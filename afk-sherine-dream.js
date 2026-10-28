@@ -61,11 +61,13 @@
 
   // 件數少 1：核心計件後（AFK_RELIC_GM.sherine 掛點）給每一組有件數的 +1
   var soulOn = function (p) { return !!(p && p.eq && p.eq[SOUL] && p.eq[SOUL].seteff); };
+  // 件數減免：之魂 1 ＋ 符文「魂」1（afk-runefx 的 W.__afkRuneSetCut，2026-10-29 晚：可以疊加），全身最多 −2
+  var setCut = function (p) { var n = soulOn(p) ? 1 : 0; try { if (typeof W.__afkRuneSetCut === 'function') n += W.__afkRuneSetCut(p) || 0; } catch (e) {} return Math.min(2, n); };
   if (W.AFK_RELIC_GM && typeof W.AFK_RELIC_GM.sherine === 'function') {
     var oSh = W.AFK_RELIC_GM.sherine;
     W.AFK_RELIC_GM.sherine = function (p, c) {
       var r = oSh.apply(this, arguments);
-      try { if (soulOn(p)) Object.keys(c).forEach(function (g) { if (c[g] > 0) c[g] += 1; }); } catch (e) {}
+      try { var cut = setCut(p); if (cut) Object.keys(c).forEach(function (g) { if (c[g] > 0) c[g] += cut; }); } catch (e) {}
       return r;
     };
   }
@@ -74,8 +76,8 @@
   var dreamTiers = function (p) {
     var dc = {}, out = {};
     SHERINE_REMAINS.forEach(function (r) { var e = p.eq && p.eq[r.id]; if (e && isDream(e)) { var g = grp(e); dc[g] = (dc[g] || 0) + 1; } });
-    var soul = soulOn(p);
-    Object.keys(dc).forEach(function (g) { var n = dc[g] + (soul ? 1 : 0), tot = (p._sherineSetCnt && p._sherineSetCnt[g]) || 0; out[g] = [2, 3, 5].filter(function (t) { return n >= t && tot >= t; }); });
+    var cut = setCut(p);
+    Object.keys(dc).forEach(function (g) { var n = dc[g] + cut, tot = (p._sherineSetCnt && p._sherineSetCnt[g]) || 0; out[g] = [2, 3, 5].filter(function (t) { return n >= t && tot >= t; }); });
     return out;
   };
   var add = function (d, k, v) { d[k] = (Number(d[k]) || 0) + v; };
@@ -292,12 +294,12 @@
     var oDesc2 = W.buildItemDescHTML;
     W.buildItemDescHTML = function (it) {
       var h = oDesc2.apply(this, arguments);
-      try { if (it && (it.etch || it.etchD)) h = '<span class="' + (it.etchD ? 'c-sherine-dream' : 'c-sherine') + ' font-bold">✠ 星蝕·解：' + starText(it) + '</span><br><span class="text-slate-300 text-sm">裝在主手時，刻上的套裝直接算滿 5 件' + (it.etchD ? '（夢域的那一組 2／3／5 段都是夢域效果）' : '') + '；符文孔 ' + (it.sockets || []).length + '／3（第三孔「' + SOCKET_NAMES[2] + '」鎖定中）。</span><br>' + h; } catch (e) {}
+      try { if (it && (it.etch || it.etchD)) h = '<span class="' + (it.etchD ? 'c-sherine-dream' : 'c-sherine') + ' font-bold">✠ 星蝕·解：' + starText(it) + '</span><br><span class="text-slate-300 text-sm">裝在主手時，刻上的套裝直接算滿 5 件' + (it.etchD ? '（夢域的那一組 2／3／5 段都是夢域效果）' : '') + '。</span><br>' + h; } catch (e) {}
       return h;
     };
   }
   (W.__afkAxLines = W.__afkAxLines || []).push(function (it) { return it && (it.etch || it.etchD) ? '<span class="' + (it.etchD ? 'c-sherine-dream' : 'c-sherine') + '">星蝕·解：' + starText(it) + '</span>' : null; });
 
-  W.__afkSherineDream = { ETCH_PER: ETCH_PER, SOCKET_NAMES: SOCKET_NAMES, SOCKET_MAX_OPEN: SOCKET_MAX_OPEN, PARTS: PARTS, etchReady: etchReady, etchTake: etchTake, etchName: etchName, migrate: migrate, mainEtch: mainEtch, DREAM: DREAM, DN: DN, isDream: isDream, dreamTiers: dreamTiers, soulOn: soulOn, COST: COST, SOUL: SOUL, SOUL_RATE: SOUL_RATE };
+  W.__afkSherineDream = { ETCH_PER: ETCH_PER, SOCKET_NAMES: SOCKET_NAMES, SOCKET_MAX_OPEN: SOCKET_MAX_OPEN, PARTS: PARTS, etchReady: etchReady, etchTake: etchTake, etchName: etchName, migrate: migrate, mainEtch: mainEtch, DREAM: DREAM, DN: DN, isDream: isDream, dreamTiers: dreamTiers, soulOn: soulOn, setCut: setCut, COST: COST, SOUL: SOUL, SOUL_RATE: SOUL_RATE };
   console.log('[AFK-sherine-dream] 已載入：夢域席琳遺骸與之魂');
 })();

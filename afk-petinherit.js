@@ -12,12 +12,13 @@
   var __T = window.AFK_TOGGLES;
   if (__T && __T.register) __T.register({ id: 'petinherit', name: '寵物繼承主人能力', desc: '寵物繼承主人 30% 的面板能力與 HP／MP', group: '遊戲玩法' });
   if (__T && !__T.enabled('petinherit')) { console.log('[AFK] 外掛開關「寵物繼承主人能力」已關閉'); return; }
-  var W = window, R = 0.30;
+  var W = window, R0 = 0.30;
   if (typeof W.petDerive !== 'function') { console.warn('[AFK-petinherit] 找不到寵物系統，略過'); return; }
   var P = function () { return (typeof player !== 'undefined' && player && player.cls && player.d) ? player : null; };
   var n = function (v) { return Number(v) || 0; };
   var share = function () {
     var p = P(); if (!p) return null; var d = p.d;
+    var R = R0; try { if (typeof W.__afkPetInheritRate === 'function') R = W.__afkPetInheritRate(R0); } catch (e) {}   // 符文「契」：30% → 40%／50%
     return {
       hit: Math.floor(Math.max(n(d.meleeHit), n(d.rangedHit)) * R),
       dmg: Math.floor((Math.max(n(d.meleeDmg), n(d.rangedDmg)) + n(d.extraDmg)) * R),
@@ -41,6 +42,6 @@
     var oMhp = W.petMhpEff;
     W.petMhpEff = function (pet) { var v = oMhp.apply(this, arguments); try { var s = share(); if (s) v += s.hp; } catch (e) {} return v; };
   }
-  W.__afkPetInherit = { rate: R, share: share };
+  W.__afkPetInherit = { rate: R0, share: share };
   console.log('[AFK-petinherit] 已啟用：寵物繼承主人 30% 面板與 HP／MP');
 })();

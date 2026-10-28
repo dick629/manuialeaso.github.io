@@ -724,7 +724,7 @@
     return before!==player.inv.length||Object.keys(buffs).length>0;
   }
   function beginRift(){
-    if(!enabled()||!inRift())return;var run=String(state.riftStartMs||'active');if(player.ttmiRiftRunKey===run){riftButton();return;}
+    if(!enabled()||!inRift())return;var run=String(state._riftRunKey||state.riftStartMs||'active');   /* afk-rift2 會依遊戲時間改寫 riftStartMs，用固定的場次編號 */if(player.ttmiRiftRunKey===run){riftButton();return;}
     clearRift();player.ttmiRiftRunKey=run;give(creditId,10);say('裂痕守衛遞來 10 枚戰勳：「擊倒敵人還能再得，拿去換這一場的補給。」');riftButton();
   }
   function riftButton(){

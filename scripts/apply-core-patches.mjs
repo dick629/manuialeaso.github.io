@@ -1285,6 +1285,20 @@ function patchHitCapCrit() {
   changed++; console.log('[patch] 命中率上限＋爆擊記錄');
 }
 
+// 67. 時空裂痕掉落掛點（玩家 2026-10-29 晚）：怪物專屬掉落表每一項先問 window.__afkRiftDrop(物品, 機率%, 怪)；
+//     回傳數字＝改用這個機率%（不吃任何加倍），回傳 null／undefined＝照原本算
+function patchRiftDrop() {
+  const FILE = 'js/05-kill-progression.js', TAG = '/* 🔌 加掛版補丁:時空裂痕掉落 */';
+  const A = "        if(Math.random() < partyDropRate((ratePct * _dropBase * _clMult * _relicX2) / 100)) gainItem(itemId, 1);";
+  const B = "        { let _rr = (typeof window.__afkRiftDrop === 'function') ? window.__afkRiftDrop(itemId, ratePct, mob) : null; if (_rr != null) { if (_rr > 0 && Math.random() < _rr / 100) gainItem(itemId, 1); return; } } " + TAG + "\n" + A;
+  let s = readFileSync(FILE, 'utf8');
+  if (s.includes(TAG)) { already++; return; }
+  if (s.split(A).length - 1 !== 1) throw new Error('[時空裂痕掉落] 錨點應出現 1 次');
+  s = s.replace(A, B);
+  if (!CHECK) writeFileSync(FILE, s);
+  changed++; console.log('[patch] 時空裂痕掉落掛點');
+}
+
 // 63. 負面效果抵抗改成外掛開關（玩家 2026-10-28）：補丁 48 寫進核心的判定，在 window.__afkDebuffAllOff 為真時一律放行
 function patchDebuffResistToggle() {
   const FILES = ['js/04-combat-attack.js', 'js/06-status-allies.js', 'js/07-skills-cast.js', 'js/22-pets.js', 'js/23-summons.js'];
@@ -1327,6 +1341,7 @@ try {
   patchWhMax();
   patchSoulSlot();
   patchHitCapCrit();
+  patchRiftDrop();
 } catch (e) {
   console.error('❌ apply-core-patches 失敗：' + e.message);
   process.exit(1);

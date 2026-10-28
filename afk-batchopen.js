@@ -16,7 +16,7 @@
   if (T && !T.enabled('batchopen')) return;
   if (typeof W.openModal !== 'function' || typeof W.useItem !== 'function') { console.warn('[AFK-batchopen] 找不到物品視窗，略過'); return; }
 
-  var EFFS = { doll_bag: 1, doll_box_high: 1, osiris_box: 1 };
+  var EFFS = { doll_bag: 1, doll_box_high: 1, osiris_box: 1, afk_runebox: 1 };   // afk_runebox：失去光芒的符文石（afk-runedata）
   var eligible = function (d) { return !!d && !d.noUse && ((d.ttmiAction === 'box' && !d.ttmiBoxCooldown) || !!EFFS[d.eff]); };
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };

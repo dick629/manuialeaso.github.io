@@ -556,7 +556,7 @@
 <script src="js/02-stats-recompute.js?v=76fb7400cf.8.26-flywing-relics"></script>
     <script src="js/03-combat-core.js?v=0a68aa7e31.8.26-flywing-relics"></script>
     <script src="js/04-combat-attack.js?v=d16eb820ba.8.26-flywing-relics"></script>
-<script src="js/05-kill-progression.js?v=e432879283.8.34-merc-trial-class-loot"></script>
+<script src="js/05-kill-progression.js?v=955dd02fe0.8.34-merc-trial-class-loot"></script>
     <script src="js/06-status-allies.js?v=403186b5d0.8.34-merc-trial-class-loot"></script>
     <script src="js/07-skills-cast.js?v=258314b415.8.26-flywing-relics"></script>
 <script src="js/08-items-equip.js?v=ae209702e8.8.16-wis-regen-interval"></script>
@@ -659,7 +659,7 @@
     <script src="afk-slotinfo.js?v=c904c3ca3a"></script>
     <script src="afk-loadslots.js?v=fdc549e696"></script>
     <script src="afk-dex.js?v=2c88b46856"></script>
-    <script src="afk-wiki.js?v=d3aed953e3"></script>
+    <script src="afk-wiki.js?v=939384eac0"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=302890a0df"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
@@ -704,11 +704,13 @@
     <script src="afk-relic-runtime.js?v=ff9fff361d"></script>
     <!-- afk-npc-kit：NPC 服務面板共用外觀（哈瑪大師、艾格尼絲、佐爾頓、艾彼迪爾）；排在這些 NPC 外掛之前 -->
     <script src="afk-npc-kit.js?v=0749913a7d"></script>
+    <!-- afk-runedata：符文石 32 顆、失去光芒的符文石、哀石系列、瘴骸·破材料與解命石的物品資料（不是開關）；排在 afk-dex-extra、afk-runes、afk-rift2 之前 -->
+    <script src="afk-runedata.js?v=954fa52be3"></script>
     <script src="afk-relicplus.js?v=72b9a5d904"></script>
     <!-- afk-dreamstar：暗夢星迴（單機版）；需 afk-dreamhell、afk-relicplus，排在 afk-relicplus 之後 -->
     <script src="afk-dreamstar.js?v=efc9ffca79"></script>
     <!-- afk-corrupt：侵蝕的法利昂／巴拉卡斯／林德拜爾巢穴（複製安塔瑞斯副本；需核心補丁 23） -->
-    <script src="afk-corrupt.js?v=248c6e9e0c"></script>
+    <script src="afk-corrupt.js?v=f8030e11d2"></script>
     <!-- afk-relicsell：席琳夢域鏡遺物詞條、商人收遺物（龍鑽）、昇華支配分解；排在 afk-relicaffix／relicplus／dreamhell 之後 -->
     <script src="afk-relicsell.js?v=caa802e373"></script>
     <!-- afk-rebirth：輪迴轉生（需核心補丁 20；裝備不限職業沿用 afk-anyclass） -->
@@ -812,7 +814,7 @@
     <!-- 天堂透視鏡已核對物品；套裝與地圖資料就緒後加入配方與裂痕補給。 -->
     <script src="afk-ttmi-items-data.js?v=3468dd975f"></script>
     <script src="afk-ttmi-icons-data.js?v=601b04b77c"></script>
-    <script src="afk-ttmi-items.js?v=bc63b53031"></script>
+    <script src="afk-ttmi-items.js?v=d639e72312"></script>
     <!-- afk-junkquest：奇岩「古物學者 塞勒斯」——雜項素材的劇情委託與常駐委託（新手／中階／高階） -->
     <script src="afk-junkquest.js?v=227611d120"></script>
     <!-- 遺物戰鬥掛接、同伴與固定終階 GM 測試道具。 -->
@@ -838,7 +840,7 @@
     <!-- afk-debuff-rules：負面效果一律計算抵抗、頭目不再免疫；污濁之水全體 15 秒、冷卻 30 秒（冷卻中改三重矢） -->
     <script src="afk-debuff-rules.js?v=214e7ae8f3"></script>
     <!-- afk-finalboss：世界最終頭目「死亡女神 席琳」（死亡之海・席琳的沉沒神殿；瘋狂席琳＋席琳夢域鏡、每角色一次；挑戰後才能冥王域轉生；需 afk-dreamhell、afk-dreamstar、afk-rebirth） -->
-    <script src="afk-finalboss.js?v=39a6a7784b"></script>
+    <script src="afk-finalboss.js?v=bf57e1ae8e"></script>
     <!-- afk-rebirth2：二轉決戰（席琳方傷害 +5%）、次元突破者／封印輪迴光環、第二次轉生（需 afk-finalboss、afk-dreamstar） -->
     <script src="afk-rebirth2.js?v=a12d3cf25f"></script>
     <!-- afk-affix-plus：詞綴擴充（祝福／遠古三階只能打怪取得；燃柳村龍紋師艾格尼絲「龍紋賦予」：不屈者意志、龍的印記／傷痕、神樹者的讚禮、闇龍的抵抗者） -->
@@ -862,7 +864,7 @@
     <!-- afk-screen：掛機模式（螢幕常亮＋全黑省電畫面，戰鬥照常；熱鍵列 🌙） -->
     <script src="afk-screen.js?v=9c9b870cf4"></script>
     <!-- afk-petinherit：寵物繼承主人 30% 面板與 HP／MP -->
-    <script src="afk-petinherit.js?v=fe6c30b494"></script>
+    <script src="afk-petinherit.js?v=d35f13ce86"></script>
     <!-- afk-poly-codex：變身收集冊（普通／銀／金，打怪掉卡、登錄加能力、金卡合成神話）（需 afk-card-ascension） -->
     <script src="afk-poly-codex.js?v=8ca138ce1c"></script>
     <!-- afk-card-codex：變身卡冊（點亮／升星，五抗加成）與燃柳村 NPC「至幻者」（需 afk-card-ascension） -->
@@ -881,7 +883,7 @@
     <!-- afk-npcspace：村莊 NPC 名牌重疊時自動換到附近空位（包 renderTownNPCMap，排在所有加 NPC 的外掛之後） -->
     <script src="afk-npcspace.js?v=a5c3b52f88"></script>
     <!-- afk-dex-extra：掉落查詢的「外掛掉落」登記表（副本／席琳夢域鏡等用程式發的掉落，不在掉落表裡；排在所有加怪加物品的外掛之後） -->
-    <script src="afk-dex-extra.js?v=6e506c4620"></script>
+    <script src="afk-dex-extra.js?v=9cddb1abc7"></script>
     <!-- afk-heartbeat：旅人頻道（真人心跳聊天）——世界頻道旁的專屬按鈕＋獨立視窗；要自己加入才連線，後端見 backend/heartbeat -->
     <script src="afk-heartbeat.js?v=0acfd4d574"></script>
     <!-- afk-itemui：物品資訊窗點外面就關＋特殊物品固定淡光（靜態背景漸層，不用動畫） -->
@@ -889,18 +891,24 @@
     <!-- afk-killlog：同一隻怪的掉落合併成一行「擊敗 X：物品 ×數量、…」（包 killMob 最外層，必須放在所有包 killMob 的外掛之後） -->
     <script src="afk-killlog.js?v=9c2bea76c9"></script>
     <!-- afk-sherine-dream：夢域席琳遺骸（伊奧夢域淬鍊，紅字、效果強化）與第 9 格遺骸「之魂」（謀叛者的低語頭目 5%；套裝件數 −1）；須在 afk-caps 之前 -->
-    <script src="afk-sherine-dream.js?v=752c080fee"></script>
+    <script src="afk-sherine-dream.js?v=7763be44ee"></script>
     <!-- afk-runes：說話之島符文師佐爾頓——武器的星蝕·解三個符文孔（墜蝕·解、刻解·骸、瘴骸·破）；需 afk-sherine-dream -->
-    <script src="afk-runes.js?v=5b52ec71d3"></script>
+    <script src="afk-runes.js?v=c45a4ef610"></script>
     <!-- afk-relicreroll：銀騎士村艾彼迪爾——+10 遺物＋回夢水晶重洗遺物第二詞綴（保留或替換）；回夢香塵（夢域四龍巢穴）20 換 1 回夢水晶；需 afk-relicplus -->
     <script src="afk-relicreroll.js?v=08bf3a7edc"></script>
+    <!-- afk-rift2：時空裂痕改用遊戲時間；席琳三模式新規則（80 分鐘完全通關、頭目暴走、60 分鐘起壓力牆、哀石系列、結算符文石、瘴骸·破材料）；需 afk-runedata、核心補丁 67 -->
+    <script src="afk-rift2.js?v=53dd54af47"></script>
+    <!-- afk-runefx：符文石與符文之語的效果（減傷、藥水、寵物、套裝、攻擊、補助）；排在 afk-runes、afk-rift2、afk-caps、afk-sherine-dream 之後 -->
+    <script src="afk-runefx.js?v=17cd993af1"></script>
+    <!-- afk-finaltiers：終焉三階層（席琳夢境／席琳幻影 ×1.25／席琳伴身 ×1.5625 只能一次）；需 afk-finalboss -->
+    <script src="afk-finaltiers.js?v=16c1cbd994"></script>
     <!-- afk-caps：轉生雙持的副手武器固定加成計入能力；爆擊率上限 80%（包 recomputeStats 最外層，必須最後載入）；迴避上限見核心補丁 patchEvadeCap -->
     <script src="afk-caps.js?v=04948c9067"></script>
     <!-- afk-art-v3：GPT變身檔（外掛開關，預設關）——神話／天上／時空／十二聖衣改用新繪製的三方向逐幀動畫與聖衣星座翅膀；只換外觀 -->
     <script src="art-v3/game-data.js?v=8e7f81be3f"></script>
     <script src="afk-art-v3.js?v=3545966d91"></script>
     <!-- afk-batchopen：禮盒、袋子、寶箱一次開多個（物品視窗「開 10 個」「全部開啟」；開完只重畫、存檔一次，列出總共拿到的東西） -->
-    <script src="afk-batchopen.js?v=3d845c535e"></script>
+    <script src="afk-batchopen.js?v=ed53eae4f0"></script>
     <!-- afk-lineage-skin：新增系統的介面統一換成遊戲原生的炭灰面板＋銅邊＋金字風格，並排版傳說引言（純 CSS，最後載入） -->
     <script src="afk-lineage-skin.js?v=e41a4d0a65"></script>
     <!-- afk-returnprobe：回城卡頓偵測（只在回城那 3 秒量測，停頓超過 0.3 秒才在系統訊息回報） -->

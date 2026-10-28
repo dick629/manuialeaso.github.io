@@ -104,7 +104,10 @@
   var on = function () { return !!(S()._afkFinal && mapState && mapState.current === MAP); };
   // 2026-10-26 二轉：'first'＝第一次決戰；'second'＝二轉決戰（席琳方傷害 +5%）；'solo'＝次元突破者單人重打（席琳方傷害 −100%、防禦與抗性 −50%）
   var mode = function () { return S()._afkFinalMode || 'first'; };
-  var modeMult = function () { var m = mode(); return m === 'solo' ? 0 : m === 'second' ? 1.05 : 1; };
+  // 2026-10-29 晚：終焉三階層——'first'＝第一階層「席琳夢境」、'tier2'＝第二階層「席琳幻影」（HP、傷害 ×1.25）、'tier3'＝第三階層「席琳伴身」（×1.5625，只能挑戰一次）
+  var TIER = { first: { n: '席琳夢境', k: 1 }, tier2: { n: '席琳幻影', k: 1.25 }, tier3: { n: '席琳伴身', k: 1.5625 } };
+  var tierK = function () { var t = TIER[mode()]; return t ? t.k : 1; };
+  var modeMult = function () { var m = mode(); return m === 'solo' ? 0 : m === 'second' ? 1.05 : tierK(); };
   (window.__afkTakenMods = window.__afkTakenMods || []).push(function (ent, mob) { return (on() && mob && (mob._afkFinal || mob._afkApostle)) ? modeMult() : 1; });
   var bossOf = function () { return (mapState.mobs || []).filter(function (m) { return m && m._afkFinal && !m._dead && m.curHp > 0; })[0] || null; };
   var addsAlive = function () { return (mapState.mobs || []).filter(function (m) { return m && m._afkApostle && !m._dead && m.curHp > 0; }).length; };
@@ -113,6 +116,7 @@
   var hurt = function (t, dmg, why) {
     var mm = modeMult(); if (!(mm > 0)) return false;
     dmg = Math.max(1, Math.floor(dmg * mm));
+    if (typeof window.__afkTrueCut === 'function') dmg = window.__afkTrueCut(t, dmg);   // 符文「骸」：真實傷害減免
     if (t === player) { player.hp -= dmg; if (player.hp <= 0 && typeof killPlayer === 'function') { killPlayer(); return true; } }
     else { t.curHp -= dmg; if (t.curHp <= 0) { t.curHp = 0; t._downed = true; t._reviveCd = 150; log('<span class="text-amber-400 font-bold">協力傭兵 ' + (t._allyName || '') + ' 被' + why + '擊倒。</span>'); } }
     return false;
@@ -132,11 +136,12 @@
     m = mapState.mobs[idx];
     m._afkFinal = true; m._fbBorn = S().ticks || 0; m._fbPhase = 1;
     var n = partyN(); S()._afkFinalParty = n; S()._afkFinalScale = mode() === 'solo' ? 1 : hpScale(n);   // 單人試煉本來就是一個人打（席琳不出手），維持原本血量
-    m.hp = m.curHp = Math.round(FB.hp * S()._afkFinalScale); m.ac = FB.ac; m.dr = FB.dr; m.mr = FB.mr; m.hard = false; m.hardSkin = 0;
+    m.hp = m.curHp = Math.round(FB.hp * S()._afkFinalScale * tierK()); m.ac = FB.ac; m.dr = FB.dr; m.mr = FB.mr; m.hard = false; m.hardSkin = 0;
     ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (k) { m[k] = FB.res; });
     m.dmg = FB.atk.slice(); m.db = FB.db; m.hit = FB.hit; m.atkSpd = FB.spd;
     m._noBossRegen = true; m.regenHp = 0; m._dreamRegen = 0; m.exp = 0; m.goldMin = 0; m.goldMax = 0; m.noGold = true;
     m._fbRage = m.rageDmgMult || 1;
+    if (TIER[mode()]) m.n = TIER[mode()].n + ' ' + BOSS_NAME;
     if (mode() === 'solo') { m.ac = Math.round(FB.ac * 0.5); m.dr = FB.dr * 0.5; m.mr = FB.mr * 0.5; ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (k) { m[k] = FB.res * 0.5; }); }
     S()._afkFinalSpawned = true;
     if (S()._afkFinalScale < 1) sys('<span class="text-cyan-200">隊伍 ' + S()._afkFinalParty + ' 人：席琳的 HP 調整為 ' + m.hp.toLocaleString() + '（' + S()._afkFinalParty + '／' + FB.base + '），冥界的使徒同比例。</span>');
@@ -153,7 +158,7 @@
       var m = Object.assign(clone(base), { curHp: base.hp, uid: uid(), _born: ++_mobBornSeq, _bornMs: Date.now(), _magCd: {}, justHit: false, st: newMobStatus() });
       mapState.mobs[i] = m;
       try { applySherineBuff(i); } catch (e) {}
-      m = mapState.mobs[i]; m._afkApostle = true; m.hp = m.curHp = Math.round(FB.addHp * (S()._afkFinalScale || 1)); m.exp = 0; m.noGold = true;
+      m = mapState.mobs[i]; m._afkApostle = true; m.hp = m.curHp = Math.round(FB.addHp * (S()._afkFinalScale || 1) * tierK()); m.exp = 0; m.noGold = true;
       k++;
     }
     if (k && !S().ff) { try { renderMobs(); } catch (e) {} }
@@ -274,6 +279,13 @@
   var finish = function (result, why) {
     var s = S(); if (!s._afkFinal) return;
     var md = mode();
+    if (md === 'tier2' || md === 'tier3') {
+      s._afkFinal = false; s._afkFinalSpawned = false; s.antharas = 0; s._antAdvance = false; s._afkFinalMode = null;
+      try { if (window.__afkFinalTiers) window.__afkFinalTiers.finish(md, result, why); } catch (e) { console.warn('[AFK-finalboss] 終焉階層結算', e); }
+      try { if (!player.dead) { setMapSelectors(typeof getLastTown === 'function' ? getLastTown() : 'town_aden'); changeMap(true); } } catch (e) {}
+      try { calcStats(); updateUI(); saveGame(); } catch (e) {}
+      return;
+    }
     if (md !== 'first') {
       s._afkFinal = false; s._afkFinalSpawned = false; s.antharas = 0; s._antAdvance = false; s._afkFinalMode = null;
       try { if (window.__afkRebirth2) window.__afkRebirth2.finish(md, result, why); } catch (e) { console.warn('[AFK-finalboss] 二轉結算', e); }
@@ -316,7 +328,7 @@
   }
   var oBossKill = window.antharasOnBossKill;
   if (typeof oBossKill === 'function') window.antharasOnBossKill = function (bossName) {
-    if (S()._afkFinal && bossName === BOSS_NAME) { finish('win'); return; }
+    if (S()._afkFinal && (bossName === BOSS_NAME || / 死亡女神 席琳$/.test(String(bossName || '')))) { finish('win'); return; }
     if (S()._afkFinal) return;   // 使徒不是頭目，不會走到這裡
     return oBossKill.apply(this, arguments);
   };
@@ -465,6 +477,6 @@
     };
   }
 
-  window.__afkFinalBoss = { mode: mode, startMode: startMode, dreamOn: dreamOn, MAP: MAP, BOSS_NAME: BOSS_NAME, ADD_NAME: ADD_NAME, cfg: FB, hpScale: hpScale, partyN: partyN, rec: rec, won: won, lost: lost, on: on, finish: finish, timeline: timeline, summon: summon, applyRebirthGift: applyRebirthGift };
+  window.__afkFinalBoss = { TIER: TIER, tierK: tierK, mode: mode, startMode: startMode, dreamOn: dreamOn, MAP: MAP, BOSS_NAME: BOSS_NAME, ADD_NAME: ADD_NAME, cfg: FB, hpScale: hpScale, partyN: partyN, rec: rec, won: won, lost: lost, on: on, finish: finish, timeline: timeline, summon: summon, applyRebirthGift: applyRebirthGift };
   console.log('[AFK-finalboss] 已啟用：最終頭目 死亡女神 席琳（死亡之海・席琳的沉沒神殿）');
 })();
