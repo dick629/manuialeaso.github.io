@@ -36,7 +36,7 @@
  *   ‧HP 3.5 億 → 4.5 億
  *   ‧沉眠之海（時間封印）：75%／50%／25%／倒下 各有最早時間 2:30／5:00／7:30／10:00；提早打到門檻時席琳沉入海底，
  *     HP 停在門檻、不受傷害，期間每 5 秒「沉沒的歌聲」全隊最大 HP 3%，時間到才浮上來
- *   ‧席琳的凝視（全程）：每 35 秒，全隊造成的傷害 −30%，持續 8 秒
+ *   ‧席琳的凝視（全程）：每 35 秒，全隊造成的傷害 −30%，持續 8 秒；開戰滿 5 分鐘起改成 −40%、持續 4 秒（玩家 2026-10-29 晚）
  *   ‧死亡之潮（第 3 段起）：每 25 秒，全隊每秒失去最大 HP 2%，持續 5 秒
  * ========================================================================== */
 (function () {
@@ -51,7 +51,7 @@
   var FB = { hp: 450000000, addHp: 8000000, addMax: 2, ac: -100, dr: 40, mr: 500, res: 400, atk: [10, 50], db: 200, hit: 250, spd: 2, limit: 1200,
     tide: 0.05, mark: 0.30, scepter: 0.25, flood: 0.10, embrace: 0.07, addDr: 0.15, addHeal: 0.003, rage: 1.5,
     // 2026-10-29 加難度：沉眠之海（時間封印）＋席琳的凝視＋死亡之潮
-    gates: [[0.75, 150], [0.50, 300], [0.25, 450], [0, 600]], sealTide: 0.03, gaze: 0.30, gazeSec: 8, gazeEvery: 35, waveEvery: 25, wavePct: 0.02, waveSec: 5 };
+    gates: [[0.75, 150], [0.50, 300], [0.25, 450], [0, 600]], sealTide: 0.03, gaze: 0.30, gazeSec: 8, gazeEvery: 35, gazeLateAt: 300, gazeLate: 0.40, gazeLateSec: 4, waveEvery: 25, wavePct: 0.02, waveSec: 5 };
   FB.base = 16;
   window.__afkFinalCfg = FB;
   // 動態血量：隊伍人數（你＋還站著的傭兵）÷ 16，最多 1 倍
@@ -184,7 +184,7 @@
       var r = oD.apply(this, arguments);
       try { if (target && target._afkFinal && r > 0) { var n = addsAlive(); if (n) r = Math.max(1, Math.floor(r * Math.pow(1 - FB.addDr, n))); } } catch (e) {}
       try {
-        if (target && (target._afkFinal || target._afkApostle) && r > 0 && on() && (S()._afkGazeUntil || 0) > (S().ticks || 0)) r = Math.max(1, Math.floor(r * (1 - FB.gaze)));
+        if (target && (target._afkFinal || target._afkApostle) && r > 0 && on() && (S()._afkGazeUntil || 0) > (S().ticks || 0)) r = Math.max(1, Math.floor(r * (1 - (S()._afkGazePct || FB.gaze))));
         if (target && target._afkFinal && r > 0) { var g = gateOf(target); if (g) { var floorHp = Math.max(1, Math.ceil(target.hp * g[0])); if (target.curHp - r < floorHp) { r = Math.max(0, target.curHp - floorHp); seal(target, g); } } }
       } catch (e) {}
       return r;
@@ -203,7 +203,11 @@
     if (gt) { var fh = Math.max(1, Math.ceil(m.hp * gt[0])); if (m.curHp < fh) { m.curHp = fh; seal(m, gt); } }
     var sealed = gt && m._fbSealGate === gt[1] && m.curHp <= Math.max(1, Math.ceil(m.hp * gt[0]));
     if (sealed && every(age, 5)) { if (pctAll(FB.sealTide, '沉沒的歌聲')) return; }
-    if (every(age, FB.gazeEvery)) { S()._afkGazeUntil = t + FB.gazeSec * SEC; log(tag('席琳的凝視', '#e879f9') + '死亡女神的目光掃過神殿，所有人的手都沉重起來（造成的傷害 −' + Math.round(FB.gaze * 100) + '%，' + FB.gazeSec + ' 秒）。'); }
+    if (every(age, FB.gazeEvery)) {
+      var late = age >= FB.gazeLateAt * SEC, gp = late ? FB.gazeLate : FB.gaze, gs = late ? FB.gazeLateSec : FB.gazeSec;
+      S()._afkGazeUntil = t + gs * SEC; S()._afkGazePct = gp;
+      log(tag('席琳的凝視', '#e879f9') + (late ? '死亡女神的目光變得更冷、更沉，' : '死亡女神的目光掃過神殿，') + '所有人的手都沉重起來（造成的傷害 −' + Math.round(gp * 100) + '%，' + gs + ' 秒）。');
+    }
     var pct = m.curHp / (m.hp || 1);
     var ph = pct > 0.75 ? 1 : pct > 0.5 ? 2 : pct > 0.25 ? 3 : 4;
     if (ph > (m._fbPhase || 1)) {

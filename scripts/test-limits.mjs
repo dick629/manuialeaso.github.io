@@ -18,6 +18,8 @@ try{
     mapState.mobs=[t1,t2]; player._rawCrit={melee:90,ranged:0,magic:0}; player._afkCrit={t:t1,at:state.ticks};
     const v=AFK_CARD_COMBAT.damage(player,t1,1000,{kind:'melee'}); out.splash=1e6-t2.curHp; out.v=v;
     player._rawCrit={melee:50}; player._afkCrit={t:t1,at:state.ticks}; AFK_CARD_COMBAT.damage(player,t1,1000,{kind:'melee'}); out.noSplash=1e6-t2.curHp===out.splash;
+    // 只有主目標：不扣
+    mapState.mobs=[t1]; player._rawCrit={melee:90}; player._afkCrit={t:t1,at:state.ticks}; out.solo=AFK_CARD_COMBAT.damage(player,t1,1000,{kind:'melee'}); player._rawCrit={melee:50}; out.solo50=AFK_CARD_COMBAT.damage(player,t1,1000,{kind:'melee'});
     return out;
   });
   assert.equal(r.hv,15,'命中判定值上限 15（80%）');
@@ -26,6 +28,8 @@ try{
   assert.equal(r.taken,250,'百分比減傷最多 75%');
   assert.ok(r.splash>0,'爆擊率滿 80% 才濺射 '+r.splash);
   assert.ok(r.noSplash,'爆擊率沒滿不濺射');
+  assert.ok(Math.abs(r.v-r.splash)<=1&&r.v>0,'濺射的 50% 從主目標扣掉 '+r.v+'/'+r.splash);
+  assert.equal(r.solo,r.solo50,'場上沒有別的敵人不扣');
   assert.deepEqual(errors,[]);
   await close();
   console.log('test-limits: ok');
