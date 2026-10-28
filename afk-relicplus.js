@@ -6,7 +6,7 @@
  *     費用：做出 +1～+6 每次 500 龍鑽＋5,000 萬，
  *     +7～+10 每高一級再多 100 龍鑽＋1,000 萬（+10＝900／9,000 萬）
  *   ‧原作者強化上限 +5 的道具（戒指、耳環、項鍊、腰帶…）：最高 +10；每級 3 個同級、龍鑽與金幣 ×3、席琳結晶 500 顆
- *   ‧+11～+15：只用一個，每次 50,000 龍鑽，成功率 10%，失敗不會消失；滿階後開放昇華支配
+ *   ‧+11～+15：只用一個，每次 50,000 龍鑽，成功率 10%，失敗不會消失；每失敗一次同一階 +2%、最高 50%（保底，2026-10-29 晚）；滿階後開放昇華支配
  *   ‧只看背包（不含倉庫、不含穿在身上的）；上鎖的不列入
  * 每一級的能力
  *   ‧武器：每 +1 大小傷 +1；每 +3 原本的白字能力各 +1
@@ -303,11 +303,14 @@
 
   // ── 成本 ──
   var CRYSTAL = 'sherine_crystal';
+  // +11～+15 保底（玩家 2026-10-29 晚）：同一個目標強化值每失敗一次 +2%，最高 50%（本身 10% 再加 40%）；成功就歸零
+  var PITY = { step: 0.02, max: 0.50 };
+  var pityOf = function (target) { var p = typeof P === 'function' ? P() : null; var m = p && p.afkRelicPity; return m && m[target] > 0 ? Math.floor(m[target]) : 0; };
   function costOf(target, base) {   // 做出 +target 的成本
     var c;
     if (target <= 6) c = { dia: 500, gold: 50000000, merge: true, rate: 1 };
     else if (target <= 10) c = { dia: 500 + 100 * (target - 6), gold: 50000000 + 10000000 * (target - 6), merge: true, rate: 1 };
-    else c = { dia: 50000, gold: 0, merge: false, rate: 0.10 };
+    else c = { dia: 50000, gold: 0, merge: false, rate: Math.min(PITY.max, 0.10 + PITY.step * pityOf(target)) };
     c.need = c.merge ? 2 : 1; c.crystal = 0;
     // 上限 +5 的飾品（戒指、耳環、項鍊、腰帶…）：每次要 3 個同款同強化值、龍鑽與金幣 ×3，另外消耗席琳結晶 500 顆
     //   例：+0→+1＝3 個 +0、1,500 龍鑽、1.5 億金幣、席琳結晶 500 顆
@@ -478,7 +481,10 @@
       pushResult(newId, best);
       remember(newId);
     }
+    var pity0 = null;
+    if (!c.merge) { if (!p.afkRelicPity || typeof p.afkRelicPity !== 'object') p.afkRelicPity = {}; pity0 = p.afkRelicPity[target] || 0; p.afkRelicPity[target] = success ? 0 : pity0 + 1; }
     if (!saveOk()) {
+      if (pity0 != null) p.afkRelicPity[target] = pity0;
       if (tk) { tk.restore(); }
       if (restoreMats) restoreMats();
       if (undoCrystal) undoCrystal();
@@ -491,7 +497,7 @@
     var nm = (DB.items[g.base] || {}).n;
     var msg = success
       ? '哈瑪大師的鐵鎚落下最後一擊——' + nm + ' +' + target + '。' + (target === fxAt(g.base) && fx ? '「' + DB.items[fx].n + '」的力量也一併烙進了刃中。' : '')
-      : '火花熄滅，' + nm + ' 仍停在 +' + g.n + '。（遺物安然無損）';
+      : '火花熄滅，' + nm + ' 仍停在 +' + g.n + '。（遺物安然無損）' + (!c.merge ? '下一次衝 +' + target + ' 的成功率 ' + Math.round(costOf(target, g.base).rate * 100) + '%。' : '');
     try { logSys('<span class="' + (success ? 'text-amber-300 font-bold' : 'text-slate-300') + '">' + msg + '</span>'); } catch (e) {}
     return { ok: true, success: success, msg: msg, id: success ? newId : null };
   }
@@ -980,7 +986,7 @@
       + '<tr><td>+1～+5</td><td>2 件同款、同階遺物</td><td>100%</td></tr>'
       + '<tr><td>+6～+9</td><td>本體＋3 件同款 +1</td><td>80%／70%／60%／50%<small>失敗保留本體，3 件 +1 消耗</small></td></tr>'
       + '<tr><td>+10</td><td>本體 +9＋3 件同款 +5</td><td>100%</td></tr>'
-      + '<tr><td>+11～+15</td><td>單件</td><td>10%<small>失敗保留遺物</small></td></tr>'
+      + '<tr><td>+11～+15</td><td>單件</td><td>10%<small>失敗保留遺物；每失敗一次同一階 +2%，最高 50%，成功後歸零</small></td></tr>'
       + '</tbody></table>'
       + '<p class="rp-fee">費用：+1～+6 每次 500 龍鑽＋5,000 萬金幣；+7～+10 每高一階再加 100 龍鑽＋1,000 萬金幣；+11～+15 每次 5 萬龍鑽。</p>'
       + '<h5>戒指、耳環、項鍊、腰帶等飾品最高 +10</h5>'
@@ -1069,7 +1075,7 @@
       var ap = (!enough && !(g.cnt >= c.need && (!c.matNeed || matHave >= c.matNeed))) ? autoPlan(g) : null, apOk = !!(ap && ap.cost.afford), cs = apOk ? ap.cost : c;
       ready = enough || apOk; label = (c.merge ? '合成 +' : '強化 +') + t;
       btn = '<button class="rp-go" type="button" data-k="' + esc(g.key) + '"' + (enough || apOk ? '' : ' disabled') + (apOk ? ' title="材料不夠，會先用背包裡的低階同款自動合成補上"' : '') + '>'
-        + (c.merge ? '合成 +' + t + (c.rate < 1 ? '（' + Math.round(c.rate * 100) + '%）' : '') : '強化 +' + t + '（10%）') + (apOk ? '<span style="font-size:12px;color:#86efac">（自動補料）</span>' : '') + '<br><span style="font-weight:600;font-size:13px">' + cs.dia.toLocaleString() + ' 鑽' + (cs.gold ? '＋' + (cs.gold / 10000).toLocaleString() + ' 萬' : '') + (cs.crystal ? '＋結晶 ' + cs.crystal : '') + (c.need > 2 ? '（' + c.need + ' 個）' : '') + (c.matNeed ? '＋同款 +' + c.matLv + ' ×' + c.matNeed + '（有 ' + matHave + '）' : '') + '</span></button>';
+        + (c.merge ? '合成 +' + t + (c.rate < 1 ? '（' + Math.round(c.rate * 100) + '%）' : '') : '強化 +' + t + '（' + Math.round(c.rate * 100) + '%）') + (apOk ? '<span style="font-size:12px;color:#86efac">（自動補料）</span>' : '') + '<br><span style="font-weight:600;font-size:13px">' + cs.dia.toLocaleString() + ' 鑽' + (cs.gold ? '＋' + (cs.gold / 10000).toLocaleString() + ' 萬' : '') + (cs.crystal ? '＋結晶 ' + cs.crystal : '') + (c.need > 2 ? '（' + c.need + ' 個）' : '') + (c.matNeed ? '＋同款 +' + c.matLv + ' ×' + c.matNeed + '（有 ' + matHave + '）' : '') + '</span></button>';
     }
     var nextTxt = '';
     if (c) { var nid = makeId(g.base, t, g.fx); var nd = DB.items[nid] || buildDef(g.base, t, g.fx); nextTxt = '下一級：' + pretty(statLine(nd, g.base)) + (t === fxAt(g.base) && !g.fx && mx >= t ? '、獲得第二詞綴（隨機同部位遺物特效）' : ''); }
@@ -1186,7 +1192,7 @@
     var t = g.n + 1, c = costOf(t, g.base), nm = DB.items[g.base].n;
     var msg = c.merge
       ? (c.matNeed ? '用 ' + (g.n ? '+' + g.n + ' ' : '') + nm + '，加上 ' + c.matNeed + ' 個同款 +' + c.matLv + '，衝 +' + t + '，' : '用 ' + c.need + ' 個 ' + (g.n ? '+' + g.n + ' ' : '') + nm + ' 合成 +' + t + '，') + '花費 ' + c.dia.toLocaleString() + ' 龍鑽＋' + c.gold.toLocaleString() + ' 金幣' + (c.crystal ? '＋席琳結晶 ' + c.crystal + ' 顆' : '') + '。' + (c.rate < 1 ? '\n成功率 ' + Math.round(c.rate * 100) + '%，' + (c.matNeed ? '失敗時本體保留，三件 +' + c.matLv + ' 與費用會扣掉。' : '失敗時遺物都還在，費用會扣掉。') : '') + (t === 10 ? '\n+10 會隨機繼承一種同部位遺物的特效。' : '')
-      : '強化 +' + g.n + ' ' + nm + ' → +' + t + '，花費 ' + c.dia.toLocaleString() + ' 龍鑽，成功率 10%。\n失敗時龍鑽會扣掉，遺物不會消失。';
+      : '強化 +' + g.n + ' ' + nm + ' → +' + t + '，花費 ' + c.dia.toLocaleString() + ' 龍鑽，成功率 ' + Math.round(c.rate * 100) + '%。\n失敗時龍鑽會扣掉，遺物不會消失；每失敗一次，下一次衝 +' + t + ' 的成功率 +2%（最高 50%，成功後歸零）。';
     var direct = g.cnt >= c.need && (!c.matNeed || ((matGroup(g, c.matLv) || {}).cnt || 0) >= c.matNeed), plan = direct ? null : autoPlan(g);
     if (plan) {
       var cnt = {}; plan.steps.forEach(function (lv) { cnt[lv] = (cnt[lv] || 0) + 1; });

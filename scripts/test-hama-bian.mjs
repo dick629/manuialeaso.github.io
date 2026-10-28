@@ -30,6 +30,15 @@ try{
     box.querySelector('[data-rpf="all"]').click();
     const pick=box.querySelector('[data-rppick]');pick.click();
     out.sel=box.querySelector('.rp-selcard .rp-go').getAttribute('data-k')===pick.getAttribute('data-rppick')||box.querySelector('.rp-selcard .rp-go').disabled;
+    // +11～+15 保底：每失敗 +2%，最高 50%，成功歸零
+    pandoraAdjustSharedDiamonds(1e7);
+    const pid=A.makeId(base,10,A.donorsFor(base)[0]);A.ensure(pid);player.inv.push({id:pid,uid:'pity-1',cnt:1,en:0,lock:false});
+    const key=()=>A.groups().find(g=>g.base===base&&g.n===10&&!g.eqSlots.length).key;
+    const rnd=Math.random;Math.random=()=>0.999;
+    const r1=A.costOf(11,base).rate;A.upgrade(key());A.upgrade(key());const r2=A.costOf(11,base).rate;
+    player.afkRelicPity[11]=30;const r3=A.costOf(11,base).rate;
+    Math.random=()=>0;A.upgrade(key());Math.random=rnd;
+    out.pity=[r1,Math.round(r2*100),r3,player.afkRelicPity[11],!!player.inv.find(x=>A.parseId(x.id)&&A.parseId(x.id).n===11)];
     return out;
   });
   assert.deepEqual(r.bian,[true,3],'碧恩有遺物武器一鍵衝星');
@@ -41,6 +50,7 @@ try{
   assert.equal(r.hama[3],true,'選中那件有按鈕');
   assert.equal(r.acc,true,'飾品分類');
   assert.equal(r.sel,true);
+  assert.deepEqual(r.pity,[0.1,14,0.5,0,true],'保底');
   assert.deepEqual(errors,[]);
   await close();
   console.log('test-hama-bian: ok');
