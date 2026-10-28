@@ -570,7 +570,7 @@
 <script src="js/16-equip-book.js?v=b65ee3ef7a.8.15-legacy-import-smooth"></script>
 <script src="js/18-misc-book.js?v=efb9d0a866.8.15-legacy-import-smooth"></script>
 <script src="js/17-audio.js?v=07c972f6fe.8.1-monia-sfx"></script>
-<script src="js/19-equipment-window.js?v=334876c496.7.57"></script>
+<script src="js/19-equipment-window.js?v=000fc9b2bc.7.57"></script>
 <script src="js/20-warehouse-window.js?v=f0ce1aeb02.5.100-audit-tail"></script>
 <script src="js/21-relic-book.js?v=7d118874fb.8.15-legacy-import-smooth"></script>
     <script src="js/23-summons.js?v=4a0791a779.8.23-sherine-set-rework"></script>
@@ -640,7 +640,7 @@
     <script src="afk-allyslim.js?v=6b4a8e1e98"></script>
     <!-- 共用基礎：自製彈窗/確認、dex/wiki 共用資料表（其他外掛依賴，排前面） -->
     <script src="afk-ui.js?v=e832474894"></script>
-    <script src="afk-extradata.js?v=50ec32689c"></script>
+    <script src="afk-extradata.js?v=1b09242cac"></script>
     <!-- 離線快速結算（自己 monkey-patch 包核心 saveGame/loadGame/changeMap/killMob/gainItem；搭配 maybeSpawnMobs 補丁） -->
     <script src="afk-offline.js?v=f7ceeebdb9"></script>
     <!-- 手機版面 / 返回鍵 -->
@@ -659,7 +659,7 @@
     <script src="afk-slotinfo.js?v=c904c3ca3a"></script>
     <script src="afk-loadslots.js?v=fdc549e696"></script>
     <script src="afk-dex.js?v=2c88b46856"></script>
-    <script src="afk-wiki.js?v=45a4f5b452"></script>
+    <script src="afk-wiki.js?v=f843a2c4b8"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=302890a0df"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
@@ -886,6 +886,8 @@
     <script src="afk-itemui.js?v=ab49ca5599"></script>
     <!-- afk-killlog：同一隻怪的掉落合併成一行「擊敗 X：物品 ×數量、…」（包 killMob 最外層，必須放在所有包 killMob 的外掛之後） -->
     <script src="afk-killlog.js?v=9c2bea76c9"></script>
+    <!-- afk-sherine-dream：夢域席琳遺骸（伊奧夢域淬鍊，紅字、效果強化）與第 9 格遺骸「之魂」（謀叛者的低語頭目 5%；套裝件數 −1）；須在 afk-caps 之前 -->
+    <script src="afk-sherine-dream.js?v=ca2ab54830"></script>
     <!-- afk-caps：轉生雙持的副手武器固定加成計入能力；爆擊率上限 80%（包 recomputeStats 最外層，必須最後載入）；迴避上限見核心補丁 patchEvadeCap -->
     <script src="afk-caps.js?v=3d68d6e162"></script>
     <!-- afk-art-v3：GPT變身檔（外掛開關，預設關）——神話／天上／時空／十二聖衣改用新繪製的三方向逐幀動畫與聖衣星座翅膀；只換外觀 -->

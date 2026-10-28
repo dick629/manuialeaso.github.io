@@ -1247,6 +1247,18 @@ function patchWhMax() {
   changed++; console.log('[patch] 倉庫上限 20000');
 }
 
+// 65. 裝備視窗第二頁加「之魂」遺骸格（玩家 2026-10-28 晚；afk-sherine-dream）
+function patchSoulSlot() {
+  const FILE = 'js/19-equipment-window.js', MARK = '/* 🔌 加掛版補丁:之魂 */';
+  let s = readFileSync(FILE, 'utf8');
+  if (s.includes(MARK)) { already++; return; }
+  const a = "{ k: 'rem_eye',   x: 50.0, y: 15.81, w: 19.67, h: 8.82 },";
+  if (s.split(a).length - 1 !== 1) throw new Error(`[${FILE}] 之魂錨點應出現 1 次`);
+  s = s.replace(a, a + "\n            { k: 'rem_soul',  x: 80.1, y: 15.81, w: 19.67, h: 8.82 }, " + MARK);
+  if (!CHECK) writeFileSync(FILE, s);
+  changed++; console.log('[patch] 裝備視窗之魂格');
+}
+
 // 63. 負面效果抵抗改成外掛開關（玩家 2026-10-28）：補丁 48 寫進核心的判定，在 window.__afkDebuffAllOff 為真時一律放行
 function patchDebuffResistToggle() {
   const FILES = ['js/04-combat-attack.js', 'js/06-status-allies.js', 'js/07-skills-cast.js', 'js/22-pets.js', 'js/23-summons.js'];
@@ -1287,6 +1299,7 @@ try {
   patchClassicOwnStats();
   patchDebuffResistToggle();   // 要在補丁 48 之後
   patchWhMax();
+  patchSoulSlot();
 } catch (e) {
   console.error('❌ apply-core-patches 失敗：' + e.message);
   process.exit(1);
