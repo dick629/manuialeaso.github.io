@@ -34,7 +34,7 @@ function summonHitValue(sm, owner, target, gearHit) {
     let masteryHit = isMageSummonMastered(sm, owner) ? 5 : 0;
     let raw = (owner.lv || 1) + (sm.hitLvOff || 0) + growth + masteryHit - target.lv + mobEffAC(target)
         + (gearHit || 0);   // 🚫 v3.2.19 召喚控制戒指不再附加效果（原 命中+5 移除·戒指只決定能否挑選召喚物）
-    return stretchHitValue(raw);
+    return Math.min(window.__afkHitHv || 20, stretchHitValue(raw)); /* 🔌 加掛版補丁:命中上限 */
 }
 
 function summonAttack(sm, owner) {

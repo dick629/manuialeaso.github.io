@@ -949,7 +949,7 @@ function petAttackOnce(p, d, target, forceCrit, addDmg, skName) {
         let _ia = (typeof teamIlluAura === 'function') ? teamIlluAura(p, true) : null;   // 🩹 v3.2.67 幻覺攻擊光環（化身+10傷／歐吉+4傷+4命）全隊生效→注入出戰寵物普攻
         let _pst = p._statuses || {};
         let rawHit = p.lv + d.hit + cb.hit + pg.hit + (_ia ? _ia.eh : 0) - target.lv + mobEffAC(target) + (typeof _relicPartnerHit === 'function' ? _relicPartnerHit(p.form) : 0) - (_pst.weaken > 0 ? 2 : 0) - (_pst.disease > 0 ? 4 : 0) - (_pst.blind > 0 ? 6 : 0);
-        let hv = stretchHitValue(rawHit);
+        let hv = Math.min(window.__afkHitHv || 20, stretchHitValue(rawHit)); /* 🔌 加掛版補丁:命中上限 */
         let r = roll(1, 20);
         let heavy = (r === 20) || !!forceCrit;
         if (heavy || (r !== 1 && hv >= r)) {

@@ -25,13 +25,19 @@
  *
  * 戰鬥（以「16 人、轉生、全身昇華支配＋5、時空變身」為基準，約 10～15 分鐘）
  *   ‧動態血量（玩家 2026-10-28：不強制練滿 16 隻）：席琳與使徒的 HP ×（進場時隊伍人數 ÷ 16），最少 1 人份；次元突破者的單人試煉除外
- *   ‧頭目：HP 3.5 億、AC −100、減傷 40、魔防 500、四屬性抗性 400；一般攻擊 10D50＋200、每 2 秒；另有冥海之潮（冰凍）、亡者之槍
+ *   ‧頭目：HP 4.5 億（2026-10-29 前 3.5 億）、AC −100、減傷 40、魔防 500、四屬性抗性 400；一般攻擊 10D50＋200、每 2 秒；另有冥海之潮（冰凍）、亡者之槍
  *   ‧第一段（HP 100～75%）水之女神的殘影：每 20 秒「潮汐之嘆」全隊最大 HP 5%；每 30 秒「沉沒之鎖」隨機一人暈眩
  *   ‧第二段（75～50%）死亡的權柄：每 60 秒召喚「冥界的使徒」（HP 800 萬，場上最多 2 名），每名存活的使徒讓席琳受到的傷害 −15%；
  *       每 25 秒「死亡的權柄」隨機一人失去當前 HP 25%
  *   ‧第三段（50～25%）被放逐者之怒：傷害 ×1.5；每 15 秒「死亡宣告」隨機一人最大 HP 30%；每 40 秒「冥河氾濫」全隊最大 HP 10%
  *   ‧第四段（25%～）終焉：每 10 秒「席琳的擁抱」全隊最大 HP 7%，每名存活的使徒讓席琳回復最大 HP 0.3%；每 45 秒召喚使徒
  *   ‧20 分鐘：萬物歸於死（全滅＝失敗）
+ *   2026-10-29 加難度（玩家：任何組合都要打 10 分鐘以上）：
+ *   ‧HP 3.5 億 → 4.5 億
+ *   ‧沉眠之海（時間封印）：75%／50%／25%／倒下 各有最早時間 2:30／5:00／7:30／10:00；提早打到門檻時席琳沉入海底，
+ *     HP 停在門檻、不受傷害，期間每 5 秒「沉沒的歌聲」全隊最大 HP 3%，時間到才浮上來
+ *   ‧席琳的凝視（全程）：每 35 秒，全隊造成的傷害 −30%，持續 8 秒
+ *   ‧死亡之潮（第 3 段起）：每 25 秒，全隊每秒失去最大 HP 2%，持續 5 秒
  * ========================================================================== */
 (function () {
   'use strict';
@@ -42,8 +48,10 @@
   var MAP = 'afk_final_sea', MAP_NAME = '死亡之海・席琳的沉沒神殿';
   var BOSS_ID = 'afk_final_shilen', ADD_ID = 'afk_final_apostle';
   var BOSS_NAME = '死亡女神 席琳', ADD_NAME = '冥界的使徒';
-  var FB = { hp: 350000000, addHp: 8000000, addMax: 2, ac: -100, dr: 40, mr: 500, res: 400, atk: [10, 50], db: 200, hit: 250, spd: 2, limit: 1200,
-    tide: 0.05, mark: 0.30, scepter: 0.25, flood: 0.10, embrace: 0.07, addDr: 0.15, addHeal: 0.003, rage: 1.5 };
+  var FB = { hp: 450000000, addHp: 8000000, addMax: 2, ac: -100, dr: 40, mr: 500, res: 400, atk: [10, 50], db: 200, hit: 250, spd: 2, limit: 1200,
+    tide: 0.05, mark: 0.30, scepter: 0.25, flood: 0.10, embrace: 0.07, addDr: 0.15, addHeal: 0.003, rage: 1.5,
+    // 2026-10-29 加難度：沉眠之海（時間封印）＋席琳的凝視＋死亡之潮
+    gates: [[0.75, 150], [0.50, 300], [0.25, 450], [0, 600]], sealTide: 0.03, gaze: 0.30, gazeSec: 8, gazeEvery: 35, waveEvery: 25, wavePct: 0.02, waveSec: 5 };
   FB.base = 16;
   window.__afkFinalCfg = FB;
   // 動態血量：隊伍人數（你＋還站著的傭兵）÷ 16，最多 1 倍
@@ -152,6 +160,20 @@
     return k;
   };
 
+  // ── 沉眠之海：每道門檻有最早時間；還沒到時間，HP 停在門檻（window.__afkFbNoGate 可關，給平衡測試用）──
+  var ageOf = function (m) { var t = S().ticks || 0; return t - ((m && m._fbBorn) || t); };
+  var gateOf = function (m) {
+    if (window.__afkFbNoGate || mode() === 'solo') return null;
+    var age = ageOf(m);
+    for (var i = 0; i < FB.gates.length; i++) { var g = FB.gates[i]; if (age < g[1] * SEC) return g; }
+    return null;
+  };
+  var seal = function (m, g) {
+    if (m._fbSealGate === g[1]) return;
+    m._fbSealGate = g[1];
+    var left = Math.max(0, Math.ceil((g[1] * SEC - ageOf(m)) / SEC));
+    log(tag('沉眠之海', '#0ea5e9') + BOSS_NAME + '沉入海底，傷害無法觸及她（' + left + ' 秒後浮上來）。海底傳來沉沒的歌聲……');
+  };
   // ── 傷害：存活的使徒讓席琳受到的傷害 −20%／名 ──
   var hooked = false;
   var hookDamage = function () {
@@ -161,6 +183,10 @@
     C.damage = function (actor, target, amount) {
       var r = oD.apply(this, arguments);
       try { if (target && target._afkFinal && r > 0) { var n = addsAlive(); if (n) r = Math.max(1, Math.floor(r * Math.pow(1 - FB.addDr, n))); } } catch (e) {}
+      try {
+        if (target && (target._afkFinal || target._afkApostle) && r > 0 && on() && (S()._afkGazeUntil || 0) > (S().ticks || 0)) r = Math.max(1, Math.floor(r * (1 - FB.gaze)));
+        if (target && target._afkFinal && r > 0) { var g = gateOf(target); if (g) { var floorHp = Math.max(1, Math.ceil(target.hp * g[0])); if (target.curHp - r < floorHp) { r = Math.max(0, target.curHp - floorHp); seal(target, g); } } }
+      } catch (e) {}
       return r;
     };
   };
@@ -172,7 +198,13 @@
     if (!on() || player.dead) return;
     hookDamage();
     var m = bossOf(); if (!m) return;
-    var t = S().ticks || 0, age = t - (m._fbBorn || t), pct = m.curHp / (m.hp || 1);
+    var t = S().ticks || 0, age = t - (m._fbBorn || t);
+    var gt = gateOf(m);
+    if (gt) { var fh = Math.max(1, Math.ceil(m.hp * gt[0])); if (m.curHp < fh) { m.curHp = fh; seal(m, gt); } }
+    var sealed = gt && m._fbSealGate === gt[1] && m.curHp <= Math.max(1, Math.ceil(m.hp * gt[0]));
+    if (sealed && every(age, 5)) { if (pctAll(FB.sealTide, '沉沒的歌聲')) return; }
+    if (every(age, FB.gazeEvery)) { S()._afkGazeUntil = t + FB.gazeSec * SEC; log(tag('席琳的凝視', '#e879f9') + '死亡女神的目光掃過神殿，所有人的手都沉重起來（造成的傷害 −' + Math.round(FB.gaze * 100) + '%，' + FB.gazeSec + ' 秒）。'); }
+    var pct = m.curHp / (m.hp || 1);
     var ph = pct > 0.75 ? 1 : pct > 0.5 ? 2 : pct > 0.25 ? 3 : 4;
     if (ph > (m._fbPhase || 1)) {
       m._fbPhase = ph; m._fbPhaseAt = age;
@@ -189,10 +221,12 @@
       if (every(pa, 60)) { var k2 = summon(2); if (k2) log(tag('亡者之潮', '#a78bfa') + BOSS_NAME + '自海底喚起 ' + k2 + ' 名' + ADD_NAME + '。（每名存活的使徒讓席琳受到的傷害 −15%）'); }
       if (every(pa, 25)) { var s2 = pick(); if (s2) { log(tag('死亡的權柄', '#a78bfa') + BOSS_NAME + '指向' + nameOf(s2) + '，奪走其現有生命的 ' + Math.round(FB.scepter * 100) + '%。'); if (hurt(s2, (s2 === player ? player.hp : s2.curHp) * FB.scepter, '死亡的權柄')) return; } }
     } else if (ph === 3) {
+      if (every(pa, FB.waveEvery)) { m._fbWaveUntil = age + FB.waveSec * SEC; log(tag('死亡之潮', '#f43f5e') + '黑色的潮水湧進神殿，全隊每秒失去最大 HP ' + Math.round(FB.wavePct * 100) + '%（' + FB.waveSec + ' 秒）。'); }
       if (every(pa, 15)) { var s3 = pick(); if (s3) { log(tag('死亡宣告', '#f43f5e') + nameOf(s3) + ' 的名字被刻上冥河的石碑，受到最大 HP ' + Math.round(FB.mark * 100) + '% 的傷害。'); if (hurt(s3, (s3.mhp || 1) * FB.mark, '死亡宣告')) return; } }
       if (every(pa, 40)) { log(tag('冥河氾濫', '#f43f5e') + '冥河的水灌進神殿，全隊失去最大 HP ' + Math.round(FB.flood * 100) + '%。'); if (pctAll(FB.flood, '冥河氾濫')) return; }
       if (every(pa, 60)) summon(2);
     } else {
+      if (every(pa, FB.waveEvery)) { m._fbWaveUntil = age + FB.waveSec * SEC; log(tag('死亡之潮', '#f43f5e') + '黑色的潮水湧進神殿，全隊每秒失去最大 HP ' + Math.round(FB.wavePct * 100) + '%（' + FB.waveSec + ' 秒）。'); }
       if (every(pa, 10)) {
         var n4 = addsAlive();
         log(tag('席琳的擁抱', '#e879f9') + '死亡女神張開雙臂，全隊失去最大 HP ' + Math.round(FB.embrace * 100) + '%' + (n4 ? '；' + n4 + ' 名使徒的魂火流回她的身體' : '') + '。');
@@ -201,6 +235,7 @@
       }
       if (every(pa, 45)) summon(2);
     }
+    if ((m._fbWaveUntil || 0) > age && age % SEC === 0) { if (pctAll(FB.wavePct, '死亡之潮')) return; }
     if (age >= FB.limit * SEC) {
       sys('<span class="text-red-500 font-bold">' + tag('萬物歸於死', '#ef4444') + '席琳闔上雙眼，死亡之海吞沒了神殿裡的一切生命。</span>');
       (player.allies || []).forEach(function (x) { if (x && !x._downed) { x.curHp = 0; x._downed = true; x._reviveCd = 150; } });
@@ -264,6 +299,17 @@
     try { if (!player.dead) { setMapSelectors(typeof getLastTown === 'function' ? getLastTown() : 'town_aden'); changeMap(true); } } catch (e) {}
     try { calcStats(); updateUI(); saveGame(); } catch (e) {}
   };
+  // 沉眠之海：時間還沒到，任何路徑打到 0 都不算倒下（停在門檻）
+  if (typeof window.killMob === 'function') {
+    var oKM = window.killMob;
+    window.killMob = function (idx) {
+      try {
+        var m = mapState.mobs && mapState.mobs[idx];
+        if (m && m._afkFinal && on()) { var g = gateOf(m); if (g) { m.curHp = Math.max(1, Math.ceil(m.hp * g[0])); m._dead = false; seal(m, g); return; } }
+      } catch (e) {}
+      return oKM.apply(this, arguments);
+    };
+  }
   var oBossKill = window.antharasOnBossKill;
   if (typeof oBossKill === 'function') window.antharasOnBossKill = function (bossName) {
     if (S()._afkFinal && bossName === BOSS_NAME) { finish('win'); return; }

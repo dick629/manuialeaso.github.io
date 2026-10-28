@@ -2317,7 +2317,7 @@ function getPhysicalDmg(diceStr, target, wpn, arrowData, forceHeavy, forceHit, f
     let rawHitValue = player.lv + hitBonus - target.lv + mobEffAC(target);
     let hitValue = stretchHitValue(rawHitValue);
     hitValue = Math.max(hitValue, physicalHitSoftFloor(hitBonus, target));
-    if (player.buffs && player.buffs.sk_warrior_outlaw > 0) hitValue = Math.max(hitValue, 10);   // ⚔️ 亡命之徒：一般攻擊最低命中率 50%
+    if (player.buffs && player.buffs.sk_warrior_outlaw > 0) hitValue = Math.max(hitValue, 10); hitValue = Math.min(hitValue, window.__afkHitHv || 20); /* 🔌 加掛版補丁:命中上限 */   // ⚔️ 亡命之徒：一般攻擊最低命中率 50%
 
     // 🔧 重擊特效武器（雙手鈍器）：骰 19 一律觸發重擊（粉碎），不論本應為擦傷/命中/未命中 → 重擊率 5%→10%
     // ⚔️ v3.5.97 改用「本次揮擊的武器」而非硬編主手：迅猛雙斧副手揮擊會傳入 wpnInst=player.eq.offwpn，
@@ -2349,7 +2349,7 @@ function getPhysicalDmg(diceStr, target, wpn, arrowData, forceHeavy, forceHit, f
     if (window.AFK_RELIC_WEAPON_BRIDGE) heavy=heavy||window.AFK_RELIC_WEAPON_BRIDGE.grazeHeavy(graze,wpn);
     if (graze) isCrit = false; /* relic-weapon-bridge:graze-heavy */   // 擦傷不會爆擊
     if (target && !probe) { if (isCrit) target._vfxBig = 'crit'; else if (heavy) target._vfxBig = 'heavy'; }   // ✨ VFX：玩家物理命中→爆擊大紅／重擊大金（唯一樞紐 getPhysicalDmg·🔎 探測不標特效——波及目標實吃主目標平砍傷害·標爆擊會名實不符）
-    let critMult = isCrit ? (1 + critDmg / 100) : 1;  // 爆擊係數 = 1 + 爆擊傷害%
+    let critMult = isCrit ? (1 + critDmg / 100) : 1; if (isCrit && !probe && target) player._afkCrit = { t: target, at: state.ticks, r: !!isRanged }; /* 🔌 加掛版補丁:命中上限 */  // 爆擊係數 = 1 + 爆擊傷害%
 
     // 武器傷害（重擊必定取最大值；🔧 烈焰之魂：持續內近距離一般攻擊武器擲骰必定最大值）
     let _flameSoulMax = (!isRanged && player.buffs && player.buffs.sk_elf_flamesoul > 0);

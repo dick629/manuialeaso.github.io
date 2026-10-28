@@ -993,7 +993,7 @@ function allyAttackOnce(ally, _arrowDelay) {   // 🏹 v3.2.14 _arrowDelay(選�
         }
         let hv = stretchHitValue((ally.lv||1) + hitB - t.lv + mobEffAC(t, ally));   // 🩹 v3.1.76 稽核高#1：改走與玩家/怪打玩家/怪打傭兵相同的軟地板曲線（原線性 clamp 對高AC怪命中系統性偏低·v3.1.40 怪物AC以此曲線為錨）
         hv = Math.max(hv, physicalHitSoftFloor(hitB, t));
-        if (ally.buffs && ally.buffs.sk_warrior_outlaw > 0) hv = Math.max(hv, 10);   // ⚔️ v3.1.77 亡命之徒（傭兵）：一般攻擊最低命中率 50%（鏡像玩家 js/03:830·原傭兵維持此 buff 白扣 MP）
+        if (ally.buffs && ally.buffs.sk_warrior_outlaw > 0) hv = Math.max(hv, 10); hv = Math.min(hv, window.__afkHitHv || 20); /* 🔌 加掛版補丁:命中上限 */   // ⚔️ v3.1.77 亡命之徒（傭兵）：一般攻擊最低命中率 50%（鏡像玩家 js/03:830·原傭兵維持此 buff 白扣 MP）
         let _cwA = (ally.eq && ally.eq.wpn) ? DB.items[ally.eq.wpn.id] : null;   // 🥊 v2.6.20 重擊特效武器(粉碎·雙手鈍器)
         let _isCrushA = !!(_cwA && _cwA.eff === 'crush');
         let r = roll(1,20); if (window.AFK_RELIC_WEAPON_BRIDGE) r=window.AFK_RELIC_WEAPON_BRIDGE.allyHitRoll(r,wpn,_rWeaponFlags); /* relic-weapon-bridge:ally-heavy-rolls */
@@ -1009,7 +1009,7 @@ function allyAttackOnce(ally, _arrowDelay) {   // 🏹 v3.2.14 _arrowDelay(選�
         if (!heavy && !_grazeA && (!ally.classicMode || (typeof window.__afkClassicDE === 'function' && window.__afkClassicDE())) && ally.eq && ally.eq.wpn && getWeaponTags(ally.eq.wpn.id).includes('鋼爪') && Math.random() < 0.05) heavy = true;   // ⚔️ 鋼爪內建特性（傭兵·鏡像玩家 getPhysicalDmg）：一般攻擊命中(非擦傷)額外 5% 重擊·經典停用   /* 🔌 加掛版補丁:經典三部曲黑妖武器 */
         let isCrit = !_grazeA && (_evCrit || (Math.random()*100 < critR));   // 🆕 v2.6.13 #5b 迴避精通：迴避後下一擊必爆；🥊 v2.6.20 擦傷不爆
         if (isCrit && wpn && wpn.critFuryHaste) ally._fangFuryTicks = critFuryDurationTicks(wpn.critFuryHaste.sec);   // 🏺 v3.7.52 邪惡利牙（傭兵）：爆擊觸發攻速+30%（攻擊間隔消費·逐 tick 遞減）
-        let critMult = isCrit ? (1 + critD/100) : 1;
+        let critMult = isCrit ? (1 + critD/100) : 1; if (isCrit && t) ally._afkCrit = { t: t, at: state.ticks }; /* 🔌 加掛版補丁:命中上限 */
         let wpnRoll = (heavy || (!isRanged && ally.buffs && ally.buffs.sk_elf_flamesoul > 0)) ? dice : roll(1, dice); if (window.AFK_RELIC_WEAPON_BRIDGE) wpnRoll=window.AFK_RELIC_WEAPON_BRIDGE.weaponRoll(wpnRoll,heavy,wpn); /* relic-weapon-bridge:ally-weapon-roll-allyAttackOnce */   // 🔥 v3.1.77 烈焰之魂（傭兵）：近距離一般攻擊武器擲骰必定最大值（鏡像玩家 js/03:861·原傭兵維持此 buff 白扣 MP）
         let _hsT = mobHardSkin(t);   // 🔧 穿透精通用：被硬皮扣減前的量
         let _hsSub = (wpn && wpn.ignHardSkin) ? 0 : _hsT;   // 🗡️ 貫穿（暗黑十字弓）：傭兵攻擊無視硬皮額外減傷（_hsT 仍保留供穿透精通加回）
@@ -1566,7 +1566,7 @@ function allyStrikeRoll(ally, t, opts) {
     else {
         let hv = stretchHitValue((ally.lv||1) + hitB - t.lv + mobEffAC(t, ally));   // 🩹 v3.1.76 稽核高#1：改走與玩家/怪打玩家/怪打傭兵相同的軟地板曲線（原線性 clamp 對高AC怪命中系統性偏低·v3.1.40 怪物AC以此曲線為錨）
         hv = Math.max(hv, physicalHitSoftFloor(hitB, t));
-        if (ally.buffs && ally.buffs.sk_warrior_outlaw > 0) hv = Math.max(hv, 10);   // ⚔️ v3.1.77 亡命之徒（傭兵）：一般攻擊最低命中率 50%（鏡像玩家 js/03:830·原傭兵維持此 buff 白扣 MP）
+        if (ally.buffs && ally.buffs.sk_warrior_outlaw > 0) hv = Math.max(hv, 10); hv = Math.min(hv, window.__afkHitHv || 20); /* 🔌 加掛版補丁:命中上限 */   // ⚔️ v3.1.77 亡命之徒（傭兵）：一般攻擊最低命中率 50%（鏡像玩家 js/03:830·原傭兵維持此 buff 白扣 MP）
         let _isCrushS = !!(wpn && wpn.eff === 'crush');   // 🥊 v2.6.20 重擊特效武器(粉碎·雙手鈍器)
         let r = roll(1, 20);
         let _norm = ((r === 20) || (r !== 1 && hv >= r) || (r === 1 && ally.buffs && ally.buffs.sk_elf_preciseshot > 0));   // 🏹 精準射擊（妖精傭兵·存檔時持有此buff）：擲骰1由必定未命中→必定命中
@@ -1577,7 +1577,7 @@ function allyStrikeRoll(ally, t, opts) {
     }
     if (!hit) return { hit: false, dmg: 0, heavy: false, crit: false };
     let isCrit = !graze && (opts.forceCrit || (Math.random()*100 < critR));   // 🏅 反擊精通（傭兵）：反擊/居合必定爆擊；🥊 v2.6.20 擦傷不爆
-    let critMult = isCrit ? (1 + critD/100) : 1;
+    let critMult = isCrit ? (1 + critD/100) : 1; if (isCrit && t) ally._afkCrit = { t: t, at: state.ticks }; /* 🔌 加掛版補丁:命中上限 */
     let wpnRoll = (heavy || (!isRanged && ally.buffs && ally.buffs.sk_elf_flamesoul > 0)) ? dice : roll(1, dice); if (window.AFK_RELIC_WEAPON_BRIDGE) wpnRoll=window.AFK_RELIC_WEAPON_BRIDGE.weaponRoll(wpnRoll,heavy,wpn); /* relic-weapon-bridge:ally-weapon-roll-allyStrikeRoll */   // 🔥 v3.1.77 烈焰之魂（傭兵·連擊/反擊/居合/副手共用·鏡像玩家 js/03:861）
     let dmg = Math.max(1, Math.floor((wpnRoll + dmgB) * critMult) + (d.extraDmg||0) - (window.AFK_RELIC_WEAPON_BRIDGE ? window.AFK_RELIC_WEAPON_BRIDGE.allyFlatReduction(ally,t,wpn,(t.dr||0)+(wpn&&wpn.ignHardSkin?0:mobHardSkin(t))) : (t.dr||0)+mobHardSkin(t)) /* relic-weapon-bridge:ally-extra-flat */);   // 🔧 硬皮：額外物理減傷
     { let _unb = allyUnbonusBonus(ally, t); if (_unb) dmg += _unb; }   // 🔧 對不死/狼人加成 +1D20（與玩家一致；連擊/魔擊共用此計算）

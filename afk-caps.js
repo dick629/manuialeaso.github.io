@@ -16,9 +16,13 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   var CAP = 80;
-  if (T && T.register) T.register({ id: 'statcap', name: '爆擊率／迴避率上限 80%', desc: '近距離、遠距離、魔法爆擊率與迴避率最高 80%（玩家、傭兵、寵物）；關掉沒有上限', group: '遊戲玩法' });
+  if (T && T.register) T.register({ id: 'statcap', name: '能力上限', desc: '爆擊率、迴避率、命中率最高 80%（敵人永遠有 20% 閃開）；爆擊傷害最多 +500%；HP／MP 消耗最多減半；百分比減傷合計最多 75%（之後才扣最終減傷）；爆擊率堆滿 80% 時，物理爆擊再濺射 50% 傷害給其他敵人', group: '遊戲玩法' });
   var capOn = !T || T.enabled('statcap');
   W.__afkCritCap = capOn ? CAP : null; W.__afkEvadeCap = capOn ? CAP : null;
+  // 2026-10-29 玩家：命中率也最多 80%（判定值 15：2～15＋19 擦傷＋20 重擊＝16/20；核心補丁 66），頭目永遠有 20% 閃開；
+  //   爆擊傷害最多 +500%；HP／MP 消耗減免最多 50%；爆擊率堆到 80% 以上時，物理爆擊再把該擊傷害的 50% 濺射給其他敵人
+  var CRIT_DMG_CAP = 500, COST_FLOOR = 0.5, SPLASH = 0.5;
+  W.__afkHitHv = capOn ? 15 : null;
   if (T && T.register) T.register({ id: 'offhandstats', name: '副手武器能力計入', desc: '轉生後雙持的副手武器，固定加成（傷害、命中、爆擊率…）比照主手算進能力', group: '遊戲玩法' });
   var on = function () { return !T || T.enabled('offhandstats'); };
   var num = function (v) { return Number(v) || 0; };
@@ -37,7 +41,43 @@
   }
   function clamp(p) {
     var d = p && p.d; if (!d || !capOn) return;
+    p._rawCrit = { melee: num(d.meleeCrit), ranged: num(d.rangedCrit), magic: num(d.magicCrit) };
     ['meleeCrit', 'rangedCrit', 'magicCrit'].forEach(function (k) { if (num(d[k]) > CAP) d[k] = CAP; });
+    ['meleeCritDmg', 'rangedCritDmg', 'magicCritDmg'].forEach(function (k) { if (num(d[k]) > CRIT_DMG_CAP) d[k] = CRIT_DMG_CAP; });
+    if (typeof d.getMpCost === 'function' && !d.getMpCost._afkCap) {   // MP 消耗最少是原本的一半
+      var g = d.getMpCost; d.getMpCost = function (mp) { var c = g.apply(this, arguments); return (mp > 0) ? Math.max(Number(c) || 0, Math.ceil(mp * COST_FLOOR)) : c; }; d.getMpCost._afkCap = true;
+    }
+  }
+  // HP 消耗最少是原本的一半
+  if (capOn && typeof W.effHpCost === 'function') {
+    var oHp = W.effHpCost;
+    W.effHpCost = function (sk) { var c = oHp.apply(this, arguments); var base = (sk && sk.hpCost) || 0; return base > 0 ? Math.max(Number(c) || 0, Math.ceil(base * COST_FLOOR)) : c; };
+  }
+  // 爆擊溢出：爆擊率（加總前）已到 80% 以上 → 物理爆擊額外把該擊傷害的 50% 濺射給場上其他敵人
+  var splashing = false;
+  var splash = function (actor, target, v, opt) {
+    var cr = actor && actor._afkCrit; if (!cr || cr.t !== target) return;
+    actor._afkCrit = null;
+    var raw = actor._rawCrit || {}, kind = opt && opt.kind, rc = kind === 'ranged' ? raw.ranged : raw.melee;
+    if (!(rc >= CAP) || !(v > 0) || typeof mapState === 'undefined') return;
+    var amt = Math.floor(v * SPLASH); if (!(amt > 0)) return;
+    splashing = true;
+    try {
+      (mapState.mobs || []).forEach(function (m, i) {
+        if (!m || m === target || m._dead || !(m.curHp > 0)) return;
+        m.curHp -= amt;
+        if (m.curHp <= 0) { try { killMob(i); } catch (e) {} }
+      });
+    } finally { splashing = false; }
+  };
+  var C = W.AFK_CARD_COMBAT;
+  if (capOn && C && typeof C.damage === 'function') {
+    var oDmg = C.damage;
+    C.damage = function (actor, target, amount, opt) {
+      var v = oDmg.apply(this, arguments);
+      try { if (!splashing && actor && actor._afkCrit && opt && (opt.kind === 'melee' || opt.kind === 'ranged' || opt.kind === 'phys')) splash(actor, target, v, opt); } catch (e) {}
+      return v;
+    };
   }
   if (typeof W.recomputeStats === 'function') {
     var o = W.recomputeStats;

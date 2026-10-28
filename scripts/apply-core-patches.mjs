@@ -1259,6 +1259,32 @@ function patchSoulSlot() {
   changed++; console.log('[patch] 裝備視窗之魂格');
 }
 
+// 66. 命中率上限 80%（判定值最多 15：2～15＋19 擦傷＋20 重擊＝16/20）＋爆擊記錄給濺射用（玩家 2026-10-29）
+function patchHitCapCrit() {
+  const TAG = '/* 🔌 加掛版補丁:命中上限 */', HV = 'Math.min(window.__afkHitHv || 20, ';
+  const EDITS = [
+    ['js/03-combat-core.js', "if (player.buffs && player.buffs.sk_warrior_outlaw > 0) hitValue = Math.max(hitValue, 10);", "if (player.buffs && player.buffs.sk_warrior_outlaw > 0) hitValue = Math.max(hitValue, 10); hitValue = Math.min(hitValue, window.__afkHitHv || 20); " + TAG, 1],
+    ['js/06-status-allies.js', "if (ally.buffs && ally.buffs.sk_warrior_outlaw > 0) hv = Math.max(hv, 10);", "if (ally.buffs && ally.buffs.sk_warrior_outlaw > 0) hv = Math.max(hv, 10); hv = Math.min(hv, window.__afkHitHv || 20); " + TAG, 2],
+    ['js/22-pets.js', "let hv = stretchHitValue(rawHit);", "let hv = " + HV + "stretchHitValue(rawHit)); " + TAG, 1],
+    ['js/23-summons.js', "const hv = stretchHitValue(d.hit + _sgb.hit + (_ia ? _ia.eh : 0) - t.lv + mobEffAC(t));", "const hv = " + HV + "stretchHitValue(d.hit + _sgb.hit + (_ia ? _ia.eh : 0) - t.lv + mobEffAC(t))); " + TAG, 1],
+    ['js/07-skills-cast.js', "    return stretchHitValue(raw);", "    return " + HV + "stretchHitValue(raw)); " + TAG, 1],
+    ['js/31-castle-guards.js', "let hv = stretchHitValue(d.hit + (_ia ? (_ia.eh || 0) : 0) - t.lv + mobEffAC(t));", "let hv = " + HV + "stretchHitValue(d.hit + (_ia ? (_ia.eh || 0) : 0) - t.lv + mobEffAC(t))); " + TAG, 1],
+    ['js/03-combat-core.js', "let critMult = isCrit ? (1 + critDmg / 100) : 1;", "let critMult = isCrit ? (1 + critDmg / 100) : 1; if (isCrit && !probe && target) player._afkCrit = { t: target, at: state.ticks, r: !!isRanged }; " + TAG, 1],
+    ['js/06-status-allies.js', "let critMult = isCrit ? (1 + critD/100) : 1;", "let critMult = isCrit ? (1 + critD/100) : 1; if (isCrit && t) ally._afkCrit = { t: t, at: state.ticks }; " + TAG, 2]
+  ];
+  const files = {};
+  for (const [f] of EDITS) if (!files[f]) files[f] = readFileSync(f, 'utf8');
+  let done = 0;
+  for (const [f, a, b, n] of EDITS) {
+    if (files[f].includes(b)) { done++; continue; }
+    if (files[f].split(a).length - 1 !== n) throw new Error(`[${f}] 命中上限錨點應出現 ${n} 次：${a}`);
+    files[f] = files[f].split(a).join(b);
+  }
+  if (done === EDITS.length) { already++; return; }
+  if (!CHECK) for (const f in files) writeFileSync(f, files[f]);
+  changed++; console.log('[patch] 命中率上限＋爆擊記錄');
+}
+
 // 63. 負面效果抵抗改成外掛開關（玩家 2026-10-28）：補丁 48 寫進核心的判定，在 window.__afkDebuffAllOff 為真時一律放行
 function patchDebuffResistToggle() {
   const FILES = ['js/04-combat-attack.js', 'js/06-status-allies.js', 'js/07-skills-cast.js', 'js/22-pets.js', 'js/23-summons.js'];
@@ -1300,6 +1326,7 @@ try {
   patchDebuffResistToggle();   // 要在補丁 48 之後
   patchWhMax();
   patchSoulSlot();
+  patchHitCapCrit();
 } catch (e) {
   console.error('❌ apply-core-patches 失敗：' + e.message);
   process.exit(1);

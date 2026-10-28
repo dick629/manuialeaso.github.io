@@ -68,7 +68,7 @@
     rec2(p).solo = { result: 'lose', pending: true, at: Date.now() };
     FB.startMode('solo', '<span class="font-bold" style="color:#a5f3fc;">你一個人沉入死亡之海。席琳看著你，沒有出手。</span><span class="afk-lore">「次元的彼端只有你自己。讓我看看，你一個人能走多遠。」</span><span class="text-amber-200">單人試煉：席琳方傷害 −100%、席琳的 AC／減傷／魔防／抗性 −50%；20 分鐘內打倒她（只有一次）。</span>');
     };
-    var msg = '⚠ 單人試煉：死亡女神 席琳\n\n只有一次——進場就算用掉，回村或中途重新整理都算失敗。\n席琳打不痛你（傷害 −100%），她的 AC、減傷、魔防、四屬性抗性 −50%，HP 一樣 3.5 億、20 分鐘時限。\n打贏：可以再當別人的傭兵，也可以招募傭兵。\n打輸：永遠不能當傭兵，但可以開始招募別人（次元突破者以外的角色）。\n\n確定要進入嗎？';
+    var msg = '⚠ 單人試煉：死亡女神 席琳\n\n只有一次——進場就算用掉，回村或中途重新整理都算失敗。\n席琳打不痛你（傷害 −100%），她的 AC、減傷、魔防、四屬性抗性 −50%，HP 一樣 4.5 億、20 分鐘時限。\n打贏：可以再當別人的傭兵，也可以招募傭兵。\n打輸：永遠不能當傭兵，但可以開始招募別人（次元突破者以外的角色）。\n\n確定要進入嗎？';
     if (window.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '單人試煉', message: msg, okText: '一個人沉入死亡之海', cancelText: '再準備一下', danger: true, onOk: go });
     else if (confirm(msg)) go();
   };

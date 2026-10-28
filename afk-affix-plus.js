@@ -242,8 +242,9 @@
   // 核心補丁 46：扣血前的受傷掛點（技藝減傷、最終減傷、龍的傷痕、席琳模式都在這裡一次算完；小數連乘、最後取整）
   W.__afkTaken = function (ent, dmg, mob, kind) {
     if (!(dmg > 0)) return dmg;
-    var v = dmg * multFor(ent, mob, kind);
-    if (typeof W.__afkArtsTaken === 'function') v = W.__afkArtsTaken(ent, v, mob, kind);
+    var m = multFor(ent, mob, kind), v;
+    if (typeof W.__afkArtsTaken === 'function') v = W.__afkArtsTaken(ent, dmg, mob, kind, m);   // 百分比減傷合計最多 75%（在技藝那邊一起夾）
+    else v = dmg * Math.max(0.25, m);
     return Math.max(0, Math.floor(v));
   };
   var wrapTaken = function (name, kind) {
@@ -392,6 +393,8 @@
   };
   var plain = function (it) { var d = DB.items[it.id]; return ((it.en > 0) ? '+' + it.en + ' ' : '') + (d ? d.n : it.id); };
   var done = function (msg) { lastMsg = msg; sys(msg); try { calcStats(); } catch (e) {} try { if (typeof renderTabs === 'function') renderTabs(true); saveGame(); updateUI(); } catch (e) {} };
+  // 給其他外掛加項目用（afk-sherine-dream 的蝕刻）：W.__afkAxExtra 回傳一列服務；按鈕 data-ax＝'ext:<名稱>:<參數>'，由 W.__afkAxAct[名稱](選取, 參數, AXH, 讀欄位) 處理
+  var AXH = { resolveRef: function (r) { return resolveRef(r); }, done: function (m) { return done(m); }, icoTag: function (u, t, sm) { return icoTag(u, t, sm); }, reqTxt: function (h, n, w) { return reqTxt(h, n, w); }, esc: function (v) { return esc(v); } };
 
   // ── 操作 ──
   var ACT = {
@@ -574,6 +577,7 @@
     if (it.dscar) L.push('<span style="color:' + (DRAGON[it.dscar] ? DRAGON[it.dscar].c : '#e2e8f0') + ';">龍的傷痕（' + (DRAGON[it.dscar] ? DRAGON[it.dscar].n : '四龍') + (stars(it.dscarStar) ? '・' + stars(it.dscarStar) + ' 星' : '') + '）：受到的傷害 −' + (50 + COST.starPct * stars(it.dscarStar)) + '%</span>');
     if (it.tree && it.tree.length) L.push('<span style="color:#86efac;">神樹者的讚禮：' + it.tree.map(function (r) { return RES[r] + '抗 +10'; }).join('、') + '</span>');
     if (it.dres) L.push('<span style="color:#c4b5fd;">闇龍的抵抗者：無屬性抗性 +10</span>');
+    (W.__afkAxLines || []).forEach(function (f) { try { var r = f(it, d); if (r) L.push(r); } catch (e) {} });
     return L;
   };
   // 每一項賦予：圖示、名稱、效果、材料（持有／需要）、這件能不能做
@@ -636,7 +640,7 @@
         req: reqTxt(fc, COST.will, '不屈的命運（任何職業）'), why: !willOk(p) ? (sealed(p) ? '封印輪迴光環封住了你的意志' : '需要已經轉生，或能進入席琳夢域鏡（Lv80）') : !x ? noSel : !isW ? '只能賦予武器' : '',
         pick: '<select id="afk-ax-will-kind" aria-label="選擇意志">' + Object.keys(WILL).map(function (k) { return '<option value="' + k + '"' + (k === (it && it.will) || (!(it && it.will) && k === p.cls) ? ' selected' : '') + '>' + WILL[k].s + '</option>'; }).join('') + '</select>',
         btns: [['will', '賦予意志', fc >= COST.will]] }
-    ];
+    ].concat((W.__afkAxExtra || []).map(function (f) { try { return f(p, x, AXH); } catch (e) { return null; } }).filter(Boolean));
   };
   var NEED_ITEM = { mark: 1, markStar: 1, scar: 1, scarStar: 1, tree: 1, dres: 1, will: 1, blessApply: 1 };
   var renderPanel = function (box) {
@@ -698,6 +702,7 @@
       else if (a === 'will') err = ACT.will(before, v('afk-ax-will-kind'));
       else if (a.indexOf('blessEx:') === 0) { var bp = a.split(':'); err = ACT.blessEx(bp[1], Number(bp[2])); }
       else if (a.indexOf('bless:') === 0) err = ACT.bless(before, Number(a.split(':')[1]));
+      else if (a.indexOf('ext:') === 0) { var ep = a.split(':'), fn = (W.__afkAxAct || {})[ep[1]]; err = fn ? fn(before, ep.slice(2).join(':'), AXH, v) : '找不到這個項目。'; }
       ui.err = err || ''; ui.msg = err ? '' : (lastMsg || '');
       // 背包裡一疊拿出一件來賦予時 uid 會變：改成指向剛處理的那件
       if (!err && lastRef) ui.sel = lastRef;

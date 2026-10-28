@@ -77,7 +77,7 @@ try{
   assert.deepEqual(r.drop,[3,3,1,1],'打怪掉落升階、非打怪不升階');
   assert.ok(r.sig,'階段不同不能疊在一起');
   assert.deepEqual(r.npc,[true,'轉生技藝']);
-  assert.equal(r.rows,12);
+  assert.equal(r.rows,13);   // 2026-10-29 多了「蝕刻」
   assert.ok(r.accBless);
   assert.deepEqual(r.scrolls,[100,1]);
   assert.deepEqual(r.blessed,[true,2,0]);
