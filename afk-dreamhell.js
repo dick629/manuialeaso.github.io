@@ -200,7 +200,10 @@
       for (var i = 0; i < ms.length; i++) {
         var m = ms[i];
         if (!m || !m.boss || m._dead || !(m.curHp > 0) || m._afkEntryBlast || m.race === '血盟' || m.race === '建築') continue;
-        m._afkEntryBlast = true; any = true; bossEntryBlast(m, ring ? 0.15 : 0.10);
+        m._afkEntryBlast = true; any = true;
+        // 時空裂痕裡頭目一半機率出場、很快就一隻接一隻：登場衝擊最多每 10 秒一次（2026-10-29 晚，裂痕有自己的暴走與崩塌）
+        if (state.riftRun) { if ((state.ticks || 0) < (state._dhBlastCd || 0)) continue; state._dhBlastCd = (state.ticks || 0) + 100; }
+        bossEntryBlast(m, ring ? 0.15 : 0.10);
       }
       if (any && ring) mapState._afkRingBoss = false;   // 戒指引來的那一波（可能 3 隻同時）都算 15%
     } catch (e) {}

@@ -30,7 +30,8 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
   var TUNE = W.__afkRift2Tune = W.__afkRift2Tune || {
-    hpFrom: 20, hpRate: { sherine: 0.0525, mad: 0.0525, dream: 0.0525 },   // 20 分鐘起怪物 HP ×e^(rate×(分鐘−20))
+    hpFrom: 20, hpRate: { sherine: 0.067, mad: 0.0525, dream: 0.0525 },   // 20 分鐘起怪物 HP ×e^(rate×(分鐘−20))
+    hpBase: { sherine: 1, mad: 1, dream: 0.15 },   // 各模式怪物 HP 的基本倍率（夢域鏡本身已經 ×50，用這個把三模式拉到同一條難度線）
     enrageSec: 60, enragePct: 0.05, enrageStep: 0.05, enrageEvery: 10,   // 頭目 60 秒沒倒：每秒全隊最大 HP 5%，每 10 秒再 +5%
     wallFrom: 60, wallBase: 0.004, wallStep: 0.0025,   // 60 分鐘起全場每秒扣 0.4% 最大 HP，每分鐘再 +0.25%
     clearMin: 80
@@ -78,7 +79,7 @@
   };
 
   // ── 難度 ──
-  var hpMult = function (mode, m) { var rate = (TUNE.hpRate || {})[mode] || 0; return m > TUNE.hpFrom ? Math.exp(rate * (m - TUNE.hpFrom)) : 1; };
+  var hpMult = function (mode, m) { var rate = (TUNE.hpRate || {})[mode] || 0, base = (TUNE.hpBase || {})[mode] || 1; return base * (m > TUNE.hpFrom ? Math.exp(rate * (m - TUNE.hpFrom)) : 1); };
   var members = function () { var out = []; if (!player.dead) out.push(player); (player.allies || []).forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) out.push(x); }); return out; };
   var hurtAll = function (pct, why) {
     var dead = false;
@@ -108,7 +109,7 @@
     (mapState.mobs || []).forEach(function (x) {
       if (!x || x._r2 || x._dead) return;
       x._r2 = { born: t };
-      if (k > 1) { x.hp = Math.max(1, Math.floor(x.hp * k)); x.curHp = Math.max(1, Math.floor((x.curHp || x.hp) * k)); if (x.curHp > x.hp) x.curHp = x.hp; }
+      if (k !== 1) { x.hp = Math.max(1, Math.floor(x.hp * k)); x.curHp = Math.max(1, Math.floor((x.curHp || x.hp) * k)); if (x.curHp > x.hp) x.curHp = x.hp; }
     });
     if (t % 10) return;
     // 頭目暴走
