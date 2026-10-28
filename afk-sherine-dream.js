@@ -236,12 +236,13 @@
     };
   }
 
-  // ── 蝕刻（玩家 2026-10-29）：龍紋師艾格尼絲把一整套席琳遺骸刻進武器 ──
-  //   材料：同一組的 8 個部位（之爪、之眼、之血、之肉、之心、之骨、之牙、之鱗）各 8 件，共 64 件（背包裡、沒上鎖的）；
-  //         用夢域遺骸刻＝夢域蝕刻。之魂不算材料。
-  //   效果：裝在主手時，那一組直接算滿 5 件（夢域蝕刻另外算 5 件夢域）；同時開出 3 個符文孔（之後的符文石組合系統用）。
-  //   再刻一次會換成新的那一組，符文孔保留。
-  var ETCH_PER = 8, SOCKETS = 3;
+  // ── 星蝕·解（玩家 2026-10-29 晚；原名「蝕刻」，跟無屬性印記的「蝕刻」撞名所以改名）──
+  //   武器的三個符文孔，在說話之島的符文師佐爾頓開（介面在 afk-runes.js）：
+  //     第一孔「墜蝕·解」：消耗同一組原版席琳遺骸 8 套（8 個部位各 8 件）→ 刻上那一組，主手時該組算滿 5 件
+  //     第二孔「刻解·骸」：要先開第一孔；消耗同一組夢域遺骸 8 套 → 刻上那一組夢域，主手時該組算滿 5 件且 2／3／5 段都是夢域效果
+  //     第三孔「瘴骸·破」：鎖定中
+  //   資料：it.etch＝第一孔的組名、it.etchD＝第二孔的組名＋「夢」、it.sockets＝已開的孔（陣列長度＝開了幾個，內容留給符文石）
+  var ETCH_PER = 8, SOCKET_NAMES = ['墜蝕·解', '刻解·骸', '瘴骸·破'], SOCKET_MAX_OPEN = 2;
   var PARTS = ['rem_claw', 'rem_eye', 'rem_blood', 'rem_flesh', 'rem_heart', 'rem_bone', 'rem_fang', 'rem_scale'];
   var invCount = function (p, id, seteff) { return (p.inv || []).filter(function (it) { return it && it.id === id && it.seteff === seteff && !it.lock; }).reduce(function (n, it) { return n + (it.cnt || 1); }, 0); };
   var etchReady = function (p, seteff) { return Math.min.apply(Math, PARTS.map(function (id) { return invCount(p, id, seteff); })); };
@@ -252,55 +253,51 @@
     });
   };
   var etchName = function (e) { if (!e) return ''; var g = String(e).slice(0, 2); return e.length > 2 ? (DN[g] || g) + '（夢域）' : g; };
-  var mainEtch = function (p) { var w = p && p.eq && p.eq.wpn; return w && w.etch ? w.etch : null; };
-  // 計件：蝕刻的那一組算滿 5 件
+  // 舊資料（蝕刻時代：etch 可能是夢域、sockets 一次給 3 個）→ 新格式
+  var migrate = function (it) {
+    if (!it || !it.etch || it._starV) return it;
+    it._starV = 1;
+    if (String(it.etch).length > 2) { it.etchD = it.etch; it.etch = String(it.etch).slice(0, 2); }
+    var n = it.etchD ? 2 : 1, old = Array.isArray(it.sockets) ? it.sockets : [];
+    it.sockets = old.slice(0, n); while (it.sockets.length < n) it.sockets.push(null);
+    return it;
+  };
+  var mainW = function (p) { var w = p && p.eq && p.eq.wpn; return w ? migrate(w) : null; };
+  var mainEtch = function (p) { var w = mainW(p); return w && w.etch ? w.etch : null; };
+  // 計件：刻上的組算滿 5 件
   if (W.AFK_RELIC_GM && typeof W.AFK_RELIC_GM.sherine === 'function') {
     var oSh2 = W.AFK_RELIC_GM.sherine;
-    W.AFK_RELIC_GM.sherine = function (p, c) { var r = oSh2.apply(this, arguments); try { var e = mainEtch(p); if (e) { var g = e.slice(0, 2); c[g] = Math.max(c[g] || 0, 5); } } catch (er) {} return r; };
+    W.AFK_RELIC_GM.sherine = function (p, c) {
+      var r = oSh2.apply(this, arguments);
+      try { var w = mainW(p); if (w) [w.etch, w.etchD].forEach(function (e) { if (!e) return; var g = String(e).slice(0, 2); c[g] = Math.max(c[g] || 0, 5); }); } catch (er) {}
+      return r;
+    };
   }
   var oTiers = dreamTiers;
   dreamTiers = function (p) {
     var out = oTiers(p);
-    try { var e = mainEtch(p); if (e && e.length > 2) out[e.slice(0, 2)] = [2, 3, 5]; } catch (er) {}
+    try { var w = mainW(p); if (w && w.etchD) out[String(w.etchD).slice(0, 2)] = [2, 3, 5]; } catch (er) {}
     return out;
   };
-  // 物品簽章帶上蝕刻（不會跟沒蝕刻的同款武器疊在一起）
-  if (typeof W.itemSig === 'function') { var oSig = W.itemSig; W.itemSig = function (it) { var s0 = oSig.apply(this, arguments); return (it && it.etch) ? s0 + '|ET' + it.etch : s0; }; }
-  // 說明
+  // 物品簽章帶上星蝕（不會跟一般的同款武器疊在一起）
+  if (typeof W.itemSig === 'function') { var oSig = W.itemSig; W.itemSig = function (it) { var s0 = oSig.apply(this, arguments); return (it && (it.etch || it.etchD)) ? s0 + '|ET' + (it.etch || '') + '/' + (it.etchD || '') + '/' + ((it.sockets || []).length) : s0; }; }
+  var starText = function (it) {
+    migrate(it);
+    var parts = [];
+    if (it.etch) parts.push('「' + SOCKET_NAMES[0] + '」' + esc(etchName(it.etch)));
+    if (it.etchD) parts.push('「' + SOCKET_NAMES[1] + '」' + esc(etchName(it.etchD)));
+    return parts.join('、');
+  };
   if (typeof W.buildItemDescHTML === 'function') {
     var oDesc2 = W.buildItemDescHTML;
     W.buildItemDescHTML = function (it) {
       var h = oDesc2.apply(this, arguments);
-      try { if (it && it.etch) h = '<span class="' + (it.etch.length > 2 ? 'c-sherine-dream' : 'c-sherine') + ' font-bold">✠ 蝕刻：' + esc(etchName(it.etch)) + '</span><br><span class="text-slate-300 text-sm">裝在主手時，' + esc(etchName(it.etch)) + '套裝直接算滿 5 件；符文孔 ' + (it.sockets ? it.sockets.length : SOCKETS) + ' 個（符文石系統開放後可鑲嵌）。</span><br>' + h; } catch (e) {}
+      try { if (it && (it.etch || it.etchD)) h = '<span class="' + (it.etchD ? 'c-sherine-dream' : 'c-sherine') + ' font-bold">✠ 星蝕·解：' + starText(it) + '</span><br><span class="text-slate-300 text-sm">裝在主手時，刻上的套裝直接算滿 5 件' + (it.etchD ? '（夢域的那一組 2／3／5 段都是夢域效果）' : '') + '；符文孔 ' + (it.sockets || []).length + '／3（第三孔「' + SOCKET_NAMES[2] + '」鎖定中）。</span><br>' + h; } catch (e) {}
       return h;
     };
   }
-  (W.__afkAxLines = W.__afkAxLines || []).push(function (it) { return it && it.etch ? '<span class="' + (it.etch.length > 2 ? 'c-sherine-dream' : 'c-sherine') + '">蝕刻・' + esc(etchName(it.etch)) + '：主手時該套裝算滿 5 件；符文孔 ' + (it.sockets ? it.sockets.length : SOCKETS) + ' 個</span>' : null; });
-  (W.__afkAxExtra = W.__afkAxExtra || []).push(function (p, x, H) {
-    var d = x && x.d, it = x && x.it, isW = !!(d && d.type === 'wpn' && !d.isArrow);
-    var opts = [];
-    SHERINE_EFFECTS.forEach(function (g) { [g, g + '夢'].forEach(function (se) { var n = etchReady(p, se); opts.push([se, n]); }); });
-    var ok = opts.filter(function (o) { return o[1] >= ETCH_PER; });
-    return { key: 'etch', ico: H.icoTag(srcIcon), name: '蝕刻（武器）', color: '#fb7185',
-      desc: '把一整套席琳遺骸刻進武器：同一組的 8 個部位各 ' + ETCH_PER + ' 件（共 ' + (ETCH_PER * 8) + ' 件，背包裡沒上鎖的），用夢域遺骸就是夢域蝕刻。裝在主手時，那一組套裝直接算滿 5 件；同時開出 ' + SOCKETS + ' 個符文孔（之後的符文石組合系統用）。再刻一次會換成新的一組，符文孔保留。',
-      note: '可以刻的組：' + (ok.length ? ok.map(function (o) { return '<span class="' + (o[0].length > 2 ? 'c-sherine-dream' : 'c-sherine') + '">' + H.esc(etchName(o[0])) + '</span>'; }).join('、') : '還沒有湊滿的組（每個部位都要 ' + ETCH_PER + ' 件）'),
-      req: '<span class="ax-req">每部位 ' + ETCH_PER + ' 件同組遺骸</span>',
-      why: !x ? '先在上面選一件裝備' : !isW ? '只能蝕刻武器' : !ok.length ? '遺骸不夠' : '',
-      pick: '<select id="afk-ax-etch" aria-label="選擇要刻的套裝">' + (ok.length ? ok : opts.slice(0, 1)).map(function (o) { return '<option value="' + H.esc(o[0]) + '">' + H.esc(etchName(o[0])) + '（可刻 ' + Math.floor(o[1] / ETCH_PER) + ' 次）</option>'; }).join('') + '</select>',
-      btns: [['ext:etch', it && it.etch ? '重新蝕刻' : '蝕刻', ok.length > 0]] };
-  });
-  (W.__afkAxAct = W.__afkAxAct || {}).etch = function (ref, arg, H, v) {
-    var p = P(); if (!p) return '找不到角色。';
-    var se = v('afk-ax-etch'); if (!se || SHERINE_EFFECTS.indexOf(se.slice(0, 2)) < 0) return '請選擇要刻的套裝。';
-    if (etchReady(p, se) < ETCH_PER) return '遺骸不夠：' + etchName(se) + '的 8 個部位各要 ' + ETCH_PER + ' 件。';
-    var x = H.resolveRef(ref); if (!x || !x.it) return '找不到這件武器。';
-    var d = DB.items[x.it.id]; if (!d || d.type !== 'wpn' || d.isArrow) return '只能蝕刻武器。';
-    etchTake(p, se);
-    x.it.etch = se; if (!Array.isArray(x.it.sockets)) x.it.sockets = [null, null, null];
-    H.done('<span class="' + (se.length > 2 ? 'c-sherine-dream' : 'c-sherine') + ' font-bold">✠ 艾格尼絲把 ' + (ETCH_PER * 8) + ' 件' + esc(etchName(se)) + '遺骸熔進刀身，席琳的紋路爬滿了武器，開出了 ' + x.it.sockets.length + ' 個符文孔。</span>');
-    return null;
-  };
+  (W.__afkAxLines = W.__afkAxLines || []).push(function (it) { return it && (it.etch || it.etchD) ? '<span class="' + (it.etchD ? 'c-sherine-dream' : 'c-sherine') + '">星蝕·解：' + starText(it) + '</span>' : null; });
 
-  W.__afkSherineDream = { ETCH_PER: ETCH_PER, SOCKETS: SOCKETS, etchReady: etchReady, mainEtch: mainEtch, DREAM: DREAM, DN: DN, isDream: isDream, dreamTiers: dreamTiers, soulOn: soulOn, COST: COST, SOUL: SOUL, SOUL_RATE: SOUL_RATE };
+  W.__afkSherineDream = { ETCH_PER: ETCH_PER, SOCKET_NAMES: SOCKET_NAMES, SOCKET_MAX_OPEN: SOCKET_MAX_OPEN, PARTS: PARTS, etchReady: etchReady, etchTake: etchTake, etchName: etchName, migrate: migrate, mainEtch: mainEtch, DREAM: DREAM, DN: DN, isDream: isDream, dreamTiers: dreamTiers, soulOn: soulOn, COST: COST, SOUL: SOUL, SOUL_RATE: SOUL_RATE };
   console.log('[AFK-sherine-dream] 已載入：夢域席琳遺骸與之魂');
 })();

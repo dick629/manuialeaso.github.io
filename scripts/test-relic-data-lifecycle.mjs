@@ -158,6 +158,7 @@ try {
       const before=JSON.stringify({inv:player.inv,gold:player.gold});
       const downgrade=A.upgrade(oldGroup.key),downgradeUnchanged=before===JSON.stringify({inv:player.inv,gold:player.gold});
       A.open();
+      A.select(oldGroup.key);
       const row=Array.from(document.querySelectorAll('#rp-list .rp-row')).find(el=>el.querySelector('[data-k]')?.getAttribute('data-k')===oldGroup.key);
       const button=row&&row.querySelector('button').textContent;
       const next=A.ascend(oldGroup.key,0,true);

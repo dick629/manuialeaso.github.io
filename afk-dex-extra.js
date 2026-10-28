@@ -42,7 +42,7 @@
   });
 
   // ── 席琳夢域鏡（afk-dreamhell）──
-  X.acq('afk_dream_crystal', '席琳夢域鏡：一般怪 10% 掉 1 顆、頭目必掉 3 顆。暗夢星迴頭目 50% 掉的「三個隨機昇華支配材料」也可能抽到。');
+  X.acq('afk_reverie_crystal', '席琳夢域鏡：一般怪 10% 掉 1 顆、頭目必掉 3 顆。暗夢星迴頭目 50% 掉的「三個隨機昇華支配材料」也可能抽到。');
   X.acq('afk_hell_essence', '席琳夢域鏡：頭目必掉 1 個。暗夢星迴頭目 50% 掉的「三個隨機昇華支配材料」也可能抽到。');
   ['earth', 'water', 'wind', 'fire'].forEach(function (k) {
     X.acq('afk_contempt_' + k, function () {
@@ -78,6 +78,10 @@
   X.acq('afk_dmark_stone', '燃柳村「龍紋師 艾格尼絲」：龍印碎片 20 個換 1 顆。');
   ['wpn', 'arm'].forEach(function (k) { [[1, 100, '一'], [2, 500, '二'], [3, 800, '三']].forEach(function (t) { X.acq('afk_bless_' + k + '_' + t[0], '燃柳村「龍紋師 艾格尼絲」：' + t[1] + ' 張「祝福的 對' + (k === 'wpn' ? '武器' : '盔甲') + '施法的卷軸」換 1 張（' + t[2] + '階）。'); }); });
   X.acq('afk_dres_shard', '席琳夢域鏡：一般怪 0.1%、頭目必掉 1 個。100 個可在燃柳村「龍紋師 艾格尼絲」賦予「闇龍的抵抗者」。');
+
+  // ── 遺物第二詞綴重洗（afk-relicreroll）──
+  X.acq('afk_reverie_incense', '席琳夢域鏡（瘋狂席琳＋夢域）的四龍巢穴：各區頭目 2 個、最終龍 5 個、一般怪 1% 掉 1 個。');
+  X.acq('afk_reverie_crystal', '銀騎士村「艾彼迪爾」：回夢香塵 20 個換 1 個。用來重洗遺物的第二詞綴（另需一件 +10 遺物）。');
 
   // ── 套裝活動品（afk-sets）：所有頭目 0.05% 掉其中一件 ──
   Object.keys(DB.items).forEach(function (id) {

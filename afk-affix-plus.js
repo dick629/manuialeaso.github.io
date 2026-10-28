@@ -393,7 +393,7 @@
   };
   var plain = function (it) { var d = DB.items[it.id]; return ((it.en > 0) ? '+' + it.en + ' ' : '') + (d ? d.n : it.id); };
   var done = function (msg) { lastMsg = msg; sys(msg); try { calcStats(); } catch (e) {} try { if (typeof renderTabs === 'function') renderTabs(true); saveGame(); updateUI(); } catch (e) {} };
-  // 給其他外掛加項目用（afk-sherine-dream 的蝕刻）：W.__afkAxExtra 回傳一列服務；按鈕 data-ax＝'ext:<名稱>:<參數>'，由 W.__afkAxAct[名稱](選取, 參數, AXH, 讀欄位) 處理
+  // 給其他外掛加項目用（目前沒有人用；原本的蝕刻已搬到 afk-runes 的符文師佐爾頓）：W.__afkAxExtra 回傳一列服務；按鈕 data-ax＝'ext:<名稱>:<參數>'，由 W.__afkAxAct[名稱](選取, 參數, AXH, 讀欄位) 處理
   var AXH = { resolveRef: function (r) { return resolveRef(r); }, done: function (m) { return done(m); }, icoTag: function (u, t, sm) { return icoTag(u, t, sm); }, reqTxt: function (h, n, w) { return reqTxt(h, n, w); }, esc: function (v) { return esc(v); } };
 
   // ── 操作 ──
@@ -508,6 +508,7 @@
   } catch (e) {}
   var ICON = { shard: DB.items[SHARD] && DB.items[SHARD].img, stone: DB.items[STONE] && DB.items[STONE].img, dres: DB.items[DRES] && DB.items[DRES].img, dia: 'assets/icons/items/鑽石卡.png', tree: 'assets/icons/items/精靈水晶(世界樹的呼喚).png', fate: 'assets/icons/items/不屈的命運.png' };
   var css = function () {
+    if (W.__afkNpcKit) return W.__afkNpcKit.css();
     if (document.getElementById('afk-ax-css')) return;
     var s = document.createElement('style'); s.id = 'afk-ax-css';
     s.textContent = '.afk-ax{color:#e2e8f0;font-size:14px;line-height:1.6}'

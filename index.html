@@ -659,7 +659,7 @@
     <script src="afk-slotinfo.js?v=c904c3ca3a"></script>
     <script src="afk-loadslots.js?v=fdc549e696"></script>
     <script src="afk-dex.js?v=2c88b46856"></script>
-    <script src="afk-wiki.js?v=a2f8e859f8"></script>
+    <script src="afk-wiki.js?v=d3aed953e3"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=302890a0df"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
@@ -702,7 +702,9 @@
     <script src="afk-relic-weapons.js?v=0a3ef041c5"></script>
     <script src="afk-relic-defense.js?v=1dc29c9f52"></script>
     <script src="afk-relic-runtime.js?v=ff9fff361d"></script>
-    <script src="afk-relicplus.js?v=bade44e000"></script>
+    <!-- afk-npc-kit：NPC 服務面板共用外觀（哈瑪大師、艾格尼絲、佐爾頓、艾彼迪爾）；排在這些 NPC 外掛之前 -->
+    <script src="afk-npc-kit.js?v=0749913a7d"></script>
+    <script src="afk-relicplus.js?v=d8cc832c80"></script>
     <!-- afk-dreamstar：暗夢星迴（單機版）；需 afk-dreamhell、afk-relicplus，排在 afk-relicplus 之後 -->
     <script src="afk-dreamstar.js?v=efc9ffca79"></script>
     <!-- afk-corrupt：侵蝕的法利昂／巴拉卡斯／林德拜爾巢穴（複製安塔瑞斯副本；需核心補丁 23） -->
@@ -840,7 +842,7 @@
     <!-- afk-rebirth2：二轉決戰（席琳方傷害 +5%）、次元突破者／封印輪迴光環、第二次轉生（需 afk-finalboss、afk-dreamstar） -->
     <script src="afk-rebirth2.js?v=a12d3cf25f"></script>
     <!-- afk-affix-plus：詞綴擴充（祝福／遠古三階只能打怪取得；燃柳村龍紋師艾格尼絲「龍紋賦予」：不屈者意志、龍的印記／傷痕、神樹者的讚禮、闇龍的抵抗者） -->
-    <script src="afk-affix-plus.js?v=3ee0cea85d"></script>
+    <script src="afk-affix-plus.js?v=24099bee53"></script>
     <!-- afk-lostshard：失去光輝的碎片（席琳夢域鏡掉落；哈瑪大師 100 碎片＋500 龍鑽＋1000 席琳結晶熔鑄成材料） -->
     <script src="afk-lostshard.js?v=0c77f70897"></script>
     <!-- afk-dragon-npcs：四龍副本入口分村（地＝沉默洞穴、火＝威頓村、水＝海音、風＝亞丁）、米米製作改版與四龍盔甲（需 afk-corrupt、afk-affix-plus） -->
@@ -879,7 +881,7 @@
     <!-- afk-npcspace：村莊 NPC 名牌重疊時自動換到附近空位（包 renderTownNPCMap，排在所有加 NPC 的外掛之後） -->
     <script src="afk-npcspace.js?v=a5c3b52f88"></script>
     <!-- afk-dex-extra：掉落查詢的「外掛掉落」登記表（副本／席琳夢域鏡等用程式發的掉落，不在掉落表裡；排在所有加怪加物品的外掛之後） -->
-    <script src="afk-dex-extra.js?v=1632abb8b1"></script>
+    <script src="afk-dex-extra.js?v=6e506c4620"></script>
     <!-- afk-heartbeat：旅人頻道（真人心跳聊天）——世界頻道旁的專屬按鈕＋獨立視窗；要自己加入才連線，後端見 backend/heartbeat -->
     <script src="afk-heartbeat.js?v=0acfd4d574"></script>
     <!-- afk-itemui：物品資訊窗點外面就關＋特殊物品固定淡光（靜態背景漸層，不用動畫） -->
@@ -887,7 +889,11 @@
     <!-- afk-killlog：同一隻怪的掉落合併成一行「擊敗 X：物品 ×數量、…」（包 killMob 最外層，必須放在所有包 killMob 的外掛之後） -->
     <script src="afk-killlog.js?v=9c2bea76c9"></script>
     <!-- afk-sherine-dream：夢域席琳遺骸（伊奧夢域淬鍊，紅字、效果強化）與第 9 格遺骸「之魂」（謀叛者的低語頭目 5%；套裝件數 −1）；須在 afk-caps 之前 -->
-    <script src="afk-sherine-dream.js?v=001f24aa76"></script>
+    <script src="afk-sherine-dream.js?v=752c080fee"></script>
+    <!-- afk-runes：說話之島符文師佐爾頓——武器的星蝕·解三個符文孔（墜蝕·解、刻解·骸、瘴骸·破）；需 afk-sherine-dream -->
+    <script src="afk-runes.js?v=5b52ec71d3"></script>
+    <!-- afk-relicreroll：銀騎士村艾彼迪爾——+10 遺物＋回夢水晶重洗遺物第二詞綴（保留或替換）；回夢香塵（夢域四龍巢穴）20 換 1 回夢水晶；需 afk-relicplus -->
+    <script src="afk-relicreroll.js?v=08bf3a7edc"></script>
     <!-- afk-caps：轉生雙持的副手武器固定加成計入能力；爆擊率上限 80%（包 recomputeStats 最外層，必須最後載入）；迴避上限見核心補丁 patchEvadeCap -->
     <script src="afk-caps.js?v=7ad7737f25"></script>
     <!-- afk-art-v3：GPT變身檔（外掛開關，預設關）——神話／天上／時空／十二聖衣改用新繪製的三方向逐幀動畫與聖衣星座翅膀；只換外觀 -->

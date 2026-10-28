@@ -785,9 +785,10 @@
     return { ok: true, msg: msg };
   }
 
-  // ── +15 以上遺物武器的屬性卷軸（只有哈瑪大師可以；裝備在武器欄的那一把）────────────
+  // ── +15 以上遺物武器的屬性卷軸（象牙塔的碧恩；玩家 2026-10-29 晚從哈瑪大師搬過去；裝備在武器欄的那一把）────────────
   //   規則沿用碧恩：每張 7%、同屬性升階、第 5 階同屬性卷軸 1% 附加／重抽魔法；遺物免強化值門檻、原本有觸發特效的也能附加魔法。
   //   昇華支配的遺物魔法最高 5 星（一般 3 星）；5 星時轉換成新魔法（見 __afkAttr5）。
+  var inHama = false;
   function relicWpnForAttr() {
     var p = P(); var it = p && p.eq && p.eq.wpn; var d = it && DB.items[it.id];
     if (!d || !d.relicPlus || d.type !== 'wpn' || d.relicPlus < 15) return null;
@@ -804,7 +805,8 @@
     window.isRelic = function (x) { return x === d ? false : oRel.apply(this, arguments); };
     window.weaponHasBaseTriggeredSkill = function (x) { return x === d ? false : oTrig.apply(this, arguments); };
     window.renderBianAttr = function () {};
-    try { doBianAttr('wpn', ele); } finally { window.isRelic = oRel; window.weaponHasBaseTriggeredSkill = oTrig; window.renderBianAttr = oRender; }
+    inHama = true;
+    try { doBianAttr('wpn', ele); } finally { inHama = false; window.isRelic = oRel; window.weaponHasBaseTriggeredSkill = oTrig; window.renderBianAttr = oRender; }
     return { ok: true };
   }
   // ── 一鍵衝星（玩家 2026-10-27）：同屬性卷軸連續使用，先把屬性衝到第 5 階，再衝屬性魔法星數，到目標或卷軸用完就停 ──
@@ -854,7 +856,7 @@
     try { if (typeof renderTabs === 'function') renderTabs(true); if (typeof updateUI === 'function') updateUI(); } catch (e) {}
     var skN = function (id) { return (DB.skills[id] && DB.skills[id].n) || id; };
     var done = tier >= 5 && mg && star >= target;
-    var msg = '哈瑪大師一口氣用了 ' + used.toLocaleString() + ' 張' + sc.n + '：'
+    var msg = '碧恩一口氣用了 ' + used.toLocaleString() + ' 張' + sc.n + '：'
       + (tierUps ? '屬性第 ' + tier0 + ' 階 → 第 ' + tier + ' 階；' : '屬性第 ' + tier + ' 階；')
       + (mg ? (mgStart === mg && star0 ? skN(mg) + ' ' + '★'.repeat(star0) + ' → ' + '★'.repeat(star) : '屬性魔法 ' + skN(mg) + ' ' + '★'.repeat(star)) : '還沒抽到屬性魔法')
       + (hits ? '（刻印回應 ' + hits + ' 次' + (resets ? '，其中 ' + resets + ' 次換成別種魔法、星數重來' : '') + '）' : '')
@@ -865,13 +867,13 @@
   }
   function askAutoAttr(target) {
     var it = relicWpnForAttr(), cur = it && typeof getAttrAffix === 'function' ? getAttrAffix(it.attr) : null;
-    if (!it || !cur) { var r0 = autoAttr(target); if (!r0.ok) { try { logSys('<span class="text-red-400">' + esc(r0.msg) + '</span>'); } catch (e) {} } return render(); }
+    if (!it || !cur) { var r0 = autoAttr(target); if (!r0.ok) { try { logSys('<span class="text-red-400">' + esc(r0.msg) + '</span>'); } catch (e) {} } return refreshAttr(); }
     var sc = ATTR_SCROLLS[cur.ele], have = invCnt(sc.id);
     var msg = '用' + sc.n + '一鍵衝到 ' + '★'.repeat(target) + '（' + DB.items[it.id].n + '）。\n'
       + (cur.tier < 5 ? '會先把屬性衝到第 5 階（每張 7%），' : '') + '1～3 星每張 1% 抽一種屬性魔法（抽到同一種 +1 星、抽到別種從 1 星重來）'
       + (target > 3 ? '；滿 3 星後 ★3→★4 固定 ' + STAR_UP[4].toLocaleString() + ' 張、★4→★5 固定 ' + STAR_UP[5].toLocaleString() + ' 張，必定成功' : '') + '。'
       + '\n到達目標或卷軸用完就停；最多用掉全部 ' + have.toLocaleString() + ' 張。';
-    var go = function () { var r = autoAttr(target); render(); if (!r.ok) { try { logSys('<span class="text-red-400">' + esc(r.msg) + '</span>'); } catch (e) {} } };
+    var go = function () { var r = autoAttr(target); refreshAttr(); if (!r.ok) { try { logSys('<span class="text-red-400">' + esc(r.msg) + '</span>'); } catch (e) {} } };
     if (window.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '一鍵 ' + target + ' 星', message: msg, okText: '開始', cancelText: '取消', onOk: go });
     else if (confirm(msg)) go();
   }
@@ -964,11 +966,14 @@
     ].join('\n');
     document.head.appendChild(st);
   }
+  // 介面（玩家 2026-10-29 晚：比照艾格尼絲——上面材料列、①選遺物（分類＋搜尋＋清單）、選中的那件在下面顯示詳細與按鈕、②其他服務一列一列）
+  var ui = { filter: 'all', q: '', sel: '', more: 0 }, PAGE = 60;
+  var KIND_N = { all: '全部', wpn: '武器', arm: '防具', acc: '飾品' };
   function build() {
-    css();
+    css(); if (window.__afkNpcKit) window.__afkNpcKit.css();
     var m = document.createElement('div'); m.id = 'rp-modal';
     m.innerHTML = '<div class="rp-box" role="dialog" aria-modal="true" aria-label="哈瑪大師・遺物強化"><div class="rp-head">🔨 哈瑪大師・遺物強化<span class="rp-bal" id="rp-bal"></span><button class="rp-x" type="button" id="rp-x" aria-label="關閉遺物強化">✕</button></div>'
-      + '<div class="rp-content"><p class="afk-lore">「同源的遺物會互相呼喚。把它們交給爐火，讓沉睡的力量醒來吧。」——哈瑪</p><details class="rp-rule"><summary>合成、昇華與費用說明</summary>'
+      + '<div class="rp-content afk-ax"><p class="ax-lore">「同源的遺物會互相呼喚。把它們交給爐火，讓沉睡的力量醒來吧。」——哈瑪</p><div id="rp-mats"></div><details class="rp-rule"><summary>合成、昇華與費用說明</summary>'
       + '<div class="rp-doc">'
       + '<h5>武器、防具最高 +15</h5>'
       + '<table class="rp-tbl"><thead><tr><th>目標</th><th>材料</th><th>成功率</th></tr></thead><tbody>'
@@ -990,111 +995,141 @@
       + '<dt>昇華支配</dt><dd>武器、防具 +15，飾品 +10 後開放。每 +1：武器大小型傷害各 +10、原有能力各 +5；防具、飾品六項能力各 +1、防禦 −1、魔法防禦／遠距迴避／減傷各 +1、四屬性抗性各 +2；防具另加生命、魔力自然恢復各 50。</dd>'
       + '<dt>注意</dt><dd>只用背包裡未鎖定的遺物與材料；穿戴中、倉庫內或上鎖的不列入。第 029 件昇華後即達終階；GM 測試道具不能合成。</dd>'
       + '</dl></div></details>'
-      + '<div class="rp-tools" id="rp-tools"></div>'
-      + '<div class="rp-list" id="rp-list"></div></div></div>';
+      + '<div class="ax-h">① 選擇遺物</div><div class="rp-list" id="rp-list"></div>'
+      + '<div class="ax-h">② 熔煉與兌換</div><div class="rp-svc" id="rp-tools"></div></div></div>';
     document.body.appendChild(m);
     m.addEventListener('click', function (e) { if (e.target === m) close(); });
     document.getElementById('rp-x').onclick = close;
-    document.getElementById('rp-list').addEventListener('click', function (e) {
+    var listEl = document.getElementById('rp-list'), qT = 0;
+    listEl.addEventListener('click', function (e) {
+      var f = e.target.closest('[data-rpf]'); if (f) { ui.filter = f.getAttribute('data-rpf'); ui.more = 0; render(); return; }
+      if (e.target.closest('[data-rpmore]')) { ui.more++; render(); return; }
+      var pk = e.target.closest('[data-rppick]'); if (pk) { ui.sel = pk.getAttribute('data-rppick'); render(); return; }
       var b = e.target.closest('.rp-go'); if (!b || b.disabled) return;
       if (b.classList.contains('rp-evo')) askEvo(b.getAttribute('data-k'));
       if (b.classList.contains('rp-fx3')) askFx3(b.getAttribute('data-k'));
       else if (b.classList.contains('rp-asc')) askAsc(b.getAttribute('data-k')); else ask(b.getAttribute('data-k'));
     });
+    listEl.addEventListener('input', function (e) {
+      if (e.target.id !== 'rp-q') return;
+      ui.q = e.target.value; ui.more = 0; clearTimeout(qT);
+      qT = setTimeout(function () { render(); var q = document.getElementById('rp-q'); if (q) { q.focus(); try { q.setSelectionRange(q.value.length, q.value.length); } catch (e2) {} } }, 250);
+    });
     document.getElementById('rp-tools').addEventListener('click', function (e) {
-      var aa = e.target.closest('[data-autostar]');
-      if (aa && !aa.disabled) { askAutoAttr(Number(aa.getAttribute('data-autostar'))); return; }
-      var ab = e.target.closest('[data-attr]');
-      if (ab && !ab.disabled) { var ar = hamaAttr(ab.getAttribute('data-attr')); if (!ar.ok) { try { logSys('<span class="text-red-400">' + esc(ar.msg) + '</span>'); } catch (e3) {} } render(); return; }
-      var xb = e.target.closest('[data-ex]');
-      if (xb && !xb.disabled) { var xr = exchange(xb.getAttribute('data-ex'), xb.getAttribute('data-arg'), Number(xb.getAttribute('data-n')) || 1); if (!xr.ok) { try { logSys('<span class="text-red-400">' + esc(xr.msg) + '</span>'); } catch (e4) {} } render(); return; }
-      var b = e.target.closest('[data-craft]'); if (!b || b.disabled) return;
-      var r = craftStardust(Number(b.getAttribute('data-craft'))); if (!r.ok) { try { logSys('<span class="text-red-400">' + esc(r.msg) + '</span>'); } catch (e2) {} } render();
+      var b = e.target.closest('button[data-rpsvc]'); if (!b || b.disabled) return;
+      var v = b.getAttribute('data-rpsvc').split(':'), r;
+      if (v[0] === 'craft') r = craftStardust(Number(v[1]));
+      else if (v[0] === 'ex') r = exchange(v[1], v[2] || null, Number(v[3]) || 1);
+      if (r && !r.ok) { try { logSys('<span class="text-red-400">' + esc(r.msg) + '</span>'); } catch (e2) {} }
+      render();
     });
     document.getElementById('rp-tools').addEventListener('change', function (e) { if (e.target.id === 'rp-dust') { dustUse = Number(e.target.value) || 0; render(); } if (e.target.id === 'rp-stone') { stoneUse = !!e.target.checked; render(); } });
   }
+  // 一組遺物的下一步：按鈕、說明、清單上的短標籤、材料夠不夠
+  function info(g) {
+    var bd = DB.items[g.base], cur = DB.items[makeId(g.base, g.n, g.fx, g.asc)] || bd;
+    var mx = maxOf(g.base), t = g.n + 1, c = g.asc == null && t <= mx ? costOf(t, g.base) : null, btn, ascTxt = '', label = '', ready = false;
+    if (!c) {
+      var A = g.asc == null ? 0 : g.asc + 1;
+      if (g.asc != null && typeof window.__afkRelicNoUp === 'function' && window.__afkRelicNoUp(makeId(g.base, g.n, g.fx, g.asc))) {
+        btn = '<button class="rp-go" disabled>已達終階</button>'; label = '已達終階';
+        ascTxt = '<div class="rp-sub">這件遺物昇華支配後即達終階，沒有後續強化。</div>';
+      }
+      else if (A > 5 && g.evo != null) {
+        var lk = fx3Lock(g), f3m = TS_MATS.filter(function (id) { return invCnt(id) < 1; }).length || invCnt('afk_dark_stardust') < FX3_COST.stardust;
+        ready = !lk && !f3m; label = lk ? '至高的支配' : (g.fx3 ? '重抽第三詞綴' : '抽第三詞綴');
+        btn = lk ? '<button class="rp-go" disabled>至高的支配<br><span style="font-weight:600;font-size:13px">' + esc(EVO[g.evo] || '第三詞綴') + '</span></button>'
+          : '<button class="rp-go rp-fx3" type="button" data-k="' + esc(g.key) + '"' + (f3m ? ' disabled' : '') + '>' + (g.fx3 ? '重抽' : '抽取') + '<br><span style="font-weight:600;font-size:13px">第三詞綴</span></button>';
+        ascTxt = '<div class="rp-sub" style="color:#fde047">至高的支配' + esc(evoTag(g.evo)) + (g.fx3 ? '；第三詞綴：' + esc((DB.items[g.fx3] || {}).n || g.fx3) : '') + '</div>'
+          + '<div class="rp-sub">' + (lk ? esc(lk) : '第三詞綴：消耗六種時空材料各 1、至暗星塵 ' + FX3_COST.stardust + '（至暗星塵 ' + invCnt('afk_dark_stardust') + '）') + '</div>';
+      }
+      else if (A > 5) {
+        var evMiss = TS_MATS.filter(function (id) { return invCnt(id) < 1; });
+        ready = !evMiss.length; label = '進化：至高的支配';
+        btn = '<button class="rp-go rp-evo" type="button" data-k="' + esc(g.key) + '"' + (evMiss.length ? ' disabled' : '') + '>進化<br><span style="font-weight:600;font-size:13px">至高的支配 100%</span></button>';
+        ascTxt = '<div class="rp-sub" style="color:#fde047">進化：隨機獲得一種至高的支配特效（' + (bd.type === 'wpn' ? '武器沒有八種特效，改成進化時直接附上「第三詞綴」：隨機繼承另一件遺物的能力，之後可在這裡重洗' : '克特／死亡騎士／惡魔／四大軍王／真．冥皇套裝、全能力 +30、面板能力 +50、四屬性抗性 +100，不跟你已有的重複') + '）' + (bd.set === 'priest' ? '；遺物・司祭苦行套裝直接擁有全部八種' : '') + '</div>'
+          + '<div class="rp-sub">需要：' + TS_MATS.map(function (id) { var h = invCnt(id); return '<span class="' + (h ? '' : 'rp-miss') + '">' + esc((DB.items[id] || {}).n || id) + ' ' + h + '/1</span>'; }).join('、') + '</div>';
+      }
+      else {
+        var ac = ascCost(A), rate = Math.min(1, ac.rate + 0.1 * dustUse);
+        if (stoneUse && A >= 1 && stoneOf(g.base)) { ac = { dia: 0, items: {}, equip: [], rate: 1 }; ac.items[stoneOf(g.base)] = 1; rate = 1; }
+        var miss = ascMissing(ac);
+        ready = !miss.length; label = '昇華支配 +' + A;
+        btn = '<button class="rp-go rp-asc" type="button" data-k="' + esc(g.key) + '"' + (miss.length ? ' disabled' : '') + '>昇華支配 +' + A + '<br><span style="font-weight:600;font-size:13px">成功率 ' + Math.round(rate * 100) + '%</span></button>';
+        var need = [];
+        if (ac.dia) need.push('龍鑽 ' + ac.dia.toLocaleString());
+        Object.keys(ac.items).forEach(function (id) { var h = invCnt(id), ok = h >= ac.items[id]; need.push('<span class="' + (ok ? '' : 'rp-miss') + '">' + esc((DB.items[id] || {}).n || id) + ' ' + h + '/' + ac.items[id] + '</span>'); });
+        ac.equip.forEach(function (nm) { need.push('<span class="' + (nameCnt(nm) ? '' : 'rp-miss') + '">' + esc(nm) + '</span>'); });
+        var nd2 = buildDef(g.base, g.n, g.fx, A);
+        ascTxt = '<div class="rp-sub" style="color:#f0abfc">昇華支配 +' + A + '：' + esc(pretty(statLine(nd2, g.base))) + '</div><div class="rp-sub">需要：' + need.join('、') + '</div>';
+      }
+    } else {
+      var mg0 = c.matNeed ? matGroup(g, c.matLv) : null, matHave = mg0 ? mg0.cnt : 0;
+      var enough = g.cnt >= c.need && (!c.matNeed || matHave >= c.matNeed) && diamonds() >= c.dia && gold() >= c.gold && (!c.crystal || crystals() >= c.crystal);
+      var ap = (!enough && !(g.cnt >= c.need && (!c.matNeed || matHave >= c.matNeed))) ? autoPlan(g) : null, apOk = !!(ap && ap.cost.afford), cs = apOk ? ap.cost : c;
+      ready = enough || apOk; label = (c.merge ? '合成 +' : '強化 +') + t;
+      btn = '<button class="rp-go" type="button" data-k="' + esc(g.key) + '"' + (enough || apOk ? '' : ' disabled') + (apOk ? ' title="材料不夠，會先用背包裡的低階同款自動合成補上"' : '') + '>'
+        + (c.merge ? '合成 +' + t + (c.rate < 1 ? '（' + Math.round(c.rate * 100) + '%）' : '') : '強化 +' + t + '（10%）') + (apOk ? '<span style="font-size:12px;color:#86efac">（自動補料）</span>' : '') + '<br><span style="font-weight:600;font-size:13px">' + cs.dia.toLocaleString() + ' 鑽' + (cs.gold ? '＋' + (cs.gold / 10000).toLocaleString() + ' 萬' : '') + (cs.crystal ? '＋結晶 ' + cs.crystal : '') + (c.need > 2 ? '（' + c.need + ' 個）' : '') + (c.matNeed ? '＋同款 +' + c.matLv + ' ×' + c.matNeed + '（有 ' + matHave + '）' : '') + '</span></button>';
+    }
+    var nextTxt = '';
+    if (c) { var nid = makeId(g.base, t, g.fx); var nd = DB.items[nid] || buildDef(g.base, t, g.fx); nextTxt = '下一級：' + pretty(statLine(nd, g.base)) + (t === fxAt(g.base) && !g.fx && mx >= t ? '、獲得第二詞綴（隨機同部位遺物特效）' : ''); }
+    return { bd: bd, cur: cur, btn: btn, ascTxt: ascTxt, nextTxt: nextTxt, label: label, ready: ready };
+  }
+  var gName = function (g, bd) { return g.asc != null ? '+' + g.asc + ' ' + esc(bd.n) + '昇華支配' : (g.n ? '+' + g.n + ' ' : '') + esc(bd.n); };
+  var gImg = function (bd) { var img = ''; try { img = getIconUrl(bd); } catch (e) {} return img; };
   function render() {
-    var bal = document.getElementById('rp-bal'); if (bal) bal.innerHTML = '<span>龍之鑽石 <b>' + diamonds().toLocaleString() + '</b></span><span>金幣 <b>' + gold().toLocaleString() + '</b></span>';
+    var K = window.__afkNpcKit;
+    var bal = document.getElementById('rp-bal'); if (bal) bal.innerHTML = '';
+    var mats = document.getElementById('rp-mats');
+    if (mats && K) mats.innerHTML = K.matBar([{ img: 'assets/icons/items/龍之鑽石.png', n: '龍之鑽石', v: diamonds() }, { img: 'assets/icons/items/金幣.png', n: '金幣', v: gold() }, CRYSTAL, 'afk_dark_stardust', DUST, STONE.wpn, STONE.arm, STONE.acc]);
     var tools = document.getElementById('rp-tools');
-    if (tools) {
+    if (tools && K) {
       var ess = invCnt('afk_hell_essence'), dustHave = invCnt(DUST);
       if (dustUse > Math.min(5, dustHave)) dustUse = Math.min(5, dustHave);
-      var opts = ''; for (var di = 0; di <= Math.min(5, dustHave); di++) opts += '<option value="' + di + '"' + (di === dustUse ? ' selected' : '') + '>' + di + '</option>';
-      var fmt = function (n) { return Number(n || 0).toLocaleString(); };
-      var kv = function (k, v, hint) { return '<div class="rp-kv"><span>' + k + '</span><b>' + v + '</b>' + (hint ? '<em>' + hint + '</em>' : '') + '</div>'; };
-      var sec = function (icon, title, hint, body, wide) { return '<section class="rp-sec' + (wide ? ' rp-wide' : '') + '"><h4><span>' + icon + ' ' + title + '</span>' + (hint ? '<small>' + hint + '</small>' : '') + '</h4>' + body + '</section>'; };
+      var opts = ''; for (var di = 0; di <= Math.min(5, dustHave); di++) opts += '<option value="' + di + '"' + (di === dustUse ? ' selected' : '') + '>夢域塵 ' + di + ' 顆</option>';
       var shard = invCnt('afk_contempt_shard'), ascS = invCnt('afk_asc_shard'), cancel = invCnt('afk_cancel_scroll');
-      tools.innerHTML =
-        sec('🔥', '熔煉至暗星塵', '20 精華 → 1 星塵・70%',
-          kv('地獄精華', fmt(ess)) + kv('至暗星塵', fmt(invCnt('afk_dark_stardust')))
-          + '<div class="rp-btns"><button type="button" data-craft="1"' + (ess >= 20 ? '' : ' disabled') + '>熔煉 ×1</button>'
-          + '<button type="button" data-craft="10"' + (ess >= 200 ? '' : ' disabled') + '>熔煉 ×10</button></div>')
-        + sec('✨', '昇華支配的輔助', '',
-          '<div class="rp-kv"><span>夢域塵（每顆 +10%，持有 ' + dustHave + '）</span><select id="rp-dust" aria-label="昇華支配使用夢域塵">' + opts + '</select></div>'
-          + '<label class="rp-chk"><input type="checkbox" id="rp-stone"' + (stoneUse ? ' checked' : '') + '><span>改用昇華支配強化石</span></label>'
-          + '<div class="rp-chips"><span>武器 <b>' + invCnt(STONE.wpn) + '</b></span><span>防具 <b>' + invCnt(STONE.arm) + '</b></span><span>飾品 <b>' + invCnt(STONE.acc) + '</b></span></div>')
-        + sec('💠', '碎片兌換', '100 個換 1',
-          kv('滅魔蔑視水晶碎片', fmt(shard), '→ 蔑視水晶')
-          + '<div class="rp-btns">' + [['earth', '地'], ['water', '水'], ['wind', '風'], ['fire', '火']].map(function (x) { return '<button type="button" data-ex="shard" data-arg="' + x[0] + '"' + (shard >= 100 ? '' : ' disabled') + '>' + x[1] + '</button>'; }).join('') + '</div>'
-          + kv('昇華支配碎片', fmt(ascS), '→ 強化石')
-          + '<div class="rp-btns">' + [['wpn', '武器'], ['arm', '防具'], ['acc', '飾品']].map(function (x) { return '<button type="button" data-ex="ascshard" data-arg="' + x[0] + '"' + (ascS >= 100 ? '' : ' disabled') + '>' + x[1] + '</button>'; }).join('') + '</div>')
-        + sec('📜', '相消術卷軸', '每張 10 龍鑽',
-          kv('持有', fmt(cancel)) + '<p class="rp-note">帶在身上時，暗夢星迴頭目張開聖結界會自動用掉 1 張。</p>'
-          + '<div class="rp-btns">' + [1, 10, 100].map(function (n) { return '<button type="button" data-ex="cancel" data-n="' + n + '"' + (diamonds() >= 10 * n ? '' : ' disabled') + '>買 ' + n + '</button>'; }).join('') + '</div>')
-        + sec('⚔', '武器屬性卷軸', '+15 以上遺物武器', attrPanel(), true);
+      var ico = function (id) { return DB.items[id] ? K.itemIco(id) : K.icoTag('', '', false); };
+      tools.innerHTML = [
+        { ico: ico('afk_dark_stardust'), name: '熔煉至暗星塵', color: '#c4b5fd', desc: '20 個地獄精華熔成 1 個至暗星塵，成功率 70%（失敗精華照扣）。', note: '至暗星塵 ' + invCnt('afk_dark_stardust').toLocaleString(),
+          req: K.reqTxt(ess, 20, '地獄精華'), btns: [['craft:1', '熔煉 ×1', ess >= 20], ['craft:10', '熔煉 ×10', ess >= 200]] },
+        { ico: ico(DUST), name: '昇華支配的輔助', color: '#f0abfc', desc: '昇華支配時每顆夢域塵成功率 +10%（最多 5 顆）；勾選「改用昇華支配強化石」則每次只用 1 顆對應部位的強化石，必定成功。下面清單的昇華按鈕會照這裡的設定。',
+          note: '強化石：武器 ' + invCnt(STONE.wpn) + '、防具 ' + invCnt(STONE.arm) + '、飾品 ' + invCnt(STONE.acc),
+          pick: '<select id="rp-dust" aria-label="昇華支配使用夢域塵">' + opts + '</select><label class="rp-chk"><input type="checkbox" id="rp-stone"' + (stoneUse ? ' checked' : '') + '><span>改用昇華支配強化石</span></label>', btns: [] },
+        { ico: ico('afk_contempt_shard'), name: '滅魔蔑視水晶', color: '#67e8f9', desc: '100 個滅魔蔑視水晶碎片換 1 個指定屬性的蔑視水晶。',
+          req: K.reqTxt(shard, 100, '滅魔蔑視水晶碎片'), btns: [['earth', '地'], ['water', '水'], ['wind', '風'], ['fire', '火']].map(function (x) { return ['ex:shard:' + x[0] + ':1', x[1], shard >= 100]; }) },
+        { ico: ico('afk_asc_shard'), name: '昇華支配強化石', color: '#f0abfc', desc: '100 個昇華支配碎片換 1 顆指定部位的昇華支配強化石。',
+          req: K.reqTxt(ascS, 100, '昇華支配碎片'), btns: [['wpn', '武器'], ['arm', '防具'], ['acc', '飾品']].map(function (x) { return ['ex:ascshard:' + x[0] + ':1', x[1], ascS >= 100]; }) },
+        { ico: ico('afk_cancel_scroll'), name: '相消術卷軸', color: '#fde68a', desc: '每張 10 龍之鑽石。帶在身上時，暗夢星迴頭目張開聖結界會自動用掉 1 張。', note: '持有 ' + cancel.toLocaleString(),
+          btns: [1, 10, 100].map(function (n) { return ['ex:cancel::' + n, '買 ' + n, diamonds() >= 10 * n]; }) }
+      ].map(function (sv) { return K.rowHtml(sv, 'data-rpsvc'); }).join('')
+        + '<div class="ax-note">武器屬性卷軸（+15 以上遺物武器的屬性與屬性魔法星數）改到象牙塔的碧恩那裡。</div>';
     }
     var list = document.getElementById('rp-list'); if (!list) return;
     var gs = groups();
     if (!gs.length) { list.innerHTML = '<div class="rp-empty">背包和身上都沒有可合成的遺物。請從倉庫取出，並確認物品未鎖定。</div>'; return; }
-    list.innerHTML = gs.map(function (g) {
-      var bd = DB.items[g.base], cur = DB.items[makeId(g.base, g.n, g.fx, g.asc)] || bd;
-      var mx = maxOf(g.base), t = g.n + 1, c = g.asc == null && t <= mx ? costOf(t, g.base) : null, btn, ascTxt = '';
-      if (!c) {
-        var A = g.asc == null ? 0 : g.asc + 1;
-        if (g.asc != null && typeof window.__afkRelicNoUp === 'function' && window.__afkRelicNoUp(makeId(g.base, g.n, g.fx, g.asc))) {
-          btn = '<button class="rp-go" disabled>已達終階</button>';
-          ascTxt = '<div class="rp-sub">這件遺物昇華支配後即達終階，沒有後續強化。</div>';
-        }
-        else if (A > 5 && g.evo != null) {
-          var lk = fx3Lock(g), f3m = TS_MATS.filter(function (id) { return invCnt(id) < 1; }).length || invCnt('afk_dark_stardust') < FX3_COST.stardust;
-          btn = lk ? '<button class="rp-go" disabled>至高的支配<br><span style="font-weight:600;font-size:13px">' + esc(EVO[g.evo] || '第三詞綴') + '</span></button>'
-            : '<button class="rp-go rp-fx3" type="button" data-k="' + esc(g.key) + '"' + (f3m ? ' disabled' : '') + '>' + (g.fx3 ? '重抽' : '抽取') + '<br><span style="font-weight:600;font-size:13px">第三詞綴</span></button>';
-          ascTxt = '<div class="rp-sub" style="color:#fde047">至高的支配' + esc(evoTag(g.evo)) + (g.fx3 ? '；第三詞綴：' + esc((DB.items[g.fx3] || {}).n || g.fx3) : '') + '</div>'
-            + '<div class="rp-sub">' + (lk ? esc(lk) : '第三詞綴：消耗六種時空材料各 1、至暗星塵 ' + FX3_COST.stardust + '（至暗星塵 ' + invCnt('afk_dark_stardust') + '）') + '</div>';
-        }
-        else if (A > 5) {
-          var evMiss = TS_MATS.filter(function (id) { return invCnt(id) < 1; });
-          btn = '<button class="rp-go rp-evo" type="button" data-k="' + esc(g.key) + '"' + (evMiss.length ? ' disabled' : '') + '>進化<br><span style="font-weight:600;font-size:13px">至高的支配 100%</span></button>';
-          ascTxt = '<div class="rp-sub" style="color:#fde047">進化：隨機獲得一種至高的支配特效（' + (bd.type === 'wpn' ? '武器沒有八種特效，改成進化時直接附上「第三詞綴」：隨機繼承另一件遺物的能力，之後可在這裡重洗' : '克特／死亡騎士／惡魔／四大軍王／真．冥皇套裝、全能力 +30、面板能力 +50、四屬性抗性 +100，不跟你已有的重複') + '）' + (bd.set === 'priest' ? '；遺物・司祭苦行套裝直接擁有全部八種' : '') + '</div>'
-            + '<div class="rp-sub">需要：' + TS_MATS.map(function (id) { var h = invCnt(id); return '<span class="' + (h ? '' : 'rp-miss') + '">' + esc((DB.items[id] || {}).n || id) + ' ' + h + '/1</span>'; }).join('、') + '</div>';
-        }
-        else {
-          var ac = ascCost(A), rate = Math.min(1, ac.rate + 0.1 * dustUse);
-          if (stoneUse && A >= 1 && stoneOf(g.base)) { ac = { dia: 0, items: {}, equip: [], rate: 1 }; ac.items[stoneOf(g.base)] = 1; rate = 1; }
-          var miss = ascMissing(ac);
-          btn = '<button class="rp-go rp-asc" type="button" data-k="' + esc(g.key) + '"' + (miss.length ? ' disabled' : '') + '>昇華支配 +' + A + '<br><span style="font-weight:600;font-size:13px">成功率 ' + Math.round(rate * 100) + '%</span></button>';
-          var need = [];
-          if (ac.dia) need.push('龍鑽 ' + ac.dia.toLocaleString());
-          Object.keys(ac.items).forEach(function (id) { var h = invCnt(id), ok = h >= ac.items[id]; need.push('<span class="' + (ok ? '' : 'rp-miss') + '">' + esc((DB.items[id] || {}).n || id) + ' ' + h + '/' + ac.items[id] + '</span>'); });
-          ac.equip.forEach(function (nm) { need.push('<span class="' + (nameCnt(nm) ? '' : 'rp-miss') + '">' + esc(nm) + '</span>'); });
-          var nd2 = buildDef(g.base, g.n, g.fx, A);
-          ascTxt = '<div class="rp-sub" style="color:#f0abfc">昇華支配 +' + A + '：' + esc(pretty(statLine(nd2, g.base))) + '</div><div class="rp-sub">需要：' + need.join('、') + '</div>';
-        }
-      } else {
-        var mg0 = c.matNeed ? matGroup(g, c.matLv) : null, matHave = mg0 ? mg0.cnt : 0;
-        var enough = g.cnt >= c.need && (!c.matNeed || matHave >= c.matNeed) && diamonds() >= c.dia && gold() >= c.gold && (!c.crystal || crystals() >= c.crystal);
-        var ap = (!enough && !(g.cnt >= c.need && (!c.matNeed || matHave >= c.matNeed))) ? autoPlan(g) : null, apOk = !!(ap && ap.cost.afford), cs = apOk ? ap.cost : c;
-        btn = '<button class="rp-go" type="button" data-k="' + esc(g.key) + '"' + (enough || apOk ? '' : ' disabled') + (apOk ? ' title="材料不夠，會先用背包裡的低階同款自動合成補上"' : '') + '>'
-          + (c.merge ? '合成 +' + t + (c.rate < 1 ? '（' + Math.round(c.rate * 100) + '%）' : '') : '強化 +' + t + '（10%）') + (apOk ? '<span style="font-size:12px;color:#86efac">（自動補料）</span>' : '') + '<br><span style="font-weight:600;font-size:13px">' + cs.dia.toLocaleString() + ' 鑽' + (cs.gold ? '＋' + (cs.gold / 10000).toLocaleString() + ' 萬' : '') + (cs.crystal ? '＋結晶 ' + cs.crystal : '') + (c.need > 2 ? '（' + c.need + ' 個）' : '') + (c.matNeed ? '＋同款 +' + c.matLv + ' ×' + c.matNeed + '（有 ' + matHave + '）' : '') + '</span></button>';
-      }
-      var nextTxt = '';
-      if (c) { var nid = makeId(g.base, t, g.fx); var nd = DB.items[nid] || buildDef(g.base, t, g.fx); nextTxt = '下一級：' + pretty(statLine(nd, g.base)) + (t === fxAt(g.base) && !g.fx && mx >= t ? '、獲得第二詞綴（隨機同部位遺物特效）' : ''); }
-      var img = ''; try { img = getIconUrl(bd); } catch (e) {}
-      return '<div class="rp-row"><img src="' + esc(img) + '" alt="" onerror="this.style.visibility=\'hidden\'">'
-        + '<div class="rp-mid"><div class="rp-nm">' + (g.asc != null ? '+' + g.asc + ' ' + esc(bd.n) + '昇華支配' : (g.n ? '+' + g.n + ' ' : '') + esc(bd.n)) + ' <span style="color:#94a3b8;font-weight:600">× ' + g.cnt + '</span>' + (g.eqSlots && g.eqSlots.length ? ' <span class="rp-eqtag">裝備中</span>' : '') + '</div>'
-        + '<div class="rp-sub">目前：' + pretty(statLine(cur, g.base)) + (g.fx && DB.items[g.fx] ? (cur.relicFxRes ? '、第二詞綴：四屬性抗性 +3' : '、第二詞綴：「' + esc(DB.items[g.fx].n) + '」特效') : '') + '</div>'
-        + (nextTxt ? '<div class="rp-sub" style="color:#fcd34d">' + esc(nextTxt) + '</div>' : '') + ascTxt + '</div>' + btn + '</div>';
-    }).join('');
+    var q = String(ui.q || '').trim();
+    var shown = gs.filter(function (g) { var bd = DB.items[g.base]; return (ui.filter === 'all' || bd.type === ui.filter) && (!q || String(bd.n).indexOf(q) >= 0 || gName(g, bd).indexOf(q) >= 0); });
+    if (!gs.some(function (g) { return g.key === ui.sel; })) ui.sel = (shown[0] || gs[0]).key;
+    var lim = PAGE * (1 + ui.more), part = shown.slice(0, lim);
+    var lst = list.querySelector('.ax-list'), lt = lst ? lst.scrollTop : 0;
+    var h = '<div class="ax-filter">' + Object.keys(KIND_N).map(function (k) { return '<button type="button" data-rpf="' + k + '"' + (ui.filter === k ? ' class="on"' : '') + '>' + KIND_N[k] + '</button>'; }).join('')
+      + '<input id="rp-q" type="search" placeholder="搜尋遺物名稱" aria-label="搜尋遺物名稱" value="' + esc(ui.q) + '" style="flex:1 1 140px;min-width:120px;background:#0f172a;color:#fff;border:1px solid #475569;border-radius:6px;padding:4px 8px;font-size:13px"></div>';
+    h += '<div class="ax-list">' + (part.length ? part.map(function (g) {
+      var f = info(g);
+      return '<div class="ax-eq' + (g.key === ui.sel ? ' on' : '') + '" data-rppick="' + esc(g.key) + '">' + (K ? K.icoTag(gImg(f.bd), '', false) : '')
+        + '<div style="min-width:0"><div class="rp-nm">' + gName(g, f.bd) + ' <span style="color:#94a3b8;font-weight:600">× ' + g.cnt + '</span>' + (g.eqSlots && g.eqSlots.length ? ' <span class="rp-eqtag">裝備中</span>' : '') + '</div>'
+        + '<div class="ax-where">' + (f.label ? '下一步：<span class="' + (f.ready ? 'ok' : 'no') + '">' + esc(f.label) + (f.label === '已達終階' ? '' : f.ready ? '（可以做）' : '（材料不足）') + '</span>' : '') + (g.fx && DB.items[g.fx] ? '　・第二詞綴：' + esc(DB.items[g.fx].n) : '') + '</div></div></div>';
+    }).join('') + (shown.length > lim ? '<div class="ax-eq ax-where" data-rpmore="1" style="justify-content:center;color:#fde68a">還有 ' + (shown.length - lim).toLocaleString() + ' 組，點這裡多顯示 ' + PAGE + ' 組，或用搜尋縮小範圍</div>' : '') : '<div class="ax-eq ax-where">沒有符合的遺物。</div>') + '</div>';
+    var g = gs.filter(function (x) { return x.key === ui.sel; })[0];
+    if (g) {
+      var f = info(g);
+      h += '<div class="ax-h">已選擇</div><div class="rp-row rp-selcard"><img src="' + esc(gImg(f.bd)) + '" alt="" onerror="this.style.visibility=\'hidden\'">'
+        + '<div class="rp-mid"><div class="rp-nm">' + gName(g, f.bd) + ' <span style="color:#94a3b8;font-weight:600">× ' + g.cnt + '</span>' + (g.eqSlots && g.eqSlots.length ? ' <span class="rp-eqtag">裝備中</span>' : '') + '</div>'
+        + '<div class="rp-sub">目前：' + pretty(statLine(f.cur, g.base)) + (g.fx && DB.items[g.fx] ? (f.cur.relicFxRes ? '、第二詞綴：四屬性抗性 +3' : '、第二詞綴：「' + esc(DB.items[g.fx].n) + '」特效') : '') + '</div>'
+        + (f.nextTxt ? '<div class="rp-sub" style="color:#fcd34d">' + esc(f.nextTxt) + '</div>' : '') + f.ascTxt + '</div>' + f.btn + '</div>';
+    }
+    list.innerHTML = h;
+    var nl = list.querySelector('.ax-list'); if (nl) nl.scrollTop = lt;
   }
   // ── 自動補料（玩家 2026-10-27：例如要 +2 但只有一件 +1，背包有 +0 就自動先合成 +1，材料不夠才變灰）──
   //   只用「沒有第二詞綴、沒昇華」的低階同款，且只走成功率 100% 的合成步驟（武器／防具 +5 以下、飾品 +4 以下），
@@ -1164,16 +1199,11 @@
   }
   function attrPanel() {
     var it = relicWpnForAttr();
-    if (!it) return '<p class="rp-note">在武器欄裝備 +15 以上的遺物武器，就能在這裡用屬性卷軸替它賦予屬性。</p>';
+    if (!it) return '';
     var cur = (typeof getAttrAffix === 'function') ? getAttrAffix(it.attr) : null, mg = (typeof getAttrMagicProc === 'function') ? getAttrMagicProc(it) : null;
     var cnt = function (id) { return invCnt(id); };
     var html = '<div class="rp-chips"><span>目前屬性 <b>' + (cur ? esc(cur.n) + '（第 ' + cur.tier + ' 階）' : '無') + '</b></span>'
-      + (mg ? '<span>屬性魔法 <b>' + '★'.repeat(mg.star) + ' ' + esc((DB.skills[mg.skId] || {}).n || mg.skId) + '</b></span>' : '') + '</div><div class="rp-btns">';
-    ['fire', 'water', 'wind', 'earth'].forEach(function (e) {
-      var sc = (typeof ATTR_SCROLLS !== 'undefined') ? ATTR_SCROLLS[e] : null; if (!sc) return;
-      html += '<button type="button" data-attr="' + e + '"' + (cnt(sc.id) ? '' : ' disabled') + '>' + esc(sc.n.replace('武器強化卷軸', '')) + '<small>' + cnt(sc.id).toLocaleString() + '</small></button>';
-    });
-    html += '</div>';
+      + (mg ? '<span>屬性魔法 <b>' + '★'.repeat(mg.star) + ' ' + esc((DB.skills[mg.skId] || {}).n || mg.skId) + '</b></span>' : '') + '</div>';
     var cap = starCap(it), sc0 = cur ? ATTR_SCROLLS[cur.ele] : null, h0 = sc0 ? cnt(sc0.id) : 0, st0 = mg ? mg.star : 0;
     html += '<div class="rp-kv"><span>一鍵衝星（沿用目前屬性，到目標或卷軸用完就停）</span></div><div class="rp-btns">'
       + [[3, '一鍵 3 星'], [st0 >= 3 && st0 < 5 ? st0 + 1 : 4, '升 1 星'], [5, '一鍵 5 星']].map(function (x) {
@@ -1184,6 +1214,48 @@
       }).join('') + '</div>'
       + '<p class="rp-note">先衝到屬性第 5 階才開始加星。1～3 星每張 1% 抽（同一種 +1 星、別種從 1 星重來）；滿 3 星後 ★3→★4 固定 ' + STAR_UP[4].toLocaleString() + ' 張、★4→★5 固定 ' + STAR_UP[5].toLocaleString() + ' 張同屬性卷軸，必定成功。4、5 星只有昇華支配、至高的支配能升（+15 沒昇華最高 3 星）。昇華、進化時屬性階、星數與其他詞綴都會保留。</p>';
     return html;
+  }
+  // 碧恩：裝備 +15 以上遺物武器時，上面原本的四顆屬性按鈕直接改走遺物規則；下面多一塊「遺物武器：一鍵衝星」
+  var refreshAttr = function () {
+    try { if (document.getElementById('rp-list')) render(); } catch (e) {}
+    var el = document.getElementById('interaction-content');
+    if (el && el.querySelector('#rp-bian') && typeof window.renderBianAttr === 'function') { try { window.renderBianAttr(el); } catch (e) {} }
+  };
+  if (typeof window.doBianAttr === 'function') {
+    var oDoBian = window.doBianAttr;
+    window.doBianAttr = function (slotKey, ele) {
+      var p = P();
+      if (!inHama && enabled() && slotKey === 'wpn' && p && p.eq && p.eq.wpn && relicWpnForAttr() === p.eq.wpn) {
+        var r = hamaAttr(ele);
+        if (!r.ok) { try { logSys('<span class="text-amber-300">' + esc(r.msg) + '</span>'); } catch (e) {} }
+        var el = document.getElementById('interaction-content'); if (el && typeof window.renderBianAttr === 'function') { try { window.renderBianAttr(el); } catch (e) {} }
+        return;
+      }
+      return oDoBian.apply(this, arguments);
+    };
+  }
+  if (typeof window.renderBianAttr === 'function') {
+    var oRenderBian = window.renderBianAttr;
+    window.renderBianAttr = function (el) {
+      var r = oRenderBian.apply(this, arguments);
+      try {
+        if (!enabled() || !el || !P()) return r;
+        css();
+        var it = relicWpnForAttr(), wpn = P().eq && P().eq.wpn, wd = wpn && DB.items[wpn.id];
+        var host = el.firstElementChild || el, box = document.createElement('div');
+        box.id = 'rp-bian'; box.className = 'rp-tools';
+        box.innerHTML = '<section class="rp-sec rp-wide"><h4><span>⚔ 遺物武器的屬性</span><small>+15 以上遺物武器</small></h4>'
+          + (it ? '<p class="rp-note">你的主手是 +15 以上的遺物武器：上面「武器」那一列的四顆屬性按鈕照樣能用（遺物不受強化值門檻限制、原本有觸發特效也能附加魔法）。下面可以一鍵衝星；昇華支配、至高的支配最高 5 星。</p>' + attrPanel()
+            : '<p class="rp-note">遺物武器要先在哈瑪大師那裡強化到 +15，才能在這裡賦予屬性' + (wd && wd.relicPlus ? '（你的主手目前 +' + wd.relicPlus + '）' : '') + '。昇華支配、至高的支配的屬性魔法最高 5 星。</p>')
+          + '</section>';
+        host.appendChild(box);
+        box.addEventListener('click', function (e) {
+          var aa = e.target.closest('[data-autostar]'); if (aa && !aa.disabled) { askAutoAttr(Number(aa.getAttribute('data-autostar'))); return; }
+          var ab = e.target.closest('[data-attr]'); if (ab && !ab.disabled) { var ar = hamaAttr(ab.getAttribute('data-attr')); if (!ar.ok) { try { logSys('<span class="text-red-400">' + esc(ar.msg) + '</span>'); } catch (e3) {} } refreshAttr(); }
+        });
+      } catch (e) { console.warn('[AFK-relicplus] bian', e); }
+      return r;
+    };
   }
   // ── 至高的支配：第三詞綴（玩家 2026-10-25）──
   //   武器：至高的支配就能抽；防具：要先湊滿 6 件至高的支配、發動過「席琳的永生」才開放；飾品（戒指／耳環／項鍊／腰帶）沒有第三詞綴
@@ -1281,7 +1353,10 @@
       town.npcs.push({ id: 'npc_hama', n: '哈瑪大師', title: '遺物強化', type: 'relicsmith',
         d: '爐火映著歲月，哈瑪將同源遺物熔鑄合一，喚醒其中沉睡的力量。武器與防具最高 +15，戒指、耳環等飾品最高 +10，滿階後可昇華支配。' });
     }
-    if (typeof NPC_SPR_FIXED !== 'undefined' && !NPC_SPR_FIXED.npc_hama) NPC_SPR_FIXED.npc_hama = '1768';   // 矮人鐵匠外型（與火焰鐵匠同款）
+    if (typeof NPC_SPR_FIXED !== 'undefined' && !NPC_SPR_FIXED.npc_hama) NPC_SPR_FIXED.npc_hama = '1768';
+    // 碧恩（象牙塔）接手 +15 以上遺物武器的屬性卷軸（玩家 2026-10-29 晚）
+    var bian = DB.towns && DB.towns.town_ivory_tower && (DB.towns.town_ivory_tower.npcs || []).filter(function (x) { return x.id === 'npc_bian'; })[0];
+    if (enabled() && bian && String(bian.d).indexOf('遺物武器') < 0) bian.d += '+15 以上的遺物武器也能在這裡賦予屬性，昇華支配、至高的支配的屬性魔法最高 5 星。';   // 矮人鐵匠外型（與火焰鐵匠同款）
   } catch (e) {}
   if (typeof window.interactNPC === 'function') {
     var oNpc = window.interactNPC;
@@ -1322,7 +1397,7 @@
 
   var rawUpgrade = upgrade;
   upgrade = withEq(upgrade); ascend = withEq(ascend); evolve = withEq(evolve); rollFx3 = withEq(rollFx3);
-  var featureApi = { autoAttr: autoAttr, rollFx3: rollFx3, fx3Lock: fx3Lock, hamaAttr: hamaAttr, ascend: ascend, ascCost: ascCost, craftStardust: craftStardust, open: open, upgrade: upgrade, groups: groups, ensure: ensure, exchange: exchange, embed: embed, evolve: evolve, equippedEvo: equippedEvo, EVO: EVO, buildDef: buildDef, costOf: costOf, donorsFor: donorsFor, makeId: makeId };
+  var featureApi = { autoAttr: autoAttr, rollFx3: rollFx3, fx3Lock: fx3Lock, hamaAttr: hamaAttr, ascend: ascend, ascCost: ascCost, craftStardust: craftStardust, open: open, upgrade: upgrade, groups: groups, ensure: ensure, exchange: exchange, embed: embed, evolve: evolve, equippedEvo: equippedEvo, EVO: EVO, buildDef: buildDef, costOf: costOf, donorsFor: donorsFor, makeId: makeId, parseId: parseId, remember: remember, fxAt: fxAt, kindOk: KIND_OK, select: function (key) { ui.sel = key; render(); }, ui: ui };
   Object.defineProperty(window, '__afkRelicPlus', { configurable: true, get: function () { return enabled() ? featureApi : null; } });
   // ── 遺物・司祭苦行套裝（玩家 2026-10-24）：名稱標上遺物；墮落的司祭一～五階每殺一隻判定一次 0.0001%，中了從五件裡隨機給一件 ──
   (function () {

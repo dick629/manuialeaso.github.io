@@ -86,6 +86,8 @@ try {
       assert.ok((await page.locator('#rp-modal .rp-rule').innerText()).includes('飾品最高 +10'),'smith rules show accessory cap');
       const hamaScroll=await page.locator('#rp-modal .rp-content').evaluate(e=>({scroll:e.scrollHeight,client:e.clientHeight,width:e.scrollWidth,clientWidth:e.clientWidth}));
       assert.ok(hamaScroll.client>=80&&hamaScroll.width<=hamaScroll.clientWidth+2,`${spec.name} smith body has usable vertical scrolling: ${JSON.stringify(hamaScroll)}`);
+      const termKey=await page.evaluate(()=>{const row=AFK_RELIC_CATALOG.find(r=>r.id===29);return __afkRelicPlus.groups().find(g=>g.base===row.key&&g.asc===0).key;});
+      await page.evaluate(k=>__afkRelicPlus.select(k),termKey);
       const terminalRow=page.locator('#rp-list .rp-row').filter({hasText:'這件遺物昇華支配後即達終階'});
       assert.equal(await terminalRow.count(),1,'terminal relic has one final-stage row');
       assert.equal(await terminalRow.locator('button').innerText(),'已達終階','terminal relic does not advertise a nonexistent upgrade');
