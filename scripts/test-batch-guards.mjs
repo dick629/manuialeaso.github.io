@@ -27,7 +27,7 @@ try{
     gainItem(ex,400,true,true);const exN=()=>player.inv.filter(x=>x.id===ex).reduce((s,x)=>s+(x.cnt||1),0),resN=()=>player.inv.filter(x=>x.id===res).reduce((s,x)=>s+(x.cnt||1),0);
     const r0=resN();it=player.inv.find(x=>x.id===ex);openModal(it,false);out.exBtns=[...document.querySelectorAll('[data-afk-bo]')].map(b=>b.textContent);
     let gaps=[],last=performance.now();const iv=setInterval(()=>{const n=performance.now();gaps.push(n-last);last=n;},10);
-    afkBatchOpen(it.uid,200);await new Promise(r=>setTimeout(r,30));out.stopBtn=document.querySelector('[data-afk-bo="10"]').textContent;
+    afkBatchOpen(it.uid,200);await new Promise(r=>setTimeout(r,30));out.stopBtn=document.querySelector('[data-afk-bo="10"]').textContent;out.locked=[...document.querySelectorAll('#modal-actions button')].filter(b=>!b.disabled).map(b=>b.textContent.trim());
     await new Promise(r=>{const c=()=>exN()<=200?r():setTimeout(c,20);c();});
     out.ex=[exN(),resN()-r0];
     it=player.inv.find(x=>x.id===ex);afkBatchOpen(it.uid,it.cnt);await new Promise(r=>setTimeout(r,60));afkBatchOpen.stop();
@@ -46,7 +46,7 @@ try{
   assert.deepEqual(r.btns,['開 10 個','全部開啟（30）']);
   assert.equal(r.after10,20,'開 10 個');
   assert.equal(r.afterAll,0,'全部開啟');
-  assert.deepEqual(r.exBtns,['開 10 個','全部開啟（400）'],'兌換券也有');assert.equal(r.stopBtn,'停止');
+  assert.deepEqual(r.exBtns,['開 10 個','全部開啟（400）'],'兌換券也有');assert.equal(r.stopBtn,'停止');assert.deepEqual(r.locked.filter(t=>!/關閉/.test(t)),['停止'],'開啟中只剩停止能按 '+r.locked.join('/'));
   assert.deepEqual(r.ex,[200,200],'兌換券開 200 張');assert.equal(r.stopped,true,'可以停止');assert.ok(r.maxGap<250,'不卡 '+r.maxGap);
   assert.deepEqual(r.cap,['w_arms','w_arms','w_arms','w_arms',null,null,null],'同技藝最多 4 人');
   assert.equal(r.tune,0.01);

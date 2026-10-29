@@ -34,7 +34,10 @@
     var id = it.id, total = Math.min(want, it.cnt || 1), done = 0;
     var before = counts(p), gold0 = Number(p.gold) || 0, saved = {}, lastMsg = '';
     running = true; stopReq = false;
-    var btns = document.querySelectorAll('[data-afk-bo]'); btns.forEach(function (b) { b.disabled = true; });
+    // 開啟中：物品視窗裡其他會動到這疊的按鈕（使用、販賣、全部賣出、標記廢品…）一起停用，只留「停止」與「關閉視窗」（2026-10-29 23:06 手機檢查）
+    var box0 = document.getElementById('modal-actions');
+    var btns = box0 ? box0.querySelectorAll('button, input') : document.querySelectorAll('[data-afk-bo]');
+    btns.forEach(function (b) { if (!/關閉/.test(b.textContent || '')) b.disabled = true; });
     var label = document.querySelector('[data-afk-bo="all"]'), ten = document.querySelector('[data-afk-bo="10"]');
     if (ten && want > 10) { ten.disabled = false; ten.textContent = '停止'; ten.setAttribute('onclick', 'afkBatchOpen.stop()'); }
     var quiet = function (on) {
@@ -57,7 +60,11 @@
       } catch (e) {}
       try { renderTabs(); } catch (e) {} try { updateUI(); } catch (e) {} try { saveGame(); } catch (e) {}
       var left = p.inv.find(function (x) { return x.uid === uid; }) || p.inv.find(function (x) { return x.id === id && !x.lock; });
-      try { if (left) openModal(left, false); else closeModal(); } catch (e) {}
+      try {
+        var mod = document.getElementById('item-modal'), shown = !!(mod && !mod.classList.contains('hidden'));
+        if (!shown) return;   // 開到一半自己關掉了視窗 → 不再跳出來
+        if (left) openModal(left, false); else closeModal();
+      } catch (e) {}
     };
     var cur = null;
     var step = function () {

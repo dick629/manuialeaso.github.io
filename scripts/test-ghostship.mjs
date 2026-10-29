@@ -31,6 +31,9 @@ try{
     fake=new Date(2026,9,29,22,30,1).getTime();const msgs=[],oLog=window.logSys;window.logSys=h=>msgs.push(String(h));G.clock();window.logSys=oLog;out.note=msgs.some(h=>/幽靈船靠上了說話之島/.test(h));
     // NPC 視窗
     const div=document.createElement('div');document.body.appendChild(div);G.render(div);out.btn=!!div.querySelector('button[data-gs="board"]:not([disabled])');
+    // 視窗開著：倒數每秒更新、離岸那一刻按鈕變不能按（2026-10-29 23:06 手機檢查）
+    const cd0=div.querySelector('#afk-gs-cd').textContent;fake+=7000;G.liveCd();out.cdLive=div.querySelector('#afk-gs-cd').textContent!==cd0;
+    fake=new Date(2026,9,29,22,40,1).getTime();G.liveCd();out.btnOff=!!div.querySelector('button[data-gs="board"][disabled]')&&/下一班/.test(div.querySelector('#afk-gs-cd').textContent);
     return out;
   });
   console.log(JSON.stringify(r));
@@ -42,7 +45,7 @@ try{
   assert.equal(r.summon,2,'深海的召喚');assert.equal(r.curse,true,'沉船的詛咒');
   assert.equal(r.capDown,true);assert.ok(r.gold>=65*1500,'寶箱金幣 '+r.gold);assert.equal(r.stats,1);
   assert.equal(r.back,'town_talking','沉船回說話之島');
-  assert.equal(r.note,true,'靠岸通知');assert.equal(r.btn,true,'可以登船');
+  assert.equal(r.note,true,'靠岸通知');assert.equal(r.btn,true,'可以登船');assert.equal(r.cdLive,true,'倒數會動');assert.equal(r.btnOff,true,'離岸後按鈕關掉');
   assert.deepEqual(errors,[]);
   await close();
   console.log('test-ghostship: ok');

@@ -240,12 +240,25 @@
     W.tick = function () { var t0 = tk(), r = oTick.apply(this, arguments); if (tk() !== t0) { try { clock(); } catch (e) { console.warn('[AFK-ghostship] tick', e); } } return r; };
   }
   // 在城裡（不跑戰鬥 tick）也要更新狀態列與靠岸通知
+  setInterval(function () { try { liveCd(); } catch (e) {} }, 1000);
   setInterval(function () { try { if (!S().running || (typeof mapState !== 'undefined' && mapState.current !== MAP)) { var p = P(); if (p) { var t = now(), sl = slot(t); if (docked(t) && lastNote !== sl && (Number(p.lv) || 0) >= LV_MIN && !catching()) { lastNote = sl; sys('<span class="font-bold" style="color:#5eead4">⛵ 霧裡傳來船鐘聲——幽靈船靠上了說話之島的港口！' + hhmm(sl + BOARD) + ' 前可以找港口的「' + NPC_N + '」登船。</span>'); } } } badge(); } catch (e) {} }, 1000);
 
   // ── NPC ──
   K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: '港口', type: 'travel',
     d: '站在說話之島港口霧裡的老水手。每個整點與半點，幽靈船會靠岸 10 分鐘，他會帶你登船。' }, '1045');
   var ui = { err: '' };
+  var cdHtml = function (t) {
+    var st = store();
+    return (docked(t) ? '<b style="color:#5eead4">幽靈船正在靠岸</b>：還可以登船 ' + mmss(slot(t) + BOARD - t) + '，' + hhmm(slot(t) + VOYAGE) + ' 開走。'
+      : '下一班 <b>' + hhmm(nextDock(t)) + '</b>（' + mmss(nextDock(t) - t) + ' 後）。') + '　搭過 ' + (st.rides || 0) + ' 趟、打倒船長 ' + (st.captains || 0) + ' 次。';
+  };
+  // NPC 視窗開著時每秒只更新倒數那一行（整個重畫會吃掉手機上的點擊）；靠岸／離岸那一刻才整個重畫，讓「登船」按鈕跟著開關（2026-10-29 23:06）
+  var liveCd = function () {
+    var el = document.getElementById('afk-gs-cd'); if (!el || !P()) return;
+    var t = now(), d = docked(t) ? '1' : '0';
+    if (el.getAttribute('data-docked') !== d) { var box = document.getElementById('afk-gs-npc'); if (box && box.parentNode) paint(box.parentNode); return; }
+    var h = cdHtml(t); if (el.innerHTML !== h) el.innerHTML = h;
+  };
   var paint = function (div) {
     var box = div.querySelector('#afk-gs-npc'); if (!box) return;
     var p = P(); if (!p) return;
@@ -253,8 +266,7 @@
     var h = '<div class="ax-h">幽靈船出航</div>'
       + '<div class="ax-note">每個<b>整點與半點</b>（照你電腦的時鐘），幽靈船會從霧裡靠上這座港口，<b>停 10 分鐘</b>讓人登船，靠岸 <b>20 分鐘</b>後沉回霧裡、船上的人回到這裡。'
       + '甲板上的船員會一直湧出來（強度跟著你的等級）；這一趟打倒 ' + NEED + ' 名船員，<b>幽靈船長</b>就會現身：幽靈砲擊、深海的召喚、HP 一半以下的沉船的詛咒。打倒他得到船長的寶箱（魔法結晶體、金幣、機率祝福卷軸與龍之鑽石）。</div>'
-      + '<div class="ax-note">' + (d ? '<b style="color:#5eead4">幽靈船正在靠岸</b>：還可以登船 ' + mmss(slot(t) + BOARD - t) + '，' + hhmm(slot(t) + VOYAGE) + ' 開走。'
-        : '下一班 <b>' + hhmm(nextDock(t)) + '</b>（' + mmss(nextDock(t) - t) + ' 後）。') + '　搭過 ' + (st.rides || 0) + ' 趟、打倒船長 ' + (st.captains || 0) + ' 次。</div>';
+      + '<div class="ax-note" id="afk-gs-cd" data-docked="' + (d ? 1 : 0) + '">' + cdHtml(t) + '</div>';
     h += K.rowHtml({ key: 'board', name: '登船', color: '#99f6e4', desc: '需要 Lv' + LV_MIN + '。登船後甲板上的船員依你的等級變強。', why: why || '', btns: [['board', '登船', !why]] }, 'data-gs');
     if (ui.err) h += '<div class="ax-err">' + esc(ui.err) + '</div>';
     K.repaint(box, h);
@@ -272,6 +284,6 @@
   K.hookNpc(NPC_ID, NPC_N, '港口', render);
 
   W.__afkGhostShip = { MAP: MAP, TOWN: TOWN, NPC_ID: NPC_ID, NEED: NEED, EVERY: EVERY, BOARD: BOARD, VOYAGE: VOYAGE, LV_MIN: LV_MIN,
-    slot: slot, docked: docked, sailing: sailing, nextDock: nextDock, canBoard: canBoard, board: board, leave: leave, clock: clock, render: render,
+    slot: slot, docked: docked, sailing: sailing, nextDock: nextDock, canBoard: canBoard, board: board, leave: leave, clock: clock, render: render, liveCd: liveCd,
     run: function () { return run; }, stats: store };
 })();
