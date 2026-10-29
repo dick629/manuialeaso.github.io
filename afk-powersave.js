@@ -203,18 +203,20 @@
         return false;
     }
     var PRESETS = {
-        full: { label: '完整效果', noanim: false, nofx: false, vfx: true, vfxnum: true },
-        smooth: { label: '流暢顯示', noanim: false, nofx: true, vfx: false, vfxnum: true },
-        low: { label: '極省電', noanim: true, nofx: true, vfx: false, vfxnum: false }
+        full: { label: '完整效果', noanim: false, nofx: false, vfx: true, vfxnum: true, fps: 0 },
+        smooth: { label: '流暢顯示', noanim: false, nofx: true, vfx: false, vfxnum: true, fps: 60 },   // 60：60Hz 螢幕上不動，90／120Hz 螢幕少畫一半（afk-fpscap，2026-10-29 23:44）
+        low: { label: '極省電', noanim: true, nofx: true, vfx: false, vfxnum: false, fps: 15 }
     };
     function preset(key) {
         var p = PRESETS[key]; if (!p) return false;
         set('noanim', p.noanim); set('nofx', p.nofx);
         ['vfx', 'vfxnum'].forEach(function (k) { if (coreReady(k)) CORE[k].set(p[k]); });
+        if (window.AFK_FPS) AFK_FPS.set(p.fps || 0);
         return true;
     }
     function snapshot() {
         var r = { noanim: on('noanim'), nofx: on('nofx') };
+        if (window.AFK_FPS) r.fps = AFK_FPS.get();
         Object.keys(CORE).forEach(function (k) { if (coreReady(k)) r[k] = CORE[k].get(); });
         return r;
     }
@@ -246,6 +248,18 @@
                 + '<input type="checkbox" ' + attr + ' ' + (checked ? 'checked' : '') + ' style="width:18px;height:18px;flex:none;accent-color:#22c55e;">'
                 + '<span><span style="font-weight:600;">' + esc(o.name) + '</span><span style="display:block;font-size:13px;line-height:1.6;color:#94a3b8;margin-top:2px;">' + esc(o.desc) + '</span></span></label>';
         }).join('');
+        var fpsRow = '';
+        if (window.AFK_FPS) {
+            var curF = AFK_FPS.get(), hzN = AFK_FPS.hz ? AFK_FPS.hz() : 60;
+            fpsRow = '<div style="padding:10px;border:1px solid #1e293b;border-radius:10px;margin-bottom:8px;background:#0b1222;">'
+                + '<div style="font-weight:600;">畫面幀率上限（FPS）</div>'
+                + '<div style="font-size:13px;line-height:1.6;color:#94a3b8;margin:2px 0 8px;">動畫與特效每秒只更新這麼多次，越低越省電、動作越不連貫；戰鬥計算、掛機速度不受影響。'
+                + '這台裝置的螢幕約 ' + hzN + 'Hz' + (hzN <= 66 ? '，選 60 不會有差別' : '') + '。</div>'
+                + '<div style="display:flex;gap:6px;">' + AFK_FPS.CAPS.map(function (c) {
+                    var sel = c === curF;
+                    return '<button type="button" data-psfps="' + c + '" class="btn" style="flex:1;min-height:38px;white-space:nowrap;padding:4px 6px;' + (sel ? 'background:#166534;border-color:#22c55e;color:#dcfce7;font-weight:700;' : '') + '">' + (c ? String(c) : '不限制') + '</button>';
+                }).join('') + '</div></div>';
+        }
         var card = document.createElement('div');
         // max-height:100% 是相對「遮罩扣掉 padding 後」的高度 —— 橫幅讓位(applyBannerPad 改的是同一個 padding)
         // 自動吃得到,不必再自己算 dvh。清單自己捲,標題與「完成」永遠留在畫面上。
@@ -254,7 +268,7 @@
         card.innerHTML = '<div style="padding:16px 18px;border-bottom:1px solid #1e293b;flex:0 0 auto;"><div id="afk-ps-title" style="font-size:18px;font-weight:700;">🔋 省電模式</div>'
             + '<div style="font-size:13px;line-height:1.6;color:#94a3b8;margin-top:5px;">卡頓時先選「流暢顯示」，仍不順再選「極省電」；戰鬥數值照常計算。</div></div>'
             + '<div style="padding:12px 14px;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;"><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">'
-            + Object.keys(PRESETS).map(function (k) { return '<button class="btn" type="button" data-preset="' + k + '" style="flex:1;min-height:40px;">' + PRESETS[k].label + '</button>'; }).join('') + '</div>' + rows + '</div>'
+            + Object.keys(PRESETS).map(function (k) { return '<button class="btn" type="button" data-preset="' + k + '" style="flex:1;min-height:40px;">' + PRESETS[k].label + '</button>'; }).join('') + '</div>' + fpsRow + rows + '</div>'
             + '<div style="padding:12px 16px;border-top:1px solid #1e293b;text-align:right;flex:0 0 auto;"><button id="afk-ps-close" style="background:#0ea5e9;border:none;color:#04263a;font-weight:700;border-radius:8px;padding:8px 16px;cursor:pointer;">完成</button></div>';
         ov.appendChild(card); document.body.appendChild(ov);
         var previousFocus = document.activeElement, layer = null;
@@ -272,9 +286,19 @@
                 try { CORE[cb.getAttribute('data-pscore')].set(!cb.checked); } catch (e) {}
             });
         });
+        var paintFps = function () {
+            if (!window.AFK_FPS) return; var c = AFK_FPS.get();
+            card.querySelectorAll('[data-psfps]').forEach(function (b) {
+                var sel = Number(b.getAttribute('data-psfps')) === c;
+                b.style.background = sel ? '#166534' : ''; b.style.borderColor = sel ? '#22c55e' : ''; b.style.color = sel ? '#dcfce7' : ''; b.style.fontWeight = sel ? '700' : '';
+            });
+        };
+        card.querySelectorAll('[data-psfps]').forEach(function (b) {
+            b.addEventListener('click', function () { try { AFK_FPS.set(Number(b.getAttribute('data-psfps'))); } catch (e) {} paintFps(); });
+        });
         card.querySelectorAll('[data-preset]').forEach(function (button) {
             button.addEventListener('click', function () {
-                preset(button.getAttribute('data-preset'));
+                preset(button.getAttribute('data-preset')); paintFps();
                 card.querySelectorAll('input[data-ps]').forEach(function (cb) { cb.checked = on(cb.getAttribute('data-ps')); });
                 card.querySelectorAll('input[data-pscore]').forEach(function (cb) { cb.checked = !CORE[cb.getAttribute('data-pscore')].get(); });
             });
