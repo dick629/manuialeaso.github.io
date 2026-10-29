@@ -18,6 +18,17 @@ try{
     const div=document.createElement('div');document.body.appendChild(div);renderIoExchange(div);
     out.io=div.querySelectorAll('[onclick^="doIoExchange"]').length;
     out.remTab=SHERINE_REMAINS.length;
+    // 2026-10-29 22:19：穿癲狂（夢域）＋冥鐵在村莊異常掉血——滿血時每重算一次 HP 被夾到沒有癲狂加成的上限
+    __profile({cls:'royal',lv:100});
+    const ids=SHERINE_REMAINS.filter(r=>!r.soul).map(r=>r.id);
+    ids.slice(0,4).forEach(id=>{player.eq[id]={id,uid:uid(),cnt:1,en:0,seteff:'狂怒夢'};});
+    ids.slice(4,8).forEach(id=>{player.eq[id]={id,uid:uid(),cnt:1,en:0,seteff:'鐵衛夢'};});
+    player.eq.rem_soul={id:'rem_soul',uid:uid(),cnt:1,en:0,seteff:'狂怒'};
+    recomputeStats();player.hp=player.mhp;const full=player.hp;recomputeStats();recomputeStats();out.madHp=[full,player.hp,player.mhp];
+    ids.forEach(id=>player.eq[id]=null);player.eq.rem_soul=null;recomputeStats();out.plainMhp=player.mhp;
+    // 轉生副手的最大 HP 也一樣
+    __profile({cls:'knight',lv:120,rebirth:1});player.eq.offwpn={id:'wpn_windblade_dagger',uid:uid(),en:0};recomputeStats();player.hp=player.mhp;const f2=player.hp;recomputeStats();out.offHp=[f2,player.hp];
+    player.eq.offwpn=null;recomputeStats();out.offGain=f2-player.mhp;
     return out;
   });
   assert.equal(r.n0,4);
@@ -30,6 +41,8 @@ try{
   assert.equal(r.color,'c-sherine-dream');
   assert.equal(r.io,8,'伊奧不兌換之魂');
   assert.equal(r.remTab,9);
+  assert.equal(r.madHp[1],r.madHp[0],'癲狂：滿血重算後 HP 不被砍');assert.equal(r.madHp[2],r.madHp[0]);assert.ok(r.madHp[2]>r.plainMhp+5000,'癲狂最大 HP 加成還在');
+  assert.equal(r.offHp[1],r.offHp[0],'副手最大 HP：重算後不被砍');assert.equal(r.offGain,100,'副手 +100 HP');
   assert.deepEqual(errors,[]);
   await close();
   console.log('test-sherine-dream: ok');

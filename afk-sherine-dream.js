@@ -95,8 +95,8 @@
             if (e.out) Object.keys(e.out).forEach(function (k) { fx.out[k] *= e.out[k]; });
             if (e.taken) fx.taken *= e.taken;
             if (e.leech) fx.leech += e.leech;
-            if (e.hp) { p.mhp = (p.mhp || 0) + e.hp; }
-            if (e.hpPct) { p.mhp = Math.floor((p.mhp || 0) * e.hpPct); }
+            // 最大 HP（癲狂）改在核心「夾 HP 之前」的掛點加（見下方 __afkMaxAdd）：
+            //   原本在重算之後才加，核心已經先把 HP 夾到沒有夢域加成的上限 → 每重算一次 HP 就被砍掉（玩家 2026-10-29 22:19：穿癲狂＋冥鐵在村莊異常掉血）
           });
         });
         p._sdreamFx = any ? fx : null;
@@ -105,6 +105,19 @@
       return r;
     };
   }
+  if (W.__afkMaxAdd && W.__afkMaxAdd.add) W.__afkMaxAdd.add(function (p) {
+    try {
+      if (!p || p !== ((typeof player !== 'undefined') ? player : null)) return;
+      var tiers = dreamTiers(p);
+      Object.keys(tiers).forEach(function (g) {
+        (tiers[g] || []).forEach(function (t) {
+          var e = DREAM[g] && DREAM[g][t]; if (!e) return;
+          if (e.hp) p.mhp = (p.mhp || 0) + e.hp;
+          if (e.hpPct) p.mhp = Math.floor((p.mhp || 0) * e.hpPct);
+        });
+      });
+    } catch (e) { console.warn('[AFK-sherine-dream] maxhp', e); }
+  });
   // 造成傷害
   var KIND = { melee: 'melee', phys: 'melee', physical: 'melee', ranged: 'ranged', magic: 'magic', mag: 'magic' };
   var C = W.AFK_CARD_COMBAT;

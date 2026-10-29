@@ -36,8 +36,13 @@
     d.magicDmg += num(w.mdmg); d.extraDmg += num(w.extraDmg); d.extraMp += num(w.extraMp);
     d.mpR += num(w.mpR); d.hpR += num(w.hpR); d.dr += num(w.dr); d.mr += num(w.mr);
     d.meleeCrit += num(w.mcrit); d.meleeCritDmg += num(w.mcritDmg); d.rangedCrit += num(w.rcrit);
-    if (w.mhp) p.mhp += num(w.mhp);
-    if (w.mmp) p.mmp += num(w.mmp);
+    // 最大 HP／MP 改在核心「夾 HP 之前」的掛點加（下方 __afkMaxAdd），否則每次重算 HP 會先被夾到沒有副手加成的上限（2026-10-29 22:19）
+  }
+  function offhandMax(p) {
+    var o = p && p.eq && p.eq.offwpn; if (!o) return;
+    var w = DB.items[o.id]; if (!w || w.type !== 'wpn') return;
+    if (w.mhp) p.mhp = (Number(p.mhp) || 0) + num(w.mhp);
+    if (w.mmp) p.mmp = (Number(p.mmp) || 0) + num(w.mmp);
   }
   function clamp(p) {
     var d = p && p.d; if (!d || !capOn) return;
@@ -102,5 +107,8 @@
       return r;
     };
   }
-  W.AFK_CAPS = { cap: CAP, addOffhand: addOffhand, clamp: clamp };
+  if (W.__afkMaxAdd && W.__afkMaxAdd.add) W.__afkMaxAdd.add(function (p) {
+    try { if (p && p === ((typeof player !== 'undefined') ? player : null) && on() && p.rebirth > 0) offhandMax(p); } catch (e) {}
+  });
+  W.AFK_CAPS = { cap: CAP, addOffhand: addOffhand, offhandMax: offhandMax, clamp: clamp };
 })();
