@@ -6,13 +6,13 @@
  *   改成：
  *     ‧一般合成、6 階重組只用「沒有詞條」的娃娃（有詞條的不計入、不會被消耗）。
  *     ‧魔法娃娃商人另開「詞條娃娃合成」專區：
- *         放入 2 個同階、有詞條的娃娃 → 成功率 5%、沒有保底，成功得到 1 個高一階的娃娃（隨機一隻）；
+ *         放入 2 個同階、有詞條的娃娃 → 成功率 0.5%（2026-10-29 21:07 從 5% 下修）、沒有保底，成功得到 1 個高一階的娃娃（隨機一隻）；
  *         失敗退還其中 1 個（隨機，詞條原封不動）。
  *         成品的詞條：每一類（祝福系、遠古系、屬性）從兩個材料裡隨機挑一個來源繼承（挑到的那個沒有就沒有），
  *         但一律回到一階：昇華的祝福／至高的祝福 → 祝福的；覺醒的／創世的 → 原名；屬性 2～5 階 → 同屬性 1 階；屬性魔法星數 → 1 星。
  *         6 階不能再升（四隻六階互換請用一般的 6 階重組，只收沒有詞條的）。
  *   2026-10-29 20:38：六階娃娃（安塔瑞斯、法利昂、林德拜爾、巴拉卡斯）不再從怪物身上掉落（四龍巢穴發瘋／時空階段原本 100%），
- *     只能用五階合成（一般合成 2 個五階 1%…或詞條專區 2 個五階 5%）。已經拿到的不受影響。
+ *     只能用五階合成（一般合成 2 個五階 1%…或詞條專區 2 個五階 0.5%）。已經拿到的不受影響。
  *   不改核心：包 dollTierCount／dollSynth／dollSynthAll／dollRerollT6／dollRerollT6All（執行時暫時把有詞條的娃娃當成鎖定）、
  *   包 renderCardSynth 加專區。亂數用核心的 _dollRng（跟一般合成一樣，存讀檔不會重抽）。
  * ========================================================================== */
@@ -23,7 +23,7 @@
     desc: '有詞條（祝福／遠古系／屬性）的魔法娃娃不會被一般合成吃掉；魔法娃娃商人另開專區：2 個同階有詞條的娃娃 → 5% 升一階（沒有保底），詞條隨機繼承但全部回到一階；六階娃娃不再掉落，只能用五階合成' });
   if (T && !T.enabled('dollaffix')) return;
   if (typeof DB === 'undefined' || typeof W.renderCardSynth !== 'function' || typeof DOLL_BY_TIER === 'undefined') return;
-  var RATE = 5, PAIR = 2;
+  var RATE = 0.5, PAIR = 2;   // 玩家 2026-10-29 21:07：5% → 0.5%
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var isDoll = function (it) { var d = it && DB.items[it.id]; return !!(d && d.doll && d.dollTier); };
   var attrOk = function (a) { try { return !!(a && typeof getAttrAffix === 'function' && getAttrAffix(a)); } catch (e) { return false; } };

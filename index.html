@@ -555,9 +555,9 @@
 <script src="js/01-drops-config.js?v=5e761b4d43.8.26-flywing-relics"></script>
 <script src="js/02-stats-recompute.js?v=76fb7400cf.8.26-flywing-relics"></script>
     <script src="js/03-combat-core.js?v=0a68aa7e31.8.26-flywing-relics"></script>
-    <script src="js/04-combat-attack.js?v=d16eb820ba.8.26-flywing-relics"></script>
+    <script src="js/04-combat-attack.js?v=a62a33fcaa.8.26-flywing-relics"></script>
 <script src="js/05-kill-progression.js?v=bb5a9b71e6.8.34-merc-trial-class-loot"></script>
-    <script src="js/06-status-allies.js?v=403186b5d0.8.34-merc-trial-class-loot"></script>
+    <script src="js/06-status-allies.js?v=35ab701f0f.8.34-merc-trial-class-loot"></script>
     <script src="js/07-skills-cast.js?v=258314b415.8.26-flywing-relics"></script>
 <script src="js/08-items-equip.js?v=ae209702e8.8.16-wis-regen-interval"></script>
 <script src="js/09-vfx-render.js?v=733f30f684.8.32-merc-vfx-origin"></script>
@@ -639,7 +639,7 @@
     <!-- afk-allyslim：傭兵快照瘦身——傭兵是來源角色的深拷貝，隊長存檔裡每個傭兵都各帶一份廢品標記等用不到的資料（實測佔存檔三成）。包 saveGame，存檔前清空 -->
     <script src="afk-allyslim.js?v=6b4a8e1e98"></script>
     <!-- 共用基礎：自製彈窗/確認、dex/wiki 共用資料表（其他外掛依賴，排前面） -->
-    <script src="afk-ui.js?v=e832474894"></script>
+    <script src="afk-ui.js?v=3ce1e275d5"></script>
     <script src="afk-extradata.js?v=08875d92f5"></script>
     <!-- 離線快速結算（自己 monkey-patch 包核心 saveGame/loadGame/changeMap/killMob/gainItem；搭配 maybeSpawnMobs 補丁） -->
     <script src="afk-offline.js?v=8eebcc2371"></script>
@@ -663,7 +663,9 @@
     <script src="afk-dex.js?v=a6c325f949"></script>
     <!-- afk-classtweak：職業技能微調（立方：和諧回 MP 5 → 15）；排在 afk-wiki 之前（小百科的技能說明讀它改過的數值） -->
     <script src="afk-classtweak.js?v=d4bb120492"></script>
-    <script src="afk-wiki.js?v=5d8673f188"></script>
+    <!-- afk-illufix：幻術士修補（疼痛的歡愉 −50%、反彈、蝕刻印記；立方：燃燒 每 2 秒 5～50 火傷、灼熱印記、吸血回魔）；排在 afk-wiki 之前（小百科說明跟著改）；需核心補丁 69 -->
+    <script src="afk-illufix.js?v=e506b2a056"></script>
+    <script src="afk-wiki.js?v=f4fea4926b"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=302890a0df"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
@@ -765,7 +767,7 @@
     <script src="afk-skillbar.js?v=496ea95617"></script>
     <script src="afk-toast.js?v=f6bc41ad16"></script>
     <!-- 手機長按 .tip-host 顯示原版資料框（倉庫清單由 afk-warehouse 自理，故排在它之前無妨） -->
-    <script src="afk-touchtip.js?v=e26211cc66"></script>
+    <script src="afk-touchtip.js?v=2d6694fdc4"></script>
     <!-- 關閉物品懸停資訊框（預設關;嫌 hover 擋路的人自行開啟;不印 hooks OK 故不在 smoke need 內） -->
     <script src="afk-notip.js?v=7cfb049009"></script>
     <!-- afk-dollcursor：關閉魔法娃娃游標（預設關）——包 applyDollCursor；手機上那顆「點一下留下的光點」也是同一個東西，一起關 -->
@@ -841,7 +843,7 @@
     <script src="afk-forged-sprites.js?v=63f7545505"></script>
     <script src="afk-card-ascension.js?v=ef2d9128ba"></script>
     <!-- afk-dollaffix：詞條娃娃合成（有詞條的娃娃不進一般合成；魔法娃娃商人專區：2 個同階 → 5%、無保底、詞條隨機繼承回一階） -->
-    <script src="afk-dollaffix.js?v=fed133cf27"></script>
+    <script src="afk-dollaffix.js?v=28e81aeb07"></script>
     <script src="afk-card-combat.js?v=cc7d222d53"></script>
     <!-- afk-saint-cloth：聖衣光輝（解除封印 5 次失去光輝、雅典娜祝福恢復）、光輝碎片升星（對最終頭目）、封印型態沒有翅膀；需 afk-card-ascension、afk-card-combat -->
     <script src="afk-saint-cloth.js?v=71ebe31189"></script>
@@ -862,7 +864,7 @@
     <!-- afk-traitor：亞丁城副本「謀叛者的低語」（持有亞丁城＋統一七城，經由亞丁城的伊菈進入；冥皇丹特斯、反王肯恩、魔女賽尼斯＋四大軍王與長老）（需 afk-castlewar、afk-sets） -->
     <script src="afk-traitor.js?v=66ee7525c9"></script>
     <!-- afk-hidden：隱藏條件（謀叛三人組、王族之敵）；需 afk-card-combat、afk-affix-plus 的受傷掛點 -->
-    <script src="afk-hidden.js?v=7d89b59cfa"></script>
+    <script src="afk-hidden.js?v=dac10906a2"></script>
     <!-- afk-dropcap：掉落種類下修 30%（必掉不算；需核心補丁 68） -->
     <script src="afk-dropcap.js?v=9e39ddb59e"></script>
     <!-- afk-giltas：吉爾塔斯副本「異界祭壇」（長老會議廳・次元裂隙；鑰匙碎片、信仰的寶珠、四色反擊屏障、真．吉爾塔斯之劍、支配者吉爾塔斯變身卡）（需 afk-traitor、afk-card-ascension、afk-relicplus） -->
@@ -878,7 +880,7 @@
     <!-- afk-screen：掛機模式（螢幕常亮＋全黑省電畫面，戰鬥照常；熱鍵列 🌙） -->
     <script src="afk-screen.js?v=9c9b870cf4"></script>
     <!-- afk-petinherit：寵物繼承主人 30% 面板與 HP／MP -->
-    <script src="afk-petinherit.js?v=d35f13ce86"></script>
+    <script src="afk-petinherit.js?v=1fb86b21df"></script>
     <!-- afk-poly-codex：變身收集冊（普通／銀／金，打怪掉卡、登錄加能力、金卡合成神話）（需 afk-card-ascension） -->
     <script src="afk-poly-codex.js?v=8ca138ce1c"></script>
     <!-- afk-card-codex：變身卡冊（點亮／升星，五抗加成）與燃柳村 NPC「至幻者」（需 afk-card-ascension） -->
@@ -913,7 +915,7 @@
     <!-- afk-redguard：避免紅人持續追殺（席琳神殿「女神嘆息信徒 京」：10 龍鑽或 100 萬金幣，正義值歸 0、追殺散去、追殺永久解除）；需 afk-npc-kit -->
     <script src="afk-redguard.js?v=d7fcf19c46"></script>
     <!-- afk-kurt-hunt：世界事件「克特的追殺令」（隊伍有王族、Lv30+、每次出怪 5%、冷卻 15 分；地圖等級縮放；副本不出現）＋克特技能組 -->
-    <script src="afk-kurt-hunt.js?v=0a885b6b93"></script>
+    <script src="afk-kurt-hunt.js?v=9280009320"></script>
     <!-- afk-lore-kit：劇情任務線與新 Boss 共用工具（試煉接取制、套裝、召喚） -->
     <script src="afk-lore-kit.js?v=f84827693d"></script>
     <!-- afk-lore-main：主線劇情「紅獅之誓」Lv10～55（甘特）＋通緝犯庫傑；需 afk-lore-kit、afk-kurt-hunt（紅獅王的守護） -->
@@ -922,6 +924,8 @@
     <script src="afk-hardin.js?v=6db89ecc89"></script>
     <!-- afk-halpas：終章劇情「闇龍的低語」Lv85～100（燃柳村 奧拉奇里亞）＋火焰之影（真身）＋闇龍 哈爾巴斯＋反王肯恩／死亡騎士重做；需 afk-lore-kit、afk-npc-kit、afk-arts -->
     <script src="afk-halpas.js?v=801012865d"></script>
+    <!-- afk-world-events：世界事件第二批（魔女賽尼斯「血的誓約詛咒」、暗殺軍王史雷佛「刺殺令」、魔族的獵龍隊、反王肯恩「篡位者的懸賞」）；需 afk-lore-kit，和 afk-kurt-hunt 共用規則 -->
+    <script src="afk-world-events.js?v=2e7bb4f8e0"></script>
     <!-- afk-relicreroll：銀騎士村艾彼迪爾——+10 遺物＋回夢水晶重洗遺物第二詞綴（保留或替換）；回夢香塵（夢域四龍巢穴）20 換 1 回夢水晶；需 afk-relicplus -->
     <script src="afk-relicreroll.js?v=08bf3a7edc"></script>
     <!-- afk-bosstrack：魔物追蹤 24 小時＋BOSS 追蹤（奧貝勒等追蹤 NPC；消耗任意遺物追蹤頭目 8 小時，每延長一次多 1 件，最多 24 小時） -->

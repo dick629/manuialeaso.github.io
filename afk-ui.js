@@ -102,6 +102,15 @@
 })();
 
 (function () {
+  // 玩家 2026-10-29 21:07：物品說明框（核心 .game-tooltip，z-index 80）跑到 NPC 浮動視窗（9700）後面 → 一律墊到最上層（橫幅除外）
+  (function () {
+    try {
+      if (document.getElementById('afk-tip-top')) return;
+      var st = document.createElement('style'); st.id = 'afk-tip-top';
+      st.textContent = '.game-tooltip{z-index:100500 !important;}';
+      (document.head || document.documentElement).appendChild(st);
+    } catch (e) {}
+  })();
   var nativeAlert = (typeof window.alert === 'function') ? window.alert.bind(window) : null;
   var queue = [];
   var modal = null, msgEl = null, okBtn = null, showing = false, layer = null;

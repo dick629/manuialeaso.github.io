@@ -6,11 +6,12 @@
  *   技能傷害 ＋ 魔法傷害 ×30%                       AC ＋ 你的 AC ×30%（只取負值，越低越好）
  *   傷害減免、迴避、魔防 ＋ 你的 ×30%                最大 HP ＋ 你的最大 HP ×30%、最大 MP ＋ 你的最大 MP ×30%
  * 不改寫寵物存檔的 HP／MP 上限，只在戰鬥、恢復、顯示時加上去。
+ * 2026-10-29 21:07（玩家）：出戰寵物每次攻擊，全隊（你與每名傭兵、出戰寵物）回復 5 MP。
  * ========================================================================== */
 (function () {
   'use strict';
   var __T = window.AFK_TOGGLES;
-  if (__T && __T.register) __T.register({ id: 'petinherit', name: '寵物繼承主人能力', desc: '寵物繼承主人 30% 的面板能力與 HP／MP', group: '遊戲玩法' });
+  if (__T && __T.register) __T.register({ id: 'petinherit', name: '寵物繼承主人能力', desc: '寵物繼承主人 30% 的面板能力與 HP／MP；寵物每次攻擊，全隊回復 5 MP', group: '遊戲玩法' });
   if (__T && !__T.enabled('petinherit')) { console.log('[AFK] 外掛開關「寵物繼承主人能力」已關閉'); return; }
   var W = window, R0 = 0.30;
   if (typeof W.petDerive !== 'function') { console.warn('[AFK-petinherit] 找不到寵物系統，略過'); return; }
@@ -42,6 +43,16 @@
     var oMhp = W.petMhpEff;
     W.petMhpEff = function (pet) { var v = oMhp.apply(this, arguments); try { var s = share(); if (s) v += s.hp; } catch (e) {} return v; };
   }
-  W.__afkPetInherit = { rate: R0, share: share };
+  // 寵物每次攻擊：全隊回 5 MP
+  var PET_MP = 5;
+  if (typeof W.petAttackOnce === 'function') {
+    var oAtk = W.petAttackOnce;
+    W.petAttackOnce = function (pet, d, target) {
+      var alive = target && target.curHp > 0, r = oAtk.apply(this, arguments);
+      try { if (alive && typeof W.teamRecoverMp === 'function') W.teamRecoverMp(PET_MP); } catch (e) {}
+      return r;
+    };
+  }
+  W.__afkPetInherit = { rate: R0, share: share, petMp: PET_MP };
   console.log('[AFK-petinherit] 已啟用：寵物繼承主人 30% 面板與 HP／MP');
 })();

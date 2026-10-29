@@ -1317,7 +1317,7 @@ function _enemyPhysicalAttackInner(mob, idx, stunChance = 0, atkDmg = null, atkD
         if (totalDmg > 0) { try { playSfx('hurt'); } catch(e){} }   // 🔊 音效：玩家受到物理傷害
         try { vfxPlayerHit(totalDmg); } catch(e){}   // ✨ VFX：較大一擊→戰場震動＋HP條紅閃
         if(player.buffs.sk_illu_pain > 0 && mob && mob.curHp > 0 && totalDmg > 0) {   // 🔮 疼痛的歡愉：受傷時對攻擊者反射等量（損失HP）的無屬性魔法傷害
-            let _rf = Math.max(1, Math.floor(totalDmg * fragileMult(mob)));
+            let _rf = Math.max(1, Math.floor((window.__afkPainRf ? window.__afkPainRf(player, totalDmg, mob) : totalDmg) * fragileMult(mob))); /* 🔌 加掛版補丁:疼痛的歡愉 */
             mob.curHp -= _rf; mob.justHit = 'magic'; mobWake(mob);
             logCombat(`<span class="font-bold" style="color:#f472b6;text-shadow:0 0 6px #ec4899;">【疼痛的歡愉】</span>痛楚化為反擊，對 <span class="${getMobColor(mob.lv)}">${mob.n}</span> 造成 ${_rf} 點傷害。`, 'magic');
             if(mob.curHp <= 0) { killMob(idx); if(player.hp <= 0) killPlayer(); return; }   // 🔧 同歸於盡：反擊殺死敵人時仍須結算玩家死亡（否則殘血<=0卻未死、被回血復活）
@@ -2560,7 +2560,7 @@ function _applyMobMagicInner(mob, sk) {
         }
         // 🔮 疼痛的歡愉：受到魔法「直接」傷害時亦對施法者反射等量無屬性傷害（與物理一致；灼燒/中毒/出血等持續傷害不反射，因其在狀態結算另計）
         if(player.buffs.sk_illu_pain > 0 && dmg > 0 && mob.curHp > 0) {
-            let _rf = Math.max(1, Math.floor(dmg * fragileMult(mob)));
+            let _rf = Math.max(1, Math.floor((window.__afkPainRf ? window.__afkPainRf(player, dmg, mob) : dmg) * fragileMult(mob))); /* 🔌 加掛版補丁:疼痛的歡愉 */
             mob.curHp -= _rf; mob.justHit = 'magic'; mobWake(mob);
             logCombat(`<span class="font-bold" style="color:#f472b6;text-shadow:0 0 6px #ec4899;">【疼痛的歡愉】</span>痛楚化為反擊，對 <span class="${getMobColor(mob.lv)}">${mob.n}</span> 造成 ${_rf} 點傷害。`, 'magic');
             if(mob.curHp <= 0) { let _ri = mapState.mobs.findIndex(m => m && m.uid === mob.uid); if(_ri !== -1) killMob(_ri); }

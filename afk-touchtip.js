@@ -110,7 +110,7 @@
         titleBox = document.createElement('div');
         titleBox.id = 'afk-tt-title';
         // 外觀比照核心 .game-tooltip(css/style.css),讓兩條路長得一樣
-        titleBox.style.cssText = 'position:fixed;z-index:80;max-width:min(280px,86vw);display:none;pointer-events:none;'
+        titleBox.style.cssText = 'position:fixed;z-index:100500;max-width:min(280px,86vw);display:none;pointer-events:none;'
             + 'background:#26252d;color:#e5e1dc;border:1px solid #8d6846;border-radius:8px;padding:10px 12px;'
             + 'font-size:13px;line-height:1.5;box-shadow:0 12px 30px rgba(0,0,0,.78),inset 0 0 0 1px #141318;';
         document.body.appendChild(titleBox);

@@ -32,7 +32,7 @@ try{
     out.t1=A.tier1Attr('fr5');out.t1b=A.tier1Attr('wa3');
     // 商人介面
     const div=document.createElement('div');div.id='interaction-content-test';document.body.appendChild(div);
-    renderCardSynth(div);const sec=div.querySelector('#afk-dollaffix');out.ui=!!sec&&/詞條娃娃合成/.test(sec.textContent)&&/5%/.test(sec.textContent)&&/沒有保底/.test(sec.textContent);
+    renderCardSynth(div);const sec=div.querySelector('#afk-dollaffix');out.ui=!!sec&&/詞條娃娃合成/.test(sec.textContent)&&/0.5%/.test(sec.textContent)&&/沒有保底/.test(sec.textContent);
     const kids=[...div.children];out.order=kids.indexOf(sec)>kids.findIndex(k=>/6 階重組/.test(k.textContent))&&kids.findIndex(k=>/6 階重組/.test(k.textContent))>=0;
     return out;
   });

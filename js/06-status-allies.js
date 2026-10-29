@@ -2078,7 +2078,7 @@ function allyReflectOnHit(ally, mob, dmgTaken, isMagic) {
     let b = ally.buffs || {};
     let _fm = fragileMult(mob);
     if (b.sk_illu_pain > 0 && mob.curHp > 0) {   // 疼痛的歡愉：100%
-        let _rf = Math.max(1, Math.floor(dmgTaken * _fm));
+        let _rf = Math.max(1, Math.floor((window.__afkPainRf ? window.__afkPainRf(ally, dmgTaken, mob) : dmgTaken) * _fm)); /* 🔌 加掛版補丁:疼痛的歡愉 */
         logCombat(`<span class="font-bold" style="color:#f472b6;">【協力·${ally._allyName}·疼痛的歡愉】</span>痛楚化為反擊，對 <span class="${getMobColor(mob.lv)}">${mob.n}</span> 造成 ${_rf} 點傷害。`, 'magic');
         _allyDamageMob(ally, mob, _rf, 'magic');
     }

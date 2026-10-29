@@ -145,6 +145,7 @@
     else if (why === 'royal') { st.fails = (st.fails || 0) + 1; sys('<span class="font-bold" style="color:#f87171">⚔ 克特收劍：「王族的血，到此為止。」他消失在黑騎士團的陣列之後。</span>'); }
     else { st.escapes = (st.escapes || 0) + 1; sys('<span class="font-bold" style="color:#fca5a5">⚔ 十分鐘過去，克特冷笑一聲離開了：「下一次，你不會這麼幸運。」</span>'); }
     hunt = null; badge();
+    try { var pp = P(); if (pp) { if (!pp.afkWe || typeof pp.afkWe !== 'object') pp.afkWe = { cd: {}, gap: 0, stats: {} }; pp.afkWe.gap = Date.now() + 10 * 60 * 1000; } } catch (e) {}
   };
   var start = function (idx) {
     var p = P(), cur = mapState.current, L = levelFor(cur);
@@ -162,6 +163,7 @@
     if ((Number(p.lv) || 0) < LV_MIN) return false;
     if (!royals(false).length) return false;
     if (Date.now() < (Number(p.afkKurtCd) || 0)) return false;
+    try { if (W.__afkWorldEvents && W.__afkWorldEvents.active()) return false; if (p.afkWe && Date.now() < (Number(p.afkWe.gap) || 0)) return false; } catch (e) {}   // 世界事件同時只有一個；任何事件結束後全部等 10 分鐘（afk-world-events）
     if (catching()) return false;
     return okMap(mapState.current);
   };

@@ -25,7 +25,7 @@ export async function testBrowser(browserOptions={}){
       page.on('pageerror',e=>errors.push(String(e.stack||e)));
       if(!browserOptions.offlineFixtures)await page.route('**/*',route=>{const q=new URL(route.request().url());if(q.protocol==='data:')return route.continue();if(options.font&&q.host===new URL(url).host&&q.pathname===options.font)return route.continue();if(q.host!==new URL(url).host||(!options.assets&&['image','media','font'].includes(route.request().resourceType())))return route.abort();return route.continue();});
       if(options.init)await page.addInitScript(options.init);
-      await page.addInitScript(()=>{window.__testTimers=[];const old=window.setInterval;window.setInterval=function(){const id=old.apply(this,arguments);window.__testTimers.push(id);return id;};});
+      await page.addInitScript(()=>{window.__afkTestNoKnightLoad=true;window.__testTimers=[];const old=window.setInterval;window.setInterval=function(){const id=old.apply(this,arguments);window.__testTimers.push(id);return id;};});
       await page.goto(url,{waitUntil:'load'});
       if(options.font){await page.addStyleTag({content:`@font-face{font-family:InterfaceTestCJK;src:url(${JSON.stringify(options.font)})}*{font-family:InterfaceTestCJK,sans-serif!important}`});await page.evaluate(()=>document.fonts.load('14px InterfaceTestCJK'));}
       try{await page.waitForFunction(()=>!!window.AFK_RELIC_INTEGRATION,null,{timeout:20000});}catch(e){throw new Error(e.message+'\nPage errors: '+errors.join('\n'));}

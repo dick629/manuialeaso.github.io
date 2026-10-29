@@ -1339,7 +1339,29 @@ function patchDebuffResistToggle() {
   if (any) changed++; else already++;
 }
 
-const PATCHES = [patchNoCastleBuyers, patchPetMpCap, patchEvadeCap, patchOffwpnRow, patchClassicDarkWeapons, patchPolyPickOverride, patchIllusionDamage, patchDebuffResist, patchNpcClanCount, patchEquipPoly, patchNoBossRegen, patchMaybeSpawnMobs, patchTradEnHook, patch16Slots, patchPetAnimTicker, patchBossHuntEscape, patchUseItemKeepModal, patchSellNowNoForce, patchInsigniaOrder, patchGiltasWandRecompute, patchEyeSlotInEquipList, patchRelicAffixHook, patchIllusionSetWpnProc, patchBuyerEnHook, patchWandererMakeHook, patchRelicBleedBonus, patchRelicSpecialScale, patchRelicDotRules, patchDreamHell, patchAscAttrStar, patchCardRebirth, patchPetHostRect, patchBarrierCdSkip, patchNoOfflineMaps, patchEvoHooks, patchRebirthMastery, patchLevelCap, patchCastleWar, patchIdleRaf, patchMaxAdd, patchAntFinal, patchEleRes, patchAllyDrCap, patchAllyHitstun, patchSetLate, patchRelicFx, patchRapidTrue];
+// 69. 疼痛的歡愉反射量掛點（玩家 2026-10-29 21:07：幻術士修補，外掛 afk-illufix）：反射的傷害交給 window.__afkPainRf 決定（沒有掛點＝原本的「受到多少反多少」）
+function patchPainReflect() {
+  const TAG = '/* 🔌 加掛版補丁:疼痛的歡愉 */';
+  const SITES = [
+    ['js/04-combat-attack.js', "if(player.buffs.sk_illu_pain > 0 && mob && mob.curHp > 0 && totalDmg > 0) {   // 🔮 疼痛的歡愉：受傷時對攻擊者反射等量（損失HP）的無屬性魔法傷害\n            let _rf = Math.max(1, Math.floor(totalDmg * fragileMult(mob)));",
+      "if(player.buffs.sk_illu_pain > 0 && mob && mob.curHp > 0 && totalDmg > 0) {   // 🔮 疼痛的歡愉：受傷時對攻擊者反射等量（損失HP）的無屬性魔法傷害\n            let _rf = Math.max(1, Math.floor((window.__afkPainRf ? window.__afkPainRf(player, totalDmg, mob) : totalDmg) * fragileMult(mob))); " + TAG],
+    ['js/04-combat-attack.js', "if(player.buffs.sk_illu_pain > 0 && dmg > 0 && mob.curHp > 0) {\n            let _rf = Math.max(1, Math.floor(dmg * fragileMult(mob)));",
+      "if(player.buffs.sk_illu_pain > 0 && dmg > 0 && mob.curHp > 0) {\n            let _rf = Math.max(1, Math.floor((window.__afkPainRf ? window.__afkPainRf(player, dmg, mob) : dmg) * fragileMult(mob))); " + TAG],
+    ['js/06-status-allies.js', "if (b.sk_illu_pain > 0 && mob.curHp > 0) {   // 疼痛的歡愉：100%\n        let _rf = Math.max(1, Math.floor(dmgTaken * _fm));",
+      "if (b.sk_illu_pain > 0 && mob.curHp > 0) {   // 疼痛的歡愉：100%\n        let _rf = Math.max(1, Math.floor((window.__afkPainRf ? window.__afkPainRf(ally, dmgTaken, mob) : dmgTaken) * _fm)); " + TAG]
+  ];
+  let any = false;
+  for (const [FILE, A, B] of SITES) {
+    let s = readFileSync(FILE, 'utf8');
+    if (s.includes(B)) continue;
+    if (s.split(A).length - 1 !== 1) throw new Error('[疼痛的歡愉] 錨點應出現 1 次：' + FILE);
+    s = s.replace(A, B); any = true;
+    if (!CHECK) writeFileSync(FILE, s);
+  }
+  if (any) { changed++; console.log('[patch] 疼痛的歡愉反射量掛點'); } else already++;
+}
+
+const PATCHES = [patchPainReflect, patchNoCastleBuyers, patchPetMpCap, patchEvadeCap, patchOffwpnRow, patchClassicDarkWeapons, patchPolyPickOverride, patchIllusionDamage, patchDebuffResist, patchNpcClanCount, patchEquipPoly, patchNoBossRegen, patchMaybeSpawnMobs, patchTradEnHook, patch16Slots, patchPetAnimTicker, patchBossHuntEscape, patchUseItemKeepModal, patchSellNowNoForce, patchInsigniaOrder, patchGiltasWandRecompute, patchEyeSlotInEquipList, patchRelicAffixHook, patchIllusionSetWpnProc, patchBuyerEnHook, patchWandererMakeHook, patchRelicBleedBonus, patchRelicSpecialScale, patchRelicDotRules, patchDreamHell, patchAscAttrStar, patchCardRebirth, patchPetHostRect, patchBarrierCdSkip, patchNoOfflineMaps, patchEvoHooks, patchRebirthMastery, patchLevelCap, patchCastleWar, patchIdleRaf, patchMaxAdd, patchAntFinal, patchEleRes, patchAllyDrCap, patchAllyHitstun, patchSetLate, patchRelicFx, patchRapidTrue];
 
 try {
   for (const p of PATCHES) p();
