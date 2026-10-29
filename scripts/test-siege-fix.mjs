@@ -10,7 +10,13 @@ try{
     const out={};const C=window.__afkCastleWar;
     __profile({cls:'royal',lv:60});player.gold=1e8;mapState.current='town_talking';state.ff=false;
     const inp=document.createElement('input');inp.id='clan-name-input';inp.value='測試盟';document.body.appendChild(inp);clanCreateFromInput();
-    // 宣戰：七座城都能點，點了就進外門區（不卡）
+    // 狩獵中按「攻城」：視窗原本在隱藏的村莊畫面裡 → 0×0 看不到、像卡死（2026-10-30 02:07）
+    setMapSelectors('talking_island');changeMap(true);document.getElementById('town-view').classList.add('hidden');
+    clanOpenSiegePanel();const tic=document.getElementById('town-interaction-container'),rr=tic.getBoundingClientRect();
+    out.fieldWin=[Math.round(rr.width)>100,Math.round(rr.height)>100,document.querySelectorAll('button[data-castle]').length];
+    try{closeNpcInteraction();}catch(e){}out.closed=tic.classList.contains('hidden');
+    setMapSelectors('town_talking');changeMap(true);
+        // 宣戰：七座城都能點，點了就進外門區（不卡）
     clanOpenSiegePanel();out.buttons=[...document.querySelectorAll('button[data-castle]')].filter(b=>!b.disabled).length;
     const t=performance.now();document.querySelector('button[data-castle="orc_fortress"]').click();out.ms=Math.round(performance.now()-t);out.map=mapState.current;
     endSiege('win');out.win=mapState.current;out.held=C.held().slice().sort().join(',');
@@ -27,6 +33,7 @@ try{
     return out;
   });
   console.log(JSON.stringify(r));
+  assert.deepEqual(r.fieldWin,[true,true,7],'狩獵中按攻城看得到視窗');assert.equal(r.closed,true);
   assert.equal(r.buttons,7,'七座城都能宣戰');assert.ok(r.ms<2000,'點了不卡 '+r.ms);assert.equal(r.map,'orc_fortress_outer');
   assert.equal(r.win,'town_orc_fortress_castle');assert.match(r.held,/orc_fortress/);
   assert.notEqual(r.kicked,'town_orc_fortress_castle','失去的城堡送回村莊');assert.ok(r.kicked&&!/castle/.test(r.kicked),r.kicked);

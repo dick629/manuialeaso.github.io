@@ -316,3 +316,26 @@
     try { okBtn.focus(); } catch (e) {}
   };
 })();
+
+// ── 浮動視窗（NPC／血盟攻城／傲慢之塔入口…）在狩獵中打開看不到（玩家 2026-10-30 02:07）──
+//   #town-interaction-container 原本放在 #town-view 裡；狩獵時 #town-view 是隱藏的 → 視窗「打開了」但 0×0 看不到，
+//   頁面捲動也被鎖住，玩家以為整頁卡死（Lv9 王族在野外按血盟分頁的「攻城」就是這樣）。
+//   打開時如果它的上層是隱藏的，就搬到 body（跟黑市快捷鍵同一招），並把內容捲回最上面。
+(function () {
+  'use strict';
+  var fix = function () {
+    try {
+      var tic = document.getElementById('town-interaction-container'); if (!tic || tic.classList.contains('hidden')) return;
+      var r = tic.getBoundingClientRect();
+      if ((r.width < 2 || r.height < 2) && tic.parentElement !== document.body) document.body.appendChild(tic);
+      var c = document.getElementById('interaction-content'); if (c) c.scrollTop = 0;
+      tic.scrollTop = 0;
+    } catch (e) {}
+  };
+  ['openTownFloatWindow', 'interactNPC'].forEach(function (k) {
+    if (typeof window[k] !== 'function') return;
+    var o = window[k];
+    window[k] = function () { var r = o.apply(this, arguments); fix(); return r; };
+  });
+  window.__afkFloatFix = fix;
+})();
