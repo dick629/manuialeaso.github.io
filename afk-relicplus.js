@@ -30,17 +30,10 @@
   'use strict';
   var T = window.AFK_TOGGLES;
   var enabled = function () { return !T || T.enabled('relicplus'); };
-  // 遺物武器命中回 MP（玩家 2026-10-29：像魔力短劍一樣，避免新手期 MP 不夠用）：+0 每擊 1 點，每 +3 再 +1，昇華支配再 +1＋昇華值
-  if (T && T.register) T.register({ id: 'relicmp', name: '遺物武器命中回 MP', group: '遊戲玩法', def: false,   // 玩家 2026-10-29：預設關（要重新填寫遺物）
-    desc: '所有遺物武器都像魔力短劍一樣，一般攻擊命中時回復 MP：+0 每擊 1 點，每 +3 再 +1（+15＝6），昇華支配再 +1＋昇華值' });
-  var mpHitOn = function () { return !T || T.enabled('relicmp'); };
-  var mpHitAmt = function (n, asc) { return 1 + Math.floor((n || 0) / 3) + (asc != null ? 1 + asc : 0); };
-  var mpHitApply = function (d, b, n, asc) { if (!mpHitOn() || !d || !b || b.type !== 'wpn' || b.eff === 'mp_drain' || (b.mpOnHit && !b._afkRelicMp)) return; d.mpOnHit = true; d.mpOnHitAmt = mpHitAmt(n, asc); d._afkRelicMp = true; };
   var disabled = function () { return { ok: false, msg: '遺物合成功能已關閉。' }; };
   if (typeof DB === 'undefined' || !DB.items || typeof isRelic !== 'function') { try { console.warn('[AFK-relicplus] 找不到物品資料，未啟用'); } catch (e) {} return; }
 
   var MAX = 15;
-  try { Object.keys(DB.items).forEach(function (k) { var d = DB.items[k]; if (d && d.relic && !d.gmOnly && k.indexOf('~') < 0) mpHitApply(d, d, 0, null); }); } catch (e) {}
   var REG_KEY = 'afk_relicplus_ids';
   var ID_RE = /(?:relic_|wpn_)[a-z0-9_]+~r\d{1,2}(?:~(?:relic_|wpn_)[a-z0-9_]+)?(?:~a\d)?(?:~e\d)?/g;
   var WHITE = ['hit', 'dmgBonus', 'bowHit', 'bowDmg', 'magicHit', 'mdmg', 'extraDmg', 'str', 'dex', 'con', 'int', 'wis', 'cha', 'mr', 'dr', 'extraMp'];   // 武器每 +3 各 +1（HP/MP 恢復另有規則）
@@ -90,7 +83,6 @@
     var d = clone(b);
     d.relicBase = base; d.relicPlus = n; d.relicFx = fx || null; d.relicAsc = (asc != null) ? asc : null; d.relicEvo = (evo != null && asc === 5) ? evo : null;
     d.gachaWeight = 0;
-    mpHitApply(d, b, n, asc);
     try { d.img = getIconUrl(b); } catch (e) {}
     var r = Math.floor(n / 5) * 5, k3 = Math.floor(n / 3), k5 = Math.floor(n / 5);
     if (b.type === 'wpn') {

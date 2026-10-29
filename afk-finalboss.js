@@ -56,7 +56,7 @@
   FB.base = 16;
   // 2026-10-29（玩家：Lv100 第一次轉生打女神太強）：還沒轉生的人挑戰第一階層＝「初次輪迴」版本
   //   HP ×hp、AC／減傷／魔防／四屬性抗性 ×def、席琳方所有傷害 ×dmg（時間封印、凝視、死亡之潮照舊）
-  FB.novice = { hp: 0.06, def: 0.15, dmg: 0.6 };   // 2026-10-29 晚：全身 +5、原版遺骸＋之魂、神話變身約 15 分鐘打贏（原本 0.17／0.3／0.8）
+  FB.novice = { hp: 0.06, def: 0.6, dmg: 0.5 };   // 2026-10-29 晚（玩家：要 +10 才打得贏，獎勵是聖衣）：全身 +10、原版遺骸＋之魂、神話變身 15.7 分鐘打贏；+5 打不贏
   window.__afkFinalCfg = FB;
   // 動態血量：隊伍人數（你＋還站著的傭兵）÷ 16，最多 1 倍
   var partyN = function () { try { return 1 + (player.allies || []).filter(function (a) { return a && !a._downed; }).length; } catch (e) { return 1; } };

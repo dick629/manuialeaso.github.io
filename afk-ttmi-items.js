@@ -171,6 +171,15 @@
       var sl=srcLv[id];if(!sl||(mob.lv||1)<sl.lv)srcLv[id]={lv:mob.lv||1,boss:!!mob.boss};
     });
   });
+  // 指定來源（玩家 2026-10-29：封印的克特套裝箱子不該在新手區，至少要在黑騎士團身上）
+  (function(){
+    var THEME={'封印的克特套裝箱子':{re:/^(黑騎士|黑騎士搜索隊|精英黑騎士|黑騎士隊長|暗黑黑騎士|邪惡的黑騎士|黑暗的黑騎士)$/,tier:1}};
+    Object.keys(junk).forEach(function(id){var th=THEME[DB.items[id].n];if(!th)return;var hit=0;
+      Object.keys(DB.mobs).forEach(function(k){var m=DB.mobs[k];if(!m||!m.n||!th.re.test(m.n)||!MOB_DROPS[m.n])return;var a=dropPools[m.n]=dropPools[m.n]||[];
+        Object.keys(dropPools).forEach(function(n){if(!th.re.test(n))dropPools[n]=dropPools[n].filter(function(x){return x.id!==id;});});
+        if(!a.some(function(x){return x.id===id;})){a.push({id:id,weight:5,boss:!!m.boss});hit++;}});
+      if(hit){junkTier[id]=th.tier;Object.keys(dropPools).forEach(function(n){if(!dropPools[n].length)delete dropPools[n];});}});
+  })();
   (function(){
     var orphan=Object.keys(junk).filter(function(id){return !junkTier[id];}).sort();
     if(!orphan.length||typeof MOB_DROPS==='undefined')return;
@@ -368,6 +377,7 @@
       if(d.ttmiBoxCooldown&&ready[id]>Date.now()){say('封印尚未重新凝聚，再等等吧。',silent);return false;}
       if(row.contentsMode==='random')out=[out[randomInt(0,out.length-1)]];
       out.forEach(function(x){give(resolve(x.sourceId),randomInt(x.min,x.max));});
+      try{if(LOTTO[id]&&Math.random()<LOTTO_RATE){give(LOTTO[id],1);say('<span class="text-yellow-300 font-bold">🎉 中獎了！包底還壓著一份「'+esc(DB.items[LOTTO[id]].n)+'」。</span>',false);}}catch(e){}
       if(d.ttmiBoxCooldown){ready[id]=Date.now()+d.ttmiBoxCooldown*1000;applyExtras(d,id);refresh();save();say('封印鬆開，裡頭的物品落入你的掌中。',silent);return true;}
     } else if(['buff','mp','blue','thirdHaste','antidote'].indexOf(action)<0)return false;
     applyExtras(d,id);
@@ -381,6 +391,7 @@
     if(!playerReady())return old.apply(self,args);
     var it=player.inv.find(function(x){return x.uid===args[0];}),d=it&&DB.items[it.id];
     if(!d)return old.apply(self,args);
+    if(d.eff==='afk_matgift'){if(it.lock||!(it.cnt>0))return;openGift(it,d,args[1]);return;}
     var hp=it.id.indexOf('potion_heal')>=0||it.id==='potion_strong'||it.id==='potion_ult'||it.id==='new_item_141';
     if(hp&&(player.ttmiPotionRemaining||0)>0)return;
     if(d.ttmiRiftOnly&&!inRift()){say('這件補給只在時空裂痕中才會回應你。',args[1]);return;}
@@ -563,6 +574,28 @@
       if(d.type==='pot'&&finite(d.valMax)>0)g=600*1.5*avg(d.valMin,d.valMax)/70;else if(d.ttmiAction==='mp')g=1.5*30*avg(d.ttmiMpMin,d.ttmiMpMax);else if(d.ttmiAction==='blue')g=1046*1.5*finite(d.dur)/600;
       else if(h)g=(h.stage>=3?1500:h.stage===2&&!h.moveOnly?880:200)*1.5*finite(d.dur||300)/300;else if(d.ttmiAction==='antidote')g=450;else if(d.ttmiAction==='buff')g=10000;
       if(g>0)CUR.price[id]=Math.max(1,Math.ceil(g));stock.push(id);d.ttmiBoxSold=true;});})();
+  // 玩家 2026-10-29：嘯龍道具包也在古物商人販售；開包有 0.1% 中獎，多給一份「材料禮包」，價值超過道具包售價的 5 倍
+  var LOTTO=Object.create(null),LOTTO_RATE=0.001,LOTTO_X=5;
+  (function(){imported.forEach(function(id){var d=DB.items[id];if(!d||d.ttmiAction!=='box'||d.ttmiEvent||d.gmOnly||!/^嘯龍道具包/.test(d.n||''))return;
+    if(stock.indexOf(id)<0)stock.push(id);
+    var gid='afk_matgift_'+id,val=Math.ceil(price(id)*LOTTO_X);
+    DB.items[gid]={n:d.n.replace(/^嘯龍道具包/,'嘯龍材料禮包'),type:'misc',req:'all',gachaWeight:0,p:0,c:'text-yellow-300',img:d.img,eff:'afk_matgift',giftValue:val,
+      d:'嘯龍道具包裡 0.1% 才會出現的中獎禮包。打開會得到一批隨機材料，總價值超過 '+val.toLocaleString()+' 金幣（'+d.n+'售價的 '+LOTTO_X+' 倍）。'};
+    LOTTO[id]=gid;
+    try{if(typeof miscCatKey==='function'&&typeof MISC_CAT_ITEMS!=='undefined'){var k=miscCatKey(gid,DB.items[gid]);if(k&&MISC_CAT_ITEMS[k]&&!MISC_ITEM_CAT[gid]){MISC_CAT_ITEMS[k].push(gid);MISC_ITEM_CAT[gid]=k;}}}catch(e){}
+  });})();
+  var giftPool=null;
+  function openGift(it,d,silent){
+    if(!giftPool)giftPool=imported.filter(function(id){var x=DB.items[id];return x&&x.ttmiMaterial&&!x.ttmiEvent&&!x.ttmiRiftOnly&&!x.gmOnly&&price(id)>0&&isFinite(price(id));});
+    if(!giftPool.length)return false;
+    var want=d.giftValue||0,got=0,bag=Object.create(null),guard=0;
+    while(got<=want&&guard++<500){var id=giftPool[randomInt(0,giftPool.length-1)],pr=price(id),n=Math.max(1,Math.min(50,Math.ceil((want-got+1)*0.25/pr)));bag[id]=(bag[id]||0)+n;got+=pr*n;}
+    if((it.cnt||1)>1)it.cnt--;else player.inv.splice(player.inv.indexOf(it),1);
+    Object.keys(bag).forEach(function(id){give(id,bag[id]);});
+    refresh();save();
+    say('打開了 '+esc(d.n)+'：'+Object.keys(bag).map(function(id){return esc(DB.items[id].n)+' ×'+bag[id];}).join('、')+'（價值約 '+Math.round(got).toLocaleString()+' 金幣）。',silent);
+    return true;
+  }
   var stockSet0=Object.create(null);stock.forEach(function(id){stockSet0[id]=1;});
   var whyNot=function(id){var d=DB.items[id];return !d?"none":d.ttmiRiftOnly?"rift":d.gmOnly?"gm":feeds[id]?"key":bossDrop[id]?"boss":isGear(d)?(finite(d.p)<=GEAR_MAX?"sale":"gear-high"):forSale(id)?"sale":d.ttmiAction?("act:"+d.ttmiAction):("type:"+d.type);};
   // 高階裝備、失去氣息的古物、封印品…原本只能在洛依買、又沒有怪物掉落的 → 分到頭目掉落（玩家 2026-10-27）
