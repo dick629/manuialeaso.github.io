@@ -145,7 +145,7 @@
     });
     applied = want;
   };
-  window.__afkDreamCost = { deaths: function () { return deaths; }, mult: reviveMult, setDeaths: function (n) { deaths = n; applyCost(); }, active: active, applyCost: applyCost };
+  window.__afkDreamCost = { deaths: function () { return deaths; }, mult: reviveMult, setDeaths: function (n) { deaths = n; applyCost(); }, active: active, onCd: onCd, applyCost: applyCost };
 
   if (typeof window.tick === 'function') {
     var oTick = window.tick;

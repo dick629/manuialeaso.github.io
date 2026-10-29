@@ -23,6 +23,7 @@
  *     （已經轉生過的角色也能挑戰一次：光環照給，聖衣當場送）
  *   ‧時空裂痕-冥王域：沒有挑戰過最終頭目不能輪迴轉生
  *
+ * 初次輪迴（2026-10-29）：還沒轉生的人挑戰第一階層時，HP、防禦／抗性、傷害照 FB.novice 打折（見下方 FB.novice）
  * 戰鬥（以「16 人、轉生、全身昇華支配＋5、時空變身」為基準，約 10～15 分鐘）
  *   ‧動態血量（玩家 2026-10-28：不強制練滿 16 隻）：席琳與使徒的 HP ×（進場時隊伍人數 ÷ 16），最少 1 人份；次元突破者的單人試煉除外
  *   ‧頭目：HP 4.5 億（2026-10-29 前 3.5 億）、AC −100、減傷 40、魔防 500、四屬性抗性 400；一般攻擊 10D50＋200、每 2 秒；另有冥海之潮（冰凍）、亡者之槍
@@ -53,6 +54,9 @@
     // 2026-10-29 加難度：沉眠之海（時間封印）＋席琳的凝視＋死亡之潮
     gates: [[0.75, 150], [0.50, 300], [0.25, 450], [0, 600]], sealTide: 0.03, gaze: 0.30, gazeSec: 8, gazeEvery: 35, gazeLateAt: 300, gazeLate: 0.40, gazeLateSec: 8, waveEvery: 25, wavePct: 0.02, waveSec: 5 };
   FB.base = 16;
+  // 2026-10-29（玩家：Lv100 第一次轉生打女神太強）：還沒轉生的人挑戰第一階層＝「初次輪迴」版本
+  //   HP ×hp、AC／減傷／魔防／四屬性抗性 ×def、席琳方所有傷害 ×dmg（時間封印、凝視、死亡之潮照舊）
+  FB.novice = { hp: 0.17, def: 0.3, dmg: 0.8 };
   window.__afkFinalCfg = FB;
   // 動態血量：隊伍人數（你＋還站著的傭兵）÷ 16，最多 1 倍
   var partyN = function () { try { return 1 + (player.allies || []).filter(function (a) { return a && !a._downed; }).length; } catch (e) { return 1; } };
@@ -107,7 +111,8 @@
   // 2026-10-29 晚：終焉三階層——'first'＝第一階層「席琳夢境」、'tier2'＝第二階層「席琳幻影」（HP、傷害 ×1.25）、'tier3'＝第三階層「席琳伴身」（×1.5625，只能挑戰一次）
   var TIER = { first: { n: '席琳夢境', k: 1 }, tier2: { n: '席琳幻影', k: 1.25 }, tier3: { n: '席琳伴身', k: 1.5625 } };
   var tierK = function () { var t = TIER[mode()]; return t ? t.k : 1; };
-  var modeMult = function () { var m = mode(); return m === 'solo' ? 0 : m === 'second' ? 1.05 : tierK(); };
+  var novice = function () { return mode() === 'first' && !!S()._afkFinalNovice; };
+  var modeMult = function () { var m = mode(); return m === 'solo' ? 0 : m === 'second' ? 1.05 : tierK() * (novice() ? FB.novice.dmg : 1); };
   (window.__afkTakenMods = window.__afkTakenMods || []).push(function (ent, mob) { return (on() && mob && (mob._afkFinal || mob._afkApostle)) ? modeMult() : 1; });
   var bossOf = function () { return (mapState.mobs || []).filter(function (m) { return m && m._afkFinal && !m._dead && m.curHp > 0; })[0] || null; };
   var addsAlive = function () { return (mapState.mobs || []).filter(function (m) { return m && m._afkApostle && !m._dead && m.curHp > 0; }).length; };
@@ -136,14 +141,17 @@
     m = mapState.mobs[idx];
     m._afkFinal = true; m._fbBorn = S().ticks || 0; m._fbPhase = 1;
     var n = partyN(); S()._afkFinalParty = n; S()._afkFinalScale = mode() === 'solo' ? 1 : hpScale(n);   // 單人試煉本來就是一個人打（席琳不出手），維持原本血量
-    m.hp = m.curHp = Math.round(FB.hp * S()._afkFinalScale * tierK()); m.ac = FB.ac; m.dr = FB.dr; m.mr = FB.mr; m.hard = false; m.hardSkin = 0;
-    ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (k) { m[k] = FB.res; });
+    S()._afkFinalNovice = mode() === 'first' && !(player.rebirth > 0);
+    var nv = novice() ? FB.novice : { hp: 1, def: 1 };
+    m.hp = m.curHp = Math.round(FB.hp * S()._afkFinalScale * tierK() * nv.hp); m.ac = Math.round(FB.ac * nv.def); m.dr = FB.dr * nv.def; m.mr = Math.round(FB.mr * nv.def); m.hard = false; m.hardSkin = 0;
+    ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (k) { m[k] = Math.round(FB.res * nv.def); });
     m.dmg = FB.atk.slice(); m.db = FB.db; m.hit = FB.hit; m.atkSpd = FB.spd;
     m._noBossRegen = true; m.regenHp = 0; m._dreamRegen = 0; m.exp = 0; m.goldMin = 0; m.goldMax = 0; m.noGold = true;
     m._fbRage = m.rageDmgMult || 1;
     if (TIER[mode()]) m.n = TIER[mode()].n + ' ' + BOSS_NAME;
     if (mode() === 'solo') { m.ac = Math.round(FB.ac * 0.5); m.dr = FB.dr * 0.5; m.mr = FB.mr * 0.5; ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (k) { m[k] = FB.res * 0.5; }); }
     S()._afkFinalSpawned = true;
+    if (novice()) sys('<span class="text-cyan-200">初次輪迴：席琳還沒認真看待你——HP ×' + FB.novice.hp + '，防禦與抗性 ×' + FB.novice.def + '，傷害 ×' + FB.novice.dmg + '。</span>');
     if (S()._afkFinalScale < 1) sys('<span class="text-cyan-200">隊伍 ' + S()._afkFinalParty + ' 人：席琳的 HP 調整為 ' + m.hp.toLocaleString() + '（' + S()._afkFinalParty + '／' + FB.base + '），冥界的使徒同比例。</span>');
     sys('<span class="font-bold" style="color:#7dd3fc;">死亡之海的水面倒映著無數亡者的臉。沉沒神殿的最深處，' + BOSS_NAME + '緩緩睜開了眼睛。</span><span class="afk-lore">「孩子……你終於走到夢的盡頭了。留下來吧，這裡就是萬物的歸宿。」</span>');
     if (typeof vfxBossEntrance === 'function') { try { vfxBossEntrance(m); } catch (e) {} }
@@ -158,7 +166,7 @@
       var m = Object.assign(clone(base), { curHp: base.hp, uid: uid(), _born: ++_mobBornSeq, _bornMs: Date.now(), _magCd: {}, justHit: false, st: newMobStatus() });
       mapState.mobs[i] = m;
       try { applySherineBuff(i); } catch (e) {}
-      m = mapState.mobs[i]; m._afkApostle = true; m.hp = m.curHp = Math.round(FB.addHp * (S()._afkFinalScale || 1) * tierK()); m.exp = 0; m.noGold = true;
+      m = mapState.mobs[i]; m._afkApostle = true; m.hp = m.curHp = Math.round(FB.addHp * (S()._afkFinalScale || 1) * tierK() * (novice() ? FB.novice.hp : 1)); m.exp = 0; m.noGold = true;
       k++;
     }
     if (k && !S().ff) { try { renderMobs(); } catch (e) {} }
@@ -280,14 +288,14 @@
     var s = S(); if (!s._afkFinal) return;
     var md = mode();
     if (md === 'tier2' || md === 'tier3') {
-      s._afkFinal = false; s._afkFinalSpawned = false; s.antharas = 0; s._antAdvance = false; s._afkFinalMode = null;
+      s._afkFinal = false; s._afkFinalSpawned = false; s._afkFinalNovice = false; s.antharas = 0; s._antAdvance = false; s._afkFinalMode = null;
       try { if (window.__afkFinalTiers) window.__afkFinalTiers.finish(md, result, why); } catch (e) { console.warn('[AFK-finalboss] 終焉階層結算', e); }
       try { if (!player.dead) { setMapSelectors(typeof getLastTown === 'function' ? getLastTown() : 'town_aden'); changeMap(true); } } catch (e) {}
       try { calcStats(); updateUI(); saveGame(); } catch (e) {}
       return;
     }
     if (md !== 'first') {
-      s._afkFinal = false; s._afkFinalSpawned = false; s.antharas = 0; s._antAdvance = false; s._afkFinalMode = null;
+      s._afkFinal = false; s._afkFinalSpawned = false; s._afkFinalNovice = false; s.antharas = 0; s._antAdvance = false; s._afkFinalMode = null;
       try { if (window.__afkRebirth2) window.__afkRebirth2.finish(md, result, why); } catch (e) { console.warn('[AFK-finalboss] 二轉結算', e); }
       try { if (!player.dead) { setMapSelectors(typeof getLastTown === 'function' ? getLastTown() : 'town_aden'); changeMap(true); } } catch (e) {}
       try { calcStats(); updateUI(); saveGame(); } catch (e) {}
@@ -297,7 +305,7 @@
     r.result = result; r.pending = false; r.at = Date.now(); r.why = why || '';
     if (result === 'win') { r.panel = {}; PANEL.forEach(function (k) { r.panel[k] = Math.floor((player.d && player.d[k]) || 0); }); }
     player.afkFinal = r;
-    s._afkFinal = false; s._afkFinalSpawned = false; s.antharas = 0; s._antAdvance = false;
+    s._afkFinal = false; s._afkFinalSpawned = false; s._afkFinalNovice = false; s.antharas = 0; s._antAdvance = false;
     var gift = null;
     // 2026-10-25 玩家指定：勝者的榮耀＝當場點亮神話＋天上全部卡冊；聖衣只給絕望轉生者（轉生時送，已轉生者當場送）
     var lit = -1;

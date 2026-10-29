@@ -198,8 +198,6 @@
       list=list.filter(function(e){return live(e)&&R.sources(owner).some(function(s){return s.key===e._relicKingSource&&s.def.relicExtraKings;});});extraKings.set(owner,list);
       list.forEach(function(e){syncSummonHp(e,owner,false);e._atkCd=num(e._atkCd)-1;if(e._atkCd>0)return;var d=W._sumDeriveAny(e,owner);e._atkCd=d.aspd;var t=W._petPickTarget(e);if(t)companionAttack(owner,e,t,{count:1,mult:1,free:true});});
     });
-    // Base earring still rescues, but no base relic can bypass the source's ten-second clock.
-    var s=source(p,232),fallen=downedCompanions(p);if(s&&s.stage===0&&fallen.length&&hasReviveScroll()&&R.api.cooldown(p,s.key,'heal',10))revive(fallen[0],{owner:p,source:s.key,hpPct:.5,consumeScroll:true});
   }
 
   wrap('necroBookEquipped',function(old){return function(owner){return enabled()?!!source(owner,196):old.apply(this,arguments);};});
@@ -225,7 +223,28 @@
   wrap('_petPickTarget',function(old){return function(e){var c=e&&e._relicCommand;return enabled()&&c&&c.until>now()&&live(c.target)?c.target:old.apply(this,arguments);};});
   wrap('summonV2Tick',function(old){return function(){var result=old.apply(this,arguments);extraTick();return result;};});
   wrap('petDevotionGrant',function(old){return function(e){var before=maxHp(e),ratio=hp(e)/before,result=old.apply(this,arguments);if(enabled()){var owner=playerNow(),s=source(owner,245);if(s){e._reviveGuardUntil=Math.max(e._reviveGuardUntil||0,Math.round(now()*10)+80);dispatchCompanion('petRevive',owner,e,{});e.hp=Math.min(maxHp(e),Math.max(hp(e),Math.floor(maxHp(e)*ratio)));}}return result;};});
-  wrap('playerHasAutoReviveEarring',function(old){return function(){return enabled()&&source(playerNow(),232)?false:old.apply(this,arguments);};});
+  // 巨靈的承諾（232）：照說明「傭兵或寵物倒下時立即消耗卷軸復活」。
+  // 付費救援走原作的耳環路徑（不等冷卻、每人各扣 1 張；席琳夢域鏡的卷軸倍率與死者之門冷卻照舊）；
+  // +5／+10 只在原作復活之後補 HP、無敵；昇華另有每 10 秒一次的免費救援（先免費、其餘照付費立即救）。
+  function djinnSource(){var p=playerNow();return enabled()&&p?source(p,232):null;}
+  function djinnBonus(e,s){
+    if(!e||e._downed||!s)return;var pct=s.stage>=2?1:s.stage>=1?.8:0;
+    if(pct){var m=maxHp(e),want=Math.max(1,Math.floor(m*pct));if(e.curHp!=null&&kindOf(e)!=='pet')e.curHp=Math.max(num(e.curHp),want);else e.hp=Math.max(num(e.hp),want);}
+    if(s.stage>=2)R.api.buff(e,s.key+':reviveGuard',{invulnerable:true},5);
+    if(s.stage>=4)R.api.buff(e,s.key+':renewed',{directDamageMult:2},10);
+  }
+  function djinnFree(){
+    var s=djinnSource();if(!s||s.stage<3)return;var p=playerNow(),DC=W.__afkDreamCost,mercCd=!!(DC&&DC.active&&DC.active()&&DC.onCd&&DC.onCd());
+    var wild=typeof W._petInWild!=='function'||W._petInWild();
+    var fallen=downedCompanions(p).filter(function(e){var pet=kindOf(e)==='pet';return pet?wild:(!p.dead&&!mercCd);});
+    if(!fallen.length||!R.api.cooldown(p,s.key,'heal',10))return;
+    (s.stage>=4?fallen:fallen.slice(0,1)).forEach(function(e){if(revive(e,{owner:p,source:s.key,hpPct:1,free:true})){djinnBonus(e,s);try{W.logSys('<span class="text-emerald-300 font-bold">【巨靈的承諾】免費救回 '+(e._allyName||e.form||'同伴')+'。</span>');}catch(_){}}});
+  }
+  wrap('playerHasAutoReviveEarring',function(old){return function(){return enabled()&&source(playerNow(),232)?true:old.apply(this,arguments);};});
+  wrap('tryAutoReviveMercScroll',function(old){return function(ally){var was=!!(ally&&ally._downed),r=old.apply(this,arguments);if(was&&ally&&!ally._downed)djinnBonus(ally,djinnSource());return r;};});
+  wrap('_petReviveDone',function(old){return function(e,via){var r=old.apply(this,arguments);if(/自動/.test(String(via||'')))djinnBonus(e,djinnSource());return r;};});
+  wrap('alliesTick',function(old){return function(){try{djinnFree();}catch(e){}return old.apply(this,arguments);};});
+  wrap('petsTick',function(old){return function(){try{djinnFree();}catch(e){}return old.apply(this,arguments);};});
   wrap('hasLoadFreeRegen',function(old){return function(){var s=source(playerNow(),239);return old.apply(this,arguments)||(enabled()&&s&&s.stage>=3);};});
   wrap('computeThreatMult',function(old){return function(owner){var value=old.apply(this,arguments);return enabled()&&owner&&owner.eq?R.dispatch('threat',{actor:owner,value:value,main:false}).value:value;};});
 
