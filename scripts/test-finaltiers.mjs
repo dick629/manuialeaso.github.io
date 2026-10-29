@@ -11,6 +11,7 @@ try{
     const FT=__afkFinalTiers,FB=__afkFinalBoss,out={};
     const cnt=id=>player.inv.filter(x=>x.id===id).reduce((n,x)=>n+(x.cnt||1),0);
     player.sherineMad=true;player.sherineDream=true;
+    out.closed=FT.can(2);FT.OPEN=true;
     out.locked=FT.can(2);
     player.afkFinal={result:'win',pending:false};
     out.open=[FT.can(2),FT.can(3)];
@@ -37,6 +38,7 @@ try{
     out.novice=[mf&&Math.round(mf.hp/(FB.cfg.hp*state._afkFinalScale)*1000)/1000,mf&&mf.ac,Math.round(__afkTakenMods.reduce((k,f)=>k*f(player,mf),1)*100)/100,N.hp,Math.round(FB.cfg.ac*N.def),N.dmg];
     return out;
   });
+  assert.equal(r.closed,'尚未開放');
   assert.ok(/第一階層/.test(r.locked),r.locked);
   assert.deepEqual(r.open,['','要先打贏第二階層「席琳幻影」']);
   assert.deepEqual(r.mode,[true,'tier2',true]);

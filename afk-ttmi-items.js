@@ -362,7 +362,7 @@
     } else if(action==='exchange') {
       if(silent||!DB.items[d.ttmiResult])return false;give(d.ttmiResult,1);
     } else if(action==='box') {
-      if(silent)return false;var row=rows[id],out=(row.contents||[]).filter(function(x){var dd=DB.items[resolve(x.sourceId)];return resolve(x.sourceId)&&!(dd&&(dd.ttmiRiftOnly||dd.gmOnly||dd.ttmiEvent));});
+      if(silent)return false;var row=rows[id],out=(row.contents||[]).filter(function(x){var dd=DB.items[resolve(x.sourceId)];return resolve(x.sourceId)&&!(dd&&(dd.ttmiRiftOnly||dd.gmOnly||(dd.ttmiEvent&&!dd.ttmiCurated)));});
       if(!out.length)return false;
       var ready=player.ttmiBoxes=player.ttmiBoxes||{};
       if(d.ttmiBoxCooldown&&ready[id]>Date.now()){say('封印尚未重新凝聚，再等等吧。',silent);return false;}
@@ -550,7 +550,7 @@
     Object.keys(keep).forEach(function(id){var d=DB.items[id],k=ICON[String(d.n).replace(/\s+/g,'')];if(k&&!/^assets\/icons\/ttmi\//.test(d.img||''))d.img='assets/icons/items/'+k+'.png';});   // 已有透視鏡原圖就不換
     CUR.ids=Object.keys(keep);
     // 沒上架的同類物品：沒有配方用途＝移除（不掉、不賣）；有用途＝交給怪物掉落
-    Object.keys(touched).forEach(function(id){if(!keep[id]&&!usedIn0[id]){DB.items[id].ttmiEvent=true;DB.items[id].ttmiRetired=true;}});
+    Object.keys(touched).forEach(function(id){if(!keep[id]&&!usedIn0[id]){DB.items[id].ttmiEvent=true;DB.items[id].ttmiRetired=true;DB.items[id].ttmiCurated=true;}});   // ttmiCurated：只是洛依不上架，道具包裡照樣開得到（玩家 2026-10-29：嘯龍道具包開不出東西）
     // 已經放進掉落表的移除品要拿掉
     for(var i=addedDrops.length-1;i>=0;i--){var x=addedDrops[i];if(DB.items[x.entry[0]]&&DB.items[x.entry[0]].ttmiRetired){var L=MOB_DROPS[x.mob],j=L?L.indexOf(x.entry):-1;if(j>=0)L.splice(j,1);addedDrops.splice(i,1);}}
   })();

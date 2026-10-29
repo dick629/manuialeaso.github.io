@@ -21,8 +21,11 @@
   var sys = function (h) { try { logSys(h); } catch (e) {} };
   var rec = function (p) { p = p || P(); if (!p) return {}; if (!p.afkFinalTier || typeof p.afkFinalTier !== 'object') p.afkFinalTier = { t2: null, t3: null, pending: null }; return p.afkFinalTier; };
   var REWARD = { tier2: ['afk_runebox_3', 1], tier3: ['afk_fate_unlock', 1] };
+  // 玩家 2026-10-29：先做好、先不開放（獎勵留到做旅人時一起討論）。開放時把 API.OPEN 改成 true。
+  var API = { OPEN: false };
   var can = function (t) {
     var p = P(); if (!p) return '請先進入遊戲。';
+    if (!API.OPEN) return '尚未開放';
     if (!FB.dreamOn()) return '需在席琳夢域鏡中';
     if (!FB.won(p)) return '要先打贏第一階層「席琳夢境」';
     var r = rec(p);
@@ -66,7 +69,7 @@
     W.renderSherinePray = function (div) {
       var r = oPray.apply(this, arguments);
       try {
-        var p = P(); if (!p || !FB.won(p)) return r;
+        var p = P(); if (!p || !FB.won(p) || !API.OPEN) return r;
         var box = div.querySelector('.flex.flex-col.gap-3') || div, rr = rec(p);
         var row = function (t) {
           var md = t === 2 ? 'tier2' : 'tier3', why = can(t), ok = !why, res = t === 2 ? rr.t2 : rr.t3;
@@ -80,6 +83,6 @@
       return r;
     };
   }
-  W.__afkFinalTiers = { can: can, finish: finish, rec: rec, REWARD: REWARD };
+  W.__afkFinalTiers = Object.assign(API, { can: can, finish: finish, rec: rec, REWARD: REWARD });
   console.log('[AFK-finaltiers] 已啟用：終焉三階層');
 })();

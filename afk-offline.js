@@ -31,6 +31,41 @@
     desc: '離線掛機也會被記恨你的玩家追殺、被捲入血盟群戰；結算時間會明顯變長'
   });
   function chaseOn() { return !!(window.AFK_TOGGLES && AFK_TOGGLES.enabled('offlinechase')); }
+  // 子選項（玩家 2026-10-29）：離線掛機不會死亡——關閉瀏覽器的離線結算、分頁在背景的補跑期間，
+  //   角色 HP 歸零時不會倒下，而是當場回滿 HP 繼續掛（回到畫面時告訴你站起來幾次）。關掉＝照原本「撞死即停」。
+  if (window.AFK_TOGGLES) AFK_TOGGLES.register({
+    id: 'offlinenodeath', name: '離線掛機不會死亡', group: '遊戲玩法', parent: 'offline', def: true,
+    desc: '離線結算與分頁在背景補跑期間，HP 歸零時不會倒下，直接回滿 HP 繼續掛；關掉＝照原本撞死即停'
+  });
+  var _noDeathN = 0;
+  function noDeathOn() { return !window.AFK_TOGGLES || AFK_TOGGLES.enabled('offlinenodeath'); }
+  function offlineNow() {
+    if (catchingUp) return true;
+    try { if (typeof _ffAcc !== 'undefined' && _ffAcc && typeof document !== 'undefined' && document.hidden) return true; } catch (e) {}
+    return false;
+  }
+  function installNoDeath() {
+    if (typeof window.killPlayer !== 'function' || window.killPlayer.__afkNoDeath) return;
+    var _kp = window.killPlayer;
+    window.killPlayer = function () {
+      if (noDeathOn() && offlineNow() && typeof player !== 'undefined' && player && !player.dead) {
+        player.hp = player.mhp || 1; _noDeathN++;
+        return;
+      }
+      return _kp.apply(this, arguments);
+    };
+    window.killPlayer.__afkNoDeath = true;
+    if (typeof window.tick === 'function' && !window.tick.__afkNoDeath) {
+      var _t = window.tick;
+      window.tick = function () {
+        var r = _t.apply(this, arguments);
+        if (_noDeathN && !offlineNow()) { var n = _noDeathN; _noDeathN = 0; try { logSys('<span class="text-emerald-300">離線掛機期間倒下 ' + n + ' 次，每次都當場回滿 HP 繼續掛（外掛開關「離線掛機不會死亡」）。</span>'); } catch (e) {} }
+        return r;
+      };
+      window.tick.__afkNoDeath = true;
+    }
+  }
+  if (document.readyState === 'complete') setTimeout(installNoDeath, 0); else window.addEventListener('load', function () { setTimeout(installNoDeath, 0); });
 
   // ----- 可調參數 ---------------------------------------------------------
   // 離線收益上限(小時)。2026-10-27 玩家要求 24 → 48；2026-10-28 玩家要求改回 24。

@@ -173,7 +173,7 @@
   var coverDepth = 0, coverPend = false, oKillCover = null;
   var coverSettle = function (h0) {
     var p = P(), g = coverGuard(); if (!p || !g) return;
-    var lost = h0 - (p.hp || 0); if (!(lost > 0)) return;
+    var lost = Math.min(h0, p.mhp || h0) - (p.hp || 0); if (!(lost > 0)) return;   // 2026-10-29：最大 HP 下降造成的「夾回上限」不算受傷（不讓禁衛軍白白代扣）
     var take = lost * 2, left = 0;
     if (take >= g.hp) { left = Math.ceil((take - g.hp) / 2); g.hp = 0; try { _guardDown(g); } catch (e) { g._downed = true; g._reviveAt = Date.now() + 30000; } }
     else g.hp -= take;

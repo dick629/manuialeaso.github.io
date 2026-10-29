@@ -32,7 +32,7 @@
   var TUNE = W.__afkRift2Tune = W.__afkRift2Tune || {
     hpFrom: 20, hpRate: { sherine: 0.067, mad: 0.0525, dream: 0.0525 },   // 20 分鐘起怪物 HP ×e^(rate×(分鐘−20))
     hpBase: { sherine: 1, mad: 1, dream: 0.15 },   // 各模式怪物 HP 的基本倍率（夢域鏡本身已經 ×50，用這個把三模式拉到同一條難度線）
-    enrageSec: 60, enragePct: 0.05, enrageStep: 0.05, enrageEvery: 10,   // 頭目 60 秒沒倒：每秒全隊最大 HP 5%，每 10 秒再 +5%
+    enrageSec: 60, enrageMulti: 90, enragePct: 0.05, enrageStep: 0.05, enrageEvery: 10,   // 頭目 60 秒沒倒：每秒全隊最大 HP 5%，每 10 秒再 +5%
     wallFrom: 60, wallBase: 0.004, wallStep: 0.0025,   // 60 分鐘起全場每秒扣 0.4% 最大 HP，每分鐘再 +0.25%
     clearMin: 80
   };
@@ -114,10 +114,11 @@
     if (t % 10) return;
     // 頭目暴走
     var worst = 0, who = null;
-    (mapState.mobs || []).forEach(function (x) {
-      if (!x || !x.boss || x._dead || !(x.curHp > 0) || !x._r2) return;
+    var bosses = (mapState.mobs || []).filter(function (x) { return x && x.boss && !x._dead && x.curHp > 0 && x._r2; });
+    var sec = bosses.length >= 2 ? TUNE.enrageMulti : TUNE.enrageSec;   // 玩家 2026-10-29：同時好幾隻王在場時放寬到 90 秒
+    bosses.forEach(function (x) {
       var age = (t - x._r2.born) / 10;
-      if (age >= TUNE.enrageSec) { var e = TUNE.enragePct + TUNE.enrageStep * Math.floor((age - TUNE.enrageSec) / TUNE.enrageEvery); if (e > worst) { worst = e; who = x; } }
+      if (age >= sec) { var e = TUNE.enragePct + TUNE.enrageStep * Math.floor((age - sec) / TUNE.enrageEvery); if (e > worst) { worst = e; who = x; } }
     });
     if (worst > 0) {
       if (lastLog.enrage !== who) { lastLog.enrage = who; logC('<span class="font-bold" style="color:#f472b6;">【時空暴走】</span>' + esc(who.n) + ' 拖得太久，扭曲的時空開始撕裂全隊（每秒最大 HP ' + Math.round(worst * 100) + '%，越拖越重）。'); }
@@ -219,7 +220,7 @@
         var div = document.createElement('div');
         div.className = 'bg-slate-900/70 border border-violet-700 rounded-lg p-3 text-sm leading-relaxed text-slate-200';
         div.innerHTML = '<div class="font-bold text-violet-300 mb-1">目前：' + MN[mode] + '模式（時空裂痕重做）</div>'
-          + '<div>一趟最長 ' + TUNE.clearMin + ' 分鐘，撐滿就是<b>完全通關</b>（另給 ' + DB.items[cl[0]].n + ' ×' + cl[1] + '）。20 分鐘後怪物越來越硬；頭目出場 ' + TUNE.enrageSec + ' 秒還沒倒會<b>時空暴走</b>；' + TUNE.wallFrom + ' 分鐘起全場每秒扣血。</div>'
+          + '<div>一趟最長 ' + TUNE.clearMin + ' 分鐘，撐滿就是<b>完全通關</b>（另給 ' + DB.items[cl[0]].n + ' ×' + cl[1] + '）。20 分鐘後怪物越來越硬；頭目出場 ' + TUNE.enrageSec + ' 秒（同時兩隻以上 ' + TUNE.enrageMulti + ' 秒）還沒倒會<b>時空暴走</b>；' + TUNE.wallFrom + ' 分鐘起全場每秒扣血。</div>'
           + '<div>掉落：' + DB.items[RD.DUST[mode]].n + '（一般怪 1%、60 等以下頭目 10%、60 等以上頭目 25%、第 60 分鐘起頭目必掉）；不吃任何掉寶加倍；遺物 0.001%。</div>'
           + '<div>結算：' + rw + '。</div>';
         (container.firstElementChild || container).appendChild(div);
