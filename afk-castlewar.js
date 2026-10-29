@@ -184,6 +184,44 @@
     };
   }
 
+  // ── 沒持有的城堡、空白地圖：送回村莊（玩家 2026-10-30 00:34 攻城回報）──
+  //   地圖選單只列出持有的城堡；要去一座已經失去的城（例如離線跨午夜被打下、最後停留的村莊還是那座城）時，
+  //   核心 changeMap 讀到的目的地是空字串，角色就卡在「沒有名字、沒有怪」的空白地圖。這裡在換圖前把目的地換成家鄉村莊，
+  //   每秒也檢查一次：人在失去的城堡或空白地圖上（不在攻城中）就送回村莊。
+  var castleTownOf = function (v) { for (var i = 0; i < ALL_CITIES.length; i++) { var c = SIEGE_CITY[ALL_CITIES[i]]; if (c && c.castle === v) return ALL_CITIES[i]; } return null; };
+  var homeSafe = function () {
+    var t = null; try { t = getHomeTown(); } catch (e) {}
+    var c = castleTownOf(t); if (!t || (c && held().indexOf(c) < 0)) t = (typeof player !== 'undefined' && player && player.cls && typeof CLASS_HOME !== 'undefined' && CLASS_HOME[player.cls]) || 'town_talking';
+    return t;
+  };
+  var badTarget = function (v) { if (!v) return true; var c = castleTownOf(v); return !!(c && held().indexOf(c) < 0); };
+  if (typeof window.changeMap === 'function') {
+    var oChange = window.changeMap;
+    window.changeMap = function () {
+      try {
+        var sel = document.getElementById('map-select'), v = sel ? sel.value : '';
+        if (P() && badTarget(v) && typeof setMapSelectors === 'function') {
+          var home = homeSafe();
+          if (home && home !== v) { setMapSelectors(home); if (castleTownOf(v)) sys('<span class="text-amber-300">血盟已經不再持有' + (SIEGE_CITY[castleTownOf(v)] ? SIEGE_CITY[castleTownOf(v)].castleName : '這座城堡') + '，改回村莊。</span>'); }
+        }
+      } catch (e) {}
+      return oChange.apply(this, arguments);
+    };
+  }
+  var watchLost = function () {
+    try {
+      var p = P(); if (!p || typeof mapState === 'undefined' || (p.siege && p.siege.active)) return;
+      var cur = mapState.current, c = castleTownOf(cur);
+      if (cur === '' || (c && held().indexOf(c) < 0)) {
+        var home = homeSafe(); if (!home || home === cur) return;
+        if (c) sys('<span class="text-amber-300 font-bold">血盟已經不再持有' + SIEGE_CITY[c].castleName + '，你被送回村莊。</span>');
+        setMapSelectors(home); changeMap(true); try { updateUI(); saveGame(); } catch (e) {}
+      }
+    } catch (e) {}
+  };
+  setInterval(watchLost, 1000);
+  window.__afkCastleTownOf = castleTownOf; window.__afkCastleWatch = watchLost;
+
   // ── 宣戰 ──
   var warTarget = function (d) {
     var n = held().length;
