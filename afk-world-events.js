@@ -236,6 +236,7 @@
   var canTrigger = function (id) {
     var p = P(); if (!p || act || p.dead || !on(id)) return false;
     if ((Number(p.lv) || 0) < LV_MIN || kurtBusy() || catching()) return false;
+    try { if (W.__afkRegionBoss && W.__afkRegionBoss.active()) return false; } catch (e) {}   // 地區霸主在場時不疊世界事件
     var s = store(); if (Date.now() < (Number(s.gap) || 0) || Date.now() < (Number(s.cd[id]) || 0)) return false;
     if (!targets(id, false).length) return false;
     return okMap(mapState.current);

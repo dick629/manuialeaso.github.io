@@ -86,6 +86,22 @@
     if (u - t > CD) { a._afkFoulCdUntil = 0; return 0; }   // 讀檔後 tick 重算，避免卡住
     return Math.max(0, u - t);
   };
+  // 汙濁之水打破物理免疫（玩家 2026-10-30 03:05）：施放成功時，畫面上帶「物理免疫」的敵人（夢域地獄小怪出生 10 秒、巨大骷髏「恐怖的面貌」選到近／遠距離）全部解除
+  var PHYS = { phys: 1, melee: 1, ranged: 1 };
+  var breakPhys = function (who) {
+    var n = 0, t = (typeof state !== 'undefined' && state) ? state.ticks : 0;
+    try {
+      (mapState.mobs || []).forEach(function (m) {
+        var w = m && !m._dead && m.curHp > 0 && m._reflectWall;
+        if (w && w.block && PHYS[w.kind] && t <= (w.until || 0)) { m._reflectWall = null; n++; }
+      });
+      if (n && typeof logCombat === 'function') logCombat('<span class="text-sky-300 font-bold">【污濁之水】</span>' + (who || '你') + '的污濁之水沖散了 ' + n + ' 隻敵人的物理免疫。', 'magic');
+      if (n && typeof renderMobs === 'function') renderMobs();
+    } catch (e) {}
+    return n;
+  };
+  W.__afkFoulBreak = breakPhys;
+  try { if (sk && sk.desc && sk.desc.indexOf('物理免疫') < 0) sk.desc += '施放時沖散畫面上敵人的物理免疫。'; } catch (e) {}
   W.__afkFoulCd = function (a) { return cdLeft(a || (typeof player !== 'undefined' ? player : null)); };
   if (typeof W.castSkill === 'function') {
     var oCast = W.castSkill;
@@ -97,7 +113,7 @@
         return false;
       }
       var r = oCast.apply(this, arguments);
-      if (r) player._afkFoulCdUntil = now() + CD;
+      if (r) { player._afkFoulCdUntil = now() + CD; breakPhys('你'); }
       return r;
     };
   }
@@ -108,7 +124,7 @@
       if (!isFoul || !ally) return oAlly.apply(this, arguments);
       if (cdLeft(ally) > 0) return false;
       var r = oAlly.apply(this, arguments);
-      if (r !== false) ally._afkFoulCdUntil = now() + CD;
+      if (r !== false) { ally._afkFoulCdUntil = now() + CD; breakPhys('協力·' + (ally._allyName || '傭兵')); }
       return r;
     };
   }

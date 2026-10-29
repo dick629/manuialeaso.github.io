@@ -318,6 +318,10 @@
     return { mobs: mobs, items: items };
   }
   // 📚 小百科的命中摘要卡(點任一項→AFK_WIKI_API.goto({q}) 開小百科統一搜尋;gotoWiki 會自動關本模態/獨立頁走網址)
+  function wikiRowsHTML(ws, qRaw) {
+    var rows = ws.map(function (w) { return '<div class="m-dex-wikihit" data-q="' + esc(qRaw) + '">【' + esc(w.label) + '】' + hl(w.title, qRaw.toLowerCase()) + '</div>'; }).join('');
+    return '<div class="m-dex-card"><div class="m-dex-imatch-h">📚 小百科相關內容（點任一項前往搜尋）</div>' + rows + '</div>';
+  }
   function wikiHitsHTML(qRaw) {
     try {
       if (!window.AFK_WIKI_API || !AFK_WIKI_API.searchHits) return '';
@@ -355,7 +359,16 @@
     });
     if (special) { var sp = document.getElementById('m-dex-special'); if (sp) sp.open = true; if (firstHit) try { firstHit.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
     var itemHTML = itemMatchesHTML(q);   // 先列出名稱符合的裝備(可點看數值;含沒被怪掉的)
-    var wikiHTML = wikiHitsHTML(input.value.trim());   // 📚 小百科命中一併附在結果尾端(統一搜尋)
+    // 📚 小百科命中：先把掉落結果畫出來，小百科的部分建好索引後再補在尾端（不再每打一個字就同步渲染整本小百科）
+    var wikiHTML = '<div id="m-dex-wikislot"></div>', qNow = input.value.trim();
+    if (window.AFK_WIKI_API && AFK_WIKI_API.searchReady && AFK_WIKI_API.searchReady()) wikiHTML = wikiHitsHTML(qNow);   // 索引已建好：直接查（很快）
+    else if (window.AFK_WIKI_API && AFK_WIKI_API.searchHitsAsync) {
+      AFK_WIKI_API.searchHitsAsync(qNow, 8, function (ws) {
+        var slot = document.getElementById('m-dex-wikislot'), inp = document.getElementById('m-dex-input');
+        if (!slot || !inp || inp.value.trim() !== qNow || !ws || !ws.length) return;
+        slot.outerHTML = wikiRowsHTML(ws, qNow);
+      });
+    } else wikiHTML = wikiHitsHTML(qNow);
     var hits = [];
     for (var i = 0; i < INDEX.length && hits.length <= MAX_RESULTS; i++) if (INDEX[i].hay.indexOf(q) >= 0) {
       if (cSel !== null) { var ce = mobClassicEra(INDEX[i]); if (ce === -1 || (ce !== null && ce > cSel)) continue; }   // 經典模式：這個時代遇不到的怪不列
@@ -370,10 +383,22 @@
     }
     var truncated = hits.length > MAX_RESULTS;
     if (truncated) hits = hits.slice(0, MAX_RESULTS);
-    var html = itemHTML + hits.map(function (h) { return cardHTML(h, mult, q); }).join('');
-    if (truncated) html += '<div class="m-dex-hint">符合的太多,只顯示前 ' + MAX_RESULTS + ' 筆,請輸入更精確的關鍵字。</div>';
-    results.innerHTML = html + wikiHTML;
+    // 結果卡分段畫：先畫第一屏（FIRST_CARDS 張），其餘每段 CHUNK_CARDS 張接在後面（手機上一次塞 60 張卡、數千個節點，排版會卡一下）
+    var FIRST_CARDS = 10, CHUNK_CARDS = 10, gen = ++_renderGen;
+    var tail = (truncated ? '<div class="m-dex-hint">符合的太多,只顯示前 ' + MAX_RESULTS + ' 筆,請輸入更精確的關鍵字。</div>' : '') + wikiHTML;
+    var cardsAt = function (a, b) { return hits.slice(a, b).map(function (h) { return cardHTML(h, mult, q); }).join(''); };
+    results.innerHTML = itemHTML + cardsAt(0, FIRST_CARDS) + '<div id="m-dex-more"></div>' + tail;
+    var at = FIRST_CARDS;
+    var more = function () {
+      if (gen !== _renderGen) return;
+      var slot = document.getElementById('m-dex-more'); if (!slot) return;
+      if (at >= hits.length) { slot.remove(); return; }
+      slot.insertAdjacentHTML('beforebegin', cardsAt(at, at + CHUNK_CARDS)); at += CHUNK_CARDS;
+      setTimeout(more, 16);
+    };
+    if (hits.length > FIRST_CARDS) setTimeout(more, 30); else { var ms = document.getElementById('m-dex-more'); if (ms) ms.remove(); }
   }
+  var _renderGen = 0;
 
   var ELE = { fire: '🔥 火', water: '💧 水', earth: '🪨 地', wind: '🌪 風', none: '無' };
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -904,9 +929,9 @@
     { id: 'dropmult', title: '🔮 掉落倍率：席琳的世界 ×3、瘋狂的席琳世界 ×5、恩賜怪 ×10、席琳夢域鏡 ×8', keys: ['掉落倍率', '倍率', '席琳的世界', '瘋狂的席琳世界', '經典模式', '恩賜怪', '恩賜'], lines: [
       '<b>怪物卡上顯示的是「一般」掉落機率</b>，下列狀態會整體放大／縮小：',
       '<b>席琳的世界</b>：被席琳化的怪掉落機率 <b>×3</b>（<b>瘋狂的席琳世界</b> <b>×5</b>）；其中「恩賜怪」更高，<b>×10</b>',
-      '<b>席琳夢域鏡</b>：所有怪都是恩賜狀態，掉落機率 <b>×8</b>（2026-10-29 起；原本 ×50），掉到的裝備 <b>50% 祝福</b>；額外掉落見下方「席琳夢域鏡的額外掉落」',
+      '<b>席琳夢域鏡</b>：所有怪都是恩賜狀態，掉落機率 <b>×8</b>，掉到的裝備 <b>50% 祝福</b>；額外掉落見下方「席琳夢域鏡的額外掉落」',
       '<b>經典模式</b>：掉落機率<b>與一般模式完全相同</b>，不打任何折',
-      '<b>掉落種類下修</b>（外掛開關，預設開，2026-10-29）：一次擊殺擲中的種類只給 7 成（擲中 10 種給 7 種、3 種給 2 種），掉落表上本來就 100% 的必掉物品不算；所以實際拿到的比卡上的機率少一些',
+      '<b>掉落種類下修</b>：一次擊殺擲中的種類只給 7 成（擲中 10 種給 7 種、3 種給 2 種），掉落表上本來就 100% 的必掉物品不算；所以實際拿到的比卡上的機率少一些',
       '<b>固定、不受倍率影響的例外</b>：怪物卡片（普／銀／金卡）、萬能藥（屬性藥）、黑魔石、銀礦石（各條另有標註）；其餘怪卡掉落都會被倍率放大／縮小',
       '<b>席琳結晶</b>比較特別：不吃「席琳的世界 ×3」與「恩賜怪 ×10」（機率直接由怪物等級決定），只吃「瘋狂 ×3」；經典模式與它無關（經典角色進不了席琳神殿）——詳見下方席琳結晶那條',
       '上方的「<b>掉落率模式</b>」下拉可把席琳倍率直接套到怪卡的掉落數字'
@@ -983,7 +1008,7 @@
       '用途：可羅蘭斯（沉默洞穴）製作拉斯塔巴德五件傳說武器（每件需聖地遺物 ×100）。'
     ] },
     { id: 'dreamhell', title: '🔥 席琳夢域鏡的額外掉落（昇華支配材料）', keys: ['席琳夢域鏡', '夢艷結晶', '地獄精華', '滅魔蔑視', '昇華支配', '失去光輝', '闇龍的抵抗者', '境滅亡域鑰匙'], lines: [
-      '席琳夢域鏡中<b>經驗 ×10、金幣 ×3</b>；一般掉落機率 <b>×8</b>（2026-10-29 起；原本 ×50），裝備掉落 <b>50% 祝福</b>，席琳結晶 ×5',
+      '席琳夢域鏡中<b>經驗 ×10、金幣 ×3</b>；一般掉落機率 <b>×8</b>，裝備掉落 <b>50% 祝福</b>，席琳結晶 ×5',
       '每殺一隻 0.1% 掉<b>龍之鑽石</b>（一半是 1～499 隨機、一半是 500）',
       '<b>夢艷結晶</b>：一般怪 10%、頭目必掉 3 顆｜<b>地獄精華</b>：頭目必掉｜<b>滅魔蔑視水晶</b>：Lv80 以上頭目必掉一顆（四屬性隨機）｜<b>滅魔蔑視水晶碎片</b>：一般怪 1%（100 個合 1 顆）',
       '<b>白金卡全部收集滿</b>時：每殺一隻 0.05% 昇華支配強化石、0.1% 昇華支配碎片',
@@ -1113,6 +1138,7 @@
     var wasOpen = m.classList.contains('open');
     m.classList.add('open');
     var i = document.getElementById('m-dex-input'); if (i) i.focus();
+    try { if (window.AFK_WIKI_API && AFK_WIKI_API.warmSearch) setTimeout(AFK_WIKI_API.warmSearch, 300); } catch (e) {}   // 背景先建小百科搜尋索引
     if (wasOpen || m.getAttribute('data-standalone')) return;
     if (adopt === true && window.AFK_NAV) _hModal = AFK_NAV.claim(_hideModal);
     if (!_hModal) _pushNav();
@@ -1154,6 +1180,7 @@
       '#m-dex-results{flex:1 1 auto;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;}',
       '.m-dex-hint{color:#94a3b8;text-align:center;padding:22px 8px;font-size:14px;line-height:1.6;}',
       '.m-dex-card{background:#111c30;border:1px solid #334155;border-radius:10px;padding:12px;}',
+      '#m-dex-results>.m-dex-card{content-visibility:auto;contain-intrinsic-size:auto 260px;}',   // 畫面外的結果卡先不排版（搜尋結果 60 張卡、近 3000 個節點，手機上排版是大頭）
       '.m-dex-name{font-size:16px;font-weight:bold;color:#fff;margin-bottom:8px;}',
       '.m-dex-hl{background:#fde047;color:#1e293b;border-radius:3px;padding:0 2px;font-weight:bold;}',
       '.m-dex-tag{font-size:11px;font-weight:bold;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle;}',

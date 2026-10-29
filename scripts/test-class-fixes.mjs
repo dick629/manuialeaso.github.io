@@ -23,6 +23,11 @@ try{
     state.running=true;player.hp=Math.floor(player.mhp/2);player.mp=10;const hp0=player.hp,mob0=mob.curHp;
     cubeTick();state.running=false;
     out.burn=[mob0-mob.curHp,player.hp-hp0,player.mp,mob._afkScorch>state.ticks];
+    // 粉碎能量打破魔法免疫（玩家、傭兵）
+    player.skills=['sk_illu_crush'];player.mp=5000;player.buffs.sk_illu_cube_burn=0;mob.curHp=mob.hp;mob._reflectWall={kind:'magic',until:state.ticks+100,block:true};mapState.targetIdx=0;
+    const cr=castSkill('sk_illu_crush');out.crush=[!!cr,mob._reflectWall];
+    mob._reflectWall={kind:'magic',until:state.ticks+100,block:true};const al={cls:'illusion',_allyName:'幻',lv:80,mp:5000,d:{},eq:{},buffs:{},statuses:{}};try{allyCastCrush(al,DB.skills.sk_illu_crush);}catch(e){out.allyErr=String(e).slice(0,80);}out.crushAlly=mob._reflectWall;
+    mob._reflectWall={kind:'phys',until:state.ticks+100,block:true};out.keepPhys=(castSkill('sk_illu_crush'),!!mob._reflectWall);
     // 寵物攻擊回全隊 MP
     out.petMp=__afkPetInherit.petMp;
     let called=0;const oT=window.teamRecoverMp;window.teamRecoverMp=n=>{called+=n;};
@@ -48,6 +53,7 @@ try{
   assert.equal(r.patch,3,'核心補丁 69 三處');
   assert.deepEqual(r.cube,[20,[5,10]]);
   assert.ok(r.burn[0]>0,'燃燒有傷害');assert.equal(r.burn[1],r.burn[0]*2,'傷害 2 倍補血');assert.equal(r.burn[2],11,'回 1 MP');assert.equal(r.burn[3],true,'灼熱印記');
+  assert.equal(r.crush[0],true);assert.equal(r.crush[1],null,'粉碎能量打破魔免');assert.equal(r.crushAlly,null,'傭兵也行 '+(r.allyErr||''));assert.equal(r.keepPhys,true,'物理免疫不受影響');
   assert.equal(r.petMp,5);assert.equal(r.petCalled,5,'寵物攻擊回全隊 5 MP '+(r.petErr||''));
   assert.ok(r.cap>0);assert.equal(r.loadAt,100,'騎士的負重 10 秒冷卻');assert.equal(r.cd,true);assert.match(r.hiddenName,/騎士的負重/);
   assert.equal(r.doll,0.5);assert.equal(r.tipZ,'100500');

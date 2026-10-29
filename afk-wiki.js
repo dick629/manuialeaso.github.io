@@ -63,7 +63,7 @@
     _hideModal();
     if (h && window.AFK_NAV) AFK_NAV.handoff(h);   // 寄放歷史層給對方 claim,整段跨頁切換只佔一格
   }
-  window.AFK_WIKI_API = { goto: gotoWiki, close: closeForNav, isOpen: _isModalClosable, searchHits: searchHits };   // goto 通用跨頁前往小百科;close/isOpen 供跨頁切換(關閉來源、接手歷史層);searchHits 供掉落查詢統一搜尋
+  window.AFK_WIKI_API = { goto: gotoWiki, close: closeForNav, isOpen: _isModalClosable, searchHits: searchHits, searchHitsAsync: searchHitsAsync, searchReady: cacheFresh, warmSearch: function () { buildHitCache(); } };   // goto 通用跨頁前往小百科;close/isOpen 供跨頁切換(關閉來源、接手歷史層);searchHits 供掉落查詢統一搜尋
   // 獨立頁:狀態(搜尋字/分頁/職業)←→ 網址,方便複製連結分享(replaceState,不灌爆瀏覽記錄)
   function _wikiParam(n) { try { return new URLSearchParams(location.search).get(n); } catch (e) { return null; } }
   var _tabSet = null, _clsSet = null;
@@ -562,7 +562,7 @@
         ['Tab', '背包三分頁輪流切換（武器 → 防具 → 道具）'],
         ['Ctrl＋S', '切到「技能」分頁'],
         ['Ctrl＋A', '切到「裝備」分頁'],
-        ['Ctrl＋B', '開啟「收藏」面板（卡片／裝備／道具／遺物 收集冊）'],
+        ['Ctrl＋B', '開啟「收藏」面板（卡片／裝備／道具／遺物收集冊、變身、特殊收藏）'],
         ['Ctrl＋C', '立即返回血盟據點（未入盟會提示；石化等行動受限中、時空裂痕內無法使用；血盟持有城堡期間改回城堡）']
       ]},
       { t: 'p', p: 'Ctrl＋C 在<b>有選取文字時不會被攔截</b>，照常複製；Ctrl＋Shift 開頭的瀏覽器快捷鍵（開發者工具等）也不受影響。' }
@@ -1285,6 +1285,7 @@
     var wasOpen = m.classList.contains('open');
     m.classList.add('open');
     render();
+    setTimeout(function () { buildHitCache(); }, 400);   // 背景先建搜尋索引（打字搜尋時就不用每次重畫每個分頁）
     // 開啟壓一層歷史 → 返回鍵可關;adopt===true:接手來源模態交出的層、不另壓(跨頁切換)。嚴格 true:按鈕 onclick 會傳 MouseEvent 進來,不可當 adopt
     if (!wasOpen && !m.getAttribute('data-standalone')) {
       if (adopt === true && window.AFK_NAV) _hModal = AFK_NAV.claim(_hideModal);
@@ -1617,7 +1618,65 @@
   }
 
   // 供掉落查詢統一搜尋呼叫:輕量回傳「哪些分頁/區塊」含關鍵字(只取標題,不渲染整頁結果)
+  // 搜尋用的文字索引（2026-10-30：掉落查詢每打一次字就把整本小百科各分頁渲染一遍，罕見字要 1 秒以上、手機 4～5 秒）
+  //   一次建好、保留 5 分鐘；建立時一次只渲染一個分頁（每段讓畫面喘一口氣），建好前的同步搜尋照舊走原本的路
+  var _hitCache = null, _hitBuilding = null, HIT_TTL = 5 * 60 * 1000;
+  function hitSlices() {
+    var out = [];
+    SEARCH_SOURCES.forEach(function (s) {
+      if (s.search) { out.push({ s: s, c: null, custom: true }); return; }
+      var clsList = s.cls ? (s.key === 'quest' ? [{ k: 'all', n: '全職業共通' }].concat(CLASSES) : CLASSES) : [null];
+      clsList.forEach(function (c) { out.push({ s: s, c: c }); });
+    });
+    return out;
+  }
+  function sliceRows(x) {
+    if (x.custom) return [{ custom: x.s }];
+    var rows = [], tmp = document.createElement('div');
+    try { tmp.innerHTML = tabHTML(x.s.key, x.c ? x.c.k : state.cls); } catch (e) { return rows; }
+    var blocks = tmp.querySelectorAll('.m-wiki-card,.m-wiki-spell,.m-wiki-kv');
+    for (var i = 0; i < blocks.length; i++) {
+      var nameEl = blocks[i].querySelector('.m-wiki-name,b');
+      rows.push({ tab: x.s.key, cls: x.c ? x.c.k : null, label: x.s.label + (x.c ? '・' + x.c.n : ''),
+        title: ((nameEl ? nameEl.textContent : blocks[i].textContent) || '').trim().slice(0, 28), t: blocks[i].textContent.toLowerCase(), h: blocks[i].outerHTML });
+    }
+    return rows;
+  }
+  function hitSig() { try { return (typeof player !== 'undefined' && player ? player.cls + '|' + player.lv + '|' + (player.classicMode ? 1 : 0) : '-') + '|' + (typeof currentSlot !== 'undefined' ? currentSlot : ''); } catch (e) { return ''; } }
+  function cacheFresh() { return !!_hitCache && Date.now() - _hitCache.at < HIT_TTL && _hitCache.sig === hitSig(); }   // 換角色、升級、改外掛開關都重建
+  try { if (window.AFK_TOGGLES && AFK_TOGGLES.set) { var _oTogSet = AFK_TOGGLES.set; AFK_TOGGLES.set = function () { _hitCache = null; return _oTogSet.apply(this, arguments); }; } } catch (e) {}
+  function buildHitCache(done) {
+    if (cacheFresh()) { if (done) done(); return; }
+    if (_hitBuilding) { if (done) _hitBuilding.push(done); return; }
+    _hitBuilding = done ? [done] : [];
+    var slices = hitSlices(), rows = [], i = 0, eqList = null, ei = 0, sig0 = hitSig();
+    var step = function () {
+      var t0 = Date.now();
+      while (i < slices.length && Date.now() - t0 < 25) rows = rows.concat(sliceRows(slices[i++]));
+      if (i < slices.length) { setTimeout(step, 0); return; }
+      // 裝備頁的詳情文字（eqHay）也分段先建好：罕見字（例如「屠龍」）會掃過全部裝備，沒建過的當下才渲染要卡 1 秒
+      if (!eqList) { try { eqList = eqIndex(); } catch (e) { eqList = []; } }
+      while (ei < eqList.length && Date.now() - t0 < 25) { try { eqHay(eqList[ei]); } catch (e) {} ei++; }
+      if (ei < eqList.length) { setTimeout(step, 0); return; }
+      _hitCache = { at: Date.now(), rows: rows, sig: sig0 };
+      var cbs = _hitBuilding; _hitBuilding = null; cbs.forEach(function (f) { try { f(); } catch (e) {} });
+    };
+    setTimeout(step, 0);
+  }
+  function searchCached(q, max) {
+    q = String(q || '').trim().toLowerCase(); if (!q) return [];
+    max = max || 8;
+    var terms = q.split(/\s+/).filter(Boolean), out = [];
+    for (var i = 0; i < _hitCache.rows.length && out.length < max; i++) {
+      var r = _hitCache.rows[i];
+      if (r.custom) { try { r.custom.search(terms, max - out.length).forEach(function (h) { if (out.length < max) out.push({ tab: r.custom.key, cls: null, label: r.custom.label, title: String(h.title).slice(0, 28) }); }); } catch (e) {} continue; }
+      if (terms.every(function (w) { return r.t.indexOf(w) >= 0; })) out.push({ tab: r.tab, cls: r.cls, label: r.label, title: r.title });
+    }
+    return out;
+  }
+  function searchHitsAsync(q, max, cb) { buildHitCache(function () { cb(searchCached(q, max)); }); }
   function searchHits(q, max) {
+    if (cacheFresh()) return searchCached(q, max);
     q = String(q || '').trim().toLowerCase();
     if (!q) return [];
     max = max || 8;
@@ -1668,15 +1727,21 @@
       }
       // cls 分頁逐職業各搜一次;任務分頁另含「全職業共通」桶(QUEST_COMMON：雷德/希米哲等只在 cls='all' 渲染,否則搜不到)
       var clsList = s.cls ? (s.key === 'quest' ? [{ k: 'all', n: '全職業共通' }].concat(CLASSES) : CLASSES) : [null];
+      var cached = cacheFresh() ? _hitCache.rows : null;   // 索引建好了就直接查（不再每次把每個分頁重畫一遍）
       clsList.forEach(function (c) {
-        var tmp = document.createElement('div');
-        tmp.innerHTML = tabHTML(s.key, c ? c.k : state.cls);
-        var blocks = [].slice.call(tmp.querySelectorAll('.m-wiki-card,.m-wiki-spell,.m-wiki-kv'))
-          .filter(function (el) { var t = el.textContent.toLowerCase(); return terms.every(function (w) { return t.indexOf(w) >= 0; }); });
-        if (blocks.length) {
+        var htmls;
+        if (cached) {
+          var ck = c ? c.k : null;
+          htmls = cached.filter(function (r) { return r.tab === s.key && r.cls === ck && terms.every(function (w) { return r.t.indexOf(w) >= 0; }); }).map(function (r) { return r.h; });
+        } else {
+          var tmp = document.createElement('div');
+          tmp.innerHTML = tabHTML(s.key, c ? c.k : state.cls);
+          htmls = [].slice.call(tmp.querySelectorAll('.m-wiki-card,.m-wiki-spell,.m-wiki-kv'))
+            .filter(function (el) { var t = el.textContent.toLowerCase(); return terms.every(function (w) { return t.indexOf(w) >= 0; }); }).map(function (el) { return el.outerHTML; });
+        }
+        if (htmls.length) {
           parts.push('<div class="m-wiki-sub">' + esc(s.label + (c ? '・' + c.n : '')) +
-            ' <span class="m-wiki-cnt">' + blocks.length + '</span></div>' +
-            blocks.map(function (el) { return el.outerHTML; }).join(''));
+            ' <span class="m-wiki-cnt">' + htmls.length + '</span></div>' + htmls.join(''));
         }
       });
     });
@@ -1709,6 +1774,11 @@
     if (q) {   // 搜尋模式:收起分頁/職業列,顯示跨全部分頁與職業的結果
       tabsEl.style.display = 'none';
       clsRow.style.display = 'none';
+      if (!cacheFresh()) {   // 索引還沒建好：先顯示「搜尋中」，分段建好（不卡畫面）再顯示結果
+        body.innerHTML = '<div class="m-wiki-hint">搜尋中……</div>';
+        buildHitCache(function () { if ((state.q || '').trim().toLowerCase() === q && document.getElementById('m-wiki-body') === body) render(); });
+        return;
+      }
       body.innerHTML = linkifyTabs(renderSearch(q));
       highlightEl(body, q);
       return;
@@ -1755,7 +1825,7 @@
     k_dualaxe: ['戰斧投擲 MP 5 → 0', '出血層數上限仍是 5（10 層是黑暗妖精出血精通專屬）：每秒總出血 ×(1＋10%×層數)、滿 5 層 +50%'],
     k_rebound: ['忍耐系觸發門檻 HP<40% → HP<80%（泰坦岩石／魔法／子彈都適用）', '額外普攻只由「泰坦岩石、泰坦魔法」反射時觸發（泰坦子彈不會）；副手那一下要學迅猛雙斧、副手裝得上武器才有'],
     k_tough: ['護甲身軀：傷害減免 +(10−AC)/10 → +(10−AC)/5（小數捨去，約翻倍）；藥水 +50% 只在 HP<40% 時生效'],
-    k_royal_pet: ['項圈夥伴的傷害與命中之魅力判定係數 ×1.2', '夥伴觸發魔法（進化夥伴 10% proc）每次額外＋完整魅力值固定傷害（不受 60 封頂）'],
+    k_royal_pet: ['項圈夥伴的傷害與命中之魅力判定係數 ×1.2', '夥伴觸發魔法（進化夥伴 10% 觸發）每次額外＋完整魅力值固定傷害（不受 60 封頂）'],
     k_royal_pledge: ['呼喚盟友 MP 30 → 15', '精準目標本來就作用於全場敵人：+[1＋等級/15]% → +[1＋等級/10]%（精通只是係數變大，不是改變範圍）'],
     k_royal_sword: ['勇猛意志觸發率 10% → 20%（觸發時傷害 ×1.5 不變）'],
     k_royal_magic: ['免 MP 額外施放的是你在「攻擊技能」下拉選定的那招，沒設定就不會觸發', '另開放「轉換技能」設定欄，可使用魔力奪取（描述沒提）']
@@ -1828,7 +1898,7 @@
   }
 
   function renderPets() {
-    var note = '<div class="m-wiki-note">寵物是<b>獨立的實體</b>：有自己的等級、HP／MP、技能，會自己攻擊、喝藥水、被打死。任何職業都能養。出戰中的寵物還會<b>繼承你 30% 的面板</b>：命中、傷害（近／遠取高＋額外傷害）、魔法傷害、AC（負值部分）、傷害減免、迴避、魔防，以及你最大 HP／MP 的 30%。</div>';
+    var note = '<div class="m-wiki-note">寵物是<b>獨立的實體</b>：有自己的等級、HP／MP、技能，會自己攻擊、喝藥水、被打死。任何職業都能養。出戰中的寵物還會<b>繼承你 30% 的面板</b>' + ((window.__afkPetInherit && window.__afkPetInherit.petMp) ? '，而且<b>每攻擊一次全隊回 ' + window.__afkPetInherit.petMp + ' MP</b>' : '') + '：命中、傷害（近／遠取高＋額外傷害）、魔法傷害、AC（負值部分）、傷害減免、迴避、魔防，以及你最大 HP／MP 的 30%。</div>';
 
     // 誘捕道具 → 抓得到什麼（讀遊戲的 PET_LURES；新增誘捕道具會自動出現）
     var lureRows = [];
@@ -1892,7 +1962,7 @@
           + wDesc('<b>放生是永久的</b>（會退回寵物身上的裝備到背包；鎖定 🔒 的寵物不顯示放生鈕）。'))
       + wCard('③ 戰鬥：寵物自己會打，也會幫你挨打',
           wDesc('有敵人時自動攻擊，沒敵人時閒晃。<b>會被怪鎖定</b>幫你分擔挨打，被鎖機率看類型：<b>物理型 4、特殊型 3、魔法型 2</b>（杜賓狗系與狼系體型小降為 3；召喚物同池共享）。')
-          + wDesc('<b>三種類型的定位</b>（設計目標：兩隻同等寵物的持續輸出 ≈ 一名同等玩家；攻速快的單發低、慢的單發高，DPS 對齊）：')
+          + wDesc('<b>三種類型的定位</b>（設計目標：兩隻同等寵物的持續輸出 ≈ 一名同等玩家；攻速快的單發低、慢的單發高，每秒傷害對齊）：')
           + wTbl(['類型', '普攻傷害', '命中成長', '防禦(AC)變硬', '魔防上限', '技能加成'], [
               ['物理型', '最高', '最快', '每 2 級 −1（最硬）', '70', '最低'],
               ['特殊型', '中', '中', '每 2.7 級 −1', '95', '中'],
@@ -3402,7 +3472,16 @@
 
   // 2026-10-29 16:24 玩家：符文系統另開一頁（原本放在「席琳」底下）
   // ===== 劇情任務（afk-lore-kit／afk-lore-main／afk-hardin／afk-halpas）＋世界事件（afk-kurt-hunt）=====
-  function worldEventCard() { return kurtEventCard() + moreEventCard() + ghostShipCard(); }
+  function worldEventCard() { return kurtEventCard() + moreEventCard() + ghostShipCard() + regionBossCard(); }
+  function regionBossCard() {
+    var B = window.__afkRegionBoss; if (!B) return '';
+    return wCard('👑 地區霸主',
+      wDesc('十五個地區各有一名霸主。角色 <b>Lv' + B.LV_MIN + '</b> 以上，在該地區的野外、地監、傲慢之塔，每次新出怪有 <b>' + Math.round(B.RATE * 100) + '%</b> 讓霸主現身；同一個地區 <b>30 分鐘</b>內只出一次，任何霸主離場後全部再等 5 分鐘。世界事件、克特、幽靈船進行中與離線補跑期間不會出現。') +
+      wDesc('霸主不追人：守在出現的地圖 <b>5 分鐘</b>，換地圖就回巢穴。強度跟著地圖：L＝地圖一般怪平均等級＋5（18～120），HP 30,000×（L÷65）^2.5×（1＋0.15×傭兵數）。打倒得到經驗、金幣、原型怪物的掉落、<b>地區霸主的寶箱</b>與該地區的<b>霸主的證明</b>（收藏面板「🏆 特殊收藏」會記下）。') +
+      wTbl(['地區', '霸主', '招式', '霸主的證明'], B.LIST.map(function (b) { return [esc(b.label), esc(b.n), b.mech.map(function (k) { return B.MECH_N[k]; }).join('、'), esc(b.trophy)]; })) +
+      wTbl(['招式', '內容'], Object.keys(B.MECH_N).map(function (k) { return [B.MECH_N[k], B.MECH_D[k]]; })) +
+      wDesc('地區霸主的寶箱：魔法結晶體 20～40（55%）、金幣（霸主等級×1,000，10%）、祝福的 對盔甲施法的卷軸（20%）、祝福的 對武器施法的卷軸（10%）、龍之鑽石 ×3（5%）。'));
+  }
   function moreEventCard() {
     var E = window.__afkWorldEvents; if (!E) return '';
     return wCard('🌍 世界事件：其他追殺',
@@ -3414,7 +3493,7 @@
         ['👑 反王肯恩「篡位者的懸賞」', '你的血盟有城堡', '刺客頭目＋2 名刺客追殺城主。每 45 秒「懸賞令」標記你 5 秒，結束時最大 HP 30% 的傷害；5 秒內打掉頭目 5% HP 可以打斷。打倒頭目另得懸賞金（等級×2,000 金幣）。'],
         ['❄ 冰之女王「寒冬」', '不挑職業', '冰之女王＋2 名侍女。女王活著時寒冬籠罩：你的攻擊速度 −20%、傭兵與寵物的傷害 −20%，侍女還活著時加重成 −40%；每 10 秒凍傷（全隊各受最大 HP 2%，侍女活著 4%）；每 30 秒冰封一名隊員 3 秒；侍女全倒後每 2 分鐘再叫 2 名。先打侍女減輕寒冬，打倒女王＝結束。']
       ]) +
-      wDesc('打倒頭目：經驗、金幣 ×3、原型頭目的掉落表，再加「世界事件的戰利品袋」1 個（打開隨機：魔法結晶體 30～60、祝福的盔甲／武器卷軸、龍之鑽石 ×5）。外掛開關每個事件各一個。'));
+      wDesc('打倒頭目：經驗、金幣 ×3、原型頭目的掉落表，再加「世界事件的戰利品袋」1 個（打開隨機：魔法結晶體 30～60、祝福的盔甲／武器卷軸、龍之鑽石 ×5）。'));
   }
   function ghostShipCard() {
     var G = window.__afkGhostShip; if (!G) return '';
@@ -3428,7 +3507,7 @@
         ['沉船的詛咒', 'HP 50% 以下：全隊每 10 秒受到最大 HP 3% 的傷害，直到船長倒下'],
         ['船長的寶箱', '德雷克的掉落表＋魔法結晶體 40～80、等級×1,500 金幣；30% 祝福的盔甲或武器卷軸一張、5% 龍之鑽石 ×5']
       ]) +
-      wDesc('在船上不會遇到克特與其他世界事件；離線補跑不會在船上進行。外掛開關「幽靈船出航」。'));
+      wDesc('在船上不會遇到克特與其他世界事件；離線補跑不會在船上進行。'));
   }
   function kurtEventCard() {
     var K = window.__afkKurtHunt; if (!K) return '';
@@ -3522,7 +3601,7 @@
         wDesc('同一件裝備不能鑲兩顆同名符文；同名符文全身最多算 2 顆。鑲嵌費：階段一 哀石水晶 5、階段二 哀石精華 10、階段三 哀石結晶 20。拆下要付哀石 500，符文完整取回。<b>合成</b>：同階段符文任意 3 顆＋哀石結晶 10 → 隨機一顆高一階（階段一→二、二→三）。<b>傳說符文「破」</b>（全身一顆）：佐爾頓用解命石 1＋哀石結晶 30 換，或時空裂痕（席琳模式）前 12 分鐘每次擊殺 1% 掉落（一趟最多一顆）。') +
         wTbl(['符文', '階段', '類別', '效果'], RDx.list.map(function (r) { return ['<b class="' + RDx.STAGE_C[r.stage] + '">' + esc(r.ch) + '</b>', RDx.STAGE_N[r.stage], RDx.CAT_N[r.cat], esc(r.d)]; })));
       out += wCard('◇ 符文之語',
-        wDesc('照孔的順序比對：武器相鄰兩孔（1→2、2→3）或三孔；防具同一件的 1→2 孔。「職」＝任一顆職業符文。三符文之語成立時，裡面的兩符文之語不另外算；同名符文之語全身最多算 2 次。<b>連線</b>（2026-10-29）：防具依 盔甲→頭盔→斗篷→手套→長靴→脛甲→T恤→盾 的孔、飾品依 戒指 1～4→耳環 1～2→項鍊→腰帶 的孔排成一列，連續三孔照順序就成立（可以跨裝備）；補助、藥水、減傷、寵物各有連線，套裝則在武器三孔（魂歸），同名連線全身算一次。') +
+        wDesc('照孔的順序比對：武器相鄰兩孔（1→2、2→3）或三孔；防具同一件的 1→2 孔。「職」＝任一顆職業符文。三符文之語成立時，裡面的兩符文之語不另外算；同名符文之語全身最多算 2 次。<b>連線</b>：防具依 盔甲→頭盔→斗篷→手套→長靴→脛甲→T恤→盾 的孔、飾品依 戒指 1～4→耳環 1～2→項鍊→腰帶 的孔排成一列，連續三孔照順序就成立（可以跨裝備）；補助、藥水、減傷、寵物各有連線，套裝則在武器三孔（魂歸），同名連線全身算一次。') +
         wTbl(['名稱', '順序', '位置', '效果'], RDx.WORDS.map(function (w) { return ['<b style="color:#fcd34d">' + esc(w.n) + '</b>', w.seq.join(' → '), ({ weapon: '武器', armor: '防具（同一件）', armorline: '防具連線（跨件）', accline: '飾品連線（跨件）' })[w.where] || '防具', esc(w.d)]; })));
     })();
     return out;
@@ -3700,7 +3779,7 @@
       special: '覺醒／血之渴望的<b>攻速對普攻有效</b>（傭兵普攻與本尊同一套算法）；<b>龍血 3/5</b> 施 HP 技時得「龍裔」10 秒（受傷 −15%，只保護他自己）。' },
     { c: '🔮 幻術士',
       atk: '<b>心靈破壞</b>（傷害＝這次消耗的 MP 量）；<b>粉碎能量</b>；<b>骷髏毀壞</b>（僅對不死，非不死退普攻）；<b>混亂／幻想</b>（傷＋控）；<b>恐慌</b>（純控）。',
-      autocast: '<b>立方</b>（燃燒／地裂／衝擊）：要<b>來源角色有勾自動施放</b>才展開；<b>立方：和諧</b>要在隊伍面板的「<b>轉換技能</b>」欄選才展開（每秒單體 1D25 火＋全隊回 5 MP，對傭兵免費）；<b>幻覺歐吉／巫妖／鑽石高崙</b>：勾「自動維持」即可維持這三支光環（全隊吃到），另需<b>幻術精通</b>才會再召出幻象本體幫打。',
+      autocast: '<b>立方</b>（燃燒／地裂／衝擊）：要<b>來源角色有勾自動施放</b>才展開；<b>立方：和諧</b>要在隊伍面板的「<b>轉換技能</b>」欄選才展開（每秒單體 1D25 火＋全隊回 ' + ((function () { try { return DB.skills.sk_illu_cube_harmony.cube.val || 5; } catch (e) { return 5; } })()) + ' MP，對傭兵免費）；<b>幻覺歐吉／巫妖／鑽石高崙</b>：勾「自動維持」即可維持這三支光環（全隊吃到），另需<b>幻術精通</b>才會再召出幻象本體幫打。',
       passive: '<b>奇古獸／魔劍</b>普攻（魔法傷害，奇古獸無視魔防）；<b>疼痛的歡愉</b>受擊 100% 反射（對傭兵免費）；學過並勾選的立方另給他自己火／地／風抗性 +30。',
       special: '<b>幻覺歐吉／巫妖／鑽石高崙的全隊光環</b>：幻術士傭兵在隊伍面板勾「自動維持」即可維持→他自己吃到加成、且全隊也吃到該光環（就算你沒放）。幻象本體（歐吉／巫妖／鑽石高崙幫打）則另需<b>幻術精通</b>才會出。' }
   ];
@@ -4109,7 +4188,7 @@
     { t: '🐍 同領域的狩獵區:底比斯與提卡爾', lines: [
       '時空裂痕領域除了上面的計時挑戰,還有<b>一般狩獵圖</b>:底比斯 3 張與<b>提卡爾</b> 3 張(提卡爾神廟地區／神廟地區深處／庫庫爾坎祭壇),等級範圍與進入條件見「地圖」分頁,這幾張都掉「時空裂痕碎片」。',
       '<b>庫庫爾坎祭壇是雙頭目房</b>:提卡爾杰弗雷庫(雄)與(雌)<b>同場</b>,進入與每次再臨各消耗 1 把「提卡爾庫庫爾坎祭壇鑰匙」(神廟地區深處的薩德系怪 2% 掉落);祭壇內比照軍王之室,不能傳送、日光術無效。',
-      '<b>庫庫爾坎寶箱</b>:神廟地區怪掉「初級寶箱碎片(上/下半)」、深處怪掉「高級寶箱碎片」各 <b>5%</b>,上下半拿去<b>歐瑞·希培利亞村莊的巴特爾</b>接合成寶箱（2026-10-29 起上、下各 50 個才能合成）;雙頭目每次擊殺必掉高級寶箱與龜裂之核。開箱每個用龜裂之核 1 顆，或席琳結晶 50 顆。',
+      '<b>庫庫爾坎寶箱</b>:神廟地區怪掉「初級寶箱碎片(上/下半)」、深處怪掉「高級寶箱碎片」各 <b>5%</b>,上下半拿去<b>歐瑞·希培利亞村莊的巴特爾</b>接合成寶箱（上、下各 50 個才能合成）;雙頭目每次擊殺必掉高級寶箱與龜裂之核。開箱每個用龜裂之核 1 顆，或席琳結晶 50 顆。',
       '開箱<b>每個消耗 1 顆龜裂之核</b>,可開出 4 件庫庫爾坎傳說裝備(矛／鐵手甲／盾／面具;初級各 <b>0.25%</b>、高級各 <b>0.75%</b>)、施法卷軸與各式寶石。'
     ]}
   ];
@@ -4127,7 +4206,7 @@
         wTbl(['項目', '說明'], [
           ['時間', '用遊戲時間計算（分頁在背景補跑也正確）；一趟最長 ' + R2.TUNE.clearMin + ' 分鐘，撐滿＝完全通關'],
           ['難度', '20 分鐘後新出場的怪物越來越硬；頭目出場 ' + R2.TUNE.enrageSec + ' 秒（同時兩隻以上 ' + (R2.TUNE.enrageMulti || 90) + ' 秒）還沒倒會「時空暴走」（每秒全隊最大 HP 5% 起，越拖越重）；' + R2.TUNE.wallFrom + ' 分鐘起「裂痕崩塌」，全場每秒扣血，越後面扣越多。夢域鏡的王登場衝擊在裂痕裡最多每 10 秒一次。'],
-          ['裝備參考', '<b>席琳模式</b>（2026-10-29 調低怪物成長）：轉生後全身 +15 祝福裝備、7 名轉生傭兵 ≈ 撐滿 80 分鐘（完全通關）。<b>瘋狂／夢域鏡</b>：全身遺物 +10、原版遺骸＋之魂、神話變身 ≈ 60 分鐘；全身 +15、夢域遺骸＋之魂、時空變身 ≈ 70 分鐘；全身昇華支配 +2 ≈ 80 分鐘。抽到的頭目不同，每趟可以差 10 分鐘以上'],
+          ['裝備參考', '<b>席琳模式</b>：轉生後全身 +15 祝福裝備、7 名轉生傭兵 ≈ 撐滿 80 分鐘（完全通關）。<b>瘋狂／夢域鏡</b>：全身遺物 +10、原版遺骸＋之魂、神話變身 ≈ 60 分鐘；全身 +15、夢域遺骸＋之魂、時空變身 ≈ 70 分鐘；全身昇華支配 +2 ≈ 80 分鐘。抽到的頭目不同，每趟可以差 10 分鐘以上'],
           ['掉落', '席琳＝哀石塵埃、瘋狂＝哀石碎片、夢域鏡＝哀石：一般怪 1%、60 等以下頭目 10%、60 等以上頭目 25%、第 60 分鐘起頭目必掉；頭目 0.001% 掉失去光芒的符文石。不吃任何掉寶加倍；遺物 0.001%'],
           ['結算・席琳', '失去光芒的符文石（階段一）'],
           ['結算・瘋狂', '0～12 分隨機遺物 +5；12～76 分階段二；76 分以上或完全通關階段三'],
@@ -4678,7 +4757,7 @@
     out += wCard('👹 另外兩隻大頭目',
       wDesc('<b>' + mobNm('sr_ushioni') + '</b>（西之地，Lv.' + mobLv('sr_ushioni') + '、HP ' + mobHp('sr_ushioni') + '）：<b>普通攻擊就會讓你中毒</b>（不是靠施法），中毒後每 3 秒扣一次血。') +
       wDesc('<b>' + mobNm('sr_gashadokuro') + '</b>（北之地，Lv.' + mobLv('sr_gashadokuro') + '、HP ' + mobHp('sr_gashadokuro') + '、魔防 300）：招式<b>恐怖的面貌</b>會<b>隨機免疫「近距離／遠距離／魔法」其中一種傷害約 10 秒</b>，被免疫的那類<b>完全打不進去</b>（含觸發法術、雙擊、連射、寵物與召喚）。') +
-      wDesc('<b>中毒、灼燒、出血這類持續傷害不受影響</b>，所以開這招時可以先靠 DoT 磨。另有「<b>枯竭詛咒</b>」讓你中<b>藥水霜化</b>（喝藥回復量減半）。'));
+      wDesc('<b>中毒、灼燒、出血這類持續傷害不受影響</b>，所以開這招時可以先靠持續傷害磨。另有「<b>枯竭詛咒</b>」讓你中<b>藥水霜化</b>（喝藥回復量減半）。'));
 
     out += wCard('🔮 妖魂：日出之國的專屬產出',
       wTbl(['道具', '怎麼拿', '用途'], [
@@ -4978,9 +5057,9 @@
     sk_illu_cube_shock: ['衝擊立方：20 秒內每 5 秒對當前目標施加「魔防減半」4 秒、自身風抗 +30'],
     sk_illu_avatar: ['受到所有傷害 -3%，且此減免與額外傷害都全隊(你＋所有傭兵)生效', '傭兵也能維持：任一隊員維持即全隊生效，已有人維持時其他人不重複施放'],
     sk_illu_panic: ['「恐慌」64 秒依魔法命中判定(非必中)：該怪防禦(AC)+5、攻擊傷害 -10，王級不免疫', '已在恐慌中就不重複施放'],
-    sk_illu_cube_burn: [(window.__afkIlluFix ? '燃燒立方：20 秒內每 2 秒對全場各造成 5~50 火傷、掛灼熱印記，每次傷害的 2 倍變成你的 HP、再回 1 MP；自身火抗 +30（外掛開關「幻術士修補」）' : '燃燒立方：20 秒內每 4 秒對全場各造成 1~25 火傷、自身火抗 +30'), '立方傷害是固定骰值，不吃智力/魔法傷害，只受武器強化(+11 以上)倍率與脆弱影響、仍被怪魔防與傷害減免削減'],
+    sk_illu_cube_burn: [(window.__afkIlluFix ? '燃燒立方：20 秒內每 2 秒對全場各造成 5~50 火傷、掛灼熱印記，每次傷害的 2 倍變成你的 HP、再回 1 MP；自身火抗 +30' : '燃燒立方：20 秒內每 4 秒對全場各造成 1~25 火傷、自身火抗 +30'), '立方傷害是固定骰值，不吃智力/魔法傷害，只受武器強化(+11 以上)倍率與脆弱影響、仍被怪魔防與傷害減免削減'],
     sk_illu_cube_harmony: ['和諧立方：20 秒內每 1 秒對當前目標造成 1~25 火傷、同時全隊各回 ' + HARMONY_MP + 'MP(整段約回 ' + HARMONY_MP * 20 + 'MP、回滿不再回)'],
-    sk_illu_pain: [(window.__afkIlluFix ? '受到的傷害 −50%；被攻擊(一般或技能)時反射無屬性魔法給攻擊者：一般／席琳／瘋狂＝減傷前的傷害 100%（實際受到的 2 倍），席琳夢域鏡＝減傷後實際受到的 100%；被反射的怪掛蝕刻印記；吃脆弱（外掛開關「幻術士修補」）' : '被攻擊(一般或技能)時反射「等同你所受傷害」的無屬性魔法給攻擊者、100% 觸發、吃脆弱')],
+    sk_illu_pain: [(window.__afkIlluFix ? '受到的傷害 −50%；被攻擊(一般或技能)時反射無屬性魔法給攻擊者：一般／席琳／瘋狂＝減傷前的傷害 100%（實際受到的 2 倍），席琳夢域鏡＝減傷後實際受到的 100%；被反射的怪掛蝕刻印記；吃脆弱' : '被攻擊(一般或技能)時反射「等同你所受傷害」的無屬性魔法給攻擊者、100% 觸發、吃脆弱')],
 
     // ===== 龍騎士 龍魔法(reqDk) =====
     sk_dragon_armor: ['效果結束後才能再施放(不刷新)'],
@@ -5076,6 +5155,8 @@
         (lvLabel ? '<div class="m-wiki-spell-lv">' + esc(lvLabel) + '</div>' : '') +
         (function () {   // 📐 逐條追程式碼查證的實際數據(金框,比照職業專精);治癒類即時由遊戲參數算出
           var f = (healFactLines(sk) || atkFactLines(sk) || []).concat(MAGIC_FACT[id] || []);
+          if (id === 'sk_illu_crush' && window.__afkCrushBreak) f = f.concat(['命中時打破目標的魔法免疫（夢域地獄小怪出生的免疫、巨大骷髏「恐怖的面貌」），之後全隊的魔法打得進去']);
+          if (id === 'sk_elf_muddywater' && window.__afkFoulBreak) f = f.concat(['施放時沖散畫面上所有敵人的物理免疫（夢域地獄小怪出生的免疫、巨大骷髏「恐怖的面貌」）']);
           if (!f.length) return '';
           // 內容全是本檔自己寫死/算出的字串(非玩家輸入)→ 直接當 HTML 輸出，讓 <b> 標重點能生效
           return '<div class="m-wiki-desc m-wiki-spell-fact"><b style="color:#fbbf24;">📐 實際數據</b>' +
