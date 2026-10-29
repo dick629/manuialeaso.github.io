@@ -4882,7 +4882,7 @@
     l.push('不吃目標的傷害減免、也無視硬皮');
     return l;
   }
-  var HARMONY_MP = (function () { try { return DB.skills.sk_illu_cube_harmony.cube.val || 5; } catch (e) { return 5; } })();   // 立方：和諧（afk-classtweak 改成 15）
+  var HARMONY_MP = (function () { try { return DB.skills.sk_illu_cube_harmony.cube.val || 5; } catch (e) { return 5; } })();   // 立方：和諧（afk-illufix 改成 15，原 afk-classtweak）
   var MAGIC_FACT = {
     // ===== 法師魔法(reqM) =====
     sk_lightarrow: ['MP 消耗隨智力降低(智力 45 以上最多省 30%)，不隨階級變'],

@@ -6,7 +6,7 @@ try{
   const {page,errors,close}=await browser.page();
   await page.evaluate(code=>{window.__profile=eval('('+code+')');},createProfile.toString());
   const r=await page.evaluate(async()=>{
-    const out={on:AFK_TOGGLES.enabled('illufix')};
+    const out={on:AFK_TOGGLES.enabled('illufix'),merged:[AFK_TOGGLES.list().some(t=>t.id==='classtweak'),AFK_TOGGLES.list().find(t=>t.id==='illufix').name,DB.skills.sk_illu_cube_harmony.cube.val]};
     __profile({cls:'illusion',lv:80});
     mapState.current='aden_field';mapState.mobs=[null,null,null,null,null];
     const mob=__afkLore.boss.place(0,DB.mobs.afk_ttmi_72,{mobId:'afk_ttmi_72'});
@@ -42,6 +42,7 @@ try{
   });
   console.log(JSON.stringify(r));
   assert.equal(r.on,true);
+  assert.equal(r.merged[0],false,'職業技能微調併進幻術士修補');assert.match(r.merged[1],/立方：和諧/);assert.equal(r.merged[2],15);
   assert.equal(r.noPain,1);assert.equal(r.pain,0.5,'疼痛的歡愉 受傷 −50%');
   assert.equal(r.rf,200,'一般模式反彈減傷前（2 倍）');assert.equal(r.rfDream,100,'夢域反彈減傷後');assert.equal(r.expose,true,'蝕刻印記');
   assert.equal(r.patch,3,'核心補丁 69 三處');

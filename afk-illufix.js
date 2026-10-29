@@ -10,12 +10,14 @@
  *   立方：燃燒：
  *     ‧20 秒內每 2 秒（原本 4 秒）對全場各造成 5～50 火傷（5D10，吃魔法傷害與屬性加成，照原本的立方算法）。
  *     ‧每次傷害：被打的怪掛上「灼熱」印記（10 秒，下一次水屬性傷害 ×2）；施放者回復這次傷害 2 倍的 HP、回復 1 MP。
+ *   立方：和諧：每次觸發全隊回復的 MP 5 → 15（20 秒內每秒一次，整段約 300 MP）。傷害不變。
+ *     （原本是獨立的外掛開關「職業技能微調」afk-classtweak.js；玩家 2026-10-30 01:20：兩個都是幻術士的，併成一個開關）
  * ========================================================================== */
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
-  if (T && T.register) T.register({ id: 'illufix', name: '幻術士修補（疼痛的歡愉、立方：燃燒）', group: '遊戲玩法',
-    desc: '疼痛的歡愉：受到傷害 −50%、反彈 100%（夢域鏡反彈減傷後的傷害），並掛蝕刻印記；立方：燃燒：每 2 秒 5～50 火傷、掛灼熱印記，傷害的 2 倍變成補血、每次回 1 MP' });
+  if (T && T.register) T.register({ id: 'illufix', name: '幻術士修補（疼痛的歡愉、立方：燃燒、立方：和諧）', group: '遊戲玩法',
+    desc: '疼痛的歡愉：受到傷害 −50%、反彈 100%（夢域鏡反彈減傷後的傷害），並掛蝕刻印記；立方：燃燒：每 2 秒 5～50 火傷、掛灼熱印記，傷害的 2 倍變成補血、每次回 1 MP；立方：和諧：每次觸發全隊回 MP 5 → 15' });
   if (T && !T.enabled('illufix')) return;
   if (typeof DB === 'undefined' || !DB.skills) return;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
@@ -30,6 +32,11 @@
     markOn(mob, '_afkExpose');   // 蝕刻
     return dream() ? taken : taken * 2;
   };
+
+  // ── 立方：和諧（原「職業技能微調」）──
+  var harmony = DB.skills.sk_illu_cube_harmony;
+  if (harmony && harmony.cube && harmony.cube.kind === 'dmgmp') harmony.cube.val = 15;
+  W.__afkClassTweak = { harmonyMp: harmony && harmony.cube ? harmony.cube.val : null };   // 舊名稱留著，給還在讀它的地方
 
   // ── 立方：燃燒 ──
   var sk = DB.skills.sk_illu_cube_burn, DICE = [5, 10];
@@ -58,5 +65,5 @@
   hook(); W.addEventListener('load', hook);
 
   // 小百科：立方：燃燒的說明跟著改
-  W.__afkIlluFix = { pain: pain, painRf: W.__afkPainRf, burnDice: DICE, burnIv: 20, afterBurn: afterBurn };
+  W.__afkIlluFix = { pain: pain, painRf: W.__afkPainRf, burnDice: DICE, burnIv: 20, afterBurn: afterBurn, harmonyMp: W.__afkClassTweak.harmonyMp };
 })();
