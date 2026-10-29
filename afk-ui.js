@@ -338,4 +338,11 @@
     window[k] = function () { var r = o.apply(this, arguments); fix(); return r; };
   });
   window.__afkFloatFix = fix;
+  // 保險：之後的外掛如果不經過上面兩個函式直接打開視窗，每秒檢查一次「開著卻 0×0」也會搬出來（只量大小，不捲動）
+  setInterval(function () {
+    try {
+      var tic = document.getElementById('town-interaction-container'); if (!tic || tic.classList.contains('hidden') || tic.parentElement === document.body) return;
+      var r = tic.getBoundingClientRect(); if (r.width < 2 || r.height < 2) document.body.appendChild(tic);
+    } catch (e) {}
+  }, 1000);
 })();

@@ -15,6 +15,8 @@ try{
     clanOpenSiegePanel();const tic=document.getElementById('town-interaction-container'),rr=tic.getBoundingClientRect();
     out.fieldWin=[Math.round(rr.width)>100,Math.round(rr.height)>100,document.querySelectorAll('button[data-castle]').length];
     try{closeNpcInteraction();}catch(e){}out.closed=tic.classList.contains('hidden');
+    // 同一個視窗：狩獵中打開任何 NPC（小百科連結、快捷鍵等會走到這裡）也要看得到
+    let npc0=0;['town_talking','town_giran','town_aden'].forEach(t=>{(DB.towns[t].npcs||[]).slice(0,4).forEach(n=>{document.getElementById('town-view').classList.add('hidden');interactNPC(n.id,t);const q=tic.getBoundingClientRect();if(!tic.classList.contains('hidden')&&(q.width<2||q.height<2))npc0++;try{closeNpcInteraction();}catch(e){}});});out.npc0=npc0;
     setMapSelectors('town_talking');changeMap(true);
         // 宣戰：七座城都能點，點了就進外門區（不卡）
     clanOpenSiegePanel();out.buttons=[...document.querySelectorAll('button[data-castle]')].filter(b=>!b.disabled).length;
@@ -33,7 +35,7 @@ try{
     return out;
   });
   console.log(JSON.stringify(r));
-  assert.deepEqual(r.fieldWin,[true,true,7],'狩獵中按攻城看得到視窗');assert.equal(r.closed,true);
+  assert.deepEqual(r.fieldWin,[true,true,7],'狩獵中按攻城看得到視窗');assert.equal(r.closed,true);assert.equal(r.npc0,0,'狩獵中打開 NPC 看得到');
   assert.equal(r.buttons,7,'七座城都能宣戰');assert.ok(r.ms<2000,'點了不卡 '+r.ms);assert.equal(r.map,'orc_fortress_outer');
   assert.equal(r.win,'town_orc_fortress_castle');assert.match(r.held,/orc_fortress/);
   assert.notEqual(r.kicked,'town_orc_fortress_castle','失去的城堡送回村莊');assert.ok(r.kicked&&!/castle/.test(r.kicked),r.kicked);
