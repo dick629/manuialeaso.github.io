@@ -35,7 +35,7 @@ try{
     // 初次輪迴：還沒轉生的人打第一階層，HP ×novice.hp、AC ×novice.def、傷害 ×novice.dmg
     state._afkFinal=false;player.rebirth=0;FB.startMode('first','');try{spawnMob(1);}catch(e){}
     const mf=mapState.mobs.find(x=>x&&x._afkFinal),N=FB.cfg.novice;
-    out.novice=[mf&&Math.round(mf.hp/(FB.cfg.hp*state._afkFinalScale)*1000)/1000,mf&&mf.ac,Math.round(__afkTakenMods.reduce((k,f)=>k*f(player,mf),1)*100)/100,N.hp,Math.round(FB.cfg.ac*N.def),N.dmg];
+    out.novice=[mf&&Math.round(mf.hp/(FB.cfg.hp*state._afkFinalScale)*1000)/1000,mf&&mf.ac,Math.round(__afkTakenMods.reduce((k,f)=>k*f(player,mf),1)*100)/100,N.hp,Math.round(FB.cfg.ac*N.def),Math.round(N.dmg*(0.5+0.5*state._afkFinalScale)*100)/100];   // 傷害也看人數
     return out;
   });
   assert.equal(r.closed,'尚未開放');

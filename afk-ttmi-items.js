@@ -555,20 +555,33 @@
     for(var i=addedDrops.length-1;i>=0;i--){var x=addedDrops[i];if(DB.items[x.entry[0]]&&DB.items[x.entry[0]].ttmiRetired){var L=MOB_DROPS[x.mob],j=L?L.indexOf(x.entry):-1;if(j>=0)L.splice(j,1);addedDrops.splice(i,1);}}
   })();
   var stock=CUR.ids.filter(function(id){return DB.items[id];});   // 洛依只賣上面整理過的這一套
+  // 玩家 2026-10-29：道具包（嘯龍道具包…）裡開得到、但上面沒挑進來的消耗品，也改成古物商人的販賣物品
+  (function(){var inBox=Object.create(null);imported.forEach(function(id){var d=DB.items[id],row=rows[id];if(!d||d.ttmiAction!=='box'||d.ttmiEvent||d.gmOnly||d.ttmiRiftOnly||!row||!row.contents)return;
+    row.contents.forEach(function(x){var cid=resolve(x.sourceId),cd=cid&&DB.items[cid];if(cd&&cd.ttmiCurated&&!cd.gmOnly&&!cd.ttmiRiftOnly&&!isGear(cd))inBox[cid]=1;});});
+    var avg=function(a,b){return (finite(a)+finite(b))/2;};
+    Object.keys(inBox).sort().forEach(function(id){if(stock.indexOf(id)>=0)return;var d=DB.items[id],h=d.ttmiHaste&&d.ttmiHaste[0],g=0;   // 價格比照上面同類（治癒、魔力、加速、增益、解毒）的算法，不讓道具包的品項比較便宜
+      if(d.type==='pot'&&finite(d.valMax)>0)g=600*1.5*avg(d.valMin,d.valMax)/70;else if(d.ttmiAction==='mp')g=1.5*30*avg(d.ttmiMpMin,d.ttmiMpMax);else if(d.ttmiAction==='blue')g=1046*1.5*finite(d.dur)/600;
+      else if(h)g=(h.stage>=3?1500:h.stage===2&&!h.moveOnly?880:200)*1.5*finite(d.dur||300)/300;else if(d.ttmiAction==='antidote')g=450;else if(d.ttmiAction==='buff')g=10000;
+      if(g>0)CUR.price[id]=Math.max(1,Math.ceil(g));stock.push(id);d.ttmiBoxSold=true;});})();
   var stockSet0=Object.create(null);stock.forEach(function(id){stockSet0[id]=1;});
   var whyNot=function(id){var d=DB.items[id];return !d?"none":d.ttmiRiftOnly?"rift":d.gmOnly?"gm":feeds[id]?"key":bossDrop[id]?"boss":isGear(d)?(finite(d.p)<=GEAR_MAX?"sale":"gear-high"):forSale(id)?"sale":d.ttmiAction?("act:"+d.ttmiAction):("type:"+d.type);};
   // 高階裝備、失去氣息的古物、封印品…原本只能在洛依買、又沒有怪物掉落的 → 分到頭目掉落（玩家 2026-10-27）
   //   失去氣息的古物：優先給「本來就會掉復原後那件」的頭目（機率同那件）；其他依價值分三層給對應等級的頭目，
   //   每隻頭目每層總共約 1.5％／1％／0.6％，平均分給分到牠身上的物品（每件至少 0.05％）
   var bossAdded=[];
+  var RIFT_NAME=/歐西里斯|庫庫爾坎|底比斯|提卡爾/;
   (function(){
     if(typeof MOB_DROPS==='undefined')return;
     var dropped=Object.create(null);Object.keys(MOB_DROPS).forEach(function(n){(MOB_DROPS[n]||[]).forEach(function(e){dropped[e[0]]=1;});});
     var crafted=Object.create(null);if(typeof CRAFT_RECIPES!=='undefined')Object.keys(CRAFT_RECIPES).forEach(function(n){(CRAFT_RECIPES[n]||[]).forEach(function(r){crafted[r.result]=1;});});
     var need=imported.filter(function(id){var d=DB.items[id];return id!==leafId&&!d.ttmiRiftOnly&&!d.gmOnly&&!d.ttmiEvent&&!stockSet0[id]&&!dropped[id];});
+    var riftNeed=need.filter(function(id){return RIFT_NAME.test(DB.items[id].n||'');});need=need.filter(function(id){return riftNeed.indexOf(id)<0;});   // 時空裂痕（底比斯／提卡爾）專屬的寶箱與碎片：只給該裂痕的怪（玩家 2026-10-29：新手區掉底比斯箱）
     var bosses=Object.keys(DB.mobs).map(function(k){return DB.mobs[k];}).filter(function(m){return m&&m.boss&&m.race!=='建築'&&m.n&&MOB_DROPS[m.n]&&(m.lv||0)>=40;})
       .sort(function(a,b){return (a.lv||0)-(b.lv||0)||(a.n<b.n?-1:1);});
     var add=function(mob,id,pct){var list=MOB_DROPS[mob];if(list.some(function(e){return e[0]===id;}))return;var entry=[id,Math.max(0.05,+pct.toFixed(3))];list.push(entry);addedDrops.push({mob:mob,entry:entry});bossAdded.push(id);};
+    riftNeed.forEach(function(id){var n=DB.items[id].n||'',pre=/庫庫爾坎|提卡爾/.test(n)?'提卡爾':'底比斯';
+      Object.keys(DB.mobs).map(function(k){return DB.mobs[k];}).filter(function(m){return m&&!m.boss&&m.n&&m.n.indexOf(pre)===0&&MOB_DROPS[m.n];})
+        .forEach(function(m){add(m.n,id,0.5);});});
     var rest=[],common=[];
     need.forEach(function(id){
       var d=DB.items[id];

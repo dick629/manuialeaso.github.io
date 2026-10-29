@@ -112,7 +112,9 @@
   var TIER = { first: { n: '席琳夢境', k: 1 }, tier2: { n: '席琳幻影', k: 1.25 }, tier3: { n: '席琳伴身', k: 1.5625 } };
   var tierK = function () { var t = TIER[mode()]; return t ? t.k : 1; };
   var novice = function () { return mode() === 'first' && !!S()._afkFinalNovice; };
-  var modeMult = function () { var m = mode(); return m === 'solo' ? 0 : m === 'second' ? 1.05 : tierK() * (novice() ? FB.novice.dmg : 1); };
+  var modeMult = function () { var m = mode(); return m === 'solo' ? 0 : m === 'second' ? 1.05 : tierK() * (novice() ? noviceDmg() : 1); };
+  // 初次輪迴的傷害也看人數（玩家 2026-10-29：8 人也要打得過）：×(0.5＋0.5×人數÷16)；16 人＝FB.novice.dmg、8 人 ×0.75、4 人 ×0.625
+  var noviceDmg = function () { var sc = Math.min(1, Math.max(0, Number(S()._afkFinalScale) || 1)); return FB.novice.dmg * (0.5 + 0.5 * sc); };
   (window.__afkTakenMods = window.__afkTakenMods || []).push(function (ent, mob) { return (on() && mob && (mob._afkFinal || mob._afkApostle)) ? modeMult() : 1; });
   var bossOf = function () { return (mapState.mobs || []).filter(function (m) { return m && m._afkFinal && !m._dead && m.curHp > 0; })[0] || null; };
   var addsAlive = function () { return (mapState.mobs || []).filter(function (m) { return m && m._afkApostle && !m._dead && m.curHp > 0; }).length; };
@@ -151,7 +153,7 @@
     if (TIER[mode()]) m.n = TIER[mode()].n + ' ' + BOSS_NAME;
     if (mode() === 'solo') { m.ac = Math.round(FB.ac * 0.5); m.dr = FB.dr * 0.5; m.mr = FB.mr * 0.5; ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (k) { m[k] = FB.res * 0.5; }); }
     S()._afkFinalSpawned = true;
-    if (novice()) sys('<span class="text-cyan-200">初次輪迴：席琳還沒認真看待你——HP ×' + FB.novice.hp + '，防禦與抗性 ×' + FB.novice.def + '，傷害 ×' + FB.novice.dmg + '。</span>');
+    if (novice()) sys('<span class="text-cyan-200">初次輪迴：席琳還沒認真看待你——HP ×' + FB.novice.hp + '，防禦與抗性 ×' + FB.novice.def + '，傷害 ×' + (Math.round(noviceDmg() * 1000) / 1000) + '。</span>');
     if (S()._afkFinalScale < 1) sys('<span class="text-cyan-200">隊伍 ' + S()._afkFinalParty + ' 人：席琳的 HP 調整為 ' + m.hp.toLocaleString() + '（' + S()._afkFinalParty + '／' + FB.base + '），冥界的使徒同比例。</span>');
     sys('<span class="font-bold" style="color:#7dd3fc;">死亡之海的水面倒映著無數亡者的臉。沉沒神殿的最深處，' + BOSS_NAME + '緩緩睜開了眼睛。</span><span class="afk-lore">「孩子……你終於走到夢的盡頭了。留下來吧，這裡就是萬物的歸宿。」</span>');
     if (typeof vfxBossEntrance === 'function') { try { vfxBossEntrance(m); } catch (e) {} }

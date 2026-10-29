@@ -31,7 +31,7 @@
   var T = window.AFK_TOGGLES;
   var enabled = function () { return !T || T.enabled('relicplus'); };
   // 遺物武器命中回 MP（玩家 2026-10-29：像魔力短劍一樣，避免新手期 MP 不夠用）：+0 每擊 1 點，每 +3 再 +1，昇華支配再 +1＋昇華值
-  if (T && T.register) T.register({ id: 'relicmp', name: '遺物武器命中回 MP', group: '遊戲玩法',
+  if (T && T.register) T.register({ id: 'relicmp', name: '遺物武器命中回 MP', group: '遊戲玩法', def: false,   // 玩家 2026-10-29：預設關（要重新填寫遺物）
     desc: '所有遺物武器都像魔力短劍一樣，一般攻擊命中時回復 MP：+0 每擊 1 點，每 +3 再 +1（+15＝6），昇華支配再 +1＋昇華值' });
   var mpHitOn = function () { return !T || T.enabled('relicmp'); };
   var mpHitAmt = function (n, asc) { return 1 + Math.floor((n || 0) / 3) + (asc != null ? 1 + asc : 0); };
