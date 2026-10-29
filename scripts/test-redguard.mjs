@@ -1,4 +1,4 @@
-// test-redguard.mjs — 避免紅人持續追殺（玩家 2026-10-29）：席琳神殿「女神嘆息信徒 京」花 10 龍鑽或 100 萬金幣，正義值歸 0、追殺名單清空、密語尋仇作廢、24 小時不再加追殺
+// test-redguard.mjs — 避免紅人持續追殺（玩家 2026-10-29）：席琳神殿「女神嘆息信徒 京」花 10 龍鑽或 100 萬金幣，正義值歸 0、追殺名單清空、密語尋仇作廢、追殺永久解除
 import assert from 'node:assert/strict';
 import {testBrowser,createProfile} from './relic-test-browser.mjs';
 const browser=await testBrowser();
@@ -21,7 +21,7 @@ try{
     pvpMarkForChase({n:'紅人丁',avatar:'男戰士',alignmentValue:-20000});out.blocked=G.chasers(player).length;
     player.trollPlayers.push({n:'世界頻道記仇',avatar:'男戰士',noExpire:true,until:Number.MAX_SAFE_INTEGER});mapState.current='training';try{spawnMob(0);}catch(e){}
     out.swept=G.chasers(player).length;
-    player.afkRedGuardUntil=Date.now()-1;pvpMarkForChase({n:'紅人戊',avatar:'男戰士',alignmentValue:-20000});out.expired=G.chasers(player).length;
+    out.forever=player.afkRedGuardUntil===G.FOREVER;pvpMarkForChase({n:'紅人戊',avatar:'男戰士',alignmentValue:-20000});out.expired=G.chasers(player).length;
     // 龍鑽
     let d=50;window.pandoraGetSharedDiamonds=()=>d;window.pandoraAdjustSharedDiamonds=x=>{d+=x;return {ok:true,diamonds:d};};
     out.dia=[G.purify('dia'),d];
@@ -33,7 +33,7 @@ try{
   assert.equal(r.before,3);assert.ok(/金幣不夠/.test(r.poor));assert.equal(r.ok,null);
   assert.deepEqual(r.after,[0,1000000,0,false,true]);
   assert.equal(r.blocked,0,'保護期間不加追殺');assert.equal(r.swept,0,'出怪前清掉其他來源的追殺');
-  assert.equal(r.expired,1,'保護過期後恢復');
+  assert.equal(r.forever,true);assert.equal(r.expired,0,'永久解除');
   assert.deepEqual(r.dia,[null,40]);
   assert.deepEqual(errors,[]);
   await close();
