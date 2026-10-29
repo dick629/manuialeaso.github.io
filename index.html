@@ -659,7 +659,9 @@
     <script src="afk-slotinfo.js?v=c904c3ca3a"></script>
     <script src="afk-loadslots.js?v=fdc549e696"></script>
     <script src="afk-dex.js?v=2c88b46856"></script>
-    <script src="afk-wiki.js?v=6253c10c47"></script>
+    <!-- afk-classtweak：職業技能微調（立方：和諧回 MP 5 → 15）；排在 afk-wiki 之前（小百科的技能說明讀它改過的數值） -->
+    <script src="afk-classtweak.js?v=d4bb120492"></script>
+    <script src="afk-wiki.js?v=53316aa0a7"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=302890a0df"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
@@ -814,7 +816,7 @@
     <!-- 天堂透視鏡已核對物品；套裝與地圖資料就緒後加入配方與裂痕補給。 -->
     <script src="afk-ttmi-items-data.js?v=3468dd975f"></script>
     <script src="afk-ttmi-icons-data.js?v=601b04b77c"></script>
-    <script src="afk-ttmi-items.js?v=1a979c7309"></script>
+    <script src="afk-ttmi-items.js?v=6948e44840"></script>
     <!-- afk-junkquest：奇岩「古物學者 塞勒斯」——雜項素材的劇情委託與常駐委託（新手／中階／高階） -->
     <script src="afk-junkquest.js?v=227611d120"></script>
     <!-- 遺物戰鬥掛接、同伴與固定終階 GM 測試道具。 -->
@@ -826,7 +828,7 @@
     <script src="afk-gm-skills.js?v=6dfd583366"></script>
     <script src="afk-relic-integration.js?v=0f83cd1482"></script>
     <!-- 鑽石卡變身與神話／天上／時空合成；保留原生變形卷軸入口。 -->
-    <script src="afk-card-forms.js?v=79798fbc18"></script>
+    <script src="afk-card-forms.js?v=2a58ddd2e9"></script>
     <!-- afk-card-fx：高階變身動態特效（SVG＋CSS，神話八主題／天上光翼／時空時鐘陣／聖衣星座陣） -->
     <script src="afk-card-fx.js?v=cfe29406f9"></script>
     <!-- afk-quickjunk：快速廢品依部位／強化值勾選 -->
@@ -834,7 +836,9 @@
     <!-- afk-forged-sprites：自製變身圖（沒有專屬圖的變身與神話／天上／時空／聖衣卡；由 scripts/forge-morph.py 產生） -->
     <script src="afk-forged-sprites.js?v=63f7545505"></script>
     <script src="afk-card-ascension.js?v=ef2d9128ba"></script>
-    <script src="afk-card-combat.js?v=7fa03f4918"></script>
+    <script src="afk-card-combat.js?v=cc7d222d53"></script>
+    <!-- afk-saint-cloth：聖衣光輝（解除封印 5 次失去光輝、雅典娜祝福恢復）、光輝碎片升星（對最終頭目）、封印型態沒有翅膀；需 afk-card-ascension、afk-card-combat -->
+    <script src="afk-saint-cloth.js?v=9aa2eca8cd"></script>
     <!-- afk-rebirth-rules：轉生魔法消耗與 SP、溢補護盾、敗者榮光、聖衣補血、魔法武器加倍、百般武藝首擊（排在 afk-arts、afk-card-combat 之後） -->
     <script src="afk-rebirth-rules.js?v=8f4b0c7c81"></script>
     <!-- afk-debuff-rules：負面效果一律計算抵抗、頭目不再免疫；污濁之水全體 15 秒、冷卻 30 秒（冷卻中改三重矢） -->
@@ -844,13 +848,15 @@
     <!-- afk-rebirth2：二轉決戰（席琳方傷害 +5%）、次元突破者／封印輪迴光環、第二次轉生（需 afk-finalboss、afk-dreamstar） -->
     <script src="afk-rebirth2.js?v=a12d3cf25f"></script>
     <!-- afk-affix-plus：詞綴擴充（祝福／遠古三階只能打怪取得；燃柳村龍紋師艾格尼絲「龍紋賦予」：不屈者意志、龍的印記／傷痕、神樹者的讚禮、闇龍的抵抗者） -->
-    <script src="afk-affix-plus.js?v=24099bee53"></script>
+    <script src="afk-affix-plus.js?v=f7abc8d7c9"></script>
     <!-- afk-lostshard：失去光輝的碎片（席琳夢域鏡掉落；哈瑪大師 100 碎片＋500 龍鑽＋1000 席琳結晶熔鑄成材料） -->
     <script src="afk-lostshard.js?v=0c77f70897"></script>
     <!-- afk-dragon-npcs：四龍副本入口分村（地＝沉默洞穴、火＝威頓村、水＝海音、風＝亞丁）、米米製作改版與四龍盔甲（需 afk-corrupt、afk-affix-plus） -->
     <script src="afk-dragon-npcs.js?v=c4936cea7e"></script>
     <!-- afk-traitor：亞丁城副本「謀叛者的低語」（持有亞丁城＋統一七城，經由亞丁城的伊菈進入；冥皇丹特斯、反王肯恩、魔女賽尼斯＋四大軍王與長老）（需 afk-castlewar、afk-sets） -->
     <script src="afk-traitor.js?v=66ee7525c9"></script>
+    <!-- afk-hidden：隱藏條件（謀叛三人組、王族之敵）；需 afk-card-combat、afk-affix-plus 的受傷掛點 -->
+    <script src="afk-hidden.js?v=7d89b59cfa"></script>
     <!-- afk-giltas：吉爾塔斯副本「異界祭壇」（長老會議廳・次元裂隙；鑰匙碎片、信仰的寶珠、四色反擊屏障、真．吉爾塔斯之劍、支配者吉爾塔斯變身卡）（需 afk-traitor、afk-card-ascension、afk-relicplus） -->
     <script src="afk-giltas.js?v=00b44bb8d4"></script>
     <!-- afk-aden-quests：亞丁的陰影（55～75 級任務，近衛隊長 雷歐）、佐姆格祝福卷軸強化亞丁近衛裝備（安定值 +9） -->
@@ -874,7 +880,7 @@
     <!-- 小百科從目前物品與變身資料生成分階說明。 -->
     <!-- afk-icon-fix：道具圖示對齊天堂透視鏡（由 scripts/gen-icon-fix.mjs 依 data/ttmi-icon-check.json 產生） -->
     <script src="afk-icon-fix.js?v=f74421a931"></script>
-    <script src="afk-game-guide.js?v=4d67f9d0cc"></script>
+    <script src="afk-game-guide.js?v=b7f821e53c"></script>
     <script src="afk-readability.js?v=fccbd2ca1e"></script>
     <!-- afk-classic：經典模式補正（256K 撥接：斷線／LAG／怪中BUG、頭目皆不死系＋起死回生、古魯丁地監 1～7 樓攀爬與歐林、黑妖之後職業封印、影子打法、歐林房、無敵狗、開服夜爆機、等級上限、時代地圖、席琳神殿進入黑妖三部曲、原版經驗表／組隊分配／死亡懲罰／掉錢、一般轉經典、能力值上限、四人隊伍、贖回冷卻）；包 tick，放在後面 -->
     <script src="afk-classic.js?v=77fdab1506"></script>

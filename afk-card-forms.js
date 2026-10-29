@@ -127,7 +127,7 @@
     delete form.controlOnly;
     var zl=ZD_LORE[z.key]||t.lore;
     catalog.samsara.push({id:id,n:n,tier:'samsara',form:form,prototype:z.base,role:'星座聖衣',lore:zl,zodiac:z.key,special:z.sp,specialBonus:copy(z.bonus),
-      desc:zl+' 封印型態：效果同時空變身，另有最終減傷 +100。解除封印（第二次取得）：六項能力各 +100、五屬性抗性各 +500、最終減傷 +500，並得到特殊能力「'+z.sp+'」。副本內一律回到封印型態、沒有特殊能力。缺點：沒回安全區連續戰鬥 30 分鐘會解除變身，冷卻 30 分鐘（期間不能變身聖衣）。'});
+      desc:zl+' 封印型態（沒有翅膀）：效果同時空變身，另有最終減傷 +100。解除封印（第二次取得，有翅膀）：六項能力各 +75、五屬性抗性各 +250、爆擊傷害 +100%、最終減傷 +500，並得到特殊能力「'+z.sp+'」。以解除封印的樣子穿上 5 次後失去光輝、回到封印型態，要用雅典娜祝福恢復。副本內一律回到封印型態、沒有特殊能力。缺點：沒回安全區連續戰鬥 30 分鐘會解除變身，冷卻 30 分鐘（期間不能變身聖衣）。'});
     if(typeof MORPH_BATTLE_ALIAS!=='undefined')MORPH_BATTLE_ALIAS[n]=MORPH_BATTLE_ALIAS['輪迴・'+n]=MORPH_BATTLE_ALIAS[z.base]||z.base;   // 舊存檔的「輪迴・X聖衣」照樣有外觀
   });
   function monsterForm(name) {

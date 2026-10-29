@@ -172,22 +172,24 @@
     });
   });
   // 指定來源（玩家 2026-10-29：封印的克特套裝箱子不該在新手區，至少要在黑騎士團身上）
+  var THEMED=Object.create(null);
   (function(){
     var THEME={'封印的克特套裝箱子':{re:/^(黑騎士|黑騎士搜索隊|精英黑騎士|黑騎士隊長|暗黑黑騎士|邪惡的黑騎士|黑暗的黑騎士)$/,tier:1}};
     Object.keys(junk).forEach(function(id){var th=THEME[DB.items[id].n];if(!th)return;var hit=0;
       Object.keys(DB.mobs).forEach(function(k){var m=DB.mobs[k];if(!m||!m.n||!th.re.test(m.n)||!MOB_DROPS[m.n])return;var a=dropPools[m.n]=dropPools[m.n]||[];
         Object.keys(dropPools).forEach(function(n){if(!th.re.test(n))dropPools[n]=dropPools[n].filter(function(x){return x.id!==id;});});
         if(!a.some(function(x){return x.id===id;})){a.push({id:id,weight:5,boss:!!m.boss});hit++;}});
-      if(hit){junkTier[id]=th.tier;Object.keys(dropPools).forEach(function(n){if(!dropPools[n].length)delete dropPools[n];});}});
+      if(hit){junkTier[id]=th.tier;THEMED[id]=1;Object.keys(dropPools).forEach(function(n){if(!dropPools[n].length)delete dropPools[n];});}});
   })();
   (function(){
-    var orphan=Object.keys(junk).filter(function(id){return !junkTier[id];}).sort();
+    var orphan=Object.keys(junk).filter(function(id){return !junkTier[id]||THEMED[id];}).sort();   // 指定來源的也留在清單裡佔位置，其他素材的分配才不會跟著位移
     if(!orphan.length||typeof MOB_DROPS==='undefined')return;
     var band=[null,[],[],[]];
     Object.keys(DB.mobs).forEach(function(k){var m=DB.mobs[k];if(!m||!m.n||m.boss||m.race==='建築'||!MOB_DROPS[m.n])return;band[tierOfLv(m.lv||1,false)].push(m);});
     for(var t=1;t<=3;t++)band[t].sort(function(a,b){return (a.lv||0)-(b.lv||0)||(a.n<b.n?-1:1);});
     var cursor=[0,0,0,0];
     orphan.forEach(function(id,i){
+      if(THEMED[id]){cursor[1+(i%3)]+=3;return;}   // 佔住原本的位置
       var t=1+(i%3),list=band[t];if(!list.length)return;junkTier[id]=t;
       for(var k=0;k<3;k++){var m=list[cursor[t]++%list.length],a=dropPools[m.n]=dropPools[m.n]||[];if(!a.some(function(x){return x.id===id;}))a.push({id:id,weight:5,boss:false});}
     });
@@ -198,6 +200,13 @@
     var dst=MOB_DROPS[n] = MOB_DROPS[n] || [];
     a.forEach(function(x){if (!dst.some(function(y){return y[0]===x.id;})) { var entry=[x.id,budget*x.weight/total]; dst.push(entry); addedDrops.push({mob:n,entry:entry}); }});
   });
+  // 玩家 2026-10-29：低階區域掉的「封印的…」（換魔法結晶體用）提煉要 100 個、掉落率固定 1%
+  (function(){
+    Object.keys(junk).forEach(function(id){var d=DB.items[id];if(!/^封印的/.test(d.n||'')||junkTier[id]!==1)return;
+      d.ttmiSealedLow=true;d.d=String(d.d||'').replace('每 10 份材料','每 100 份材料');
+      recipes.forEach(function(r){if(r.ttmiRecipeKind==='refine'&&r.req.some(function(q){return q.id===id;}))r.req.forEach(function(q){if(q.id===id)q.cnt=100;});});
+      addedDrops.forEach(function(x){if(x.entry[0]===id){x.entry[1]=1;x.fixed=true;}});});
+  })();
 
   function equipped(p,fn) { if (!p || !p.eq) return; Object.keys(p.eq).forEach(function(slot){var e=p.eq[slot],d=e&&DB.items[e.id];if(e&&d)fn(e,d,slot);}); }
   function merge(to,from) { Object.keys(from || {}).forEach(function(k){if(k==='ttmiExpMult')to[k]=Math.max(to[k]||1,finite(from[k]));else to[k]=(to[k]||0)+finite(from[k]);}); }
@@ -648,7 +657,7 @@
     })();
     // 每隻怪新增的掉落合計不超過 20%（與原本的預算一致）：超過就整組等比例縮小
     var sum=Object.create(null);addedDrops.forEach(function(x){sum[x.mob]=(sum[x.mob]||0)+finite(x.entry[1]);});
-    addedDrops.forEach(function(x){if(sum[x.mob]>20)x.entry[1]=x.entry[1]*20/sum[x.mob]*(1-1e-9);});
+    addedDrops.forEach(function(x){if(sum[x.mob]>20&&!x.fixed)x.entry[1]=x.entry[1]*20/sum[x.mob]*(1-1e-9);});
   })();
   var stockSet=Object.create(null);stock.forEach(function(id){stockSet[id]=true;});
   // 特殊裝備抽抽樂（玩家 2026-10-27）：原本用金幣賣的「裝了裝備的箱子」（究極 T 恤箱子…）改成每抽 10 龍之鑽石，從所有這類箱子的裝備裡平均抽一件

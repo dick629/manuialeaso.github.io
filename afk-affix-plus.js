@@ -214,8 +214,9 @@
   };
 
   // ── 龍的印記：對該龍傷害 +50% ──
+  var markHooked = false;   // 2026-10-29 修：只包一次——之後 sherine-dream、runefx、caps 再包 C.damage，外層沒有旗標，load 時會再包一層（印記 ×1.5 變成 ×2.25）
   var hookDamage = function () {
-    var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function' || C.damage.__afkMark) return;
+    var C = W.AFK_CARD_COMBAT; if (markHooked || !C || typeof C.damage !== 'function' || C.damage.__afkMark) return; markHooked = true;
     var oD = C.damage;
     C.damage = function (actor, target, amount) {
       var v = oD.apply(this, arguments);
