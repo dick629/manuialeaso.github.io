@@ -181,6 +181,10 @@
         if(!a.some(function(x){return x.id===id;})){a.push({id:id,weight:5,boss:!!m.boss});hit++;}});
       if(hit){junkTier[id]=th.tier;THEMED[id]=1;Object.keys(dropPools).forEach(function(n){if(!dropPools[n].length)delete dropPools[n];});}});
   })();
+  // 玩家 2026-10-29：「集字遊戲[…]」整個系列都是週年活動的集字道具（只有 [週年] 那一張名字裡有「週年」被擋到）→ 全系列除役：
+  //   不掉、不賣、不進委託；但仍在分配清單裡佔位置，其他素材分到哪些怪才不會跟著位移。舊存檔裡已有的不會消失。
+  var RETIRED_JUNK=Object.create(null);
+  Object.keys(junk).forEach(function(id){var d=DB.items[id];if(/^集字遊戲/.test(d.n||'')){RETIRED_JUNK[id]=1;d.ttmiEvent=true;d.ttmiRetired=true;d.d=String(d.d||'').replace(/\n【古物學者委託[^】]*】[^\n]*/,'')+'（週年活動的集字道具，已除役：不再掉落，古物學者也不收。）';}});
   (function(){
     var orphan=Object.keys(junk).filter(function(id){return !junkTier[id]||THEMED[id];}).sort();   // 指定來源的也留在清單裡佔位置，其他素材的分配才不會跟著位移
     if(!orphan.length||typeof MOB_DROPS==='undefined')return;
@@ -189,11 +193,12 @@
     for(var t=1;t<=3;t++)band[t].sort(function(a,b){return (a.lv||0)-(b.lv||0)||(a.n<b.n?-1:1);});
     var cursor=[0,0,0,0];
     orphan.forEach(function(id,i){
-      if(THEMED[id]){cursor[1+(i%3)]+=3;return;}   // 佔住原本的位置
+      if(THEMED[id]||RETIRED_JUNK[id]){cursor[1+(i%3)]+=3;return;}   // 佔住原本的位置（除役的不分配）
       var t=1+(i%3),list=band[t];if(!list.length)return;junkTier[id]=t;
       for(var k=0;k<3;k++){var m=list[cursor[t]++%list.length],a=dropPools[m.n]=dropPools[m.n]||[];if(!a.some(function(x){return x.id===id;}))a.push({id:id,weight:5,boss:false});}
     });
   })();
+  Object.keys(RETIRED_JUNK).forEach(function(id){delete junk[id];delete junkTier[id];Object.keys(dropPools).forEach(function(n){dropPools[n]=dropPools[n].filter(function(x){return x.id!==id;});if(!dropPools[n].length)delete dropPools[n];});});
   var addedDrops = [];
   if (typeof MOB_DROPS !== 'undefined') Object.keys(dropPools).forEach(function(n) {
     var a=dropPools[n], total=a.reduce(function(s,x){return s+x.weight;},0), budget=a[0].boss?20:8;

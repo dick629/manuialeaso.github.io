@@ -7,7 +7,8 @@
  *       祝福的（任一階）、昇華的祝福、至高的祝福、屬性、遠古系（任一）、永恆、不朽、太初、覺醒的、創世的、
  *       不屈者意志、龍的印記、龍的傷痕、神樹者的讚禮、闇龍的抵抗者、套裝效果、傳說、遺物、符文孔、已鑲符文
  *     另外各有一個「強化 +N 以上」。
- *   ‧保護設定記在角色上（player.itemGuard），兩欄各自勾：
+ *   ‧保護設定記在角色上（player.itemGuard），三欄各自勾：
+ *       自動廢品（2026-10-29 15:40）：自動販賣開著時，有這個詞條（或強化 +N 以下）的就自動標成廢品，照自動販賣的等待秒數賣；不能賣的優先、個別例外「永遠保留」優先
  *       不能賣：手動販賣、快速廢品勾選、標成廢品、自動販賣（含預覽）、一鍵賣出都會跳過
  *       不能存：單件存入、一鍵存入、條件存入、存入目前顯示、批次存入都會跳過
  *     預設都不勾（不改變原本行為）。
@@ -56,24 +57,27 @@
   var NAME = {}; AFFIX.forEach(function (a) { NAME[a[0]] = a[1]; });
   var P = function () { return (typeof player !== 'undefined' && player && Array.isArray(player.inv)) ? player : null; };
   var cfg = function () {
-    var p = P(); if (!p) return { sell: {}, store: {}, sellEn: -1, storeEn: -1 };
+    var p = P(); if (!p) return { sell: {}, store: {}, junk: {}, sellEn: -1, storeEn: -1, junkEn: -1 };
     var g = p.itemGuard || (p.itemGuard = {});
     if (!g.sell || typeof g.sell !== 'object') g.sell = {};
     if (!g.store || typeof g.store !== 'object') g.store = {};
-    if (g.sellEn == null) g.sellEn = -1; if (g.storeEn == null) g.storeEn = -1;
+    if (!g.junk || typeof g.junk !== 'object') g.junk = {};   // 自動廢品（2026-10-29 15:40）：有這個詞條就自動標成廢品（不能賣的優先）
+    if (g.sellEn == null) g.sellEn = -1; if (g.storeEn == null) g.storeEn = -1; if (g.junkEn == null) g.junkEn = -1;
     return g;
   };
   // 為什麼被擋（字串）；沒擋＝''
   var why = function (i, kind) {
     if (!i || !DB.items[i.id]) return '';
-    var g = cfg(), set = kind === 'store' ? g.store : g.sell, en = Number(kind === 'store' ? g.storeEn : g.sellEn);
+    var g = cfg(), set = kind === 'store' ? g.store : kind === 'junk' ? g.junk : g.sell, en = Number(kind === 'store' ? g.storeEn : kind === 'junk' ? g.junkEn : g.sellEn);
     for (var n = 0; n < AFFIX.length; n++) { var k = AFFIX[n][0]; if (set[k] && has(i, k)) return NAME[k]; }
     var d = DB.items[i.id];
-    if (en >= 0 && (d.type === 'wpn' || d.type === 'arm' || d.type === 'acc') && (Number(i.en) || 0) >= en) return '+' + en + ' 以上';
+    if (en >= 0 && (d.type === 'wpn' || d.type === 'arm' || d.type === 'acc') && (kind === 'junk' ? (Number(i.en) || 0) <= en : (Number(i.en) || 0) >= en)) return (kind === 'junk' ? '+' + en + ' 以下' : '+' + en + ' 以上');
     return '';
   };
   var blocked = function (i, kind) { return !!why(i, kind); };
-  var count = function (kind) { var g = cfg(); return Object.keys(kind === 'store' ? g.store : g.sell).filter(function (k) { return (kind === 'store' ? g.store : g.sell)[k]; }).length + (Number(kind === 'store' ? g.storeEn : g.sellEn) >= 0 ? 1 : 0); };
+  var count = function (kind) { var g = cfg(), set = kind === 'store' ? g.store : kind === 'junk' ? g.junk : g.sell; return Object.keys(set).filter(function (k) { return set[k]; }).length + (Number(kind === 'store' ? g.storeEn : kind === 'junk' ? g.junkEn : g.sellEn) >= 0 ? 1 : 0); };
+  // 自動廢品：有勾的詞條、沒被「不能賣」擋、不是鎖定／不可賣／玩家手動取消過的
+  var autoJunk = function (i) { var d = i && DB.items[i.id]; return !!(d && !i.lock && !d.noSell && !d.noJunk && !i._userKeep && !blocked(i, 'sell') && why(i, 'junk')); };
 
   // ── 暫時鎖定：操作期間把要擋的物品當成鎖定（核心各處本來就跳過鎖定物品），結束還原 ──
   var tmp = [];
@@ -128,6 +132,7 @@
     W._autoSellDecision = function (i, r) {
       if (blocked(i, 'sell')) return { sell: false };
       var rr = r || (typeof getAutoSellRules === 'function' ? getAutoSellRules() : null), d = i && DB.items[i.id];
+      if (rr && rr.overrides && rr.overrides[i.id] !== 'keep' && autoJunk(i)) return { sell: true, qty: Number(i.cnt) || 1 };
       if (rr && rr.parts && d && typeof _asEquipType === 'function' && _asEquipType(d)) {
         var ck = ''; try { ck = equipCatKey(i.id, d); } catch (e) {}
         if (ck && rr.parts[ck] === false) return { sell: false };
@@ -201,27 +206,29 @@
     ov.style.cssText = 'position:fixed;inset:0;z-index:10070;background:#020617aa;display:flex;align-items:center;justify-content:center;color:#e2e8f0';
     var enSel = function (kind, v) {
       var s = '<select data-ig-en="' + kind + '" style="background:#0f172a;border:1px solid #475569;border-radius:4px;color:#e2e8f0;padding:2px 4px"><option value="-1"' + (v < 0 ? ' selected' : '') + '>不限</option>';
-      for (var k = 1; k <= 15; k++) s += '<option value="' + k + '"' + (v === k ? ' selected' : '') + '>+' + k + ' 以上</option>';
+      for (var k = (kind === 'junk' ? 0 : 1); k <= 15; k++) s += '<option value="' + k + '"' + (v === k ? ' selected' : '') + '>+' + k + (kind === 'junk' ? ' 以下' : ' 以上') + '</option>';
       return s + '</select>';
     };
     var rows = AFFIX.map(function (a) {
       return '<tr><td style="padding:3px 8px;color:' + a[2] + '">' + esc(a[1]) + '</td>'
         + '<td style="text-align:center"><input type="checkbox" data-ig="sell" data-k="' + a[0] + '"' + (g.sell[a[0]] ? ' checked' : '') + ' aria-label="' + esc(a[1]) + ' 不能賣"></td>'
-        + '<td style="text-align:center"><input type="checkbox" data-ig="store" data-k="' + a[0] + '"' + (g.store[a[0]] ? ' checked' : '') + ' aria-label="' + esc(a[1]) + ' 不能存"></td></tr>';
+        + '<td style="text-align:center"><input type="checkbox" data-ig="store" data-k="' + a[0] + '"' + (g.store[a[0]] ? ' checked' : '') + ' aria-label="' + esc(a[1]) + ' 不能存"></td>'
+        + '<td style="text-align:center"><input type="checkbox" data-ig="junk" data-k="' + a[0] + '"' + (g.junk[a[0]] ? ' checked' : '') + ' aria-label="' + esc(a[1]) + ' 自動廢品"></td></tr>';
     }).join('');
     ov.innerHTML = '<div role="dialog" aria-modal="true" aria-label="物品保護" style="width:min(520px,94vw);max-height:88vh;overflow:auto;background:#172033;border:2px solid #b7791f;border-radius:14px;padding:16px;box-shadow:0 18px 60px #000">'
       + '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:20px;color:#fde68a">🛡 物品保護</b><button type="button" data-ig-close style="background:#334155;border:1px solid #64748b;border-radius:6px;padding:4px 12px;color:#fff">關閉</button></div>'
-      + '<div style="color:#94a3b8;font-size:13px;margin:6px 0 8px">打勾＝有這個詞條的物品「不能賣」（手動販賣、快速廢品、自動販賣、一鍵賣出都跳過）／「不能存」（各種存入倉庫都跳過）。只要符合其中一項就擋。設定跟著角色存檔。</div>'
-      + '<table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr style="color:#fbbf24"><th style="text-align:left;padding:3px 8px">詞條</th><th>不能賣</th><th>不能存</th></tr></thead><tbody>' + rows
-      + '<tr><td style="padding:6px 8px">強化值（武器、防具、飾品）</td><td style="text-align:center">' + enSel('sell', Number(g.sellEn)) + '</td><td style="text-align:center">' + enSel('store', Number(g.storeEn)) + '</td></tr></tbody></table>'
+      + '<div style="color:#94a3b8;font-size:13px;margin:6px 0 8px">打勾＝有這個詞條的物品「不能賣」（手動販賣、快速廢品、自動販賣、一鍵賣出都跳過）／「不能存」（各種存入倉庫都跳過）／「自動廢品」（自動販賣開著時，有這個詞條的就自動標成廢品、照自動販賣的等待秒數賣掉；不能賣的優先）。只要符合其中一項就算。設定跟著角色存檔。</div>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr style="color:#fbbf24"><th style="text-align:left;padding:3px 8px">詞條</th><th>不能賣</th><th>不能存</th><th>自動廢品</th></tr></thead><tbody>' + rows
+      + '<tr><td style="padding:6px 8px">強化值（武器、防具、飾品）</td><td style="text-align:center">' + enSel('sell', Number(g.sellEn)) + '</td><td style="text-align:center">' + enSel('store', Number(g.storeEn)) + '</td><td style="text-align:center">' + enSel('junk', Number(g.junkEn)) + '</td></tr></tbody></table>'
       + '<div id="afk-ig-sum" style="margin-top:8px;color:#fcd34d;font-size:13px"></div></div>';
     document.body.appendChild(ov);
     var sum = function () {
-      var p = P(), s = 0, t = 0; if (p) p.inv.forEach(function (i) { if (blocked(i, 'sell')) s++; if (blocked(i, 'store')) t++; });
-      var el = ov.querySelector('#afk-ig-sum'); if (el) el.textContent = '背包裡目前：不能賣 ' + s + ' 件、不能存 ' + t + ' 件。';
+      var p = P(), s = 0, t = 0, j = 0; if (p) p.inv.forEach(function (i) { if (blocked(i, 'sell')) s++; if (blocked(i, 'store')) t++; if (autoJunk(i)) j++; });
+      var el = ov.querySelector('#afk-ig-sum'); if (el) el.textContent = '背包裡目前：不能賣 ' + s + ' 件、不能存 ' + t + ' 件、自動廢品 ' + j + ' 件' + (p && p.autoSellOn === false ? '（自動販賣目前是停止的，自動廢品不會標）' : '') + '。';
     };
     var changed = function () {
       var n = clearJunk(); sum();
+      try { if (typeof applyAutoSellRules === 'function') applyAutoSellRules(); } catch (e) {}   // 自動廢品立刻標上
       try { renderTabs(true); } catch (e) {}
       try { var b = document.getElementById('as-ig-open'); if (b) b.textContent = '🛡 物品保護（不能賣 ' + count('sell') + ' 項）'; } catch (e) {}
       try { if (document.getElementById('interaction-content') && document.querySelector('#afk-whfilter')) W.renderWarehouseNPC(document.getElementById('interaction-content')); } catch (e) {}
@@ -230,8 +237,8 @@
     };
     ov.addEventListener('change', function (ev) {
       var x = ev.target, gg = cfg();
-      if (x.matches('[data-ig]')) { var set = x.getAttribute('data-ig') === 'store' ? gg.store : gg.sell; if (x.checked) set[x.getAttribute('data-k')] = true; else delete set[x.getAttribute('data-k')]; changed(); }
-      else if (x.matches('[data-ig-en]')) { gg[x.getAttribute('data-ig-en') === 'store' ? 'storeEn' : 'sellEn'] = Number(x.value); changed(); }
+      if (x.matches('[data-ig]')) { var kd = x.getAttribute('data-ig'), set = kd === 'store' ? gg.store : kd === 'junk' ? gg.junk : gg.sell; if (x.checked) set[x.getAttribute('data-k')] = true; else delete set[x.getAttribute('data-k')]; changed(); }
+      else if (x.matches('[data-ig-en]')) { var ke = x.getAttribute('data-ig-en'); gg[ke === 'store' ? 'storeEn' : ke === 'junk' ? 'junkEn' : 'sellEn'] = Number(x.value); changed(); }
     });
     ov.addEventListener('click', function (ev) { if (ev.target === ov || ev.target.closest('[data-ig-close]')) ov.remove(); });
     sum();
@@ -257,5 +264,5 @@
     };
   }
 
-  W.__afkItemGuard = { AFFIX: AFFIX, has: has, why: why, blocked: blocked, cfg: cfg, open: openGuard, clearJunk: clearJunk, lockOn: lockOn, lockOff: lockOff };
+  W.__afkItemGuard = { AFFIX: AFFIX, has: has, why: why, blocked: blocked, autoJunk: autoJunk, cfg: cfg, open: openGuard, clearJunk: clearJunk, lockOn: lockOn, lockOff: lockOff };
 })();

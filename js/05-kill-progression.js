@@ -501,8 +501,8 @@ function killMob(idx) {
         if (typeof trialForced100 === 'function' && trialForced100(itemId)) { grantPartyTrialQuestDrop(itemId, 1); return; }   // 🔥 接取制試煉道具：通過閘門後 100% 掉落
         let _clMult = (mob.n === '卡瑞' && itemId === 'wpn_dragonslayer') ? 1 : trialItemDropMult(itemId);   // 🔧 v2.6.75 卡瑞·屠龍劍固定 100%（獎勵已綁「擊殺消耗四任務道具」的成本）；trialItemDropMult 現恆 1
         let _relicX2 = !DB.items[itemId].relic ? 1 : (typeof window.__afkRelicDropMult === 'function' ? window.__afkRelicDropMult() : ((typeof mainPlayerHasEquippedEffect === 'function' && mainPlayerHasEquippedEffect('relicDropX2')) ? 2 : 1));   /* 🔌 加掛版補丁:兔腳可戴兩個 */   // 幸運暴走兔腳只讀主操作玩家裝備
-        { let _rr = (typeof window.__afkRiftDrop === 'function') ? window.__afkRiftDrop(itemId, ratePct, mob) : null; if (_rr != null) { if (_rr > 0 && Math.random() < _rr / 100) { if (_afkDropBag) _afkDropBag.push([itemId, _rr / 100]); else gainItem(itemId, 1); } return; } } /* 🔌 加掛版補丁:時空裂痕掉落 */
-        { let _pp = partyDropRate((ratePct * _dropBase * _clMult * _relicX2) / 100); if(Math.random() < _pp) { if (_afkDropBag) _afkDropBag.push([itemId, _pp]); else gainItem(itemId, 1); } }
+        { let _rr = (typeof window.__afkRiftDrop === 'function') ? window.__afkRiftDrop(itemId, ratePct, mob) : null; if (_rr != null) { if (_rr > 0 && Math.random() < _rr / 100) { if (_afkDropBag) _afkDropBag.push([itemId, _rr / 100, ratePct]); else gainItem(itemId, 1); } return; } } /* 🔌 加掛版補丁:時空裂痕掉落 */
+        { let _pp = partyDropRate((ratePct * _dropBase * _clMult * _relicX2) / 100); if(Math.random() < _pp) { if (_afkDropBag) _afkDropBag.push([itemId, _pp, ratePct]); else gainItem(itemId, 1); } }
     });
     if (_afkDropBag) { try { window.__afkDropCap(_afkDropBag, mob); } catch (e) { _afkDropBag.forEach(x => gainItem(x[0], 1)); } }
 

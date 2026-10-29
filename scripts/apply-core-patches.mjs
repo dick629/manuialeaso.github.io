@@ -1307,9 +1307,9 @@ function patchDropCap() {
   const A1 = "    dropList.forEach(entry => {";
   const B1 = "    let _afkDropBag = (typeof window.__afkDropCap === 'function') ? [] : null; " + TAG + "\n" + A1;
   const A2 = "if (_rr > 0 && Math.random() < _rr / 100) gainItem(itemId, 1); return; }";
-  const B2 = "if (_rr > 0 && Math.random() < _rr / 100) { if (_afkDropBag) _afkDropBag.push([itemId, _rr / 100]); else gainItem(itemId, 1); } return; }";
+  const B2 = "if (_rr > 0 && Math.random() < _rr / 100) { if (_afkDropBag) _afkDropBag.push([itemId, _rr / 100, ratePct]); else gainItem(itemId, 1); } return; }";
   const A3 = "        if(Math.random() < partyDropRate((ratePct * _dropBase * _clMult * _relicX2) / 100)) gainItem(itemId, 1);\n    });";
-  const B3 = "        { let _pp = partyDropRate((ratePct * _dropBase * _clMult * _relicX2) / 100); if(Math.random() < _pp) { if (_afkDropBag) _afkDropBag.push([itemId, _pp]); else gainItem(itemId, 1); } }\n    });\n    if (_afkDropBag) { try { window.__afkDropCap(_afkDropBag, mob); } catch (e) { _afkDropBag.forEach(x => gainItem(x[0], 1)); } }";
+  const B3 = "        { let _pp = partyDropRate((ratePct * _dropBase * _clMult * _relicX2) / 100); if(Math.random() < _pp) { if (_afkDropBag) _afkDropBag.push([itemId, _pp, ratePct]); else gainItem(itemId, 1); } }\n    });\n    if (_afkDropBag) { try { window.__afkDropCap(_afkDropBag, mob); } catch (e) { _afkDropBag.forEach(x => gainItem(x[0], 1)); } }";
   for (const [a, n] of [[A1, '開頭'], [A2, '裂痕'], [A3, '一般']]) if (s.split(a).length - 1 !== 1) throw new Error('[掉落種類上限] 錨點（' + n + '）應出現 1 次');
   s = s.replace(A1, B1).replace(A2, B2).replace(A3, B3);
   if (!CHECK) writeFileSync(FILE, s);

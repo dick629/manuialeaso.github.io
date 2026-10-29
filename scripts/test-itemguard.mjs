@@ -48,9 +48,17 @@ try{
     out.dmSell=IG.blocked(dm2,'sell');m.remove();
     // 強化值
     IG.cfg().sellEn=7;const e7=add(arm[2],{en:7});out.en=[IG.blocked(e7,'sell'),IG.blocked(Object.assign({},e7,{en:6}),'sell')];
+    // 自動廢品：有「龍的印記」或 +0 以下的自動標成廢品；不能賣的優先
+    IG.cfg().sell={bless:true};IG.cfg().junk={dmark:true};IG.cfg().junkEn=-1;getAutoSellRules().equip.arm.on=false;
+    const j1=add(arm[0],{dmark:true}),j2=add(arm[0],{dmark:true,bless:true}),j3=add(arm[0]);
+    player.autoSellOn=true;applyAutoSellRules();
+    out.aj=[!!j1.junk,!!j2.junk,!!j3.junk,IG.autoJunk(j1),IG.autoJunk(j2)];
+    IG.cfg().junkEn=0;applyAutoSellRules();out.aj.push(!!j3.junk);
+    IG.cfg().junk={};IG.cfg().junkEn=-1;applyAutoSellRules();out.aj.push(!!j3.junk);   // 取消設定→規則標記清掉
     return out;
   });
-  assert.equal(r.on,true);assert.equal(r.n,20);
+  assert.equal(r.on,true);
+  assert.deepEqual(r.aj,[true,false,false,true,false,true,false],'自動廢品');assert.equal(r.n,20);
   assert.equal(r.sellBl,true,'手動販賣被擋');
   assert.equal(r.why,'遠古系（任一）');
   assert.deepEqual(r.can,[false,true],'快速廢品勾不到');

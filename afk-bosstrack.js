@@ -26,7 +26,7 @@
   // ── 一、魔物追蹤 24 小時 ──
   W.obelStartTracking = function () {
     if (typeof _obelSel === 'undefined' || !_obelSel.mob || !_obelSel.map) return;
-    var COST = 100000;
+    var COST = (typeof W.__afkTrackCost === 'function') ? W.__afkTrackCost(player) : 100000;   // afk-novice-econ：依等級收費
     if ((player.gold || 0) < COST) { alert('金幣不足，追蹤需要 ' + COST.toLocaleString() + ' 金幣。'); return; }
     player.gold -= COST;
     player.tracking = { map: _obelSel.map, mob: _obelSel.mob, until: Date.now() + TRACK_H * H };
