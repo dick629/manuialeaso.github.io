@@ -33,6 +33,32 @@
   //   本檔在 </body> 前才載入,更早的錯誤抓不到;被 try/catch 吞掉的也抓不到(如離線結算迴圈內)——
   //   有東西就是線索,空的不代表沒問題。
   var ERRS = [];
+  // ── 最近操作（2026-10-30 01:35：玩家回報「點攻城整頁卡死」重現不出 → 把最後 30 次點擊與心跳存進 localStorage，
+  //    卡死後重開診斷還看得到「卡住前按了什麼、在哪張圖、停在幾點幾分」）──
+  var CLICK_KEY = 'afk_diag_clicks', HB_KEY = 'afk_diag_hb', CLICKS = [], LAST_RUN = null;
+  try { CLICKS = JSON.parse(localStorage.getItem(CLICK_KEY) || '[]') || []; if (!Array.isArray(CLICKS)) CLICKS = []; } catch (e) { CLICKS = []; }
+  try { var hb0 = Number(localStorage.getItem(HB_KEY)) || 0; if (hb0 && CLICKS.length) { var lc = CLICKS[CLICKS.length - 1]; LAST_RUN = { hb: hb0, lastClick: lc.at || 0 }; } } catch (e) {}
+  var hhmmss = function (t) { try { return new Date(t).toLocaleTimeString('zh-TW', { hour12: false }); } catch (e) { return String(t); } };
+  function noteClick(e) {
+    try {
+      var el = e.target && e.target.closest ? e.target.closest('button, a, [onclick], select, input[type=checkbox], summary') : null; if (!el) return;
+      var txt = (el.id ? '#' + el.id + ' ' : '') + String(el.textContent || el.value || '').replace(/\s+/g, ' ').trim().slice(0, 24);
+      var oc = el.getAttribute && el.getAttribute('onclick'); if (oc) txt += ' {' + oc.slice(0, 40) + '}';
+      var map = (typeof mapState !== 'undefined' && mapState) ? (mapState.current || '') : '';
+      CLICKS.push({ at: Date.now(), t: txt, m: map }); if (CLICKS.length > 30) CLICKS.splice(0, CLICKS.length - 30);
+      localStorage.setItem(CLICK_KEY, JSON.stringify(CLICKS));
+    } catch (x) {}
+  }
+  try { document.addEventListener('click', noteClick, true); } catch (e) {}
+  setInterval(function () { try { localStorage.setItem(HB_KEY, String(Date.now())); } catch (e) {} }, 2000);
+  function clicksText() {
+    var lines = [];
+    if (LAST_RUN && LAST_RUN.lastClick && LAST_RUN.hb - LAST_RUN.lastClick < 15000) lines.push('⚠️ 上一次執行：最後一次點擊 ' + hhmmss(LAST_RUN.lastClick) + '，心跳停在 ' + hhmmss(LAST_RUN.hb) + '（點完 ' + Math.round((LAST_RUN.hb - LAST_RUN.lastClick) / 1000) + ' 秒內就沒有心跳了——可能是卡住或被關掉）');
+    else if (LAST_RUN) lines.push('上一次執行的心跳停在 ' + hhmmss(LAST_RUN.hb));
+    CLICKS.slice(-15).forEach(function (c) { lines.push('· [' + hhmmss(c.at) + '] ' + c.t + (c.m ? '  @' + c.m : '')); });
+    return lines.length ? '\n          ' + lines.join('\n          ') : '(沒有)';
+  }
+  window.__afkDiagClicks = function () { return CLICKS.slice(); };
   function pushErr(kind, msg, src) {
     if (ERRS.length >= 12) ERRS.shift();
     ERRS.push({ t: new Date().toLocaleTimeString('zh-TW'), kind: kind, msg: String(msg || '').slice(0, 200), src: String(src || '').split('/').pop().slice(0, 40) });
@@ -562,6 +588,7 @@
         if (ANIM_RECON.skipped) return '⏭️ 跳過 —— ' + ANIM_RECON.skipped + '(✅ 修正版 SW 生效中:沒清任何圖)';
         return '清掉 ' + ANIM_RECON.evicted + ' 張';
       });
+      put('最近操作', clicksText);
       out.最近錯誤 = ERRS.length ?
         '\n          ' + ERRS.map(function (e) { return '· [' + e.t + '] ' + e.kind + ': ' + e.msg + (e.src ? '  (' + e.src + ')' : ''); }).join('\n          ') :
         '(這次開啟後沒抓到;更早的或被 try/catch 吞掉的抓不到)';

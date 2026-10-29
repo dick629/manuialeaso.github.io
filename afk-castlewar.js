@@ -544,8 +544,10 @@
   //   核心只在你第一次攻城勝利後才分配肯特／風木／海音的持有者，其他四座城沒有；這裡補上：
   //   每座不是你的城，依目前存在的 NPC 血盟隨機指定一個持有者並記下來（血盟消失或你打下來就重新指定）。
   //   攻城畫面「守城血盟」就顯示它，攻城時也由它守城（核心原本的守城規則）。
+  var worldCache = { at: 0, w: null };   // 攻城畫面 7 顆城堡各查一次守城血盟 → 同一秒內共用一次讀取（每次讀都要 parse 整份血盟資料，慢手機吃力）
+  var worldNow = function (p) { var t = Date.now(); if (t - worldCache.at > 1000) { worldCache.at = t; try { worldCache.w = npcClanGetWorld(p || P()); } catch (e) { worldCache.w = null; } } return worldCache.w; };
   var npcOwnerOf = function (city, p) {
-    var w = null; try { w = npcClanGetWorld(p || P()); } catch (e) {}
+    var w = worldNow(p);
     var clans = (w && w.clans || []).filter(Boolean); if (!clans.length) return null;
     if (held().indexOf(city) >= 0) return null;
     var d = data(), own = d.npcOwners = (d.npcOwners && typeof d.npcOwners === 'object') ? d.npcOwners : {};
