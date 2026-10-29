@@ -105,7 +105,7 @@
   var SRC = { 1: '時空裂痕（席琳模式）', 2: '時空裂痕（瘋狂席琳模式）', 3: '時空裂痕（夢域鏡席琳模式）' };
   [1, 2, 3].forEach(function (s) {
     ITEMS[BOX[s]] = { n: '失去光芒的符文石（' + STAGE_N[s] + '）', c: STAGE_C[s], img: IMG('失去光芒的符文石(階段' + s + ')'), eff: 'afk_runebox', stage: s,
-      d: '黯淡無光的符文石，握在手裡才微微發熱。使用後隨機變成一顆' + STAGE_N[s] + '的符文（' + list.filter(function (r) { return r.stage === s; }).map(function (r) { return r.ch; }).join('、') + '）。' + SRC[s] + '的結算獎勵。' };
+      d: '黯淡無光的符文石，握在手裡才微微發熱。使用後' + ({ 1: '（消耗魔法結晶體 100 個）', 2: '（消耗魔法結晶體 150 個）', 3: '' })[s] + '隨機變成一顆' + STAGE_N[s] + '的符文（' + list.filter(function (r) { return r.stage === s; }).map(function (r) { return r.ch; }).join('、') + '）。' + SRC[s] + '的結算獎勵。' };
   });
   var LAMENT = {
     afk_lament_dust: ['哀石塵埃', 'text-slate-300', '席琳的嘆息落進時空裂縫後凝成的細砂。時空裂痕（席琳模式）：一般怪 1%、60 等以下頭目 10%、60 等以上頭目 25%、第 60 分鐘起頭目必掉。'],
@@ -130,8 +130,18 @@
   });
   // 失去光芒的符文石：使用＝打開
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  // 玩家 2026-10-29 16:24：解開失去光芒的符文石要魔法結晶體——階段一 100 個、階段二 150 個、階段三不用
+  var OPEN_COST = { 1: 100, 2: 150, 3: 0 };
+  var crystalId = function () { var X = W.AFK_TTMI_ITEMS, id = X && X.resolve ? X.resolve(7102) : null; if (id && DB.items[id]) return id; return Object.keys(DB.items).find(function (k) { return DB.items[k] && DB.items[k].n === '魔法結晶體'; }) || null; };
+  var haveOf = function (p, id) { return (p.inv || []).filter(function (x) { return x && x.id === id && !x.lock; }).reduce(function (n, x) { return n + (Number(x.cnt) || 1); }, 0); };
+  var takeOf = function (p, id, n) { (p.inv || []).filter(function (x) { return x && x.id === id && !x.lock; }).forEach(function (x) { if (n <= 0) return; var c = Number(x.cnt) || 1, k = Math.min(c, n); n -= k; if (c - k > 0) x.cnt = c - k; else p.inv.splice(p.inv.indexOf(x), 1); }); };
   var openBox = function (it) {
     var p = P(), d = DB.items[it.id], s = d.runeStage;
+    var cost = OPEN_COST[s] || 0, cid = cost ? crystalId() : null;
+    if (cost && cid) {
+      if (haveOf(p, cid) < cost) { try { logSys('<span class="text-red-400">解開' + d.n + '需要魔法結晶體 ' + cost + ' 個（背包裡未上鎖的有 ' + haveOf(p, cid) + ' 個）。</span>'); } catch (e) {} return null; }
+      takeOf(p, cid, cost);
+    }
     var pool = list.filter(function (r) { return r.stage === s; });
     var r = pool[Math.floor(Math.random() * pool.length)];
     if ((Number(it.cnt) || 1) > 1) it.cnt = (Number(it.cnt) || 1) - 1; else p.inv.splice(p.inv.indexOf(it), 1);
@@ -160,5 +170,5 @@
     // 平衡點數（玩家 2026-10-29：太強就壓縮傷害、太弱就追加傷害）：鑲著這顆符文時，造成的傷害 ×(1＋點數×1%)；0＝不調整
     // 佐爾頓合成（玩家 2026-10-29）：同階段符文 3 顆＋哀石結晶 10 → 隨機一顆高一階的符文。只開放 階段一→二、階段二→三（傳說不從合成出）
     COMBINE: { n: 3, cost: ['afk_lament_gem', 10], from: [1, 2] },
-    BAL: { po_l: 5 }, REMOVE: ['afk_lament_stone', 500], openBox: openBox };
+    BAL: { po_l: 5 }, OPEN_COST: OPEN_COST, REMOVE: ['afk_lament_stone', 500], openBox: openBox };
 })();

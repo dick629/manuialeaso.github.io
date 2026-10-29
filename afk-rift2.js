@@ -30,7 +30,7 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
   var TUNE = W.__afkRift2Tune = W.__afkRift2Tune || {
-    hpFrom: 20, hpRate: { sherine: 0.067, mad: 0.0525, dream: 0.0525 },   // 20 分鐘起怪物 HP ×e^(rate×(分鐘−20))
+    hpFrom: 20, hpRate: { sherine: 0.035, mad: 0.0525, dream: 0.0525 },   // 20 分鐘起怪物 HP ×e^(rate×(分鐘−20))；席琳模式 0.067 → 0.035（玩家 2026-10-29：王族＋7 名轉生傭兵、冥皇套 +15 要能撐滿 80 分鐘；實測原本 63～65 分被頭目暴走團滅）
     hpBase: { sherine: 1, mad: 1, dream: 0.15 },   // 各模式怪物 HP 的基本倍率（夢域鏡本身已經 ×50，用這個把三模式拉到同一條難度線）
     enrageSec: 60, enrageMulti: 90, enragePct: 0.05, enrageStep: 0.05, enrageEvery: 10,   // 頭目 60 秒沒倒：每秒全隊最大 HP 5%，每 10 秒再 +5%
     wallFrom: 60, wallBase: 0.004, wallStep: 0.0025,   // 60 分鐘起全場每秒扣 0.4% 最大 HP，每分鐘再 +0.25%

@@ -84,10 +84,10 @@ let checks=0;
 }
 // Buying and real core crafting deduct precisely; locks cannot become inputs.
 {
- let p=reset(),row=data.items.find(r=>r.refine),id=A.resolve(row.sourceId),pot=A.shopStock().find(x=>!A.priceDia(x)),pc=A.price(pot);assert.equal(A.buy(pot,2),true);assert.equal(p.gold,1000000000-pc*2);p.gold=1000000000;/* 2026-10-27 洛依只賣藥水與增益，素材改從怪物取得 */add(id,10);assert.equal(count(id),10);
+ let p=reset(),row=data.items.find(r=>r.refine),id=A.resolve(row.sourceId),pot=A.shopStock().find(x=>!A.priceDia(x)),pc=A.price(pot);assert.equal(A.buy(pot,2),true);assert.equal(p.gold,1000000000-pc*2);p.gold=1000000000;/* 2026-10-27 洛依只賣藥水與增益，素材改從怪物取得 */const need=A.recipes.find(r=>r.ttmiRecipeKind==='refine'&&r.req.some(q=>q.id===id)).req.find(q=>q.id===id).cnt;add(id,need);assert.equal(count(id),need);
  const index=A.recipes.findIndex(r=>r.ttmiRecipeKind==='refine'&&r.req.some(q=>q.id===id));assert.ok(index>=0);
  const gold=p.gold,result=A.recipes[index].result;const fee=A.recipes[index].req.find(q=>q.id==='gold').cnt;assert.ok(fee>=50100,'工錢最低 5 萬（加在原本 100 金幣上）');A.craft(index);assert.equal(count(id),0);assert.equal(count(result),1);assert.equal(p.gold,gold-fee);
- p=reset();add(id,10,true);A.craft(index);assert.equal(count(id),10);assert.equal(count(result),0);assert.equal(p.gold,1000000000);
+ p=reset();add(id,need,true);A.craft(index);assert.equal(count(id),need);assert.equal(count(result),0);assert.equal(p.gold,1000000000);
  assert.equal(A.buy('99999',1),false);run("mapState.current='training'");assert.equal(A.buy(id,1),false);checks++;
 }
 // Imported real recipe counts and output yield are honored by native doCraft.

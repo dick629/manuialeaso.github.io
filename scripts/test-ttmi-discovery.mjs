@@ -43,7 +43,7 @@ try {
     const craft=await page.evaluate(()=>{
       const A=AFK_TTMI_ITEMS,row=A.source.items.find(r=>r.refine),id=A.resolve(row.sourceId),index=A.recipes.findIndex(r=>r.ttmiRecipeKind==='refine'&&r.req.some(m=>m.id===id)),recipe=A.recipes[index];
       window.__ttmiMaterial=id;mapState.current='town_giran';
-      const book=JSON.stringify(MISC_CAT_ITEMS),gold=player.gold,cost=0,bought=(gainItem(id,10,true,true),true)/* 2026-10-27 素材改從怪物取得 */,afterBuy=player.gold;
+      const book=JSON.stringify(MISC_CAT_ITEMS),gold=player.gold,cost=0,bought=(gainItem(id,recipe.req.find(m=>m.id===id).cnt,true,true),true)/* 2026-10-27 素材改從怪物取得 */,afterBuy=player.gold;
       const beforeResult=__ttmiCount(recipe.result),crafted=A.craft(index);
       return {id,name:DB.items[id].n,recipe,index,cost,bought,crafted,gold,afterBuy,after:player.gold,left:__ttmiCount(id),result:__ttmiCount(recipe.result)-beforeResult,bookStable:book===JSON.stringify(MISC_CAT_ITEMS),registered:!!player.miscDex[id]};
     });

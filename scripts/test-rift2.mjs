@@ -35,7 +35,7 @@ try{
     const seg=m=>{const before=JSON.stringify(player.inv.map(x=>x.id+':'+(x.cnt||1)));R2.reward({mode:'dream',min:m,clear:false});return player.inv.filter(x=>!before.includes(x.id+':'+(x.cnt||1))).map(x=>x.id);};
     out.dream=[seg(5).some(id=>/~r10/.test(id)),seg(30).includes(RD.BOX[2]),seg(65).includes(RD.BOX[3]),seg(77).some(id=>/afk_(miasma|bone|void)_stone/.test(id))];
     // 失去光芒的符文石：打開
-    gainItem(RD.BOX[1],1,true,true);const box=player.inv.find(x=>x.id===RD.BOX[1]);useItem(box.uid);
+    gainItem(RD.BOX[1],1,true,true);gainItem(AFK_TTMI_ITEMS.resolve(7102),100,true,true);/* 2026-10-29：階段一要魔法結晶體 100 */const box=player.inv.find(x=>x.id===RD.BOX[1]);useItem(box.uid);
     out.open=player.inv.some(x=>RD.byId[x.id]&&RD.byId[x.id].stage===1);
     return out;
   });

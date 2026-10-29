@@ -212,6 +212,21 @@
       recipes.forEach(function(r){if(r.ttmiRecipeKind==='refine'&&r.req.some(function(q){return q.id===id;}))r.req.forEach(function(q){if(q.id===id)q.cnt=100;});});
       addedDrops.forEach(function(x){if(x.entry[0]===id){x.entry[1]=1;x.fixed=true;}});});
   })();
+  // 玩家 2026-10-29 16:24：材料工坊提煉魔法結晶體，依「掉落怪物的最低等級」分三段：
+  //   Lv30 以下（<30）：100 個、金幣照舊；Lv30～59：50 個、金幣 ×1.5；Lv60 以上：10 個、金幣 ×2（金幣＝原本的 100＋工錢）。沒有怪掉的（只能買或做）維持 10 個。
+  //   上面低階「封印的…」的 100 個是下限（不會因為這條變少）。
+  var REFINE_TIER=[[30,100,1],[60,50,1.5],[1e9,10,2]];
+  var refineCost=Object.create(null);
+  (function(){
+    if(typeof MOB_DROPS==='undefined')return;
+    var lvOf=Object.create(null);Object.keys(DB.mobs).forEach(function(k){var m=DB.mobs[k];if(m&&m.n&&m.race!=='建築'){var v=m.lv||1;if(lvOf[m.n]==null||v<lvOf[m.n])lvOf[m.n]=v;}});
+    var minLv=Object.create(null);Object.keys(MOB_DROPS).forEach(function(n){var lv=lvOf[n];if(lv==null)return;(MOB_DROPS[n]||[]).forEach(function(e){if(minLv[e[0]]==null||lv<minLv[e[0]])minLv[e[0]]=lv;});});
+    recipes.forEach(function(r){if(r.ttmiRecipeKind!=='refine')return;var mat=r.req.find(function(q){return q.id!=='gold';});if(!mat||minLv[mat.id]==null)return;
+      var lv=minLv[mat.id],t=REFINE_TIER.find(function(x){return lv<x[0];}),d=DB.items[mat.id];
+      var cnt=d&&d.ttmiSealedLow?Math.max(100,t[1]):t[1],gold=0;mat.cnt=cnt;r.req.forEach(function(q){if(q.id==='gold'){q.cnt=Math.round(q.cnt*t[2]);gold=q.cnt;}});
+      refineCost[mat.id]={cnt:cnt,gold:gold,mult:t[2],lv:lv};
+      if(d)d.d=String(d.d||'').replace(/每 \d+ 份材料與 [\d,]+ 金幣/,'每 '+cnt+' 份材料與 '+gold.toLocaleString()+' 金幣');});
+  })();
 
   function equipped(p,fn) { if (!p || !p.eq) return; Object.keys(p.eq).forEach(function(slot){var e=p.eq[slot],d=e&&DB.items[e.id];if(e&&d)fn(e,d,slot);}); }
   function merge(to,from) { Object.keys(from || {}).forEach(function(k){if(k==='ttmiExpMult')to[k]=Math.max(to[k]||1,finite(from[k]));else to[k]=(to[k]||0)+finite(from[k]);}); }
@@ -859,7 +874,7 @@
 
   window.AFK_TTMI_ITEMS={
     sourceIds:sourceIds,items:imported,recipes:recipes,source:data,resolve:resolve,bonus:bonus,conditional:conditional,price:price,buy:buy,buyQty:function(id){var el=typeof document!=='undefined'&&document.getElementById('ttmi-qty-'+id),q=Math.max(1,Math.min(100,Math.floor(Number(el&&el.value)||1)));return buy(id,q);},craft:craft,riftBuy:riftBuy,enabled:enabled,
-    acquisition:acquisition,priceDia:priceDia,gacha:gacha,gachaPool:function(){return gachaPool.slice();},isEvent:isEvent,whyNot:whyNot,junk:function(){return Object.keys(junkTier).map(function(id){return {id:id,tier:junkTier[id]};});},gearMax:function(){return GEAR_MAX;},shopStock:function(){return stock.slice();},
+    acquisition:acquisition,priceDia:priceDia,gacha:gacha,gachaPool:function(){return gachaPool.slice();},isEvent:isEvent,whyNot:whyNot,refineCost:function(id){return refineCost[id]||null;},junk:function(){return Object.keys(junkTier).map(function(id){return {id:id,tier:junkTier[id]};});},gearMax:function(){return GEAR_MAX;},shopStock:function(){return stock.slice();},
     beginRift:beginRift,clearRift:clearRift,inRift:inRift,openRift:openRiftSupplies,closeRift:closeRiftSupplies,
     coverage:function(){return {registered:imported.length,catalogueCandidates:data.items.length,reusedCandidates:data.items.filter(function(r){return resolve(r.sourceId)!==r.id;}).map(function(r){return {sourceId:r.sourceId,id:resolve(r.sourceId),n:r.n};}),sourceItems:data.sourceItems,sourcePages:data.sourcePages,recipes:recipes.length,dropMobs:Object.keys(dropPools).length,riftItems:riftIds.length,rejectedRecipes:rejectedRecipes.slice()};},
     mode:function(m){if(!enabled()||!atTown())return;catalogue.mode=m==='craft'?'craft':'shop';catalogue.page=0;catalogue.kind='all';redrawCatalogue();},

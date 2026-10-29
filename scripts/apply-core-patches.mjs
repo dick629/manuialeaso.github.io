@@ -567,7 +567,7 @@ function patchRelicDotRules() {
 }
 
 // ── 補丁 18：瘋狂席琳夢艷地獄模式的核心掛點（js/03＋js/04＋js/05）─────────────────────
-//   ‧掉落倍率：夢艷地獄怪（mob._dream）＝恩賜 ×10 × 掉落 ×5＝×50
+//   ‧掉落倍率：夢艷地獄怪（mob._dream）×8（玩家 2026-10-29：原本 ×50）
 //   ‧席琳結晶掉率：夢艷地獄 ×5（瘋狂 ×3）
 //   ‧出怪等待：window.__afkSpawnDelayAdj(delay)（夢艷地獄 −3 秒，下限 0.5 秒）
 //   ‧血壁型免疫支援 kind:'phys'（近距離＋遠距離都算），供夢艷地獄小怪出生 10 秒隨機免疫物理或魔法
@@ -575,7 +575,7 @@ function patchRelicDotRules() {
 function patchDreamHell() {
   const edits = [
     ['js/05-kill-progression.js', "let _dropBase = (mob._grace ? 10 : (mob._sherine ? (mob._sherineMad ? 5 : 3) : 1));",
-      "let _dropBase = (mob._dream ? 50 : (mob._grace ? 10 : (mob._sherine ? (mob._sherineMad ? 5 : 3) : 1)));   /* 🔌 加掛版補丁:夢艷地獄 ×50 */"],
+      "let _dropBase = (mob._dream ? 8 : (mob._grace ? 10 : (mob._sherine ? (mob._sherineMad ? 5 : 3) : 1)));   /* 🔌 加掛版補丁:夢艷地獄 ×8 */"],
     ['js/05-kill-progression.js', "let _cr = (mob.boss ? 0.0001 : 0.00001) * (mob.lv || 1) * (mob._sherineMad ? 3 : 1);",
       "let _cr = (mob.boss ? 0.0001 : 0.00001) * (mob.lv || 1) * (mob._dream ? 5 : (mob._sherineMad ? 3 : 1));   /* 🔌 加掛版補丁:夢艷地獄結晶 ×5 */"],
     ['js/03-combat-core.js', "                    delay = Math.max(5, Math.round(50 * _mv));                       // 🚧 下限 5 tick＝0.5 秒\n",
