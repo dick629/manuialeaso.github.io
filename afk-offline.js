@@ -44,6 +44,7 @@
     try { if (typeof _ffAcc !== 'undefined' && _ffAcc && typeof document !== 'undefined' && document.hidden) return true; } catch (e) {}
     return false;
   }
+  window.__afkOfflineNow = offlineNow;   // 給其他外掛判斷「離線補跑／背景補跑中」（afk-kurt-hunt）
   function installNoDeath() {
     if (typeof window.killPlayer !== 'function' || window.killPlayer.__afkNoDeath) return;
     var _kp = window.killPlayer;

@@ -1117,6 +1117,7 @@
     { k: 'set', n: '套裝' },
     { k: 'craft', n: '製作' },
     { k: 'quest', n: '任務' },
+    { k: 'story', n: '劇情任務' },
     { k: 'weapon', n: '武器特性' },
     { k: 'ally', n: '傭兵' },
     { k: 'mercskill', n: '傭兵可用技能' },
@@ -1339,6 +1340,7 @@
     if (key === 'craft') return renderCraft();
     if (key === 'sherine') return renderSherine();
     if (key === 'runes') return renderRunes();
+    if (key === 'story') return renderStory();
     if (key === 'tower') return renderTower();
     if (key === 'oblivion') return renderOblivion();
     if (key === 'rift') return renderRift();
@@ -1394,6 +1396,7 @@
     { key: 'set', cls: false, label: '套裝' },
     { key: 'craft', cls: false, label: '製作' },
     { key: 'quest', cls: true, label: '任務' },
+    { key: 'story', cls: false, label: '劇情任務' },
     { key: 'weapon', cls: false, label: '武器特性' },
     { key: 'ally', cls: false, label: '傭兵' },
     { key: 'mercskill', cls: false, label: '傭兵可用技能' },
@@ -3315,6 +3318,76 @@
   }
 
   // 2026-10-29 16:24 玩家：符文系統另開一頁（原本放在「席琳」底下）
+  // ===== 劇情任務（afk-lore-kit／afk-lore-main／afk-hardin／afk-halpas）＋世界事件（afk-kurt-hunt）=====
+  function worldEventCard() {
+    var K = window.__afkKurtHunt; if (!K) return '';
+    return wCard('⚔ 世界事件：克特的追殺令',
+      wDesc('隊伍裡有<b>王族</b>（你或任何一名傭兵）、角色 <b>Lv' + K.LV_MIN + '</b> 以上，在野外、地監、傲慢之塔、海賊島時，每次新出怪有 <b>' + Math.round(K.RATE * 100) + '%</b> 被黑騎士隊長<b>克特</b>追殺；觸發後冷卻 ' + Math.round(K.CD_MS / 60000) + ' 分鐘。離線補跑期間不會觸發。') +
+      wDesc('不會出現：城鎮、副本（支配者傲慢之塔、四龍巢穴、軍王之室、謀叛者的低語、吉爾塔斯祭壇、最終決戰、哈汀的時空、暗影神殿最深處、闇龍的巢…）、時空裂痕、攻城、純 BOSS 房、新兵修練場、夢幻之島。') +
+      wDesc('追殺 10 分鐘（只在可出現的地圖計時）；換地圖時克特 20～40 秒後追到，HP 不回滿。結束：打倒克特、時間到（克特離開）、王族倒下（照一般死亡，克特離開）。') +
+      wTbl(['項目', '內容'], [
+        ['等級 L', '地圖一般怪平均等級 ＋8（最低 18、最高 115）'],
+        ['HP', '30,000 ×（L÷65）^2.5 ×（1＋0.15×傭兵數）'],
+        ['傷害', '傷害骰 ×L÷65、額外傷害 ×（L÷65）^1.3；命中、AC、魔防 ×L÷65（命中再 +10）'],
+        ['王血追獵', '70% 優先攻擊王族，對王族傷害 +30%'],
+        ['賽尼斯的黑魔法鎧', '受到的魔法傷害 −40%；HP 30% 以下鎧甲碎裂，改成受到的物理傷害 +20%'],
+        ['黑騎士召集', 'HP 70%、40% 各召喚 2 名黑騎士'],
+        ['斬首宣告', '每 45 秒標記王族 5 秒，結束時造成王族最大 HP 25%；5 秒內打掉克特最大 HP 5% 就能打斷'],
+        ['獎勵', '經驗、金幣 ×3；黑騎士團的追殺令必掉 1 張；封印的克特套裝箱子 10%／25%／50%（L<40／40～79／80 以上）；克特頭盔、盔甲、長靴、手套 各 2%'],
+        ['追殺令', '交給說話之島的甘特：10 張 → 紅獅王的守護（30 分鐘內受到克特的傷害 −30%）；50 張 → 克特的牛角頭盔（王族專用）']
+      ]) +
+      wDesc('港口、黑騎士前哨基地原本的克特也換了技能：王血追獵、黑魔法鎧、黑騎士召集（沒有斬首宣告）。'));
+  }
+  function renderStory() {
+    var LO = window.__afkLore, D = (typeof DB !== 'undefined') ? DB : {}, it = function (id) { return (D.items && D.items[id]) ? D.items[id].n : id; };
+    var out = '<div class="m-wiki-note">「劇情任務」：三條補完世界觀的任務線，加上各職業的試煉（見「任務」）與亞丁的陰影（亞丁的雷歐，Lv55～80）。每一章都要照順序；接了之後指定的怪 100% 掉任務道具，任務道具不能放倉庫。世界觀與人物關係見「世界觀」。</div>';
+    var lines = LO ? Object.keys(LO.lines).map(function (k) { return LO.lines[k]; }) : [];
+    var where = { redlion: '說話之島 甘特', hardin: '象牙塔 魔法師 喬', halpas: '燃柳村 奧拉奇里亞（轉生技藝的下面）' };
+    lines.forEach(function (ln) {
+      out += wCard('📜 ' + esc(ln.name) + '（Lv' + ln.chapters[0].lv + '～' + ln.chapters[ln.chapters.length - 1].lv + '，' + esc(where[ln.id] || ln.hostN) + '）',
+        (ln.intro ? wDesc(ln.intro) : '') +
+        wTbl(['章', 'Lv', '地點', '任務道具', '獎勵', '第一次另給'], ln.chapters.map(function (ch, i) {
+          var rw = Object.keys(ch.rewards || {}).map(function (c) { return (c === 'all' ? '' : ({ royal: '王族', mage: '法師', knight: '騎士' }[c] || c) + '：') + (ch.rewards[c] || []).map(it).join('、'); }).filter(Boolean).join('<br>');
+          return [(i + 1) + '. ' + esc(ch.title), ch.lv, esc(ch.map), ch.reqs.map(function (q) { return esc(q.n) + ' ×' + q.need; }).join('<br>'), rw,
+            (ch.first || []).map(function (f) { return (f[0] === 'gold' ? '金幣' : it(f[0])) + ' ×' + Number(f[1]).toLocaleString(); }).join('、') || '—'];
+        })));
+    });
+    var sets = [['紅獅套裝', ['afk_lion_cloak', 'afk_lion_badge', 'afk_lion_gloves', 'afk_lion_ring'], '2 件：最大 HP +60；3 件：再 額外命中 +2、魔防 +5；4 件：再 額外傷害 +2、最大 HP +80'],
+      ['哈汀的遺產', ['afk_hd_boots', 'afk_hd_belt', 'afk_hd_robe', 'afk_hd_cloak'], '2 件：最大 MP +50、魔防 +5；3 件：再 魔法傷害 +1、額外命中 +2；4 件：再 額外傷害 +2、最大 HP +100、MP 回復 +3'],
+      ['闇龍獵人', ['afk_hp_helm', 'afk_hp_gloves', 'afk_hp_boots', 'afk_hp_armor'], '2 件：額外傷害 +2、最大 HP +100；3 件：再 傷害減免 +2、魔防 +10；4 件：再 額外傷害 +3、額外命中 +3、最大 HP +200、魔法傷害 +2']]
+      .filter(function (x) { return D.items && D.items[x[1][0]]; });
+    var solo = ['afk_lion_crown', 'afk_hd_tome', 'afk_hd_tear', 'afk_hp_flame_cloak', 'afk_hp_eye', 'afk_kurt_helm', 'afk_kuze_dagger'].filter(function (id) { return D.items && D.items[id]; });
+    if (sets.length || solo.length) out += wCard('🛡 劇情裝備',
+      wDesc('數值都比亞丁近衛裝好，但不超過同部位的遺物、沒有遺物特效；可以一般強化。') +
+      (sets.length ? wTbl(['套裝', '部位', '套裝效果'], sets.map(function (x) { return ['<b>' + x[0] + '</b>', x[1].map(it).join('、'), x[2]]; })) : '') +
+      (solo.length ? wTbl(['裝備', '說明'], solo.map(function (id) { return ['<b>' + esc(it(id)) + '</b>', esc(String(D.items[id].d || '').split('【')[0])]; })) : ''));
+    var H = window.__afkHardin, X = window.__afkHalpas;
+    var dg = [];
+    if (H) dg.push(['哈汀的時空（隊伍副本）', '象牙塔 魔法師 喬；Lv70、接了「知識與背叛」第 7 章', '12 波魔界怪；第 6 波後選擇「阻止封印儀式」（黑翼賽尼斯，難）或「讓儀式完成」（失控的巴風特）；最後是大魔法師 哈汀。頭目與魔界怪 HP ×（1＋0.25×傭兵數）。次數不限', '每天第一次通關：哈汀的魔法印記 ×1、魔法結晶體 ×30；第一次走「阻止封印儀式」通關：賽尼斯的淚滴耳環。印記找喬換東西']);
+    if (X) {
+      dg.push(['暗影神殿最深處', '燃柳村 奧拉奇里亞；接了「闇龍的低語」第 4 章', '火焰之影（真身）。HP 40 萬（以 8 人隊為準，人少就少，最少 36%）。次數不限', '魔法結晶體 30～60；火焰之影的斗篷 2%']);
+      dg.push(['時空裂痕－闇龍的巢', '燃柳村 奧拉奇里亞；接了「闇龍的低語」第 5 章', '闇龍 哈爾巴斯。HP 150 萬 ×（隊伍人數÷16，最少 4 人份；席琳夢域鏡再 6 折）；20 分鐘限時。次數不限', '每天第一次打倒：闇龍的鱗片 ×3～5、闇龍之心 10%。鱗片找奧拉奇里亞換龍之鑽石、闇龍獵人套裝、闇龍之眼']);
+    }
+    if (dg.length) out += wCard('🌀 劇情副本', wDesc('都不能離線掛機；中途離開或倒下就要重來（倒下照一般死亡）。克特的追殺令不會追進來。') + wTbl(['副本', '入口', '內容', '獎勵'], dg));
+    var bs = [];
+    if (D.mobs && D.mobs.afk_kuze) bs.push(['通緝犯 庫傑', 22, '說話之島周邊或北島，每 30 分鐘出現一次', '偷襲（出場 3 秒內傷害 ×2）、煙霧彈（每 20 秒，5 秒內打他的傷害 −30%）、逃跑（HP 30% 消失 10 秒，回來 HP +10%）']);
+    if (H) bs = bs.concat([
+      ['大魔法師 歐林', 58, '古魯丁地監 7 樓（「知識與背叛」第 4 章完成後每 30 分鐘一次）', '四元素齊射（每 12 秒火、地、風、水各一發）、鍊金護壁（HP 70%／35%：10 秒受到傷害 −50%）、時間停止（每 40 秒冰凍 HP 最高的一人）'],
+      ['黑翼賽尼斯', 72, '哈汀的時空', '伊娃的淚（全體水）、魅惑（每 30 秒一名傭兵 5 秒內改打自己人）、活祭品的詛咒（每少 25% HP，你的最大 HP −5%）、黑翼（HP 30%：6 秒近戰打不到）'],
+      ['失控的巴風特', 72, '哈汀的時空', '地裂術、震裂術、惡魔契約（每 25 秒 3 隻魔界的骷髏）、失控（HP 50%：攻速 +50%、受到傷害 +20%）'],
+      ['大魔法師 哈汀', 80, '哈汀的時空', '黑魔法領域（全體必中）、禁咒・永生（第一次倒下以 30% HP 復活）、弟子的影子（HP 75%／50%／25% 召喚四色的影子，影子活著時受到傷害 −50%）、知識的代價（每 45 秒全體封印魔法＋吸 10% MP）']]);
+    if (X) bs = bs.concat([
+      ['火焰之影（真身）', 96, '暗影神殿最深處', '業火領域（每秒全隊最大 HP 1% 火傷，火抗可減）、親衛隊召集（HP 80／60／40／20% 各 4 名）、煉獄火柱（每 20 秒標記 2 人，3 秒後傷害全隊平分）、不死之焰（HP 10%：20 秒每秒回 1%）'],
+      ['闇龍 哈爾巴斯', 105, '時空裂痕－闇龍的巢', '100～70% 闇之吐息；70～35% 每 20 秒換一招四龍的招式（地震、詛咒之水、業火、暴風）；35% 以下吞噬（每 30 秒吸全隊最大 HP 10% 回補自己，奧拉奇里亞的祝福擋一次）']]);
+    if (bs.length) out += wCard('👑 劇情頭目', wTbl(['頭目', 'Lv', '出現', '技能'], bs.map(function (b) { return ['<b>' + b[0] + '</b>', b[1], b[2], b[3]]; })));
+    var rw = [];
+    if (H) rw.push(['四色（古魯丁地監 3～4 樓）', '各多一招全體魔法；連攜（同圖另一位四色還活著，受到傷害 −20%）；剩最後一位時喊「為了老師……」狂暴（攻速 +30%）'], ['哈汀之影', 'HP 50% 分出影分身（本體 30% HP），影分身倒下前本體不受傷害']);
+    if (X) rw.push(['反王肯恩（傲慢之塔）', 'HP 50% 召喚 2 名黑騎士親衛；篡位者的威壓：他活著時，王族「精準目標」對所有敵人的加成減半'], ['死亡騎士', 'HP 30% 召喚 4 隻骷髏（死亡騎士的誓約）']);
+    if (window.__afkKurtHunt) rw.push(['克特（港口、黑騎士前哨基地）', '王血追獵、賽尼斯的黑魔法鎧、黑騎士召集（見「戰鬥機制」的世界事件）']);
+    if (rw.length) out += wCard('🔁 既有頭目的新技能', wTbl(['頭目', '改了什麼'], rw));
+    return out + worldEventCard();
+  }
+
   function renderRunes() {
     var out = '<div class="m-wiki-note">「符文系統」：說話之島的<b>符文師佐爾頓</b>替裝備鑿<b>星蝕·解</b>符文孔、鑲嵌符文石；符文石從<b>時空裂痕</b>帶回來（見「時空裂痕」分頁）。</div>';
     var SD = window.__afkSherineDream || {};
@@ -3771,7 +3844,7 @@
   function renderCombat() {
     var note = '<div class="m-wiki-note">傷害不是「攻擊力扣防禦」這麼單純。下面把幾個會大幅左右輸出與生存、卻不直觀的機制講清楚。</div>';
     var secs = COMBAT_SECTIONS.map(sectionCard).join('');
-    return note + secs;
+    return note + secs + worldEventCard();
   }
 
   function renderStats() {
