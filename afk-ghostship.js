@@ -210,9 +210,14 @@
       if (p && onShip && sailing(t)) txt = '⛵ 幽靈船 ' + mmss(slot(t) + VOYAGE - t) + (run && run.captain === 0 ? '（船員 ' + run.kills + '／' + NEED + '）' : '');
       else if (p && (Number(p.lv) || 0) >= LV_MIN && docked(t)) txt = '⛵ 幽靈船靠岸 ' + mmss(slot(t) + BOARD - t);
       if (!txt) { if (el) el.remove(); return; }
-      var host = document.getElementById('status-alerts'); if (!host) return;
+      var host = (function () {   // 世界事件的狀態列共用容器：放在 #status-alerts 旁邊，不放裡面（核心每個 tick 都會改寫 #status-alerts 的文字，把徽章洗掉又加回 → 那一排一直抖；玩家 2026-10-29 22:37）
+        var h = document.getElementById('afk-ev-badges'); if (h) return h;
+        var sa = document.getElementById('status-alerts'); if (!sa || !sa.parentNode) return null;
+        h = document.createElement('span'); h.id = 'afk-ev-badges'; h.className = 'text-sm'; h.style.cssText = 'font-weight:bold;font-variant-numeric:tabular-nums;white-space:nowrap';
+        sa.parentNode.insertBefore(h, sa.nextSibling); return h;
+      })(); if (!host) return;
       if (!el) { el = document.createElement('span'); el.id = 'afk-gs-badge'; el.style.cssText = 'font-weight:bold;margin-left:6px;color:#5eead4'; host.appendChild(el); }
-      el.textContent = txt;
+      if (el.textContent !== txt) el.textContent = txt;
     } catch (e) {}
   };
   var catching = function () { try { return typeof W.__afkOfflineNow === 'function' && !!W.__afkOfflineNow(); } catch (e) { return false; } };

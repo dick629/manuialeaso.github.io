@@ -129,10 +129,15 @@
     try {
       var el = document.getElementById('afk-kurt-badge');
       if (!hunt) { if (el) el.remove(); return; }
-      var host = document.getElementById('status-alerts'); if (!host) return;
+      var host = (function () {   // 世界事件的狀態列共用容器：放在 #status-alerts 旁邊，不放裡面（核心每個 tick 都會改寫 #status-alerts 的文字，把徽章洗掉又加回 → 那一排一直抖；玩家 2026-10-29 22:37）
+        var h = document.getElementById('afk-ev-badges'); if (h) return h;
+        var sa = document.getElementById('status-alerts'); if (!sa || !sa.parentNode) return null;
+        h = document.createElement('span'); h.id = 'afk-ev-badges'; h.className = 'text-sm'; h.style.cssText = 'font-weight:bold;font-variant-numeric:tabular-nums;white-space:nowrap';
+        sa.parentNode.insertBefore(h, sa.nextSibling); return h;
+      })(); if (!host) return;
       if (!el) { el = document.createElement('span'); el.id = 'afk-kurt-badge'; el.style.cssText = 'color:#fca5a5;font-weight:bold;margin-left:6px'; host.appendChild(el); }
       var s = Math.max(0, Math.ceil(hunt.left / 10)), mm = Math.floor(s / 60), ss = s % 60;
-      el.textContent = '⚔ 克特追殺中 ' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+      var tx = '⚔ 克特追殺中 ' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss; if (el.textContent !== tx) el.textContent = tx;
     } catch (e) {}
   };
   var stats = function () { var p = P(); if (!p) return {}; var s = p.afkKurtStats || (p.afkKurtStats = { met: 0, kills: 0, fails: 0, escapes: 0 }); return s; };

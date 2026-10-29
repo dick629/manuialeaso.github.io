@@ -12,7 +12,10 @@ try{
     out.npc=DB.towns.town_talking.npcs.some(n=>n.id===G.NPC_ID);
     // 21:40 不在靠岸時間（21:30～21:40 才能登船）
     out.closed=G.canBoard();out.next=new Date(G.nextDock()).getMinutes();
-    fake=new Date(2026,9,29,22,3,0).getTime();out.dock=G.docked();out.board=G.board();out.map=mapState.current;
+    fake=new Date(2026,9,29,22,3,0).getTime();out.dock=G.docked();
+    // 狀態列徽章不能放進 #status-alerts（核心每個 tick 改寫它的文字 → 徽章被洗掉又加回，那一排一直抖；2026-10-29 22:37）
+    state.ticks=1000;G.clock();const sa=document.getElementById('status-alerts');sa.innerText='[中毒]';sa.innerText='';
+    const bd=document.getElementById('afk-gs-badge');out.badge=!!(bd&&bd.isConnected)&&bd.parentNode.id+'|'+/幽靈船靠岸/.test(bd.textContent);out.board=G.board();out.map=mapState.current;
     // 船員一直湧出
     for(let i=0;i<5;i++)spawnMob(i);out.crew=mapState.mobs.filter(m=>m&&m._gs).length;out.crewLv=mapState.mobs[0].lv;
     // 打倒 30 名 → 船長
@@ -33,7 +36,7 @@ try{
   console.log(JSON.stringify(r));
   assert.equal(r.on,true);assert.equal(r.npc,true);
   assert.match(r.closed,/還沒靠岸/);assert.equal(r.next,0);
-  assert.equal(r.dock,true);assert.equal(r.board,true);assert.equal(r.map,'afk_ghostship');
+  assert.equal(r.dock,true);assert.equal(r.badge,'afk-ev-badges|true','徽章在獨立容器、不會被洗掉');assert.equal(r.board,true);assert.equal(r.map,'afk_ghostship');
   assert.equal(r.crew,5);assert.equal(r.crewLv,60,'船員跟著你的等級');
   assert.equal(r.kills,30);assert.equal(r.captain,'幽靈船長');
   assert.equal(r.summon,2,'深海的召喚');assert.equal(r.curse,true,'沉船的詛咒');
