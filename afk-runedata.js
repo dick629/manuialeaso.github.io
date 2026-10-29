@@ -135,12 +135,53 @@
   var crystalId = function () { var X = W.AFK_TTMI_ITEMS, id = X && X.resolve ? X.resolve(7102) : null; if (id && DB.items[id]) return id; return Object.keys(DB.items).find(function (k) { return DB.items[k] && DB.items[k].n === '魔法結晶體'; }) || null; };
   var haveOf = function (p, id) { return (p.inv || []).filter(function (x) { return x && x.id === id && !x.lock; }).reduce(function (n, x) { return n + (Number(x.cnt) || 1); }, 0); };
   var takeOf = function (p, id, n) { (p.inv || []).filter(function (x) { return x && x.id === id && !x.lock; }).forEach(function (x) { if (n <= 0) return; var c = Number(x.cnt) || 1, k = Math.min(c, n); n -= k; if (c - k > 0) x.cnt = c - k; else p.inv.splice(p.inv.indexOf(x), 1); }); };
+  // 玩家 2026-10-29 20:38：魔法結晶體不夠時，自動用背包＋倉庫的結晶體，還不夠就用背包＋倉庫裡能提煉的材料（材料工坊的提煉配方）先做出來
+  var whHave = function (id) { try { return typeof whCountId === 'function' ? whCountId(id) : 0; } catch (e) { return 0; } };
+  var allHave = function (p, id) { return haveOf(p, id) + whHave(id); };
+  var takeAll = function (p, id, n) {   // 背包優先、再扣倉庫
+    var a = Math.min(n, haveOf(p, id)); if (a > 0) takeOf(p, id, a); n -= a;
+    if (n > 0) { try { if (typeof whConsumeId === 'function') n -= whConsumeId(id, n); } catch (e) {} }
+    return n <= 0;
+  };
+  var refinePlan = function (p, cid, short) {
+    var X = W.AFK_TTMI_ITEMS, rs = (X && X.recipes) || [], rows = [];
+    rs.forEach(function (r) {
+      if (r.result !== cid || r.ttmiRecipeKind !== 'refine') return;
+      var mat = r.req.filter(function (q) { return q.id !== 'gold'; })[0], g = r.req.filter(function (q) { return q.id === 'gold'; })[0];
+      if (!mat || !DB.items[mat.id]) return;
+      var have = allHave(p, mat.id), y = Math.max(1, r.yield || 1), times = Math.floor(have / mat.cnt);
+      if (times > 0) rows.push({ mat: mat.id, per: mat.cnt, gold: g ? g.cnt : 0, y: y, times: times });
+    });
+    rows.sort(function (a, b) { return (a.gold / a.y) - (b.gold / b.y) || b.times - a.times; });   // 每個結晶體的金幣最少的先用
+    var plan = [], gold = Number(p.gold) || 0, got = 0, cost = 0;
+    rows.forEach(function (r) {
+      if (got >= short) return;
+      var k = Math.min(r.times, Math.ceil((short - got) / r.y));
+      if (r.gold > 0) k = Math.min(k, Math.floor((gold - cost) / r.gold));
+      if (k <= 0) return;
+      plan.push({ mat: r.mat, n: k * r.per, times: k, gold: k * r.gold, y: k * r.y }); got += k * r.y; cost += k * r.gold;
+    });
+    return { plan: plan, got: got, gold: cost };
+  };
   var openBox = function (it) {
     var p = P(), d = DB.items[it.id], s = d.runeStage;
     var cost = OPEN_COST[s] || 0, cid = cost ? crystalId() : null;
     if (cost && cid) {
-      if (haveOf(p, cid) < cost) { try { logSys('<span class="text-red-400">解開' + d.n + '需要魔法結晶體 ' + cost + ' 個（背包裡未上鎖的有 ' + haveOf(p, cid) + ' 個）。</span>'); } catch (e) {} return null; }
-      takeOf(p, cid, cost);
+      var have = allHave(p, cid), made = null;
+      if (have < cost) {
+        var pl = refinePlan(p, cid, cost - have);
+        if (have + pl.got < cost) {
+          try { logSys('<span class="text-red-400">解開' + d.n + '需要魔法結晶體 ' + cost + ' 個（背包＋倉庫未上鎖的有 ' + have + ' 個'
+            + (pl.got ? '，用背包＋倉庫的材料最多還能提煉 ' + pl.got + ' 個' : '，背包＋倉庫也沒有能提煉的材料') + '）。</span>'); } catch (e) {}
+          return null;
+        }
+        pl.plan.forEach(function (x) { takeAll(p, x.mat, x.n); });
+        p.gold = (Number(p.gold) || 0) - pl.gold;
+        gainItem(cid, pl.got, true, true);
+        made = pl;
+      }
+      takeAll(p, cid, cost);
+      if (made) { try { logSys('<span class="text-cyan-300">魔法結晶體不夠，先自動提煉了 ' + made.got + ' 個：' + made.plan.map(function (x) { return (DB.items[x.mat] || {}).n + ' ×' + x.n.toLocaleString(); }).join('、') + (made.gold ? '，金幣 ' + made.gold.toLocaleString() : '') + '（背包優先，再用倉庫）。</span>'); } catch (e) {} }
     }
     var pool = list.filter(function (r) { return r.stage === s; });
     var r = pool[Math.floor(Math.random() * pool.length)];
@@ -170,5 +211,5 @@
     // 平衡點數（玩家 2026-10-29：太強就壓縮傷害、太弱就追加傷害）：鑲著這顆符文時，造成的傷害 ×(1＋點數×1%)；0＝不調整
     // 佐爾頓合成（玩家 2026-10-29）：同階段符文 3 顆＋哀石結晶 10 → 隨機一顆高一階的符文。只開放 階段一→二、階段二→三（傳說不從合成出）
     COMBINE: { n: 3, cost: ['afk_lament_gem', 10], from: [1, 2] },
-    BAL: { po_l: 5 }, OPEN_COST: OPEN_COST, REMOVE: ['afk_lament_stone', 500], openBox: openBox };
+    BAL: { po_l: 5 }, OPEN_COST: OPEN_COST, REMOVE: ['afk_lament_stone', 500], openBox: openBox, refinePlan: refinePlan };
 })();

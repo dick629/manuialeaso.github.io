@@ -7,6 +7,7 @@ try{
   await page.evaluate(code=>{window.__profile=eval('('+code+')');},createProfile.toString());
   const r=await page.evaluate(()=>{
     const A=__afkDollAffix,out={on:AFK_TOGGLES.enabled('dollaffix')};
+    const t6=DOLL_BY_TIER[6];out.t6drops=Object.keys(MOB_DROPS).filter(n=>(MOB_DROPS[n]||[]).some(e=>t6.includes(e[0]))).length;out.t6synth=DOLL_SYNTH_RATES[5][2];
     __profile({cls:'royal',lv:80});
     const t4=DOLL_BY_TIER[4][0];
     const mk=(o)=>{const it=Object.assign({id:t4,uid:uid(),cnt:1,en:0,bless:false,anc:false,attr:false,seteff:false,lock:false,junk:false},o);player.inv.push(it);return it;};
@@ -37,6 +38,7 @@ try{
   });
   console.log(JSON.stringify(r));
   assert.equal(r.on,true);
+  assert.equal(r.t6drops,0,'六階娃娃不掉落');assert.ok(r.t6synth>0,'五階合成六階');
   assert.equal(r.count4,2,'一般合成只算沒有詞條的');assert.equal(r.aff4,2);
   assert.equal(r.affLeft,2,'一般合成不吃有詞條的');assert.equal(r.unlocked,true,'暫時鎖定有還原');
   assert.equal(r.ok,1);assert.equal(r.gotTier,5);

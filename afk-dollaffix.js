@@ -11,6 +11,8 @@
  *         成品的詞條：每一類（祝福系、遠古系、屬性）從兩個材料裡隨機挑一個來源繼承（挑到的那個沒有就沒有），
  *         但一律回到一階：昇華的祝福／至高的祝福 → 祝福的；覺醒的／創世的 → 原名；屬性 2～5 階 → 同屬性 1 階；屬性魔法星數 → 1 星。
  *         6 階不能再升（四隻六階互換請用一般的 6 階重組，只收沒有詞條的）。
+ *   2026-10-29 20:38：六階娃娃（安塔瑞斯、法利昂、林德拜爾、巴拉卡斯）不再從怪物身上掉落（四龍巢穴發瘋／時空階段原本 100%），
+ *     只能用五階合成（一般合成 2 個五階 1%…或詞條專區 2 個五階 5%）。已經拿到的不受影響。
  *   不改核心：包 dollTierCount／dollSynth／dollSynthAll／dollRerollT6／dollRerollT6All（執行時暫時把有詞條的娃娃當成鎖定）、
  *   包 renderCardSynth 加專區。亂數用核心的 _dollRng（跟一般合成一樣，存讀檔不會重抽）。
  * ========================================================================== */
@@ -18,7 +20,7 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'dollaffix', name: '詞條娃娃合成', group: '遊戲玩法',
-    desc: '有詞條（祝福／遠古系／屬性）的魔法娃娃不會被一般合成吃掉；魔法娃娃商人另開專區：2 個同階有詞條的娃娃 → 5% 升一階（沒有保底），詞條隨機繼承但全部回到一階' });
+    desc: '有詞條（祝福／遠古系／屬性）的魔法娃娃不會被一般合成吃掉；魔法娃娃商人另開專區：2 個同階有詞條的娃娃 → 5% 升一階（沒有保底），詞條隨機繼承但全部回到一階；六階娃娃不再掉落，只能用五階合成' });
   if (T && !T.enabled('dollaffix')) return;
   if (typeof DB === 'undefined' || typeof W.renderCardSynth !== 'function' || typeof DOLL_BY_TIER === 'undefined') return;
   var RATE = 5, PAIR = 2;
@@ -52,6 +54,14 @@
   };
   ['dollSynth', 'dollSynthAll', 'dollRerollT6', 'dollRerollT6All'].forEach(function (f) { if (typeof W[f] === 'function') W[f] = shield(W[f]); });
   if (typeof W.dollTierCount === 'function') W.dollTierCount = shield(W.dollTierCount, false);
+
+  // ── 六階娃娃不掉落：載入完（其他外掛加完掉落表）再清一次 ──
+  var purgeT6 = function () {
+    var t6 = (DOLL_BY_TIER[6] || []).slice(), n = 0; if (!t6.length || typeof MOB_DROPS === 'undefined') return 0;
+    Object.keys(MOB_DROPS).forEach(function (k) { var a = MOB_DROPS[k]; if (!Array.isArray(a)) return; for (var i = a.length - 1; i >= 0; i--) if (a[i] && t6.indexOf(a[i][0]) >= 0) { a.splice(i, 1); n++; } });   // 就地刪：別的外掛握著同一個陣列
+    return n;
+  };
+  purgeT6(); W.addEventListener('load', purgeT6); setTimeout(purgeT6, 0);
 
   // ── 詞條娃娃 ──
   var units = function (tier) {
@@ -134,7 +144,7 @@
       + '<div>‧有詞條（祝福的／昇華的祝福／至高的祝福、遠古／永恆／不朽／太初、屬性）的娃娃<b>不會被上面的一般合成、6 階重組吃掉</b>。</div>'
       + '<div>‧放入 <b>2 個同階、有詞條</b>的娃娃 → 成功率 <b>' + RATE + '%</b>、<b>沒有保底</b>；成功得到 1 個高一階的娃娃（隨機一隻），失敗退還其中 1 個（詞條不變）。</div>'
       + '<div>‧成品的詞條從兩個材料裡<b>隨機繼承</b>，但<b>全部回到一階</b>：昇華的祝福、至高的祝福 → 祝福的；覺醒的、創世的 → 原名；屬性 2～5 階 → 同屬性 1 階。例：4 階＋4 階成功 → 5 階娃娃，詞條都是一階。</div>'
-      + '<div>‧6 階不能再升；想保留的娃娃先在背包「鎖定」。</div></div>'
+      + '<div>‧6 階不能再升；<b>6 階娃娃不會從怪物身上掉落，只能用 5 階合成</b>（2 個 5 階）。想保留的娃娃先在背包「鎖定」。</div></div>'
       + '<div class="bg-slate-900/60 border border-slate-700 rounded p-3 text-sm space-y-2">'
       + '<div>來源階級：<span class="inline-flex gap-1 ml-1 flex-wrap">' + [1, 2, 3, 4, 5].map(function (t) { return '<button type="button" data-afx-tier="' + t + '" class="btn px-2 py-0.5 text-xs ' + (ui.tier === t ? 'bg-sky-700 border-sky-400' : 'bg-slate-800 border-slate-600') + '">' + t + '階（' + counts[t - 1] + '）</button>'; }).join('') + '</span></div>'
       + '<div class="flex justify-between text-xs text-slate-400"><span>第 ' + ui.tier + ' 階有詞條可合成：<span class="' + (can ? 'text-green-400' : 'text-red-400') + ' font-bold">' + cur + '</span> 個<span class="text-slate-500">（未鎖定）</span></span><span>成功率：<b class="text-amber-300">' + RATE + '%</b>　保底：<b class="text-slate-500">無</b></span></div>'
@@ -169,5 +179,5 @@
     } catch (e) { console.warn('[AFK-dollaffix] ui', e); }
     return r;
   };
-  W.__afkDollAffix = { RATE: RATE, PAIR: PAIR, hasAff: hasAff, count: count, synth: synth, inherit: inherit, tier1Attr: tier1Attr };
+  W.__afkDollAffix = { purgeT6: purgeT6, RATE: RATE, PAIR: PAIR, hasAff: hasAff, count: count, synth: synth, inherit: inherit, tier1Attr: tier1Attr };
 })();
