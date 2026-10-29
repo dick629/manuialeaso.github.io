@@ -12,8 +12,8 @@
   var W = window;
   if (typeof DB === 'undefined' || !DB.items) return;
   var IMG = function (n) { return 'assets/icons/items/' + n + '.png'; };
-  var STAGE_C = { 1: 'text-slate-200', 2: 'text-sky-300', 3: 'text-rose-400' };
-  var STAGE_N = { 1: '階段一', 2: '階段二', 3: '階段三' };
+  var STAGE_C = { 1: 'text-slate-200', 2: 'text-sky-300', 3: 'text-rose-400', 4: 'text-amber-300' };
+  var STAGE_N = { 1: '階段一', 2: '階段二', 3: '階段三', 4: '傳說' };
   // 單符文效果（數字在 afk-runes 實作；這裡是說明文字）
   var RUNES = [
     ['hui', '穗', 1, 'aid', '材料掉落 +15%（全身最多算 2 顆）'],
@@ -47,12 +47,15 @@
     ['guan', '冠', 3, 'class', '王族：指定技能常駐（增益）或每 8 秒自動施放（攻擊）（效果製作中）'],
     ['lin', '鱗', 3, 'class', '龍騎士：指定技能常駐（增益）或每 8 秒自動施放（攻擊）（效果製作中）'],
     ['huan', '幻', 3, 'class', '幻術士：指定技能常駐（增益）或每 8 秒自動施放（攻擊）（效果製作中）'],
-    ['nu', '怒', 3, 'class', '戰士：指定技能常駐（增益）或每 8 秒自動施放（攻擊）（效果製作中）']
+    ['nu', '怒', 3, 'class', '戰士：指定技能常駐（增益）或每 8 秒自動施放（攻擊）（效果製作中）'],
+    // 傳說（玩家 2026-10-29）：跟攻擊類的「破」同字，物品名稱加「（傳說）」區分；只能鑲在飾品、腰帶，全身只能裝一顆
+    ['po_l', '破', 4, 'aid', '吸收 MP：一般攻擊或攻擊魔法命中時，回復 MP＝面板的近距離傷害／遠距離傷害／魔法傷害（看這一擊是哪一種）×100%，冷卻 3 秒。全身只能裝一顆；另外造成的傷害 +5%（平衡點數）']
   ];
+  var UNIQUE = { po_l: true };
   var CLASS_OF = { shi_k: 'knight', ye: 'elf', zhi: 'mage', ying: 'dark', guan: 'royal', lin: 'dragon', huan: 'illusion', nu: 'warrior' };
   var CAT_N = { aid: '補助', potion: '藥水', guard: '減傷', pet: '寵物', set: '套裝', attack: '攻擊', 'class': '職業' };
   var SLOT_CATS = { weapon: ['attack', 'set', 'class'], armor: ['guard', 'potion', 'pet'], acc: ['aid'] };
-  var list = RUNES.map(function (r) { return { id: 'afk_rune_' + r[0], key: r[0], ch: r[1], stage: r[2], cat: r[3], d: r[4], cls: CLASS_OF[r[0]] || null }; });
+  var list = RUNES.map(function (r) { return { id: 'afk_rune_' + r[0], key: r[0], ch: r[1], stage: r[2], cat: r[3], d: r[4], cls: CLASS_OF[r[0]] || null, unique: !!UNIQUE[r[0]], nk: UNIQUE[r[0]] ? r[0] : r[1] }; });   // nk：計數用的鍵（傳說的破跟攻擊的破分開算）
   var byId = {}; list.forEach(function (r) { byId[r.id] = r; });
   // 符文之語：照孔的順序比對（'職'＝任一顆職業符文）。武器：相鄰兩孔（1→2、2→3）或三孔；防具：同一件的 1→2 孔。
   //   三符文之語成立時，裡面包含的兩符文之語不另外算；同名符文之語全身最多算 2 次。
@@ -84,9 +87,10 @@
   ].map(function (w) { return { id: w[0], n: w[1], where: w[2], seq: w[3].split(''), d: w[4] }; });
   var ITEMS = {};
   list.forEach(function (r) {
-    ITEMS[r.id] = { n: r.ch + '之符文', c: STAGE_C[r.stage], img: IMG('符文(' + r.ch + ')'),
+    ITEMS[r.id] = { n: r.ch + '之符文' + (r.stage === 4 ? '（傳說）' : ''), c: STAGE_C[r.stage], img: IMG('符文(' + r.ch + ')'),
       d: '【符文石・' + STAGE_N[r.stage] + '・' + CAT_N[r.cat] + '】' + r.d + '。在說話之島的符文師佐爾頓那裡鑲進' + (r.cat === 'aid' ? '飾品或腰帶' : (SLOT_CATS.armor.indexOf(r.cat) >= 0 ? '防具' : '武器')) + '的星蝕·解孔。' };
   });
+  list.forEach(function (r) { if (r.stage === 4) ITEMS[r.id].d += '只能在說話之島的符文師佐爾頓那裡用解命石 1＋哀石結晶 30 換取；鑲嵌費哀石結晶 40。'; });
   var BOX = { 1: 'afk_runebox_1', 2: 'afk_runebox_2', 3: 'afk_runebox_3' };
   var SRC = { 1: '時空裂痕（席琳模式）', 2: '時空裂痕（瘋狂席琳模式）', 3: '時空裂痕（夢域鏡席琳模式）' };
   [1, 2, 3].forEach(function (s) {
@@ -136,9 +140,13 @@
   }
   W.__afkRuneData = { list: list, byId: byId, WORDS: WORDS, CAT_N: CAT_N, SLOT_CATS: SLOT_CATS, STAGE_N: STAGE_N, STAGE_C: STAGE_C, BOX: BOX, CLASS_OF: CLASS_OF,
     DUST: { sherine: 'afk_lament_dust', mad: 'afk_lament_shard', dream: 'afk_lament_stone' },
-    CUR: { 1: 'afk_lament_crystal', 2: 'afk_lament_essence', 3: 'afk_lament_gem' },
+    CUR: { 1: 'afk_lament_crystal', 2: 'afk_lament_essence', 3: 'afk_lament_gem', 4: 'afk_lament_gem' },
     EXCHANGE: { afk_lament_dust: 'afk_lament_crystal', afk_lament_shard: 'afk_lament_essence', afk_lament_stone: 'afk_lament_gem' }, EX_RATE: 150,
     FATE: { id: 'afk_fate_unlock', need: { afk_miasma_stone: 1000, afk_bone_stone: 500, afk_void_stone: 100 } },
     CLEAR: { sherine: ['afk_miasma_stone', 100], mad: ['afk_bone_stone', 50], dream: ['afk_void_stone', 10] },
-    INLAY: { 1: 5, 2: 10, 3: 20 }, REMOVE: ['afk_lament_stone', 500], openBox: openBox };
+    INLAY: { 1: 5, 2: 10, 3: 20, 4: 40 },
+    // 傳說符文（暫定）：佐爾頓用解命石 1＋哀石結晶 30 換一顆；鑲嵌費哀石結晶 40
+    LEGEND: { 'afk_rune_po_l': { afk_fate_unlock: 1, afk_lament_gem: 30 } },
+    // 平衡點數（玩家 2026-10-29：太強就壓縮傷害、太弱就追加傷害）：鑲著這顆符文時，造成的傷害 ×(1＋點數×1%)；0＝不調整
+    BAL: { po_l: 5 }, REMOVE: ['afk_lament_stone', 500], openBox: openBox };
 })();

@@ -160,6 +160,7 @@
       if (s[idx]) return '這個孔已經有符文了，要先拆下來。';
       if (KINDS[c.kind].cats.indexOf(r.cat) < 0) return KINDS[c.kind].n + '只能鑲' + KINDS[c.kind].cats.map(function (k) { return RD.CAT_N[k]; }).join('、') + '類的符文。';
       if (s.indexOf(runeId) >= 0) return '同一件裝備不能鑲兩顆同名符文。';
+      if (r.unique) { var eqd = Object.keys(p.eq || {}).some(function (k) { var e = p.eq[k]; return e && e !== c.it && Array.isArray(e.sockets) && e.sockets.indexOf(runeId) >= 0; }); if (eqd) return nm(runeId) + '全身只能裝一顆（身上已經有了）。'; }
       if (have(runeId) < 1) return '背包裡沒有' + nm(runeId) + '（上鎖的不算）。';
       var cur = RD.CUR[r.stage], cost = RD.INLAY[r.stage];
       if (have(cur) < cost) return '需要' + nm(cur) + ' ' + cost + '。';
@@ -188,6 +189,15 @@
       if (n < 1) return '需要' + nm(from) + ' ' + RD.EX_RATE + ' 個。';
       take(from, n * RD.EX_RATE); gainItem(to, n, true, true);
       done('<span class="text-sky-200">' + NPC_N + '把 ' + (n * RD.EX_RATE).toLocaleString() + ' 個' + nm(from) + '凝成了 ' + n + ' 個' + nm(to) + '。</span>');
+      return null;
+    },
+    legend: function (id) {
+      var need = (RD.LEGEND || {})[id]; if (!need) return '不能兌換這個。';
+      var miss = Object.keys(need).filter(function (k) { return have(k) < need[k]; });
+      if (miss.length) return '材料不足：' + miss.map(function (k) { return nm(k) + ' ' + have(k) + '/' + need[k]; }).join('、');
+      Object.keys(need).forEach(function (k) { take(k, need[k]); });
+      gainItem(id, 1, true, true);
+      done('<span class="text-amber-300 font-bold">' + NPC_N + '把解命石與哀石結晶熔進同一塊石頭——' + nm(id) + '亮了起來。</span>');
       return null;
     },
     fate: function () {
@@ -304,7 +314,7 @@
     var pick = '<select id="afk-zo-slot" aria-label="鑲在第幾孔">' + (empties.length ? empties.map(function (i) { return '<option value="' + i + '"' + (i === ui.slot ? ' selected' : '') + '>第 ' + (i + 1) + ' 孔</option>'; }).join('') : '<option value="">沒有空孔</option>') + '</select>'
       + '<select id="afk-zo-rune" aria-label="選擇符文">' + (owned.length ? owned.map(function (r) { return '<option value="' + r.id + '"' + (r.id === ui.rune ? ' selected' : '') + '>' + esc(nm(r.id)) + '（' + RD.STAGE_N[r.stage] + '・' + RD.CAT_N[r.cat] + '）×' + have(r.id) + '</option>'; }).join('') : '<option value="">沒有可鑲的符文</option>') + '</select>';
     h += K.rowHtml({ key: 'inlay', ico: rr ? K.itemIco(rr.id) : K.icoTag('', '', false), name: '鑲嵌符文', color: '#a78bfa',
-      desc: (rr ? '<b>' + esc(nm(rr.id)) + '</b>：' + esc(rr.d) + '<br>' : '') + '費用：階段一 哀石水晶 5、階段二 哀石精華 10、階段三 哀石結晶 20。同一件裝備不能鑲兩顆同名符文；同名符文全身最多算 2 顆。',
+      desc: (rr ? '<b>' + esc(nm(rr.id)) + '</b>：' + esc(rr.d) + '<br>' : '') + '費用：階段一 哀石水晶 5、階段二 哀石精華 10、階段三 哀石結晶 20、傳說 哀石結晶 40。同一件裝備不能鑲兩顆同名符文；同名符文全身最多算 2 顆（傳說符文全身只能 1 顆）。',
       req: rr ? K.reqTxt(have(cur), cost, nm(cur)) : '', why: !x ? noSel : !(it.sockets || []).length ? '這件還沒有開孔' : !empties.length ? '沒有空孔（要先拆下符文）' : !owned.length ? '背包裡沒有能鑲在' + KINDS[x.kind].n + '的符文' : '',
       pick: pick, btns: [['inlay', '鑲嵌', !!rr && have(cur) >= cost]] }, 'data-zo');
     // 拆下
@@ -324,6 +334,11 @@
     var need = RD.FATE.need, okF = Object.keys(need).every(function (id) { return have(id) >= need[id]; });
     h += K.rowHtml({ key: 'fate', ico: K.itemIco(RD.FATE.id), name: '解命石', color: '#facc15', desc: '瘴氣魔石、骸骨魔石、破空石合成。解命石打開瘴骸·破等級的孔（武器第三孔、腰帶三孔）。',
       req: Object.keys(need).map(function (id) { return K.reqTxt(have(id), need[id], nm(id)); }).join('　'), btns: [['fate', '合成', okF]] }, 'data-zo');
+    Object.keys(RD.LEGEND || {}).forEach(function (id) {
+      var nd = RD.LEGEND[id], ok = Object.keys(nd).every(function (k) { return have(k) >= nd[k]; }), r = RD.byId[id];
+      h += K.rowHtml({ key: 'lg-' + id, ico: K.itemIco(id), name: nm(id), color: '#fcd34d', desc: '傳說符文：' + esc(r ? r.d : ''),
+        req: Object.keys(nd).map(function (k) { return K.reqTxt(have(k), nd[k], nm(k)); }).join('　'), btns: [['lg:' + id, '兌換', ok]] }, 'data-zo');
+    });
     h += '<div class="ax-note">只用背包裡未上鎖的材料。武器的套裝與符文只在主手生效；防具、飾品、腰帶裝備在身上就生效。</div>';
     K.repaint(box, h, '.ax-list');
   };
@@ -340,6 +355,7 @@
       else if (a === 'inlay') err = ACT.inlay(ui.sel, Number(ui.slot), ui.rune);
       else if (a === 'remove') err = ACT.remove(ui.sel, Number(ui.rm));
       else if (a === 'fate') err = ACT.fate();
+      else if (a.indexOf('lg:') === 0) err = ACT.legend(a.slice(3));
       else if (a.indexOf('ex1:') === 0) err = ACT.exchange(a.slice(4), false);
       else if (a.indexOf('exAll:') === 0) err = ACT.exchange(a.slice(6), true);
       ui.err = err || ''; ui.msg = err ? '' : '完成了。';

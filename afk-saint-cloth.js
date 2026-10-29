@@ -4,7 +4,7 @@
  *   外觀：解除封印＝有翅膀；封印型態（或失去光輝、或在副本裡）＝沒有翅膀（assets/morphanim/<聖衣>・封{,2,F}）。
  *   封印型態也能變身；30 分鐘冷卻期間不能穿任何聖衣（afk-card-ascension 原本就擋）。
  *   解除封印的效果（afk-card-combat RULES.samsaraOpen）：六項能力 +75、五屬性抗性 +250、爆擊傷害 +100%、開啟星座能力。
- *   光輝：已解除封印的聖衣，每「以解除封印的樣子穿上一次」算一次，五次之後失去光輝，回到封印型態；
+ *   光輝：已解除封印的聖衣，每「以解除封印的樣子穿上一次」算一次（在副本裡穿也算），五次之後失去光輝，回到封印型態；
  *     用「雅典娜祝福」恢復光輝（再五次）。
  *   聖衣光輝碎片：十二件聖衣都收集到（封印型態也算）後，10 張多餘的怪物鑽石卡合成 1 片。
  *   升星：5 片光輝碎片，隨機替一件聖衣升 1 星（最多 3 星）；穿著那件聖衣時，每星對最終頭目（死亡女神 席琳與冥界的使徒）
@@ -50,7 +50,7 @@
     if (!r) { if (s.clothOn) s.clothOn = null; return; }
     if (s.clothOn === r.id) return;
     s.clothOn = r.id;
-    if (origSealed(r.id, p) || inDungeon()) return;
+    if (origSealed(r.id, p)) return;   // 玩家 2026-10-29：在副本裡穿上也算一次
     var c = s.cloth[r.id] = s.cloth[r.id] || { uses: 0, dim: false };
     if (c.dim) { sys('<span class="text-slate-300">' + esc(r.n) + ' 已經失去光輝，只能以封印的樣子穿上。用「雅典娜祝福」可以恢復。</span>'); return; }
     c.uses = (Number(c.uses) || 0) + 1;

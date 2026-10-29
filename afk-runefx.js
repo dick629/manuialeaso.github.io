@@ -58,7 +58,7 @@
     var t = S().ticks || 0, c = cache && cache.get(a);
     if (c && c.t === t && c.v === ver) return c;
     var n = {}, w = {}, cls = null;
-    var add = function (id) { var r = runeOf(id); if (!r) return; if (r.cat === 'class') { if (!cls) cls = r; return; } n[r.ch] = Math.min(2, (n[r.ch] || 0) + 1); };
+    var add = function (id) { var r = runeOf(id); if (!r) return; if (r.cat === 'class') { if (!cls) cls = r; return; } var k = r.nk || r.ch; n[k] = Math.min(r.unique ? 1 : 2, (n[k] || 0) + 1); };   // 傳說符文全身只算 1 顆
     var addW = function (list) { list.forEach(function (x) { w[x.id] = Math.min(2, (w[x.id] || 0) + 1); }); };
     var wp = a.eq.wpn; if (wp && Array.isArray(wp.sockets)) { wp.sockets.forEach(add); addW(wordsOn(wp.sockets, 'weapon')); }
     ARMOR.forEach(function (k) { var it = a.eq[k]; if (it && Array.isArray(it.sockets)) { it.sockets.forEach(add); addW(wordsOn(it.sockets, 'armor')); } });
@@ -131,7 +131,7 @@
 
   // ── 攻擊 ──
   var DRAGON = /安塔瑞斯|法利昂|巴拉卡斯|林德拜爾/;
-  var C = W.AFK_CARD_COMBAT, extra = false;
+  var C = W.AFK_CARD_COMBAT, extra = false, poCd = new WeakMap(), PO_CD = 30;
   if (C && typeof C.damage === 'function') {
     var oDmg = C.damage;
     C.damage = function (actor, target, amount, opt) {
@@ -141,10 +141,19 @@
         if (target._dream && Wd(actor, 'dreamhunt')) mult *= 1.15;
         if (DRAGON.test(String(target.n || '')) && Wd(actor, 'dragonslay')) mult *= 1.25;
         var add = N(actor, '破') ? 0.2 * (Number(target.dr) || 0) : 0;
+        var bal = RD.BAL || {}; Object.keys(bal).forEach(function (k) { var c = N(actor, k); if (c && bal[k]) mult *= Math.max(0, 1 + bal[k] / 100 * c); });   // 平衡點數：每點 ±1%
         if (mult !== 1 || add) amount = floor(amount * mult + add);
       }
       var v = oDmg.call(this, actor, target, amount, opt);
       try {
+        // 傳說「破」：吸收 MP＝面板的近距離／遠距離／魔法傷害 ×100%（看這一擊的種類），冷卻 3 秒
+        if (v > 0 && actor && actor.eq && opt && !opt.second && (N(actor, 'po_l') || W.__afkPoForce)) {
+          var kd = opt.kind === 'ranged' ? 'rangedDmg' : opt.kind === 'magic' ? 'magicDmg' : (opt.kind === 'melee' || opt.kind === 'phys') ? 'meleeDmg' : null, t0 = S().ticks || 0;
+          if (kd && !(t0 < (poCd.get(actor) || -1e9))) {
+            var gain = Math.max(0, floor(Number(actor.d && actor.d[kd]) || 0)), mx = Number(actor.mmp) || 0;
+            if (gain > 0 && mx > 0) { poCd.set(actor, t0 + PO_CD); actor.mp = Math.min(mx, (Number(actor.mp) || 0) + gain); }
+          }
+        }
         // 雷：魔法二次傷害（不會爆擊）
         if (!extra && v > 0 && actor && actor.eq && opt && opt.kind === 'magic' && N(actor, '雷') && target && target.curHp > 0) {
           var ch = Wd(actor, 'thunder') ? 0.35 : 0.20;
