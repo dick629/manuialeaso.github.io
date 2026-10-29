@@ -159,6 +159,7 @@
             if (!it || it.uid == null || !sel[it.uid] || full) { keep.push(it); continue; }
             if (noStore(it.id)) { skipNoStore++; keep.push(it); continue; }
             if (it.lock) { skipLock++; keep.push(it); continue; }          // 鎖定物品需先解鎖(同核心)
+            if (window.__afkItemGuard && window.__afkItemGuard.blocked(it, 'store')) { skipLock++; keep.push(it); continue; }   // 🛡 物品保護：設定成不能存（2026-10-29）
             var stack = findStack(whIdx, it);
             if (!stack && w.items.length >= MAX) { full = true; keep.push(it); continue; }   // 滿了就停,其餘留在背包
             if (stack) _whStackAbsorb(stack, it, (it.cnt || 1));
@@ -177,7 +178,7 @@
         say('<span class="text-cyan-300 font-bold">批次存入：已存入 ' + moved + ' 格'
             + (full ? '（倉庫已滿，其餘未存入）' : '')
             + (skipNoStore ? '，' + skipNoStore + ' 項不可存入已略過' : '')
-            + (skipLock ? '，' + skipLock + ' 項鎖定中已略過' : '') + '。</span>');
+            + (skipLock ? '，' + skipLock + ' 項鎖定或受保護已略過' : '') + '。</span>');
     }
 
     function refresh() {

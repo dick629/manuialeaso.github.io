@@ -83,14 +83,24 @@
     ['dragonslay', '屠龍', 'weapon', '斬破濺', '對四龍（含各階型態）傷害 +25%'],
     ['zenith', '極意', 'weapon', '職雷裂', '指定技能也會觸發二次傷害（效果製作中）'],
     ['kingsway', '王道', 'weapon', '職斬破', '指定技能傷害 +50%，無視 20% 減傷（效果製作中）'],
-    ['styx', '冥河', 'weapon', '冥斬裂', '擊殺時回復 3% 最大 HP']
+    ['styx', '冥河', 'weapon', '冥斬裂', '擊殺時回復 3% 最大 HP'],
+    // 2026-10-29 玩家：補助、藥水、減傷、寵物、套裝都要有三符文連線。防具的連線＝盔甲→頭盔→斗篷→手套→長靴→脛甲→T恤→盾（臂甲）的孔排成一列，
+    //   飾品的連線＝戒指 1～4→耳環 1～2→項鍊→腰帶 1～3 的孔排成一列；連續三個孔照順序就成立（可以跨裝備），同名連線全身算一次。
+    ['harvest', '豐饒', 'accline', '穗豐尋', '材料、金幣、遺物掉落再各 +10%'],
+    ['gleaner', '拾光', 'accline', '尋拾豐', '夢域專屬材料再 +20%、經驗再 +10%'],
+    ['lifespring', '生生不息', 'armorline', '泉瞬飲', '藥水回復量再 +25%'],
+    ['phoenix', '不死藥', 'armorline', '逆泉瞬', '喝治癒藥水時另外回復最大 HP 3%'],
+    ['vajra', '金剛', 'armorline', '盾罩淨', '物理、魔法、屬性傷害再各 −4%'],
+    ['adamant', '不壞', 'armorline', '骸淨盾', '真實傷害再 −8%'],
+    ['menagerie', '萬獸', 'armorline', '鬃契牙', '寵物能力再 +15%、繼承主人面板再 +5%'],
+    ['soulreturn', '魂歸', 'weapon', '魂冥魘', '夢域套裝吸血再 ×1.3、受到的傷害再 −5%']
   ].map(function (w) { return { id: w[0], n: w[1], where: w[2], seq: w[3].split(''), d: w[4] }; });
   var ITEMS = {};
   list.forEach(function (r) {
     ITEMS[r.id] = { n: r.ch + '之符文' + (r.stage === 4 ? '（傳說）' : ''), c: STAGE_C[r.stage], img: IMG('符文(' + r.ch + ')'),
       d: '【符文石・' + STAGE_N[r.stage] + '・' + CAT_N[r.cat] + '】' + r.d + '。在說話之島的符文師佐爾頓那裡鑲進' + (r.cat === 'aid' ? '飾品或腰帶' : (SLOT_CATS.armor.indexOf(r.cat) >= 0 ? '防具' : '武器')) + '的星蝕·解孔。' };
   });
-  list.forEach(function (r) { if (r.stage === 4) ITEMS[r.id].d += '只能在說話之島的符文師佐爾頓那裡用解命石 1＋哀石結晶 30 換取；鑲嵌費哀石結晶 40。'; });
+  list.forEach(function (r) { if (r.stage === 4) ITEMS[r.id].d += '取得：說話之島的符文師佐爾頓用解命石 1＋哀石結晶 30 換取；或在時空裂痕（席琳模式）前 12 分鐘，每次擊殺 1% 掉落（一趟最多一顆）。鑲嵌費哀石結晶 40。'; });
   var BOX = { 1: 'afk_runebox_1', 2: 'afk_runebox_2', 3: 'afk_runebox_3' };
   var SRC = { 1: '時空裂痕（席琳模式）', 2: '時空裂痕（瘋狂席琳模式）', 3: '時空裂痕（夢域鏡席琳模式）' };
   [1, 2, 3].forEach(function (s) {
@@ -148,5 +158,7 @@
     // 傳說符文（暫定）：佐爾頓用解命石 1＋哀石結晶 30 換一顆；鑲嵌費哀石結晶 40
     LEGEND: { 'afk_rune_po_l': { afk_fate_unlock: 1, afk_lament_gem: 30 } },
     // 平衡點數（玩家 2026-10-29：太強就壓縮傷害、太弱就追加傷害）：鑲著這顆符文時，造成的傷害 ×(1＋點數×1%)；0＝不調整
+    // 佐爾頓合成（玩家 2026-10-29）：同階段符文 3 顆＋哀石結晶 10 → 隨機一顆高一階的符文。只開放 階段一→二、階段二→三（傳說不從合成出）
+    COMBINE: { n: 3, cost: ['afk_lament_gem', 10], from: [1, 2] },
     BAL: { po_l: 5 }, REMOVE: ['afk_lament_stone', 500], openBox: openBox };
 })();

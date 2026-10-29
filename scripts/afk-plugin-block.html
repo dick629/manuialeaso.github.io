@@ -60,7 +60,7 @@
     <script src="afk-offline.js"></script>
     <!-- 手機版面 / 返回鍵 -->
     <script src="afk-mobile.js"></script>
-    <!-- afk-uiscale：畫面調整（整體縮放 60～100%、左右欄拖曳調寬；外掛開關，預設關）；排在 afk-mobile 之後（手機版不套用） -->
+    <!-- afk-uiscale：畫面調整（只縮放遊戲畫面 60～100%、每個框都能拖曳調整；外掛開關，預設關；手機版禁用）；排在 afk-mobile 之後 -->
     <script src="afk-uiscale.js"></script>
     <script src="afk-backnav.js"></script>
     <script src="afk-battlehud.js"></script>
@@ -198,7 +198,7 @@
     <script src="afk-whbatch.js"></script>
     <!-- afk-whall：倉庫一鍵存入／一鍵取出（目前分類）；排在 afk-whbatch 之後 -->
     <script src="afk-whall.js"></script>
-    <!-- afk-whfilter：倉庫條件存入（類別／部位／道具種類／祝福／屬性／遠古／+N；需 afk-whall 的批次存入、afk-quickjunk 的道具分類） -->
+    <!-- afk-whfilter：倉庫條件存入（類別／部位／道具種類／完整詞條／+N；需 afk-whall 的批次存入、afk-quickjunk 的道具分類） -->
     <script src="afk-whfilter.js"></script>
     <!-- 迷你遊戲（我方自製） -->
     <script src="afk-dograce.js"></script>
@@ -250,6 +250,8 @@
     <script src="afk-card-fx.js"></script>
     <!-- afk-quickjunk：快速廢品依部位／強化值勾選 -->
     <script src="afk-quickjunk.js"></script>
+    <!-- afk-itemguard：🛡 物品保護（依詞條／強化值設定不能賣、不能存；自動販賣部位）；排在 afk-quickjunk、afk-sellguard、倉庫擴充之後（包它們的函式） -->
+    <script src="afk-itemguard.js"></script>
     <!-- afk-forged-sprites：自製變身圖（沒有專屬圖的變身與神話／天上／時空／聖衣卡；由 scripts/forge-morph.py 產生） -->
     <script src="afk-forged-sprites.js"></script>
     <script src="afk-card-ascension.js"></script>
@@ -274,6 +276,8 @@
     <script src="afk-traitor.js"></script>
     <!-- afk-hidden：隱藏條件（謀叛三人組、王族之敵）；需 afk-card-combat、afk-affix-plus 的受傷掛點 -->
     <script src="afk-hidden.js"></script>
+    <!-- afk-dropcap：掉落種類上限（一般怪 1～3 種、頭目 3～5 種，必掉不算；需核心補丁 68） -->
+    <script src="afk-dropcap.js"></script>
     <!-- afk-giltas：吉爾塔斯副本「異界祭壇」（長老會議廳・次元裂隙；鑰匙碎片、信仰的寶珠、四色反擊屏障、真．吉爾塔斯之劍、支配者吉爾塔斯變身卡）（需 afk-traitor、afk-card-ascension、afk-relicplus） -->
     <script src="afk-giltas.js"></script>
     <!-- afk-aden-quests：亞丁的陰影（55～75 級任務，近衛隊長 雷歐）、佐姆格祝福卷軸強化亞丁近衛裝備（安定值 +9） -->

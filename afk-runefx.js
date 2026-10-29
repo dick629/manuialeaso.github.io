@@ -24,6 +24,7 @@
   var S = function () { return typeof state !== 'undefined' ? state : {}; };
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var KEY = {}; RD.list.forEach(function (r) { KEY[r.ch] = r; });
+  var LINE_ARMOR = ['armor', 'helm', 'cloak', 'gloves', 'boots', 'shin', 'tshirt', 'shield'];
   var ARMOR = ['armor', 'shield', 'helm', 'cloak', 'gloves', 'boots', 'shin', 'tshirt'], ACC = ['ring1', 'ring2', 'ring3', 'ring4', 'ear1', 'ear2', 'amulet', 'belt'];
   var runeOf = function (id) { return id ? RD.byId[id] : null; };
   var matchSeq = function (ids, seq) {
@@ -63,6 +64,12 @@
     var wp = a.eq.wpn; if (wp && Array.isArray(wp.sockets)) { wp.sockets.forEach(add); addW(wordsOn(wp.sockets, 'weapon')); }
     ARMOR.forEach(function (k) { var it = a.eq[k]; if (it && Array.isArray(it.sockets)) { it.sockets.forEach(add); addW(wordsOn(it.sockets, 'armor')); } });
     ACC.forEach(function (k) { var it = a.eq[k]; if (it && Array.isArray(it.sockets)) it.sockets.forEach(add); });
+    // 三符文連線（防具、飾品）：依固定順序把孔排成一列，連續三孔照順序就成立；同名連線全身算一次
+    var line = function (slots) { var out = []; slots.forEach(function (k) { var it = a.eq[k]; if (it && Array.isArray(it.sockets)) it.sockets.forEach(function (x) { out.push(x || null); }); }); return out; };
+    [['armorline', line(LINE_ARMOR)], ['accline', line(ACC)]].forEach(function (pr) {
+      var arr = pr[1]; if (arr.length < 3) return;
+      RD.WORDS.forEach(function (wd) { if (wd.where !== pr[0] || w[wd.id]) return; for (var i = 0; i + 3 <= arr.length; i++) if (matchSeq(arr.slice(i, i + 3), wd.seq)) { w[wd.id] = 1; break; } });
+    });
     c = { t: t, v: ver, n: n, w: w, cls: cls };
     if (cache) cache.set(a, c);
     return c;
@@ -76,25 +83,27 @@
   (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob, kind) {
     if (!ent || !ent.eq) return 1;
     var m = 1;
-    if (kind === 'magic') { m *= 1 - 0.06 * N(ent, '罩') - 0.03 * Wd(ent, 'bulwark'); m *= 1 - 0.08 * N(ent, '淨') - 0.05 * Wd(ent, 'pure'); }
-    else m *= 1 - 0.06 * N(ent, '盾') - 0.03 * Wd(ent, 'bulwark');
+    var vj = 0.04 * Wd(ent, 'vajra');
+    if (kind === 'magic') { m *= 1 - 0.06 * N(ent, '罩') - 0.03 * Wd(ent, 'bulwark') - vj; m *= 1 - 0.08 * N(ent, '淨') - 0.05 * Wd(ent, 'pure') - vj; }
+    else m *= 1 - 0.06 * N(ent, '盾') - 0.03 * Wd(ent, 'bulwark') - vj;
+    if (Wd(ent, 'soulreturn')) m *= 0.95;
     if (N(ent, '冥')) m *= 0.95;
     if (Wd(ent, 'grace')) m *= 0.95;
     return Math.max(0.05, m);
   });
   // 真實傷害（時空裂痕暴走／崩塌、最終頭目的百分比傷害…）由各處呼叫
-  W.__afkTrueCut = function (ent, dmg) { if (!ent || !ent.eq || !(dmg > 0)) return dmg; var m = 1 - 0.10 * N(ent, '骸') - 0.05 * Wd(ent, 'pure'); return Math.max(1, floor(dmg * Math.max(0.5, m))); };
+  W.__afkTrueCut = function (ent, dmg) { if (!ent || !ent.eq || !(dmg > 0)) return dmg; var m = 1 - 0.10 * N(ent, '骸') - 0.05 * Wd(ent, 'pure') - 0.08 * Wd(ent, 'adamant'); return Math.max(1, floor(dmg * Math.max(0.5, m))); };
   W.__afkRuneImmune = function (t, k) { if (!t || !t.eq) return false; if (k === 'pot') return N(t, '逆') > 0; if (k === 'heal') return Wd(t, 'uncurse') > 0; return false; };
   W.__afkRuneHalfHeal = function (t) { return Wd(t, 'sanct') > 0 ? 0.75 : 0.5; };
 
   // ── 寵物 ──
-  W.__afkPetInheritRate = function (r0) { var p = P(); return r0 + 0.10 * (p ? N(p, '契') : 0); };
+  W.__afkPetInheritRate = function (r0) { var p = P(); return r0 + 0.10 * (p ? N(p, '契') : 0) + 0.05 * (p ? Wd(p, 'menagerie') : 0); };
   if (typeof W.petDerive === 'function') {
     var oDerive = W.petDerive;
     W.petDerive = function () {
       var d = oDerive.apply(this, arguments);
       try {
-        var p = P(), k = p ? 0.15 * N(p, '鬃') : 0;
+        var p = P(), k = p ? 0.15 * N(p, '鬃') + 0.15 * Wd(p, 'menagerie') : 0;
         if (k > 0 && d) { var s = d._afkInherit || {}; ['hit', 'flat', 'skillFlat', 'dr', 'er', 'mr'].forEach(function (f) { var own = (Number(d[f]) || 0) - (Number(s[f === 'flat' ? 'dmg' : f === 'skillFlat' ? 'mdmg' : f]) || 0); d[f] = (Number(d[f]) || 0) + floor(own * k); }); }
       } catch (e) {}
       return d;
@@ -117,7 +126,7 @@
           fx.taken = 1 - (1 - fx.taken) * (1 + boost);
           fx.leech = fx.leech * (1 + boost);
         }
-        var lm = 1; if (N(p, '冥')) lm *= 1.5; if (Wd(p, 'pact')) lm *= 1.3; if (Wd(p, 'grace')) lm = Math.max(lm, 2);
+        var lm = 1; if (N(p, '冥')) lm *= 1.5; if (Wd(p, 'pact')) lm *= 1.3; if (Wd(p, 'soulreturn')) lm *= 1.3; if (Wd(p, 'grace')) lm = Math.max(lm, 2);
         fx.leech *= lm;
         // 魘：夢域套裝的能力加成（固定數值）×1.5
         if (N(p, '魘') && W.__afkSherineDream) {
@@ -186,7 +195,7 @@
       try {
         if (alive && m && m._dead && p) {
           [p].concat(p.allies || []).forEach(function (a) { if (a && Wd(a, 'styx')) { if (a === p) p.hp = Math.min(p.mhp, p.hp + floor(p.mhp * 0.03)); else if (!a._downed) a.curHp = Math.min(a.mhp, (a.curHp || 0) + floor(a.mhp * 0.03)); } });
-          if (!rift) { var gk = N(p, '豐'); var dg = (Number(p.gold) || 0) - g0; if (gk && dg > 0) p.gold += floor(dg * 0.25 * gk); }
+          if (!rift) { var gk = 0.25 * N(p, '豐') + 0.10 * Wd(p, 'harvest'); var dg = (Number(p.gold) || 0) - g0; if (gk && dg > 0) p.gold += floor(dg * gk); }
         }
       } catch (e) {}
       return r;
@@ -194,7 +203,7 @@
   }
   if (typeof W.__afkTtmiExpMult === 'function') {
     var oExp = W.__afkTtmiExpMult;
-    W.__afkTtmiExpMult = function (p) { var v = oExp.apply(this, arguments); try { if (p && !inRift()) v *= 1 + 0.10 * N(p, '豐'); } catch (e) {} return v; };
+    W.__afkTtmiExpMult = function (p) { var v = oExp.apply(this, arguments); try { if (p && !inRift()) v *= 1 + 0.10 * N(p, '豐') + 0.10 * Wd(p, 'gleaner'); } catch (e) {} return v; };
   }
   // 掉落：擊殺期間拿到的材料／遺物，依符文多給（期望值 +15%／+25%；時空裂痕裡不算）
   var DREAM_MATS = { afk_dream_dust: 1, afk_reverie_incense: 1, afk_dres_shard: 1, rem_soul: 1 };
@@ -207,9 +216,9 @@
         if (depth || inRift() || !(typeof _lootMobInfo !== 'undefined' && _lootMobInfo)) return r;
         var p = P(), d = DB.items[id]; if (!p || !d) return r;
         var k = 0;
-        if (DREAM_MATS[id]) k = 0.25 * N(p, '拾');
-        else if (d.relic) k = 0.25 * N(p, '尋');
-        else if (isMat(d, id)) k = 0.15 * N(p, '穗');
+        if (DREAM_MATS[id]) k = 0.25 * N(p, '拾') + 0.20 * Wd(p, 'gleaner');
+        else if (d.relic) k = 0.25 * N(p, '尋') + 0.10 * Wd(p, 'harvest');
+        else if (isMat(d, id)) k = 0.15 * N(p, '穗') + 0.10 * Wd(p, 'harvest');
         if (k > 0) { var q = Number(qty) || 1, more = floor(q * k) + (Math.random() < (q * k) % 1 ? 1 : 0); if (more > 0) { depth++; try { oGain.call(this, id, more, true, true); } finally { depth--; } } }
       } catch (e) {}
       return r;
@@ -227,12 +236,13 @@
       try {
         var gain = p.hp - h0, used = c0 - (p.inv || []).filter(function (x) { return x.id === id; }).reduce(function (n, x) { return n + (x.cnt || 1); }, 0);
         if (used > 0 && gain > 0) {
-          var mult = 1 + 0.25 * N(p, '泉');
+          var mult = 1 + 0.25 * N(p, '泉') + 0.25 * Wd(p, 'lifespring');
           if (N(p, '飲')) {   // 一次喝三罐：再扣 2 瓶（甘露只再扣 1 瓶），回復 ×3
             var more = Wd(p, 'nectar') ? 1 : 2, haveMore = c0 - used;
             if (haveMore >= more && W.__afkNpcKit) { W.__afkNpcKit.take(id, more); mult *= 3; }
           }
           if (mult > 1) p.hp = Math.min(p.mhp, h0 + floor(gain * mult));
+          if (Wd(p, 'phoenix')) p.hp = Math.min(p.mhp, p.hp + floor(p.mhp * 0.03));
         }
         if (used > 0 && p.cds && p.cds.pot > 0) { var skip = 0.25 * N(p, '瞬') + 0.2 * Math.min(1, Wd(p, 'spring')); if (skip > 0 && Math.random() < skip) p.cds.pot = 0; }
       } catch (e) {}

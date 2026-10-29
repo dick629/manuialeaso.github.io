@@ -1299,6 +1299,23 @@ function patchRiftDrop() {
   changed++; console.log('[patch] 時空裂痕掉落掛點');
 }
 
+// 68. 掉落種類上限（玩家 2026-10-29：一般怪隨機 1～3 種、王 3～5 種，必掉的不算）：怪物掉落表先收集，再交給 window.__afkDropCap 決定要給哪些
+function patchDropCap() {
+  const FILE = 'js/05-kill-progression.js', TAG = '/* 🔌 加掛版補丁:掉落種類上限 */';
+  let s = readFileSync(FILE, 'utf8');
+  if (s.includes(TAG)) { already++; return; }
+  const A1 = "    dropList.forEach(entry => {";
+  const B1 = "    let _afkDropBag = (typeof window.__afkDropCap === 'function') ? [] : null; " + TAG + "\n" + A1;
+  const A2 = "if (_rr > 0 && Math.random() < _rr / 100) gainItem(itemId, 1); return; }";
+  const B2 = "if (_rr > 0 && Math.random() < _rr / 100) { if (_afkDropBag) _afkDropBag.push([itemId, _rr / 100]); else gainItem(itemId, 1); } return; }";
+  const A3 = "        if(Math.random() < partyDropRate((ratePct * _dropBase * _clMult * _relicX2) / 100)) gainItem(itemId, 1);\n    });";
+  const B3 = "        { let _pp = partyDropRate((ratePct * _dropBase * _clMult * _relicX2) / 100); if(Math.random() < _pp) { if (_afkDropBag) _afkDropBag.push([itemId, _pp]); else gainItem(itemId, 1); } }\n    });\n    if (_afkDropBag) { try { window.__afkDropCap(_afkDropBag, mob); } catch (e) { _afkDropBag.forEach(x => gainItem(x[0], 1)); } }";
+  for (const [a, n] of [[A1, '開頭'], [A2, '裂痕'], [A3, '一般']]) if (s.split(a).length - 1 !== 1) throw new Error('[掉落種類上限] 錨點（' + n + '）應出現 1 次');
+  s = s.replace(A1, B1).replace(A2, B2).replace(A3, B3);
+  if (!CHECK) writeFileSync(FILE, s);
+  changed++; console.log('[patch] 掉落種類上限');
+}
+
 // 63. 負面效果抵抗改成外掛開關（玩家 2026-10-28）：補丁 48 寫進核心的判定，在 window.__afkDebuffAllOff 為真時一律放行
 function patchDebuffResistToggle() {
   const FILES = ['js/04-combat-attack.js', 'js/06-status-allies.js', 'js/07-skills-cast.js', 'js/22-pets.js', 'js/23-summons.js'];
@@ -1342,6 +1359,7 @@ try {
   patchSoulSlot();
   patchHitCapCrit();
   patchRiftDrop();
+  patchDropCap();
 } catch (e) {
   console.error('❌ apply-core-patches 失敗：' + e.message);
   process.exit(1);

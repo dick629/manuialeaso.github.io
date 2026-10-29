@@ -36,7 +36,8 @@
     wallFrom: 60, wallBase: 0.004, wallStep: 0.0025,   // 60 分鐘起全場每秒扣 0.4% 最大 HP，每分鐘再 +0.25%
     clearMin: 80
   };
-  var DROP = { mob: 0.01, bossLow: 0.10, bossHigh: 0.25, bossFrom: 60, box: 0.00001, relicX: 10 };
+  var DROP = { mob: 0.01, bossLow: 0.10, bossHigh: 0.25, bossFrom: 60, box: 0.00001, relicX: 10,
+    legend: 0.01, legendPct: 0.15, legendId: 'afk_rune_po_l' };   // 玩家 2026-10-29：席琳模式前 15% 時間（80 分的前 12 分）每次擊殺 1% 掉傳說符文「破」，給新手用；一趟最多一顆
   var SEG = { mad: [[12, 'relic5'], [76, 'box2'], [1e9, 'box3']], dream: [[12, 'relic10'], [60, 'box2'], [76, 'box3'], [1e9, 'fate']] };
 
   // ── 模式與時間 ──
@@ -54,7 +55,7 @@
   W.enterRift = function () {
     var r = oEnter.apply(this, arguments);
     var s = S();
-    if (s.riftRun) { s._riftRunKey = s.riftStartMs; s._r2Start = s.ticks || 0; s._r2BossDue = s._r2Start + 3000; s._r2Mode = modeNow(); s._r2Clear = false; s._r2Wall = 0; sync(); }
+    if (s.riftRun) { s._riftRunKey = s.riftStartMs; s._r2Start = s.ticks || 0; s._r2BossDue = s._r2Start + 3000; s._r2Mode = modeNow(); s._r2Clear = false; s._r2Wall = 0; s._r2Legend = false; sync(); }
     return r;
   };
   var oSpawn = W.spawnRiftMob;
@@ -164,6 +165,11 @@
           var rate = !m.boss ? DROP.mob : (mm >= DROP.bossFrom ? 1 : (lv >= 60 ? DROP.bossHigh : DROP.bossLow));
           if (dust && Math.random() < rate) gainItem(dust, 1, true, true);
           var stage = { sherine: 1, mad: 2, dream: 3 }[mode];
+          var S0 = S();
+          if (mode === 'sherine' && mm < TUNE.clearMin * DROP.legendPct && !S0._r2Legend && DB.items[DROP.legendId] && Math.random() < DROP.legend) {
+            S0._r2Legend = true; gainItem(DROP.legendId, 1, true, true);
+            try { logSys('<span class="text-amber-300 font-bold">✦ 傳說！' + esc(m.n) + ' 的殘影裡掉出了 ' + DB.items[DROP.legendId].n + '。</span>'); } catch (e) {}
+          }
           if (m.boss && stage && Math.random() < DROP.box) { gainItem(RD.BOX[stage], 1, true, true); try { logSys('<span class="text-amber-300 font-bold">✦ 極稀有！' + esc(m.n) + ' 留下了 ' + DB.items[RD.BOX[stage]].n + '。</span>'); } catch (e) {} }
         }
       } catch (e) { console.warn('[AFK-rift2] drop', e); }
@@ -221,7 +227,7 @@
         div.className = 'bg-slate-900/70 border border-violet-700 rounded-lg p-3 text-sm leading-relaxed text-slate-200';
         div.innerHTML = '<div class="font-bold text-violet-300 mb-1">目前：' + MN[mode] + '模式（時空裂痕重做）</div>'
           + '<div>一趟最長 ' + TUNE.clearMin + ' 分鐘，撐滿就是<b>完全通關</b>（另給 ' + DB.items[cl[0]].n + ' ×' + cl[1] + '）。20 分鐘後怪物越來越硬；頭目出場 ' + TUNE.enrageSec + ' 秒（同時兩隻以上 ' + TUNE.enrageMulti + ' 秒）還沒倒會<b>時空暴走</b>；' + TUNE.wallFrom + ' 分鐘起全場每秒扣血。</div>'
-          + '<div>掉落：' + DB.items[RD.DUST[mode]].n + '（一般怪 1%、60 等以下頭目 10%、60 等以上頭目 25%、第 60 分鐘起頭目必掉）；不吃任何掉寶加倍；遺物 0.001%。</div>'
+          + '<div>掉落：' + DB.items[RD.DUST[mode]].n + '（一般怪 1%、60 等以下頭目 10%、60 等以上頭目 25%、第 60 分鐘起頭目必掉）；不吃任何掉寶加倍；遺物 0.001%。' + (mode === 'sherine' ? '前 ' + Math.round(TUNE.clearMin * DROP.legendPct) + ' 分鐘每次擊殺 ' + (DROP.legend * 100) + '% 掉傳說符文「破」（一趟最多一顆）。' : '') + '</div>'
           + '<div>結算：' + rw + '。</div>';
         (container.firstElementChild || container).appendChild(div);
       } catch (e) {}

@@ -12,6 +12,7 @@
  * 鑲嵌：武器＝攻擊、套裝、職業；防具＝減傷、藥水、寵物；飾品與腰帶＝補助。
  *   費用：階段一 哀石水晶 5、階段二 哀石精華 10、階段三 哀石結晶 20。同一件不能鑲兩顆同名符文。
  * 拆下：哀石 500，符文完整取回。
+ * 合成（2026-10-29）：同階段符文 3 顆＋哀石結晶 10 → 隨機一顆高一階（階段一→二、二→三）。
  * 兌換：哀石塵埃／哀石碎片／哀石 各 150 → 哀石水晶／哀石精華／哀石結晶；瘴氣魔石 1,000＋骸骨魔石 500＋破空石 100 → 解命石。
  * 效果在 afk-runefx；星蝕·解刻上的套裝計件在 afk-sherine-dream。
  * ========================================================================== */
@@ -200,6 +201,23 @@
       done('<span class="text-amber-300 font-bold">' + NPC_N + '把解命石與哀石結晶熔進同一塊石頭——' + nm(id) + '亮了起來。</span>');
       return null;
     },
+    // 合成：同階段 3 顆（先用數量最多的，盡量保留只有一顆的）＋哀石結晶 10 → 高一階隨機一顆
+    combine: function (stage) {
+      var CB = RD.COMBINE; stage = Number(stage);
+      if (!CB || CB.from.indexOf(stage) < 0) return '這個階段不能合成。';
+      var pool = RD.list.filter(function (r) { return r.stage === stage && !r.unique; });
+      var cnt = pool.map(function (r) { return { id: r.id, n: have(r.id) }; }).filter(function (x) { return x.n > 0; });
+      var tot = cnt.reduce(function (a, x) { return a + x.n; }, 0);
+      if (tot < CB.n) return '需要' + RD.STAGE_N[stage] + '的符文 ' + CB.n + ' 顆（背包裡未上鎖的有 ' + tot + ' 顆）。';
+      if (have(CB.cost[0]) < CB.cost[1]) return '需要' + nm(CB.cost[0]) + ' ' + CB.cost[1] + '。';
+      var used = [];
+      for (var i = 0; i < CB.n; i++) { cnt.sort(function (a, b) { return b.n - a.n; }); cnt[0].n--; used.push(cnt[0].id); }
+      used.forEach(function (id) { take(id, 1); }); take(CB.cost[0], CB.cost[1]);
+      var up = RD.list.filter(function (r) { return r.stage === stage + 1 && !r.unique; }), got = up[Math.floor(Math.random() * up.length)];
+      gainItem(got.id, 1, true, true);
+      done('<span class="' + RD.STAGE_C[got.stage] + ' font-bold">' + NPC_N + '把 ' + used.map(nm).join('、') + ' 熔在一起——' + nm(got.id) + '亮了起來。</span>');
+      return got.id;
+    },
     fate: function () {
       var need = RD.FATE.need, miss = Object.keys(need).filter(function (id) { return have(id) < need[id]; });
       if (miss.length) return '材料不足：' + miss.map(function (id) { return nm(id) + ' ' + have(id) + '/' + need[id]; }).join('、');
@@ -334,6 +352,12 @@
     var need = RD.FATE.need, okF = Object.keys(need).every(function (id) { return have(id) >= need[id]; });
     h += K.rowHtml({ key: 'fate', ico: K.itemIco(RD.FATE.id), name: '解命石', color: '#facc15', desc: '瘴氣魔石、骸骨魔石、破空石合成。解命石打開瘴骸·破等級的孔（武器第三孔、腰帶三孔）。',
       req: Object.keys(need).map(function (id) { return K.reqTxt(have(id), need[id], nm(id)); }).join('　'), btns: [['fate', '合成', okF]] }, 'data-zo');
+    if (RD.COMBINE) RD.COMBINE.from.forEach(function (st) {
+      var CB = RD.COMBINE, tot = RD.list.filter(function (r) { return r.stage === st && !r.unique; }).reduce(function (a, r) { return a + have(r.id); }, 0);
+      h += K.rowHtml({ key: 'cb-' + st, ico: K.itemIco(RD.BOX[st + 1] || RD.BOX[st]), name: '合成：' + RD.STAGE_N[st] + ' → ' + RD.STAGE_N[st + 1], color: '#c4b5fd',
+        desc: RD.STAGE_N[st] + '的符文任意 ' + CB.n + ' 顆＋' + nm(CB.cost[0]) + ' ' + CB.cost[1] + ' → 隨機一顆' + RD.STAGE_N[st + 1] + '的符文。先用掉數量最多的（重複的），盡量留下只有一顆的。',
+        req: K.reqTxt(tot, CB.n, RD.STAGE_N[st] + '符文') + '　' + K.reqTxt(have(CB.cost[0]), CB.cost[1], nm(CB.cost[0])), btns: [['cb:' + st, '合成', tot >= CB.n && have(CB.cost[0]) >= CB.cost[1]]] }, 'data-zo');
+    });
     Object.keys(RD.LEGEND || {}).forEach(function (id) {
       var nd = RD.LEGEND[id], ok = Object.keys(nd).every(function (k) { return have(k) >= nd[k]; }), r = RD.byId[id];
       h += K.rowHtml({ key: 'lg-' + id, ico: K.itemIco(id), name: nm(id), color: '#fcd34d', desc: '傳說符文：' + esc(r ? r.d : ''),
@@ -356,6 +380,7 @@
       else if (a === 'remove') err = ACT.remove(ui.sel, Number(ui.rm));
       else if (a === 'fate') err = ACT.fate();
       else if (a.indexOf('lg:') === 0) err = ACT.legend(a.slice(3));
+      else if (a.indexOf('cb:') === 0) { err = ACT.combine(a.slice(3)); if (err && RD.byId[err]) err = null; }
       else if (a.indexOf('ex1:') === 0) err = ACT.exchange(a.slice(4), false);
       else if (a.indexOf('exAll:') === 0) err = ACT.exchange(a.slice(6), true);
       ui.err = err || ''; ui.msg = err ? '' : '完成了。';

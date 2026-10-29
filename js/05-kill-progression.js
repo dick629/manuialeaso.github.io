@@ -492,6 +492,7 @@ function killMob(idx) {
     let dropList = _kbNoReward ? [] : (MOB_DROPS[mob.n] || []);   // 🔧 魔獸軍王之室：除頭目外不掉落物品
     let _dropBase = (mob._dream ? 50 : (mob._grace ? 10 : (mob._sherine ? (mob._sherineMad ? 5 : 3) : 1)));   /* 🔌 加掛版補丁:夢艷地獄 ×50 */   // 🔮 席琳的世界 ×3（瘋狂×5）／恩賜怪 ×10
     let _dropMult = _dropBase * classicDropMult() * partyRewardMult();   // 席琳／恩賜／模式倍率後再乘有效隊伍人數（最高 ×8）
+    let _afkDropBag = (typeof window.__afkDropCap === 'function') ? [] : null; /* 🔌 加掛版補丁:掉落種類上限 */
     dropList.forEach(entry => {
         let itemId = entry[0];
         let ratePct = entry[1];               // 機率(%)
@@ -500,9 +501,10 @@ function killMob(idx) {
         if (typeof trialForced100 === 'function' && trialForced100(itemId)) { grantPartyTrialQuestDrop(itemId, 1); return; }   // 🔥 接取制試煉道具：通過閘門後 100% 掉落
         let _clMult = (mob.n === '卡瑞' && itemId === 'wpn_dragonslayer') ? 1 : trialItemDropMult(itemId);   // 🔧 v2.6.75 卡瑞·屠龍劍固定 100%（獎勵已綁「擊殺消耗四任務道具」的成本）；trialItemDropMult 現恆 1
         let _relicX2 = !DB.items[itemId].relic ? 1 : (typeof window.__afkRelicDropMult === 'function' ? window.__afkRelicDropMult() : ((typeof mainPlayerHasEquippedEffect === 'function' && mainPlayerHasEquippedEffect('relicDropX2')) ? 2 : 1));   /* 🔌 加掛版補丁:兔腳可戴兩個 */   // 幸運暴走兔腳只讀主操作玩家裝備
-        { let _rr = (typeof window.__afkRiftDrop === 'function') ? window.__afkRiftDrop(itemId, ratePct, mob) : null; if (_rr != null) { if (_rr > 0 && Math.random() < _rr / 100) gainItem(itemId, 1); return; } } /* 🔌 加掛版補丁:時空裂痕掉落 */
-        if(Math.random() < partyDropRate((ratePct * _dropBase * _clMult * _relicX2) / 100)) gainItem(itemId, 1);
+        { let _rr = (typeof window.__afkRiftDrop === 'function') ? window.__afkRiftDrop(itemId, ratePct, mob) : null; if (_rr != null) { if (_rr > 0 && Math.random() < _rr / 100) { if (_afkDropBag) _afkDropBag.push([itemId, _rr / 100]); else gainItem(itemId, 1); } return; } } /* 🔌 加掛版補丁:時空裂痕掉落 */
+        { let _pp = partyDropRate((ratePct * _dropBase * _clMult * _relicX2) / 100); if(Math.random() < _pp) { if (_afkDropBag) _afkDropBag.push([itemId, _pp]); else gainItem(itemId, 1); } }
     });
+    if (_afkDropBag) { try { window.__afkDropCap(_afkDropBag, mob); } catch (e) { _afkDropBag.forEach(x => gainItem(x[0], 1)); } }
 
     // === 🔧 萬能藥稀有掉落：等級 40 以上、非血盟。一般敵人 0.01%；頭目 1%（排除夢幻之島頭目），擊殺後隨機掉落 6 種萬能藥之一 ===
     if (!_kbNoReward && !mob.siegeV2 && (mob.lv || 0) >= 40 && mob.race !== '血盟') {   // 🗝️ 軍王之室小怪／城戰 V2 守軍不進萬能藥掉落
