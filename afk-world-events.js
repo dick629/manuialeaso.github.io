@@ -16,6 +16,9 @@
  *       每 20 秒「獵龍號令」：5 秒內全隊對龍騎士的傷害 +50%。打倒隊長＝成功，隊員四散。
  *   四、反王肯恩「篡位者的懸賞」（你的血盟有城堡）：篡位者的刺客頭目＋2 名刺客，追殺城主（你）。
  *       每 45 秒「懸賞令」：標記你 5 秒，結束時受到最大 HP 30% 的傷害；5 秒內打掉頭目 5% HP 可以打斷。打倒頭目另得懸賞金（L×2,000 金幣）。
+ *   五、冰之女王「寒冬」（玩家 2026-10-29 21:36；不挑職業，整隊都算）：冰之女王帶 2 名侍女。女王活著時「寒冬」籠罩：
+ *       你的攻擊速度 −20%、傭兵與寵物的傷害 −20%；侍女還活著時加重成 −40%。每 10 秒凍傷（全隊各受最大 HP 2%，侍女活著 4%），
+ *       每 30 秒冰封一名隊員 3 秒；侍女全倒後每 2 分鐘再叫 2 名。打倒女王＝寒冬結束。
  *   外掛開關：每個事件各一個（預設開）。
  * ========================================================================== */
 (function () {
@@ -29,7 +32,9 @@
     dragon: { tog: 'wedragon', n: '魔族的獵龍隊', who: 'dragon', whoN: '龍騎士', badge: '🐉 魔族的獵龍隊', color: '#fdba74',
       desc: '隊伍裡有龍騎士時，每次出怪 5% 被火焰之影的獵龍隊（隊長＋3 名隊員）追殺 10 分鐘：隊長活著時隊員很硬，要先打掉隊長' },
     kenn: { tog: 'wekenn', n: '反王肯恩「篡位者的懸賞」', who: 'lord', whoN: '城主', badge: '👑 篡位者的懸賞', color: '#fca5a5',
-      desc: '你的血盟有城堡時，每次出怪 5% 被反王肯恩派來的刺客追殺 10 分鐘：懸賞令標記城主，打倒刺客頭目另得懸賞金' }
+      desc: '你的血盟有城堡時，每次出怪 5% 被反王肯恩派來的刺客追殺 10 分鐘：懸賞令標記城主，打倒刺客頭目另得懸賞金' },
+    winter: { tog: 'wewinter', n: '冰之女王「寒冬」', who: 'all', whoN: '全隊', badge: '❄ 寒冬', color: '#7dd3fc',
+      desc: '不挑職業，每次出怪 5% 冰之女王帶著侍女降下寒冬 10 分鐘：全隊攻擊變慢、每 10 秒凍傷，先打倒侍女能減輕，打倒女王寒冬就結束' }
   };
   var IDS = Object.keys(EV);
   IDS.forEach(function (id) { var e = EV[id]; if (T && T.register) T.register({ id: e.tog, name: '世界事件：' + e.n, group: '遊戲內容', desc: e.desc }); });
@@ -65,13 +70,18 @@
   mk('afk_we_kenncap', { n: '篡位者的刺客頭目', boss: true, race: '人形', e: 'none', hp: 22000, ac: -78, mr: 50, exp: 5000, goldMin: 3000, goldMax: 6000, atkSpd: 1, dmg: [3, 40], db: 45, hit: 90, afkWe: 'kenn',
     mag: { skn: '劍氣斬', cd: 60, chance: 0.3, dmg: [4, 40], db: 80, ele: 'none', alwaysHit: true } }, '暗殺軍王史雷佛');
   mk('afk_we_assassin', { n: '篡位者的刺客', race: '人形', e: 'none', hp: 4000, ac: -58, mr: 70, exp: 900, atkSpd: 1.6, dmg: [2, 60], db: 38, hit: 70, afkWe: 'kenn', weMinion: true }, '魔族暗殺團', 'demon_assassin');
-  try { MOB_PARTY_AOE_SKILLS.add('誓約的冰雪颶風'); } catch (e) {}
-  var BOSS = { senis: 'afk_we_senis', slayer: 'afk_we_slayer', dragon: 'afk_we_huntcap', kenn: 'afk_we_kenncap' };
-  var MINIONS = { senis: [['afk_we_medium', 2]], slayer: [], dragon: [['afk_we_hunter', 3]], kenn: [['afk_we_assassin', 2]] };
+  mk('afk_we_icequeen', { n: '冰之女王（寒冬）', boss: true, race: '精靈', e: 'water', hp: 28000, ac: -65, mr: 110, exp: 5600, goldMin: 4000, goldMax: 9000, atkSpd: 2, dmg: [3, 30], db: 35, hit: 75, afkWe: 'winter',
+    mag: { skn: '寒冬的暴風雪', cd: 80, dmg: [4, 45], db: 110, ele: 'water', alwaysHit: true },
+    mag2: { skn: '冰之女王的吐息', cd: 120, chance: 0.5, dmg: [3, 40], db: 90, ele: 'water', alwaysHit: true, sec: { type: 'freeze', pbase: 100 } } }, '冰之女王', 'ice_queen');
+  mk('afk_we_icemaid', { n: '冰之女王的侍女（寒冬）', race: '精靈', e: 'water', hp: 4500, ac: -55, mr: 80, exp: 900, atkSpd: 2, dmg: [2, 40], db: 25, hit: 65, afkWe: 'winter', weMinion: true, weMaid: true,
+    mag: { skn: '冰錐', cd: 60, chance: 0.4, dmg: [3, 30], db: 40, ele: 'water', alwaysHit: true } }, '冰之女王侍女', 'ice_maid');
+  try { MOB_PARTY_AOE_SKILLS.add('誓約的冰雪颶風'); MOB_PARTY_AOE_SKILLS.add('寒冬的暴風雪'); } catch (e) {}
+  var BOSS = { senis: 'afk_we_senis', slayer: 'afk_we_slayer', dragon: 'afk_we_huntcap', kenn: 'afk_we_kenncap', winter: 'afk_we_icequeen' };
+  var MINIONS = { senis: [['afk_we_medium', 2]], slayer: [], dragon: [['afk_we_hunter', 3]], kenn: [['afk_we_assassin', 2]], winter: [['afk_we_icemaid', 2]] };
   try {
     var TTMI = {}; ((W.AFK_TTMI_ITEMS && W.AFK_TTMI_ITEMS.items) || []).forEach(function (id) { TTMI[id] = 1; });
     var cp = function (to, from) { if (typeof MOB_DROPS !== 'undefined' && !MOB_DROPS[to] && MOB_DROPS[from]) MOB_DROPS[to] = MOB_DROPS[from].filter(function (x) { return !TTMI[x[0]]; }).map(function (x) { return x.slice(); }); };
-    cp('魔女賽尼斯（血的誓約）', '賽尼斯(首領)'); cp('暗殺軍王史雷佛（刺殺令）', '暗殺軍王史雷佛'); cp('魔族獵龍隊長', '火焰之影親衛隊(巴風特)'); cp('篡位者的刺客頭目', '反王肯恩');
+    cp('魔女賽尼斯（血的誓約）', '賽尼斯(首領)'); cp('暗殺軍王史雷佛（刺殺令）', '暗殺軍王史雷佛'); cp('魔族獵龍隊長', '火焰之影親衛隊(巴風特)'); cp('篡位者的刺客頭目', '反王肯恩'); cp('冰之女王（寒冬）', '冰之女王');
   } catch (e) {}
 
   // ── 戰利品袋 ──
@@ -132,8 +142,8 @@
     var p = P(); if (!p) return [];
     var who = EV[id].who, out = [];
     if (who === 'lord') { if (lordCity() && (!alive || !p.dead)) out.push(p); return out; }
-    if (p.cls === who && (!alive || !p.dead)) out.push(p);
-    (p.allies || []).forEach(function (a) { if (a && a.cls === who && (!alive || (!a._downed && (a.curHp || 0) > 0))) out.push(a); });
+    if ((who === 'all' || p.cls === who) && (!alive || !p.dead)) out.push(p);
+    (p.allies || []).forEach(function (a) { if (a && (who === 'all' || a.cls === who) && (!alive || (!a._downed && (a.curHp || 0) > 0))) out.push(a); });
     return out;
   };
   var allyCount = function () { var p = P(); return p ? (p.allies || []).filter(Boolean).length : 0; };
@@ -157,7 +167,7 @@
     return L.boss.place(i, m, Object.assign({ mobId: id, _afkWe: base.afkWe, _weL: Lv }, extra || {}));
   };
   var placeMinions = function (id, Lv) {
-    var n = 0; (MINIONS[id] || []).forEach(function (x) { for (var k = 0; k < x[1]; k++) { var m = placeOne(x[0], Lv, { _weMinion: !!DB.mobs[x[0]].weMinion, _weMedium: !!DB.mobs[x[0]].weMedium }, false); if (m) n++; } });
+    var n = 0; (MINIONS[id] || []).forEach(function (x) { for (var k = 0; k < x[1]; k++) { var m = placeOne(x[0], Lv, { _weMinion: !!DB.mobs[x[0]].weMinion, _weMedium: !!DB.mobs[x[0]].weMedium, _weMaid: !!DB.mobs[x[0]].weMaid }, false); if (m) n++; } });
     return n;
   };
   var placeGroup = function (Lv, frac, idx) {
@@ -181,17 +191,19 @@
       el.style.color = EV[act.id].color; el.textContent = EV[act.id].badge + ' ' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
     } catch (e) {}
   };
+  var chillMult = function () { return act && act.id === 'winter' && act.chill > 0 ? (act.chill >= 2 ? 0.6 : 0.8) : 1; };
   var curseApply = function () { try { if (typeof recomputeStats === 'function') recomputeStats(); var p = P(); if (p && p.hp > p.mhp) p.hp = p.mhp; } catch (e) {} };
   var end = function (why) {
     if (!act) return;
-    var id = act.id, st = stat(id), hadCurse = act.curse > 0;
+    var id = act.id, st = stat(id), hadCurse = act.curse > 0 || act.chill > 0;
     onField().forEach(function (x) { if (why !== 'kill' || !x[0]._weBoss) mapState.mobs[x[1]] = null; });
     try { if (!S().ff) renderMobs(); } catch (e) {}
     var msg = {
       senis: { kill: '魔女賽尼斯的身影碎成了冰屑——誓約騎士的詛咒，這一次被你斬斷了。', fail: '賽尼斯輕聲笑了：「誓約，就是要流盡最後一滴血。」她消失在霧裡。', time: '十分鐘過去，賽尼斯的詛咒慢慢散去了。' },
       slayer: { kill: '暗殺軍王史雷佛倒下了，刺殺令在火光裡燒成灰。', fail: '史雷佛收起短刀：「叛徒，就該是這個下場。」', time: '史雷佛的氣息消失了——他還會再來。' },
       dragon: { kill: '獵龍隊長倒下，剩下的隊員四散逃走。', fail: '獵龍隊帶著勝利的號角離開了。', time: '獵龍隊吹響撤退的號角，消失在地平線。' },
-      kenn: { kill: '刺客頭目倒下了，你從他懷裡搜出反王親筆的懸賞令。', fail: '刺客們帶著你的消息回去領賞了。', time: '刺客們沒等到機會，退回了陰影裡。' }
+      kenn: { kill: '刺客頭目倒下了，你從他懷裡搜出反王親筆的懸賞令。', fail: '刺客們帶著你的消息回去領賞了。', time: '刺客們沒等到機會，退回了陰影裡。' },
+      winter: { kill: '冰之女王碎成了滿地冰晶，寒冬退去，陽光照了下來。', fail: '冰之女王俯視著凍僵的隊伍：「在永恆的冬天裡安睡吧。」', time: '風雪漸漸停了，冰之女王回到了她的城堡。' }
     }[id];
     if (why === 'kill') st.kills++; else if (why === 'fail') st.fails++; else st.escapes++;
     sys('<span class="font-bold" style="color:' + EV[id].color + '">' + EV[id].badge.split(' ')[0] + ' ' + (msg[why] || msg.time) + '</span>');
@@ -201,14 +213,15 @@
   };
   var start = function (id, idx) {
     var p = P(), cur = mapState.current, Lv = levelFor(cur);
-    act = { id: id, left: DUR, map: cur, wait: 0, hpFrac: 1, L: Lv, fled: false, curse: 0, curseAt: tk() + 600, freezeAt: tk() + 300, stealthAt: tk() + 300, callAt: tk() + 200, markAt: tk() + 450, mark: null, mediumAt: tk() + 1200, ambush: true };
+    act = { id: id, left: DUR, map: cur, wait: 0, hpFrac: 1, L: Lv, fled: false, curse: 0, curseAt: tk() + 600, freezeAt: tk() + 300, stealthAt: tk() + 300, callAt: tk() + 200, markAt: tk() + 450, mark: null, mediumAt: tk() + 1200, ambush: true, chill: 0, frostAt: tk() + 100, maidAt: tk() + 1200 };
     store().cd[id] = Date.now() + CD_MS; store().gap = Date.now() + GAP_MS;
     stat(id).met++;
     var intro = {
       senis: '☠ 冰冷的霧氣湧了上來——魔女賽尼斯找到了誓約騎士的後代。血的誓約詛咒！',
       slayer: '🗡 一把短刀從背後抵住了黑暗妖精的喉嚨——暗殺軍團的刺殺令已經發出！',
       dragon: '🐉 地平線上響起號角——火焰之影的獵龍隊盯上了龍騎士！',
-      kenn: '👑 「城主的頭，值一座城。」——反王肯恩派來的刺客找上門了！'
+      kenn: '👑 「城主的頭，值一座城。」——反王肯恩派來的刺客找上門了！',
+      winter: '❄ 氣溫驟降，風雪從四面八方捲來——冰之女王降臨，寒冬開始了！'
     }[id];
     placeGroup(Lv, null, idx);
     sys('<span class="font-bold" style="color:' + EV[id].color + ';text-shadow:0 0 8px #000">' + intro + '</span><span class="text-slate-300">（Lv' + Lv + '，10 分鐘內換地圖也會追來）</span>');
@@ -244,7 +257,7 @@
   };
   var skills = function (b) {
     var t = tk(), id = act.id;
-    if (L.boss.halted(b)) { ['curseAt', 'freezeAt', 'stealthAt', 'callAt', 'markAt', 'mediumAt'].forEach(function (k) { act[k]++; }); if (act.mark) act.mark.end++; return; }
+    if (L.boss.halted(b)) { ['curseAt', 'freezeAt', 'stealthAt', 'callAt', 'markAt', 'mediumAt', 'frostAt', 'maidAt'].forEach(function (k) { act[k]++; }); if (act.mark) act.mark.end++; return; }
     var frac = b.curHp / Math.max(1, b.hp);
     if (id === 'senis') {
       var meds = onField('Medium');
@@ -264,6 +277,17 @@
       if (b._weStealth && t >= b._weStealth) { b._weStealth = 0; act.ambush = true; }
     } else if (id === 'dragon') {
       if (t >= act.callAt) { act.callAt = t + 200; act.callUntil = t + 50; clog('<span class="font-bold" style="color:#fdba74">【獵龍號令】</span>隊長吹響號角——5 秒內獵龍隊對龍騎士的傷害 +50%！'); }
+    } else if (id === 'winter') {
+      var maids = onField('Maid'), lvl = maids.length ? 2 : 1;
+      if (act.chill !== lvl) { var was = act.chill; act.chill = lvl; curseApply(); if (was === 2 && lvl === 1) clog('<span class="font-bold" style="color:#86efac">【寒冬】</span>侍女倒下了，風雪變小了一些（攻擊速度 −20%、凍傷 2%）。', 'player'); }
+      if (t >= act.frostAt) {
+        act.frostAt = t + 100;
+        party().forEach(function (m) { if (!m || m.dead || m._downed) return; var mx = m === P() ? (m.mhp || 1) : (m.mhp || m.curHp || 1); L.boss.hurt(m, mx * 0.02 * lvl); });
+        if (t % 300 < 100) clog('<span class="font-bold" style="color:#7dd3fc">【凍傷】</span>寒風割過皮膚——全隊受到最大 HP ' + (2 * lvl) + '% 的傷害。');
+      }
+      if (t >= act.freezeAt) { act.freezeAt = t + 300; var all = targets('winter', true); if (all.length) { var k2 = all[Math.floor(Math.random() * all.length)]; freeze(b, k2, '女王的冰封'); clog('<span class="font-bold" style="color:#7dd3fc">【女王的冰封】</span>冰之女王指向 ' + nameOf(k2) + '——冰封 3 秒。'); } }
+      if (!maids.length && t >= act.maidAt) { act.maidAt = t + 1200; var n2 = placeMinions('winter', act.L); if (n2) clog('<span class="font-bold" style="color:#7dd3fc">【寒冬】</span>冰之女王又喚來了 ' + n2 + ' 名侍女——風雪變大了。'); }
+      else if (maids.length) act.maidAt = Math.max(act.maidAt, t + 1200);
     } else if (id === 'kenn') {
       if (act.mark && t >= act.mark.end) {
         var mk2 = act.mark; act.mark = null; var p = P();
@@ -276,7 +300,11 @@
     }
   };
   // 詛咒：最大 HP（玩家走最大值掛點；傭兵直接壓住目前 HP）
-  if (W.__afkMaxAdd && W.__afkMaxAdd.add) W.__afkMaxAdd.add(function (p) { if (act && act.id === 'senis' && act.curse > 0) p.mhp = Math.max(1, Math.round((p.mhp || 0) * (1 - 0.05 * act.curse))); });
+  if (W.__afkMaxAdd && W.__afkMaxAdd.add) W.__afkMaxAdd.add(function (p) {
+    if (act && act.id === 'senis' && act.curse > 0) p.mhp = Math.max(1, Math.round((p.mhp || 0) * (1 - 0.05 * act.curse)));
+    // 寒冬：攻擊間隔 ÷0.8（−20%）／÷0.6（侍女活著，−40%）
+    if (act && act.id === 'winter' && act.chill > 0 && p.d) { var f = 1 / chillMult(); if (p.d.aspd > 0) p.d.aspd *= f; if (p.d.aspdOff > 0) p.d.aspdOff *= f; }
+  });
   var step = function () {
     var p = P(); if (!p || !act) return;
     if (!targets(act.id, true).length) { end('fail'); return; }
@@ -335,7 +363,14 @@
   var hookDmg = function () {
     var C = W.AFK_CARD_COMBAT; if (hooked || !C || typeof C.damage !== 'function') return; hooked = true;
     var o = C.damage;
-    C.damage = function (actor, target, amount, opt) { var v = o.apply(this, arguments); try { if (v > 0 && target && target._afkWe) { var w = mod(target, v); if (w !== v) v = Math.floor(w); } } catch (e) {} return v; };
+    C.damage = function (actor, target, amount, opt) {
+      var v = o.apply(this, arguments);
+      try {
+        if (v > 0 && target && target._afkWe) { var w = mod(target, v); if (w !== v) v = Math.floor(w); }
+        if (v > 0 && actor && act && act.id === 'winter' && act.chill > 0 && actor !== P() && !actor._afkWe && target && !target.cls) { var w2 = Math.floor(v * chillMult()); if (w2 !== v) v = w2; }   // 寒冬：傭兵、寵物、召喚物打怪 −20%／−40%
+      } catch (e) {}
+      return v;
+    };
   };
   hookDmg(); W.addEventListener('load', hookDmg);
   // 擊殺
@@ -359,5 +394,5 @@
 
   W.__afkWorldEvents = { EV: EV, IDS: IDS, RATE: RATE, CD_MS: CD_MS, GAP_MS: GAP_MS, DUR: DUR, LV_MIN: LV_MIN, BAG: BAG,
     active: function () { return act; }, start: function (id) { var i = freeSlot(true); if (i < 0) return false; start(id, i); return true; }, end: end, step: step,
-    canTrigger: canTrigger, targets: targets, okMap: okMap, levelFor: levelFor, stats: stat, openBag: openBag, mod: mod };
+    canTrigger: canTrigger, targets: targets, okMap: okMap, levelFor: levelFor, stats: stat, openBag: openBag, mod: mod, chillMult: chillMult, scale: scale };
 })();

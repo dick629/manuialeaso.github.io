@@ -46,11 +46,17 @@ try{
     const bc=()=>player.inv.filter(i=>i.id===E.BAG).reduce((s,i)=>s+(i.cnt||1),0);gainItem(E.BAG,1,true,true);const b0=bc();useItem(player.inv.find(i=>i.id===E.BAG).uid);out.opened=bc()===b0-1;
     // 被追殺的人倒下＝失敗
     __profile({cls:'knight',lv:60});fresh();E.start('senis');player.dead=true;E.step();out.fail=!E.active()&&E.stats('senis').fails===1;player.dead=false;
+    // 五、冰之女王「寒冬」：不挑職業；女王＋2 侍女；攻速 −40%（侍女在）→ −20%；凍傷
+    __profile({cls:'elf',lv:60});fresh();out.winterCan=E.canTrigger('winter');recomputeStats();const as0=player.d.aspd;
+    E.start('winter');out.maids=mapState.mobs.filter(m=>m&&m._weMaid).length;E.step();out.chill=E.chillMult();recomputeStats();out.aspd2=+(player.d.aspd/as0).toFixed(3);
+    player.hp=player.mhp;state.ticks=E.active().frostAt;E.step();out.frost=Math.round((1-player.hp/player.mhp)*100);
+    mapState.mobs.forEach((m,i)=>{if(m&&m._weMaid){m.curHp=0;killMob(i);}});E.step();out.chill1=E.chillMult();recomputeStats();out.aspd1=+(player.d.aspd/as0).toFixed(3);
+    const q=boss();q.curHp=0;killMob(mapState.mobs.indexOf(q));recomputeStats();out.winterEnd=!E.active()&&+(player.d.aspd/as0).toFixed(3);
     return out;
   });
   console.log(JSON.stringify(r));
-  assert.deepEqual(r.on,[true,true,true,true]);
-  assert.deepEqual(r.can,[true,false,false,false],'騎士只觸發賽尼斯');assert.equal(r.lv29,false);
+  assert.deepEqual(r.on,[true,true,true,true,true]);
+  assert.deepEqual(r.can,[true,false,false,false,true],'騎士觸發賽尼斯（寒冬不挑職業）');assert.equal(r.lv29,false);
   assert.equal(r.senis,true);assert.equal(r.medium,2);assert.equal(r.curse,1);assert.equal(r.cut,5);assert.equal(r.lifted,true);
   assert.equal(r.bag,true);assert.equal(r.ended,true);assert.equal(r.kills,1);assert.equal(r.gap,false);
   assert.equal(r.ambush,2.5);assert.equal(r.ambush2,1);assert.equal(r.stealth,0);assert.equal(r.unstealth,1000);
@@ -58,6 +64,8 @@ try{
   assert.equal(r.members,3);assert.equal(r.memMod,200);assert.equal(r.call,1.5);assert.equal(r.squadGone,true);
   assert.equal(r.noCastle,false);assert.equal(r.castle,true);assert.equal(r.mark,true);assert.ok(r.hit>=25&&r.hit<=31,'懸賞令 '+r.hit);assert.ok(r.bounty>=60000);
   assert.equal(r.opened,true);assert.equal(r.fail,true);
+  assert.equal(r.winterCan,true,'寒冬不挑職業');assert.equal(r.maids,2);assert.equal(r.chill,0.6);assert.equal(r.aspd2,1.667,'攻速 −40%');assert.equal(r.frost,4,'凍傷 4%');
+  assert.equal(r.chill1,0.8);assert.equal(r.aspd1,1.25,'侍女倒下 −20%');assert.equal(r.winterEnd,1,'寒冬結束');
   assert.deepEqual(errors,[]);
   await close();
   console.log('test-world-events: ok');

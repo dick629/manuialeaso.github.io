@@ -1123,6 +1123,7 @@
     { k: 'mercskill', n: '傭兵可用技能' },
     { k: 'doll', n: '魔法娃娃' },
     { k: 'map', n: '地圖' },
+    { k: 'mapguide', n: '練功推薦' },
     { k: 'sherine', n: '席琳' },
     { k: 'runes', n: '符文系統' },
     { k: 'combat', n: '戰鬥機制' },
@@ -1322,6 +1323,7 @@
     if (key === 'poly') return renderPoly();
     if (key === 'mode') return renderMode();
     if (key === 'map') return renderMap();
+    if (key === 'mapguide') return renderMapGuide();
     if (key === 'npc') return renderNpc();
     if (key === 'stats') return renderStats();
     if (key === 'magic') return renderMagic();
@@ -1402,6 +1404,7 @@
     { key: 'mercskill', cls: false, label: '傭兵可用技能' },
     { key: 'doll', cls: false, label: '魔法娃娃' },
     { key: 'map', cls: false, label: '地圖' },
+    { key: 'mapguide', cls: false, label: '練功推薦' },   // 玩家 2026-10-29：各地圖幾等怪、建議 AC／魔防
     { key: 'sherine', cls: false, label: '席琳' },
     { key: 'combat', cls: false, label: '戰鬥機制' },
     { key: 'stats', cls: false, label: '能力值' },
@@ -1502,6 +1505,81 @@
     h += '<div class="m-wiki-kv"><b>' + wDexLink('受詛咒的黑暗妖精聖地') + '</b>　<span class="c-mapunlock">📍 交出 死亡騎士之書 ×1（吉爾塔斯 BOSS 房）</span></div>';
     h += '<div class="m-wiki-kv"><b>' + wDexLink('崩壞的長老會議廳') + '</b>　<span class="c-mapunlock">📍 交出 吉爾塔斯的封印 ×1 傳送（真‧死亡騎士 冥皇丹特斯 BOSS 房）</span></div>';
     h += '<div class="m-wiki-desc">「死亡騎士之書」由長老之室的「長老．X」系列怪掉（各 1%）。兩間 BOSS 房<b>每次 BOSS 復活再扣 1 個入場道具</b>，扣光就被踢回長老會議廳；挑戰吉爾塔斯中途離開會消耗 1 顆召喚球把傷勢封在原地（下次接著打）。</div>';
+    return h;
+  }
+
+  // ===== 練功推薦（玩家 2026-10-29）：每張狩獵地圖的怪物等級、建議等級、建議 AC、建議魔防 =====
+  //   直接讀 DB.maps／DB.mobs（作者改怪物數值自動跟上），公式與戰鬥一致：
+  //   怪打玩家 raw＝怪物等級＋怪物命中−玩家等級＋玩家 AC，經 stretchedHitExpectedValue 拉伸成判定值後擲 1D20。
+  function mgAvgDice(a) { return a && a.length >= 2 ? (Number(a[0]) || 1) * ((Number(a[1]) || 1) + 1) / 2 : 0; }
+  function mgHv(raw) { try { if (typeof stretchedHitExpectedValue === 'function') return stretchedHitExpectedValue(raw); } catch (e) {} if (raw >= 8) return Math.min(20, raw); var f = Math.min(30, 8 - raw) / 30; return 8 - 7 * (2 * f - f * f); }
+  function mgHitPct(raw) { var hv = Math.max(1, Math.min(20, mgHv(raw))); return Math.round(((Math.min(hv, 19) - 1) / 20 + (hv < 19 ? 0.05 : 0) + 0.05) * 100); }   // 2～判定值 命中、19 擦傷、20 重擊
+  function mgMrMult(mr) { try { if (typeof mrMult === 'function') return mrMult(mr); } catch (e) {} return mr <= 100 ? (100 - mr / 2) / 100 : Math.max(0.01, 0.5 - (mr - 100) / 1000); }
+  var MG_RAW_OK = 8, MG_RAW_GOOD = -10;   // 怪的判定值 8（約 45% 打中你）／−10 拉伸後約 16%
+  function mapGuideRows() {
+    var seen = {}, list = [];
+    var add = function (v, title, where) {
+      if (!v || seen[v] || typeof DB === 'undefined' || !DB.maps || !DB.maps[v]) return; seen[v] = 1;
+      var mobs = DB.maps[v].map(function (id) { return DB.mobs[id]; }).filter(function (m) { return m && typeof m.lv === 'number' && !m.boss && !m.noAttack && !m.afkWe; });
+      if (!mobs.length) return;
+      var lvs = mobs.map(function (m) { return m.lv; }), sum = lvs.reduce(function (a, b) { return a + b; }, 0);
+      var avg = Math.round(sum / lvs.length), rec = avg;
+      var hard = mobs.reduce(function (a, m) { return (m.lv + (m.hit || 0)) > (a.lv + (a.hit || 0)) ? m : a; });
+      var raw0 = hard.lv + (hard.hit || 0) - rec;   // 你在建議等級、AC 0 時的 raw
+      var mr = 0, caster = null, phys = 0;
+      mobs.forEach(function (m) { phys = Math.max(phys, mgAvgDice(m.dmg) + (Number(m.db) || 0)); });   // 這張圖最痛的普攻
+      mobs.forEach(function (m) {
+        ['mag', 'mag2', 'mag3', 'mag4', 'mag5'].forEach(function (k) {
+          var g = m[k]; if (!g || !g.dmg) return;
+          var sp = mgAvgDice(g.dmg) + (Number(g.db) || 0); if (!(sp > phys)) return;
+          var need = 0; while (need < 400 && sp * mgMrMult(need) > phys) need += 10;   // 讓魔法平均不比這張圖最痛的普攻痛
+          if (need > mr) { mr = need; caster = { n: m.n, skn: g.skn || '魔法', sp: Math.round(sp) }; }
+        });
+      });
+      list.push({ v: v, t: title || mapTitleOf(v), where: where || '', mn: Math.min.apply(null, lvs), mx: Math.max.apply(null, lvs), avg: avg, rec: rec,
+        hard: hard, raw0: raw0, acOk: MG_RAW_OK - raw0, acGood: MG_RAW_GOOD - raw0, mr: mr, caster: caster });
+    };
+    if (typeof MAP_REGIONS !== 'undefined') MAP_REGIONS.forEach(function (reg) { (reg.maps || []).forEach(function (m) { add(m.v, m.t, reg.label); }); });
+    if (typeof HIDDEN_AREA_NAMES !== 'undefined') Object.keys(HIDDEN_AREA_NAMES).forEach(function (hid) { add(hid, HIDDEN_AREA_NAMES[hid], '隱藏狩獵區域'); });
+    if (typeof CASTLE_EXTRA !== 'undefined') CASTLE_EXTRA.forEach(function (v) { add(v, mapTitleOf(v), '攻城後開放'); });
+    list.sort(function (a, b) { return a.avg - b.avg || a.mx - b.mx; });
+    return list;
+  }
+  function renderMapGuide() {
+    var rows; try { rows = mapGuideRows(); } catch (e) { return '<div class="m-wiki-note">讀不到地圖資料。</div>'; }
+    if (!rows.length) return '<div class="m-wiki-note">讀不到地圖資料。</div>';
+    var p = (typeof player !== 'undefined' && player && player.cls && player.d) ? player : null;
+    var h = '<div class="m-wiki-note">每張狩獵地圖（不含頭目）的怪物等級，依平均等級由低到高排。數字直接從遊戲資料算，作者改怪物數值會自動跟上。<br>'
+      + '・<b>建議等級</b>＝這張圖一般怪的平均等級。<br>'
+      + '・<b>建議 AC</b>：以建議等級、對這張圖<b>最準的那隻怪</b>（等級＋命中最高，等級跨很大的圖通常是裡面的精英怪；滑鼠移到數字上看是哪隻）來算——「及格」約 45% 會被打中，「舒適」約 16%。'
+      + '怪打你的命中＝怪物等級＋怪物命中−你的等級＋你的 AC，所以你<b>每比建議等級高 1 級，AC 就可以少 1</b>。AC 越低，每一下還會再隨機擋掉一些傷害（騎士擋最多、王族與法師最少）。<br>'
+      + '・<b>建議魔防</b>：讓這張圖<b>最痛的魔法</b>平均傷害不超過這張圖<b>最痛的普攻</b>（魔法大多必中，不看 AC）；寫「—」代表這張圖的魔法都不比普攻痛，不用特別堆。<br>'
+      + '・頭目、困難怪與席琳世界另有加成，這裡不算；隊伍有大地的祝福等 AC 光環會更好打。'
+      + (p ? '<br>・<b>你</b>欄：用你現在的等級 Lv' + p.lv + '、AC ' + (p.d.ac || 0) + '、魔防 ' + (p.d.mr || 0) + ' 算，最準的怪打中你的機率；✅＝魔防已達建議。' : '') + '</div>';
+    var bands = [[1, 20], [21, 40], [41, 60], [61, 80], [81, 100], [101, 999]];
+    if (!document.getElementById('m-mg-css')) { var st = document.createElement('style'); st.id = 'm-mg-css';
+      st.textContent = '.m-mg-row{padding:7px 2px;border-bottom:1px solid #1e293b;}.m-mg-name{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;}.m-mg-where{font-size:12px;color:#94a3b8;}'
+        + '.m-mg-chips{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:4px;}.m-mg-chip{display:inline-flex;align-items:baseline;gap:4px;background:#0f172a;border:1px solid #334155;border-radius:6px;padding:1px 7px;font-size:13px;color:#e2e8f0;white-space:nowrap;}'
+        + '.m-mg-lab{font-size:11px;color:#94a3b8;}';
+      document.head.appendChild(st); }
+    bands.forEach(function (b) {
+      var rs = rows.filter(function (r) { return r.avg >= b[0] && r.avg <= b[1]; }); if (!rs.length) return;
+      h += '<div class="m-wiki-sub">⚔️ 平均 Lv' + b[0] + (b[1] < 999 ? '～' + b[1] : ' 以上') + '（' + rs.length + ' 張）</div>';
+      rs.forEach(function (r) {
+        var chip = function (lab, val, title, col) { return '<span class="m-mg-chip"' + (title ? ' title="' + esc(title) + '"' : '') + '><span class="m-mg-lab">' + lab + '</span><b' + (col ? ' style="color:' + col + ';"' : '') + '>' + val + '</b></span>'; };
+        var chips = [
+          chip('怪物', r.mn === r.mx ? 'Lv' + r.mn : 'Lv' + r.mn + '～' + r.mx),
+          chip('建議', 'Lv' + r.rec, '', '#86efac'),
+          chip('AC', r.acOk + '／' + r.acGood, '及格／舒適；最準的怪：' + r.hard.n + '（Lv' + r.hard.lv + '、命中 ' + (r.hard.hit || 0) + '）'),
+          chip('魔防', r.mr ? String(r.mr) : '—', r.mr ? r.caster.n + '「' + r.caster.skn + '」平均約 ' + r.caster.sp : '')
+        ];
+        if (p) {
+          var pct = mgHitPct(r.hard.lv + (r.hard.hit || 0) - p.lv + (p.d.ac || 0));
+          chips.push(chip('你被打中', pct + '%' + (r.mr ? ((p.d.mr || 0) >= r.mr ? ' ✅' : ' ⚠️') : ''), '最準的怪打中你的機率', pct <= 20 ? '#86efac' : pct <= 45 ? '#fde68a' : '#fca5a5'));
+        }
+        h += '<div class="m-mg-row" data-mg="' + esc(r.v) + '"><div class="m-mg-name"><b>' + wDexLink(r.t) + '</b>' + (r.where ? '<span class="m-mg-where">' + esc(r.where) + '</span>' : '') + '</div><div class="m-mg-chips">' + chips.join('') + '</div></div>';
+      });
+    });
     return h;
   }
 
@@ -3324,7 +3402,7 @@
 
   // 2026-10-29 16:24 玩家：符文系統另開一頁（原本放在「席琳」底下）
   // ===== 劇情任務（afk-lore-kit／afk-lore-main／afk-hardin／afk-halpas）＋世界事件（afk-kurt-hunt）=====
-  function worldEventCard() { return kurtEventCard() + moreEventCard(); }
+  function worldEventCard() { return kurtEventCard() + moreEventCard() + ghostShipCard(); }
   function moreEventCard() {
     var E = window.__afkWorldEvents; if (!E) return '';
     return wCard('🌍 世界事件：其他追殺',
@@ -3333,9 +3411,24 @@
         ['☠ 魔女賽尼斯「血的誓約詛咒」', '隊伍裡有騎士', '她帶著 2 個「詛咒的媒介」。媒介活著時每分鐘最大 HP −5%（最多 −40%），打倒全部媒介才解除；每 30 秒冰凍一名騎士；媒介沒了每 2 分鐘再叫 2 個。'],
         ['🗡 暗殺軍王史雷佛「暗殺軍團的刺殺令」', '隊伍裡有黑暗妖精', '出場與每次隱身結束後的第一擊 ×2.5；每 30 秒隱身 5 秒（打不到）；暗殺毒刃（中毒）；HP 一半時遁走，換地圖才會再追來（只遁走一次）。'],
         ['🐉 魔族的獵龍隊', '隊伍裡有龍騎士', '獵龍隊長＋3 名隊員。隊長活著時隊員受到的傷害 −80%；每 20 秒「獵龍號令」：5 秒內對龍騎士的傷害 +50%。打倒隊長＝成功。'],
-        ['👑 反王肯恩「篡位者的懸賞」', '你的血盟有城堡', '刺客頭目＋2 名刺客追殺城主。每 45 秒「懸賞令」標記你 5 秒，結束時最大 HP 30% 的傷害；5 秒內打掉頭目 5% HP 可以打斷。打倒頭目另得懸賞金（等級×2,000 金幣）。']
+        ['👑 反王肯恩「篡位者的懸賞」', '你的血盟有城堡', '刺客頭目＋2 名刺客追殺城主。每 45 秒「懸賞令」標記你 5 秒，結束時最大 HP 30% 的傷害；5 秒內打掉頭目 5% HP 可以打斷。打倒頭目另得懸賞金（等級×2,000 金幣）。'],
+        ['❄ 冰之女王「寒冬」', '不挑職業', '冰之女王＋2 名侍女。女王活著時寒冬籠罩：你的攻擊速度 −20%、傭兵與寵物的傷害 −20%，侍女還活著時加重成 −40%；每 10 秒凍傷（全隊各受最大 HP 2%，侍女活著 4%）；每 30 秒冰封一名隊員 3 秒；侍女全倒後每 2 分鐘再叫 2 名。先打侍女減輕寒冬，打倒女王＝結束。']
       ]) +
       wDesc('打倒頭目：經驗、金幣 ×3、原型頭目的掉落表，再加「世界事件的戰利品袋」1 個（打開隨機：魔法結晶體 30～60、祝福的盔甲／武器卷軸、龍之鑽石 ×5）。外掛開關每個事件各一個。'));
+  }
+  function ghostShipCard() {
+    var G = window.__afkGhostShip; if (!G) return '';
+    return wCard('⛵ 幽靈船出航（說話之島）',
+      wDesc('照你電腦的時鐘，<b>每個整點與半點</b>幽靈船靠上說話之島的港口，<b>停 10 分鐘</b>：這段時間找港口的「幽靈船的引路人」登船（Lv' + G.LV_MIN + ' 以上）。靠岸 <b>20 分鐘</b>後船沉回霧裡，船上的人回到說話之島。靠岸時會有系統訊息，狀態列顯示倒數。') +
+      wTbl(['項目', '內容'], [
+        ['船員', '幽靈船的海賊骷髏、骷髏刀手、船舶之墓的溺死者一直湧出來，強度跟著你的等級（Lv30～115）；照一般怪給經驗、金幣、掉落'],
+        ['幽靈船長', '這一趟打倒 ' + G.NEED + ' 名船員就會現身（每趟一次），HP 隨傭兵數變高'],
+        ['幽靈砲擊', '每 15 秒，全隊水屬性魔法'],
+        ['深海的召喚', '每 25 秒叫 2 名溺死的水手'],
+        ['沉船的詛咒', 'HP 50% 以下：全隊每 10 秒受到最大 HP 3% 的傷害，直到船長倒下'],
+        ['船長的寶箱', '德雷克的掉落表＋魔法結晶體 40～80、等級×1,500 金幣；30% 祝福的盔甲或武器卷軸一張、5% 龍之鑽石 ×5']
+      ]) +
+      wDesc('在船上不會遇到克特與其他世界事件；離線補跑不會在船上進行。外掛開關「幽靈船出航」。'));
   }
   function kurtEventCard() {
     var K = window.__afkKurtHunt; if (!K) return '';

@@ -3,9 +3,10 @@
  *
  * 物品視窗的「使用」下面多兩顆按鈕：「開 10 個」「全部開啟」。
  * 適用：會開出東西的盒子／袋子（天堂透視鏡的禮盒類、魔法娃娃的袋子／盒子、歐西里斯／庫庫爾坎寶箱）；
+ *   天堂透視鏡的兌換券（例如修練者解咒卷軸 → 解除詛咒的卷軸，玩家 2026-10-29）也適用；
  *   有冷卻的封印盒、要自選的券、藥水與卷軸不適用。
  * 做法：照樣一個一個呼叫遊戲本身的「使用」，但開的期間先不重畫畫面、不存檔、不逐筆寫系統訊息，
- *   每 100 個讓畫面喘一口氣；開完只重畫一次、存一次，系統訊息列出這次總共拿到什麼。
+ *   每開約 25 毫秒就讓畫面喘一口氣（玩家 2026-10-29：背包一大，固定每 100 個才讓一次會卡到當掉），可以按「停止」；開完只重畫一次、存一次，系統訊息列出這次總共拿到什麼。
  *   開到一半東西用完、或某次沒有扣到（例如寶箱沒有鑰匙），就停下來。
  * ========================================================================== */
 (function () {
@@ -17,11 +18,12 @@
   if (typeof W.openModal !== 'function' || typeof W.useItem !== 'function') { console.warn('[AFK-batchopen] 找不到物品視窗，略過'); return; }
 
   var EFFS = { doll_bag: 1, doll_box_high: 1, osiris_box: 1, afk_runebox: 1, afk_matgift: 1 };   // afk_matgift：嘯龍材料禮包（afk-ttmi-items）   // afk_runebox：失去光芒的符文石（afk-runedata）
-  var eligible = function (d) { return !!d && !d.noUse && ((d.ttmiAction === 'box' && !d.ttmiBoxCooldown) || !!EFFS[d.eff]); };
+  var eligible = function (d) { return !!d && !d.noUse && ((d.ttmiAction === 'box' && !d.ttmiBoxCooldown) || d.ttmiAction === 'exchange' || !!EFFS[d.eff]); };
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var counts = function (p) { var m = {}; (p.inv || []).forEach(function (it) { if (it && it.id) m[it.id] = (m[it.id] || 0) + (it.cnt || 1); }); return m; };
-  var running = false;
+  var running = false, stopReq = false, SLICE = 25;
+  var now = function () { return (W.performance && performance.now) ? performance.now() : Date.now(); };
   var QUIET = ['renderTabs', 'updateUI', 'saveGame', 'logSys'];
 
   var run = function (uid, want) {
@@ -31,9 +33,10 @@
     if (p.dead) { try { logSys('死亡狀態無法使用道具，請先復活。'); } catch (e) {} return; }
     var id = it.id, total = Math.min(want, it.cnt || 1), done = 0;
     var before = counts(p), gold0 = Number(p.gold) || 0, saved = {}, lastMsg = '';
-    running = true;
+    running = true; stopReq = false;
     var btns = document.querySelectorAll('[data-afk-bo]'); btns.forEach(function (b) { b.disabled = true; });
-    var label = document.querySelector('[data-afk-bo="all"]');
+    var label = document.querySelector('[data-afk-bo="all"]'), ten = document.querySelector('[data-afk-bo="10"]');
+    if (ten && want > 10) { ten.disabled = false; ten.textContent = '停止'; ten.setAttribute('onclick', 'afkBatchOpen.stop()'); }
     var quiet = function (on) {
       QUIET.forEach(function (k) {
         if (on) { saved[k] = W[k]; W[k] = k === 'logSys' ? function (h) { lastMsg = h; } : function () {}; }
@@ -56,26 +59,33 @@
       var left = p.inv.find(function (x) { return x.uid === uid; }) || p.inv.find(function (x) { return x.id === id && !x.lock; });
       try { if (left) openModal(left, false); else closeModal(); } catch (e) {}
     };
+    var cur = null;
     var step = function () {
       quiet(true);
+      var t0 = now();
       try {
-        for (var k = 0; k < 100 && done < total; k++) {
-          var cur = p.inv.find(function (x) { return x.uid === uid; }) || p.inv.find(function (x) { return x.id === id && !x.lock; });
+        while (done < total && !stopReq) {
+          if (!cur || p.inv.indexOf(cur) < 0) cur = p.inv.find(function (x) { return x.uid === uid; }) || p.inv.find(function (x) { return x.id === id && !x.lock; });
           if (!cur) { total = done; break; }
           uid = cur.uid;
-          var c0 = counts(p)[id] || 0;
+          var c0 = cur.cnt || 1, ref = cur;
           W.useItem(cur.uid, false, true);
-          if ((counts(p)[id] || 0) >= c0) { total = done; break; }   // 沒有扣到（缺鑰匙、條件不符）→ 停
+          var still = (ref.cnt || 1) >= c0 && p.inv.indexOf(ref) >= 0;
+          if (still) { total = done; break; }   // 沒有扣到（缺鑰匙、條件不符）→ 停
           done++;
+          if (now() - t0 >= SLICE) break;
         }
       } catch (e) { console.warn('[AFK-batchopen]', e); total = done; }
       quiet(false);
-      if (done < total) { if (label) label.textContent = '開啟中… ' + done + '／' + total; setTimeout(step, 0); }
+      if (stopReq) total = done;
+      if (done < total) { if (label) label.textContent = '開啟中… ' + done.toLocaleString() + '／' + total.toLocaleString(); setTimeout(step, 0); }
       else finish();
     };
     step();
   };
   W.afkBatchOpen = run;
+  run.stop = function () { stopReq = true; };
+  run.eligible = eligible;
 
   var oOpen = W.openModal;
   W.openModal = function (item, isEq) {
