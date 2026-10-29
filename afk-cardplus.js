@@ -193,8 +193,8 @@
     closePick();
     var names = Object.keys(CARD_MOB_INFO).sort(function (a, b) { return (CARD_MOB_INFO[a].mob.lv || 0) - (CARD_MOB_INFO[b].mob.lv || 0); });
     var m = document.createElement('div'); m.id = 'afk-cardpick';
-    m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(2,6,23,.75);display:flex;align-items:center;justify-content:center';
-    m.innerHTML = '<div style="background:#0f172a;border:1px solid #0891b2;border-radius:12px;width:min(560px,94vw);max-height:84vh;display:flex;flex-direction:column;color:#e2e8f0">'
+    m.style.cssText = 'position:fixed;inset:0;top:var(--orig-bar-h,0px);z-index:9999;background:rgba(2,6,23,.75);display:flex;align-items:center;justify-content:center';
+    m.innerHTML = '<div style="background:#0f172a;border:1px solid #0891b2;border-radius:12px;width:min(560px,94vw);max-height:calc((100dvh - var(--orig-bar-h,0px)) * .88);display:flex;flex-direction:column;color:#e2e8f0">'
       + '<div style="padding:12px 14px;font-weight:700;color:#67e8f9;display:flex;justify-content:space-between">💎 鑽白金幻化：選一隻怪物獲得鑽石卡<button type="button" id="afk-cp-x" style="color:#94a3b8">✕</button></div>'
       + '<input id="afk-cp-q" placeholder="搜尋怪物名稱" style="margin:0 14px 8px;padding:6px 10px;border-radius:8px;border:1px solid #334155;background:#020617;color:#e2e8f0">'
       + '<div id="afk-cp-list" style="overflow:auto;padding:0 14px 14px;display:flex;flex-wrap:wrap;gap:6px"></div></div>';

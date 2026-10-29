@@ -20,6 +20,7 @@
  *   確定＝記下同意並當場隱藏(不必重新整理);取消＝把開關撥回去、面板上的勾也取消掉。
  *   撥回關閉時一併清掉同意紀錄 → 下次再開會再問一次。
  *
+ * 2026-10-29：橫幅右邊加一顆 ✕（手機版橫幅會擋住視窗右上角的關閉），按下去＝打開本開關，一樣先跳確認視窗。
  * 掛接:在 index.html 的 </body> 前 <script src="afk-nobanner.js">(排在 afk-banner 之後)。
  * ========================================================================== */
 (function () {
@@ -110,6 +111,21 @@
     if (modal) modal.classList.add(TOP_CLASS);
   }
 
+  function addCloseButton() {
+    try {
+      var bar = document.getElementById('_orig_pbar');
+      if (!bar || bar.querySelector('.afk-pbar-x') || (on() && acked())) return;
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'afk-pbar-x'; b.textContent = '✕'; b.title = '隱藏這條提醒'; b.setAttribute('aria-label', '隱藏這條提醒');
+      b.style.cssText = 'position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;border:1px solid #ffcf5a;'
+        + 'background:rgba(13,31,58,.85);color:#ffcf5a;font:bold 16px/1 system-ui,sans-serif;cursor:pointer;padding:0';
+      b.addEventListener('click', function (ev) { ev.preventDefault(); ev.stopPropagation(); if (window.AFK_TOGGLES) AFK_TOGGLES.set(ID, true); else ask(); });
+      bar.style.paddingRight = '46px';
+      bar.appendChild(b);
+      if (window.AFK_BANNER && typeof AFK_BANNER.remeasure === 'function') AFK_BANNER.remeasure();
+    } catch (e) {}
+  }
+
   function init() {
     ensureStyle();
     // 面板勾起來的當下就問(面板本身不會重新整理,不攔的話玩家要按了「重新整理」才會有反應)
@@ -124,6 +140,9 @@
     }
     // 開著但沒同意紀錄(上一場問到一半就關掉、或手動改過 localStorage)→ 補問一次,問到之前不藏
     if (on() && !acked()) ask(); else apply();
+    // 玩家 2026-10-29（手機版提醒擋住視窗右上角的關閉）：橫幅右邊加一顆 ✕，按下去＝打開這個開關（一樣先跳確認視窗）
+    addCloseButton(); setInterval(addCloseButton, 2000);
+    window.__afkNoBanner = { addCloseButton: addCloseButton };
     console.log('[AFK-nobanner] hooks OK — 橫幅隱藏（預設關，開啟時會先確認）。');
   }
 

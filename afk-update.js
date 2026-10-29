@@ -7,13 +7,15 @@
  *   1. 開頁時讀一次 version.json（不吃快取）記下「目前這頁的版本」，之後每 10 分鐘再讀一次。
  *   2. 版本不同 → 畫面上方出現一條提示「遊戲有新版本」，按「立即更新」＝存檔、重新整理、自動回到同一格角色。
  *   3. 同時通知自動重新整理（afk-autoreload）：在安全時機（沒在操作、沒在打副本／攻城…）自動更新，
- *      不用等滿 4 小時。關掉「定時自動重新整理」的玩家只看得到提示，不會被自動重整。
+ *      不用等滿 4 小時。2026-10-29 起要另外打開外掛開關「有新版本時自動更新」（autoupdate，預設關）；
+ *      關著或關掉「定時自動重新整理」的玩家只看得到提示，不會被自動重整。
  * 讀不到 version.json（離線、本機測試）就什麼都不做。
  * ========================================================================== */
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'updatenotice', name: '新版本提示', desc: '網站發布新版本時，畫面上方提示更新（按一下存檔並重新整理，自動回到原角色）', group: '遊戲介面' });
+  if (T && T.register) T.register({ id: 'autoupdate', name: '有新版本時自動更新', desc: '網站發布新版本時，在安全時機（閒置 30 分鐘或切到背景、沒在打副本／攻城）自動存檔、重新整理並回到原角色。關著時只顯示更新提示，不會在掛機中途自動更新', group: '系統與其他', def: false });   // 玩家 2026-10-29：掛機時會自動更新 → 改成開關、預設關
   var on = function () { return !T || T.enabled('updatenotice'); };
   var FLAG = 'afk_autoreload_resume';
   var POLL_MS = 10 * 60 * 1000;
@@ -61,7 +63,7 @@
       bar = document.createElement('div'); bar.id = 'afk-update-bar'; bar.setAttribute('role', 'status');
       document.body.appendChild(bar);
     }
-    var auto = !!(W.__afkAutoReload);
+    var auto = !!(W.__afkAutoReload) && !!(T && T.enabled('autoupdate'));
     bar.innerHTML = '<span>🔔 遊戲有新版本</span><small>' + (fmt(latest) ? '（' + fmt(latest) + ' 發布）' : '') + (auto ? '・閒置 30 分鐘（或切到背景）時會自動更新' : '') + '</small>'
       + '<button type="button" data-u="go">立即更新</button><button type="button" class="ghost" data-u="later">稍後</button>';
     bar.querySelector('[data-u="go"]').onclick = reloadNow;

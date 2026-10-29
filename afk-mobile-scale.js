@@ -49,10 +49,13 @@
  *      同門檻）。玩家可在面板強制開/關（存 localStorage，per 裝置）。光暈/濾鏡/模糊那批不在這裡重做——
  *      afk-powersave 的「關閉光暈與濾鏡」已經做了且 afk-lowend 會自動套，這支只補它沒碰的陰影與過渡。
  *   ⑦ 設定入口：首頁「⚙ 其他功能 → 📱 介面縮放」(AFK_SETTINGS，只在手機幾何顯示)與遊戲內「設定分頁 →
- *      🔌 外掛 → 📱 介面縮放」。面板：90/100/110/120% 四顆＋「輕量模式」勾選。縮放值存 localStorage
+ *      🔌 外掛 → 📱 介面縮放」。面板：90～140% 六顆（2026-10-29 加 130／140%）＋「輕量模式」勾選。縮放值存 localStorage
  *      `afk_ui_scale`（per 裝置，不進存檔）、輕量模式存 `afk_ui_lite`（'1'/'0'，沒設＝自動判定）。
  *      儲存判準：這兩個值壞掉只影響外觀、不影響遊戲，但「要能在 file:// 下用」→ localStorage；各只佔十幾個
  *      字元，不佔存檔空間。
+ *
+ *   ⑧ 小字下限（2026-10-29 玩家：手機字太小）：text-xs、行內寫死 10～12px 的說明字、外掛面板（.afk-ax）說明，
+ *      最小 13px×縮放；戰鬥框、狀態列、快捷列、底部導覽、怪名不動（那些地方擠，放大會跑版）。
  *
  * 量測（/root/bench/mobile-scale-test.mjs，390×844 / 360×780 / 844×390 觸控 context，SLOT=7 真實隊伍存檔，
  *   每輪全新分頁；結果細節見檔尾「量測紀錄」）：
@@ -91,7 +94,7 @@
   // 橫向手機：上游那條 MQ 的第二半 + 橫向。直向手機 (max-width:768) 不會進來。
   var LAND_MQ = '(max-height: 520px) and (pointer: coarse) and (orientation: landscape)';
   var LS_SCALE = 'afk_ui_scale', LS_LITE = 'afk_ui_lite';
-  var SCALES = [0.9, 1, 1.1, 1.2];
+  var SCALES = [0.9, 1, 1.1, 1.2, 1.3, 1.4];   // 2026-10-29 玩家：手機字太小 → 加 130%／140%
   var S = 'var(--afk-ui-scale, 1)';
   function px(n) { return 'calc(' + n + 'px * ' + S + ')'; }
 
@@ -101,10 +104,10 @@
   function getScale() {
     var v = parseFloat(lsGet(LS_SCALE));
     if (!(v > 0)) return 1;
-    return Math.min(1.2, Math.max(0.9, v));
+    return Math.min(1.4, Math.max(0.9, v));
   }
   function setScale(v) {
-    v = Math.min(1.2, Math.max(0.9, Number(v) || 1));
+    v = Math.min(1.4, Math.max(0.9, Number(v) || 1));
     lsSet(LS_SCALE, String(v));
     applyScale();
   }
@@ -134,6 +137,7 @@
     var HDR = GS + '#map-view-panel > .panel-header';
     // 外擴點擊區：元素本身不變大，::after 把可點範圍撐到 ≥40px（給塞在標題列裡、加高會撐胖整列的小丸子）
     var HIT = '{position:relative;}';
+    var SMALL_EX = ':not(#battle-view *):not(#m-status *):not(#mobile-vitals *):not(#afk-hotbar *):not(.mob-name):not(#m-nav *)';
     var HIT_AFTER = '::after{content:"";position:absolute;left:-4px;right:-4px;top:-8px;bottom:-8px;}';
     return [
       '@media ' + MOBILE_MQ + '{',
@@ -168,6 +172,11 @@
       GS + '.classic-sort-button{min-width:40px;min-height:40px;}',
       GS + ':is(#tab-weapons,#tab-armors,#tab-items) > .sticky button{min-height:40px;}',   /* 快速強化／快速廢品表頭（核心 buildQuickHeader，無具名 class） */
       '#afk-stg-gear,#afk-toggles-entry,#main-menu #afk-stg-menu button{min-height:40px;}',
+      /* ⑧ 小字下限（2026-10-29 玩家：手機字太小）：說明文字最小 13px×縮放（text-xs、寫死 10～12px 的行內字級、外掛面板說明）；
+            戰鬥框、狀態列、快捷列這類擠的地方不動 */
+      ':is(.text-xs,[style*="font-size:12px"],[style*="font-size: 12px"],[style*="font-size:11px"],[style*="font-size: 11px"],.text-\\[11px\\],.text-\\[10px\\])' + SMALL_EX + '{font-size:max(0.75rem, ' + px(13) + ') !important;}',
+      '.afk-ax' + SMALL_EX + '{font-size:' + px(15) + ';}',
+      '.afk-ax :is(.ax-note,.ax-desc,.ax-lore)' + SMALL_EX + '{font-size:' + px(14) + ';}',
       /* ⑤ 100vh → 100dvh（核心手機規則已是 dvh，補剩下的） */
       '.wc-private-dialog{height:min(560px, calc(100dvh - 24px));}',
       '#login-art-stage{width:min(100vw, calc(100dvh * 4 / 3));}',

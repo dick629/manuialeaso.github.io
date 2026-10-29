@@ -11,6 +11,7 @@
  *   ‧設定記在這台裝置（localStorage），不跟著存檔走。
  *   ‧手機版禁用：手機（含平板手機版面）或視窗寬度不到 900 時，什麼都不套用，也不出現按鈕。
  *   ‧左下角的「🖥 80%」按鈕打開調整面板。
+ *   ‧2026-10-29 修正：拖過日誌高度後村莊畫面溢出、蓋到日誌列（地圖面板不再溢出，村莊畫面縮到剩下的高度、維持 16:9）。
  * 想法參考自其他天堂放置專案的「UI 縮放＋可拖曳欄寬」，程式自己寫。
  * ========================================================================== */
 (function () {
@@ -45,6 +46,12 @@
     + 'body.afk-ui-dragging{user-select:none}body.afk-ui-dragging.col{cursor:col-resize}body.afk-ui-dragging.row{cursor:row-resize}'
     + 'body.afk-ui-on #game-screen #map-view-panel.afk-ui-maph{flex:1 1 0 !important;min-height:0 !important}'
     + 'body.afk-ui-on #game-screen #log-row.afk-ui-logh{flex:0 0 var(--afk-ui-log) !important;min-height:0 !important}'
+    // 2026-10-29（玩家：縮放版破圖）：拖過日誌高度後地圖面板變矮，村莊畫面（800×450、16:9）還是原本大小 → 整塊溢出蓋到日誌列。
+    //   地圖面板不准溢出；村莊畫面改成「吃滿地圖面板剩下的高度、維持 16:9 置中」，NPC 條列式在裡面自己捲。
+    + 'body.afk-ui-on #game-screen #map-view-panel{overflow:hidden}'
+    + 'body.afk-ui-on #game-screen #map-view-panel.afk-ui-maph #town-view:not(.hidden){flex:1 1 0 !important;min-height:0 !important;height:auto !important;width:auto !important;max-width:100% !important;aspect-ratio:16/9;align-self:center}'
+    + 'body.afk-ui-on #game-screen #map-view-panel.afk-ui-maph #battle-view:not(.hidden){flex:1 1 0 !important;min-height:0 !important;height:auto !important;width:auto !important;max-width:100% !important;align-self:center}'
+    + 'body.afk-ui-on.afk-npclist #game-screen #map-view-panel.afk-ui-maph #town-view:not(.hidden){width:100% !important;aspect-ratio:auto}'   // NPC 條列式：沒有地圖圖片，寬度吃滿
     + 'body.afk-ui-on #game-screen #combat-log-panel.afk-ui-split{flex:0 0 calc(var(--afk-ui-split) - 8px) !important}'
     + '#afk-ui-btn{position:fixed;left:8px;bottom:8px;z-index:60;font-size:12px;padding:3px 8px;border-radius:6px;background:#0f172acc;border:1px solid #475569;color:#e2e8f0;cursor:pointer}'
     + '#afk-ui-pop{position:fixed;left:8px;bottom:38px;z-index:61;background:#0f172af2;border:1px solid #64748b;border-radius:8px;padding:10px 12px;color:#e2e8f0;font-size:13px;min-width:250px;box-shadow:0 6px 24px #000a}'

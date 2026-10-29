@@ -200,10 +200,10 @@
 
   // ── 保護設定視窗 ──
   var openGuard = function () {
-    var old = document.getElementById('afk-ig-modal'); if (old) old.remove();
+    var old = document.getElementById('afk-ig-modal'); if (old) { if (old.__close) old.__close(); else old.remove(); }
     var g = cfg();
     var ov = document.createElement('div'); ov.id = 'afk-ig-modal';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:10070;background:#020617aa;display:flex;align-items:center;justify-content:center;color:#e2e8f0';
+    ov.style.cssText = 'position:fixed;inset:0;top:var(--orig-bar-h,0px);z-index:10070;background:#020617aa;display:flex;align-items:center;justify-content:center;color:#e2e8f0';
     var enSel = function (kind, v) {
       var s = '<select data-ig-en="' + kind + '" style="background:#0f172a;border:1px solid #475569;border-radius:4px;color:#e2e8f0;padding:2px 4px"><option value="-1"' + (v < 0 ? ' selected' : '') + '>不限</option>';
       for (var k = (kind === 'junk' ? 0 : 1); k <= 15; k++) s += '<option value="' + k + '"' + (v === k ? ' selected' : '') + '>+' + k + (kind === 'junk' ? ' 以下' : ' 以上') + '</option>';
@@ -215,7 +215,7 @@
         + '<td style="text-align:center"><input type="checkbox" data-ig="store" data-k="' + a[0] + '"' + (g.store[a[0]] ? ' checked' : '') + ' aria-label="' + esc(a[1]) + ' 不能存"></td>'
         + '<td style="text-align:center"><input type="checkbox" data-ig="junk" data-k="' + a[0] + '"' + (g.junk[a[0]] ? ' checked' : '') + ' aria-label="' + esc(a[1]) + ' 自動廢品"></td></tr>';
     }).join('');
-    ov.innerHTML = '<div role="dialog" aria-modal="true" aria-label="物品保護" style="width:min(520px,94vw);max-height:88vh;overflow:auto;background:#172033;border:2px solid #b7791f;border-radius:14px;padding:16px;box-shadow:0 18px 60px #000">'
+    ov.innerHTML = '<div role="dialog" aria-modal="true" aria-label="物品保護" style="width:min(520px,94vw);max-height:calc((100dvh - var(--orig-bar-h,0px)) * .92);overflow:auto;background:#172033;border:2px solid #b7791f;border-radius:14px;padding:16px;box-shadow:0 18px 60px #000">'
       + '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:20px;color:#fde68a">🛡 物品保護</b><button type="button" data-ig-close style="background:#334155;border:1px solid #64748b;border-radius:6px;padding:4px 12px;color:#fff">關閉</button></div>'
       + '<div style="color:#94a3b8;font-size:13px;margin:6px 0 8px">打勾＝有這個詞條的物品「不能賣」（手動販賣、快速廢品、自動販賣、一鍵賣出都跳過）／「不能存」（各種存入倉庫都跳過）／「自動廢品」（自動販賣開著時，有這個詞條的就自動標成廢品、照自動販賣的等待秒數賣掉；不能賣的優先）。只要符合其中一項就算。設定跟著角色存檔。</div>'
       + '<table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr style="color:#fbbf24"><th style="text-align:left;padding:3px 8px">詞條</th><th>不能賣</th><th>不能存</th><th>自動廢品</th></tr></thead><tbody>' + rows
@@ -240,7 +240,11 @@
       if (x.matches('[data-ig]')) { var kd = x.getAttribute('data-ig'), set = kd === 'store' ? gg.store : kd === 'junk' ? gg.junk : gg.sell; if (x.checked) set[x.getAttribute('data-k')] = true; else delete set[x.getAttribute('data-k')]; changed(); }
       else if (x.matches('[data-ig-en]')) { var ke = x.getAttribute('data-ig-en'); gg[ke === 'store' ? 'storeEn' : ke === 'junk' ? 'junkEn' : 'sellEn'] = Number(x.value); changed(); }
     });
-    ov.addEventListener('click', function (ev) { if (ev.target === ov || ev.target.closest('[data-ig-close]')) ov.remove(); });
+    // 手機返回鍵／ESC 也能關（玩家 2026-10-29：不一定要按右上角關閉）
+    var nav = null; try { if (W.AFK_NAV) nav = W.AFK_NAV.push(function () { nav = null; ov.remove(); }); } catch (e) {}
+    var close = function () { if (nav && W.AFK_NAV) { var h = nav; nav = null; try { W.AFK_NAV.pop(h); } catch (e) {} } ov.remove(); };
+    ov.__close = close;
+    ov.addEventListener('click', function (ev) { if (ev.target === ov || ev.target.closest('[data-ig-close]')) close(); });
     sum();
   };
   W.openItemGuard = openGuard;

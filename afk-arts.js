@@ -883,8 +883,8 @@
   var css = function () {
     if (document.getElementById('afk-arts-css')) return;
     var s = document.createElement('style'); s.id = 'afk-arts-css';
-    s.textContent = '#afk-arts-modal{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px}' +
-      '#afk-arts-modal .box{background:#1e1b2e;border:1px solid #7c3aed;border-radius:10px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:16px;color:#e9d5ff}' +
+    s.textContent = '#afk-arts-modal{position:fixed;inset:0;top:var(--orig-bar-h,0px);z-index:9000;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px}' +
+      '#afk-arts-modal .box{background:#1e1b2e;border:1px solid #7c3aed;border-radius:10px;max-width:640px;width:100%;max-height:calc((100dvh - var(--orig-bar-h,0px)) * .9);overflow:auto;padding:16px;color:#e9d5ff}' +
       '#afk-arts-modal h3{font-size:18px;font-weight:bold;color:#f0abfc;margin:0 0 8px}' +
       '#afk-arts-modal .card{border:1px solid #4c1d95;border-radius:8px;padding:10px;margin:10px 0;background:#2a2342}' +
       '#afk-arts-modal .card.on{border-color:#facc15;box-shadow:0 0 8px #a16207}' +

@@ -596,7 +596,7 @@
     <!-- afk-banner：非官方轉載橫幅讓位（基礎設施、無開關；不可掛在 afk-mobile 裡，玩家關掉手機版面就會整個頂端被蓋住） -->
     <script src="afk-banner.js?v=5dbc7f1ec4"></script>
     <!-- afk-nobanner：隱藏非官方橫幅（預設關；只藏不刪＝不跟 gameLoop 的重掛打架，確認過才生效） -->
-    <script src="afk-nobanner.js?v=07adf6960c"></script>
+    <script src="afk-nobanner.js?v=0a03d928f8"></script>
     <!-- 存檔解壓快取：必須排在所有會讀 localStorage 的外掛之前（核心每殺一隻怪都重解壓一次血盟狀態） -->
     <script src="afk-lzcache.js?v=1b86b3d102"></script>
     <!-- afk-perf：卡頓修正（日誌批次寫入／背包分頁按需重建）。必須排在 afk-toast（包 logSys）與 afk-itemsearch（包 renderTabs）之前 -->
@@ -605,13 +605,13 @@
     <!-- afk-mapsync：地圖下拉自我校正（回城／出發後地區/地圖下拉與所在地不符時自動校正） -->
     <script src="afk-mapsync.js?v=f0c11680ea"></script>
     <!-- afk-autoreload：定時自動重新整理（預設每 4 小時，安全時機才做，重整後自動回到原角色） -->
-    <script src="afk-autoreload.js?v=8b91993fbf"></script>
+    <script src="afk-autoreload.js?v=2c51407797"></script>
     <!-- afk-update：網站有新版本時提示更新（按一下存檔重整回原角色；閒置時由 afk-autoreload 自動更新） -->
-    <script src="afk-update.js?v=dd3890ddfd"></script>
+    <script src="afk-update.js?v=632fceedc3"></script>
     <!-- afk-dreamhell：瘋狂席琳席琳夢域鏡模式（需核心補丁 18）；排在 afk-droplog／afk-dropcount 之前，讓它們看得到新掉落 -->
     <script src="afk-dreamhell.js?v=0032992a18"></script>
     <!-- afk-cardplus：白金／鑽石卡、圖鑑全滿夢域 ×3、鑽白金幻化（需核心補丁 20）；排在 afk-dropcount 之前，讓掉落統計數得到白金／鑽石卡 -->
-    <script src="afk-cardplus.js?v=80a38e2a0d"></script>
+    <script src="afk-cardplus.js?v=ae0c57bc69"></script>
     <!-- afk-droplog：短暫卡頓補跑中的擊殺／掉落照常顯示（原版 <3 秒補跑完全不印） -->
     <script src="afk-droplog.js?v=2c6ae01cc4"></script>
     <!-- afk-dropcount：統計分頁「本圖掉落物品」標上實際打到的數量（×N，離開地圖清除） -->
@@ -646,12 +646,12 @@
     <!-- 手機版面 / 返回鍵 -->
     <script src="afk-mobile.js?v=1112cd2210"></script>
     <!-- afk-uiscale：畫面調整（只縮放遊戲畫面 60～100%、每個框都能拖曳調整；外掛開關，預設關；手機版禁用）；排在 afk-mobile 之後 -->
-    <script src="afk-uiscale.js?v=7088b48609"></script>
+    <script src="afk-uiscale.js?v=e0b0c1a027"></script>
     <script src="afk-backnav.js?v=a02389afc7"></script>
     <script src="afk-battlehud.js?v=a9842b42d6"></script>
     <script src="afk-mapbar.js?v=048a44152b"></script>
     <!-- afk-mobile-scale：手機介面縮放（根字級 clamp×縮放、分頁列 4 欄、觸控目標 ≥40px、橫向、輕量模式；排在 afk-mobile／battlehud／mapbar 之後） -->
-    <script src="afk-mobile-scale.js?v=59e030bf5f"></script>
+    <script src="afk-mobile-scale.js?v=34afcd585b"></script>
     <script src="afk-nozoom.js?v=cf5af6ecd5"></script>
     <!-- afk-statusicon：手機狀態圖示縮小一半（純 CSS，只在窄畫面生效） -->
     <script src="afk-statusicon.js?v=4212230d90"></script>
@@ -722,7 +722,7 @@
     <!-- afk-ancient：古代藥水系列（天堂透視鏡古代體力恢復劑）、席琳夢域鏡藥水基礎補量 ×3 -->
     <script src="afk-ancient.js?v=1d1daf7598"></script>
     <!-- afk-arts：轉生技藝（奧拉奇里亞；需 afk-rebirth，排在它之後） -->
-    <script src="afk-arts.js?v=3368a921e3"></script>
+    <script src="afk-arts.js?v=847d0f9f53"></script>
     <!-- afk-knight-shock：轉生騎士的衝擊之暈打全畫面（力量加傷害、敏捷加暈眩率，頭目也會暈） -->
     <script src="afk-knight-shock.js?v=05a1341ffa"></script>
     <!-- afk-uifix：切換地區優先飛到村莊 -->
@@ -836,7 +836,7 @@
     <!-- afk-quickjunk：快速廢品依部位／強化值勾選 -->
     <script src="afk-quickjunk.js?v=1b3e489998"></script>
     <!-- afk-itemguard：🛡 物品保護（依詞條／強化值設定不能賣、不能存；自動販賣部位）；排在 afk-quickjunk、afk-sellguard、倉庫擴充之後（包它們的函式） -->
-    <script src="afk-itemguard.js?v=ee01df1449"></script>
+    <script src="afk-itemguard.js?v=c881c8e395"></script>
     <!-- afk-forged-sprites：自製變身圖（沒有專屬圖的變身與神話／天上／時空／聖衣卡；由 scripts/forge-morph.py 產生） -->
     <script src="afk-forged-sprites.js?v=63f7545505"></script>
     <script src="afk-card-ascension.js?v=ef2d9128ba"></script>
@@ -886,12 +886,14 @@
     <!-- 小百科從目前物品與變身資料生成分階說明。 -->
     <!-- afk-icon-fix：道具圖示對齊天堂透視鏡（由 scripts/gen-icon-fix.mjs 依 data/ttmi-icon-check.json 產生） -->
     <script src="afk-icon-fix.js?v=f74421a931"></script>
-    <script src="afk-game-guide.js?v=68e938e3d9"></script>
+    <script src="afk-game-guide.js?v=fb6dcbe34e"></script>
     <script src="afk-readability.js?v=fccbd2ca1e"></script>
+    <!-- afk-craftinfo：製作清單每列多一行「成品能力」（點開看成品資料，手機不用長按）；手機版製作按鈕換到下一行 -->
+    <script src="afk-craftinfo.js?v=8a51de9e7a"></script>
     <!-- afk-classic：經典模式補正（256K 撥接：斷線／LAG／怪中BUG、頭目皆不死系＋起死回生、古魯丁地監 1～7 樓攀爬與歐林、黑妖之後職業封印、影子打法、歐林房、無敵狗、開服夜爆機、等級上限、時代地圖、席琳神殿進入黑妖三部曲、原版經驗表／組隊分配／死亡懲罰／掉錢、一般轉經典、能力值上限、四人隊伍、贖回冷卻）；包 tick，放在後面 -->
     <script src="afk-classic.js?v=77fdab1506"></script>
     <!-- afk-hotbar：道具熱鍵列 F5～F8（左欄最底下；任何道具裝備都能放） -->
-    <script src="afk-hotbar.js?v=1c820bff49"></script>
+    <script src="afk-hotbar.js?v=24c9b45ae3"></script>
     <!-- afk-npcspace：村莊 NPC 名牌重疊時自動換到附近空位（包 renderTownNPCMap，排在所有加 NPC 的外掛之後） -->
     <script src="afk-npcspace.js?v=a5c3b52f88"></script>
     <!-- afk-dex-extra：掉落查詢的「外掛掉落」登記表（副本／席琳夢域鏡等用程式發的掉落，不在掉落表裡；排在所有加怪加物品的外掛之後） -->

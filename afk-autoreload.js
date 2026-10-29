@@ -61,14 +61,17 @@
   };
 
   var lastWhy = '';
+  // 2026-10-29（玩家：掛機時會自動更新）：有新版本時要不要自動重整，改由外掛開關「有新版本時自動更新」（autoupdate，預設關）決定；
+  //   關著時只顯示更新提示，等滿定時重整的時間才會重整。
+  var updDue = function () { return !!window.__afkUpdateDue && !!(T && T.enabled('autoupdate')); };
   var tick = function () {
-    if (Date.now() - startedAt < DUE_MS && !window.__afkUpdateDue) return;   // 有新版本（afk-update）→ 下一個安全時機就重整
+    if (Date.now() - startedAt < DUE_MS && !updDue()) return;   // 有新版本（afk-update）→ 下一個安全時機就重整
     var why = whyUnsafe();
     if (why) { if (why !== lastWhy) { lastWhy = why; try { console.log('[AFK-autoreload] 已到 ' + hours + ' 小時，延後重新整理：' + why); } catch (e) {} } return; }
     var resume = null;
     if (inGame()) {
       try { if (typeof saveGame === 'function') saveGame(); } catch (e) {}
-      resume = { slot: currentSlot, at: Date.now(), hours: hours, update: !!window.__afkUpdateDue };
+      resume = { slot: currentSlot, at: Date.now(), hours: hours, update: updDue() };
     }
     try { if (resume) sessionStorage.setItem(FLAG, JSON.stringify(resume)); } catch (e) {}
     location.reload();
