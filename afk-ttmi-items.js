@@ -405,7 +405,7 @@
       var ready=player.ttmiBoxes=player.ttmiBoxes||{};
       if(d.ttmiBoxCooldown&&ready[id]>Date.now()){say('封印尚未重新凝聚，再等等吧。',silent);return false;}
       if(row.contentsMode==='random')out=[out[randomInt(0,out.length-1)]];
-      out.forEach(function(x){give(resolve(x.sourceId),randomInt(x.min,x.max));});
+      out.forEach(function(x){var sid=x.pickAny?x.pickAny[randomInt(0,x.pickAny.length-1)]:x.sourceId;give(resolve(sid)||resolve(x.sourceId),randomInt(x.min,x.max));});   // pickAny：永恆禮盒的戒指盒四選一
       try{if(LOTTO[id]&&Math.random()<LOTTO_RATE){give(LOTTO[id],1);say('<span class="text-yellow-300 font-bold">🎉 中獎了！包底還壓著一份「'+esc(DB.items[LOTTO[id]].n)+'」。</span>',false);}}catch(e){}
       if(d.ttmiBoxCooldown){ready[id]=Date.now()+d.ttmiBoxCooldown*1000;applyExtras(d,id);refresh();save();say('封印鬆開，裡頭的物品落入你的掌中。',silent);return true;}
     } else if(['buff','mp','blue','thirdHaste','antidote'].indexOf(action)<0)return false;
@@ -863,6 +863,32 @@
     if(typeof buildRecipeIndex==='function')buildRecipeIndex();
     if(!on&&typeof document!=='undefined'){closeRiftSupplies();var b=document.getElementById('ttmi-rift-button');if(b)b.remove();}
   }
+  // 玩家 2026-10-30 12:19／12:48：禮盒整理
+  //   ①四種永恆禮盒（回覆／集中／體力／魔力）合成一種「永恆禮盒」：開到戒指盒時，四種戒指盒隨機一個；
+  //     掉落改成只掉這一種（同一隻怪原本掉好幾種＝取其中最高的掉落率，不疊加）。舊的三種不再掉落，背包裡的照樣能開，內容一樣。
+  //   ②「魔法娃娃：小思克巴(商城)」＝本作原本就有的「魔法娃娃：小思克巴」→ 禮盒直接開出本作那一隻。
+  //   ③神力藥水（150%～250%）狩獵經驗倍率上限 ×2。
+  (function(){
+    var BOX=resolve(10246),OLD=[10247,10248,10249].map(resolve).filter(Boolean),RINGS=[10251,10252,10253,10254];
+    var core=DB.items['doll_小思克巴'],shop=DB.items[resolve(7097)];
+    if(core&&shop&&resolve(7097)!=='doll_小思克巴'){shop.n=core.n;shop.ttmiDup='doll_小思克巴';shop.ttmiEvent=true;sourceIds[7097]='doll_小思克巴';}
+    if(BOX&&DB.items[BOX]&&rows[BOX]){
+      var list=(rows[BOX].contents||[]).map(function(x){return RINGS.indexOf(x.sourceId)>=0?{sourceId:x.sourceId,min:x.min,max:x.max,pickAny:RINGS.slice()}:x;});
+      var names=RINGS.map(function(sid){var d=DB.items[resolve(sid)];return d?String(d.n).replace('戒指盒',''):null;}).filter(Boolean).join('／');
+      var desc='隨機取得下列一種：永恆糖果 ×10、戒指盒 ×1（'+names+'隨機一種）、巧克力蛋糕 ×5、'+
+        list.filter(function(x){var d=DB.items[resolve(x.sourceId)];return d&&d.doll;}).map(function(x){return DB.items[resolve(x.sourceId)].n+' ×1';}).join('、')+'等 '+list.length+' 種獎勵。';
+      [BOX].concat(OLD).forEach(function(id){var r=rows[id];if(!r)return;r.contents=list;var d=DB.items[id];
+        if(id===BOX){d.n='永恆禮盒';d.d=desc;}else{d.ttmiRetired=true;d.ttmiMergedInto=BOX;d.d='（舊版禮盒，已不再掉落）內容與「永恆禮盒」相同：'+desc;}});
+      if(typeof MOB_DROPS!=='undefined'){
+        var best={};
+        for(var i=addedDrops.length-1;i>=0;i--){var x=addedDrops[i],id=x.entry[0];if(id!==BOX&&OLD.indexOf(id)<0)continue;
+          best[x.mob]=Math.max(best[x.mob]||0,x.entry[1]);var L=MOB_DROPS[x.mob],j=L?L.indexOf(x.entry):-1;if(j>=0)L.splice(j,1);addedDrops.splice(i,1);}
+        Object.keys(best).forEach(function(mob){var entry=[BOX,best[mob]],L=MOB_DROPS[mob]=MOB_DROPS[mob]||[];L.push(entry);addedDrops.push({mob:mob,entry:entry});});
+      }
+    }
+    [9589,9590,9591,9592,9593].forEach(function(sid){var d=DB.items[resolve(sid)];if(!d||!d.ttmiBuff||!(d.ttmiBuff.ttmiExpMult>2))return;
+      d.ttmiOrigExpMult=d.ttmiBuff.ttmiExpMult;d.ttmiBuff.ttmiExpMult=2;d.d=String(d.d||'').replace(/×\s*[\d.]+/,'×2.0');});
+  })();
   syncAvailability();
   if(T&&typeof T.set==='function'){
     var oldToggle=T.set;

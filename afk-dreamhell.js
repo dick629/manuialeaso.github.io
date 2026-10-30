@@ -273,8 +273,12 @@
       if (made) { try { logSys('<span class="text-fuchsia-300">戒指的符文一閃，' + (made + 1) + ' 隻' + nm.n + '自夢魘中同時現身。</span>'); } catch (e) {} if (!state.ff) { try { renderMobs(); } catch (e) {} } }
       return made;
     };
+    var dualRoom = function () {   // 雙頭目祭壇（底比斯、提卡爾）：兩位神本來就要同時在場（玩家 2026-10-30：剛進場兩隻，之後只剩一隻）
+      try { var kr = typeof KING_ROOMS !== 'undefined' && KING_ROOMS[curMap()]; return !!(kr && kr.dual); } catch (e) { return false; }
+    };
     var oldRule = function (idx, args) {   // 副本：舊規則
       if (reborn()) { var r0 = oSpawn.apply(null, args); scanBossEntry(); return r0; }
+      if (dualRoom() && (idx === 0 || idx === 1)) return oSpawn.apply(null, args);   // 祭壇的兩個頭目格不受「王在場不再出怪」限制
       if (typeof window.__afkWantHostile === 'function' && window.__afkWantHostile(idx)) return oSpawn.apply(null, args);
       var ms = mapState.mobs;
       if (ms.some(function (m, j) { return j !== idx && live(m) && m.boss; })) return;
