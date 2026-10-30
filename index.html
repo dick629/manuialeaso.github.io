@@ -591,6 +591,9 @@
     <style>:root{color-scheme:dark}</style>
     <!-- afk-toggles 必須最先載入：外掛開關中樞（逃生門，自己不可被關；某支外掛壞掉時玩家關掉它就能用原版繼續玩） -->
     <script src="afk-toggles.js?v=3593a09bfc"></script>
+    <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
+    <script src="afk-dup-frames-data.js?v=d19c412b59"></script>
+    <script src="afk-dup-frames.js?v=13521f048b"></script>
     <!-- afk-fpscap：畫面幀率上限（省電模式選 15／30／60 FPS：rAF 排隊放行、CSS／Web 動畫改由這裡按頻率推進）；要早載入，讓之後的外掛呼叫 requestAnimationFrame 都經過它 -->
     <script src="afk-fpscap.js?v=006887f31c"></script>
     <!-- afk-classic-core：經典版先記住原版的能力值計算、NPC 名單與變身表（必須排在其他外掛之前） -->
