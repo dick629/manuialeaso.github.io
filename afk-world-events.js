@@ -2,7 +2,7 @@
  * afk-world-events.js — 世界事件（追殺型）第二批（玩家 2026-10-29 21:07；跟「克特的追殺令」同一套規則）
  *
  *   共通：角色 Lv30 以上、在野外／地監／傲慢之塔／海賊島（副本、城鎮、時空裂痕、攻城、純 BOSS 房不出現），
- *         每次新出怪 5% 判定；每種事件各自冷卻 15 分鐘，任何一個世界事件（含克特）結束後全部再等 10 分鐘。
+ *         每次新出怪 5% 判定；每種事件各自冷卻 15 分鐘，任何一個世界事件（含克特）結束後全部再等 15 分鐘（2026-10-30 14:22 起，原 10 分鐘）。
  *         同一時間只會有一個世界事件。離線補跑期間不觸發。
  *         強度跟著地圖等級：L＝地圖一般怪平均等級＋8（18～115），HP×(L÷65)^2.5×(1＋0.15×傭兵數)，傷害骰×L÷65、額外傷害×(L÷65)^1.3。
  *         持續 10 分鐘（只在可出現的地圖計時），換地圖 20～40 秒後追來（HP 不回滿）；被追殺的人全部倒下＝失敗（照一般死亡）。
@@ -50,7 +50,7 @@
   if (!IDS.some(on)) return;
   if (!L || typeof DB === 'undefined' || !DB.mobs) return;
 
-  var RATE = 0.05, CD_MS = 15 * 60 * 1000, GAP_MS = 10 * 60 * 1000, DUR = 6000, LV_MIN = 30, REF = 65;
+  var RATE = 0.05, CD_MS = 15 * 60 * 1000, GAP_MS = 15 * 60 * 1000,   /* 共用冷卻：玩家 2026-10-30 14:22 由 10 分鐘改 15 分鐘 */ DUR = 6000, LV_MIN = 30, REF = 65;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var S = function () { return (typeof state !== 'undefined' && state) ? state : {}; };
   var tk = function () { return Number(S().ticks) || 0; };

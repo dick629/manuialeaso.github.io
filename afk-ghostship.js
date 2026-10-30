@@ -1,8 +1,8 @@
 /* ============================================================================
- * afk-ghostship.js — 幽靈船出航（玩家 2026-10-29 21:36：開船 30 分鐘一次；外掛開關 ghostship，預設開）
+ * afk-ghostship.js — 幽靈船出航（玩家 2026-10-29 21:36：開船 30 分鐘一次 → 2026-10-30 14:22 改成每小時一次、靠岸 3 分鐘、15 分鐘沉船；外掛開關 ghostship，預設開）
  *
- *   時刻：照你電腦的時鐘，每個整點與半點（:00、:30）幽靈船靠上說話之島的港口。
- *         靠岸後 10 分鐘內可以找港口的「幽靈船的引路人」登船（Lv30 以上）；靠岸後 20 分鐘船會沉回霧裡，船上的人回到說話之島。
+ *   時刻：照你電腦的時鐘，每個整點（:00）幽靈船靠上說話之島的港口。
+ *         靠岸後 3 分鐘內可以找港口的「幽靈船的引路人」登船（Lv30 以上）；靠岸後 15 分鐘船會沉回霧裡，船上的人回到說話之島。
  *   船上：甲板上的船員（海賊骷髏、海賊骷髏刀手、船舶之墓的殭屍）一直湧出來，強度跟著你的等級（Lv30～115）；
  *         這一趟打倒 30 名船員，幽靈船長就會現身（每趟一次）：
  *           幽靈砲擊（每 15 秒，全隊水屬性）、深海的召喚（每 25 秒叫 2 名溺死的水手）、
@@ -23,22 +23,22 @@
     (document.head || document.documentElement).appendChild(st);
   })();
   var W = window, T = W.AFK_TOGGLES, L = W.__afkLore, K = W.__afkNpcKit;
-  if (T && T.register) T.register({ id: 'ghostship', name: '幽靈船出航（說話之島，每 30 分鐘）', group: '遊戲內容',
-    desc: '每個整點與半點幽靈船靠上說話之島港口，10 分鐘內可以登船；甲板上打倒 30 名船員，幽靈船長現身，打倒得到幽靈船的寶藏' });
+  if (T && T.register) T.register({ id: 'ghostship', name: '幽靈船出航（說話之島，每小時）', group: '遊戲內容',
+    desc: '每個整點幽靈船靠上說話之島港口，3 分鐘內可以登船、15 分鐘後沉船；甲板上打倒 30 名船員，幽靈船長現身，打倒得到幽靈船的寶藏' });
   if (T && !T.enabled('ghostship')) return;
   if (!L || !K || typeof DB === 'undefined' || !DB.maps || !DB.mobs) return;
 
   var MAP = 'afk_ghostship', MAP_N = '幽靈船－甲板', TOWN = 'town_talking', NPC_ID = 'afk_npc_ghostship', NPC_N = '幽靈船的引路人';
-  var EVERY = 30 * 60 * 1000, BOARD = 10 * 60 * 1000, VOYAGE = 20 * 60 * 1000, NEED = 30, LV_MIN = 30, REF = 65;
+  var EVERY = 60 * 60 * 1000, BOARD = 3 * 60 * 1000, VOYAGE = 15 * 60 * 1000, NEED = 30, LV_MIN = 30, REF = 65;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var S = function () { return (typeof state !== 'undefined' && state) ? state : {}; };
   var tk = function () { return Number(S().ticks) || 0; };
   var esc = L.esc, sys = L.sys, clog = L.clog, B = L.boss;
   var rint = function (a, b) { return a + Math.floor(Math.random() * (b - a + 1)); };
 
-  // ── 時刻（本地時鐘的 :00／:30）──
+  // ── 時刻（本地時鐘的 :00；2026-10-30 14:22 起每小時一班，原本 :00／:30）──
   var now = function () { return (W.__afkGsNow ? W.__afkGsNow() : Date.now()); };
-  var slot = function (t) { var d = new Date(t); d.setSeconds(0, 0); d.setMinutes(d.getMinutes() < 30 ? 0 : 30); return d.getTime(); };   // 這一班的靠岸時間
+  var slot = function (t) { var d = new Date(t); d.setSeconds(0, 0); d.setMinutes(0); return d.getTime(); };   // 這一班的靠岸時間
   var docked = function (t) { t = t == null ? now() : t; return t - slot(t) < BOARD; };
   var sailing = function (t) { t = t == null ? now() : t; return t - slot(t) < VOYAGE; };
   var nextDock = function (t) { t = t == null ? now() : t; return slot(t) + EVERY; };
@@ -70,7 +70,7 @@
   DB.maps[MAP] = CREW.concat(['afk_gs_captain']);
   try { W.__afkNoOfflineMaps = (W.__afkNoOfflineMaps || []).concat([MAP]); } catch (e) {}
   try { SPECIAL_AREA_BG[MAP] = 'assets/area/1920x1080/海賊島.jpg'; } catch (e) {}
-  try { if (typeof MAP_DESC !== 'undefined' && !MAP_DESC[MAP]) MAP_DESC[MAP] = '每個整點與半點從霧裡駛進說話之島港口的幽靈船。甲板上的船員早就不是活人了。'; } catch (e) {}
+  try { if (typeof MAP_DESC !== 'undefined' && !MAP_DESC[MAP]) MAP_DESC[MAP] = '每個整點從霧裡駛進說話之島港口的幽靈船。甲板上的船員早就不是活人了。'; } catch (e) {}
   try { if (typeof SANCTUARY_MAP_NAMES !== 'undefined') SANCTUARY_MAP_NAMES[MAP] = MAP_N; } catch (e) {}
 
   var Lv = function () { var p = P(); return Math.max(LV_MIN, Math.min(115, Number(p && p.lv) || LV_MIN)); };
@@ -253,7 +253,7 @@
 
   // ── NPC ──
   K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: '港口', type: 'travel',
-    d: '站在說話之島港口霧裡的老水手。每個整點與半點，幽靈船會靠岸 10 分鐘，他會帶你登船。' }, '1045');
+    d: '站在說話之島港口霧裡的老水手。每個整點，幽靈船會靠岸 3 分鐘，他會帶你登船。' }, '1045');
   var ui = { err: '' };
   var cdHtml = function (t) {
     var st = store();
@@ -272,7 +272,7 @@
     var p = P(); if (!p) return;
     var t = now(), why = canBoard(), st = store(), d = docked(t);
     var h = '<div class="ax-h">幽靈船出航</div>'
-      + '<div class="ax-note">每個<b>整點與半點</b>（照你電腦的時鐘），幽靈船會從霧裡靠上這座港口，<b>停 10 分鐘</b>讓人登船，靠岸 <b>20 分鐘</b>後沉回霧裡、船上的人回到這裡。'
+      + '<div class="ax-note">每個<b>整點</b>（照你電腦的時鐘），幽靈船會從霧裡靠上這座港口，<b>停 3 分鐘</b>讓人登船，靠岸 <b>15 分鐘</b>後沉回霧裡、船上的人回到這裡。'
       + '甲板上的船員會一直湧出來（強度跟著你的等級）；這一趟打倒 ' + NEED + ' 名船員，<b>幽靈船長</b>就會現身：幽靈砲擊、深海的召喚、HP 一半以下的沉船的詛咒。打倒他得到船長的寶箱（魔法結晶體、金幣、機率祝福卷軸與龍之鑽石）。</div>'
       + '<div class="ax-note" id="afk-gs-cd" data-docked="' + (d ? 1 : 0) + '">' + cdHtml(t) + '</div>';
     h += K.rowHtml({ key: 'board', name: '登船', color: '#99f6e4', desc: '需要 Lv' + LV_MIN + '。登船後甲板上的船員依你的等級變強。', why: why || '', btns: [['board', '登船', !why]] }, 'data-gs');

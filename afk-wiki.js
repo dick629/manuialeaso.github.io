@@ -3481,6 +3481,9 @@
       wTbl(['等級', '累積點數', '等級加成'], H.RANKS.map(function (r, i) { return [r[0], r[1].toLocaleString(), i ? '最大 HP +' + H.PER_RANK.mhp * i + '、最大 MP +' + H.PER_RANK.mmp * i + '、掉落機率 +' + Math.round(H.PER_RANK.drop * i * 100) + '%' : '—']; })) +
       wTbl(['委託', '冒險點數', '狩獵徽章'], [['討伐', H.PTS.kill, H.BADGE.kill], ['霸主討伐', H.PTS.rb, H.BADGE.rb], ['世界事件', H.PTS.we, H.BADGE.we], ['不在委託裡打倒地區霸主／世界事件頭目', H.BONUS_PTS, 0]]) +
       wDesc('冒險者套裝（狩獵徽章交換）：' + H.SET.map(function (x) { return esc(x.n) + '（' + H.RANKS[x.rank][0] + ' 級・' + x.cost + ' 枚）'; }).join('、') + '。' + esc(H.SET_TXT)) +
+      (H.GROW ? wTbl(['冒險等級'].concat(H.SET.map(function (x) { return esc(x.n); })), [1, 2, 3, 4, 5].map(function (r) {
+        return [H.RANKS[r][0] + (r === 5 ? '／S' : '')].concat(H.SET.map(function (x) { var g = H.GROW[x.id][r]; return g ? Object.keys(g).map(function (k) { return ({ ac: 'AC', mr: '魔防', mhp: 'HP', hpR: 'HP 回復', extraHit: '額外命中', extraDmg: '額外傷害', er: '迴避', mdmg: '魔法傷害' })[k] + ' ' + g[k]; }).join('、') : '—'; }));
+      })) + wDesc('數值看穿的人自己的冒險等級（傭兵看那個角色自己的）。強化在冒險者公會用冒險點數＋狩獵徽章：只加 AC、不會失敗、最高 +' + H.ENH_MAX + '；' + [1, 2, 3, 4, 5, 6].map(function (n) { return '+' + n + ' ' + H.ENH[n][0] + ' 點／' + H.ENH[n][1] + ' 枚'; }).join('、') + '。用掉的點數不會讓冒險等級下降。') : '') +
       (H.RELIC_COST ? wDesc('<b>S 級自選遺物</b>：S 級冒險者用狩獵徽章換，武器、防具、飾品各限一次，每件 ' + H.RELIC_COST + ' 枚，從遺物圖鑑的設計遺物裡自己挑。') : '') +
       wDesc('<b>S 級冒險者</b>才能挑戰終焉第二階層；在第二、三階層，每個隊員自己是 S 級才有：受到的傷害 −10%、造成的傷害 +10%、「席琳的凝視」的傷害下降減半、每 15 秒抵銷下一次單次超過最大 HP 10% 的傷害（狀態列的 🛡 S 護盾，亮＝可用）。'));
   }
@@ -3509,7 +3512,7 @@
   function ghostShipCard() {
     var G = window.__afkGhostShip; if (!G) return '';
     return wCard('⛵ 幽靈船出航（說話之島）',
-      wDesc('照你電腦的時鐘，<b>每個整點與半點</b>幽靈船靠上說話之島的港口，<b>停 10 分鐘</b>：這段時間找港口的「幽靈船的引路人」登船（Lv' + G.LV_MIN + ' 以上）。靠岸 <b>20 分鐘</b>後船沉回霧裡，船上的人回到說話之島。靠岸時會有系統訊息，狀態列顯示倒數。') +
+      wDesc('照你電腦的時鐘，<b>每個整點</b>幽靈船靠上說話之島的港口，<b>停 3 分鐘</b>：這段時間找港口的「幽靈船的引路人」登船（Lv' + G.LV_MIN + ' 以上）。靠岸 <b>15 分鐘</b>後船沉回霧裡，船上的人回到說話之島。靠岸時會有系統訊息，狀態列顯示倒數。') +
       wTbl(['項目', '內容'], [
         ['船員', '幽靈船的海賊骷髏、骷髏刀手、船舶之墓的溺死者一直湧出來，強度跟著你的等級（Lv30～115）；照一般怪給經驗、金幣、掉落'],
         ['幽靈船長', '這一趟打倒 ' + G.NEED + ' 名船員就會現身（每趟一次），HP 隨傭兵數變高'],

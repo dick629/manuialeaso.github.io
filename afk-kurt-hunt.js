@@ -158,7 +158,7 @@
     else if (why === 'royal') { st.fails = (st.fails || 0) + 1; sys('<span class="font-bold" style="color:#f87171">⚔ 克特收劍：「王族的血，到此為止。」他消失在黑騎士團的陣列之後。</span>'); }
     else { st.escapes = (st.escapes || 0) + 1; sys('<span class="font-bold" style="color:#fca5a5">⚔ 十分鐘過去，克特冷笑一聲離開了：「下一次，你不會這麼幸運。」</span>'); }
     hunt = null; badge();
-    try { var pp = P(); if (pp) { if (!pp.afkWe || typeof pp.afkWe !== 'object') pp.afkWe = { cd: {}, gap: 0, stats: {} }; pp.afkWe.gap = Date.now() + 10 * 60 * 1000; } } catch (e) {}
+    try { var pp = P(); if (pp) { if (!pp.afkWe || typeof pp.afkWe !== 'object') pp.afkWe = { cd: {}, gap: 0, stats: {} }; pp.afkWe.gap = Date.now() + ((W.__afkWorldEvents && W.__afkWorldEvents.GAP_MS) || 15 * 60 * 1000); } } catch (e) {}   // 共用冷卻 15 分鐘（玩家 2026-10-30 14:22，原 10 分鐘）
   };
   var start = function (idx) {
     var p = P(), cur = mapState.current, L = levelFor(cur);

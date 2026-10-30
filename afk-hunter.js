@@ -10,7 +10,8 @@
  *     委託板永遠有 4 個可選：3 個討伐（依你的等級挑地圖與怪物）、1 個霸主或世界事件。
  *     完成就直接領獎（不用回公會）：點數、金幣（等級×300）、狩獵徽章（討伐 1、霸主／世界事件 3）。
  *   冒險者套裝（公會用狩獵徽章換）：帽子 E 級／10 枚、手套 D 級／20 枚、長靴 C 級／30 枚、斗篷 B 級／40 枚。
- *     套裝效果：2 件 最大 HP +50、魔防 +5；4 件 再加 傷害減免 +2、命中 +3。
+ *     2026-10-30 14:22 起：數值跟著穿的人的冒險等級成長（A 級追平闇龍獵人那一級，S 同 A）；套裝效果也跟著成長。
+ *     強化：冒險者公會用冒險點數＋狩獵徽章，只加 AC、不會失敗、最高 +6（+1～+3 100 點＋40 枚、+4 200＋80、+5 300＋160、+6 400＋320）。
  *   S 級自選遺物（2026-10-30 13:18）：武器、防具、飾品各限一次，每件狩獵徽章 40 枚，從遺物圖鑑的 250 件設計遺物裡自己挑。
  *   委託跟著等級走：討伐挑「怪物平均等級在角色等級 −10～+2」的地圖；角色等級比上板時差 5 級以上就換；霸主 Lv15、世界事件 Lv30 起才會上板。
  *   S 級冒險者在終焉第二、三階層（每個隊員自己是 S 才有）：受到的傷害 −10%、造成的傷害 +10%、
@@ -67,19 +68,46 @@
     W.partyDropRate = function (rate) { var p = P(), r = (p && !classic(p)) ? rankIdx(p) : 0; return oDrop.call(this, r ? (Number(rate) || 0) * (1 + PER_RANK.drop * r) : rate); };
   }
 
-  // ── 冒險者套裝 ──
+  // ── 冒險者套裝（玩家 2026-10-30 14:22：跟著冒險等級成長，A 級追平闇龍獵人那一級；用冒險點數＋狩獵徽章強化到 +6）──
+  //   數值看「穿的人自己的冒險等級」（玩家看自己、傭兵看那個角色自己的），S 級＝A 級；穿的人等級比這件的門檻低時，照這件的門檻等級算。
   var SET = [
-    { id: 'afk_hunter_helm', n: '冒險者的帽子', slot: 'helm', img: 'armors/皮帽子', ac: 2, rank: 1, cost: 10 },
-    { id: 'afk_hunter_gloves', n: '冒險者的手套', slot: 'gloves', img: 'armors/手套', ac: 2, rank: 2, cost: 20 },
-    { id: 'afk_hunter_boots', n: '冒險者的長靴', slot: 'boots', img: 'armors/放牧者的皮靴', ac: 2, rank: 3, cost: 30 },
-    { id: 'afk_hunter_cloak', n: '冒險者的斗篷', slot: 'cloak', img: 'armors/狼皮斗篷', ac: 2, rank: 4, cost: 40, mr: 3 }
+    { id: 'afk_hunter_helm', n: '冒險者的帽子', slot: 'helm', img: 'armors/皮帽子', rank: 1, cost: 10 },
+    { id: 'afk_hunter_gloves', n: '冒險者的手套', slot: 'gloves', img: 'armors/手套', rank: 2, cost: 20 },
+    { id: 'afk_hunter_boots', n: '冒險者的長靴', slot: 'boots', img: 'armors/放牧者的皮靴', rank: 3, cost: 30 },
+    { id: 'afk_hunter_cloak', n: '冒險者的斗篷', slot: 'cloak', img: 'armors/狼皮斗篷', rank: 4, cost: 40 }
   ];
-  var SET_TXT = '冒險者套裝：2 件 最大 HP +50、魔防 +5；4 件 再加 傷害減免 +2、命中 +3。';
+  var GROW = {   // 冒險等級 1＝E … 5＝A（S 同 A）
+    afk_hunter_helm: { 1: { ac: 2, mr: 2, mhp: 20, hpR: 1 }, 2: { ac: 3, mr: 4, mhp: 40, hpR: 2 }, 3: { ac: 4, mr: 6, mhp: 60, hpR: 3 }, 4: { ac: 5, mr: 8, mhp: 80, hpR: 4 }, 5: { ac: 6, mr: 10, mhp: 100, hpR: 5 } },
+    afk_hunter_gloves: { 2: { ac: 2, extraHit: 1 }, 3: { ac: 3, extraHit: 2, extraDmg: 1 }, 4: { ac: 4, extraHit: 3, extraDmg: 1 }, 5: { ac: 5, extraHit: 4, extraDmg: 2 } },
+    afk_hunter_boots: { 3: { ac: 3, er: 2, mr: 4, mhp: 40 }, 4: { ac: 4, er: 3, mr: 6, mhp: 60 }, 5: { ac: 5, er: 4, mr: 8, mhp: 80 } },
+    afk_hunter_cloak: { 4: { ac: 4, mr: 12, extraDmg: 1, mdmg: 1 }, 5: { ac: 5, mr: 15, extraDmg: 2, mdmg: 2 } }
+  };
+  var SET_GROW = { 1: [{ mhp: 30 }, null], 2: [{ mhp: 50, mr: 3 }, null], 3: [{ mhp: 70, mr: 5 }, null], 4: [{ mhp: 90, mr: 5 }, { dr: 1, extraHit: 2 }], 5: [{ mhp: 110, mr: 7 }, { dr: 2, extraHit: 3 }] };
+  var GROW_KEYS = ['ac', 'mr', 'mhp', 'hpR', 'extraHit', 'extraDmg', 'er', 'mdmg', 'dr'];
+  var STAT_N = { ac: 'AC', mr: '魔防', mhp: '最大 HP', hpR: 'HP 回復', extraHit: '額外命中', extraDmg: '額外傷害', er: '迴避', mdmg: '魔法傷害', dr: '傷害減免' };
+  var statTxt = function (o) { return Object.keys(o || {}).map(function (k) { return (STAT_N[k] || k) + (k === 'ac' ? ' ' : ' +') + o[k]; }).join('、'); };
+  var growRank = function (r) { return Math.max(1, Math.min(5, r || 1)); };
+  var pieceStats = function (id, r) { var g = GROW[id], x = SET.filter(function (q) { return q.id === id; })[0]; if (!g || !x) return {}; return g[Math.max(x.rank, growRank(r))] || {}; };
+  var setTiers = [[2, {}], [4, {}]], SET_OBJ = { ids: SET.map(function (x) { return x.id; }), tiers: setTiers };
+  var setTxt = function (r) { var t = SET_GROW[growRank(r)]; return '冒險者套裝（依你的冒險等級）：2 件 ' + statTxt(t[0]) + (t[1] ? '；4 件 再加 ' + statTxt(t[1]) : '；4 件效果 B 級起') + '。'; };
+  var SET_TXT = '冒險者套裝：數值跟著冒險等級成長（A 級最強，追平闇龍獵人那一級）；2 件 最大 HP、魔防，4 件（B 級起）再加 傷害減免、命中。';
+  var curGrow = -1;
+  var applyGrow = function (r) {   // 把物品定義與套裝效果切到等級 r 的數值
+    r = growRank(r); if (r === curGrow) return; curGrow = r;
+    SET.forEach(function (x) {
+      var d = DB.items[x.id]; if (!d) return;
+      GROW_KEYS.forEach(function (k) { delete d[k]; });
+      var st = pieceStats(x.id, r); Object.keys(st).forEach(function (k) { d[k] = st[k]; });
+      d.d = '冒險者公會發給 ' + RANKS[x.rank][0] + ' 級以上冒險者的裝備，用狩獵徽章 ' + x.cost + ' 枚交換。目前（' + RANKS[Math.max(x.rank, r)][0] + ' 級）：' + statTxt(st)
+        + '。A 級：' + statTxt(GROW[x.id][5]) + '。可在冒險者公會用冒險點數＋狩獵徽章強化到 +6（只加 AC，不會失敗）。' + setTxt(r);
+    });
+    var t = SET_GROW[r];
+    [0, 1].forEach(function (i) { var o = setTiers[i][1]; Object.keys(o).forEach(function (k) { delete o[k]; }); Object.assign(o, t[i] || {}); });
+  };
   SET.forEach(function (x) {
-    L.addItem(x.id, Object.assign({ n: x.n, type: 'arm', slot: x.slot, ac: x.ac, req: 'all', safe: 4, p: 5000, c: 'text-lime-300', img: IC(x.img), afkHunterSet: true,
-      d: '冒險者公會發給 ' + RANKS[x.rank][0] + ' 級以上冒險者的裝備，用狩獵徽章 ' + x.cost + ' 枚交換。' + SET_TXT }, x.mr ? { mr: x.mr } : {}));
+    L.addItem(x.id, { n: x.n, type: 'arm', slot: x.slot, req: 'all', safe: 6, noEnhance: true, p: 5000, c: 'text-lime-300', img: IC(x.img), afkHunterSet: true, d: '' });
   });
-  L.defineSet({ ids: SET.map(function (x) { return x.id; }), tiers: [[2, { mhp: 50, mr: 5 }], [4, { dr: 2, extraHit: 3 }]] });
+  L.defineSet(SET_OBJ);
 
   // ── 委託 ──
   var okMap = function (id) { try { if (W.__afkKurtHunt && W.__afkKurtHunt.okMap) return W.__afkKurtHunt.okMap(id); } catch (e) {} return !!(DB.maps[id] && DB.maps[id].length) && !/^town_|^afk_/.test(id); };
@@ -303,11 +331,18 @@
       return '<div class="p-2 rounded border border-slate-600 bg-slate-900/40 flex items-center justify-between gap-2"><span>' + esc(title(c)) + '<br><small class="text-slate-400">冒險點數 ' + PTS[c.kind] + '・狩獵徽章 ' + BADGE[c.kind] + '・金幣 ' + Math.max(1000, (Number(p.lv) || 1) * 300).toLocaleString() + '</small></span>'
         + '<button type="button" class="btn px-3 py-1 text-sm font-bold" style="white-space:nowrap;flex-shrink:0"' + (why ? ' disabled' : '') + ' data-hq="take:' + c.id + '">接取</button></div>';
     }).join('');
-    hh += '<div class="font-bold text-sky-300">冒險者套裝（狩獵徽章 ' + (h.badges || 0) + ' 枚）</div><div class="text-xs text-slate-400">' + SET_TXT + '</div>';
+    hh += '<div class="font-bold text-sky-300">冒險者套裝（狩獵徽章 ' + (h.badges || 0) + ' 枚・可用冒險點數 ' + availPts(p).toLocaleString() + '）</div><div class="text-xs text-slate-400">' + esc(setTxt(ri)) + ' A 級追平闇龍獵人那一級。強化：只加 AC、不會失敗、最高 +' + ENH_MAX + '（用掉的冒險點數不會讓冒險等級下降）。</div>';
     hh += SET.map(function (x) {
       var lock = ri < x.rank ? RANKS[x.rank][0] + ' 級以上' : (h.badges || 0) < x.cost ? '徽章不足' : '';
-      return '<div class="p-2 rounded border border-slate-700 flex items-center justify-between gap-2"><span><img src="' + IC(x.img) + '" style="width:28px;height:28px;display:inline-block;vertical-align:middle;margin-right:6px">' + esc(x.n) + ' <small class="text-slate-400">AC ' + x.ac + (x.mr ? '、魔防 +' + x.mr : '') + '・' + RANKS[x.rank][0] + ' 級・' + x.cost + ' 枚</small></span>'
-        + '<button type="button" class="btn px-3 py-1 text-sm" style="white-space:nowrap;flex-shrink:0"' + (lock ? ' disabled title="' + lock + '"' : '') + ' data-hq="buy:' + x.id + '">' + (lock || '交換') + '</button></div>';
+      var own = owned(p, x.id);
+      return '<div class="p-2 rounded border border-slate-700"><div class="flex items-center justify-between gap-2"><span><img src="' + IC(x.img) + '" style="width:28px;height:28px;display:inline-block;vertical-align:middle;margin-right:6px">' + esc(x.n) + ' <small class="text-slate-400">' + esc(statTxt(pieceStats(x.id, ri))) + '・' + RANKS[x.rank][0] + ' 級・' + x.cost + ' 枚</small></span>'
+        + '<button type="button" class="btn px-3 py-1 text-sm" style="white-space:nowrap;flex-shrink:0"' + (lock ? ' disabled title="' + lock + '"' : '') + ' data-hq="buy:' + x.id + '">' + (lock || '交換') + '</button></div>'
+        + own.map(function (o) {
+          var en = Number(o.it.en) || 0, c = ENH[en + 1], why3 = enhWhy(p, o.it);
+          return '<div class="flex items-center justify-between gap-2 mt-1 text-xs"><span class="text-slate-300">' + (o.slot ? '裝備中' : '背包') + '：+' + en + '</span>'
+            + (en >= ENH_MAX ? '<span class="text-amber-300">已強化到 +' + ENH_MAX + '</span>'
+              : '<button type="button" class="btn px-2 py-0.5 text-xs" style="white-space:nowrap"' + (why3 ? ' disabled title="' + esc(why3) + '"' : '') + ' data-hq="enh:' + esc(o.key) + '">強化到 +' + (en + 1) + '（點數 ' + c[0] + '・徽章 ' + c[1] + '）</button>') + '</div>';
+        }).join('') + '</div>';
     }).join('');
     hh += '<div class="font-bold" style="color:#c4b5fd">S 級：自選遺物（武器、防具、飾品各一次，每件狩獵徽章 ' + RELIC_COST + ' 枚）</div>';
     hh += '<div class="grid grid-cols-3 gap-2">' + RELIC_CATS.map(function (c) {
@@ -324,6 +359,7 @@
       else if (v[0] === 'drop') abandon(Number(v[1]));
       else if (v[0] === 'buy') { r = buy(v[1]); if (!r.ok) sys('<span class="text-amber-300">' + esc(r.msg) + '</span>'); }
       else if (v[0] === 'relic') { openPicker(v[1], function () { render(div); }); return; }
+      else if (v[0] === 'enh') { r = enhance(v.slice(1).join(':')); if (!r.ok) sys('<span class="text-amber-300">' + esc(r.msg) + '</span>'); }
       render(div);
     };
   };
@@ -338,6 +374,59 @@
     try { renderTabs(); updateUI(); saveGame(); } catch (e) {}
     return { ok: true };
   };
+  // ── 冒險者套裝強化（玩家 2026-10-30 14:22）：用冒險點數＋狩獵徽章，只加 AC、不會失敗、最高 +6 ──
+  //   到 +1～+3：每次點數 100＋徽章 40；+4：200＋80；+5：300＋160；+6：400＋320。
+  //   冒險等級看「累積」點數，強化用掉的點數另外記（spent），所以強化不會讓等級掉下來。
+  var ENH = { 1: [100, 40], 2: [100, 40], 3: [100, 40], 4: [200, 80], 5: [300, 160], 6: [400, 320] }, ENH_MAX = 6;
+  var availPts = function (p) { var h = p && p.afkHunter; return h ? Math.max(0, (Number(h.pts) || 0) - (Number(h.spent) || 0)) : 0; };
+  var owned = function (p, id) {
+    var out = [];
+    Object.keys((p && p.eq) || {}).forEach(function (k) { var it = p.eq[k]; if (it && it.id === id) out.push({ it: it, slot: k, key: 'eq:' + k }); });
+    ((p && p.inv) || []).forEach(function (it, i) { if (it && it.id === id) out.push({ it: it, slot: null, key: 'inv:' + (it.uid != null ? it.uid : '#' + i) }); });
+    return out;
+  };
+  var findOwned = function (p, key) {
+    var k = String(key || ''), i;
+    if (k.indexOf('eq:') === 0) { var it = p.eq && p.eq[k.slice(3)]; return it && SET.some(function (x) { return x.id === it.id; }) ? it : null; }
+    if (k.indexOf('inv:#') === 0) { i = Number(k.slice(5)); var it2 = p.inv && p.inv[i]; return it2 && SET.some(function (x) { return x.id === it2.id; }) ? it2 : null; }
+    if (k.indexOf('inv:') === 0) { var u = k.slice(4); return (p.inv || []).filter(function (x) { return x && String(x.uid) === u && SET.some(function (q) { return q.id === x.id; }); })[0] || null; }
+    return null;
+  };
+  var enhWhy = function (p, it) {
+    if (!p || !it) return '找不到這件裝備';
+    if (classic(p)) return '經典模式不開放';
+    var en = Number(it.en) || 0; if (en >= ENH_MAX) return '已經 +' + ENH_MAX;
+    if ((Number(it.cnt) || 1) > 1) return '請先把疊在一起的拆開';
+    var c = ENH[en + 1], h = store(p);
+    if (availPts(p) < c[0]) return '冒險點數不足（要 ' + c[0] + '，可用 ' + availPts(p) + '）';
+    if ((h.badges || 0) < c[1]) return '狩獵徽章不足（要 ' + c[1] + '）';
+    return '';
+  };
+  var enhance = function (key) {
+    var p = P(); if (!p) return { ok: false, msg: '請先進入遊戲' };
+    var it = findOwned(p, key), why = enhWhy(p, it); if (why) return { ok: false, msg: why };
+    var h = store(p), en = Number(it.en) || 0, c = ENH[en + 1];
+    h.spent = (Number(h.spent) || 0) + c[0]; h.badges -= c[1]; it.en = en + 1;
+    var d = DB.items[it.id];
+    sys('<span class="text-sky-300">冒險者公會替你強化了「' + esc(d ? d.n : it.id) + '」：+' + en + ' → <b>+' + it.en + '</b>（冒險點數 −' + c[0] + '、狩獵徽章 −' + c[1] + '）。</span>');
+    try { recomputeStats(); renderTabs(); updateUI(); saveGame(); } catch (e) {}
+    return { ok: true, en: it.en };
+  };
+  // 數值跟著穿的人的冒險等級：玩家重算能力前切到自己的等級；建傭兵時切到那個傭兵自己的等級，建完切回來
+  var playerGrow = function () { var p = P(); applyGrow(p ? rankIdx(p) : 1); };
+  if (typeof W.recomputeStats === 'function') {
+    var oRe2 = W.recomputeStats;
+    W.recomputeStats = function () { try { playerGrow(); } catch (e) {} return oRe2.apply(this, arguments); };
+  }
+  if (typeof W.buildAlly === 'function') {
+    var oBA = W.buildAlly;
+    W.buildAlly = function (slotN) {
+      var r0 = 1; try { var sp = typeof _roleReadSavePlayer === 'function' ? _roleReadSavePlayer(String(slotN)) : null; r0 = sp ? rankIdx(sp) : 1; } catch (e) {}
+      applyGrow(r0);
+      try { return oBA.apply(this, arguments); } finally { try { playerGrow(); } catch (e) {} }
+    };
+  }
+  applyGrow(1); try { playerGrow(); } catch (e) {}
   // ── S 級：自選遺物（玩家 2026-10-30 13:18：S 級兌換要媲美遺物 → 武器、防具、飾品各一件自選）──
   //   S 級冒險者用狩獵徽章換：每個角色武器／防具／飾品各限一次，每件 RELIC_COST 枚；可選範圍＝遺物圖鑑的 250 件設計遺物。
   var RELIC_COST = 40, RELIC_CATS = [['weapon', '武器'], ['armor', '防具'], ['accessory', '飾品']];
@@ -441,6 +530,7 @@
   }
 
   W.__afkHunter = { RANKS: RANKS, DAY_MAX: DAY_MAX, CD_MS: CD_MS, ACTIVE_MAX: ACTIVE_MAX, PTS: PTS, BADGE: BADGE, BONUS_PTS: BONUS_PTS, PER_RANK: PER_RANK, S_BUFF: S_BUFF, SET: SET, SET_TXT: SET_TXT, NPC_ID: NPC_ID,
+    ENH: ENH, ENH_MAX: ENH_MAX, GROW: GROW, SET_GROW: SET_GROW, applyGrow: applyGrow, pieceStats: pieceStats, availPts: availPts, enhance: enhance, enhWhy: enhWhy, owned: owned, setTxt: setTxt,
     RELIC_COST: RELIC_COST, RELIC_CATS: RELIC_CATS, relics: relics, relicWhy: relicWhy, buyRelic: buyRelic, openPicker: openPicker, stale: stale,
     store: store, rankIdx: rankIdx, rankOf: rankOf, isS: isS, sOf: sOf, roll: roll, accept: accept, abandon: abandon, buy: buy, canAccept: canAccept, addPts: addPts, title: title, render: render, tierOn: tierOn, maps: maps,
     _resetAllyCache: function () { allyS = {}; } };
