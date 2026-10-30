@@ -29,7 +29,7 @@
     if (!FB.dreamOn()) return '需在席琳夢域鏡中';
     if (!FB.won(p)) return '要先打贏第一階層「席琳夢境」';
     var r = rec(p);
-    if (t === 2) { if (r.t2 === 'win') return '已經打贏了'; return ''; }
+    if (t === 2) { if (r.t2 === 'win') return '已經打贏了'; if (W.__afkHunter && !W.__afkHunter.isS(p)) return '要先成為 S 級冒險者（冒險者公會）'; return ''; }   // 魔物獵人模式（玩家 2026-10-30）：第二階層要 S 級
     if (r.t2 !== 'win') return '要先打贏第二階層「席琳幻影」';
     if (r.t3) return r.t3 === 'win' ? '已經打贏了' : '已經挑戰過了（只有一次）';
     return '';

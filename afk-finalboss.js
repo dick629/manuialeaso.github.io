@@ -124,6 +124,7 @@
     var mm = modeMult(); if (!(mm > 0)) return false;
     dmg = Math.max(1, Math.floor(dmg * mm));
     if (typeof window.__afkTrueCut === 'function') dmg = window.__afkTrueCut(t, dmg);   // 符文「骸」：真實傷害減免
+    if (typeof window.__afkFbHurtMod === 'function') { try { dmg = window.__afkFbHurtMod(t, dmg, why); } catch (e) {} if (!(dmg > 0)) return false; }   // 魔物獵人：S 級冒險者的減傷與護盾（afk-hunter.js）
     if (t === player) { player.hp -= dmg; if (player.hp <= 0 && typeof killPlayer === 'function') { killPlayer(); return true; } }
     else { t.curHp -= dmg; if (t.curHp <= 0) { t.curHp = 0; t._downed = true; t._reviveCd = 150; log('<span class="text-amber-400 font-bold">協力傭兵 ' + (t._allyName || '') + ' 被' + why + '擊倒。</span>'); } }
     return false;
@@ -197,9 +198,10 @@
     var oD = C.damage;
     C.damage = function (actor, target, amount) {
       var r = oD.apply(this, arguments);
+      try { if (r > 0 && target && (target._afkFinal || target._afkApostle) && typeof window.__afkFbOutMod === 'function') r = Math.max(1, Math.floor(window.__afkFbOutMod(actor, target, r))); } catch (e) {}   // 魔物獵人：S 級冒險者攻擊 +10%（在封印門檻判斷之前）
       try { if (target && target._afkFinal && r > 0) { var n = addsAlive(); if (n) r = Math.max(1, Math.floor(r * Math.pow(1 - FB.addDr, n))); } } catch (e) {}
       try {
-        if (target && (target._afkFinal || target._afkApostle) && r > 0 && on() && (S()._afkGazeUntil || 0) > (S().ticks || 0)) r = Math.max(1, Math.floor(r * (1 - (S()._afkGazePct || FB.gaze))));
+        if (target && (target._afkFinal || target._afkApostle) && r > 0 && on() && (S()._afkGazeUntil || 0) > (S().ticks || 0)) { var gzp = S()._afkGazePct || FB.gaze; if (typeof window.__afkFbGazeMod === 'function') { try { gzp = window.__afkFbGazeMod(actor, gzp); } catch (e) {} } r = Math.max(1, Math.floor(r * (1 - gzp))); }
         if (target && target._afkFinal && r > 0) { var g = gateOf(target); if (g) { var floorHp = Math.max(1, Math.ceil(target.hp * g[0])); if (target.curHp - r < floorHp) { r = Math.max(0, target.curHp - floorHp); seal(target, g); } } }
       } catch (e) {}
       return r;

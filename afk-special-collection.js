@@ -6,7 +6,7 @@
  *     👑 地區霸主：十五個地區的霸主（打倒次數、霸主的證明）
  *     📜 劇情：主線與支線劇情（紅獅之誓、知識與背叛、闇龍的低語…）、職業專屬劇情、亞丁的陰影（目前職業的進度）
  *     📋 任務：各等級的職業試煉（目前職業）
- *     🏹 冒險者等級：魔物獵人模式（規劃中）
+ *     🏹 冒險者等級：魔物獵人模式（冒險者等級、完成的委託、冒險者套裝）
  *   只讀現有紀錄，不改任何數值；目前不給收藏加成。
  * ========================================================================== */
 (function () {
@@ -83,7 +83,17 @@
     h += sec('📋', '任務（職業試煉）', qr.filter(function (q) { return q.done; }).length, qr.length,
       '<ol class="afk-sc-q">' + qr.map(function (q) { return '<li class="' + (q.done ? 'done' : '') + '">' + (q.done ? '✔' : q.on ? '…' : '・') + ' Lv' + q.lv + ' 試煉（' + esc(q.npc) + '）<small>' + esc(q.rw) + '</small></li>'; }).join('') + '</ol>');
     // 冒險者等級
-    h += sec('🏹', '冒險者等級', 0, 0, '<p class="afk-sc-note">魔物獵人模式（規劃中）：狩獵委託、冒險者等級與冒險者套裝的紀錄會放在這裡。</p>');
+    var HU = W.__afkHunter;
+    if (!HU) h += sec('🏹', '冒險者等級', 0, 0, '<p class="afk-sc-note">「魔物獵人模式」目前關閉中。</p>');
+    else if (p.classicMode) h += sec('🏹', '冒險者等級', 0, 0, '<p class="afk-sc-note">經典模式不開放冒險者公會。</p>');
+    else {
+      var hs = HU.store(p), ri = HU.rankIdx(p), R = HU.RANKS, own = function (id) { return (p.inv || []).some(function (x) { return x && x.id === id; }) || Object.keys(p.eq || {}).some(function (k) { return p.eq[k] && p.eq[k].id === id; }); };
+      var setGot = HU.SET.filter(function (x) { return own(x.id); }).length;
+      h += sec('🏹', '冒險者等級', ri, R.length - 1,
+        '<div class="afk-sc-grid">' + R.map(function (r, i) { return '<div class="afk-sc-tile' + (i <= ri ? ' got' : '') + '"><div class="afk-sc-ic" style="color:' + r[2] + ';font-weight:900">' + r[0] + '</div><b>' + r[0] + ' 級</b><small>' + r[1].toLocaleString() + ' 點</small></div>'; }).join('') + '</div>'
+        + '<p class="afk-sc-note">目前 ' + R[ri][0] + ' 級・冒險點數 ' + (hs.pts || 0).toLocaleString() + '・完成委託 ' + (hs.done || 0) + ' 個（討伐 ' + ((hs.kinds || {}).kill || 0) + '、霸主 ' + ((hs.kinds || {}).rb || 0) + '、世界事件 ' + ((hs.kinds || {}).we || 0) + '）・冒險者套裝 ' + setGot + '／' + HU.SET.length + ' 件</p>'
+        + '<p class="afk-sc-note">冒險者公會的接待員在說話之島、奇岩、亞丁、歐瑞。</p>');
+    }
     body.innerHTML = h;
   };
 
