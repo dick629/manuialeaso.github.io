@@ -16,6 +16,14 @@
  * ========================================================================== */
 (function () {
   'use strict';
+  (function () {   // 世界事件狀態列：多個倒數改成上下排，不擠壓「冒險地圖」標題（玩家 2026-10-30 13:49）
+    if (document.getElementById('afk-ev-badges-css')) return;
+    var st = document.createElement('style'); st.id = 'afk-ev-badges-css';
+    st.textContent = '#afk-ev-badges{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;line-height:1.2;white-space:nowrap;font-size:13px;min-width:0}'
+      + '#afk-ev-badges>span{margin-left:0!important}#afk-ev-badges:empty{display:none}'
+      + '#map-view-panel>.panel-header>span:first-child{white-space:nowrap;min-width:0}';
+    (document.head || document.documentElement).appendChild(st);
+  })();
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'kurthunt', name: '世界事件：克特的追殺令', group: '遊戲內容',
     desc: '隊伍裡有王族、Lv30 以上時，野外／地監／傲慢之塔每次出怪 5% 被黑騎士隊長克特追殺 10 分鐘（冷卻 15 分鐘）；強度跟著地圖等級，副本裡不出現' });

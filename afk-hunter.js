@@ -19,6 +19,14 @@
  * ========================================================================== */
 (function () {
   'use strict';
+  (function () {   // 世界事件狀態列：多個倒數改成上下排，不擠壓「冒險地圖」標題（玩家 2026-10-30 13:49）
+    if (document.getElementById('afk-ev-badges-css')) return;
+    var st = document.createElement('style'); st.id = 'afk-ev-badges-css';
+    st.textContent = '#afk-ev-badges{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;line-height:1.2;white-space:nowrap;font-size:13px;min-width:0}'
+      + '#afk-ev-badges>span{margin-left:0!important}#afk-ev-badges:empty{display:none}'
+      + '#map-view-panel>.panel-header>span:first-child{white-space:nowrap;min-width:0}';
+    (document.head || document.documentElement).appendChild(st);
+  })();
   var W = window, T = W.AFK_TOGGLES, L = W.__afkLore;
   if (T && T.register) T.register({ id: 'hunter', name: '魔物獵人模式（冒險者公會）', group: '遊戲內容',
     desc: '冒險者公會的狩獵委託與冒險者等級 F～S（每個角色各自計算，經典模式不開放）；S 級才能挑戰終焉第二階層' });

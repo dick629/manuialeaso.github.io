@@ -17,6 +17,14 @@
  * ========================================================================== */
 (function () {
   'use strict';
+  (function () {   // 世界事件狀態列：多個倒數改成上下排，不擠壓「冒險地圖」標題（玩家 2026-10-30 13:49）
+    if (document.getElementById('afk-ev-badges-css')) return;
+    var st = document.createElement('style'); st.id = 'afk-ev-badges-css';
+    st.textContent = '#afk-ev-badges{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;line-height:1.2;white-space:nowrap;font-size:13px;min-width:0}'
+      + '#afk-ev-badges>span{margin-left:0!important}#afk-ev-badges:empty{display:none}'
+      + '#map-view-panel>.panel-header>span:first-child{white-space:nowrap;min-width:0}';
+    (document.head || document.documentElement).appendChild(st);
+  })();
   var W = window, T = W.AFK_TOGGLES, L = W.__afkLore;
   if (T && T.register) T.register({ id: 'regionboss', name: '地區霸主', group: '遊戲內容',
     desc: '每個地區有自己的霸主：在該地區的野外與地監每次出怪 1% 現身（同地區 30 分鐘一次），守在原地 5 分鐘，打倒得寶箱與霸主的證明' });

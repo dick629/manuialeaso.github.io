@@ -23,6 +23,14 @@
  * ========================================================================== */
 (function () {
   'use strict';
+  (function () {   // 世界事件狀態列：多個倒數改成上下排，不擠壓「冒險地圖」標題（玩家 2026-10-30 13:49）
+    if (document.getElementById('afk-ev-badges-css')) return;
+    var st = document.createElement('style'); st.id = 'afk-ev-badges-css';
+    st.textContent = '#afk-ev-badges{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;line-height:1.2;white-space:nowrap;font-size:13px;min-width:0}'
+      + '#afk-ev-badges>span{margin-left:0!important}#afk-ev-badges:empty{display:none}'
+      + '#map-view-panel>.panel-header>span:first-child{white-space:nowrap;min-width:0}';
+    (document.head || document.documentElement).appendChild(st);
+  })();
   var W = window, T = W.AFK_TOGGLES, L = W.__afkLore;
   var EV = {
     senis: { tog: 'wesenis', n: '魔女賽尼斯「血的誓約詛咒」', who: 'knight', whoN: '騎士', badge: '☠ 血的誓約詛咒', color: '#93c5fd',

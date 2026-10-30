@@ -14,6 +14,14 @@
  * ========================================================================== */
 (function () {
   'use strict';
+  (function () {   // 世界事件狀態列：多個倒數改成上下排，不擠壓「冒險地圖」標題（玩家 2026-10-30 13:49）
+    if (document.getElementById('afk-ev-badges-css')) return;
+    var st = document.createElement('style'); st.id = 'afk-ev-badges-css';
+    st.textContent = '#afk-ev-badges{display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;line-height:1.2;white-space:nowrap;font-size:13px;min-width:0}'
+      + '#afk-ev-badges>span{margin-left:0!important}#afk-ev-badges:empty{display:none}'
+      + '#map-view-panel>.panel-header>span:first-child{white-space:nowrap;min-width:0}';
+    (document.head || document.documentElement).appendChild(st);
+  })();
   var W = window, T = W.AFK_TOGGLES, L = W.__afkLore, K = W.__afkNpcKit;
   if (T && T.register) T.register({ id: 'ghostship', name: '幽靈船出航（說話之島，每 30 分鐘）', group: '遊戲內容',
     desc: '每個整點與半點幽靈船靠上說話之島港口，10 分鐘內可以登船；甲板上打倒 30 名船員，幽靈船長現身，打倒得到幽靈船的寶藏' });
