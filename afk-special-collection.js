@@ -25,7 +25,7 @@
     var E = W.__afkWorldEvents;
     if (E) { var es = (p.afkWe && p.afkWe.stats) || {}; E.IDS.forEach(function (id) { var e = E.EV[id], s = es[id] || {}; rows.push({ icon: e.badge.split(' ')[0], n: e.n, met: s.met || 0, kills: s.kills || 0 }); }); }
     var G = W.__afkGhostShip;
-    if (G) { var gs = p.afkGs || {}; rows.push({ icon: '⛵', n: '幽靈船出航', met: gs.voy || gs.rides || 0, kills: gs.captains || 0, killN: '幽靈船長' }); }
+    if (G) { var gs = p.afkGs || {}; rows.push({ icon: '⛵', n: '幽靈船出航', met: gs.rides || 0, kills: gs.captains || 0, killN: '幽靈船長' }); }
     return rows;
   };
   var bossRows = function (p) {

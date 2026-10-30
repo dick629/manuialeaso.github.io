@@ -11,6 +11,8 @@
  *     完成就直接領獎（不用回公會）：點數、金幣（等級×300）、狩獵徽章（討伐 1、霸主／世界事件 3）。
  *   冒險者套裝（公會用狩獵徽章換）：帽子 E 級／10 枚、手套 D 級／20 枚、長靴 C 級／30 枚、斗篷 B 級／40 枚。
  *     套裝效果：2 件 最大 HP +50、魔防 +5；4 件 再加 傷害減免 +2、命中 +3。
+ *   S 級自選遺物（2026-10-30 13:18）：武器、防具、飾品各限一次，每件狩獵徽章 40 枚，從遺物圖鑑的 250 件設計遺物裡自己挑。
+ *   委託跟著等級走：討伐挑「怪物平均等級在角色等級 −10～+2」的地圖；角色等級比上板時差 5 級以上就換；霸主 Lv15、世界事件 Lv30 起才會上板。
  *   S 級冒險者在終焉第二、三階層（每個隊員自己是 S 才有）：受到的傷害 −10%、造成的傷害 +10%、
  *     「席琳的凝視」造成的傷害下降減半、每 15 秒抵銷下一次「單次超過最大 HP 10%」的傷害（護盾圖示）。第二階層要 S 級才能挑戰。
  *   公會接待員：說話之島、奇岩、亞丁、歐瑞。外掛開關 hunter（預設開）。
@@ -25,6 +27,7 @@
 
   var RANKS = [['F', 0, '#94a3b8'], ['E', 100, '#a3e635'], ['D', 300, '#4ade80'], ['C', 600, '#38bdf8'], ['B', 1000, '#818cf8'], ['A', 1500, '#f472b6'], ['S', 2000, '#fbbf24']];
   var DAY_MAX = 8, CD_MS = 60 * 60 * 1000, ACTIVE_MAX = 3, BOARD_N = 4;
+  var LV_BELOW = 10, LV_ABOVE = 2, LV_DRIFT = 5;   // 討伐：地圖怪物平均等級在「角色等級 −10 ～ +2」；角色等級跟上板時差 5 級以上就換（玩家 2026-10-30 13:18）
   var PTS = { kill: 10, rb: 25, we: 25 }, BADGE = { kill: 1, rb: 3, we: 3 }, BONUS_PTS = 15;
   var PER_RANK = { mhp: 30, mmp: 15, drop: 0.03 };
   var S_BUFF = { dr: 0.10, atk: 0.10, gazeCut: 0.5, shieldPct: 0.10, shieldSec: 15 };
@@ -90,20 +93,32 @@
   };
   var rint = function (a, b) { return a + Math.floor(Math.random() * (b - a + 1)); };
   var newKill = function (p, h) {
-    var lv = Number(p.lv) || 1, all = maps(), lo = lv - 12, hi = lv + 3;
+    var lv = Number(p.lv) || 1, all = maps(), lo = lv - LV_BELOW, hi = lv + LV_ABOVE;
     var c = all.filter(function (m) { return m.avg >= lo && m.avg <= hi; });
-    if (!c.length) c = all.filter(function (m) { return m.avg <= hi; }).sort(function (a, b) { return b.avg - a.avg; }).slice(0, 6);
+    if (!c.length) c = all.filter(function (m) { return m.avg <= hi; }).sort(function (a, b) { return b.avg - a.avg; }).slice(0, 4);   // 等級高過所有一般狩獵地圖（Lv90 以上）：挑最高的 4 張（龍之谷地監 7 樓、魔族實驗室 2 樓、高崙研究所、風龍棲息地）
     if (!c.length) c = all.slice(0, 6);
     var m = c[Math.floor(Math.random() * c.length)]; if (!m) return null;
     var mob = m.mobs[Math.floor(Math.random() * m.mobs.length)];
     var need = Math.max(6, Math.min(30, Math.round(rint(50, 70) / m.mobs.length)));
-    return { id: ++h.seq, kind: 'kill', mob: mob, map: m.v, mapN: mapName(m.v), need: need, got: 0 };
+    return { id: ++h.seq, kind: 'kill', mob: mob, map: m.v, mapN: mapName(m.v), avg: m.avg, lv: lv, need: need, got: 0 };
   };
   var newSpecial = function (p, h) {
-    var rbOk = !!W.__afkRegionBoss, weOk = !!(W.__afkWorldEvents || W.__afkKurtHunt);
+    var lv = Number(p.lv) || 1, RB = W.__afkRegionBoss, WE = W.__afkWorldEvents || W.__afkKurtHunt;
+    var rbOk = !!RB && lv >= (RB.LV_MIN || 15), weOk = !!WE && lv >= (WE.LV_MIN || 30);   // 等級還碰不到的委託不上板（霸主 Lv15、世界事件 Lv30 起）
     var k = rbOk && weOk ? (Math.random() < 0.5 ? 'rb' : 'we') : rbOk ? 'rb' : weOk ? 'we' : null;
     if (!k) return newKill(p, h);
-    return { id: ++h.seq, kind: k, need: 1, got: 0 };
+    return { id: ++h.seq, kind: k, need: 1, got: 0, lv: lv };
+  };
+  // 委託板上的委託跟著等級走：等級差超過 LV_DRIFT（或等級還碰不到）就換掉（已接的不動）
+  var stale = function (p, c) {
+    var lv = Number(p.lv) || 1;
+    if (c.kind === 'kill') {
+      if (c.lv == null) { var m = maps().filter(function (x) { return x.v === c.map; })[0]; return !m || m.avg < lv - LV_BELOW || m.avg > lv + LV_ABOVE + 2; }
+      return Math.abs(lv - c.lv) > LV_DRIFT;
+    }
+    if (c.kind === 'we') { var WE = W.__afkWorldEvents || W.__afkKurtHunt; return lv < ((WE && WE.LV_MIN) || 30); }
+    if (c.kind === 'rb') { var RB = W.__afkRegionBoss; return lv < ((RB && RB.LV_MIN) || 15); }
+    return false;
   };
   var fillBoard = function (p, h) {
     var kills = h.board.filter(function (x) { return x.kind === 'kill'; }).length, sp = h.board.length - kills;
@@ -114,11 +129,12 @@
     p = p || P(); var h = store(p); if (!h) return h;
     var d = today();
     if (h.day !== d) { h.day = d; h.today = 0; h.board = []; }
+    else h.board = h.board.filter(function (c) { return !stale(p, c); });
     fillBoard(p, h);
     return h;
   };
   var title = function (c) {
-    if (c.kind === 'kill') return '討伐：' + c.mob + ' ×' + c.need + '（' + c.mapN + '）';
+    if (c.kind === 'kill') return '討伐：' + c.mob + ' ×' + c.need + '（' + c.mapN + (c.avg ? '・怪物平均 Lv' + c.avg : '') + '）';
     if (c.kind === 'rb') return '霸主討伐：打倒任一地區的霸主';
     return '世界事件：打倒世界事件的頭目（克特、魔女賽尼斯、冰之女王…，或幽靈船長）';
   };
@@ -285,6 +301,11 @@
       return '<div class="p-2 rounded border border-slate-700 flex items-center justify-between gap-2"><span><img src="' + IC(x.img) + '" style="width:28px;height:28px;display:inline-block;vertical-align:middle;margin-right:6px">' + esc(x.n) + ' <small class="text-slate-400">AC ' + x.ac + (x.mr ? '、魔防 +' + x.mr : '') + '・' + RANKS[x.rank][0] + ' 級・' + x.cost + ' 枚</small></span>'
         + '<button type="button" class="btn px-3 py-1 text-sm" style="white-space:nowrap;flex-shrink:0"' + (lock ? ' disabled title="' + lock + '"' : '') + ' data-hq="buy:' + x.id + '">' + (lock || '交換') + '</button></div>';
     }).join('');
+    hh += '<div class="font-bold" style="color:#c4b5fd">S 級：自選遺物（武器、防具、飾品各一次，每件狩獵徽章 ' + RELIC_COST + ' 枚）</div>';
+    hh += '<div class="grid grid-cols-3 gap-2">' + RELIC_CATS.map(function (c) {
+      var why2 = relicWhy(p, c[0]), got = h.relics && h.relics[c[0]];
+      return '<button type="button" class="btn px-2 py-2 text-sm" style="line-height:1.3"' + (why2 && !got ? ' title="' + esc(why2) + '"' : '') + (why2 ? ' disabled' : '') + ' data-hq="relic:' + c[0] + '"><b>' + c[1] + '</b><br><small class="text-xs">' + esc(got ? (DB.items[got] ? DB.items[got].n : '已兌換') : why2 || '選擇遺物') + '</small></button>';
+    }).join('') + '</div>';
     hh += '<details class="text-xs text-slate-300"><summary class="cursor-pointer">等級表</summary>' + RANKS.map(function (r, i) { return '<div><b style="color:' + r[2] + '">' + r[0] + '</b>：' + r[1].toLocaleString() + ' 點' + (i ? '（HP +' + PER_RANK.mhp * i + '、MP +' + PER_RANK.mmp * i + '、掉落 +' + Math.round(PER_RANK.drop * i * 100) + '%）' : '') + '</div>'; }).join('')
       + '<div class="mt-1">點數：討伐委託 ' + PTS.kill + '、霸主／世界事件委託 ' + PTS.rb + '；不在委託裡打倒地區霸主或世界事件的頭目也 +' + BONUS_PTS + '。</div></details>';
     div.innerHTML = hh + '</div>';
@@ -294,6 +315,7 @@
       if (v[0] === 'take') { r = accept(Number(v[1])); if (!r.ok) sys('<span class="text-amber-300">' + esc(r.msg) + '</span>'); }
       else if (v[0] === 'drop') abandon(Number(v[1]));
       else if (v[0] === 'buy') { r = buy(v[1]); if (!r.ok) sys('<span class="text-amber-300">' + esc(r.msg) + '</span>'); }
+      else if (v[0] === 'relic') { openPicker(v[1], function () { render(div); }); return; }
       render(div);
     };
   };
@@ -308,6 +330,99 @@
     try { renderTabs(); updateUI(); saveGame(); } catch (e) {}
     return { ok: true };
   };
+  // ── S 級：自選遺物（玩家 2026-10-30 13:18：S 級兌換要媲美遺物 → 武器、防具、飾品各一件自選）──
+  //   S 級冒險者用狩獵徽章換：每個角色武器／防具／飾品各限一次，每件 RELIC_COST 枚；可選範圍＝遺物圖鑑的 250 件設計遺物。
+  var RELIC_COST = 40, RELIC_CATS = [['weapon', '武器'], ['armor', '防具'], ['accessory', '飾品']];
+  var relicCat = function (d) {
+    if (!d || !d.relic || d.gmOnly) return null;
+    if (d.type === 'wpn' || d.slot === 'petwpn') return 'weapon';
+    if (d.type === 'arm' || d.slot === 'petarm') return 'armor';
+    if (d.type === 'acc') return 'accessory';
+    return null;
+  };
+  var relicList = null;
+  var relics = function () {
+    if (relicList) return relicList;
+    relicList = { weapon: [], armor: [], accessory: [] };
+    (W.AFK_RELIC_CATALOG || []).forEach(function (c) {
+      var d = DB.items[c.key], k = relicCat(d); if (!k) return;
+      relicList[k].push({ id: c.key, n: d.n, slot: c.slot || '', eff: c.base_effect || '', req: d.req || 'all' });
+    });
+    return relicList;
+  };
+  var canUse = function (p, x) { return !x.req || x.req === 'all' || String(x.req).split(',').indexOf(p.cls) >= 0; };
+  var relicWhy = function (p, cat) {
+    var h = store(p); if (!h) return '請先進入遊戲';
+    if (classic(p)) return '經典模式不開放';
+    if (!isS(p)) return '要 S 級冒險者';
+    if (h.relics && h.relics[cat]) { var d0 = DB.items[h.relics[cat]]; return '已兌換（' + (d0 ? d0.n : h.relics[cat]) + '）'; }
+    if ((h.badges || 0) < RELIC_COST) return '狩獵徽章不足（要 ' + RELIC_COST + ' 枚）';
+    return '';
+  };
+  var buyRelic = function (cat, id) {
+    var p = P(), h = store(p); if (!p) return { ok: false, msg: '請先進入遊戲' };
+    var why = relicWhy(p, cat); if (why) return { ok: false, msg: why };
+    var x = (relics()[cat] || []).filter(function (r) { return r.id === id; })[0]; if (!x) return { ok: false, msg: '這件不在可兌換的遺物裡' };
+    h.badges -= RELIC_COST; h.relics = h.relics || {}; h.relics[cat] = id;
+    try { gainItem(id, 1, true, true, false); } catch (e) { h.badges += RELIC_COST; delete h.relics[cat]; return { ok: false, msg: '兌換失敗，徽章已退回' }; }
+    sys('<span class="font-bold text-purple-300">🏅 S 級冒險者用狩獵徽章 ' + RELIC_COST + ' 枚換到遺物「' + esc(x.n) + '」。</span>');
+    try { renderTabs(); updateUI(); saveGame(); } catch (e) {}
+    return { ok: true };
+  };
+  var pickerCss = false;
+  var openPicker = function (cat, back) {
+    var p = P(); if (!p) return;
+    if (!pickerCss) {
+      pickerCss = true;
+      var st = document.createElement('style'); st.id = 'afk-hrelic-css';
+      st.textContent = '#afk-hrelic{position:fixed;inset:0;z-index:9700;background:rgba(2,6,23,.72);display:flex;align-items:center;justify-content:center;padding:12px}'
+        + '#afk-hrelic .box{background:#0f172a;border:1px solid #475569;border-radius:10px;width:min(760px,100%);max-height:88vh;display:flex;flex-direction:column;color:#e2e8f0}'
+        + '#afk-hrelic .hd{padding:10px 12px;border-bottom:1px solid #334155;display:flex;gap:8px;align-items:center;justify-content:space-between}#afk-hrelic .hd button{white-space:nowrap;flex-shrink:0}'
+        + '#afk-hrelic .flt{padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-bottom:1px solid #1e293b}'
+        + '#afk-hrelic .flt button{padding:2px 8px;border-radius:999px;border:1px solid #475569;font-size:12px;background:#1e293b}#afk-hrelic .flt button.on{background:#7c3aed;border-color:#a78bfa}'
+        + '#afk-hrelic .lst{overflow:auto;padding:6px 12px;flex:1;min-height:120px}'
+        + '#afk-hrelic .row{display:flex;gap:8px;align-items:flex-start;padding:6px 4px;border-bottom:1px solid #1e293b;cursor:pointer}#afk-hrelic .row:hover{background:#1e293b}#afk-hrelic .row.sel{background:#3b0764}'
+        + '#afk-hrelic .row img{width:32px;height:32px;flex-shrink:0;image-rendering:pixelated}#afk-hrelic .row small{display:block;color:#94a3b8;font-size:11px;line-height:1.35}'
+        + '#afk-hrelic .ft{padding:10px 12px;border-top:1px solid #334155;font-size:13px}';
+      document.head.appendChild(st);
+    }
+    var old = document.getElementById('afk-hrelic'); if (old) old.remove();
+    var catN = RELIC_CATS.filter(function (c) { return c[0] === cat; })[0][1], list = relics()[cat] || [];
+    var slots = list.map(function (x) { return x.slot; }).filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+    var ui = { slot: '', mine: true, q: '', sel: '' };
+    var div = document.createElement('div'); div.id = 'afk-hrelic';
+    var icon = function (id) { try { return typeof getIconUrl === 'function' ? getIconUrl(DB.items[id]) : ''; } catch (e) { return ''; } };
+    var draw = function () {
+      var why = relicWhy(p, cat);
+      var rows = list.filter(function (x) { return (!ui.slot || x.slot === ui.slot) && (!ui.mine || canUse(p, x)) && (!ui.q || (x.n + x.eff).indexOf(ui.q) >= 0); });
+      var sel = list.filter(function (x) { return x.id === ui.sel; })[0];
+      div.innerHTML = '<div class="box"><div class="hd"><b style="color:#c4b5fd">S 級自選遺物：' + catN + '</b><span class="text-xs text-slate-400">狩獵徽章 ' + (store(p).badges || 0) + ' 枚・每件 ' + RELIC_COST + ' 枚・' + catN + '限一次</span>'
+        + '<button type="button" class="btn px-2 py-0.5 text-sm" data-hr="close">關閉</button></div>'
+        + '<div class="flt"><button type="button" data-hr="slot:"' + (ui.slot ? '' : ' class="on"') + '>全部</button>' + slots.map(function (v) { return '<button type="button" data-hr="slot:' + esc(v) + '"' + (ui.slot === v ? ' class="on"' : '') + '>' + esc(v) + '</button>'; }).join('')
+        + '<label class="text-xs" style="margin-left:auto"><input type="checkbox" data-hr="mine"' + (ui.mine ? ' checked' : '') + '> 只看我的職業能用的</label>'
+        + '<input type="search" placeholder="搜尋名稱或效果" value="' + esc(ui.q) + '" data-hr="q" style="background:#020617;border:1px solid #475569;border-radius:6px;padding:2px 6px;font-size:12px;width:150px"></div>'
+        + '<div class="lst">' + (rows.length ? rows.map(function (x) {
+          return '<div class="row' + (x.id === ui.sel ? ' sel' : '') + '" data-hr="pick:' + esc(x.id) + '"><img alt="" loading="lazy" src="' + esc(icon(x.id)) + '"><div><b>' + esc(x.n) + '</b> <span class="text-xs text-slate-400">' + esc(x.slot) + '</span><small>' + esc(x.eff) + '</small></div></div>';
+        }).join('') : '<div class="text-sm text-slate-400 p-3">沒有符合的遺物。</div>') + '</div>'
+        + '<div class="ft">' + (sel ? '選擇：<b style="color:#e9d5ff">' + esc(sel.n) + '</b>（' + esc(sel.slot) + '）' + (canUse(p, sel) ? '' : '<span class="text-amber-300">　你的職業不能裝備</span>') : '<span class="text-slate-400">點一件遺物來選擇。</span>')
+        + '<div class="mt-2 flex items-center justify-between gap-2"><span class="text-xs text-amber-200">' + esc(why) + '</span><button type="button" class="btn px-3 py-1 text-sm font-bold"' + (why || !sel ? ' disabled' : '') + ' data-hr="buy">確定兌換（' + RELIC_COST + ' 枚）</button></div></div></div>';
+      var q = div.querySelector('[data-hr="q"]');
+      if (q) q.oninput = function () { ui.q = q.value.trim(); var pos = q.selectionStart; draw(); var q2 = div.querySelector('[data-hr="q"]'); if (q2) { q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (e) {} } };
+      var mine = div.querySelector('[data-hr="mine"]');
+      if (mine) mine.onchange = function () { ui.mine = mine.checked; draw(); };
+    };
+    div.onclick = function (e) {
+      if (e.target === div) { div.remove(); return; }
+      var b = e.target.closest('[data-hr]'); if (!b || b.disabled) return;
+      var v = b.getAttribute('data-hr');
+      if (v === 'close') { div.remove(); return; }
+      if (v.indexOf('slot:') === 0) { ui.slot = v.slice(5); draw(); return; }
+      if (v.indexOf('pick:') === 0) { ui.sel = v.slice(5); draw(); return; }
+      if (v === 'buy') { var r = buyRelic(cat, ui.sel); if (!r.ok) { sys('<span class="text-amber-300">' + esc(r.msg) + '</span>'); draw(); return; } div.remove(); if (back) back(); }
+    };
+    draw();
+    document.body.appendChild(div);
+  };
   if (typeof W.interactNPC === 'function') {
     var oNpc = W.interactNPC;
     W.interactNPC = function (npcId) {
@@ -318,6 +433,7 @@
   }
 
   W.__afkHunter = { RANKS: RANKS, DAY_MAX: DAY_MAX, CD_MS: CD_MS, ACTIVE_MAX: ACTIVE_MAX, PTS: PTS, BADGE: BADGE, BONUS_PTS: BONUS_PTS, PER_RANK: PER_RANK, S_BUFF: S_BUFF, SET: SET, SET_TXT: SET_TXT, NPC_ID: NPC_ID,
+    RELIC_COST: RELIC_COST, RELIC_CATS: RELIC_CATS, relics: relics, relicWhy: relicWhy, buyRelic: buyRelic, openPicker: openPicker, stale: stale,
     store: store, rankIdx: rankIdx, rankOf: rankOf, isS: isS, sOf: sOf, roll: roll, accept: accept, abandon: abandon, buy: buy, canAccept: canAccept, addPts: addPts, title: title, render: render, tierOn: tierOn, maps: maps,
     _resetAllyCache: function () { allyS = {}; } };
   try { console.log('[AFK-hunter] 已載入：魔物獵人模式'); } catch (e) {}

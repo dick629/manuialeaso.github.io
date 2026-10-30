@@ -172,6 +172,19 @@
     return out;
   }
 
+  // 轉生標籤：緊接在「狀態: 」後面、排在所有增益前（玩家 2026-10-30 13:18）
+  function addRebirth(el, tag) {
+    if (!tag) return;
+    var head = el.firstChild;
+    if (!head || head.nodeType !== 3 || !/^狀態:/.test(head.nodeValue)) { el.insertBefore(tag, el.firstChild); return; }
+    var rest = head.nodeValue.replace(/^狀態:\s*/, '');
+    head.nodeValue = '狀態: ';
+    var after = head.nextSibling;
+    el.insertBefore(tag, after);
+    var sepTxt = rest ? ' / ' + rest : (after && !(after.nodeType === 1 && after.tagName === 'DIV') ? ' / ' : '');
+    if (sepTxt) el.insertBefore(document.createTextNode(sepTxt), tag.nextSibling);
+  }
+
   function append() {
     var el = document.getElementById('dt-buffs');
     if (!el || el.querySelector('.afk-statusadd')) return;   // 沒有面板／本輪已補過就不做
@@ -187,7 +200,20 @@
       return sp;
     });
     var track = buildSpan(); if (track) spans.push(track);   // 🔍 追蹤固定排最後（時間類，不是身上的增益）
-    if (!spans.length) return;
+    // 玩家 2026-10-30 13:18：是否轉生、幾轉，放在狀態列最前面（經典模式沒有轉生，不顯示）
+    var rebirthTag = null;
+    try {
+      if (typeof player !== 'undefined' && player && !player.classicMode) {
+        var rb = Math.max(0, Math.floor(Number(player.rebirth) || 0)), RB_N = ['未轉生', '一轉', '二轉', '三轉', '四轉', '五轉'];
+        var rs = document.createElement('span');
+        rs.className = 'afk-statusadd afk-rebirth-tag font-bold'; rs.id = 'afk-rebirth-tag';
+        rs.textContent = '🔄 ' + (RB_N[rb] || (rb + ' 轉'));
+        rs.style.color = rb >= 2 ? '#f0abfc' : rb === 1 ? '#fcd34d' : '#94a3b8';
+        rs.title = rb ? '已轉生 ' + rb + ' 次' : '還沒轉生';
+        rebirthTag = rs;
+      }
+    } catch (e) {}
+    if (!spans.length) { addRebirth(el, rebirthTag); return; }
 
     // 「狀態: 正常」＝沒有任何增益 → 把「正常」讓給我們這幾格；否則以 " / " 接在既有增益後面
     var first = el.firstChild, sep = ' / ';
@@ -201,6 +227,7 @@
       sep = ' / ';
       el.insertBefore(spans[i], abnormal || null);
     }
+    addRebirth(el, rebirthTag);
   }
 
   function init() {

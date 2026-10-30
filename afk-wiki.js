@@ -3477,10 +3477,11 @@
     var H = window.__afkHunter; if (!H) return '';
     return wCard('🏹 魔物獵人：冒險者公會',
       wDesc('冒險者公會的接待員「米雅」在說話之島、奇岩、亞丁、歐瑞。冒險者等級 <b>F → E → D → C → B → A → S</b>，每個角色各自計算；經典模式不開放。') +
-      wDesc('委託每天換新，一天最多接 <b>' + H.DAY_MAX + '</b> 個；接一個之後要等 <b>1 小時</b>才能接下一個；身上最多同時 ' + H.ACTIVE_MAX + ' 個。委託板有 3 個討伐（依你的等級挑地圖與怪物）＋1 個霸主或世界事件。完成就直接領獎。') +
+      wDesc('委託每天換新，一天最多接 <b>' + H.DAY_MAX + '</b> 個；接一個之後要等 <b>1 小時</b>才能接下一個；身上最多同時 ' + H.ACTIVE_MAX + ' 個。委託板有 3 個討伐（地圖怪物平均等級在你的等級 −10～+2；等級變動 5 級以上就換）＋1 個霸主（Lv15 起）或世界事件（Lv30 起）。完成就直接領獎。') +
       wTbl(['等級', '累積點數', '等級加成'], H.RANKS.map(function (r, i) { return [r[0], r[1].toLocaleString(), i ? '最大 HP +' + H.PER_RANK.mhp * i + '、最大 MP +' + H.PER_RANK.mmp * i + '、掉落機率 +' + Math.round(H.PER_RANK.drop * i * 100) + '%' : '—']; })) +
       wTbl(['委託', '冒險點數', '狩獵徽章'], [['討伐', H.PTS.kill, H.BADGE.kill], ['霸主討伐', H.PTS.rb, H.BADGE.rb], ['世界事件', H.PTS.we, H.BADGE.we], ['不在委託裡打倒地區霸主／世界事件頭目', H.BONUS_PTS, 0]]) +
       wDesc('冒險者套裝（狩獵徽章交換）：' + H.SET.map(function (x) { return esc(x.n) + '（' + H.RANKS[x.rank][0] + ' 級・' + x.cost + ' 枚）'; }).join('、') + '。' + esc(H.SET_TXT)) +
+      (H.RELIC_COST ? wDesc('<b>S 級自選遺物</b>：S 級冒險者用狩獵徽章換，武器、防具、飾品各限一次，每件 ' + H.RELIC_COST + ' 枚，從遺物圖鑑的設計遺物裡自己挑。') : '') +
       wDesc('<b>S 級冒險者</b>才能挑戰終焉第二階層；在第二、三階層，每個隊員自己是 S 級才有：受到的傷害 −10%、造成的傷害 +10%、「席琳的凝視」的傷害下降減半、每 15 秒抵銷下一次單次超過最大 HP 10% 的傷害（狀態列的 🛡 S 護盾，亮＝可用）。'));
   }
   function regionBossCard() {
