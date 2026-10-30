@@ -166,6 +166,7 @@
   var hurt = function (t, dmg, trueDmg) {
     var p = P(); if (!t || !(dmg > 0)) return 0;
     if (trueDmg !== false && typeof W.__afkTrueCut === 'function') dmg = W.__afkTrueCut(t, dmg);
+    if (typeof W.__afkIncomingMod === 'function') { try { dmg = W.__afkIncomingMod(t, dmg); } catch (e) {} }   // 隱藏規則「命運」等：受到的傷害（afk-fate.js）
     dmg = Math.max(1, Math.floor(dmg));
     if (t === p) { p.hp -= dmg; if (p.hp <= 0 && !p.dead) { try { killPlayer(); } catch (e) {} } }
     else { t.curHp -= dmg; if (t.curHp <= 0) { t.curHp = 0; t._downed = true; t._reviveCd = 150; } }

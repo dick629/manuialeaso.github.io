@@ -10,8 +10,8 @@
  *     委託板永遠有 4 個可選：3 個討伐（依你的等級挑地圖與怪物）、1 個霸主或世界事件。
  *     完成就直接領獎（不用回公會）：點數、金幣（等級×300）、狩獵徽章（討伐 1、霸主／世界事件 3）。
  *   冒險者套裝（公會用狩獵徽章換）：帽子 E 級／10 枚、手套 D 級／20 枚、長靴 C 級／30 枚、斗篷 B 級／40 枚。
- *     2026-10-30 14:22 起：數值跟著穿的人的冒險等級成長（A 級追平闇龍獵人那一級，S 同 A）；套裝效果也跟著成長。
- *     強化：冒險者公會用冒險點數＋狩獵徽章，只加 AC、不會失敗、最高 +6（+1～+3 100 點＋40 枚、+4 200＋80、+5 300＋160、+6 400＋320）。
+ *     2026-10-30 14:22 起：數值跟著穿的人的冒險等級成長（A 級封頂、追平闇龍獵人那一級；S 級不再成長，改換自選遺物）；套裝效果也跟著成長。
+ *     強化：冒險者公會用冒險點數＋狩獵徽章，只加 AC、不會失敗、最高 +6（+1～+4 100 點＋40 枚、+5 200＋80、+6 300＋160）。
  *   S 級自選遺物（2026-10-30 13:18）：武器、防具、飾品各限一次，每件狩獵徽章 40 枚，從遺物圖鑑的 250 件設計遺物裡自己挑。
  *   委託跟著等級走：討伐挑「怪物平均等級在角色等級 −10～+2」的地圖；角色等級比上板時差 5 級以上就換；霸主 Lv15、世界事件 Lv30 起才會上板。
  *   S 級冒險者在終焉第二、三階層（每個隊員自己是 S 才有）：受到的傷害 −10%、造成的傷害 +10%、
@@ -76,7 +76,7 @@
     { id: 'afk_hunter_boots', n: '冒險者的長靴', slot: 'boots', img: 'armors/放牧者的皮靴', rank: 3, cost: 30 },
     { id: 'afk_hunter_cloak', n: '冒險者的斗篷', slot: 'cloak', img: 'armors/狼皮斗篷', rank: 4, cost: 40 }
   ];
-  var GROW = {   // 冒險等級 1＝E … 5＝A（S 同 A）
+  var GROW = {   // 冒險等級 1＝E … 5＝A（A 封頂；S 用 A 的數值）
     afk_hunter_helm: { 1: { ac: 2, mr: 2, mhp: 20, hpR: 1 }, 2: { ac: 3, mr: 4, mhp: 40, hpR: 2 }, 3: { ac: 4, mr: 6, mhp: 60, hpR: 3 }, 4: { ac: 5, mr: 8, mhp: 80, hpR: 4 }, 5: { ac: 6, mr: 10, mhp: 100, hpR: 5 } },
     afk_hunter_gloves: { 2: { ac: 2, extraHit: 1 }, 3: { ac: 3, extraHit: 2, extraDmg: 1 }, 4: { ac: 4, extraHit: 3, extraDmg: 1 }, 5: { ac: 5, extraHit: 4, extraDmg: 2 } },
     afk_hunter_boots: { 3: { ac: 3, er: 2, mr: 4, mhp: 40 }, 4: { ac: 4, er: 3, mr: 6, mhp: 60 }, 5: { ac: 5, er: 4, mr: 8, mhp: 80 } },
@@ -90,7 +90,7 @@
   var pieceStats = function (id, r) { var g = GROW[id], x = SET.filter(function (q) { return q.id === id; })[0]; if (!g || !x) return {}; return g[Math.max(x.rank, growRank(r))] || {}; };
   var setTiers = [[2, {}], [4, {}]], SET_OBJ = { ids: SET.map(function (x) { return x.id; }), tiers: setTiers };
   var setTxt = function (r) { var t = SET_GROW[growRank(r)]; return '冒險者套裝（依你的冒險等級）：2 件 ' + statTxt(t[0]) + (t[1] ? '；4 件 再加 ' + statTxt(t[1]) : '；4 件效果 B 級起') + '。'; };
-  var SET_TXT = '冒險者套裝：數值跟著冒險等級成長（A 級最強，追平闇龍獵人那一級）；2 件 最大 HP、魔防，4 件（B 級起）再加 傷害減免、命中。';
+  var SET_TXT = '冒險者套裝：數值跟著冒險等級成長，到 A 級封頂（追平闇龍獵人那一級；S 級起改換自選遺物）；2 件 最大 HP、魔防，4 件（B 級起）再加 傷害減免、命中。';
   var curGrow = -1;
   var applyGrow = function (r) {   // 把物品定義與套裝效果切到等級 r 的數值
     r = growRank(r); if (r === curGrow) return; curGrow = r;
@@ -269,7 +269,7 @@
   W.__afkFbGazeMod = function (actor, pct) { return (tierOn() && sOf(actor)) ? pct * S_BUFF.gazeCut : pct; };
   W.__afkFbHurtMod = function (t, dmg, why) { if (!tierOn() || !sOf(t)) return dmg; return shield(t, dmg * (1 - S_BUFF.dr), why); };
   var hookIncoming = function () {
-    var R = W.AFK_RELIC_RUNTIME; if (!R || typeof R.incoming !== 'function' || R.incoming.__afkHunter) return;
+    var R = W.AFK_RELIC_RUNTIME; if (!R || typeof R.incoming !== 'function' || R.__afkHunter) return;   // 旗標放在物件上：別的外掛之後再包一層也不會重複套用（2026-10-30）
     var o = R.incoming;
     R.incoming = function (actor, amount, attacker, opts) {
       var r = o.apply(this, arguments);
@@ -281,7 +281,7 @@
       } catch (e) {}
       return r;
     };
-    R.incoming.__afkHunter = true;
+    R.__afkHunter = true;
   };
   hookIncoming(); W.addEventListener('load', hookIncoming);
   // 護盾圖示（狀態列）：亮＝可用、灰＝冷卻中
@@ -331,7 +331,7 @@
       return '<div class="p-2 rounded border border-slate-600 bg-slate-900/40 flex items-center justify-between gap-2"><span>' + esc(title(c)) + '<br><small class="text-slate-400">冒險點數 ' + PTS[c.kind] + '・狩獵徽章 ' + BADGE[c.kind] + '・金幣 ' + Math.max(1000, (Number(p.lv) || 1) * 300).toLocaleString() + '</small></span>'
         + '<button type="button" class="btn px-3 py-1 text-sm font-bold" style="white-space:nowrap;flex-shrink:0"' + (why ? ' disabled' : '') + ' data-hq="take:' + c.id + '">接取</button></div>';
     }).join('');
-    hh += '<div class="font-bold text-sky-300">冒險者套裝（狩獵徽章 ' + (h.badges || 0) + ' 枚・可用冒險點數 ' + availPts(p).toLocaleString() + '）</div><div class="text-xs text-slate-400">' + esc(setTxt(ri)) + ' A 級追平闇龍獵人那一級。強化：只加 AC、不會失敗、最高 +' + ENH_MAX + '（用掉的冒險點數不會讓冒險等級下降）。</div>';
+    hh += '<div class="font-bold text-sky-300">冒險者套裝（狩獵徽章 ' + (h.badges || 0) + ' 枚・可用冒險點數 ' + availPts(p).toLocaleString() + '）</div><div class="text-xs text-slate-400">' + esc(setTxt(ri)) + ' 到 A 級封頂（追平闇龍獵人那一級），S 級起改換自選遺物。強化：只加 AC、不會失敗、最高 +' + ENH_MAX + '（用掉的冒險點數不會讓冒險等級下降）。</div>';
     hh += SET.map(function (x) {
       var lock = ri < x.rank ? RANKS[x.rank][0] + ' 級以上' : (h.badges || 0) < x.cost ? '徽章不足' : '';
       var own = owned(p, x.id);
@@ -375,9 +375,9 @@
     return { ok: true };
   };
   // ── 冒險者套裝強化（玩家 2026-10-30 14:22）：用冒險點數＋狩獵徽章，只加 AC、不會失敗、最高 +6 ──
-  //   到 +1～+3：每次點數 100＋徽章 40；+4：200＋80；+5：300＋160；+6：400＋320。
+  //   到 +1～+4：每次點數 100＋徽章 40；+5：200＋80；+6：300＋160（玩家 2026-10-30 14:55 更正）。
   //   冒險等級看「累積」點數，強化用掉的點數另外記（spent），所以強化不會讓等級掉下來。
-  var ENH = { 1: [100, 40], 2: [100, 40], 3: [100, 40], 4: [200, 80], 5: [300, 160], 6: [400, 320] }, ENH_MAX = 6;
+  var ENH = { 1: [100, 40], 2: [100, 40], 3: [100, 40], 4: [100, 40], 5: [200, 80], 6: [300, 160] }, ENH_MAX = 6;   // 玩家 2026-10-30 14:55 更正
   var availPts = function (p) { var h = p && p.afkHunter; return h ? Math.max(0, (Number(h.pts) || 0) - (Number(h.spent) || 0)) : 0; };
   var owned = function (p, id) {
     var out = [];

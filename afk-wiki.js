@@ -3482,7 +3482,7 @@
       wTbl(['委託', '冒險點數', '狩獵徽章'], [['討伐', H.PTS.kill, H.BADGE.kill], ['霸主討伐', H.PTS.rb, H.BADGE.rb], ['世界事件', H.PTS.we, H.BADGE.we], ['不在委託裡打倒地區霸主／世界事件頭目', H.BONUS_PTS, 0]]) +
       wDesc('冒險者套裝（狩獵徽章交換）：' + H.SET.map(function (x) { return esc(x.n) + '（' + H.RANKS[x.rank][0] + ' 級・' + x.cost + ' 枚）'; }).join('、') + '。' + esc(H.SET_TXT)) +
       (H.GROW ? wTbl(['冒險等級'].concat(H.SET.map(function (x) { return esc(x.n); })), [1, 2, 3, 4, 5].map(function (r) {
-        return [H.RANKS[r][0] + (r === 5 ? '／S' : '')].concat(H.SET.map(function (x) { var g = H.GROW[x.id][r]; return g ? Object.keys(g).map(function (k) { return ({ ac: 'AC', mr: '魔防', mhp: 'HP', hpR: 'HP 回復', extraHit: '額外命中', extraDmg: '額外傷害', er: '迴避', mdmg: '魔法傷害' })[k] + ' ' + g[k]; }).join('、') : '—'; }));
+        return [H.RANKS[r][0] + (r === 5 ? '（封頂）' : '')].concat(H.SET.map(function (x) { var g = H.GROW[x.id][r]; return g ? Object.keys(g).map(function (k) { return ({ ac: 'AC', mr: '魔防', mhp: 'HP', hpR: 'HP 回復', extraHit: '額外命中', extraDmg: '額外傷害', er: '迴避', mdmg: '魔法傷害' })[k] + ' ' + g[k]; }).join('、') : '—'; }));
       })) + wDesc('數值看穿的人自己的冒險等級（傭兵看那個角色自己的）。強化在冒險者公會用冒險點數＋狩獵徽章：只加 AC、不會失敗、最高 +' + H.ENH_MAX + '；' + [1, 2, 3, 4, 5, 6].map(function (n) { return '+' + n + ' ' + H.ENH[n][0] + ' 點／' + H.ENH[n][1] + ' 枚'; }).join('、') + '。用掉的點數不會讓冒險等級下降。') : '') +
       (H.RELIC_COST ? wDesc('<b>S 級自選遺物</b>：S 級冒險者用狩獵徽章換，武器、防具、飾品各限一次，每件 ' + H.RELIC_COST + ' 枚，從遺物圖鑑的設計遺物裡自己挑。') : '') +
       wDesc('<b>S 級冒險者</b>才能挑戰終焉第二階層；在第二、三階層，每個隊員自己是 S 級才有：受到的傷害 −10%、造成的傷害 +10%、「席琳的凝視」的傷害下降減半、每 15 秒抵銷下一次單次超過最大 HP 10% 的傷害（狀態列的 🛡 S 護盾，亮＝可用）。'));
@@ -5106,7 +5106,7 @@
 
     // ===== 王族魔法(reqRoy) =====
     sk_royal_precise: ['加成的是全場敵人「受到的傷害」(物理/魔法/固定都算)：每一種傷害 +[1＋(等級÷15)]%(等級 60＝5%、150＝11%)', '學血盟精通後除數 15→10(等級 60＝7%)', '場上任一傭兵持有此增益，全隊都吃得到'],
-    sk_royal_callally: ['所有上場傭兵立即各發動一次額外一般攻擊(傷害＝各傭兵自己的普攻)；本身不造成傷害、沒傭兵或沒目標放不出來', '學血盟精通後消耗魔力減半為 15'],
+    sk_royal_callally: ['所有上場傭兵立即各發動一次額外一般攻擊(傷害＝各傭兵自己的普攻)；本身不造成傷害、沒傭兵或沒目標放不出來；冷卻 3 秒，每名傭兵一秒最多被呼喚一次', '學血盟精通後消耗魔力減半為 15'],
     sk_royal_burnweapon: ['團隊光環：你或任一隊員維持，全隊(含傭兵、寵物、召喚物、城堡護衛)都吃到額外傷害 +5、額外命中 +5', '已有人維持時其他人不重複施放、不耗魔'],
     sk_royal_shield: ['團隊光環：你或任一隊員維持，全隊(含傭兵、寵物、召喚物、城堡護衛)防禦(AC) 都 −8', '已有人維持時其他人不重複施放、不耗魔'],
     sk_royal_bravewill: ['10% 機率讓一般攻擊傷害 ×1.5(學王族劍術精通後提高到 20%)'],

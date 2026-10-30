@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
-  if (T && T.register) T.register({ id: 'hiddenbonus', name: '隱藏條件（謀叛三人組、王族之敵、騎士的負重）', group: '遊戲玩法',
+  if (T && T.register) T.register({ id: 'hiddenbonus', name: '隱藏條件（謀叛三人組、王族之敵、騎士的負重）', group: '隱藏規則',
     desc: '特定職業與性別的組合，在特定副本或對特定頭目有額外效果' });
   if (T && !T.enabled('hiddenbonus')) return;
   var KNIGHT_LOAD = 0.05, KNIGHT_CD = 100;
