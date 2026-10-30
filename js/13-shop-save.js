@@ -427,8 +427,8 @@ function _roleSaveAllowed(){
     let fp = _roleFingerprint(player);
     if(!fp) return false;
     let guards = _roleReadObject(ROLE_DELETED_GUARD_KEY);
-    if(guards[fp]) return false;
     let stored = _roleReadSavePlayer(currentSlot);
+    if(guards[fp] && !(stored && _roleFingerprint(stored) === fp)) return false; /* 🔌 加掛版補丁:已刪除名單只擋不在這格的角色 */
     return !stored || _roleFingerprint(stored) === fp;
 }
 setInterval(_roleSessionHeartbeat, 2000);

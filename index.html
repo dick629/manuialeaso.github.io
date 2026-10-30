@@ -564,7 +564,7 @@
     <script src="js/10-ui-tabs.js?v=e3150ac6b9.8.14-merc-guild"></script>
 <script src="js/11-world-map.js?v=35d1e90d8a.8.17-item-stack-source"></script>
 <script src="js/12-npc-quests.js?v=500a81a03f.8.34-merc-trial-class-loot"></script>
-<script src="js/13-shop-save.js?v=37ed118f50.8.18-desktop-save-isolation"></script>
+<script src="js/13-shop-save.js?v=c5b0feb312.8.18-desktop-save-isolation"></script>
 <script src="js/14-craft-pandora.js?v=3335e41014.8.17-item-stack-source"></script>
 <script src="js/15-cards.js?v=9a420e48e7.7.66"></script>
 <script src="js/16-equip-book.js?v=b65ee3ef7a.8.15-legacy-import-smooth"></script>
@@ -575,7 +575,7 @@
 <script src="js/21-relic-book.js?v=7d118874fb.8.15-legacy-import-smooth"></script>
     <script src="js/23-summons.js?v=b0c2214f56.8.23-sherine-set-rework"></script>
     <script src="js/22-pets.js?v=d3ba6cdd2b.8.23-sherine-set-rework"></script>
-    <script src="js/24-pandora-relic-market.js?v=89558aa05a.7.70"></script>
+    <script src="js/24-pandora-relic-market.js?v=79d0df9d33.7.70"></script>
     <script src="js/25-clan-system.js?v=397fb3d1d6.8.7-social-private"></script>
     <script src="js/26-world-channel.js?v=9f45eaff51.8.13-private-bond"></script>
 <script src="js/28-pvp-arena.js?v=3448feb9f9.7.89-stage33-host-sign"></script>
@@ -594,6 +594,8 @@
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <script src="afk-dup-frames-data.js?v=d19c412b59"></script>
     <script src="afk-dup-frames.js?v=13521f048b"></script>
+    <!-- afk-txnsave：玩家操作（倉庫、寵物、血盟、遺物合成…）的存檔不因補跑延後 -->
+    <script src="afk-txnsave.js?v=2fd33e0818"></script>
     <!-- afk-fpscap：畫面幀率上限（省電模式選 15／30／60 FPS：rAF 排隊放行、CSS／Web 動畫改由這裡按頻率推進）；要早載入，讓之後的外掛呼叫 requestAnimationFrame 都經過它 -->
     <script src="afk-fpscap.js?v=006887f31c"></script>
     <!-- afk-classic-core：經典版先記住原版的能力值計算、NPC 名單與變身表（必須排在其他外掛之前） -->

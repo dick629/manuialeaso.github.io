@@ -1714,8 +1714,9 @@
 
     function _rerenderPandora() {
         try {
-            if (typeof _pandoraDiv !== 'undefined' && _pandoraDiv && typeof pandoraRenderMarket === 'function') {
-                pandoraRenderMarket(_pandoraDiv);
+            if (typeof _pandoraDiv !== 'undefined' && _pandoraDiv && typeof pandoraRenderMarket === 'function') { /* 🔌 加掛版補丁:黑市重繪只在顯示黑市時 */
+                if (document.body.contains(_pandoraDiv) && _pandoraDiv.querySelector('#pandora-msg')) pandoraRenderMarket(_pandoraDiv);
+                else _pandoraDiv = null;
             }
         } catch (e) {}
     }
