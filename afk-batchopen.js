@@ -1,0 +1,115 @@
+/* ============================================================================
+ * afk-batchopen.js — 禮盒、袋子一次開多個（玩家 2026-10-28：不用一直點，也不會卡）
+ *
+ * 物品視窗的「使用」下面多兩顆按鈕：「開 10 個」「全部開啟」。
+ * 適用：會開出東西的盒子／袋子（天堂透視鏡的禮盒類、魔法娃娃的袋子／盒子、歐西里斯／庫庫爾坎寶箱）；
+ *   天堂透視鏡的兌換券（例如修練者解咒卷軸 → 解除詛咒的卷軸，玩家 2026-10-29）也適用；
+ *   有冷卻的封印盒、要自選的券、藥水與卷軸不適用。
+ * 做法：照樣一個一個呼叫遊戲本身的「使用」，但開的期間先不重畫畫面、不存檔、不逐筆寫系統訊息，
+ *   每開約 25 毫秒就讓畫面喘一口氣（玩家 2026-10-29：背包一大，固定每 100 個才讓一次會卡到當掉），可以按「停止」；開完只重畫一次、存一次，系統訊息列出這次總共拿到什麼。
+ *   開到一半東西用完、或某次沒有扣到（例如寶箱沒有鑰匙），就停下來。
+ * ========================================================================== */
+(function () {
+  'use strict';
+  var W = window, T = W.AFK_TOGGLES;
+  if (T && T.register) T.register({ id: 'batchopen', name: '禮盒一次開多個', group: '遊戲介面',
+    desc: '物品視窗多「開 10 個」「全部開啟」：禮盒、袋子、寶箱一次開完，最後列出總共拿到的東西' });
+  if (T && !T.enabled('batchopen')) return;
+  if (typeof W.openModal !== 'function' || typeof W.useItem !== 'function') { console.warn('[AFK-batchopen] 找不到物品視窗，略過'); return; }
+
+  var EFFS = { doll_bag: 1, doll_box_high: 1, osiris_box: 1, afk_runebox: 1, afk_matgift: 1 };   // afk_matgift：嘯龍材料禮包（afk-ttmi-items）   // afk_runebox：失去光芒的符文石（afk-runedata）
+  var eligible = function (d) { return !!d && !d.noUse && ((d.ttmiAction === 'box' && !d.ttmiBoxCooldown) || d.ttmiAction === 'exchange' || !!EFFS[d.eff]); };
+  var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var counts = function (p) { var m = {}; (p.inv || []).forEach(function (it) { if (it && it.id) m[it.id] = (m[it.id] || 0) + (it.cnt || 1); }); return m; };
+  var running = false, stopReq = false, SLICE = 25;
+  var now = function () { return (W.performance && performance.now) ? performance.now() : Date.now(); };
+  var QUIET = ['renderTabs', 'updateUI', 'saveGame', 'logSys'];
+
+  var run = function (uid, want) {
+    var p = P(); if (!p || running) return;
+    var it = p.inv.find(function (x) { return x.uid === uid; }), d = it && DB.items[it.id];
+    if (!it || !eligible(d) || it.lock) return;
+    if (p.dead) { try { logSys('死亡狀態無法使用道具，請先復活。'); } catch (e) {} return; }
+    var id = it.id, total = Math.min(want, it.cnt || 1), done = 0;
+    var before = counts(p), gold0 = Number(p.gold) || 0, saved = {}, lastMsg = '';
+    running = true; stopReq = false;
+    // 開啟中：物品視窗裡其他會動到這疊的按鈕（使用、販賣、全部賣出、標記廢品…）一起停用，只留「停止」與「關閉視窗」（2026-10-29 23:06 手機檢查）
+    var box0 = document.getElementById('modal-actions');
+    var btns = box0 ? box0.querySelectorAll('button, input') : document.querySelectorAll('[data-afk-bo]');
+    btns.forEach(function (b) { if (!/關閉/.test(b.textContent || '')) b.disabled = true; });
+    var label = document.querySelector('[data-afk-bo="all"]'), ten = document.querySelector('[data-afk-bo="10"]');
+    if (ten && want > 10) { ten.disabled = false; ten.textContent = '停止'; ten.setAttribute('onclick', 'afkBatchOpen.stop()'); }
+    var quiet = function (on) {
+      QUIET.forEach(function (k) {
+        if (on) { saved[k] = W[k]; W[k] = k === 'logSys' ? function (h) { lastMsg = h; } : function () {}; }
+        else if (saved[k]) W[k] = saved[k];
+      });
+    };
+    var finish = function () {
+      quiet(false); running = false;
+      var after = counts(p), gains = [];
+      Object.keys(after).forEach(function (k) { if (k === id) return; var dv = after[k] - (before[k] || 0); if (dv > 0) gains.push([k, dv]); });
+      gains.sort(function (a, b) { return b[1] - a[1]; });
+      var gold = (Number(p.gold) || 0) - gold0;
+      var list = gains.map(function (g) { var dd = DB.items[g[0]] || {}; return '<span class="' + (dd.c || 'text-slate-200') + '">' + esc(dd.n || g[0]) + '</span> ×' + g[1].toLocaleString(); });
+      if (gold > 0) list.unshift('<span class="text-yellow-300">金幣</span> ×' + gold.toLocaleString());
+      try {
+        logSys('開啟了 <span class="' + (d.c || 'text-amber-200') + ' font-bold">' + esc(d.n) + '</span> ×' + done.toLocaleString() + '：' + (list.length ? list.join('、') : '沒有拿到東西') + '。'
+          + (done < total && lastMsg ? '<span class="text-slate-400">（停在第 ' + (done + 1) + ' 個：' + String(lastMsg).replace(/<[^>]+>/g, '') + '）</span>' : ''));
+      } catch (e) {}
+      try { renderTabs(); } catch (e) {} try { updateUI(); } catch (e) {} try { saveGame(); } catch (e) {}
+      var left = p.inv.find(function (x) { return x.uid === uid; }) || p.inv.find(function (x) { return x.id === id && !x.lock; });
+      try {
+        var mod = document.getElementById('item-modal'), shown = !!(mod && !mod.classList.contains('hidden'));
+        if (!shown) return;   // 開到一半自己關掉了視窗 → 不再跳出來
+        if (left) openModal(left, false); else closeModal();
+      } catch (e) {}
+    };
+    var cur = null;
+    var step = function () {
+      quiet(true);
+      var t0 = now();
+      try {
+        while (done < total && !stopReq) {
+          if (!cur || p.inv.indexOf(cur) < 0) cur = p.inv.find(function (x) { return x.uid === uid; }) || p.inv.find(function (x) { return x.id === id && !x.lock; });
+          if (!cur) { total = done; break; }
+          uid = cur.uid;
+          var c0 = cur.cnt || 1, ref = cur;
+          W.useItem(cur.uid, false, true);
+          var still = (ref.cnt || 1) >= c0 && p.inv.indexOf(ref) >= 0;
+          if (still) { total = done; break; }   // 沒有扣到（缺鑰匙、條件不符）→ 停
+          done++;
+          if (now() - t0 >= SLICE) break;
+        }
+      } catch (e) { console.warn('[AFK-batchopen]', e); total = done; }
+      quiet(false);
+      if (stopReq) total = done;
+      if (done < total) { if (label) label.textContent = '開啟中… ' + done.toLocaleString() + '／' + total.toLocaleString(); setTimeout(step, 0); }
+      else finish();
+    };
+    step();
+  };
+  W.afkBatchOpen = run;
+  run.stop = function () { stopReq = true; };
+  run.eligible = eligible;
+
+  var oOpen = W.openModal;
+  W.openModal = function (item, isEq) {
+    var r = oOpen.apply(this, arguments);
+    try {
+      var d = item && DB.items[item.id];
+      if (!isEq && eligible(d) && !item.lock && (item.cnt || 1) > 1) {
+        var box = document.getElementById('modal-actions'), use = box && box.querySelector('button[onclick^="useItem("]');
+        if (use && !box.querySelector('[data-afk-bo]')) {
+          var n = item.cnt || 1, cls = 'btn border-sky-700 bg-sky-900 hover:bg-sky-800 text-sky-100 py-2 text-base font-bold';
+          use.insertAdjacentHTML('afterend',
+            '<button type="button" data-afk-bo="10" class="' + cls + '" onclick="afkBatchOpen(\'' + item.uid + '\',10)">開 ' + Math.min(10, n) + ' 個</button>'
+            + '<button type="button" data-afk-bo="all" class="' + cls + '" onclick="afkBatchOpen(\'' + item.uid + '\',' + n + ')">全部開啟（' + n.toLocaleString() + '）</button>');
+        }
+      }
+    } catch (e) {}
+    return r;
+  };
+  console.log('[AFK-batchopen] 已載入：禮盒一次開多個');
+})();
