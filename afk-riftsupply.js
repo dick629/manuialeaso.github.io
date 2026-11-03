@@ -23,6 +23,9 @@
  *   2026-11-03（子開關 riftout）：1／2／3 段加速藥水與魔力藥水（裂痕專用）離開裂痕不會消失，在一般地圖也能用，
  *     每用一次收龍之鑽石 10（＋等比例金幣，afk-diacost）；效果照裂痕裡（一般版的 2 倍、可疊加）。不會自動喝。
  *     在一般地圖喝的效果，進出裂痕都不會被清掉；在裂痕裡喝的，離開時照舊清掉。其他裂痕補給照舊只能在裂痕裡用、離場消失。
+ *   2026-11-04 03:14（玩家）：加速與魔力藥水（裂痕專用）的效果也套到傭兵身上——只在之後的「次元裂縫」難度裡。
+ *     那個難度還沒做：判斷集中在 window.__afkDimRiftOn()（先回 false），做好時改成真正的判斷就會生效；玩家看不到任何文字。
+ *     傭兵重算能力時（_recomputingAlly）讀隊長身上的裂痕藥水效果；隊長的效果變了就重算全部傭兵。
  * ========================================================================== */
 (function () {
   'use strict';
@@ -147,6 +150,12 @@
     try { (0, eval)('useItem = window.useItem'); } catch (e) {}
   }
 
+  // ── 次元裂縫（之後的難度，還沒做）：裂痕藥水的效果也給傭兵 ──
+  //   ⚠ 做出次元裂縫時，把這個判斷改成「現在是不是次元裂縫難度」；其他地方不用動
+  if (typeof W.__afkDimRiftOn !== 'function') W.__afkDimRiftOn = function () { return false; };
+  var dimOn = function () { try { return !!W.__afkDimRiftOn(); } catch (e) { return false; } };
+  var leader = null;   // 最近一次的真正角色（傭兵重算時全域 player 會暫時換成傭兵）
+  var allyCalc = function () { try { return typeof _recomputingAlly !== 'undefined' && !!_recomputingAlly; } catch (e) { return false; } };
   // ── 效果：攻速、施法、移動、MP 恢復 ──
   var bf = function (p, k) { return !!(p && p.buffs && p.buffs[BUFF[k]] > 0 && (active(p) || (OUT[k] && outOn()))); };
   var anyOut = function (p) { return Object.keys(OUT).some(function (k) { return bf(p, k); }); };
@@ -155,14 +164,17 @@
     W.recomputeStats = function () {
       var r = oRe.apply(this, arguments);
       try {
-        var p = P(); if (!p || !p.d || !(active(p) || anyOut(p))) return r;
+        var p = P(), src = p;
+        if (allyCalc()) { if (!dimOn() || !leader || leader === p) return r; src = leader; }   // 傭兵：只在次元裂縫，吃隊長的藥水
+        else if (p) leader = p;
+        if (!p || !p.d || !src || !(active(src) || anyOut(src))) return r;
         var d = p.d, a = 1, c = 1;
-        if (bf(p, 'h1')) a *= K1;
-        if (bf(p, 'h2')) a *= K2;
-        if (bf(p, 'h3')) { a *= K3; c *= K3; }
+        if (bf(src, 'h1')) a *= K1;
+        if (bf(src, 'h2')) a *= K2;
+        if (bf(src, 'h3')) { a *= K3; c *= K3; }
         if (a > 1 && d.aspd) d.aspd /= a;
         if (c > 1) { if (d.castLock) d.castLock /= c; if (d.supportCastLock) d.supportCastLock /= c; }
-        if (bf(p, 'blue')) d.mpR = Math.ceil((Number(d.mpR) || 0) * BLUE_K);   // 玩家 2026-11-03 23:44：改成 MP 自然恢復 +50%
+        if (bf(src, 'blue')) d.mpR = Math.ceil((Number(d.mpR) || 0) * BLUE_K);   // 玩家 2026-11-03 23:44：改成 MP 自然恢復 +50%
       } catch (e) {}
       return r;
     };
@@ -222,6 +234,16 @@
     delete p._afkRiftCd; delete p._afkRiftImmune;
     if (any) recalc();
   };
+  // 次元裂縫：隊長的加速／魔力效果開始或結束時，重算傭兵（核心 _allyLevelRecompute：保留目前 HP／MP）
+  var allySig = '';
+  var allySync = function (p) {
+    var sig = dimOn() ? ['h1', 'h2', 'h3', 'blue'].map(function (k) { return bf(p, k) ? 1 : 0; }).join('') : '';
+    if (sig === allySig) return;
+    var had = allySig; allySig = sig;
+    if (!had && sig === '0000') return;
+    if (typeof W._allyLevelRecompute !== 'function') return;
+    (p.allies || []).forEach(function (a) { if (a) { try { W._allyLevelRecompute(a); } catch (e) {} } });
+  };
   // 離開裂痕不消失的補給（afk-ttmi-items 的 clearRift 問這裡）
   var keep = function (id) { var k = kindOf(id); return !!(k && OUT[k] && outOn()); };
   if (typeof W.tick === 'function') {
@@ -230,6 +252,8 @@
       var r = oTick.apply(this, arguments);
       try {
         var p = P(); if (!p) return r;
+        if (!allyCalc()) leader = p;
+        allySync(p);
         if (!inRift() || !on()) {
           var out = p._afkRiftOut || {}, stray = Object.keys(BUFF).some(function (k) { return p.buffs && p.buffs[BUFF[k]] > 0 && !(OUT[k] && out[k] && outOn()); });
           if (p._afkRiftCd || p._afkRiftImmune || stray) wipe(p, true);
@@ -259,5 +283,5 @@
   };
   texts(); W.addEventListener('load', texts);
 
-  W.__afkRiftSupply = { use: use, ids: ids, BUFF: BUFF, CDS: CDS, HEAL2_PCT: HEAL2_PCT, BONE_SEC: BONE_SEC, BONE_CUT: BONE_CUT, CALM_STACKS: CALM_STACKS, boneOn: boneOn, K1: K1, K2: K2, K3: K3, HEAL: HEAL, MPV: MPV, CD: CD, IMMUNE: IMMUNE, cdLeft: cdLeft, immune: immune, auto: auto, wipe: wipe, NAMES: NAMES, keep: keep, OUT: OUT, OUT_FEE: OUT_FEE, outOn: outOn };
+  W.__afkRiftSupply = { dimOn: dimOn, allySync: allySync, use: use, ids: ids, BUFF: BUFF, CDS: CDS, HEAL2_PCT: HEAL2_PCT, BONE_SEC: BONE_SEC, BONE_CUT: BONE_CUT, CALM_STACKS: CALM_STACKS, boneOn: boneOn, K1: K1, K2: K2, K3: K3, HEAL: HEAL, MPV: MPV, CD: CD, IMMUNE: IMMUNE, cdLeft: cdLeft, immune: immune, auto: auto, wipe: wipe, NAMES: NAMES, keep: keep, OUT: OUT, OUT_FEE: OUT_FEE, outOn: outOn };
 })();

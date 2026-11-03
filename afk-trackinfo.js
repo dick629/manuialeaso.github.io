@@ -211,6 +211,7 @@
         var ttl = []; try { var Ti = window.__afkTitles, TOn = !window.AFK_TOGGLES || window.AFK_TOGGLES.enabled('hiddenbonus'); if (Ti && TOn) ttl = Ti.list(player).filter(function (t) { return t.id !== 'reborn'; }).map(function (t) { return t.n; }); } catch (e) {}
         // 2026-11-03：打倒死亡女神的光環「勝者的榮耀」也接在後面（原本狀態列看不到，玩家以為沒生效）
         try { var FBo = window.__afkFinalBoss; if (FBo && FBo.won && FBo.won(player)) ttl.push('勝者的榮耀'); } catch (e) {}
+        try { var SWv = window.__afkStarWeaver; if (SWv && SWv.has && SWv.has(player)) ttl.push('織星者'); } catch (e) {}   // 2026-11-04：稱號「織星者」（afk-starweaver）
         rs.textContent = '🔄 ' + (rb === 1 ? '轉生者' : rb >= 2 ? '轉生者（' + (RB_N[rb] || (rb + ' 轉')) + '）' : RB_N[0]) + (ttl.length ? '・' + ttl.join('・') : '');
         rs.style.color = rb >= 2 ? '#f0abfc' : rb === 1 ? '#fcd34d' : '#94a3b8';
         rs.title = rb ? '已轉生 ' + rb + ' 次' : '還沒轉生';

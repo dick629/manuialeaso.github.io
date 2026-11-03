@@ -15,6 +15,7 @@
  *       20 次 → 復活代價再 ×2；50、60、80、100 次各再 ×2（卷軸 2→4→8→16→32→64 張）
  *       （2026-11-03 10:22 改）倒下滿 100 次：這場戰鬥之後不能再復活（卷軸、耳環、返生術以外的復活法術、寵物都不行）。
  *       這個 100 次上限不論有沒有轉生都算，範圍是席琳夢域鏡、攻城戰、副本；倍率 ×2 仍只在轉生後的夢域鏡。
+ *       （2026-11-04 03:14）終焉第一階層（已轉生的「席琳夢境」）與第二階層（「席琳幻影」）這兩場改成 30 次；其他地方照舊 100 次。
  *     換地圖、離開席琳夢域鏡、或你自己倒下（＝這場戰鬥結束）都歸零；你自己的原地復活照原本規則，不受倍率影響
  *   ‧用復活卷軸復活（你與傭兵）：HP 100% 復活，但吸走當前 MP 10%（寵物照原本規則）
  *
@@ -112,13 +113,23 @@
   // ── 二、轉生夢域：死亡次數與倍率 ──
   var deaths = 0, mapAt = null, cdUntil = 0, STEPS = [20, 50, 60, 80, 100];
   var reviveMult = function () { var k = 1; STEPS.forEach(function (s) { if (deaths >= s) k *= 2; }); return 2 * k; };
-  var LIMIT = 100;
-  var onCd = function () { return limitOn() && deaths >= LIMIT; };   // 名稱沿用：倒下滿 100 次＝這場戰鬥不能再復活
+  var LIMIT = 100, LIMIT_FINAL = 30;
+  // 2026-11-04 03:14（玩家）：終焉第一階層（已轉生打的 'first'＝席琳夢境）與第二階層（'tier2'＝席琳幻影）只能倒下 30 次
+  //   還沒轉生的初次輪迴（一轉女神）、二轉決戰、第三階層、單人試煉、其他副本照舊 100 次
+  var finalTight = function () {
+    try {
+      var FB = window.__afkFinalBoss; if (!FB || !FB.on || !FB.on()) return false;
+      var md = FB.mode();
+      return md === 'tier2' || (md === 'first' && player.rebirth > 0);
+    } catch (e) { return false; }
+  };
+  var limitNow = function () { return finalTight() ? LIMIT_FINAL : LIMIT; };
+  var onCd = function () { return limitOn() && deaths >= limitNow(); };   // 名稱沿用：倒下滿上限＝這場戰鬥不能再復活
   var setCd = function () {};
   var countDeath = function (who) {
     if (!limitOn()) return;
     deaths++;
-    if (deaths === LIMIT) clog('<span class="text-red-500 font-bold">死者之門關上了：這場戰鬥已經倒下 ' + LIMIT + ' 次，之後不能再復活。</span>', 'system');
+    if (deaths === limitNow()) clog('<span class="text-red-500 font-bold">死者之門關上了：這場戰鬥已經倒下 ' + limitNow() + ' 次，之後不能再復活。</span>', 'system');
     if (!active()) return;
     if (STEPS.indexOf(deaths) >= 0) {
       clog('<span class="text-red-400 font-bold">這場戰鬥已有 ' + deaths + ' 次倒下。</span>死者歸來的代價更沉重了： ×' + reviveMult() + '（復活卷軸 ' + reviveMult() + ' 張）' + (deaths >= 100 ? '，每次復活後 10 秒內不能再復活（寵物除外）' : '') + '。', 'enemy');
@@ -161,7 +172,7 @@
     });
     applied = want;
   };
-  window.__afkDreamCost = { LIMIT: 100, limitOn: limitOn, instanceMap: instanceMap, deaths: function () { return deaths; }, mult: reviveMult, setDeaths: function (n) { deaths = n; applyCost(); }, active: active, onCd: onCd, applyCost: applyCost };
+  window.__afkDreamCost = { LIMIT: 100, LIMIT_FINAL: LIMIT_FINAL, limit: limitNow, finalTight: finalTight, limitOn: limitOn, instanceMap: instanceMap, deaths: function () { return deaths; }, mult: reviveMult, setDeaths: function (n) { deaths = n; applyCost(); }, active: active, onCd: onCd, applyCost: applyCost };
 
   if (typeof window.tick === 'function') {
     var oTick = window.tick;
@@ -186,7 +197,7 @@
   var withScrolls = function (fn, opt) {
     return function () {
       if (opt && opt.cd && onCd()) {
-        if (opt.say) clog('<span class="text-slate-400">死者之門已經關上：這場戰鬥倒下滿 ' + LIMIT + ' 次，不能再復活。</span>', 'system');
+        if (opt.say) clog('<span class="text-slate-400">死者之門已經關上：這場戰鬥倒下滿 ' + limitNow() + ' 次，不能再復活。</span>', 'system');
         return false;
       }
       if (!active()) return fn.apply(this, arguments);

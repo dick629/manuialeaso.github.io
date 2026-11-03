@@ -112,8 +112,10 @@
   // 2026-10-26 二轉：'first'＝第一次決戰；'second'＝二轉決戰（席琳方傷害 +5%）；'solo'＝次元突破者單人重打（席琳方傷害 −100%、防禦與抗性 −50%）
   var mode = function () { return S()._afkFinalMode || 'first'; };
   // 2026-10-29 晚：終焉三階層——'first'＝第一階層「席琳夢境」、'tier2'＝第二階層「席琳幻影」（HP、傷害 ×1.25）、'tier3'＝第三階層「席琳伴身」（×1.5625，只能挑戰一次）
-  var TIER = { first: { n: '席琳夢境', k: 1 }, tier2: { n: '席琳幻影', k: 1.25 }, tier3: { n: '席琳伴身', k: 1.5625 } };
+  // 2026-11-04 03:14（玩家）：第二階層的席琳 HP 再 ×0.70（hpK；傷害照 ×1.25，使徒 HP 照 ×1.25）→ 席琳 HP 合計 ×0.875
+  var TIER = { first: { n: '席琳夢境', k: 1 }, tier2: { n: '席琳幻影', k: 1.25, hpK: 0.70 }, tier3: { n: '席琳伴身', k: 1.5625 } };
   var tierK = function () { var t = TIER[mode()]; return t ? t.k : 1; };
+  var tierHpK = function () { var t = TIER[mode()]; return t ? t.k * (t.hpK || 1) : 1; };   // 只用在席琳本人的 HP
   var novice = function () { return mode() === 'first' && !!S()._afkFinalNovice; };
   var modeMult = function () { var m = mode(); return m === 'solo' ? 0 : m === 'second' ? 1.05 : tierK() * (novice() ? noviceDmg() : 1); };
   // 初次輪迴的傷害也看人數（玩家 2026-10-29：8 人也要打得過）：×(0.5＋0.5×人數÷16)；16 人＝FB.novice.dmg、8 人 ×0.75、4 人 ×0.625
@@ -150,7 +152,7 @@
     var n = partyN(); S()._afkFinalParty = n; S()._afkFinalScale = mode() === 'solo' ? 1 : hpScale(n);   // 單人試煉本來就是一個人打（席琳不出手），維持原本血量
     S()._afkFinalNovice = mode() === 'first' && !(player.rebirth > 0);
     var nv = novice() ? FB.novice : { hp: 1, def: 1 };
-    m.hp = m.curHp = Math.round(FB.hp * S()._afkFinalScale * tierK() * nv.hp); m.ac = Math.round(FB.ac * nv.def); m.dr = FB.dr * nv.def; m.mr = Math.round(FB.mr * nv.def); m.hard = false; m.hardSkin = 0;
+    m.hp = m.curHp = Math.round(FB.hp * S()._afkFinalScale * tierHpK() * nv.hp); m.ac = Math.round(FB.ac * nv.def); m.dr = FB.dr * nv.def; m.mr = Math.round(FB.mr * nv.def); m.hard = false; m.hardSkin = 0;
     ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (k) { m[k] = Math.round(FB.res * nv.def); });
     m.dmg = FB.atk.slice(); m.db = FB.db; m.hit = FB.hit; m.atkSpd = FB.spd;
     m._noBossRegen = true; m.regenHp = 0; m._dreamRegen = 0; m.exp = 0; m.goldMin = 0; m.goldMax = 0; m.noGold = true;
@@ -535,6 +537,6 @@
     };
   }
 
-  window.__afkFinalBoss = { TIER: TIER, tierK: tierK, mode: mode, startMode: startMode, dreamOn: dreamOn, MAP: MAP, BOSS_NAME: BOSS_NAME, ADD_NAME: ADD_NAME, cfg: FB, hpScale: hpScale, partyN: partyN, rec: rec, won: won, lost: lost, on: on, finish: finish, timeline: timeline, summon: summon, applyRebirthGift: applyRebirthGift };
+  window.__afkFinalBoss = { TIER: TIER, tierK: tierK, tierHpK: tierHpK, mode: mode, startMode: startMode, dreamOn: dreamOn, MAP: MAP, BOSS_NAME: BOSS_NAME, ADD_NAME: ADD_NAME, cfg: FB, hpScale: hpScale, partyN: partyN, rec: rec, won: won, lost: lost, on: on, finish: finish, timeline: timeline, summon: summon, applyRebirthGift: applyRebirthGift };
   console.log('[AFK-finalboss] 已啟用：最終頭目 死亡女神 席琳（死亡之海・席琳的沉沒神殿）');
 })();
