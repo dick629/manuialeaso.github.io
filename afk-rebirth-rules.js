@@ -68,13 +68,16 @@
   // ── 受到傷害：護盾吸收、敗者榮光的免疫轉回血 ──
   var depth = 0, pend = false;
   var snapParty = function () { return party().map(function (e) { return [e, hpOf(e) || 0]; }); };
+  // 敗者榮光×滿抗：原本「物理 P 減半再改回血」＝補回損失的 1.5 倍（淨 +0.5P）。
+  //   2026-11-04 滿抗改成「受 50%、回 10%」（afk-resist CONV）：損失＝P×(0.5−0.1)，受到的 0.5P 改回血＋原本的 0.1P → 補回損失的 1＋0.6/0.4＝2.5 倍（淨 +0.6P）
+  var gloryX = function () { var F = window.__afkResFull, c = F && F.CONV; if (!c || !(F.on && F.on()) || !(c.take > c.heal)) return 1.5; return 1 + (c.take + c.heal) / (c.take - c.heal); };
   var resOf = function (e, ele) { var k = ELE_KEY[ele]; return k && e.d ? Number(e.d[k]) || 0 : 0; };
   var settle = function (snap, mob) {
     var glory = gloryOn(), ele = mob && mob.e && mob.e !== 'none' ? mob.e : null;
     snap.forEach(function (row) {
       var e = row[0], lost = row[1] - (hpOf(e) || 0); if (!(lost > 0)) return;
       var back = 0;
-      if (glory && ele && resOf(e, ele) >= 1000) back = Math.floor(lost * 1.5);          // 轉成物理的那份減半，再改成回血
+      if (glory && ele && resOf(e, ele) >= 1000) back = Math.floor(lost * gloryX());     // 轉成物理後受到的那份改成回血
       else { var sh = Number(e._afkShield) || 0; if (sh > 0) { var use = Math.min(sh, lost); e._afkShield = sh - use; back = use; } }
       if (!(back > 0)) return;
       var nv = Math.min(Number(e.mhp) || Infinity, (hpOf(e) || 0) + back);

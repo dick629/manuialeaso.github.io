@@ -22,13 +22,15 @@
  *       席琳夢域鏡：原本就寫好的「1000 屬性免疫」（一般攻擊走純物理、魔法改吃無屬性抗性的物理減傷比例）現在打得到了。
  *       其他地方：原版曲線 300 起就是 100% 減傷；滿 1000 時改成倍率 1（物理），一般攻擊照物理流程、魔法照扣傷害減免與魔防。
  *   ‧1000 以下照原本的表／原版曲線，只是上限變高（夢域鏡 800～999 都是 −99%；原版 300～999 都是 −100%）。
- *   ⚠ 這代表 999 → 1000 時受到的屬性傷害會變多（從 1%／0% 變成物理傷害）；敗者榮光（afk-rebirth-rules）會把這份轉成回血。
+ *   ‧2026-11-04（玩家）滿抗的代價改小：轉成物理、走完整條物理減傷後的傷害 P，只受 50%（P×0.5），另外回復 P×10% 的 HP（淨 40%）。
+ *       你與傭兵、夢域鏡與其他地方都一樣。做法：抗性倍率被叫到（1000 起）時記下「這一下要轉換」，在受傷掛點 __afkTaken 的最外層（window load 後包）
+ *       把那一下打五折＋回血（不算進百分比減傷 75% 上限）。外掛自己算的屬性傷害（夢域鏡房間、暗夢星迴究極魔法）傳第 4 參數 direct，直接回淨倍率 0.4。
  * ========================================================================== */
 (function () {
   'use strict';
   var T = window.AFK_TOGGLES;
-  if (T && T.register) T.register({ id: 'res1000', parent: 'dreamhell', name: '屬性抗性上限 1000（滿抗轉物理）', group: '遊戲玩法', seal: true, def: false,
-    desc: '火水風地抗性上限從 800 提高到 1000；抗性滿 1000 時，那個屬性的傷害改當物理傷害（吃防禦與傷害減免，不再吃屬性抗性）' });
+  if (T && T.register) T.register({ id: 'res1000', parent: 'dreamhell', name: '屬性抗性上限 1000（滿抗轉物理）', group: '遊戲玩法', seal: true,
+    desc: '火水風地抗性上限從 800 提高到 1000；抗性滿 1000 時，那個屬性的傷害改當物理、只受一半，另外回復 10%' });
   if (T && !T.enabled('resist')) return;
   // 經典模式照舊：傭兵重算能力時全域 player 暫時換成傭兵（_recomputingAlly），這時看最近一次的真正角色
   var lastReal = null;
@@ -41,6 +43,7 @@
   var fullOn = function () { if (T && !T.enabled('res1000')) return false; var p = realP(); return !(p && p.classicMode); };
 
   var CAP = 500, IMMUNE = 1000;
+  var CONV = { take: 0.5, heal: 0.1 };   // 滿抗轉物理：只受 50%、回復 10%
   var ELE_KEY = { fire: 'resFire', water: 'resWater', wind: 'resWind', earth: 'resEarth' };
   // [抗性, 受到傷害倍率]
   var PTS = [[0, 1.5], [50, 1.0], [100, 0.8], [150, 0.7], [200, 0.6], [250, 0.5], [300, 0.4], [400, 0.3], [500, 0.2], [600, 0.15], [700, 0.10], [800, 0.01]];
@@ -67,13 +70,20 @@
     nonePctMult = function (v) { return CV.step(CV.NONE_DREAM, Math.max(0, Number(v) || 0)); };
   }
   window.__afkEleFactor = eleFactor;
-  window.__afkResFull = { on: function () { return fullOn(); }, IMMUNE: IMMUNE, CAP4_OLD: 800, CAP4_NEW: 1000 };
+  window.__afkResFull = { on: function () { return fullOn(); }, IMMUNE: IMMUNE, CAP4_OLD: 800, CAP4_NEW: 1000, CONV: CONV, last: null };
   // 玩家 2026-10-25：抗性新制只在瘋狂席琳席琳夢域鏡有效；其他地方回到原版抗性（核心看不到這兩個掛點就走原本的算法）
   var dreamOn = function () { try { return !!(typeof player !== 'undefined' && player && player.sherineDream && player.sherineMad); } catch (e) { return false; } };
-  var eleMult = function (d, ele, isPhys) {
+  // 滿抗轉物理（1000 起）：記下這一下，受傷掛點再打五折＋回血；direct＝外掛自己扣血的屬性傷害，直接回淨倍率
+  var pend = null;
+  var conv = function (d, isPhys, base, direct) {
+    if (direct) return base * (CONV.take - CONV.heal);
+    pend = { d: d, kind: isPhys ? 'phys' : 'magic', t: (typeof state !== 'undefined' && state) ? state.ticks : 0 };
+    return base;
+  };
+  var eleMult = function (d, ele, isPhys, direct) {
     var key = ELE_KEY[ele]; if (!key || !d) return 1;
     var v = Number(d[key]) || 0;
-    if (v >= IMMUNE) return isPhys ? 1 : nonePctMult(d.resNone);   // 屬性免疫：一般攻擊當純物理；魔法改吃物理減傷
+    if (v >= IMMUNE) return conv(d, isPhys, isPhys ? 1 : nonePctMult(d.resNone), direct);   // 屬性免疫：一般攻擊當純物理；魔法改吃物理減傷
     return eleFactor(v);
   };
   var noneRes = function (d, dmg) {
@@ -85,15 +95,31 @@
   };
 
   // 席琳夢域鏡以外（滿抗轉物理開著時）：1000 以下照原版 1 − 抗性換算%（夾 0～1）；1000 起倍率 1＝當物理算
-  var eleMultOrig = function (d, ele) {
+  var eleMultOrig = function (d, ele, isPhys, direct) {
     var key = ELE_KEY[ele]; if (!key || !d) return 1;
     var v = Number(d[key]) || 0;
-    if (v >= IMMUNE) return 1;
+    if (v >= IMMUNE) return conv(d, isPhys, 1, direct);
     if (!v) return 1;
     var pct = typeof effResistPct === 'function' ? effResistPct(v) : v;
     return Math.max(0, Math.min(1, 1 - pct / 100));
   };
   Object.defineProperty(window, '__afkEleMult', { configurable: true, get: function () { return dreamOn() ? eleMult : (fullOn() ? eleMultOrig : undefined); }, set: function () {} });
+  // 受傷掛點最外層：被記下的那一下（同一個人、同一個 tick、同一種傷害）只受 50%，另外回復轉換後傷害的 10%
+  var installConv = function () {
+    var o = window.__afkTaken; if (typeof o !== 'function' || o.__afkResConv) return;
+    var w = function (ent, dmg, mob, kind) {
+      var v = o.apply(this, arguments), p = pend; pend = null;
+      try {
+        if (!p || !ent || !(v > 0) || p.d !== ent.d || p.kind !== kind || p.t !== ((typeof state !== 'undefined' && state) ? state.ticks : 0)) return v;
+        var take = Math.floor(v * CONV.take), heal = Math.floor(v * CONV.heal);
+        if (heal > 0) { if (ent === player) player.hp += heal; else ent.curHp = (ent.curHp || 0) + heal; }   // 扣血前先加：扣完＝受 50%、回 10%（不會超過上限）
+        window.__afkResFull.last = { raw: v, take: take, heal: heal };
+        return take;
+      } catch (e) { return v; }
+    };
+    w.__afkResConv = true; window.__afkTaken = w;
+  };
+  window.addEventListener('load', installConv);
   Object.defineProperty(window, '__afkNoneRes', { configurable: true, get: function () { return noneRes; }, set: function () {} });
 
   // 怪物也套同一張表（你和傭兵、召喚、寵物打怪物的屬性魔法）：抗性 0 的怪物受到屬性魔法 +50%

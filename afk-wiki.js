@@ -449,7 +449,7 @@
       ]},
       { t: 'p', p: '這個倍率<b>物理攻擊、武器特效、魔法、技能傷害全都吃</b>（魔法沒有上面那筆固定加值，但一樣吃 ×1.4／×0.6）。<b>無屬性武器永遠 ×1.0、不會被扣</b>；只有「帶了被怪剋的屬性」才會掉到 ×0.6（比不帶屬性還虧）。' },
       { t: 'p', p: '<b>屬性抗性</b>（防具/飾品屬性詞綴給）：對應元素傷害依抗性減免——50 點以內 1 點＝減 1%，超過 50 後每 5 點才再減 1%（300 點擋下全部）。' },
-      { t: 'p', p: (window.AFK_TOGGLES && !AFK_TOGGLES.enabled('res1000')) ? '火／水／風／地抗性最多 800。' : '火／水／風／地抗性最多 <b>1000</b>。<b>抗性滿 1000</b> 時，那個屬性的傷害改當成<b>物理傷害</b>：不再被抗性擋掉，改吃防禦和傷害減免——對方打得很重時，可能比 999 點受到更多。經典模式照原本。' }
+      { t: 'p', p: (window.AFK_TOGGLES && !AFK_TOGGLES.enabled('res1000')) ? '火／水／風／地抗性最多 800。' : '火／水／風／地抗性最多 <b>1000</b>。<b>抗性滿 1000</b>：那個屬性的傷害改當物理（吃防禦和傷害減免）、<b>只受一半</b>，另外<b>回復 10%</b>——對方打得很重時，可能比 999 點受到更多。經典模式照原本。' }
     ]},
     { t: '異常狀態效果（你讓怪中的負面狀態）', blocks: [
       { t: 'p', p: '很多技能／武器命中時會讓怪陷入負面狀態，時間到自動解除。<b>「定身」四種（暈眩／凍結／石化／沉睡）對 BOSS 無效</b>。各狀態實際效果：' },
@@ -842,7 +842,7 @@
       { t: 'p', p: '<b>不屈者意志</b>只限一轉以上、或能進入席琳夢域鏡（Lv80）的角色；被「封印輪迴」光環封住的角色不行。再次賦予會換掉舊的。' },
       { t: 'p', p: '<b>龍印碎片</b>：同一條龍的心、爪、眼、牙、肉、骨、血、鱗各 1 個湊成一套，換 1 個龍印碎片（四大龍副本掉落這八種材料）。<b>20 個龍印碎片＝1 顆龍的印記石</b>，印記與傷痕各用 1 顆。' },
       { t: 'p', p: '<b>闇龍的抵抗者意志傳承碎片</b>只在席琳夢域鏡掉：一般怪 0.1%、頭目必掉 1 個。' },
-      { t: 'p', p: '抗性一樣受總上限限制：火／水／風／地各 ' + ((window.AFK_TOGGLES && !AFK_TOGGLES.enabled('res1000')) ? '800' : '1000（滿 1000 時那個屬性的傷害改當物理傷害，見「戰鬥機制」的屬性抗性）') + '、無屬性 300。' }
+      { t: 'p', p: '抗性一樣受總上限限制：火／水／風／地各 ' + ((window.AFK_TOGGLES && !AFK_TOGGLES.enabled('res1000')) ? '800' : '1000（滿 1000 時那個屬性的傷害改當物理、只受一半，另外回復 10%，見「戰鬥機制」的屬性抗性）') + '、無屬性 300。' }
     ]},
     { t: '祝福／詛咒怎麼來', blocks: [
       { t: 'p', p: '<b>只有打怪掉的裝備</b>會自帶「祝福的」，機率看來源（下表；製作、兌換、任務、黑市不會產生祝福）；「對武器／盔甲施法的卷軸」另有各 <b>1%</b> 變成「祝福的」／「詛咒的」（互斥）。' }
@@ -1145,6 +1145,7 @@
     { k: 'mapguide', n: '練功推薦' },
     { k: 'sherine', n: '席琳' },
     { k: 'runes', n: '符文系統' },
+    { k: 'engrave', n: '刻印與印記' },
     { k: 'soulstone', n: '靈魂石' },
     { k: 'miosigil', n: '密奧與聖紋' },
     { k: 'combat', n: '戰鬥機制' },
@@ -1165,6 +1166,7 @@
     { k: 'relicmarket', n: '遺物市場' },
     { k: 'pvp', n: 'PVP／性向值' },
     { k: 'arena', n: '決鬥競技場' },
+    { k: 'poker', n: '德州撲克' },
     { k: 'mode', n: '遊戲模式' },
     { k: 'npc', n: 'NPC總覽' }
   ];
@@ -1371,6 +1373,7 @@
     if (key === 'craft') return renderCraft();
     if (key === 'sherine') return renderSherine();
     if (key === 'runes') return renderRunes();
+    if (key === 'engrave') return renderEngrave();
     if (key === 'soulstone') return renderSoulStone();
     if (key === 'miosigil') return renderMioSigil();
     if (key === 'story') return renderStory();
@@ -1385,6 +1388,7 @@
     if (key === 'relicmarket') return renderRelicMarket();
     if (key === 'pvp') return renderPvp();
     if (key === 'arena') return renderArena();
+    if (key === 'poker') return renderPoker();
     return '';
   }
 
@@ -1456,6 +1460,7 @@
     { key: 'relicmarket', cls: false, label: '遺物市場' },
     { key: 'pvp', cls: false, label: 'PVP／性向值' },
     { key: 'arena', cls: false, label: '決鬥競技場' },
+    { key: 'poker', cls: false, label: '德州撲克' },
     { key: 'mode', cls: false, label: '遊戲模式' },
     { key: 'npc', cls: false, label: 'NPC總覽' }
   ];
@@ -3968,6 +3973,35 @@
   }
 
   // 2026-11-02 13:10：密奧之卡（塔羅牌）與聖紋第二版
+  function renderEngrave() {   // 刻印與印記（afk-carve）
+    var C = window.__afkCarve;
+    if (!C) return '<div class="m-wiki-note">刻印目前沒有開放。</div>';
+    var f1 = function (n) { return (Math.round(Number(n) * 10) / 10).toLocaleString(); };
+    var nm = function (id) { return esc((DB.items[id] || {}).n || id); };
+    var money = function (n) { return n >= 100000000 ? (n / 100000000) + ' 億' : (n / 10000).toLocaleString() + ' 萬'; };
+    var out = '<div class="m-wiki-note">歐瑞村莊的<b>刻印師邪迪克爾</b>：武器、盔甲、頭盔、手套、長靴、斗篷各有 1 孔，先刻<b>刻印</b>（Lv1～5），刻到 Lv5 再升成<b>尤／鯤／彌之印記</b>（Lv1～5）。升級一定成功。經典模式沒有。</div>';
+    out += wCard('✦ 規則',
+      wDesc('全身最多 6 個刻印；<b>同一種刻印全身最多 2 個</b>。') +
+      wDesc('刻印跟著那件裝備走；換裝備時可以在邪迪克爾那裡付金幣<b>轉移</b>到同部位的另一件，不會失敗、不掉等級：刻印 <b>Lv × 10 萬</b>，印記 <b>Lv × 30 萬</b>。') +
+      wDesc('升成印記後，原本刻印的效果 <b>×1.5</b>（以 Lv5 為準），再加上方向的效果。') +
+      wDesc('材料背包不夠時，會用倉庫裡的（「副本材料從倉庫補足」開著時）。勇氣之證、身體的印記拿來升級會整件用掉，強化值不算。'));
+    out += wCard('◆ 7 種刻印', wTbl(['刻印', '材料', '效果（Lv1／2／3／4／5）', '升成印記後'], C.KINDS.map(function (k) {
+      return ['<b style="color:#fdba74">' + esc(k.ch) + '</b>', nm(k.mat), esc(k.d(k.v.join('／'), k.v2 ? k.v2.join('／') : '')), esc(k.d(k.v[4] * C.SEAL_X, k.v2 ? k.v2[4] * C.SEAL_X : 0))];
+    })) + wTbl(['等級', '刻印材料', '金幣'], C.ENG_COST.map(function (c, i) { return ['Lv' + (i + 1), c[0], money(c[1])]; })));
+    out += wCard('◆ 印記', wTbl(['方向', '材料', 'Lv1 → Lv5'], ['you', 'kun', 'mi'].map(function (k) { var D = C.DIRS[k]; return ['<b style="color:' + D.c + '">' + D.n + '之印記</b>', nm(D.mat), esc(D.d(0)) + '<br>→ ' + esc(D.d(4))]; })) +
+      wDesc('<b>蝕刻</b>：被蝕刻的目標，下一次受到的傷害 ×1.5（你、傭兵、寵物、持續傷害都算），吃掉就消失；同一個目標只有 1 層，再觸發只會刷新；最多 5 秒。多格彌之印記的機率相加。') +
+      wTbl(['等級', '印記材料', '原本的刻印材料', '龍之鑽石', '席琳結晶', '夢艷結晶', '金幣'], C.SEAL_COST.map(function (c, i) { return ['Lv' + (i + 1), c.mark, c.mat.toLocaleString(), c.dia.toLocaleString(), c.sc.toLocaleString(), c.dc.toLocaleString(), money(c.gold)]; })));
+    out += wCard('◆ 套裝（6 孔裡同方向的印記，等級不限）', wTbl(['方向', '3 格', '6 格'], ['you', 'kun', 'mi'].map(function (k) { return ['<b style="color:' + C.DIRS[k].c + '">' + C.DIRS[k].n + '</b>', esc(C.SETS[k][0]), esc(C.SETS[k][1])]; })) +
+      wDesc('還在刻印階段的孔不算。6 格同方向＝3 格、6 格兩段都拿到；3 格尤＋3 格鯤兩邊的 3 格都拿到。邪迪克爾的面板會顯示「尤 3／6、鯤 1／6、彌 2／6」這樣的進度。'));
+    var mapsOf = function (list) { var seen = {}, o = []; list.forEach(function (v) { var n = C.mapName(v); if (n && !seen[n]) { seen[n] = 1; o.push(n); } }); return o.join('、'); };
+    out += wCard('◆ 材料取得', wTbl(['材料', '地點', '機率'], C.KINDS.map(function (k) { return [nm(k.mat), esc(mapsOf(C.DROPS[k.k])), '一般怪 0.3%（乘隊伍人數）、頭目 20%（1～3 個）']; }).concat([
+      [nm(C.DIRS.you.mat), '四龍副本、哈汀的時空', '頭目 3%'],
+      [nm(C.DIRS.kun.mat), '傲慢之塔 41 樓以上各層', '頭目 2%'],
+      [nm(C.DIRS.mi.mat), '拉斯塔巴德的軍王之室、席琳的世界', '頭目 1%']
+    ])) + wDesc('刻印材料可以在邪迪克爾那裡 <b>10 個換 1 個</b>其他種刻印材料（每次手續費 1 萬金幣）。'));
+    return out;
+  }
+
   function renderMioSigil() {
     var out = '', M = window.__afkMio, S = window.__afkSigil;
     if (!M && !S) return '<div class="m-wiki-note">密奧之卡、聖紋在設定裡被關掉了。經典模式沒有這兩個系統。</div>';
@@ -4708,7 +4742,7 @@
           ['時間', '用遊戲時間計算；一趟最長 ' + R2.TUNE.clearMin + ' 分鐘，撐滿＝完全通關'],
           ['怪物', (function () { var T2 = R2.TUNE, c = T2.dmgCurve || [], dm = c.map(function (x) { return x[0] + ' 分 ×' + x[1]; }).join('、');
             return '怪物等級慢慢變高，' + (T2.lvFull || 30) + ' 分鐘到最高（四大龍也是那時才出現）；' + (T2.bossHalf || 20) + ' 分鐘前每 5 分鐘一隻頭目，之後一半機率是頭目。'
-              + (dm ? '怪物攻擊力：' + dm + '（之間平均變化）。' : '') + (T2.hpFrom || 20) + ' 分鐘後新出場的怪物 HP 越來越高。'; })()],
+              + (dm ? '怪物攻擊力：' + dm + '（之間平均變化）。' : '') + (T2.hpFrom || 20) + ' 分鐘後新出場的怪物 HP 越來越高。只在副本、任務、世界事件裡出現的頭目不會進裂痕（四大龍除外）。'; })()],
           ['裂痕裡的代價', '小怪死亡的代價、王的死亡詛咒、王的殘響：每種每秒最多一次（同一秒倒下好幾隻只算一次）。'],
           ['難度', '頭目出場 ' + R2.TUNE.enrageSec + ' 秒（同時兩隻以上 ' + (R2.TUNE.enrageMulti || 90) + ' 秒）還沒倒會「時空暴走」（每秒全隊最大 HP 5% 起，每 10 秒 +5%' + (R2.TUNE.enrageLateFrom ? '，' + R2.TUNE.enrageLateFrom + ' 分鐘後每 10 秒 +' + Math.round(R2.TUNE.enrageStepLate * 100) + '%' : '') + (R2.TUNE.erodeFrom ? '；同一隻頭目出場滿 ' + R2.TUNE.erodeFrom + ' 秒還沒倒會「時空侵蝕」：再 +' + Math.round(R2.TUNE.erodeStep * 100) + '%，之後每 10 秒再 +' + Math.round(R2.TUNE.erodeStep * 100) + '%，暴走抑制劑消不掉' : '') + '；場上有頭目時，你和傭兵會自動先打最早出場的那隻）；' + R2.TUNE.wallFrom + ' 分鐘起「裂痕崩塌」，全場每秒扣血，越後面扣越多。夢域鏡的王登場衝擊在裂痕裡最多每 10 秒一次。'],
           ['裝備參考', '<b>席琳模式</b>：轉生後全身 +15 祝福裝備、7 名轉生傭兵 ≈ 撐滿 80 分鐘（完全通關）。<b>瘋狂／夢域鏡</b>：全身遺物 +10、原版遺骸＋之魂、神話變身 ≈ 60 分鐘；全身 +15、夢域遺骸＋之魂、時空變身 ≈ 70 分鐘；全身昇華支配 +2 ≈ 80 分鐘。抽到的頭目不同，每趟可以差 10 分鐘以上'],
@@ -5255,6 +5289,46 @@
   // 決鬥競技場(本檔手動維護;上游 js/28-pvp-arena.js 全檔＋js/04 killPlayer 的決鬥豁免＋js/08 useItem 禁藥閘)。
   //   常數都包在 js/28 的 IIFE 內、外部讀不到,故本頁數字直接對照該檔原始碼(PVP_ATK_MULT_*/PVP_HISTORY_MAX 等)。
   //   何時要更新:上游改攻擊面夾擠上下限、名片欄位白名單、禁藥清單,或決鬥勝負的獎懲規則時。
+  // 德州撲克(afk-poker.js 的荷官洛蒂;牌桌數字直接讀 __afkPoker.TABLES)
+  function renderPoker() {
+    var K = window.__afkPoker;
+    if (!K || !K.on()) return '<div class="m-wiki-note">德州撲克目前沒有開放。</div>';
+    var unit = function (t) { return t.cur === 'gold' ? '' : ' 顆'; };
+    var out = '<div class="m-wiki-note">到<b>歐瑞村莊</b>找荷官「<b>洛蒂</b>」，用<b>金幣、龍之鑽石或血龍鑽</b>換籌碼入座，跟 3～5 位 NPC 玩<b>無限注德州撲克</b>。經典模式沒有這張牌桌。</div>';
+    out += wCard('🃏 牌桌',
+      wTbl(['牌桌', '用什麼買籌碼', '小盲／大盲', '買入'], K.TABLES.map(function (t) {
+        return ['<b>' + t.n + '</b>', K.CURS[t.cur], t.sb.toLocaleString() + '／' + t.bb.toLocaleString(), t.min.toLocaleString() + '～' + t.max.toLocaleString() + unit(t)];
+      })) +
+      wDesc('<b>1 個籌碼＝1 單位</b>該幣別（金幣桌 1 籌碼＝1 金幣）。入座時就從身上扣掉；<b>按「離座」才換回去</b>。') +
+      wDesc('莊家<b>不抽成</b>：贏多少就拿多少。') +
+      wDesc('籌碼少於買入下限時，兩手之間可以按「<b>補到…</b>」補籌碼（最多補到買入上限）。'));
+    out += wCard('📜 怎麼玩',
+      wDesc('每人發 <b>2 張底牌</b>，桌上陸續翻開 <b>5 張公牌</b>（翻牌 3 張 → 轉牌 1 張 → 河牌 1 張），從 7 張裡挑<b>最好的 5 張</b>比大小。') +
+      wDesc('每一手由莊家（<b>D</b>）左手邊兩位先放<b>小盲、大盲</b>。每一輪可以<b>棄牌、過牌、跟注、下注／加注、全下</b>；加注至少要加到上一次加注的幅度，最多可以推出全部籌碼。') +
+      wDesc('有人全下時，多出來的下注會另開<b>邊池</b>：全下的人只能贏到自己有跟到的那部分。') +
+      wDesc('牌型一樣大就比剩下的牌（踢腳）；5 張完全一樣大就<b>平分</b>那個池。') +
+      wTbl(['牌型（由大到小）', '例子'], [
+        ['皇家同花順', 'A K Q J 10 同花色'], ['同花順', '9 8 7 6 5 同花色'], ['四條', '四張 7'], ['葫蘆', '三張 Q＋兩張 4'],
+        ['同花', '五張同花色'], ['順子', '連續五張（<b>A 2 3 4 5</b> 也算，是最小的順子）'], ['三條', '三張 9'], ['兩對', '兩張 J＋兩張 3'], ['一對', '兩張 A'], ['高牌', '什麼都沒湊到，比最大的牌']
+      ]));
+    out += wCard('🧑‍🤝‍🧑 對手',
+      wDesc('每位 NPC 都有自己的打法，名字旁邊會標出來：') +
+      wTbl(['打法', '特色'], [
+        ['謹慎', '只玩好牌，很少詐唬；他加注時通常真的有東西'],
+        ['穩健', '照牌力打，偶爾詐唬'],
+        ['兇狠', '牌不多但一出手就常常加注'],
+        ['莽撞', '什麼牌都想玩，常加注也常詐唬'],
+        ['愛跟', '很少棄牌、也很少加注，喜歡跟到最後']
+      ]) +
+      wDesc('NPC <b>看不到你的底牌</b>，也不會偷看還沒發的牌，只看自己的牌和桌上的公牌做決定。') +
+      wDesc('NPC 輸光籌碼就會離桌，換一位新的坐下。'));
+    out += wCard('⚠️ 離座與斷線',
+      wDesc('牌打到一半按「離座」＝<b>這手直接棄牌</b>，已經推進底池的籌碼拿不回來，其餘照常換回。') +
+      wDesc('牌局中途關掉遊戲、重新整理或換角色，也算這手棄牌；桌上剩下的籌碼會在<b>下次進入遊戲時自動換回</b>。') +
+      wDesc('打牌時掛機照常進行；按「－」可以把牌桌縮成小球，輪到你時小球會閃。'));
+    return out;
+  }
+
   function renderArena() {
     var out = '<div class="m-wiki-note">除了野外會遇到的<b>玩家 NPC</b>（見「PVP／性向值」），另外還有一套<b>真人對真人</b>的玩法：把自己的角色壓成一段「<b>對戰名片</b>」文字丟給朋友，對方貼進遊戲就能跟你的角色打一場。<b>贏了沒有獎勵、輸了也沒有損失</b>，純粹比誰練得好。</div>';
 

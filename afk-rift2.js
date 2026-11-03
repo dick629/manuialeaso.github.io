@@ -56,6 +56,38 @@
   };
   fixStages(); W.addEventListener('load', fixStages);
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  // ── 副本／專屬頭目不進席琳三模式的裂痕池（玩家 2026-11-04：例 異界祭壇的半身／真‧吉爾塔斯）──
+  //   判準（一條規則，不列名單）：頭目必須出現在至少一張「一般狩獵地圖」的出怪表裡才可以進池。
+  //   一般狩獵地圖＝地圖選單的 野外／地監／傲慢之塔／海賊島／時空裂痕領域 分類＋風木地監（城堡）＋象牙塔隱藏區域＋遺忘之島，
+  //   但去掉：外掛自建地圖（afk_*，副本／事件／任務）、支配者傲慢之塔（dom_tower*）、純頭目房、軍王之室與祭壇（KING_ROOMS）、
+  //   四龍副本（ANTHARAS_AREA_BOSS）、不能離線掛機的地圖（__afkNoOfflineMaps）、攻城區、新兵修練場、夢幻之島。
+  //   只靠程式叫出來、不在任何出怪表的頭目（任務、世界事件、地區頭目、最終決戰）自然也被排除。
+  //   例外：核心的四大龍（安塔瑞斯／法利昂／巴拉卡斯／林德拜爾）本來就是裂痕設計的一部分，照舊 lvFull 分鐘後入池。
+  var CORE_DRAGONS = ['antaras', 'fafurion', 'valakas', 'lindvior'];
+  var banCache = null;
+  var g0 = function (n) { try { return (0, eval)('typeof ' + n + ' !== "undefined" ? ' + n + ' : null'); } catch (e) { return null; } };
+  var openMap = function (id, cat) {
+    if (!id || /^afk_|^dom_tower|^town_/.test(id) || id === 'rift_battle' || id === 'training' || id === 'dream_island') return false;
+    var PB = g0('PURE_BOSS_MAPS') || [], KR = g0('KING_ROOMS') || {}, AA = g0('ANTHARAS_AREA_BOSS') || {};
+    if (PB.indexOf(id) >= 0 || KR[id] || AA[id] || (W.__afkNoOfflineMaps || []).indexOf(id) >= 0) return false;
+    try { if (typeof isSiegeArea === 'function' && isSiegeArea(id)) return false; } catch (e) {}
+    return !!cat[id];
+  };
+  var riftBan = function () {
+    if (banCache) return banCache;
+    var ban = {}, ok = {}, cat = {};
+    try {
+      var MC = g0('MAP_CATEGORIES') || {};
+      ['wild', 'dungeon', 'tower', 'pirate_island', 'rift'].forEach(function (c) { (MC[c] || []).forEach(function (m) { if (m && m.v) cat[m.v] = 1; }); });
+      (g0('CASTLE_EXTRA') || []).forEach(function (id) { cat[id] = 1; });
+      var HP = g0('HIDDEN_AREA_PARENT') || {}; Object.keys(HP).forEach(function (k) { cat[HP[k]] = 1; });
+      cat.oblivion_island = 1;
+      Object.keys(DB.maps || {}).forEach(function (mid) { if (openMap(mid, cat)) (DB.maps[mid] || []).forEach(function (id) { ok[id] = 1; }); });
+      Object.keys(DB.mobs).forEach(function (id) { var m = DB.mobs[id]; if (m && m.boss && !ok[id] && CORE_DRAGONS.indexOf(id) < 0) ban[id] = 1; });
+    } catch (e) { console.warn('[AFK-rift2] ban', e); }
+    if (document.readyState === 'complete') banCache = ban;   // 外掛的地圖與頭目都載完才固定下來
+    return ban;
+  };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
   var TUNE = W.__afkRift2Tune = W.__afkRift2Tune || {
@@ -68,8 +100,9 @@
     //   席琳三模式改成：等級上限 lvFull 分鐘才到 100（四大龍同時才入池），bossHalf 分鐘起一半機率出頭目；之前每 5 分鐘一隻頭目。
     lvFull: 60, bossHalf: 20,
     // 怪物攻擊力（核心 riftDamageMult：30 分起每分鐘 +20%，70 分 ×9、100 分 ×15）。席琳三模式改成分段直線：
-    //   [分鐘, 倍率]——開場 ×0.2、60 分 ×0.5、67 分 ×12、74 分 ×30、80 分 ×40（之間直線；80 分以後照最後一段的斜率繼續）
-    dmgCurve: [[0, 0.2], [60, 0.5], [67, 12], [74, 30], [80, 40]],
+    //   [分鐘, 倍率]——開場 ×0.2、63 分 ×0.5、70 分 ×12、74 分 ×30、80 分 ×40（之間直線；80 分以後照最後一段的斜率繼續）
+    //   2026-11-04（玩家）：60→67 分的爬升整段往後挪 3 分鐘（原本 60 ×0.5、67 ×12）；74／80 不動 → 每一分鐘都不比原本高
+    dmgCurve: [[0, 0.2], [63, 0.5], [70, 12], [74, 30], [80, 40]],
     // 暴走：lateFrom 分鐘以後，每 10 秒的增量改成 enrageStepLate
     enrageLateFrom: 0, enrageStepLate: 0.05,
     // 時空侵蝕（2026-11-04）：同一隻頭目出場滿 erodeFrom 秒還沒倒，暴走再加 erodeStep，之後每 10 秒再加一次；暴走抑制劑消不掉這一段
@@ -113,6 +146,12 @@
     return r;
   };
   var oSpawn = W.spawnRiftMob;
+  // 核心抽一隻、抽到副本專屬頭目就重抽（拒絕取樣＝在允許的頭目裡一樣平均）
+  var pickOk = function (boss, minLv, maxLv, ks) {
+    var ban = riftBan();
+    for (var k = 0; k < 40; k++) { var id = pickRiftMob(boss, minLv, maxLv, ks); if (!id) return null; if (!ban[id]) return id; }
+    return null;
+  };
   // 席琳三模式的出怪（照核心 spawnRiftMob，只換時間軸；暗夢星迴不經過這裡——rule() 已排除）
   var spawnMine = function (idx) {
     var s = S(), t = s.ticks || 0, m = minutes();
@@ -122,7 +161,7 @@
     if (m >= TUNE.bossHalf) isBoss = Math.random() < 0.5;
     else if (s._r2BossDue != null && t >= s._r2BossDue) { isBoss = true; s._r2BossDue = t + 3000; }
     else isBoss = false;
-    var id = pickRiftMob(isBoss, minLv, maxLv, ks) || pickRiftMob(!isBoss, minLv, maxLv, ks);
+    var id = pickOk(isBoss, minLv, maxLv, ks) || pickOk(!isBoss, minLv, maxLv, ks);
     if (!id) return;
     var base = DB.mobs[id];
     mapState.mobs[idx] = Object.assign({}, base, { curHp: base.hp, uid: uid(), _born: ++_mobBornSeq, _magCd: {}, justHit: false, st: newMobStatus() });
@@ -361,6 +400,6 @@
       return r;
     };
   }
-  W.__afkRift2 = { segTxt: segTxt, TUNE: TUNE, DROP: DROP, SEG: SEG, minutes: minutes, modeNow: modeNow, rule: rule, reward: reward, hpMult: hpMult, dmgMult: dmgMult, fixStages: fixStages, enrage: enrageNow, calm: calm, oldestBoss: oldestBoss };
+  W.__afkRift2 = { segTxt: segTxt, TUNE: TUNE, DROP: DROP, SEG: SEG, minutes: minutes, modeNow: modeNow, rule: rule, reward: reward, hpMult: hpMult, dmgMult: dmgMult, fixStages: fixStages, riftBan: riftBan, enrage: enrageNow, calm: calm, oldestBoss: oldestBoss };
   console.log('[AFK-rift2] 已啟用：時空裂痕改用遊戲時間' + (ON ? '＋席琳三模式新規則' : ''));
 })();
