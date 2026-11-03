@@ -5,6 +5,8 @@
  *     怪物等級、頭目比例、傷害倍率會一口氣跳上去。現在每一下都換算成「開場後經過幾下遊戲時間」。
  * 二、席琳三模式（席琳／瘋狂席琳／夢域鏡席琳）的新規則：
  *   ‧一趟最長 80 分鐘；撐滿 80 分鐘＝完全通關，自動結算。
+ *   ‧2026-11-04（玩家）：出怪時間軸（等級 60 分到最高、四大龍 60 分起）、怪物攻擊力曲線（TUNE.dmgCurve）、時空侵蝕（同一隻頭目 180 秒沒倒，暴走再 +15%、每 10 秒再 +15%，抑制劑消不掉）、
+ *     裂痕裡小怪代價／王的死亡詛咒／屍爆每秒最多一次（__afkRiftOnce）。
  *   ‧難度目標：撐到 60／70／80 分鐘，大約要曲線 60／70／80 的裝備（遺物 +10＋原版遺骸＋之魂／遺物 +15＋夢域遺骸／昇華支配 +2）。
  *     做法：20 分鐘後怪物 HP 隨時間成長；頭目出場 60 秒還沒倒就「時空暴走」，每秒對全隊造成真實傷害（越拖越重）；
  *           60 分鐘起全場每秒扣最大 HP（第二道壓力牆）。數字在 TUNE，用模擬工具對齊。
@@ -61,11 +63,36 @@
     hpBase: { sherine: 1, mad: 1, dream: 0.15 },   // 各模式怪物 HP 的基本倍率（夢域鏡本身已經 ×50，用這個把三模式拉到同一條難度線）
     enrageSec: 60, enrageMulti: 90, enragePct: 0.05, enrageStep: 0.05, enrageEvery: 10,   // 頭目 60 秒沒倒：每秒全隊最大 HP 5%，每 10 秒再 +5%
     wallFrom: 60, wallBase: 0.004, wallStep: 0.0025,   // 60 分鐘起全場每秒扣 0.4% 最大 HP，每分鐘再 +0.25%
-    clearMin: 80
+    clearMin: 80,
+    // 出怪時間軸（2026-11-03 23:39）：核心是開場 30 分鐘怪物等級就到上限 100、20 分鐘起一半機率出頭目、30 分鐘起出四大龍。
+    //   席琳三模式改成：等級上限 lvFull 分鐘才到 100（四大龍同時才入池），bossHalf 分鐘起一半機率出頭目；之前每 5 分鐘一隻頭目。
+    lvFull: 60, bossHalf: 20,
+    // 怪物攻擊力（核心 riftDamageMult：30 分起每分鐘 +20%，70 分 ×9、100 分 ×15）。席琳三模式改成分段直線：
+    //   [分鐘, 倍率]——開場 ×0.2、60 分 ×0.5、67 分 ×12、74 分 ×30、80 分 ×40（之間直線；80 分以後照最後一段的斜率繼續）
+    dmgCurve: [[0, 0.2], [60, 0.5], [67, 12], [74, 30], [80, 40]],
+    // 暴走：lateFrom 分鐘以後，每 10 秒的增量改成 enrageStepLate
+    enrageLateFrom: 0, enrageStepLate: 0.05,
+    // 時空侵蝕（2026-11-04）：同一隻頭目出場滿 erodeFrom 秒還沒倒，暴走再加 erodeStep，之後每 10 秒再加一次；暴走抑制劑消不掉這一段
+    erodeFrom: 180, erodeStep: 0.15
   };
   var DROP = { mob: 0.01, bossLow: 0.10, bossHigh: 0.25, bossFrom: 60, box: 0.00001, relicX: 10,
     legend: 0.01, legendPct: 0.15, legendId: 'afk_rune_po_l' };   // 玩家 2026-10-29：席琳模式前 15% 時間（80 分的前 12 分）每次擊殺 1% 掉傳說符文「破」，給新手用；一趟最多一顆
   var SEG = { mad: [[12, 'relic5'], [76, 'box2'], [1e9, 'box3']], dream: [[12, 'relic10'], [60, 'box2'], [76, 'box3'], [1e9, 'fate']] };
+  var segTxt = function (mode) {
+    var sg = SEG[mode]; if (!sg) return '失去光芒的符文石（階段一）';
+    var nm = { relic5: '隨機遺物 +5', relic10: '隨機遺物 +10', box2: '失去光芒的符文石（階段二）', box3: '失去光芒的符文石（階段三）', fate: '瘴骸·破材料（隨機一種）' };
+    var out = [], from = 0;
+    sg.forEach(function (x, i) { out.push((i === sg.length - 1 ? from + ' 分以上或完全通關' : from + '～' + x[0] + ' 分') + '：' + nm[x[1]]); from = x[0]; });
+    return out.join('；');
+  };
+  // 裂痕裡每秒最多一次（玩家 2026-11-03 23:39）：小怪死亡代價、王的死亡詛咒、屍爆…同一秒好幾隻倒下只算一次。席琳三模式的裂痕才作用；其他地方一律放行。
+  var onceAt = {};
+  W.__afkRiftOnce = function (key) {
+    if (!rule()) return true;
+    var t = S().ticks || 0, last = onceAt[key];
+    if (last != null && t >= last && t - last < 10) return false;
+    onceAt[key] = t; return true;
+  };
 
   // ── 模式與時間 ──
   var modeNow = function () { var p = P(); if (!p || p.classicMode) return 'plain'; if (p.sherineMad && p.sherineDream) return 'dream'; if (p.sherineMad) return 'mad'; if (p.sherineWorld) return 'sherine'; return 'plain'; };
@@ -86,8 +113,40 @@
     return r;
   };
   var oSpawn = W.spawnRiftMob;
+  // 席琳三模式的出怪（照核心 spawnRiftMob，只換時間軸；暗夢星迴不經過這裡——rule() 已排除）
+  var spawnMine = function (idx) {
+    var s = S(), t = s.ticks || 0, m = minutes();
+    var ks = m * 60 * (30 / TUNE.lvFull);   // 換算成核心時間軸的秒數：lvFull 分鐘 ↔ 核心的 30 分鐘
+    var inc = Math.floor(ks / 30), minLv = Math.min(40, 1 + inc), maxLv = Math.min(100, 40 + inc);
+    var isBoss;
+    if (m >= TUNE.bossHalf) isBoss = Math.random() < 0.5;
+    else if (s._r2BossDue != null && t >= s._r2BossDue) { isBoss = true; s._r2BossDue = t + 3000; }
+    else isBoss = false;
+    var id = pickRiftMob(isBoss, minLv, maxLv, ks) || pickRiftMob(!isBoss, minLv, maxLv, ks);
+    if (!id) return;
+    var base = DB.mobs[id];
+    mapState.mobs[idx] = Object.assign({}, base, { curHp: base.hp, uid: uid(), _born: ++_mobBornSeq, _magCd: {}, justHit: false, st: newMobStatus() });
+    applySherineBuff(idx);
+    if (mapState.mobs[idx].hard) initHardSkin(mapState.mobs[idx]);
+    applySherineGrace(idx);
+    if (base.boss && typeof vfxBossEntrance === 'function') { try { vfxBossEntrance(mapState.mobs[idx]); } catch (e) {} }
+    if (!s.ff && typeof renderMobs === 'function') renderMobs();
+  };
+  // 怪物攻擊力（席琳三模式）：TUNE.dmgCurve 分段直線，取代核心「30 分起每分鐘 +20%」
+  var dmgMult = function (m) {
+    var c = TUNE.dmgCurve || []; if (!c.length) return 1;
+    if (m <= c[0][0]) return c[0][1];
+    for (var i = 1; i < c.length; i++) if (m <= c[i][0]) { var a = c[i - 1], b = c[i]; return a[1] + (b[1] - a[1]) * (m - a[0]) / (b[0] - a[0]); }
+    var y = c[c.length - 2], z = c[c.length - 1]; return z[1] + (z[1] - y[1]) / (z[0] - y[0]) * (m - z[0]);
+  };
+  if (typeof W.riftDamageMult === 'function') {
+    var oRDM = W.riftDamageMult;
+    W.riftDamageMult = function () { try { if (rule()) return dmgMult(minutes()); } catch (e) {} return oRDM.apply(this, arguments); };
+    try { (0, eval)('riftDamageMult = window.riftDamageMult'); } catch (e) {}
+  }
   W.spawnRiftMob = function (idx) {
     sync();
+    try { if (rule() && typeof pickRiftMob === 'function') { spawnMine(idx); sync(); return; } } catch (e) { console.warn('[AFK-rift2] spawn', e); }
     var s = S(), due0 = s.riftBossDue;
     var r = oSpawn.apply(this, arguments);
     if (s.riftBossDue !== due0 && s._r2Start != null) s._r2BossDue = (s.ticks || 0) + Math.round((s.riftBossDue - Date.now()) / 100);
@@ -131,7 +190,8 @@
       var age = (t - x._r2.born) / 10;
       if (age >= sec) {
         var from = Math.max(sec, x._r2.calm != null ? (x._r2.calm - x._r2.born) / 10 : 0);
-        var k = Math.floor(Math.max(0, age - from) / TUNE.enrageEvery), e = TUNE.enragePct + TUNE.enrageStep * k;
+        var k = Math.floor(Math.max(0, age - from) / TUNE.enrageEvery), e = TUNE.enragePct + (minutes() >= (TUNE.enrageLateFrom || 1e9) ? (TUNE.enrageStepLate || TUNE.enrageStep) : TUNE.enrageStep) * k;
+        if (TUNE.erodeFrom && age >= TUNE.erodeFrom) e += (TUNE.erodeStep || 0) * (1 + Math.floor((age - TUNE.erodeFrom) / TUNE.enrageEvery));
         if (e > worst) { worst = e; who = x; stacks = k; }
       }
     });
@@ -287,12 +347,13 @@
         if (!ON || !container) return r;
         var mode = modeNow(); if (mode === 'plain') return r;
         var MN = { sherine: '席琳', mad: '瘋狂席琳', dream: '夢域鏡席琳' };
-        var rw = { sherine: '失去光芒的符文石（階段一）', mad: '0～12 分隨機遺物 +5；12～76 分失去光芒的符文石（階段二）；76 分以上或完全通關（階段三）', dream: '0～12 分隨機遺物 +10；12～60 分階段二；60～76 分階段三；76 分以上或完全通關：瘴骸·破材料（隨機一種）' }[mode];
+        var rw = segTxt(mode);
         var cl = RD.CLEAR[mode];
         var div = document.createElement('div');
         div.className = 'bg-slate-900/70 border border-violet-700 rounded-lg p-3 text-sm leading-relaxed text-slate-200';
         div.innerHTML = '<div class="font-bold text-violet-300 mb-1">目前：' + MN[mode] + '模式（時空裂痕重做）</div>'
-          + '<div>一趟最長 ' + TUNE.clearMin + ' 分鐘，撐滿就是<b>完全通關</b>（另給 ' + DB.items[cl[0]].n + ' ×' + cl[1] + '）。20 分鐘後怪物越來越硬；頭目出場 ' + TUNE.enrageSec + ' 秒（同時兩隻以上 ' + TUNE.enrageMulti + ' 秒）還沒倒會<b>時空暴走</b>；' + TUNE.wallFrom + ' 分鐘起全場每秒扣血。</div>'
+          + '<div>一趟最長 ' + TUNE.clearMin + ' 分鐘，撐滿就是<b>完全通關</b>（另給 ' + DB.items[cl[0]].n + ' ×' + cl[1] + '）。' + TUNE.hpFrom + ' 分鐘後怪物越來越硬、' + TUNE.lvFull + ' 分鐘怪物等級到最高、之後攻擊力大幅上升；頭目出場 ' + TUNE.enrageSec + ' 秒（同時兩隻以上 ' + TUNE.enrageMulti + ' 秒）還沒倒會<b>時空暴走</b>；' + TUNE.wallFrom + ' 分鐘起全場每秒扣血。</div>'
+          + '<div>同一隻頭目出場 ' + TUNE.erodeFrom + ' 秒還沒倒會「時空侵蝕」（暴走再 +' + Math.round(TUNE.erodeStep * 100) + '%，每 10 秒再加，暴走抑制劑消不掉）。小怪死亡的代價、王的死亡詛咒、王的殘響：裂痕裡每種每秒最多一次。</div>'
           + '<div>掉落：' + DB.items[RD.DUST[mode]].n + '（一般怪 1%、60 等以下頭目 10%、60 等以上頭目 25%、第 60 分鐘起頭目必掉）；不吃任何掉寶加倍；遺物 0.001%。' + (mode === 'sherine' ? '前 ' + Math.round(TUNE.clearMin * DROP.legendPct) + ' 分鐘每次擊殺 ' + (DROP.legend * 100) + '% 掉傳說符文「汲」（一趟最多一顆）。' : '') + '</div>'
           + '<div>結算：' + rw + '。</div>';
         (container.firstElementChild || container).appendChild(div);
@@ -300,6 +361,6 @@
       return r;
     };
   }
-  W.__afkRift2 = { TUNE: TUNE, DROP: DROP, SEG: SEG, minutes: minutes, modeNow: modeNow, rule: rule, reward: reward, hpMult: hpMult, fixStages: fixStages, enrage: enrageNow, calm: calm, oldestBoss: oldestBoss };
+  W.__afkRift2 = { segTxt: segTxt, TUNE: TUNE, DROP: DROP, SEG: SEG, minutes: minutes, modeNow: modeNow, rule: rule, reward: reward, hpMult: hpMult, dmgMult: dmgMult, fixStages: fixStages, enrage: enrageNow, calm: calm, oldestBoss: oldestBoss };
   console.log('[AFK-rift2] 已啟用：時空裂痕改用遊戲時間' + (ON ? '＋席琳三模式新規則' : ''));
 })();

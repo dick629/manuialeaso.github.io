@@ -679,7 +679,7 @@
     <script src="afk-dex.js?v=ce52a036b3"></script>
     <!-- afk-illufix：幻術士修補（疼痛的歡愉 −50%、反彈、蝕刻印記；立方：燃燒 每 2 秒 5～50 火傷、灼熱印記、吸血回魔；立方：和諧回 MP 5 → 15，原 afk-classtweak）；排在 afk-wiki 之前（小百科說明跟著改）；需核心補丁 69 -->
     <script src="afk-illufix.js?v=7149276189"></script>
-    <script src="afk-wiki.js?v=0d5049f479"></script>
+    <script src="afk-wiki.js?v=d0c8e87c70"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=302890a0df"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
@@ -744,7 +744,7 @@
     <!-- afk-uifix：切換地區優先飛到村莊 -->
     <script src="afk-uifix.js?v=f0dc17c37c"></script>
     <!-- afk-castlewar：七城攻城、城堡收成、宣戰與統一伺服器（需核心補丁 27；排在 afk-dreamhell／afk-arts 之後） -->
-    <script src="afk-castlewar.js?v=6eefdd1997"></script>
+    <script src="afk-castlewar.js?v=ccdf8f8525"></script>
     <!-- afk-castle-guards：持有的每座城都能招該城部隊、四座新城部隊、統一七城後亞丁「聖十字近衛」（最多 8 名，湊滿 4 名可融合 ×4，融合體替玩家擋傷害） -->
     <script src="afk-castle-guards.js?v=5b3ac5020b"></script>
     <script src="afk-bmprice.js?v=ec643849be"></script>
@@ -828,7 +828,7 @@
     <script src="afk-curves.js?v=ccee11f154"></script>
     <script src="afk-resist.js?v=c8ace94d89"></script>
     <!-- afk-dreamcost：席琳夢域鏡的死亡詛咒、轉生夢域技能／復活代價、寵物 MP 恢復吃玩家面板（需 afk-dreamhell） -->
-    <script src="afk-dreamcost.js?v=49848c5a03"></script>
+    <script src="afk-dreamcost.js?v=f7359265e6"></script>
     <!-- afk-healstat：本圖效率統計的恢復統計、面板 HP恢復量完整算式（需 afk-arts） -->
     <script src="afk-healstat.js?v=bcd0f66d52"></script>
     <!-- afk-stun：鈍擊＝暈眩（頭目有抗性）、連暈 10 秒→完全停擺 15 秒；包 tick 必須在最外層，所以排最後 -->
@@ -978,7 +978,7 @@
     <!-- afk-novice-econ：新手曲線（無用掉落物 ×0.2、Lv30 以下必掉金幣、魔物追蹤收費依等級）；排在 afk-classic、afk-ttmi-items、afk-bosstrack 之後 -->
     <script src="afk-novice-econ.js?v=aaf846d09a"></script>
     <!-- afk-rift2：時空裂痕改用遊戲時間；席琳三模式新規則（80 分鐘完全通關、頭目暴走、60 分鐘起壓力牆、哀石系列、結算符文石、瘴骸·破材料）；需 afk-runedata、核心補丁 67 -->
-    <script src="afk-rift2.js?v=a5b4c54212"></script>
+    <script src="afk-rift2.js?v=e51ee95daf"></script>
     <!-- afk-runefx：符文石與符文之語的效果（減傷、藥水、寵物、套裝、攻擊、補助）；排在 afk-runes、afk-rift2、afk-caps、afk-sherine-dream 之後 -->
     <script src="afk-runefx.js?v=9481a37a60"></script>
     <!-- afk-finaltiers：終焉三階層（席琳夢境／席琳幻影 ×1.25／席琳伴身 ×1.5625 只能一次）；需 afk-finalboss -->
@@ -1069,7 +1069,7 @@
     <!-- afk-partylead：傭兵管理畫面指定隊員當隊長（不用解散重組） -->
     <script src="afk-partylead.js?v=4cdff20686"></script>
     <!-- afk-bossdrain：副本與時空裂痕裡王倒下時吸走全隊 MP（王的殘響） -->
-    <script src="afk-bossdrain.js?v=038bc37fb4"></script>
+    <script src="afk-bossdrain.js?v=232aa99909"></script>
     <!-- afk-charm：迷魅術改版（所有職業可學、頭目 5%、頭目反噬）；要在 afk-training、afk-dreamcost、afk-revive 之後 -->
     <script src="afk-charm.js?v=45c9809fc0"></script>
     <!-- afk-bossarts：副本／夢域鏡／終焉頭目每 45 秒施放秘技；要在 afk-riftsupply 之後（鎖定的負面狀態在補給清除之後補回） -->
@@ -1078,10 +1078,10 @@
     <script src="afk-reflectcap.js?v=96b4739ae2"></script>
     <!-- afk-petbite：寵物傷口撕咬（一般攻擊打中疊 AC +5、魔防 −5、四屬性抗性 −1，最多 5 層、5 秒） -->
     <script src="afk-petbite.js?v=4fb5a9a66a"></script>
-    <!-- afk-siege2：每週守城戰（20:00～21:00 隨機集結、回防副本 25 波（倒下轉攻城）、失城 7 天鎖與城陷之恥、奪回戰鏡像敵人）；預設開；要在 afk-castlewar、afk-castle-guards、afk-guardup、afk-soulstone 之後 -->
-    <script src="afk-siege2.js?v=5b6aad585f"></script>
     <!-- afk-starweaver：稱號「織星者」（七城、S 級、上位者、村長、密奧、織羽手環、隱藏稱號、轉生、聖甲蟲、卡冊、星途遠征、6 件至高的支配全部達成）；只在檢查時讀其他系統，放最後 -->
     <script src="afk-starweaver.js?v=8897b32f30"></script>
+    <!-- afk-siege2：每週守城戰（每週五 20:00 集結、血盟頁可關、攻城頁放棄城堡、回防副本 25 波（倒下轉攻城）、失城 7 天鎖與城陷之恥、奪回戰鏡像敵人）；預設開；要在 afk-castlewar、afk-castle-guards、afk-guardup、afk-soulstone 之後 -->
+    <script src="afk-siege2.js?v=0f1cd36aa5"></script>
     <!-- ═══════════ 加掛版外掛層 END ═══════════ -->
 </body>
 </html>

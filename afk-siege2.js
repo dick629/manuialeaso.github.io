@@ -1,8 +1,10 @@
 /* ============================================================================
  * afk-siege2.js — 攻城、守城戰第二版（設計稿 docs/castle-defense-design.md，玩家 2026-11-03 確認；外掛開關 siege2，預設開）
  *
- * 一、時間：每週隨機一天（週日～週六）台灣時間 20:00～21:00；週日 00:00（UTC+8）換週重抽。只有持有城堡的帳號（一般模式）會遇到。
- * 二、流程：20:00～20:57 之間隨機一刻跳出集結訊息 → 3 分鐘後跳出「是否回防」
+ * 一、時間：固定每週五 台灣時間 20:00～21:00（玩家 11-04 03:58）。只有持有城堡的帳號（一般模式）會遇到；血盟頁可以關掉守城戰。
+ * 二、流程：20:00 跳出集結訊息 → 20:03 跳出「是否回防」→ 20:06 前要回應 → 20:30 前要進場（30 分鐘，最晚 21:00 打完）
+ * 放棄城堡（攻城頁）：失去那座城；所有對你宣戰的血盟停戰、NPC 血盟的仇恨歸零，7 天內不會再結仇或被宣戰（自己宣戰就結束）；
+ *     追殺你的紅人散去、之後不再追殺（同女神嘆息信徒 京）。城全部放掉時守城難度歸零。
  *     ‧不回防／3 分鐘內沒回應（不在線上、在副本裡）→ 擲骰：30% 失 1 座、50% 失 2 座、20% 沒事
  *     ‧被打的城隨機挑，主城（回城選的那座）最後才挑
  * 三、守城戰（副本）：30 分鐘、5 輪×5 波＝25 波，每波 8 名鏡像敵人（八職業各 1）；強度見 CFG.def.mult／roundAtk（治療規則改窄後：第 1～3 輪 ×0.6～2，第 4 輪 4.5～7.3、第 5 輪 7.5～10.3，後兩輪傷害 ×0.5／0.4）
@@ -35,7 +37,7 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'siege2', name: '每週守城戰（攻城守城第二版）', group: '遊戲內容', seal: true, def: true,
-    desc: '每週隨機一天 20:00～21:00 有血盟來攻你的城：回防進守城戰副本（30 分鐘 25 波），不回防就可能失去 1～2 座城；失去的城 7 天後可以打回來' });
+    desc: '每週五 20:00～21:00 有血盟來攻你的城：回防進守城戰副本（30 分鐘 25 波），不回防就可能失去 1～2 座城；失去的城 7 天後可以打回來' });
   if (T && !T.enabled('siege2')) return;
   if (typeof DB === 'undefined' || !DB.mobs || typeof SIEGE_CITY === 'undefined' || !W.__afkCastleWar) { console.warn('[AFK-siege2] 找不到攻城／七城系統，略過'); return; }
 
@@ -49,7 +51,10 @@
 
   // ── 設定（煙霧測試調整用的旋鈕都在這裡）──
   var CFG = {
-    tz: 8 * 3600000, startH: 20, endH: 21, assembleSpanMin: 57, askDelay: 3 * 60000, answerWindow: 3 * 60000,
+    // 排程（玩家 11-04 03:58）：固定每週五（台灣時間）20:00 集結 → 20:03 宣戰問回防 → 20:06 前要回應 → 20:30 前要進場；
+    //   守城戰 30 分鐘，最晚 21:00 打完。day：0＝週日…5＝週五
+    tz: 8 * 3600000, day: 5, startH: 20, endH: 21, entryMin: 30, askDelay: 3 * 60000, answerWindow: 3 * 60000,
+    peaceMs: 7 * 86400000,   // 放棄城堡後的和平期（現實時間）
     loss: [[0.30, 1], [0.50, 2], [0.20, 0]],
     lockMs: 7 * 86400000, shameMs: 86400000, shameVal: 50,
     // 守城戰：rounds 輪 × perRound 波；每波 size 名（八職業各 1）。強度：
@@ -137,14 +142,11 @@
 
   // ── 週排程 ──
   var newWeek = function (wk, t, first) {
-    var days = [];
-    for (var d = 0; d < 7; d++) { var end = dayStart(wk + d) + CFG.endH * 3600000; if (!first || end > t) days.push(d); }
-    if (!days.length) return { week: wk, status: 'skip' };
-    var pick = days[Math.floor(Math.random() * days.length)];
-    var base = dayStart(wk + pick);
-    var at = base + CFG.startH * 3600000 + Math.floor(Math.random() * CFG.assembleSpanMin * 60) * 1000;
-    if (first && at < t) at = Math.min(base + CFG.startH * 3600000 + CFG.assembleSpanMin * 60000, Math.max(at, t));
-    return { week: wk, day: pick, assembleAt: at, askAt: at + CFG.askDelay, deadline: at + CFG.askDelay + CFG.answerWindow, endAt: base + CFG.endH * 3600000, status: 'none' };
+    var base = dayStart(wk + CFG.day), at = base + CFG.startH * 3600000;
+    var c = { week: wk, day: CFG.day, assembleAt: at, askAt: at + CFG.askDelay, deadline: at + CFG.askDelay + CFG.answerWindow, endAt: at + CFG.entryMin * 60000, status: 'none' };
+    if (first && t >= c.deadline) c.status = 'skip';   // 第一次開啟（或剛打開守城戰）時這週五已經過了：這週不算
+    if (read().off) c.status = 'off';
+    return c;
   };
   var ensureWeek = function (o) {
     var t = now(), wk = weekOf(t);
@@ -211,7 +213,8 @@
   };
   // 上一週沒處理完的（離線、關掉遊戲）：補結算
   var settlePast = function (o, weekOver) {
-    var c = o.cur; if (!c || c.status === 'resolved' || c.status === 'skip' || c.status === 'exempt') return;
+    var c = o.cur; if (!c || c.status === 'resolved' || c.status === 'skip' || c.status === 'exempt' || c.status === 'off') return;
+    if (o.off && c.status === 'none') { c.status = 'off'; return; }
     var t = now();
     if (c.status === 'none') {
       if (t < c.deadline && !weekOver) return;
@@ -241,6 +244,7 @@
     if (run && run.kind === 'def') saveProg();
     if (!p || classic()) { ui(); return; }
     var o = store(), changed = ensureWeek(o), c = o.cur, t = now();
+    if (c && c.status === 'none' && o.off) { c.status = 'off'; changed = true; }
     if (c && c.status === 'none' && t >= c.assembleAt) {
       if (!held().length) { c.status = 'skip'; changed = true; }
       else if (exempt(p)) { c.status = 'exempt'; changed = true; }
@@ -296,6 +300,91 @@
       grantDefense(); return;
     }
     defenseFail(o, why);
+  };
+  // ── 守城戰開關（血盟頁；帳號共用）：關掉＝不會被集結、沒有守城戰、不會因守城戰失城。守城難度保留。──
+  var setOff = function (v) {
+    var o = store(); ensureWeek(o); var c = o.cur;
+    if (c && (c.status === 'assembled' || c.status === 'asked' || c.status === 'defending')) return '守城戰進行中，現在不能切換。';
+    o.off = !!v;
+    if (c) {
+      if (v && c.status === 'none') c.status = 'off';
+      else if (!v && c.status === 'off') c.status = now() < c.assembleAt ? 'none' : 'skip';   // 這週五已經開始或過了＝這週不算
+    }
+    write(o);
+    sys(v ? '<span class="text-slate-300">🏰 你關掉了守城戰：之後不會有血盟來攻你的城（守城難度 Lv ' + lvOf(o) + ' 保留）。</span>'
+          : '<span class="text-amber-200">🏰 你打開了守城戰：每週五 20:00～21:00 會有血盟來攻你的城。</span>');
+    return null;
+  };
+  // ── 和平期（放棄城堡後）：NPC 血盟不結仇、不宣戰，七城宣戰與強制宣戰停止；自己宣戰就結束 ──
+  var peaceLeft = function () { return Math.max(0, (Number(store().peaceUntil) || 0) - now()); };
+  W.__afkClanPeace = function () { try { return on() && !classic() && peaceLeft() > 0; } catch (e) { return false; } };
+  var endPeace = function (why) { var o = store(); if ((o.peaceUntil || 0) > now()) { o.peaceUntil = 0; write(o); sys('<span class="text-slate-300">和平期結束了（' + esc(why) + '）。</span>'); } };
+  if (typeof W._npcClanApplyHatredLocked === 'function') {
+    var oHate = W._npcClanApplyHatredLocked;
+    W._npcClanApplyHatredLocked = function (clan, delta) { if (delta > 0 && W.__afkClanPeace()) return; return oHate.apply(this, arguments); };
+    try { (0, eval)('_npcClanApplyHatredLocked = window._npcClanApplyHatredLocked'); } catch (e) {}
+  }
+  if (typeof W.npcClanSetWar === 'function') {
+    var oSetWar = W.npcClanSetWar;
+    W.npcClanSetWar = function (clanId, onWar) { var r = oSetWar.apply(this, arguments); try { if (onWar && W.__afkClanPeace()) endPeace('你對其他血盟宣戰'); } catch (e) {} return r; };
+    try { (0, eval)('npcClanSetWar = window.npcClanSetWar'); } catch (e) {}
+  }
+  if (typeof W.pvpMarkForChase === 'function') {
+    var oChase = W.pvpMarkForChase;
+    W.pvpMarkForChase = function () { if (W.__afkClanPeace()) return; return oChase.apply(this, arguments); };
+    try { (0, eval)('pvpMarkForChase = window.pvpMarkForChase'); } catch (e) {}
+  }
+  var makePeace = function () {
+    var p = P(), cleared = 0, gone = 0;
+    try {
+      var mk = (typeof clanModeKey === 'function') ? clanModeKey(p) : 'normal';
+      if (typeof _clanWithLock === 'function') _clanWithLock(function (st) {
+        var w = st.npcWorlds && st.npcWorlds[mk]; if (!w || !Array.isArray(w.clans)) return { commit: false };
+        w.clans.forEach(function (c) { if (!c) return; if (c.war || c.hostile) cleared++; c.war = false; c.warStartedAt = 0; c.hostile = false; c.hatred = 0; c.counterWarChance = 0; c.mercy = null; });
+        return {};
+      });
+      try { (0, eval)('typeof _npcClanWarCache !== "undefined" && delete _npcClanWarCache[' + JSON.stringify(mk) + ']'); } catch (e) {}
+    } catch (e) {}
+    try { var d = CW.data(); d.warIds = []; d.forced = null; CW.save(d); } catch (e) {}
+    try {   // 追殺你的紅人散去，之後不再追殺（同女神嘆息信徒 京的永久解除）
+      var ch = (p.trollPlayers || []).filter(Boolean); gone = ch.length;
+      ch.forEach(function (t) { try { if (typeof pvpReleaseAlignLock === 'function') pvpReleaseAlignLock(t.n); } catch (e) {} });
+      p.trollPlayers = [];
+      (mapState.mobs || []).forEach(function (m, i) { if (m && m.trollPlayer) mapState.mobs[i] = null; });
+      (p.pvpKillWhispers || []).forEach(function (w) { if (w) { w.awaitingRevenge = false; w.revengeCount = 99; w.expiresAt = Date.now(); w.nextCheckAt = 0; } });
+      p.afkRedGuardUntil = Number.MAX_SAFE_INTEGER;
+    } catch (e) {}
+    var o = store(); o.peaceUntil = now() + CFG.peaceMs; write(o);
+    try { CW.syncWar(true); } catch (e) {}
+    return { clans: cleared, chasers: gone };
+  };
+  // ── 放棄城堡（攻城頁）──
+  var abandon = function (city) {
+    var p = P(); if (!p || classic()) return '經典模式沒有這個功能。';
+    if (flowActive()) return '守城戰進行中，現在不能放棄城堡。';
+    try { if (p.siege && p.siege.active) return '攻城戰進行中，現在不能放棄城堡。'; } catch (e) {}
+    if (held().indexOf(city) < 0) return '你沒有這座城。';
+    var d = CW.data(), was = d.castles.length;
+    if (d.npcOwners) delete d.npcOwners[city];
+    d.castles = d.castles.filter(function (c) { return c !== city; });
+    var main = null; try { main = clanGetCastleCity(p); } catch (e) {}
+    if (main === city) {
+      var next = d.castles.length ? d.castles[d.castles.length - 1] : null;
+      try { var mk = (typeof clanModeKey === 'function') ? clanModeKey(p) : 'normal'; _clanWithLock(function (st) { var info = st.modes[mk]; if (!info) return { commit: false }; info.castle = next; return {}; }); } catch (e) {}
+      try { rememberCastleOwnerCity(next); } catch (e) {}
+    }
+    if (d.home === city) d.home = null;
+    if (was >= 7 && d.everUnified && !d.allWarDone) d.allWarDone = true;
+    CW.save(d);
+    try { if (typeof W.castleGuardsOnCastleLost === 'function') W.castleGuardsOnCastleLost(city); } catch (e) {}
+    var o = store(), lv0 = lvOf(o), reset = !held().length && lv0 > 0;
+    if (!held().length) { o.level = 0; write(o); }
+    var r = makePeace();
+    sys('<span class="text-amber-200 font-bold">🏳 你放棄了' + esc(cityName(city)) + '。</span><span class="text-slate-300">'
+      + (r.clans ? '對你宣戰的 ' + r.clans + ' 個血盟收兵停戰，' : '') + 'NPC 血盟的仇恨一筆勾銷，' + Math.round(CFG.peaceMs / 86400000) + ' 天內不會再跟你結仇或宣戰（你自己宣戰就結束）；'
+      + (r.chasers ? '追殺你的 ' + r.chasers + ' 名紅人散去，' : '') + '之後也不會再有紅人追殺你。' + (reset ? '城全部放掉了，守城難度歸零。' : '') + '</span>');
+    afterLoss();
+    return null;
   };
   var giveUp = function () {
     var o = store(), c = o.cur; if (!c || c.status !== 'defending') return false;
@@ -1042,6 +1131,7 @@
           }
         }
       } catch (e) {}
+      try { if (W.__afkClanPeace()) endPeace('你宣戰攻城'); } catch (e) {}
       return oStart.apply(this, arguments);
     };
     try { (0, eval)('startSiege = window.startSiege'); } catch (e) {}
@@ -1059,11 +1149,50 @@
           else if (st) st.textContent = '奪回戰';
         });
         var note = el.querySelector('.border-t.border-slate-700');
-        if (note) note.textContent = '七座城都可以宣戰，最多持有 7 座。每週隨機一天 20:00～21:00 會有血盟來攻你的城（守城戰）；失去的城 7 天後可以打回來。持有越多城，攻城越難。3 座以上每小時有收成；持有 2 座以上會有血盟對你宣戰。';
+        if (note) note.textContent = '七座城都可以宣戰，最多持有 7 座。每週五 20:00～21:00 會有血盟來攻你的城（守城戰，可以在血盟頁關掉）；失去的城 7 天後可以打回來。持有越多城，攻城越難。3 座以上每小時有收成；持有 2 座以上會有血盟對你宣戰。';
+        // 放棄城堡：只列自己持有的城
+        var h = held(), old = el.querySelector('#afk-s2-abandon'); if (old) old.remove();
+        if (h.length) {
+          var box = document.createElement('div'); box.id = 'afk-s2-abandon';
+          box.className = 'mt-2 p-2 rounded border border-slate-600 bg-slate-900/70 text-sm text-slate-200';
+          var pl = peaceLeft();
+          box.innerHTML = '<div class="font-bold text-amber-200 mb-1">🏳 放棄城堡</div>'
+            + '<div class="text-xs text-slate-400 mb-2">放棄一座城：失去那座城，所有對你宣戰的血盟停戰，NPC 血盟的仇恨一筆勾銷，' + Math.round(CFG.peaceMs / 86400000) + ' 天內不會再跟你結仇或宣戰（你自己宣戰就結束）；追殺你的紅人散去、之後不再追殺。城全部放掉時守城難度歸零。'
+            + (pl > 0 ? '<span class="text-emerald-300">（和平期還有 ' + daysLeft(pl) + ' 天）</span>' : '') + '</div>'
+            + '<div class="flex flex-wrap gap-2">' + h.map(function (c) { return '<button type="button" data-s2abandon="' + esc(c) + '" class="px-2 py-1 rounded border border-red-700 bg-red-950/60 text-red-200">放棄' + esc(cityName(c)) + '</button>'; }).join('') + '</div>';
+          box.addEventListener('click', function (ev) {
+            var c = ev.target && ev.target.getAttribute && ev.target.getAttribute('data-s2abandon'); if (!c) return;
+            var msg = '放棄' + cityName(c) + '？\n這座城會失去（之後可以再攻下來）；對你宣戰的血盟全部停戰，' + Math.round(CFG.peaceMs / 86400000) + ' 天內 NPC 血盟不會跟你結仇或宣戰；追殺你的紅人散去。';
+            var go = function () { var why = abandon(c); if (why) sys('<span class="text-amber-300">' + esc(why) + '</span>'); try { W.openSiegeSelect(faction, targetEl); } catch (e) {} };
+            if (W.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '放棄城堡', message: msg, okText: '放棄', cancelText: '再想想', danger: true, onOk: go });
+            else if (W.confirm(msg)) go();
+          });
+          grid.parentNode.insertBefore(box, grid.nextSibling);
+        }
       } catch (e) {}
       return r;
     };
     try { (0, eval)('openSiegeSelect = window.openSiegeSelect'); } catch (e) {}
+  }
+
+  // ── 血盟頁：守城戰開關 ──
+  if (typeof W.renderClanTab === 'function') {
+    var oClanTab = W.renderClanTab;
+    W.renderClanTab = function () {
+      var r = oClanTab.apply(this, arguments);
+      try {
+        var div = document.getElementById('tab-clan'); if (!div || classic() || !P()) return r;
+        var old = div.querySelector('#afk-s2-switch'); if (old) old.remove();
+        var o = store(), off = !!o.off, row = document.createElement('div'); row.id = 'afk-s2-switch';
+        row.className = 'mt-2 p-2 rounded border border-amber-700/60 bg-slate-900/70 text-sm text-slate-200 flex flex-wrap items-center gap-2';
+        row.innerHTML = '<span class="text-amber-200 font-bold">🛡️ 守城戰</span><button type="button" class="px-2 py-1 rounded border ' + (off ? 'border-slate-500 bg-slate-800 text-slate-300' : 'border-amber-500 bg-amber-900/60 text-amber-100') + '">' + (off ? '已關閉（點一下打開）' : '已開啟（點一下關閉）') + '</button>'
+          + '<span class="text-xs text-slate-400">' + (off ? '關閉中：不會有血盟來攻你的城，也不會因此失去城堡。' : '每週五 20:00～21:00 會有血盟來攻你的城。') + lvText(lvOf(o)) + (peaceLeft() > 0 ? '　和平期還有 ' + daysLeft(peaceLeft()) + ' 天' : '') + '</span>';
+        row.querySelector('button').onclick = function () { var why = setOff(!off); if (why) sys('<span class="text-amber-300">' + esc(why) + '</span>'); try { W.renderClanTab(); } catch (e) {} };
+        var anchor = div.firstElementChild; if (anchor) anchor.appendChild(row); else div.appendChild(row);
+      } catch (e) {}
+      return r;
+    };
+    try { (0, eval)('renderClanTab = window.renderClanTab'); } catch (e) {}
   }
 
   // ── 介面：狀態列與回防視窗 ──
@@ -1133,7 +1262,7 @@
   api.answer = answer; api.noAnswer = function () { var o = store(); closePop(); return noDefense(o, 'noanswer'); };
   api.rollCount = rollCount; api.pickTargets = pickTargets; api.loseCastle = function (c) { var o = store(); var ok = loseCastle(c, o); write(o); afterLoss(); return ok; };
   api.enterDefense = enterDefense; api.startRetake = function (c) { return startRetake(c, true); }; api.giveUp = giveUp; api.finish = finish; api.timeline = timeline;
-  api.run = function () { return run; }; api.waveMult = waveMult; api.defWaves = defWaves; api.onDeath = onDeath; api.natHit = natHit; api.mirrorReflect = mirrorReflect; api.partyK = partyK; api.markNoHeal = markNoHeal; api.lvOf = lvOf; api.lvK = lvK; api.lvA = lvA; api.lvMax = lvMax; api.lvText = lvText; api.unifiedAll = unifiedAll; api.timeUpOff = timeUpOff; api.asCaster = function (m, fn) { var pv = casting; casting = m; try { return fn(); } finally { casting = pv; } }; api.noHealOn = noHealOn; api.guardParty = guardParty; api.rampOf = rampOf; api.rampTick = rampTick; api.placeMirror = placeMirror; api.partySize = partySize; api.isAlly = isAlly; api.scanDowns = scanDowns; api.downsLeft = downsLeft; api.floorChance = floorChance; api.defExpired = defExpired; api.waveClasses = waveClasses; api.buildMirror = buildMirror; api.snapPanel = snapPanel; api.castSkill = castSkill;
+  api.run = function () { return run; }; api.waveMult = waveMult; api.defWaves = defWaves; api.onDeath = onDeath; api.natHit = natHit; api.mirrorReflect = mirrorReflect; api.partyK = partyK; api.markNoHeal = markNoHeal; api.setOff = setOff; api.abandon = abandon; api.makePeace = makePeace; api.peaceLeft = peaceLeft; api.endPeace = endPeace; api.lvOf = lvOf; api.lvK = lvK; api.lvA = lvA; api.lvMax = lvMax; api.lvText = lvText; api.unifiedAll = unifiedAll; api.timeUpOff = timeUpOff; api.asCaster = function (m, fn) { var pv = casting; casting = m; try { return fn(); } finally { casting = pv; } }; api.noHealOn = noHealOn; api.guardParty = guardParty; api.rampOf = rampOf; api.rampTick = rampTick; api.placeMirror = placeMirror; api.partySize = partySize; api.isAlly = isAlly; api.scanDowns = scanDowns; api.downsLeft = downsLeft; api.floorChance = floorChance; api.defExpired = defExpired; api.waveClasses = waveClasses; api.buildMirror = buildMirror; api.snapPanel = snapPanel; api.castSkill = castSkill;
   api.exempt = exempt; api.inHunt = inHunt; api.shameOn = shameOn; api.shameLeft = shameLeft; api.grantDefense = grantDefense; api.relicRate = relicRate; api.ascRelic = ascRelic;
   api.flowActive = flowActive; api.ui = ui; api.lostInfo = lostInfo;
   W.__afkSiege2 = api;

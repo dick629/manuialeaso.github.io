@@ -98,8 +98,9 @@
     var r = oKill.apply(this, arguments);
     try {
       if (was && m._dead && dreamOn() && m.race !== '建築' && !m._dsBlast) {   // 暗夢星迴自爆的那隻不算擊殺
-        if (!m.boss) mobCurse();
-        if (m.boss) {
+        // 時空裂痕裡每秒最多一次（玩家 2026-11-03 23:39；afk-rift2 __afkRiftOnce）
+        if (!m.boss && (typeof window.__afkRiftOnce !== 'function' || window.__afkRiftOnce('mobCurse'))) mobCurse();
+        if (m.boss && (typeof window.__afkRiftOnce !== 'function' || window.__afkRiftOnce('bossCurse'))) {
           var hit = teamHit(0.10, m.n + '的死亡詛咒'), mp = [];
           var d0 = Math.floor((player.mp || 0) * 0.1); if (d0 > 0 && !player.dead) { player.mp -= d0; mp.push('你 ' + d0); }
           (player.allies || []).forEach(function (x) { if (!x || x._downed) return; var d = Math.floor((x.mp || 0) * 0.1); if (d > 0) { x.mp -= d; mp.push((x._allyName || '傭兵') + ' ' + d); } });

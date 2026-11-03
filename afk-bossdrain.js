@@ -79,7 +79,7 @@
             var tk0 = Number(S().ticks) || 0, inRift = !!(S().riftRun && mapState.current === 'rift_battle');
             if (!inRift || !(W.__afkDrainAt != null && tk0 - W.__afkDrainAt < 10 && tk0 >= W.__afkDrainAt)) { if (inRift) W.__afkDrainAt = tk0; drain(); }
           }
-          if (m.race === '不死' && hiddenOn() && dreamOn() && !P().dead) corpse();
+          if (m.race === '不死' && hiddenOn() && dreamOn() && !P().dead && (typeof window.__afkRiftOnce !== 'function' || window.__afkRiftOnce('corpse'))) corpse();   // 時空裂痕裡每秒最多一次（2026-11-03 23:39）
         }
       } catch (e) { console.warn('[AFK-bossdrain]', e); }
       return r;

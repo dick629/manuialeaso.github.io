@@ -277,7 +277,9 @@
   window.__afkCastleTownOf = castleTownOf; window.__afkCastleWatch = watchLost;
 
   // ── 宣戰 ──
+  var peace = function () { try { return typeof window.__afkClanPeace === 'function' && window.__afkClanPeace(); } catch (e) { return false; } };   // afk-siege2：放棄城堡後的和平期
   var warTarget = function (d) {
+    if (peace()) return 0;
     var n = held().length;
     if (n <= 1) return 0;
     if (n >= 7) return d.allWarDone ? 0 : Infinity;   // 一萬人事件只有第一次統一會發生
@@ -478,7 +480,7 @@
     else if (now >= d.fwNext) {
       var steps = Math.floor((now - d.fwNext) / FW_EVERY) + 1, start = d.fwNext + (steps - 1) * FW_EVERY;
       d.fwNext += steps * FW_EVERY; changed = true;
-      if (!d.forced && now < start + FW_DUR && Math.random() < FW_RATE) {
+      if (!d.forced && !peace() && now < start + FW_DUR && Math.random() < FW_RATE) {
         var w = null; try { w = npcClanGetWorld(p); } catch (e) {}
         var pool = (w && w.clans || []).filter(Boolean);
         if (pool.length) {
@@ -633,7 +635,7 @@
       (loseLeft() > 0 ? '<div class="mt-1 text-red-300">⛔ ' + loseText() + '</div>' : '') +
       '<div>宣戰：' + war + '</div>' +
       (forced() ? '<div class="text-red-300">強制宣戰：「' + forced().name + '」（剩 ' + Math.max(1, Math.ceil((forced().until - Date.now()) / 60000)) + ' 分鐘；狩獵 5% 遇敵、傳送戒指找王必定 2 名）</div>' : '<div class="text-slate-400 text-xs">每 8 小時有 30% 機率被隨機一個血盟強制宣戰 4 小時。</div>') +
-      '<div>攻城難度：多 ' + ((n >= 1 ? 1 : 0) + (n >= 3 ? 1 : 0) + (n >= 5 ? 1 : 0)) + ' 波守軍（每波 5 名；1 座城起門口、3 座起進內城、5 座起搶塔）；守軍傷害、命中 +' + (n * 10) + '%、受傷 −' + Math.min(70, n * 10) + '%。' + ((typeof window.__afkSiege2On === 'function' && window.__afkSiege2On()) ? '每週隨機一天 20:00～21:00 會有血盟來攻你的城（守城戰）。' : '離線掛機期間每跨過一次午夜（台灣時間 00:00）有 5% 機率失去一座城。') + '</div>' +
+      '<div>攻城難度：多 ' + ((n >= 1 ? 1 : 0) + (n >= 3 ? 1 : 0) + (n >= 5 ? 1 : 0)) + ' 波守軍（每波 5 名；1 座城起門口、3 座起進內城、5 座起搶塔）；守軍傷害、命中 +' + (n * 10) + '%、受傷 −' + Math.min(70, n * 10) + '%。' + ((typeof window.__afkSiege2On === 'function' && window.__afkSiege2On()) ? '每週每週五 20:00～21:00 會有血盟來攻你的城（守城戰，可以在血盟頁關掉）。' : '離線掛機期間每跨過一次午夜（台灣時間 00:00）有 5% 機率失去一座城。') + '</div>' +
       '<div>已擊殺敵對血盟 ' + d.kills.toLocaleString() + ' 名（目前強度：' + (t ? t[3] : '一般') + '；一次 ' + groupSize(d.kills) + ' 人）' + (n >= 7 && !d.allWarDone ? '・連續擊殺 10,000 名後全體投降（死亡歸零；只有第一次統一會發生）' : '') + '</div></div>';
   };
   // ── 沒被你打下的城：由 NPC 血盟持有（玩家 2026-10-28：一開始城堡沒被攻打時也要顯示是哪個 NPC 血盟的）──
