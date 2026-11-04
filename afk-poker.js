@@ -5,6 +5,9 @@
  *   牌桌（買入＝換成籌碼，1 籌碼＝1 單位該幣別）：
  *     金幣小桌 1,000／2,000，買入 4 萬～20 萬；金幣大桌 10 萬／20 萬，買入 400 萬～2,000 萬；
  *     龍鑽桌 1／2，買入 40～200 顆龍之鑽石；血龍鑽桌 1／2，買入 40～200 顆血龍鑽。
+ *     無上限桌（買入只有下限＝50 個大盲；NPC 帶你目前籌碼的 0.6～1.5 倍、至少 60～150 個大盲）：
+ *       金幣 5 萬／10 萬 買入 500 萬起；龍鑽 10／20 買入 1,000 顆起；血龍鑽 1／2 買入 100 顆起。
+ *       一個座位最多 100 兆（STACK_CAP，只為了讓所有金額都是精確整數）；「補到…」補回買入下限。
  *   抽水 3%（2026-11-04 Ping）：每個池子發給贏家前先抽 3%（捨去零頭）；沒翻牌就結束的那手不抽（no flop no drop）；沒人跟到的下注先原數退回、不抽。NPC 贏也抽。
  *   NPC 的籌碼由莊家出（NPC 輸光就換一位新的坐下）。
  *   超難桌（入座前選「對手：一般／超難」）：全桌 hardDecide。不偷看——只用自己的牌、公牌、這手的下注、這張桌上記下的打法
@@ -34,6 +37,7 @@
   var fmt = function (n) { return Number(n || 0).toLocaleString(); };
   var fmtS = function (n) {   // 座位上用的短格式
     n = Number(n || 0);
+    if (n >= 1e12) return (Math.floor(n / 1e11) / 10) + '兆';
     if (n >= 1e8) return (Math.floor(n / 1e7) / 10) + '億';
     if (n >= 1e5) return (Math.floor(n / 1e3) / 10) + '萬';
     return n.toLocaleString();
@@ -79,11 +83,18 @@
   // ════════════════ 牌桌設定 ════════════════
   var BLOOD = 'afk_blood_dia';
   var CURS = { gold: '金幣', dia: '龍之鑽石', blood: '血龍鑽' };
+  // 無上限桌（2026-11-04 Ping）：買入只有下限（＝50 個大盲），沒有上限。
+  //   STACK_CAP 只是「數字安全」的天花板，不是遊戲規則：一個座位最多 100 兆，6 個座位（NPC 最多帶你的 1.5 倍）
+  //   全推進一個池子也只有 ~9e14，離 Number.MAX_SAFE_INTEGER（~9e15）還差 10 倍 → 底池、抽水、退回全是精確整數。
+  var STACK_CAP = 1e14;
   var TABLES = [
     { id: 'g1', cur: 'gold', n: '金幣小桌', sb: 1000, bb: 2000, min: 40000, max: 200000 },
     { id: 'g2', cur: 'gold', n: '金幣大桌', sb: 100000, bb: 200000, min: 4000000, max: 20000000 },
+    { id: 'g3', cur: 'gold', n: '金幣無上限桌', sb: 50000, bb: 100000, min: 5000000, max: STACK_CAP, nomax: true },
     { id: 'd1', cur: 'dia', n: '龍鑽桌', sb: 1, bb: 2, min: 40, max: 200 },
-    { id: 'b1', cur: 'blood', n: '血龍鑽桌', sb: 1, bb: 2, min: 40, max: 200 }
+    { id: 'd2', cur: 'dia', n: '龍鑽無上限桌', sb: 10, bb: 20, min: 1000, max: STACK_CAP, nomax: true },
+    { id: 'b1', cur: 'blood', n: '血龍鑽桌', sb: 1, bb: 2, min: 40, max: 200 },
+    { id: 'b2', cur: 'blood', n: '血龍鑽無上限桌', sb: 1, bb: 2, min: 100, max: STACK_CAP, nomax: true }
   ];
   var TBL = {}; TABLES.forEach(function (t) { TBL[t.id] = t; });
   // 個性：tight＝出手門檻（越大越挑牌）、aggr＝有好牌時加注的機率、bluff＝詐唬機率、callMul＝跟注時要求的勝率倍數
@@ -104,6 +115,9 @@
   var HARD_NPCS = [{ n: '賭神 維克多', p: 'hard' }, { n: '冷面 賽琳', p: 'hard' }, { n: '職業牌手 奧斯卡', p: 'hard' }, { n: '鐵面 卡珊', p: 'hard' },
     { n: '狐狸 雷文', p: 'hard' }, { n: '莊家之子 洛克', p: 'hard' }, { n: '算牌師 伊芙', p: 'hard' }];
   var RAKE = 0.03;   // 抽水 3%：每個池子（有翻牌才抽；沒人跟的下注先退回、不抽）
+  // 抽水用整數算：floor(amt×3/100)＝(amt 的百位以上)×3 ＋ 零頭×3/100 捨去。不寫 amt*0.03——0.03 不是精確的二進位小數，
+  //   池子上億之後 floor 可能差 1；也不寫 amt*3（無上限桌的池子再大一點就會超過精確整數範圍）。
+  function rakeOf(amt) { amt = Math.floor(amt); var q = Math.floor(amt / 100), r = amt - q * 100; return q * 3 + Math.floor(r * 3 / 100); }
 
   // ════════════════ 牌局引擎（純邏輯，測試直接呼叫） ════════════════
   function newSeat(o) { return Object.assign({ stack: 0, bet: 0, total: 0, folded: false, allIn: false, out: false, hole: [], acted: false, actedAt: -1, last: '', won: 0 }, o); }
@@ -246,7 +260,7 @@
         var best = -1; p.el.forEach(function (i) { if (seats[i].score > best) best = seats[i].score; });
         win = p.el.filter(function (i) { return seats[i].score === best; });
       }
-      var rk = flopped && p.n >= 2 ? Math.floor(p.amt * RAKE) : 0, net = p.amt - rk;
+      var rk = flopped && p.n >= 2 ? rakeOf(p.amt) : 0, net = p.amt - rk;
       res.rake += rk;
       // 平分；除不盡的零頭從莊家左手邊開始一人一枚
       var order = win.slice().sort(function (a, b) { return ((a - tb.button - 1 + n) % n) - ((b - tb.button - 1 + n) % n); });
@@ -503,7 +517,11 @@
     var src = tb.hard ? HARD_NPCS : NPCS, pool = src.filter(function (x) { return npcUsed(tb).indexOf(x.n) < 0; });
     var d = pool[Math.floor(tb.rng() * pool.length)] || src[0];
     var bbs = 60 + Math.floor(tb.rng() * 91);   // 60～150 個大盲
-    return newSeat({ name: d.n, pers: d.p, stack: tb.def.bb * bbs, human: false });
+    var st = tb.def.bb * bbs;
+    // 無上限桌：NPC 帶的籌碼跟你差不多（你目前籌碼的 0.6～1.5 倍，至少 60～150 個大盲）→ 你帶再多上桌也有得贏、有得輸
+    var me = tb.seats[0], hs = me && me.human ? me.stack : 0;
+    if (tb.def.nomax && hs > 0) st = Math.max(st, Math.min(STACK_CAP, Math.round(hs * (0.6 + tb.rng() * 0.9) / tb.def.bb) * tb.def.bb));
+    return newSeat({ name: d.n, pers: d.p, stack: st, human: false });
   }
   function newTable(def, humanStack, nNpc, rng, hard) {
     var tb = { def: def, seats: [], button: -1, handNo: 0, hand: null, rng: rng || Math.random, hard: !!hard, model: {} };
@@ -600,7 +618,8 @@
     if (!curReady(def.cur)) return CURS[def.cur] + '暫時不能用';
     if (hasPending()) { refundStale(); if (hasPending()) return '上一桌的籌碼還在結算，請稍後再試'; }
     amt = Math.floor(Number(amt));
-    if (!(amt >= def.min && amt <= def.max)) return '買入要在 ' + fmt(def.min) + '～' + fmt(def.max) + ' 之間';
+    if (def.nomax) { if (!(amt >= def.min)) return '買入至少 ' + fmt(def.min); if (amt > def.max) return '買入最多 ' + fmt(def.max); }
+    else if (!(amt >= def.min && amt <= def.max)) return '買入要在 ' + fmt(def.min) + '～' + fmt(def.max) + ' 之間';
     if (balance(def.cur) < amt) return CURS[def.cur] + '不夠（你有 ' + fmt(balance(def.cur)) + '）';
     return '';
   }
@@ -656,6 +675,8 @@
     closeTable();
     return { ok: true, n: n };
   }
+  // 「補到…」的目標：一般桌補到買入上限；無上限桌補回買入下限（不會一按就把全身的錢推上桌）
+  function topTarget(def) { return def.nomax ? def.min : def.max; }
   function tblName() { return tb ? tb.def.n + (tb.hard ? '・超難' : '') : ''; }
   function closeTable() { stopTimer(); heartbeat(false); tb = null; hideWin(); }
 
@@ -865,7 +886,7 @@
       }
     } else if (!H || H.done) {
       if (me.stack <= 0 || me.stack < def.min) {
-        var room = def.max - me.stack, can = Math.min(room, balance(def.cur));
+        var room = topTarget(def) - me.stack, can = Math.min(room, balance(def.cur));
         h += '<div class="pk-acts">' + (can > 0 && me.stack + can >= def.min ? '<button type="button" class="c" data-pk="topup">補到 ' + fmtS(me.stack + can) + '</button>' : '')
           + (me.stack > 0 ? '<button type="button" data-pk="next">下一手</button>' : '') + '<button type="button" class="f" data-pk="leave">離座</button></div>';
       } else h += '<div class="pk-acts"><button type="button" class="c" data-pk="next">下一手</button></div>';
@@ -882,7 +903,7 @@
       var r = cashOut(); if (!r.ok) { ui.msg = r.msg; render(); } return;
     }
     if (a === 'next') { stopTimer(); return dealNext(); }
-    if (a === 'topup') { var def = tb.def, amt = Math.min(def.max - tb.seats[0].stack, balance(def.cur)); var t = topUp(amt); ui.msg = t.ok ? '補好了籌碼。' : t.msg; render(); if (t.ok && cfg.next >= 0) later(dealNext, cfg.next); return; }
+    if (a === 'topup') { var def = tb.def, amt = Math.min(topTarget(def) - tb.seats[0].stack, balance(def.cur)); var t = topUp(amt); ui.msg = t.ok ? '補好了籌碼。' : t.msg; render(); if (t.ok && cfg.next >= 0) later(dealNext, cfg.next); return; }
     if (a === 'fold' || a === 'check' || a === 'call') return humanAct(a);
     if (a === 'raise') { ui.raise = true; ui.to = legal(tb, 0).minTo; return render(); }
     if (a === 'rzno') { ui.raise = false; return render(); }
@@ -904,13 +925,13 @@
     if (tb) h += '<div class="ax-row"><div class="ax-main"><div><div class="ax-name">你正坐在' + esc(tblName()) + '</div><div class="ax-desc">籌碼 ' + fmt(tb.seats[0].stack) + '</div></div></div><div class="ax-act"><button type="button" data-pkn="open">回到牌桌</button></div></div>';
     TABLES.forEach(function (t) {
       if (!curReady(t.cur)) return;
-      var bal = balance(t.cur), v = sel[t.id] != null ? sel[t.id] : Math.max(t.min, Math.min(t.max, bal));
+      var bal = balance(t.cur), v = sel[t.id] != null ? sel[t.id] : (t.nomax ? t.min : Math.max(t.min, Math.min(t.max, bal)));   // 無上限桌預設填下限，不預設全押
       var why = tb ? '' : whyNotSit(t, v);
       h += '<div class="ax-row" data-row="' + t.id + '"><div class="ax-main"><div style="min-width:0"><div class="ax-name">' + esc(t.n) + '</div>'
-        + '<div class="ax-desc">盲注 ' + fmt(t.sb) + '／' + fmt(t.bb) + '　買入 ' + fmt(t.min) + '～' + fmt(t.max) + '　抽水 3%</div>'
+        + '<div class="ax-desc">盲注 ' + fmt(t.sb) + '／' + fmt(t.bb) + '　買入 ' + (t.nomax ? fmt(t.min) + ' 起，無上限' : fmt(t.min) + '～' + fmt(t.max)) + '　抽水 3%</div>'
         + '<div class="ax-note">你有' + esc(amtTxt(t.cur, bal)) + '</div>'
         + (why && !tb ? '<div class="ax-req"><span class="no" style="font-size:12px">' + esc(why) + '</span></div>' : '') + '</div></div>'
-        + (tb ? '' : '<div class="ax-act"><span class="pk-lv" role="group" aria-label="對手">對手：<button type="button" data-pkn="lv:' + t.id + ':0" class="n' + (selHard[t.id] ? '' : ' on') + '">一般</button><button type="button" data-pkn="lv:' + t.id + ':1"' + (selHard[t.id] ? ' class="on"' : '') + '>超難</button></span><input type="number" inputmode="numeric" min="' + t.min + '" max="' + t.max + '" step="' + t.bb + '" value="' + v + '" data-pkin="' + t.id + '" aria-label="' + esc(t.n) + '買入金額">'
+        + (tb ? '' : '<div class="ax-act"><span class="pk-lv" role="group" aria-label="對手">對手：<button type="button" data-pkn="lv:' + t.id + ':0" class="n' + (selHard[t.id] ? '' : ' on') + '">一般</button><button type="button" data-pkn="lv:' + t.id + ':1"' + (selHard[t.id] ? ' class="on"' : '') + '>超難</button></span><input type="number" inputmode="numeric" min="' + t.min + '"' + (t.nomax ? '' : ' max="' + t.max + '"') + ' step="' + t.bb + '" value="' + v + '" data-pkin="' + t.id + '" aria-label="' + esc(t.n) + '買入金額">'
           + '<button type="button" data-pkn="set:' + t.id + ':min">最少</button><button type="button" data-pkn="set:' + t.id + ':max">最多</button>'
           + '<button type="button" data-pkn="sit:' + t.id + '"' + (why ? ' disabled' : '') + '>入座</button></div>') + '</div>';
     });
@@ -946,7 +967,7 @@
     evaluate: evaluate, handName: handName, catOf: catOf, cardTxt: cardTxt,
     newTable: newTable, newSeat: newSeat, startHand: startHand, act: act, legal: legal, buildPots: buildPots, potTotal: potTotal,
     equity: equity, npcDecide: npcDecide, npcAct: npcAct, refillNpcs: refillNpcs,
-    hardDecide: hardDecide, rangeEquity: rangeEquity, pfPct: pfPct, strength: strength, modelOf: modelOf, RAKE: RAKE, HARD_NPCS: HARD_NPCS,
+    hardDecide: hardDecide, rangeEquity: rangeEquity, pfPct: pfPct, strength: strength, modelOf: modelOf, RAKE: RAKE, rakeOf: rakeOf, STACK_CAP: STACK_CAP, HARD_NPCS: HARD_NPCS,
     balance: balance, buyIn: buyIn, cashOut: cashOut, topUp: topUp, refundStale: refundStale, humanAct: humanAct, dealNext: dealNext,
     table: function () { return tb; }, openWin: openWin, toBall: toBall, panel: panel, render: render, on: on
   };

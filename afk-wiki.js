@@ -5297,11 +5297,12 @@
     var out = '<div class="m-wiki-note">到<b>歐瑞村莊</b>找荷官「<b>洛蒂</b>」，用<b>金幣、龍之鑽石或血龍鑽</b>換籌碼入座，跟 3～5 位 NPC 玩<b>無限注德州撲克</b>。經典模式沒有這張牌桌。</div>';
     out += wCard('🃏 牌桌',
       wTbl(['牌桌', '用什麼買籌碼', '小盲／大盲', '買入'], K.TABLES.map(function (t) {
-        return ['<b>' + t.n + '</b>', K.CURS[t.cur], t.sb.toLocaleString() + '／' + t.bb.toLocaleString(), t.min.toLocaleString() + '～' + t.max.toLocaleString() + unit(t)];
+        return ['<b>' + t.n + '</b>', K.CURS[t.cur], t.sb.toLocaleString() + '／' + t.bb.toLocaleString(), t.nomax ? t.min.toLocaleString() + unit(t) + ' 起，<b>無上限</b>' : t.min.toLocaleString() + '～' + t.max.toLocaleString() + unit(t)];
       })) +
       wDesc('<b>1 個籌碼＝1 單位</b>該幣別（金幣桌 1 籌碼＝1 金幣）。入座時就從身上扣掉；<b>按「離座」才換回去</b>。') +
       wDesc('<b>抽水 3%</b>：每個底池在發給贏家之前先抽 3%（不足 1 個籌碼的零頭不抽）。<b>沒有翻牌就結束的那一手不抽</b>；沒有人跟到的那一截下注會原數退回，也不抽。NPC 贏的池子一樣抽。') +
-      wDesc('籌碼少於買入下限時，兩手之間可以按「<b>補到…</b>」補籌碼（最多補到買入上限）。'));
+      wDesc('籌碼少於買入下限時，兩手之間可以按「<b>補到…</b>」補籌碼（最多補到買入上限；無上限桌補回買入下限）。') +
+      wDesc('<b>無上限桌</b>：買入沒有上限，帶多少上桌都行；同桌 NPC 帶的籌碼會跟你差不多，一手就可能輸贏整疊。'));
     out += wCard('📜 怎麼玩',
       wDesc('每人發 <b>2 張底牌</b>，桌上陸續翻開 <b>5 張公牌</b>（翻牌 3 張 → 轉牌 1 張 → 河牌 1 張），從 7 張裡挑<b>最好的 5 張</b>比大小。') +
       wDesc('每一手由莊家（<b>D</b>）左手邊兩位先放<b>小盲、大盲</b>。每一輪可以<b>棄牌、過牌、跟注、下注／加注、全下</b>；加注至少要加到上一次加注的幅度，最多可以推出全部籌碼。') +

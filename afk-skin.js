@@ -83,7 +83,7 @@
        (整塊還沒縮到上限以下)就會頂到標題;smoke 第一輪有驗「不壓到標題/版號」。 */
     '#afk-plugin-panel{position:absolute;z-index:5;left:5.8%;width:25.4%;top:21.8%;bottom:59.8%;',
       'display:flex;flex-direction:column;align-items:center;justify-content:flex-end;',
-      'gap:.42em;font-size:clamp(8px,min(1.25vh,.94vw),16px);}',
+      'gap:.3em;font-size:clamp(8px,min(1.25vh,.94vw),16px);}',
     /* 選角/創角時作者會把 #main-menu 加 .hidden,入口要跟著收起來。
        靠 DOM 順序:panel 一定 append 在 #main-menu 之後(見 ensurePanel),故用一般兄弟選擇器。 */
     '#main-menu.hidden ~ #afk-plugin-panel{display:none;}',

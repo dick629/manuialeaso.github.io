@@ -71,18 +71,22 @@
   }
 
   var _asking = false;
+  var _modal = null;
   function ask() {
-    if (_asking) return;
+    if (_asking) {   // 開頁那次還開著、玩家又從面板勾一次 → 把同一個視窗墊到面板上面,不然勾了像沒反應
+      if (_modal && document.getElementById('afk-toggles-overlay')) _modal.classList.add(TOP_CLASS);
+      return;
+    }
     if (!window.AFK_UI || typeof AFK_UI.confirm !== 'function') {   // 共用確認窗不在 → 不隱藏(絕不「問不到就當同意」)
       console.warn('[AFK-nobanner] 找不到 AFK_UI.confirm，橫幅維持顯示。');
       if (window.AFK_TOGGLES) AFK_TOGGLES.set(ID, false);
       return;
     }
     _asking = true;
-    var modal = null;
     var done = function (ok) {
       _asking = false;
-      if (modal) modal.classList.remove(TOP_CLASS);
+      if (_modal) _modal.classList.remove(TOP_CLASS);
+      _modal = null;
       setAck(ok);
       if (!ok && window.AFK_TOGGLES) { AFK_TOGGLES.set(ID, false); uncheckPanel(); }
       apply();
@@ -107,8 +111,11 @@
       onDismiss: function () { done(false); }   // 點背景/ESC/返回鍵＝沒同意
     });
     ensureStyle();
-    modal = document.getElementById('afk-confirm-modal');
-    if (modal) modal.classList.add(TOP_CLASS);
+    // 只有「從外掛開關面板裡勾起來」時才墊高(那時面板 100000 蓋在上面,不墊就看不到)。
+    //   開頁就跳的那次(手機預設開、還沒同意過)**不可以墊**:墊到 100002 會壓過逃生門(afk-toggles-entry 100001),
+    //   插件壞掉的手機玩家第一眼就點不到「外掛開關」(smoke 第三輪抓到)。不墊＝10001,逃生門照常在它上面。
+    _modal = _asking ? document.getElementById('afk-confirm-modal') : null;
+    if (_modal && document.getElementById('afk-toggles-overlay')) _modal.classList.add(TOP_CLASS);
   }
 
   function addCloseButton() {
