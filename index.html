@@ -590,7 +590,7 @@
          無開關：這是顯示正確性，不是功能。實測 forceDarkModeEnabled+darkModeImagePolicy=smart 可重現、加這行即解。 -->
     <style>:root{color-scheme:dark}</style>
     <!-- afk-toggles 必須最先載入：外掛開關中樞（逃生門，自己不可被關；某支外掛壞掉時玩家關掉它就能用原版繼續玩） -->
-    <script src="afk-toggles.js?v=d0401c1a58"></script>
+    <script src="afk-toggles.js?v=8dcbad6dfc"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=8d0c4c2a8b"></script>
@@ -616,7 +616,7 @@
     <!-- 存檔解壓快取：必須排在所有會讀 localStorage 的外掛之前（核心每殺一隻怪都重解壓一次血盟狀態） -->
     <script src="afk-lzcache.js?v=4ec1e9389b"></script>
     <!-- afk-perf：卡頓修正（日誌批次寫入／背包分頁按需重建）。必須排在 afk-toast（包 logSys）與 afk-itemsearch（包 renderTabs）之前 -->
-    <script src="afk-perf.js?v=2831126540"></script>
+    <script src="afk-perf.js?v=b4d566f4cf"></script>
     <script src="afk-display.js?v=4d29ace3d3"></script>
     <!-- afk-mapsync：地圖下拉自我校正（回城／出發後地區/地圖下拉與所在地不符時自動校正） -->
     <script src="afk-mapsync.js?v=f0c11680ea"></script>

@@ -517,6 +517,49 @@
     };
   }
 
+  // ─────────────────────────────────────────────────────────────────
+  // ⑧ 收集冊完成度快取（perf-dex，2026-11-04 量測）
+  //    每次重算能力值（傭兵 buff 到期／施放都會連帶重算隊長）都要把裝備收集冊 31 類、道具收集冊 5 類逐件問
+  //    「收集了沒」——玩家的收集冊各有一千三百多筆，一次重算約問三千次字典（含夢域鏡 ×3 的「是否全滿」檢查）。
+  //    收集冊只增不減、寫入只在核心幾支具名函式裡（registerEquipObtained／ensureEquipBook／registerMiscObtained／
+  //    ensureMiscDex／_miscModeAutoComplete／mergeSharedIntoPlayer）；換成新物件時 WeakMap 自然失效。
+  //    這裡記住每本收集冊（物件）每一類的「已收集數」，上述寫入函式一進一出都把版本 +1 → 版本沒變就直接用。
+  //    ⚠️ 不用「數 key 數量」當失效依據：實測 1,300 筆的字典 Object.keys 要 100～230 µs，比重算還貴。
+  //    結果（got/total 物件）每次都新建，呼叫端拿到的東西跟原本一樣。
+  // ─────────────────────────────────────────────────────────────────
+  if (on('perf-dex') && typeof window.equipCatCount === 'function' && typeof window.miscCatCount === 'function') {
+    var dexVer = 1, dexBooks = new WeakMap();
+    var bump = function () { dexVer++; };
+    ['registerEquipObtained', 'ensureEquipBook', 'registerMiscObtained', 'ensureMiscDex', '_miscModeAutoComplete', 'mergeSharedIntoPlayer', 'openEquipBook', 'openMiscBook'].forEach(function (fn) {
+      var o = window[fn]; if (typeof o !== 'function') return;
+      window[fn] = function () { bump(); try { return o.apply(this, arguments); } finally { bump(); } };
+      try { (0, eval)(fn + ' = window.' + fn); } catch (e) {}
+    });
+    var cached = function (book, kind, ck, items, has) {   // book＝收集冊物件；回傳 got（數字）
+      var b = dexBooks.get(book);
+      if (!b || b.ver !== dexVer) { b = { ver: dexVer, equip: Object.create(null), misc: Object.create(null) }; dexBooks.set(book, b); }
+      var slot = b[kind], hit = slot[ck];
+      if (hit && hit.items === items && hit.n === items.length) return hit.got;   // 類別清單只會 push（外掛補登新道具）：長度變了就重數
+      var got = 0; for (var i = 0; i < items.length; i++) if (has(items[i])) got++;
+      slot[ck] = { items: items, n: items.length, got: got }; return got;
+    };
+    var oEquipCat = window.equipCatCount, oMiscCat = window.miscCatCount;
+    window.equipCatCount = function (ck) {
+      var book = typeof player !== 'undefined' && player && player.equipDex;
+      if (!book || typeof book !== 'object' || typeof EQUIP_CAT_ITEMS === 'undefined') return oEquipCat.apply(this, arguments);
+      var arr = EQUIP_CAT_ITEMS[ck] || [];
+      return { got: cached(book, 'equip', ck, arr, equipDexHas), total: arr.length };
+    };
+    window.miscCatCount = function (ck) {
+      var book = typeof player !== 'undefined' && player && player.miscDex;
+      if (!book || typeof book !== 'object' || typeof MISC_CAT_ITEMS === 'undefined') return oMiscCat.apply(this, arguments);
+      var arr = MISC_CAT_ITEMS[ck] || [];
+      return { got: cached(book, 'misc', ck, arr, miscDexHas), total: arr.length };
+    };
+    try { (0, eval)('equipCatCount = window.equipCatCount; miscCatCount = window.miscCatCount'); } catch (e) {}
+    window.__afkDexCacheBump = bump;
+  }
+
   // ───────────────────────────────────────────────────
   // ⑦ 畫面重繪減量（perf-render，2026-10-21）
   //    ‧遊戲畫面上每張圖都套了 filter: contrast(1.06) saturate(1.05)（肉眼幾乎看不出來），
@@ -555,5 +598,5 @@
     }
   }
 
-  console.log('[AFK-perf] 已啟用：' + [on('perf-render') ? '畫面重繪減量' : '', on('perf-log') ? '日誌批次寫入' : '', on('perf-tabs') ? '背包分頁按需重建' : '', on('perf-dom') ? '同值不重寫' : '', on('perf-mem') ? '動畫快取記憶體上限' : '', on('perf-vfx') ? '特效讀位置合併' : '', on('perf-pot') ? '治癒藥水不重算' : ''].filter(Boolean).join('、'));
+  console.log('[AFK-perf] 已啟用：' + [on('perf-render') ? '畫面重繪減量' : '', on('perf-log') ? '日誌批次寫入' : '', on('perf-tabs') ? '背包分頁按需重建' : '', on('perf-dom') ? '同值不重寫' : '', on('perf-mem') ? '動畫快取記憶體上限' : '', on('perf-vfx') ? '特效讀位置合併' : '', on('perf-pot') ? '治癒藥水不重算' : '', on('perf-dex') ? '收集冊完成度快取' : ''].filter(Boolean).join('、'));
 })();
