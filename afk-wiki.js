@@ -5294,7 +5294,7 @@
     var K = window.__afkPoker;
     if (!K || !K.on()) return '<div class="m-wiki-note">德州撲克目前沒有開放。</div>';
     var unit = function (t) { return t.cur === 'gold' ? '' : ' 顆'; };
-    var out = '<div class="m-wiki-note">到<b>歐瑞村莊</b>找荷官「<b>洛蒂</b>」，用<b>金幣、龍之鑽石或血龍鑽</b>換籌碼入座，跟 3～5 位 NPC 玩<b>無限注德州撲克</b>。經典模式沒有這張牌桌。</div>';
+    var out = '<div class="m-wiki-note">到<b>歐瑞村莊</b>找荷官「<b>洛蒂</b>」，用<b>金幣、龍之鑽石或血龍鑽</b>換籌碼入座，跟 3～5 位 NPC 玩<b>無限注德州撲克</b>。不想走回村莊時，打開<b>設定</b>分頁「🔌 外掛」那一列，按「<b>♠︎ 德州撲克</b>」（就在賽狗場旁邊），一樣能看到所有牌桌、直接入座。經典模式沒有這張牌桌。</div>';
     out += wCard('🃏 牌桌',
       wTbl(['牌桌', '用什麼買籌碼', '小盲／大盲', '買入'], K.TABLES.map(function (t) {
         return ['<b>' + t.n + '</b>', K.CURS[t.cur], t.sb.toLocaleString() + '／' + t.bb.toLocaleString(), t.nomax ? t.min.toLocaleString() + unit(t) + ' 起，<b>無上限</b>' : t.min.toLocaleString() + '～' + t.max.toLocaleString() + unit(t)];

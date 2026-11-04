@@ -5,8 +5,9 @@
  *   牌桌（買入＝換成籌碼，1 籌碼＝1 單位該幣別）：
  *     金幣小桌 1,000／2,000，買入 4 萬～20 萬；金幣大桌 10 萬／20 萬，買入 400 萬～2,000 萬；
  *     龍鑽桌 1／2，買入 40～200 顆龍之鑽石；血龍鑽桌 1／2，買入 40～200 顆血龍鑽。
- *     無上限桌（買入只有下限＝50 個大盲；NPC 帶你目前籌碼的 0.6～1.5 倍、至少 60～150 個大盲）：
- *       金幣 5 萬／10 萬 買入 500 萬起；龍鑽 10／20 買入 1,000 顆起；血龍鑽 1／2 買入 100 顆起。
+ *     無上限桌（買入只有下限；NPC 帶你目前籌碼的 0.6～1.5 倍、至少買入下限的 1.2～3 倍）：
+ *       金幣 25 萬／50 萬 買入 500 萬起（盲注比大桌大，下限＝10 個大盲）；龍鑽 10／20 買入 1,000 顆起；血龍鑽 1／2 買入 100 顆起（＝50 個大盲）。
+ *   入口：歐瑞村莊的洛蒂，或設定分頁「🔌 外掛」列的「♠︎ 德州撲克」（賽狗場旁，不用走回村莊；開關關掉／經典模式沒有）。
  *       一個座位最多 100 兆（STACK_CAP，只為了讓所有金額都是精確整數）；「補到…」補回買入下限。
  *   抽水 3%（2026-11-04 Ping）：每個池子發給贏家前先抽 3%（捨去零頭）；沒翻牌就結束的那手不抽（no flop no drop）；沒人跟到的下注先原數退回、不抽。NPC 贏也抽。
  *   NPC 的籌碼由莊家出（NPC 輸光就換一位新的坐下）。
@@ -28,7 +29,7 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'poker', name: '德州撲克（歐瑞村莊）', group: '遊戲內容', def: true, seal: true,
-    desc: '歐瑞村莊的荷官洛蒂開德州撲克桌：用金幣、龍之鑽石或血龍鑽買籌碼，跟 3～5 位 NPC 對賭' });
+    desc: '歐瑞村莊的荷官洛蒂開德州撲克桌：用金幣、龍之鑽石或血龍鑽買籌碼，跟 3～5 位 NPC 對賭；設定分頁「🔌 外掛」列也能直接開牌桌' });
   var on = function () { return !T || T.enabled('poker'); };
   if (typeof DB === 'undefined' || !DB.items) return;
 
@@ -83,14 +84,15 @@
   // ════════════════ 牌桌設定 ════════════════
   var BLOOD = 'afk_blood_dia';
   var CURS = { gold: '金幣', dia: '龍之鑽石', blood: '血龍鑽' };
-  // 無上限桌（2026-11-04 Ping）：買入只有下限（＝50 個大盲），沒有上限。
+  // 無上限桌（2026-11-04 Ping）：買入只有下限，沒有上限（龍鑽／血龍鑽桌下限＝50 個大盲；金幣無上限桌 500 萬＝10 個大盲）。
   //   STACK_CAP 只是「數字安全」的天花板，不是遊戲規則：一個座位最多 100 兆，6 個座位（NPC 最多帶你的 1.5 倍）
   //   全推進一個池子也只有 ~9e14，離 Number.MAX_SAFE_INTEGER（~9e15）還差 10 倍 → 底池、抽水、退回全是精確整數。
   var STACK_CAP = 1e14;
   var TABLES = [
     { id: 'g1', cur: 'gold', n: '金幣小桌', sb: 1000, bb: 2000, min: 40000, max: 200000 },
     { id: 'g2', cur: 'gold', n: '金幣大桌', sb: 100000, bb: 200000, min: 4000000, max: 20000000 },
-    { id: 'g3', cur: 'gold', n: '金幣無上限桌', sb: 50000, bb: 100000, min: 5000000, max: STACK_CAP, nomax: true },
+    // 金幣無上限桌（2026-11-04 Ping）：盲注要比大桌（10 萬／20 萬）大 → 25 萬／50 萬；買入下限照 Ping 定的 500 萬（＝10 個大盲）
+    { id: 'g3', cur: 'gold', n: '金幣無上限桌', sb: 250000, bb: 500000, min: 5000000, max: STACK_CAP, nomax: true },
     { id: 'd1', cur: 'dia', n: '龍鑽桌', sb: 1, bb: 2, min: 40, max: 200 },
     { id: 'd2', cur: 'dia', n: '龍鑽無上限桌', sb: 10, bb: 20, min: 1000, max: STACK_CAP, nomax: true },
     { id: 'b1', cur: 'blood', n: '血龍鑽桌', sb: 1, bb: 2, min: 40, max: 200 },
@@ -517,8 +519,10 @@
     var src = tb.hard ? HARD_NPCS : NPCS, pool = src.filter(function (x) { return npcUsed(tb).indexOf(x.n) < 0; });
     var d = pool[Math.floor(tb.rng() * pool.length)] || src[0];
     var bbs = 60 + Math.floor(tb.rng() * 91);   // 60～150 個大盲
-    var st = tb.def.bb * bbs;
-    // 無上限桌：NPC 帶的籌碼跟你差不多（你目前籌碼的 0.6～1.5 倍，至少 60～150 個大盲）→ 你帶再多上桌也有得贏、有得輸
+    // 無上限桌的底：買入下限的 1.2～3 倍（下限＝50 個大盲的龍鑽／血龍鑽桌剛好就是 60～150 個大盲；
+    //   金幣無上限桌下限只有 10 個大盲 → 600 萬～1,500 萬，不會一坐下就面對比你多 6～15 倍的人）
+    var st = tb.def.nomax ? Math.max(tb.def.bb, Math.round(tb.def.min * bbs / 50 / tb.def.bb) * tb.def.bb) : tb.def.bb * bbs;
+    // 無上限桌：NPC 帶的籌碼跟你差不多（你目前籌碼的 0.6～1.5 倍，至少是上面的底）→ 你帶再多上桌也有得贏、有得輸
     var me = tb.seats[0], hs = me && me.human ? me.stack : 0;
     if (tb.def.nomax && hs > 0) st = Math.max(st, Math.min(STACK_CAP, Math.round(hs * (0.6 + tb.rng() * 0.9) / tb.def.bb) * tb.def.bb));
     return newSeat({ name: d.n, pers: d.p, stack: st, human: false });
@@ -781,6 +785,8 @@
       + '.pk-ball b{font-size:20px;line-height:1}.pk-ball span{font-size:10px;font-weight:800;margin-top:1px}'
       + '.pk-ball.turn{border-color:#facc15;box-shadow:0 0 12px #facc15cc;animation:pk-pulse .9s ease-in-out infinite}'
       + '@keyframes pk-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}'
+      + '.pk-lobby{background:#0f172af7}.pk-lobby-body{padding:8px}'
+      + '#afk-pk-lobby .afk-ax.pk-tbl .pk-lv button{background:#1e293b;border-color:#475569;color:#cbd5e1;padding:6px 10px}#afk-pk-lobby .afk-ax.pk-tbl .pk-lv button.on{background:#7f1d1d;border-color:#f87171;color:#fff}#afk-pk-lobby .afk-ax.pk-tbl .pk-lv button.n.on{background:#166534;border-color:#4ade80}'
       + '.afk-ax.pk-tbl .pk-lv{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:#cbd5e1}#interaction-content .afk-ax.pk-tbl .pk-lv button{background:#1e293b;border-color:#475569;color:#cbd5e1;padding:6px 10px}#interaction-content .afk-ax.pk-tbl .pk-lv button.on{background:#7f1d1d;border-color:#f87171;color:#fff}#interaction-content .afk-ax.pk-tbl .pk-lv button.n.on{background:#166534;border-color:#4ade80}'
       + '.afk-ax.pk-tbl input{width:110px;background:#0f172a;color:#fde68a;border:1px solid #475569;border-radius:6px;padding:6px 8px;font-size:14px}';
     document.head.appendChild(s);
@@ -799,10 +805,12 @@
   }
   var visObs = null;
   function updateVis() {
-    var hide = isMobileHidden(), w = el('afk-pk-win'), b = el('afk-pk-ball');
+    var hide = isMobileHidden(), w = el('afk-pk-win'), b = el('afk-pk-ball'), l = el('afk-pk-lobby');
     if (w) w.style.visibility = hide ? 'hidden' : '';
     if (b) b.style.visibility = hide ? 'hidden' : '';
+    if (l) l.style.visibility = hide ? 'hidden' : '';
   }
+  function watchVis() { if (!visObs && typeof MutationObserver === 'function') { visObs = new MutationObserver(updateVis); visObs.observe(document.body, { attributes: true, attributeFilter: ['class'] }); } }
   function ensureWin() {
     css();
     var w = el('afk-pk-win');
@@ -818,13 +826,14 @@
         var a = el('pk-rz-amt'); if (a && L) a.textContent = rzLabel(L, ui.to);
       });
     }
-    if (!visObs && typeof MutationObserver === 'function') { visObs = new MutationObserver(updateVis); visObs.observe(document.body, { attributes: true, attributeFilter: ['class'] }); }
+    watchVis();
     return w;
   }
   function rzLabel(L, to) { return (to >= L.maxTo ? '全下 ' : (L.cur === 0 ? '下注 ' : '加注到 ')) + fmt(to); }
   function hideWin() { var w = el('afk-pk-win'), b = el('afk-pk-ball'); if (w) w.style.display = 'none'; if (b) b.style.display = 'none'; ui.min = false; }
   function openWin() {
     if (!tb) return;
+    closeLobby();
     try { if (document.body.classList.contains('m-mobile') && W.__afkm && typeof W.__afkm.setView === 'function') W.__afkm.setView('center'); } catch (e) {}
     try { var tic = el('town-interaction-container'); if (tic && !tic.classList.contains('hidden') && tic.querySelector('.pk-tbl') && typeof W.closeNpcInteraction === 'function') W.closeNpcInteraction(); } catch (e) {}
     ui.min = false; var w = ensureWin(); w.style.display = ''; var b = el('afk-pk-ball'); if (b) b.style.display = 'none';
@@ -911,6 +920,31 @@
     if (a === 'rzok') return humanAct('raise', ui.to);
   }
 
+  // ════════════════ 不用走回村莊：浮動牌桌清單（設定分頁「♠︎ 德州撲克」開的；內容跟洛蒂的面板同一份） ════════════════
+  function closeLobby() { var l = el('afk-pk-lobby'); if (l) l.style.display = 'none'; }
+  // 經典模式的角色看不到入口（換角色時重新判斷）
+  function syncNav() { var b = el('m-afk-nav-poker'), p = P(); if (b) b.style.display = (p && p.classicMode) ? 'none' : ''; }
+  function openLobby() {
+    var p = P();
+    if (!p || p.classicMode || !on()) return false;
+    // 入口在設定分頁；手機上浮動視窗只在戰鬥畫面露出 → 先切回戰鬥畫面（跟賽狗場一樣），不然按了像沒反應
+    try { if (document.body.classList.contains('m-mobile') && W.__afkm && typeof W.__afkm.setView === 'function') W.__afkm.setView('center'); } catch (e) {}
+    css();
+    var l = el('afk-pk-lobby');
+    if (!l) {
+      l = document.createElement('div'); l.id = 'afk-pk-lobby'; l.className = 'pk-win pk-lobby';
+      l.setAttribute('role', 'dialog'); l.setAttribute('aria-label', '德州撲克牌桌');
+      l.innerHTML = '<div class="pk-head"><div class="pk-title">♠︎ 德州撲克<small>荷官洛蒂的牌桌</small></div><button type="button" class="pk-hb" data-pkl="close" aria-label="關閉">✕</button></div><div class="pk-lobby-body" id="afk-pk-lobby-body"></div>';
+      l.querySelector('[data-pkl="close"]').addEventListener('click', closeLobby);
+      document.body.appendChild(l);
+    }
+    watchVis();
+    l.style.display = '';
+    panel(el('afk-pk-lobby-body'));
+    updateVis();
+    return true;
+  }
+
   // ════════════════ 荷官 NPC（歐瑞村莊） ════════════════
   var NPC_ID = 'npc_afk_poker', NPC_N = '洛蒂', NPC_T = '德州撲克';
   var sel = {}, selHard = {};   // 各桌輸入的買入金額、對手難度
@@ -958,7 +992,7 @@
     W.loadGame = function () {
       try { if (tb) closeTable(); } catch (e) {}
       var r = oLoad.apply(this, arguments);
-      setTimeout(function () { try { refundStale(); } catch (e) { console.warn('[AFK-poker] refund', e); } }, 800);
+      setTimeout(function () { try { refundStale(); } catch (e) { console.warn('[AFK-poker] refund', e); } try { closeLobby(); syncNav(); } catch (e) {} }, 800);
       return r;
     };
   }
@@ -969,7 +1003,7 @@
     equity: equity, npcDecide: npcDecide, npcAct: npcAct, refillNpcs: refillNpcs,
     hardDecide: hardDecide, rangeEquity: rangeEquity, pfPct: pfPct, strength: strength, modelOf: modelOf, RAKE: RAKE, rakeOf: rakeOf, STACK_CAP: STACK_CAP, HARD_NPCS: HARD_NPCS,
     balance: balance, buyIn: buyIn, cashOut: cashOut, topUp: topUp, refundStale: refundStale, humanAct: humanAct, dealNext: dealNext,
-    table: function () { return tb; }, openWin: openWin, toBall: toBall, panel: panel, render: render, on: on
+    table: function () { return tb; }, openWin: openWin, toBall: toBall, panel: panel, render: render, on: on, openLobby: openLobby, closeLobby: closeLobby
   };
   setTimeout(function () { try { if (P()) refundStale(); } catch (e) {} }, 3000);
   if (!on()) return;   // 關掉時只留「把沒離座的籌碼換回去」
@@ -981,5 +1015,29 @@
     else if (DB.towns && DB.towns.town_oren) DB.towns.town_oren.npcs.push(def);
     var K = W.__afkNpcKit; if (K && K.hookNpc) K.hookNpc(NPC_ID, NPC_N, NPC_T, panel);
   } catch (e) { console.warn('[AFK-poker] NPC', e); }
+  // ── 設定分頁「🔌 外掛」列：「♠︎ 德州撲克」排在「🐕 賽狗場」旁邊，在哪裡都能開牌桌清單 ──
+  var navTries = 0;
+  function injectNav() {
+    if (!el('tab-automation')) return false;
+    if (el('m-afk-nav-poker')) return true;
+    var dg = el('m-afk-nav-dograce');
+    if (!dg && T && T.enabled && T.enabled('dograce') && navTries < 20) return false;   // 等賽狗場的鈕先放好
+    var row = el('m-afk-navrow');
+    if (!row) {
+      row = document.createElement('div'); row.id = 'm-afk-navrow'; row.className = 'bg-slate-800 p-3 rounded-lg border border-slate-700';
+      row.innerHTML = '<div class="text-sm text-amber-400 mb-2 border-b border-slate-700 pb-1 font-bold">🔌 外掛</div><div id="m-afk-navrow-btns" style="display:flex;gap:8px;flex-wrap:wrap;"></div>';
+      el('tab-automation').appendChild(row);
+    }
+    var b = document.createElement('button');
+    b.id = 'm-afk-nav-poker'; b.type = 'button';
+    b.className = 'btn py-2 text-sm bg-slate-700 hover:bg-slate-600 border-slate-500';
+    b.style.width = '100%'; b.style.marginTop = '8px';
+    b.textContent = '♠︎ 德州撲克';
+    b.addEventListener('click', function () { openLobby(); });
+    if (dg && dg.parentNode) dg.parentNode.insertBefore(b, dg.nextSibling); else row.appendChild(b);
+    syncNav();
+    return true;
+  }
+  (function tryNav() { if (injectNav()) return; if (++navTries < 40) setTimeout(tryNav, 500); })();
   console.log('[AFK-poker] 已啟用：歐瑞村莊 德州撲克');
 })();
