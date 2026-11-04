@@ -404,7 +404,7 @@
       + '.my-cell.once{background:#fde68a;font-size:9px;font-weight:900;color:#b91c1c;text-align:center;line-height:1.05}'
       + '.my-cell::after{content:"";position:absolute;top:2px;left:2px;width:6px;height:6px;border-radius:50%;background:#7f1d1d}'
       + '.my-cell.on{background:#fff;box-shadow:inset 0 0 0 3px #ef4444}.my-cell.on::after{background:#ff2d2d;box-shadow:0 0 6px #ff2d2d}'
-      + '.my-cell.lit{background:#fef08a;box-shadow:inset 0 0 0 3px #f59e0b}.my-cell.lit::after{background:#facc15;box-shadow:0 0 6px #facc15}'
+      + '.my-cell.fl{background:#ecfeff;box-shadow:inset 0 0 0 3px #22d3ee,0 0 10px #22d3ee}.my-cell.fl::after{background:#22d3ee;box-shadow:0 0 6px #22d3ee}.my-cell.lit{background:#fef08a;box-shadow:inset 0 0 0 3px #f59e0b}.my-cell.lit::after{background:#facc15;box-shadow:0 0 6px #facc15}'
       + '.my-center{grid-column:2/7;grid-row:2/7;position:relative;background:linear-gradient(#7dd3fc,#bae6fd 60%,#86efac 60%,#4ade80);border:2px solid #7c4a1e;border-radius:4px;overflow:hidden}'
       + '.my-center img{position:absolute;image-rendering:pixelated;pointer-events:none}'
       + '.my-kn{left:-26%;bottom:-8%;width:112%}.my-sl{right:2%;bottom:10%;width:40%;transform:scaleX(-1)}'
@@ -771,13 +771,19 @@
   }
   function jpSet(cur, v100) { if (cur === 'dia') LS('afk_gh_jp_dia', String(v100)); else { var d = hallData(); if (d) { d.jp = d.jp || {}; d.jp[cur] = v100; } } }
   // 收分：WIN 錶 → 身上
-  function maryCollect(quiet) {
+  // 收分：WIN 錶 → 身上。part＝只收一部分（剩下的留在 WIN 錶繼續比倍）
+  function maryCollect(quiet, part) {
     var m = maryPend(); if (!m) return 0;
-    var amt = m.win, cur = m.cur, base = m.base || amt;
+    var cur = m.cur, unit = maryUnit(cur), amt = m.win;
+    if (part === 'half') { amt = Math.floor(m.win / unit / 2) * unit; if (amt <= 0 || amt >= m.win) amt = m.win; }
     if (!credit(cur, amt)) return 0;
-    statAdd('mary', cur, 0, amt, base && m.cost ? amt / m.cost : 0, false);
-    var d = hallData(); d.mary = null; safeSave();
-    if (!quiet) ui.msg = '收分 ' + amtTxt(cur, amt) + '。';
+    m.got = (m.got || 0) + amt;
+    var all = amt >= m.win;
+    statAdd('mary', cur, 0, amt, all && m.cost ? m.got / m.cost : 0, false);
+    var d = hallData();
+    if (all) d.mary = null; else m.win -= amt;
+    safeSave();
+    if (!quiet) ui.msg = '收分 ' + amtTxt(cur, amt) + '。' + (all ? '' : '剩下 ' + fmt(Math.floor(m.win / unit)) + ' 分留在 WIN，可以繼續比倍或收分。');
     return amt;
   }
   function renderMary() {
@@ -792,7 +798,7 @@
     var pos = function (i) { if (i <= 6) return [1, i + 1]; if (i <= 11) return [i - 5, 7]; if (i <= 18) return [7, 7 - (i - 12)]; return [7 - (i - 18), 1]; };
     h += '<div class="my-board">';
     for (var i = 0; i < 24; i++) {
-      var c = RING[i], rc = pos(i), cls = 'my-cell' + (my.on === i ? ' on' : '') + (my.lit.indexOf(i) >= 0 ? ' lit' : '');
+      var c = RING[i], rc = pos(i), cls = 'my-cell' + (my.on === i ? ' on' : '') + (my.lit.indexOf(i) >= 0 ? ' lit' : '') + (my.fl && my.fl[i] ? ' fl' : '');
       if (c === 'O') h += '<div class="' + cls + ' once" style="grid-row:' + rc[0] + ';grid-column:' + rc[1] + '">ONCE<br>MORE</div>';
       else h += '<div class="' + cls + (c[1] ? ' sm' : '') + '" style="grid-row:' + rc[0] + ';grid-column:' + rc[1] + '"><img alt="' + MF[c[0]].n + '" src="' + I[MF[c[0]].k] + '">' + (c[1] ? '<i>×3</i>' : '') + '</div>';
     }
@@ -811,22 +817,22 @@
     h += '<div class="my-ctl">'
       + '<button type="button" class="out" data-gh="home">離開</button>'
       + '<button type="button" data-gh="mcol"' + (pend && !ui.busy ? '' : ' disabled') + '>WIN→<br>CREDIT</button>'
+      + '<button type="button" data-gh="mcolh"' + (pend && !ui.busy && Math.floor(pend.win / unit) >= 2 ? '' : ' disabled') + '>收一半</button>'
       + '<button type="button" data-gh="mdbl:s"' + (dbl ? '' : ' disabled') + '>比倍<br>小 1-4</button>'
       + '<button type="button" data-gh="mdbl:b"' + (dbl ? '' : ' disabled') + '>比倍<br>大 6-9</button>'
-      + '<button type="button" data-gh="mall"' + (lock ? ' disabled' : '') + '>全押<br>+1</button>'
       + (ui.auto ? '<button type="button" class="out" data-gh="stop">停止<br>' + ui.autoLeft + '</button>' : '<button type="button" class="go" data-gh="mgo"' + (ui.busy ? ' disabled' : '') + '>開始</button>')
       + '</div>';
     h += '<div class="gh-msg" id="gh-msg">' + esc(ui.msg || (pend ? '贏分 ' + fmt(Math.floor(pend.win / unit)) + ' 分：可以比倍（猜小 1-4／大 6-9，開 5 莊家通殺），或按 WIN→CREDIT 收分。' : '點下面的水果押分（每種 0～99 分），按「開始」。9 種全押、大 BAR 亮起時開出 777 就中 JP。')) + '</div>';
     var tot = maryPts(my.bets);
     h += '<div class="gh-sm">這局押 ' + tot + ' 分＝' + esc(amtTxt(cur, tot * unit)) + '</div>';
-    h += '<div class="gh-btns"><button type="button" data-gh="mclr"' + (lock ? ' disabled' : '') + '>清除</button><button type="button" data-gh="mre"' + (lock || !my.last ? ' disabled' : '') + '>重複上一局</button>'
+    h += '<div class="gh-btns"><button type="button" data-gh="mall"' + (lock ? ' disabled' : '') + '>全押 +1</button><button type="button" data-gh="mclr"' + (lock ? ' disabled' : '') + '>清除</button><button type="button" data-gh="mre"' + (lock || !my.last ? ' disabled' : '') + '>重複上一局</button>'
       + '<button type="button" data-gh="mauto:10"' + (lock ? ' disabled' : '') + '>自動 10</button><button type="button" data-gh="mauto:25"' + (lock ? ' disabled' : '') + '>25</button><button type="button" data-gh="mauto:50"' + (lock ? ' disabled' : '') + '>50</button></div>';
     h += '<div style="margin-top:6px"><label class="gh-tog"><input type="checkbox" data-gh="quick"' + (ui.quick ? ' checked' : '') + '> 快速（縮短跑燈）</label></div>';
     h += '<details style="margin-top:6px"><summary class="gh-sm" style="cursor:pointer">規則</summary><div class="gh-sm" style="line-height:1.6">'
       + '燈停在哪一格，就賠那種水果押的分數 × 賠率；畫小一號、標 ×3 的格子固定賠 3 倍。<br>'
       + 'ONCE MORE：隨機送燈——再送一燈、送 2～4 燈、開火車（後面 3～7 格一起亮）、小三元（柳丁、檸檬、鈴鐺）、大三元（西瓜、星星、77）、大四喜（4 個蘋果），也可能槓龜。<br>'
       + 'JP：每局押注的 1.5% 進獎池；9 種全押、而且大 BAR 那格亮起時，中間會跳一組 000～999 的號碼，開出 777 就整池給你（不能比倍）。<br>'
-      + '比倍：開 1～9，猜中小（1～4）或大（6～9）贏分翻倍，猜錯或開 5 歸零；最多比 ' + DBL_MAX + ' 次。</div></details>';
+      + '比倍：開 1～9，猜中小（1～4）或大（6～9）贏分翻倍，猜錯或開 5 歸零；最多比 ' + DBL_MAX + ' 次。比之前可以先按「收一半」把一半收進來，只拿剩下的去比。<br>中王牌（大格 BAR、77、星星）或頭獎（JP）時會跳燈。</div></details>';
     return h + '</div>';
   }
   function maryAnimSprites(kind) {   // 中間插畫：贏了騎士出拳、果凍怪挨打（大獎打飛）
@@ -863,8 +869,28 @@
     if (ui.auto && winAmt > 0) maryCollect(true);
     my.last = bets; ui.msg = '';
     var evName = r.ev ? (MEV.filter(function (x) { return x[0] === r.ev; })[0] || [0, 0, ''])[2] : '';
+    // 跳燈：王牌（大格 BAR、77、星星有押中）或頭獎（JP）——整圈追燈＋全盤閃
+    var trump = r.lit.some(function (i) { var c = RING[i]; return c !== 'O' && !c[1] && c[0] <= 2 && bets[c[0]] > 0; });
     var fin = function () {
-      ui.busy = false; my.showWin = null; my.ev = ''; my.on = -1;
+      if (!fin.shown && (r.jp || trump)) {
+        fin.shown = true; ui.busy = true;
+        var laps = r.jp ? 4 : 2, flashes = r.jp ? 12 : 6, k = 0, keepLit = my.lit.slice(), start = my.pos || 0;
+        my.ev = r.jp ? '🎰 頭獎 JP！' : '👑 王牌！';
+        var chase = function () {
+          my.on = (start + k) % 24; my.fl = {}; for (var q = 0; q < 4; q++) my.fl[(start + k - q * 6 + 240) % 24] = 1;
+          render();
+          if (++k < laps * 24) later(chase, r.jp ? 28 : 36); else { k = 0; my.on = -1; later(flash, 60); }
+        };
+        var flash = function () {
+          my.fl = {}; for (var q = 0; q < 24; q++) if ((q + k) % 2 === 0) my.fl[q] = 1;
+          my.lit = k % 2 ? keepLit.slice() : [];
+          render();
+          if (++k < flashes) later(flash, 150); else { my.fl = null; my.lit = keepLit; fin(); }
+        };
+        chase();
+        return;
+      }
+      ui.busy = false; my.showWin = null; my.ev = ''; my.on = -1; my.fl = null;
       var big = r.jp || r.pts >= pts * 20;
       if (r.jp) { ui.msg = '🎰 JP！拿走整個獎池 ' + amtTxt(cur, jpAmt) + '！' + (winAmt ? '另外贏分 ' + fmt(r.pts) + ' 分。' : ''); announceJp(cur, jpAmt); }
       else if (winAmt > 0) ui.msg = (evName && r.ev !== 'none' ? evName + '！' : '') + '贏分 ' + fmt(r.pts) + ' 分（' + amtTxt(cur, winAmt) + '）' + (ui.auto ? '，已收分。' : '：可以比倍或收分。');
@@ -973,6 +999,7 @@
     if (a === 'mre') { if (my.last) my.bets = my.last.slice(); return render(); }
     if (a === 'mgo') return maryRound();
     if (a === 'mcol') { maryCollect(false); return render(); }
+    if (a === 'mcolh') { maryCollect(false, 'half'); return render(); }
     if (p[0] === 'mdbl') return maryDouble(p[1]);
     if (p[0] === 'mauto') { if (!maryPts(my.bets) && my.last) my.bets = my.last.slice(); ui.auto = 1; ui.autoLeft = Number(p[1]); if (!maryRound()) stopAuto(); return; }
     // 拉霸

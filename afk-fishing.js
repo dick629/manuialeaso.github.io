@@ -205,10 +205,27 @@
     g.statAdd('fish', cur, b, 0, 0, true);
     st.spent += b;
     var ang = st.aim;
-    if (st.lock) { var tf = st.fish.filter(function (f) { return f.uid === st.lock && !f.dead; })[0]; if (tf) ang = Math.atan2(tf.y - CANNON.y, tf.x - CANNON.x); else st.lock = null; }
+    if (st.lockMode && st.lock && !lockFish()) retarget();
+    var tf = st.lock ? lockFish() : null;
+    if (tf) { ang = Math.atan2(tf.y - CANNON.y, tf.x - CANNON.x); st.aim = Math.min(-0.08, Math.max(-Math.PI + 0.08, ang)); }
+    else if (st.lock) st.lock = null;
     st.bullets.push({ x: CANNON.x + Math.cos(ang) * 30, y: CANNON.y + Math.sin(ang) * 30, vx: Math.cos(ang) * BULLET_SPEED, vy: Math.sin(ang) * BULLET_SPEED, b: b, cur: cur, lv: st.lv, born: now, lock: st.lock, own: true });
     st.lastShot = now; markSave(false);
     return true;
+  }
+  function lockFish() { var u = st.lock; if (!u) return null; for (var i = 0; i < st.fish.length; i++) { var f = st.fish[i]; if (f.uid === u) return alive(f) ? f : null; } return null; }
+  // 鎖定的魚沒了：先找同一種最近的，沒有就找畫面上倍數最高的
+  function retarget() {
+    var old = st.lockKind, cand = st.fish.filter(function (f) { return alive(f) && f.y < VH - 60; });
+    var same = cand.filter(function (f) { return f.d.id === old; });
+    var pool = same.length ? same : cand; if (!pool.length) { st.lock = null; return; }
+    pool.sort(function (a, b) { return same.length ? Math.hypot(a.x - CANNON.x, a.y - CANNON.y) - Math.hypot(b.x - CANNON.x, b.y - CANNON.y) : (b.d.avg - a.d.avg); });
+    st.lock = pool[0].uid; st.lockKind = pool[0].d.id;
+  }
+  function lockBest() {
+    var cand = st.fish.filter(function (f) { return alive(f) && f.y < VH - 60; }); if (!cand.length) return;
+    cand.sort(function (a, b) { return b.d.avg - a.d.avg; });
+    st.lockMode = true; st.lock = cand[0].uid; st.lockKind = cand[0].d.id; st.auto = true; st.msg = '鎖定畫面上最大的「' + cand[0].d.n + '」。'; hud();
   }
   // 特殊魚的「效果期望值」（以注額為單位）：捕獲率＝R0 ÷（倍數＋期望值），長期返還率不變
   function specialE(f) {
@@ -264,10 +281,10 @@
     if (k === 3) { try { var p = P(); if (typeof W.logWorld === 'function') W.logWorld('<span class="wc-answer">🐟【遊戲廳】<b style="color:#fde047">' + esc((p && p.name) || '冒險者') + '</b> 在' + NAME + '打倒水龍法利昂，轉出<b style="color:#ef4444">超級 JP</b>：' + esc(amtTxt(cur, got)) + '！</span>'); } catch (e) {} }
   }
   // 特殊砲
-  function fireWeapon(i) {
+  function fireWeapon(i, angIn) {
     var ws = weapons(), w = ws[i]; if (!w || st.weapon || st.wheel) return;
-    ws.splice(i, 1); markSave(true);
-    var ang = st.aim;
+    ws.splice(i, 1); markSave(true); st.aimW = null;
+    var ang = angIn != null ? angIn : st.aim;
     if (w.k === 'laser') {
       var hit = st.fish.filter(function (f) { return alive(f); }).map(function (f) {
         var dx = f.x - CANNON.x, dy = f.y - CANNON.y, along = dx * Math.cos(ang) + dy * Math.sin(ang), perp = Math.abs(-dx * Math.sin(ang) + dy * Math.cos(ang));
@@ -380,6 +397,10 @@
     // 砲台
     var drawCannon = function (x, ang, lv, me, top) { ctx.save(); ctx.translate(x, top ? 18 : VH - 18); ctx.fillStyle = me ? '#1e293b' : '#334155'; ctx.beginPath(); if (top) ctx.arc(0, 0, 18, 0, Math.PI); else ctx.arc(0, 0, me ? 26 : 18, Math.PI, 0); ctx.fill(); ctx.rotate(ang + Math.PI / 2); ctx.fillStyle = me ? BULLET_LOOK[lv][0] : '#64748b'; ctx.fillRect(-(me ? 7 + lv : 5), -(me ? 44 : 30), (me ? 14 + lv * 2 : 10), me ? 40 : 26); ctx.restore(); };
     st.npc.forEach(function (n) { drawCannon(n.x, n.ang, 0, false, n.top); });
+    var lf = st.lock ? lockFish() : null;
+    if (lf) { ctx.save(); ctx.strokeStyle = 'rgba(239,68,68,.55)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(CANNON.x, CANNON.y); ctx.lineTo(lf.x, lf.y); ctx.stroke(); ctx.restore(); }
+    if (st.aimW != null) { var aw = weapons()[st.aimW]; ctx.save(); ctx.strokeStyle = aw && aw.k === 'laser' ? 'rgba(216,180,254,.9)' : 'rgba(103,232,249,.9)'; ctx.lineWidth = 3; ctx.setLineDash([12, 8]); ctx.beginPath(); ctx.moveTo(CANNON.x, CANNON.y); ctx.lineTo(CANNON.x + Math.cos(st.aim) * 900, CANNON.y + Math.sin(st.aim) * 900); ctx.stroke(); ctx.restore();
+      ctx.textAlign = 'center'; ctx.font = 'bold 18px Arial,"Microsoft JhengHei",sans-serif'; ctx.lineWidth = 4; ctx.strokeStyle = '#000'; var tt = (aw && aw.k === 'laser' ? '🔫 雷射砲' : '🌀 鑽頭砲') + '：點畫面選方向發射'; ctx.strokeText(tt, VW / 2, VH - 70); ctx.fillStyle = '#fde68a'; ctx.fillText(tt, VW / 2, VH - 70); }
     drawCannon(CANNON.x, st.aim, st.lv, true);
     ctx.font = 'bold 12px Arial,"Microsoft JhengHei",sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#cbd5e1';
     st.npc.forEach(function (n) { ctx.fillText(n.n, n.x, n.top ? 46 : VH - 2); });
@@ -463,11 +484,16 @@
       var pt = function (e) { var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * VW, y: (e.clientY - r.top) / r.height * VH }; };
       cv.addEventListener('pointerdown', function (e) {
         var p = pt(e); st.aim = Math.min(-0.08, Math.max(-Math.PI + 0.08, Math.atan2(p.y - CANNON.y, p.x - CANNON.x)));
-        if (st.lockMode) { var best = null, bd = 1e9; st.fish.forEach(function (f) { if (f.dead) return; var d = Math.hypot(f.x - p.x, f.y - p.y); if (d < hitR(f) + 20 && d < bd) { bd = d; best = f; } }); st.lock = best ? best.uid : null; if (best) { st.auto = true; hud(); } return; }
+        if (st.aimW != null) { fireWeapon(st.aimW, st.aim); return; }   // 特殊砲：點哪裡就往哪裡打
+        if (st.lockMode) {   // 鎖定：點到哪隻（或最靠近點的那隻，80 範圍內）就鎖哪隻，並自動開火
+          var best = null, bd = 1e9; st.fish.forEach(function (f) { if (!alive(f)) return; var d = Math.hypot(f.x - p.x, f.y - p.y) - hitR(f); if (d < 80 && d < bd) { bd = d; best = f; } });
+          if (best) { st.lock = best.uid; st.lockKind = best.d.id; st.auto = true; st.msg = '鎖定「' + best.d.n + '」，子彈會追著打；牠沒了會自動換下一隻。'; hud(); }
+          return;
+        }
         st.firing = true; try { cv.setPointerCapture(e.pointerId); } catch (er) {}
         if (performance.now() - st.lastShot >= FIRE_MS) fire(performance.now());
       });
-      cv.addEventListener('pointermove', function (e) { var p = pt(e); if (st.firing || e.pointerType === 'mouse') st.aim = Math.min(-0.08, Math.max(-Math.PI + 0.08, Math.atan2(p.y - CANNON.y, p.x - CANNON.x))); });
+      cv.addEventListener('pointermove', function (e) { var p = pt(e); if (st.firing || st.aimW != null || e.pointerType === 'mouse') st.aim = Math.min(-0.08, Math.max(-Math.PI + 0.08, Math.atan2(p.y - CANNON.y, p.x - CANNON.x))); });
       var up = function () { st.firing = false; };
       cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('pointerleave', up);
       w.addEventListener('click', onClick);
@@ -492,8 +518,9 @@
     h += ['gold', 'dia', 'blood'].map(function (c) { var ok = g && g.curReady(c); return '<button type="button" data-fh="cur:' + c + '"' + (st.cur === c ? ' class="on"' : '') + (ok ? '' : ' disabled') + '>' + ICON[c] + ' ' + CURS[c] + '</button>'; }).join('');
     h += '<span class="lv"><button type="button" data-fh="lv-" aria-label="降低砲台等級">－</button>Lv' + (st.lv + 1) + '・' + fmtS(bet()) + '<button type="button" data-fh="lv+" aria-label="提高砲台等級">＋</button></span>';
     h += '<button type="button" data-fh="auto"' + (st.auto ? ' class="on"' : '') + '>' + (st.auto ? '⏸ 停止自動' : '▶ 自動射擊') + '</button>';
-    h += '<button type="button" data-fh="lock"' + (st.lockMode ? ' class="on"' : '') + '>🎯 鎖定' + (st.lockMode ? '（點一隻魚）' : '') + '</button>';
-    ws.forEach(function (w, i) { h += '<button type="button" class="fh-w" data-fh="wp:' + i + '"' + (st.weapon || st.wheel ? ' disabled' : '') + '>' + (w.k === 'laser' ? '🔫 雷射砲' : '🌀 鑽頭砲') + '（' + fmtS(w.b) + (w.cur === 'gold' ? '' : '顆') + '）</button>'; });
+    h += '<button type="button" data-fh="lock"' + (st.lockMode ? ' class="on"' : '') + '>🎯 鎖定' + (st.lockMode ? '（點魚換目標・再按關閉）' : '') + '</button>';
+    h += '<button type="button" data-fh="lockbest">👑 鎖最大隻</button>';
+    ws.forEach(function (w, i) { h += '<button type="button" class="fh-w' + (st.aimW === i ? ' on' : '') + '" data-fh="wp:' + i + '"' + (st.weapon || st.wheel ? ' disabled' : '') + '>' + (st.aimW === i ? '✖ 取消瞄準' : (w.k === 'laser' ? '🔫 雷射砲' : '🌀 鑽頭砲')) + '（' + fmtS(w.b) + (w.cur === 'gold' ? '' : '顆') + '）</button>'; });
     h += '<span class="sp"></span><span id="afk-fish-bal" style="align-self:center;font-weight:800;color:#fde68a"></span>';
     bar.innerHTML = h; hudBal();
     var m = el('afk-fish-msg'); if (m) m.textContent = st.msg || '每發 ' + amtTxt(st.cur, bet()) + '；倍數越高越難抓。抓到水龍法利昂會轉 JP 轉盤。';
@@ -506,8 +533,9 @@
     if (p[0] === 'cur') { st.cur = p[1]; st.lv = 0; LS('afk_fish_cur', st.cur); st.msg = ''; return hud(); }
     if (a === 'lv-' || a === 'lv+') { st.lv = Math.max(0, Math.min(LEVELS[st.cur].length - 1, st.lv + (a === 'lv+' ? 1 : -1))); st.msg = ''; return hud(); }
     if (a === 'auto') { st.auto = !st.auto; if (!st.auto) st.lock = null; st.msg = ''; return hud(); }
-    if (a === 'lock') { st.lockMode = !st.lockMode; if (!st.lockMode) st.lock = null; return hud(); }
-    if (p[0] === 'wp') return fireWeapon(Number(p[1]));
+    if (a === 'lock') { st.lockMode = !st.lockMode; if (!st.lockMode) { st.lock = null; st.auto = false; st.msg = ''; } else st.msg = '點一隻魚鎖定（點空白處附近也會抓最近的那隻）。'; return hud(); }
+    if (a === 'lockbest') return lockBest();
+    if (p[0] === 'wp') { var wi = Number(p[1]); st.aimW = st.aimW === wi ? null : wi; st.msg = st.aimW != null ? '移動滑鼠／手指瞄準，點畫面發射。' : ''; return hud(); }
   }
   function open() {
     var p = P(); if (!p || p.classicMode || !on() || !G()) return false;
