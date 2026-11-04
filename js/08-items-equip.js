@@ -322,6 +322,10 @@ function getWpnEle(wpnInst, wpnBase, owner) {
         && (wielder._spellbladeUntil || 0) > ((typeof state !== 'undefined' && state.ticks) || 0));
     return resolveWeaponElement(!!a, a && a.ele, spellbladeActive, wielder && wielder._spellbladeEle, wpnBase && wpnBase.ele);
 }
+/* 🔌 加掛版補丁:雙屬性武器 */
+function wpnEleMult(m, owner, inst, defEle) { return (typeof window !== 'undefined' && typeof window.__afkDualEleMult === 'function') ? window.__afkDualEleMult(m, owner, inst, defEle) : m; }
+function wpnEleIs(ele, want, owner, inst) { return ele === want || !!(typeof window !== 'undefined' && typeof window.__afkDualEleHas === 'function' && window.__afkDualEleHas(ele, want, owner, inst)); }
+function wpnEleAs(ele, want, owner, inst) { return wpnEleIs(ele, want, owner, inst) ? want : ele; }
 // 屬性剋制判定（攻擊屬性 e 是否剋制怪物屬性 te），加成量由各詞綴的 counter 決定
 // 🔧 統一：抗魔係數（MR 折減倍率，邊際效益遞減）。回傳「魔法傷害通過率」(=1-減傷%)。
 //   0–100：每+1 MR +0.5% 減傷（→50%）｜100–200：+0.1%（→60%）｜200–400：+0.075%（→75%）｜

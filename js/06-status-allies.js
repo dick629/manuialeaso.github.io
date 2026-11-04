@@ -1041,14 +1041,14 @@ function allyAttackOnce(ally, _arrowDelay) {   // 🏹 v3.2.14 _arrowDelay(選�
         dmg = _allyAtkBuffProcs(ally, dmg, isRanged);   // 🆕 v2.6.9 #1b：攻擊 buff proc（燃燒鬥志/屬性之火/雙重破壞/狂暴/勇猛意志/燃燒擊砍）·狂暴已併入此
         dmg = Math.max(1, Math.floor(dmg * wpnEnFinalMult(ally.eq && ally.eq.wpn)));   // 🔧 武器強化 +11~+20：最終傷害倍率（傭兵物理普攻·與玩家普攻 getPhysicalDmg 一致）
         {   // ⚔️ 武器屬性剋制倍率（物理普攻）；不定形的變幻劍對四大屬性一律視為剋制
-            let _ecmA = elementCounterMult(_rWeaponFlags.element || getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally), t.e); /* relic-weapon-bridge:ally-element */
+            let _ecmA = elementCounterMult(_rWeaponFlags.element || getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally), t.e); /* relic-weapon-bridge:ally-element */ _ecmA = wpnEleMult(_ecmA, ally, ally.eq ? ally.eq.wpn : null, t.e); /* 🔌 加掛版補丁:雙屬性武器 */
             if (wpn && wpn.counterAllEle && t.e && t.e !== 'none') _ecmA = Math.max(_ecmA, 1.4);
             if (wpn && wpn.counterEles && t.e && wpn.counterEles.includes(t.e)) _ecmA = Math.max(_ecmA, 1.4);   // 🌑 v3.4.67 冥皇執行劍：一般攻擊對指定屬性(地/風)敵人 ×1.4（傭兵鏡像玩家）
             if (window.AFK_RELIC_WEAPON_BRIDGE) _ecmA=window.AFK_RELIC_WEAPON_BRIDGE.counterElementMult(wpn,t,_ecmA); dmg = Math.max(1, Math.floor(dmg * _ecmA)); /* relic-weapon-bridge:ally-counter-element */
         }
-        dmg = Math.max(1, Math.floor(dmg * (window.AFK_RELIC_WEAPON_BRIDGE ? window.AFK_RELIC_WEAPON_BRIDGE.deferPhysicalMark(ally,t,_rWeaponFlags.element||getWpnEle(ally.eq ? ally.eq.wpn : null,wpn,ally)) : consumeWetMult(t, getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally))) /* relic-weapon-bridge:ally-defer-reaction */));   // 🏺 海洋水晶球（傭兵受益端）：潮濕目標受風屬性物理傷害 ×2 並解除
-        if (t._fireVulnUntil > state.ticks && getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally) === 'fire') dmg = Math.max(1, Math.floor(dmg * 1.3));   // 🏺 v3.1.76 灼熱蜥蜴長舌（傭兵受益端）：目標帶火屬性弱點時受火屬性攻擊 +30%（鏡像玩家 js/03:901）
-        if (d.eleWpnMult && getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally) === d.eleWpnMult.ele) dmg = Math.max(1, Math.floor(dmg * d.eleWpnMult.mult));   // 🏺 v3.1.80 四之牙臂甲（傭兵主攻）：裝備對應屬性武器時一般攻擊傷害 ×1.2（鏡像玩家 getPhysicalDmg）
+        dmg = Math.max(1, Math.floor(dmg * (window.AFK_RELIC_WEAPON_BRIDGE ? window.AFK_RELIC_WEAPON_BRIDGE.deferPhysicalMark(ally,t,_rWeaponFlags.element||getWpnEle(ally.eq ? ally.eq.wpn : null,wpn,ally)) : consumeWetMult(t, wpnEleAs(getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally), 'wind', ally, ally.eq ? ally.eq.wpn : null))) /* relic-weapon-bridge:ally-defer-reaction */));   // 🏺 海洋水晶球（傭兵受益端）：潮濕目標受風屬性物理傷害 ×2 並解除
+        if (t._fireVulnUntil > state.ticks && wpnEleIs(getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally), 'fire', ally, ally.eq ? ally.eq.wpn : null)) dmg = Math.max(1, Math.floor(dmg * 1.3));   // 🏺 v3.1.76 灼熱蜥蜴長舌（傭兵受益端）：目標帶火屬性弱點時受火屬性攻擊 +30%（鏡像玩家 js/03:901）
+        if (d.eleWpnMult && wpnEleIs(getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally), d.eleWpnMult.ele, ally, ally.eq ? ally.eq.wpn : null)) dmg = Math.max(1, Math.floor(dmg * d.eleWpnMult.mult));   // 🏺 v3.1.80 四之牙臂甲（傭兵主攻）：裝備對應屬性武器時一般攻擊傷害 ×1.2（鏡像玩家 getPhysicalDmg）
         dmg = Math.max(1, Math.floor(dmg * allyRlFuryMult(ally)));   // 🔴😡 v2.6.18 紅獅5×狂怒5造傷（物理普攻·原全無·鏡像玩家 getPhysicalDmg）
         dmg = Math.max(1, Math.floor(dmg * royalAllyMult()));   // 👑 王族魅力加成：傭兵造成傷害 ×(1+魅力/200)
         let _dualX2A = false;   // ⚔️ 雙刀內建特性（傭兵·鏡像玩家）：一般攻擊命中(非擦傷) 5% 機率最終傷害×2·經典停用
@@ -1125,7 +1125,7 @@ function allyAttackOnce(ally, _arrowDelay) {   // 🏹 v3.2.14 _arrowDelay(選�
         // 🏺 遺物 命中附加固定屬性傷害＋弱點洞察（傭兵鏡像玩家·置於各 proc 後、擊殺判定前，避免對死怪重複觸發）
         if (t.curHp > 0 && wpn && wpn.onHitEleDmg && (!wpn.onHitEleDmg.rate || Math.random() * 100 < wpn.onHitEleDmg.rate)) { let _oh = wpn.onHitEleDmg; if(!(window.AFK_RELIC_WEAPON_BRIDGE&&window.AFK_RELIC_WEAPON_BRIDGE.elementalDamage(ally,t,_oh.dmg,_oh.ele,wpn)))t.curHp -= (window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(ally,t,_oh.dmg,{nativeRefund:null,kind:'magic'}):_oh.dmg); /* relic-weapon-bridge:elemental-reflect-allyAttackOnce */ t.justHit = _oh.ele; mobWake(t); logCombat(`<span class="font-bold" style="color:${RELIC_ELE_COLOR[_oh.ele] || '#e2e8f0'};">【協力·${ally._allyName}】附加 ${_oh.dmg} 點${RELIC_ELE_LABEL[_oh.ele] || ''}屬性傷害。</span>`, 'player'); }   // 🏺 rate：火焰長劍 3%（傭兵鏡像玩家）
         if (t.curHp > 0 && wpn && wpn.frozenBonusDmg && t.st && t.st.freeze > 0) { t.curHp -= (window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(ally,t,wpn.frozenBonusDmg,{nativeRefund:null,kind:'true'}):wpn.frozenBonusDmg); t.justHit = 'water'; mobWake(t); logCombat(`<span class="font-bold text-sky-300">【協力·${ally._allyName}·${wpn.n}】</span>對冰凍目標追加 ${wpn.frozenBonusDmg} 點傷害。`, 'player'); }   // 🏺 v3.5.27 水靈的魔力珠（傭兵鏡像玩家 js/04）
-        if (t.curHp > 0) { let _whb = _relicWeakHitBonus(ally); if (_whb > 0) { let _we = getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally); if (_we && _we !== 'none' && elementCounterMult(_we, t.e) > 1) { t.curHp -= (_whb=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(ally,t,_whb,{nativeRefund:null,kind:'true'}):_whb)); t.justHit = _we; mobWake(t); logCombat(`<span class="font-bold text-amber-300">【協力·${ally._allyName}·弱點洞察】</span>額外造成 ${_whb} 點傷害。`, 'player'); } } }
+        if (t.curHp > 0) { let _whb = _relicWeakHitBonus(ally); if (_whb > 0) { let _we = getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally); if (_we && _we !== 'none' && wpnEleMult(elementCounterMult(_we, t.e), ally, ally.eq ? ally.eq.wpn : null, t.e) > 1) { t.curHp -= (_whb=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(ally,t,_whb,{nativeRefund:null,kind:'true'}):_whb)); t.justHit = _we; mobWake(t); logCombat(`<span class="font-bold text-amber-300">【協力·${ally._allyName}·弱點洞察】</span>額外造成 ${_whb} 點傷害。`, 'player'); } } }
         // 🏺 v3.7.20 無限火藥爆裂矢（傭兵箭矢·鏡像玩家 js/04）：遠距離命中 10% 追加 50 點火屬性固定傷害
         if (t.curHp > 0 && isRanged && ally.eq && ally.eq.arrow) { let _aad = DB.items[ally.eq.arrow.id]; if (_aad && _aad.onHitEleDmg && (!_aad.onHitEleDmg.rate || Math.random() * 100 < _aad.onHitEleDmg.rate)) { let _ah = _aad.onHitEleDmg; t.curHp -= (window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(ally,t,_ah.dmg,{nativeRefund:null,kind:'magic'}):_ah.dmg); t.justHit = _ah.ele; mobWake(t); logCombat(`<span class="font-bold" style="color:${RELIC_ELE_COLOR[_ah.ele] || '#e2e8f0'};">【協力·${ally._allyName}·${_aad.n}】</span>火藥炸裂，追加 ${_ah.dmg} 點${RELIC_ELE_LABEL[_ah.ele] || ''}屬性傷害。`, 'player'); } }
         // 🏺 v3.7.20 戰士的漆黑之劍（傭兵 traumaProc·鏡像玩家 js/04）：命中 5% 附加創傷（+5/層·6 秒·最多 2 層）
@@ -1159,7 +1159,7 @@ function allyComboAttack(ally, t, fullDmg) {
     if (!r.hit) { if (typeof vfxMiss === 'function') vfxMiss(t); logCombat(`<span class="font-bold" style="color:#c4b5fd;">【協力·${ally._allyName}·雙擊】</span>追擊 <span class="${getMobColor(t.lv)}">${t.n}</span> 未命中。`, 'miss'); return; }
     if (r.crit && wo && wo.critFuryHaste) ally._fangFuryTicks = critFuryDurationTicks(wo.critFuryHaste.sec);   // 🏺 v3.7.52 邪惡利牙（傭兵）：爆擊觸發攻速+30%（js/06 攻擊間隔消費·逐 tick 遞減）
     let dmg = Math.max(1, Math.floor(r.dmg * (fullDmg ? (ally._setShadow5 ? 2.0 : 1.0) : (ally._setShadow5 ? 1.0 : 0.5))));   // 🔧 雙擊(fullDmg)：完整一般攻擊·暗影5/5傷害加倍(×2)；爆擊精通(legacy)×0.5
-    dmg = Math.max(1, Math.floor(dmg * elementCounterMult(getWpnEle(wi, wo, ally), t.e)));   // ⚔️ 武器屬性剋制倍率（雙擊）
+    dmg = Math.max(1, Math.floor(dmg * wpnEleMult(elementCounterMult(getWpnEle(wi, wo, ally), t.e), ally, wi, t.e)));   // ⚔️ 武器屬性剋制倍率（雙擊）
     if (t.curHp > 0) wearHardSkin(t, wi ? wi.id : null, r.heavy, false, true, ally.classicMode);
     logCombat(`<span class="font-bold" style="color:#c4b5fd;text-shadow:0 0 6px #8b5cf6;">【協力·${ally._allyName}·雙擊】</span>追擊 <span class="${getMobColor(t.lv)}">${t.n}</span>，造成 ${dmg} 點傷害。`, 'player');
     _allyDamageMob(ally, t, dmg, getWpnEle(wi, wo, ally), 'melee');
@@ -1217,7 +1217,7 @@ function allyDualWieldOffhandAttack(ally, t) {
     if (allyOffhandInstakillProc(ally, ally.eq.offwpn, owpn, t)) return;   // ⚔️ v3.5.97 副手即死 proc（鏡像玩家：成功則不再跑一般扣血）
     let dmg = r.dmg;
     if (ally.skills.includes('sk_warrior_berserk') && Math.random() < 0.05) dmg = Math.max(1, dmg * 2);   // ⚔️ 狂暴：副手亦為一般攻擊
-    dmg = Math.max(1, Math.floor(dmg * elementCounterMult(getWpnEle(ally.eq.offwpn, owpn, ally), t.e)));   // ⚔️ 副手武器屬性剋制倍率
+    dmg = Math.max(1, Math.floor(dmg * wpnEleMult(elementCounterMult(getWpnEle(ally.eq.offwpn, owpn, ally), t.e), ally, ally.eq.offwpn, t.e)));   // ⚔️ 副手武器屬性剋制倍率
     dmg = allyOffhandDmgMods(ally, owpn, t, dmg);   // ⚔️ v3.5.97 副手扣血前的傷害修飾（selfBreakProc／eleBonusDmg）
     dmg = Math.max(1, dmg);
     if (t.curHp > 0) wearHardSkin(t, ally.eq.offwpn.id, r.heavy, false, true, ally.classicMode);
@@ -1482,7 +1482,7 @@ function allyRapidfire(ally, forceProc, classicOk) {
         let dice = wpn ? (mt.s === 'L' ? wpn.dmgL : wpn.dmgS) : 2;
         let _hsSub = (wpn && wpn.ignHardSkin) ? 0 : mobHardSkin(mt);   // 🗡️ 貫穿（暗黑十字弓）：傭兵連射亦無視硬皮額外減傷
         let dmg = Math.max(1, Math.floor((roll(1, dice) + (d.rangedDmg||0) + (d.extraDmg||0) - (mt.dr||0) - _hsSub + allyUnbonusBonus(ally, mt)) * _rfMult * fragileMult(mt) * wpnEnFinalMult(ally.eq && ally.eq.wpn)));   // 🔧 硬皮：額外物理減傷（貫穿時不扣）；對不死/狼人 +1D20；連射倍率（疾風5/5/連射精通）；脆弱；武器強化 +11~+20 最終倍率（與玩家連射一致·古老武器×2 機制已於 v3.1.26 移除）
-        dmg = Math.max(1, Math.floor(dmg * elementCounterMult(getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally), mt.e)));   // ⚔️ 武器屬性剋制倍率（連射）
+        dmg = Math.max(1, Math.floor(dmg * wpnEleMult(elementCounterMult(getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally), mt.e), ally, ally.eq ? ally.eq.wpn : null, mt.e)));   // ⚔️ 武器屬性剋制倍率（連射）
         dmg = Math.max(1, Math.floor(dmg * allyRlFuryMult(ally)));   // 🔴😡 v2.6.18 紅獅5×狂怒5造傷（連射每箭·原全無·鏡像玩家連射 getPhysicalDmg）
         dmg = Math.max(1, Math.floor(dmg * royalAllyMult()));   // 👑 王族魅力加成：傭兵造成傷害 ×(1+魅力/200)
         mt.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(ally,mt,dmg,{nativeRefund:'terror',kind:'ranged'}):dmg)); /* card-combat:refund-allyRapidfire */ /* card-combat:settle-allyRapidfire */ if (typeof terrorVisageOnDamage === 'function') terrorVisageOnDamage(mt, dmg, 'ranged'); mt.justHit = getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally); mobWake(mt);   // 🌅 巨大骷髏：傭兵連射視為遠距離
@@ -1589,8 +1589,8 @@ function allyStrikeRoll(ally, t, opts) {
     dmg = _allyAtkBuffProcs(ally, dmg, isRanged);   // 🆕 v2.6.9 #1b：攻擊 buff proc（連擊/魔擊/反擊/居合/雙持共用此計算）
     dmg = Math.max(1, Math.floor(dmg * (opts.noEnhance ? 1 : wpnEnFinalMult(wpnInst))));   // 🔧 武器強化 +11~+20：最終傷害倍率（noEnhance＝副手不另計強化）
     dmg = Math.max(1, Math.floor(dmg * allyRlFuryMult(ally)));   // 🔴😡 v2.6.18 紅獅5×狂怒5造傷：物理攻擊樞紐（普攻技/連擊/魔擊/反擊/居合/穿透/雙持/鐵衛/物理技/屠宰者皆經此·鏡像玩家 getPhysicalDmg rlFuryMult；原物理傭兵全無紅獅5）
-    if (t._fireVulnUntil > state.ticks && getWpnEle(wpnInst, wpn, ally) === 'fire') dmg = Math.max(1, Math.floor(dmg * 1.3));   // 🏺 v3.1.76 灼熱蜥蜴長舌（傭兵受益端·連擊/反擊/居合/副手共用·鏡像玩家 js/03:901）
-    if (!opts.forceHit && !opts.forceLand && !opts.forceHeavy && d.eleWpnMult && getWpnEle(wpnInst, wpn, ally) === d.eleWpnMult.ele) dmg = Math.max(1, Math.floor(dmg * d.eleWpnMult.mult));   // 🏺 v3.1.80 四之牙臂甲（傭兵·連擊/副手）：對應屬性武器一般攻擊 ×1.2（v3.2.42 稽核修：排除反擊/居合/魔擊·對齊玩家 js/03 _natRoll 閘＝「一般攻擊」字面）
+    if (t._fireVulnUntil > state.ticks && wpnEleIs(getWpnEle(wpnInst, wpn, ally), 'fire', ally, wpnInst)) dmg = Math.max(1, Math.floor(dmg * 1.3));   // 🏺 v3.1.76 灼熱蜥蜴長舌（傭兵受益端·連擊/反擊/居合/副手共用·鏡像玩家 js/03:901）
+    if (!opts.forceHit && !opts.forceLand && !opts.forceHeavy && d.eleWpnMult && wpnEleIs(getWpnEle(wpnInst, wpn, ally), d.eleWpnMult.ele, ally, wpnInst)) dmg = Math.max(1, Math.floor(dmg * d.eleWpnMult.mult));   // 🏺 v3.1.80 四之牙臂甲（傭兵·連擊/副手）：對應屬性武器一般攻擊 ×1.2（v3.2.42 稽核修：排除反擊/居合/魔擊·對齊玩家 js/03 _natRoll 閘＝「一般攻擊」字面）
     if (heavy && wpn && wpn.heavyMult) dmg = Math.max(1, Math.floor(dmg * wpn.heavyMult));   // 🏺 v3.1.76 鎧甲守衛的笨重巨劍（傭兵·鏡像玩家 js/03:903）
     if (heavy && wpn && wpn.heavyBonusDmg) dmg += wpn.heavyBonusDmg;   // 🌅 牛鬼的斷角（傭兵·連擊/穿透/副手等·鏡像玩家 js/03）
     if (ally.statuses && ally.statuses.broken > 0) dmg = Math.max(1, Math.floor(dmg * 0.8));   // 🐍 v3.1.76 壞物術（傭兵·鏡像玩家 js/03:904）
@@ -2522,7 +2522,7 @@ function allyCastCrush(ally, sk) {
     let _base = roll(1, dice) + _dmgB + enB + (sk.weaponFlat || 0);
     let dmg = Math.max(1, Math.floor(magicBaseDamage(_base, d, 0, true) * magicDamageCoef(d, magicAttrDefense(t, getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally)), sk.tier))) + (sk.flatBonus || 0);   // 🔮 統一魔法公式 ×(1+幻術專屬階級/10)；骷髏毀壞另加固定20
     dmg = Math.max(1, Math.floor(dmg * fragileMult(t) * illuLvMult(ally) * wpnEnFinalMult(ally.eq && ally.eq.wpn)));   // 🔮 幻術士(傭兵)等級加成 ×(1+等級/50)；🔧 武器強化 +11~+20 最終倍率
-    dmg = Math.max(1, Math.floor(dmg * elementCounterMult(getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally), t.e)));   // ⚔️ 武器屬性剋制倍率（粉碎能量）
+    dmg = Math.max(1, Math.floor(dmg * wpnEleMult(elementCounterMult(getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally), t.e), ally, ally.eq ? ally.eq.wpn : null, t.e)));   // ⚔️ 武器屬性剋制倍率（粉碎能量）
     dmg = Math.max(1, Math.floor(dmg * royalAllyMult()));   // 👑 王族魅力加成：傭兵造成傷害 ×(1+魅力/200)
     t.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(ally,t,dmg,{nativeRefund:'full',kind:window.AFK_CARD_COMBAT.physicalKind(ally)}) /* card-combat:crush-physical-kind */:dmg)); /* card-combat:refund-allyCastCrush */ /* card-combat:settle-allyCastCrush */ if (typeof moonShatterOnDamage === 'function') moonShatterOnDamage(ally, t, dmg); t.justHit = getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally); mobWake(t);
     if (typeof reflectWallOnDamage === 'function') reflectWallOnDamage(t, dmg, _rng ? 'ranged' : 'melee', ally);   // 🌑 v3.4.14 血壁空間：傭兵粉碎能量/骷髏毀壞＝技能直擊反射（鏡像玩家 js/07:572 weaponDmg）
@@ -2575,7 +2575,7 @@ function allyCastSlaughter(ally, sk) {
         if (bonus > 0) { dmg += bonus; applied = true; }   // 🐉 弱點曝光（傭兵）：成功觸發後，三刀每一擊命中都吃 +10/層（不再僅首擊）
         if (_chain && t.weakExpose > 0) dmg = Math.floor(dmg * (1 + 0.1 * Math.min(5, t.weakExpose)));   // 🏅 鎖刃精通（傭兵）：每層弱點曝光最終傷害 +10%
         if (sk.hpCost && ally._setDragonblood5) dmg = Math.max(1, Math.floor(dmg * 1.2));   // 🐉 v3.1.78 龍血5/5（傭兵）：HP消耗技傷害+20%（屠宰者·鏡像玩家 js/07:419·傭兵確有付HP見 allyDragonAct）
-        dmg = Math.max(1, Math.floor(dmg * elementCounterMult(getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally), t.e)));   // ⚔️ 武器屬性剋制倍率（屠宰者每擊）
+        dmg = Math.max(1, Math.floor(dmg * wpnEleMult(elementCounterMult(getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally), t.e), ally, ally.eq ? ally.eq.wpn : null, t.e)));   // ⚔️ 武器屬性剋制倍率（屠宰者每擊）
         dmg = Math.max(1, Math.floor(dmg * royalAllyMult()));   // 👑 王族魅力加成：傭兵造成傷害 ×(1+魅力/200)
         t.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(ally,t,dmg,{nativeRefund:'full',kind:window.AFK_CARD_COMBAT.physicalKind(ally)}):dmg)); /* card-combat:refund-allyCastSlaughter */ /* card-combat:settle-allyCastSlaughter */ if (typeof moonShatterOnDamage === 'function') moonShatterOnDamage(ally, t, dmg); t.justHit = getWpnEle(ally.eq ? ally.eq.wpn : null, wpn, ally); total += dmg; mobWake(t);
         if (typeof reflectWallOnDamage === 'function') reflectWallOnDamage(t, dmg, 'melee', ally);   // 🌑 v3.4.14 血壁空間：傭兵屠宰者每擊＝近距離技能直擊反射（鏡像玩家 js/07 屠宰者）

@@ -336,12 +336,13 @@
     result = result || {}; var c = Object.assign({},result.relicFlags||{}, { actor: actor, target: target, weapon: weapon, channelKey: weapon && weapon.relicBase, damage: amount, snapshot: amount, targetHpBefore: hp(target), main:!action||['normal','auto','gm'].indexOf(action.origin)>=0, direct: true, origin: action && action.origin || 'normal', kind: result.ranged || weapon && weapon.ranged ? 'ranged' : 'melee', element: result.element||weapon && weapon.ele || 'none', critical: !!result.crit, heavy: !!result.heavy, graze: !!result.graze }, result);
     c.now=now();if(target&&!target._relicDefenseMarks)transient(target,'_relicDefenseMarks',{});
     if(typeof getWpnEle==='function'&&!result.element)c.element=getWpnEle(actor.eq&&actor.eq.wpn,weapon,actor)||'none';
+    c.element2=typeof W.__afkDualElePartner==='function'&&W.__afkDualElePartner(c.element,actor,actor.eq&&actor.eq.wpn,weapon)||null;   // 雙屬性武器（afk-dualele）：另一個屬性的印記、易傷也算
     applyVulnerability(c);
     if(W.AFK_RELIC_DEFENSE&&W.AFK_RELIC_DEFENSE.targetModifiers)W.AFK_RELIC_DEFENSE.targetModifiers(c,api);
     dispatch('beforeHit', c);
     if (weapon && weapon.relicAsc != null) target._relicAscHit = true;
     c.damage = Math.max(0, finite(c.damage)); c.snapshot = c.damage;result.relicSnapshot=c.snapshot;
-    var prev=active;active=c;try{c.damage*=consumeMark(target,c.element);}finally{active=prev;}
+    var prev=active;active=c;try{c.damage*=consumeMark(target,c.element);if(c.element2)c.damage*=consumeMark(target,c.element2);}finally{active=prev;}
     stateOf(actor, '_attack').pending = c; return c.damage;
   }
   function afterHit(actor, target, amount, weapon) {
@@ -375,7 +376,7 @@
     if(!a||!a.hits)return;var hs=a.hits.splice(0);
     hs.forEach(function(c){c.actualDamage=Math.max(0,Math.min(c.damage,c.targetHpBefore-hp(c.target)));if(!c.actor.dead&&!c.actor._downed&&hp(c.actor)>0){moduleEvent('defense','afterHit',c);moduleEvent('weapon',c.main?'afterHit':'skill',c);dispatch('directHit',Object.assign({},c));if(c.element!=='none')dispatch('elementHit',Object.assign({},c));if(c.main)addMarkAfter(c);}trace('damage',{actor:c.actor,target:c.target,amount:c.damage,actual:c.actualDamage,snapshot:c.snapshot,kind:c.kind,origin:c.origin,skillId:c.skillId});});
   }
-  function applyVulnerability(c){if(!c.target||c.snapshotCopy)return;var n=statusValue(c.target,c.element+'Vulnerability');if(n)c.damage*=1+n;if(c.kind!=='magic'&&c.kind!=='dot'){var p=statusValue(c.target,'physicalVulnerability');if(p)c.damage*=1+p;}}
+  function applyVulnerability(c){if(!c.target||c.snapshotCopy)return;var n=statusValue(c.target,c.element+'Vulnerability');if(c.element2)n=Math.max(finite(n),finite(statusValue(c.target,c.element2+'Vulnerability')));if(n)c.damage*=1+n;if(c.kind!=='magic'&&c.kind!=='dot'){var p=statusValue(c.target,'physicalVulnerability');if(p)c.damage*=1+p;}}
   function moduleEvent(mod,event,c){var old=c._module;c._module=mod;try{return dispatch(event,c);}finally{c._module=old;}}
   function tickRuntime() {
     if (!enabled() || typeof state === 'undefined' || lastTick === state.ticks) return;

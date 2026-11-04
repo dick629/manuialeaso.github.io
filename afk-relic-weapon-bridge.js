@@ -17,6 +17,8 @@
   function equipped(d) { return !!(d && d.relicCatalogId && d.relicCatalogId <= 131); }
   function mastery(k, a) { return a && a !== owner() && typeof allyHasMastery === 'function' ? allyHasMastery(a,k) : typeof hasMastery === 'function' && hasMastery(k); }
   function current() { return physical[physical.length - 1] || null; }
+  // 傭兵的一般攻擊屬性剋制；雙屬性武器（afk-dualele）取兩種屬性裡較有利的倍率
+  function allyEleMult(a, ele, t) { var m = elementCounterMult(ele, t.e); return typeof W.wpnEleMult === 'function' ? W.wpnEleMult(m, a, a && a.eq && a.eq.wpn, t.e) : m; }
   function source(d, a) {
     a = a || owner(); var k = key(d), r = runtime();
     var found = r && r.sources(a).find(function (s) { return s.key === k; });
@@ -120,7 +122,7 @@
       if(a===owner()){
         if(a.buffs&&a.buffs.sk_dark_burn>0&&Math.random()<.3)n*=1.5;
         if(a.buffs&&a.buffs.sk_dark_double>0){var tags=getWeaponTags(a.eq.wpn.id);if((tags.indexOf('雙刀')>=0||tags.indexOf('鋼爪')>=0)&&Math.random()*100<10+(a.lv>=45?Math.floor((a.lv-45)/5):0))n*=2;}
-      }else n*=elementCounterMult(r.element||d.ele||'none',t.e)*royalAllyMult();
+      }else n*=allyEleMult(a,r.element||d.ele||'none',t)*royalAllyMult();
       n=Math.max(1,Math.floor(n*(full?(a._setShadow5?2:1):(a._setShadow5?1:.5))));
       c.damage=c.snapshot=n;c.critical=!!r.crit;c.heavy=!!r.heavy;c.main=false;c.element=r.element||d.ele||'none';
       c.actualDamage=runDamage(t,n,d,'combo',{actor:a,element:c.element});
@@ -321,7 +323,7 @@
     var a = actor || owner(), d = mainWeapon(a); if (!alive(a) || !alive(t)) return 0;
     return withAction(d, t, 'magicStrike', function (c) {
       var res = a===owner()?getPhysicalDmg(t.s === 'L' ? d.dmgL : d.dmgS, t, d, null, true):_allyStrikeWithIllu(a,t,{forceHeavy:true});
-      if(a!==owner())res.dmg*=elementCounterMult(res.element||d.ele||'none',t.e)*royalAllyMult();
+      if(a!==owner())res.dmg*=allyEleMult(a,res.element||d.ele||'none',t)*royalAllyMult();
       c.damage = c.snapshot = res.dmg; c.critical = !!res.crit; c.heavy = true; c.main = false;
       weaponEvent('beforeSkill', c); c.snapshot = c.damage;
       c.actualDamage = runDamage(t, c.damage, d, 'magicStrike', { actor:a, element: res.element });
@@ -363,7 +365,7 @@
         if(arrowData)dice+=t.s==='L'?arrowData.dmgL||0:arrowData.dmgS||0;
         var res=a===owner()?getPhysicalDmg(dice,t,d,arrowData):allyStrikeRoll(a,t,{});if(!res.hit)continue;
         var ratio=a._setGale5?(mastery('e_rapid',a)?1:.8):mastery('e_rapid',a)?.5:.3;if(d.rapidArrowPct)ratio=Math.max(ratio,d.rapidArrowPct/100);
-        var amount=Math.max(1,Math.floor(res.dmg*ratio));if(a!==owner())amount=Math.max(1,Math.floor(amount*elementCounterMult(res.element||d.ele||'none',t.e)*royalAllyMult()));
+        var amount=Math.max(1,Math.floor(res.dmg*ratio));if(a!==owner())amount=Math.max(1,Math.floor(amount*allyEleMult(a,res.element||d.ele||'none',t)*royalAllyMult()));
         var actual=runDamage(t,amount,d,'rapidfire',{actor:a,type:d.rapidTrue?'true':'ranged',element:res.element,kind:'ranged'});total+=actual;
         if(!alive(a))break;if(d.bonespike&&alive(t))boneLayers(t,d,1);log('連射',t,actual);
         if(a===owner()&&typeof moonburstProc==='function')moonburstProc(t);else if(d.eff==='moonburst'&&Math.random()<.08&&typeof allyProcMoonburst==='function')allyProcMoonburst(a,pick(t));
@@ -619,7 +621,7 @@
       }else{
         if(arrow)dice+=target.s==='L'?arrow.dmgL||0:arrow.dmgS||0;
         res=a===owner()?getPhysicalDmg(dice,target,d,arrow,!!options.heavy,!!options.forceHit,false,!!options.critical,ref):allyStrikeRoll(a,target,{forceHeavy:!!options.heavy,forceHit:!!options.forceHit,forceCrit:!!options.critical});
-        if(a!==owner())res.dmg*=elementCounterMult(res.element||d.ele||'none',target.e)*royalAllyMult();
+        if(a!==owner())res.dmg*=allyEleMult(a,res.element||d.ele||'none',target)*royalAllyMult();
         if(!res.hit&&d.missGrazeRate&&Math.random()*100<d.missGrazeRate&&a===owner())res=getPhysicalDmg(dice,target,d,arrow,false,false,false,false,ref,true);
       }
       if(!res.hit){if(!options.noProc)r.dispatch('miss',context(d,target,origin,{actor:a}));return 0;}
