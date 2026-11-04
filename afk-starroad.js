@@ -1,7 +1,7 @@
 /* ============================================================================
  * afk-starroad.js — 副本「星途遠征」與「星辰藥水」（玩家 2026-11-02 18:08 提出、18:24 確認；外掛開關 starroad，預設開；經典模式沒有）
  *
- *   入口：席琳神殿的 NPC「喬斯達」。每天 5 次（進場就算一次，每天 0 點重置）。
+ *   入口：席琳神殿的 NPC「喬斯達」。一般／瘋狂席琳／夢域鏡三個世界每天各 5 次（進場就算一次，每天 0 點重置；2026-11-04 改成分開算）。
  *   內容：10 波，每波 1 隻頭目，從「地監頭目＋地區霸主」裡隨機抽（照你的等級挑：等級 ±15 的地監頭目；地區霸主調到你的等級）。
  *         第 w 波 HP 與傷害 ×(1 ＋ 0.1 ×(w − 1))。時限 15 分鐘；你倒下、時間到或離開＝失敗。傭兵可以一起進。
  *   獎勵：打贏 10 波 → 星辰藥水 ×1；副本裡每隻頭目 1% 再掉 1 罐（頭目原本的掉落照舊）。
@@ -16,7 +16,7 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES, L = W.__afkLore, K = W.__afkNpcKit;
   if (T && T.register) T.register({ id: 'starroad', name: '星途遠征（副本）與星辰藥水', group: '遊戲內容', seal: true,
-    desc: '席琳神殿的喬斯達：每天 5 次、10 波頭目的副本。通關得到星辰藥水（升級點數 +1；一般 50、瘋狂席琳 80、夢域鏡 110 罐，各自計算）' });
+    desc: '席琳神殿的喬斯達：三個世界每天各 5 次、10 波頭目的副本。通關得到星辰藥水（升級點數 +1；一般 50、瘋狂席琳 80、夢域鏡 110 罐，各自計算）' });
   if (T && !T.enabled('starroad')) return;
   if (!L || !K || typeof DB === 'undefined' || !DB.maps) return;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
@@ -40,9 +40,12 @@
     p = p || P(); if (!p) return { day: 0, used: 0, clears: 0, runs: 0, pts: {} };
     if (!p.afkStar || typeof p.afkStar !== 'object') p.afkStar = { day: 0, used: 0, clears: 0, runs: 0, pts: {} };
     if (!p.afkStar.pts || typeof p.afkStar.pts !== 'object') p.afkStar.pts = {};
-    if (p.afkStar.day !== dayKey()) { p.afkStar.day = dayKey(); p.afkStar.used = 0; }
+    if (p.afkStar.day !== dayKey()) { p.afkStar.day = dayKey(); p.afkStar.used = 0; p.afkStar.usedW = {}; }
+    if (!p.afkStar.usedW || typeof p.afkStar.usedW !== 'object') p.afkStar.usedW = {};
     return p.afkStar;
   };
+  // 每天 5 次，一般／瘋狂席琳／夢域鏡三個世界分開算（玩家 2026-11-04 11:41：一天最多 15 次）
+  var usedToday = function (p) { p = p || P(); var s = store(p); return Number(s.usedW[worldOf(p)]) || 0; };
   var worldOf = function (p) { p = p || P(); if (!p) return 'normal'; if (p.sherineDream && p.sherineMad) return 'dream'; if (p.sherineMad) return 'mad'; return 'normal'; };
   // 玩家 2026-11-02 19:23：面板上已經有兩項能力的基本值（出生＋配點＋萬能藥）到 200，星辰藥水就不再掉
   var STATS = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -138,7 +141,7 @@
   var canEnter = function () {
     var p = P(); if (!p) return '請先進入遊戲。';
     if (p.classicMode) return '經典模式沒有星途遠征。';
-    if (store(p).used >= CFG.daily) return '今天的 ' + CFG.daily + ' 次已經用完，明天再來。';
+    if (usedToday(p) >= CFG.daily) return '在' + WORLD_N[worldOf(p)] + '的世界，今天的 ' + CFG.daily + ' 次已經用完，明天再來（三個世界各自 ' + CFG.daily + ' 次）。';
     var DC = W.__afkDiaCost, c = costOf(p), miss = null;
     var add = function (t) { miss = (miss ? miss + '；' : '') + t; };
     if (c.dia && DC) miss = DC.check(c.dia);
@@ -166,13 +169,13 @@
     if (c.dia && DCx && !DCx.pay(c.dia)) { if (c.crystal) gainItem('sherine_crystal', c.crystal, true, true); if (c.dream) gainItem('afk_dream_crystal', c.dream, true, true); sys('<span class="text-amber-300">龍之鑽石帳戶暫時無法寫入，沒有進場。</span>'); return false; }
     if (c.gold) p.gold = Math.max(0, Math.floor(Number(p.gold) || 0) - c.gold);
     if (c.disc) store(p).disc = (Number(store(p).disc) || 0) + 1;
-    var s = store(p); s.used++; s.runs = (Number(s.runs) || 0) + 1;
+    var s = store(p); s.used++; s.usedW[worldOf(p)] = (Number(s.usedW[worldOf(p)]) || 0) + 1; s.runs = (Number(s.runs) || 0) + 1;
     mapState.current = MAP; p.lastBattleMap = MAP;
     mapState.mobs = [null, null, null, null, null]; mapState.spawnAt = [null, null, null, null, null];
     mapState.targetIdx = -1; mapState.forceBoss = false;
     run = { wave: 1, pending: true, done: false, until: Date.now() + CFG.timeMs };
     lastMap = MAP;
-    sys('<span class="font-bold" style="color:#7dd3fc">喬斯達揮動星盤，你踏上了星之通道——第 1／' + CFG.waves + ' 道星門。（今天第 ' + s.used + '／' + CFG.daily + ' 次）</span>');
+    sys('<span class="font-bold" style="color:#7dd3fc">喬斯達揮動星盤，你踏上了星之通道——第 1／' + CFG.waves + ' 道星門。（今天第 ' + usedToday(p) + '／' + CFG.daily + ' 次）</span>');
     try { if (typeof _vfxClearAll === 'function') _vfxClearAll(); } catch (e) {}
     try {
       var mapPanel = document.getElementById('town-view').parentElement;
@@ -264,11 +267,11 @@
     var s = store(p), why = canEnter(), w = worldOf(p);
     var h = '<div class="ax-h">星途遠征</div><div class="ax-note" style="color:#bae6fd">「我的力量有限——在' + ({ normal: '這個世界', mad: '瘋狂席琳的世界', dream: '席琳夢域鏡' }[w]) + '，我只能為你開啟 ' + CFG.cap[w] + ' 次星門。」（已開啟 ' + (Number(s.pts[w]) || 0) + ' 次）</div>'
       + '<div class="ax-note">穿過 ' + CFG.waves + ' 道星門，每道門後是一名頭目（地監頭目或地區霸主，照你的等級挑選；越後面越強）。打贏 ' + CFG.waves + ' 道門得到星辰藥水 ×1，副本裡每名頭目另有 1% 掉 1 罐。有兩項能力的基本值（出生＋配點＋萬能藥）到 200 之後就不再掉。'
-      + '每天 ' + CFG.daily + ' 次（進場就算），時限 15 分鐘；倒下、時間到或離開就失敗。傭兵可以一起進。</div>'
-      + '<div class="ax-note">今天：' + s.used + '／' + CFG.daily + ' 次　通關 ' + (Number(s.clears) || 0) + ' 次</div>'
+      + '一般、瘋狂席琳、夢域鏡三個世界每天各 ' + CFG.daily + ' 次（進場就算），時限 15 分鐘；倒下、時間到或離開就失敗。傭兵可以一起進。</div>'
+      + '<div class="ax-note">今天（' + WORLD_N[w] + '）：' + usedToday(p) + '／' + CFG.daily + ' 次　通關 ' + (Number(s.clears) || 0) + ' 次</div>'
       + '<div class="ax-note">進場費用：' + costTxt(costOf(p)) + (w === 'normal' ? '（一般世界前 ' + DISC.n + ' 次只要金幣 ' + DISC.gold.toLocaleString() + '＋席琳結晶 ' + DISC.crystal + '，還剩 ' + discLeft(p) + ' 次）' : '') + '　持有席琳結晶 ' + matTxt('sherine_crystal') + (w === 'dream' ? '、夢艷結晶 ' + matTxt('afk_dream_crystal') : '') + '</div>'
       + '<div class="ax-note">星辰藥水（升級點數 +1）已喝：一般 ' + (Number(s.pts.normal) || 0) + '／' + CFG.cap.normal + '、瘋狂席琳 ' + (Number(s.pts.mad) || 0) + '／' + CFG.cap.mad + '、席琳夢域鏡 ' + (Number(s.pts.dream) || 0) + '／' + CFG.cap.dream + '（你現在的世界：' + WORLD_N[w] + '）</div>';
-    h += K.rowHtml({ key: 'enter', name: '進入星途遠征', color: '#bae6fd', desc: '今天還剩 ' + Math.max(0, CFG.daily - s.used) + ' 次。', why: why || '', btns: [['enter', '進入', !why]] }, 'data-star');
+    h += K.rowHtml({ key: 'enter', name: '進入星途遠征', color: '#bae6fd', desc: '今天在這個世界還剩 ' + Math.max(0, CFG.daily - usedToday(p)) + ' 次（三個世界各自 ' + CFG.daily + ' 次）。', why: why || '', btns: [['enter', '進入', !why]] }, 'data-star');
     K.repaint(box, h);
   };
   var render = function (div) {
@@ -284,6 +287,6 @@
   K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: NPC_T, type: 'quest', d: '帶著星盤的旅人喬斯達，能打開通往各地頭目的星之通道——副本「星途遠征」。' });
   K.hookNpc(NPC_ID, NPC_N, NPC_T, render);
 
-  W.__afkStarRoad = { CFG: CFG, noDrop: noDrop, MAP: MAP, ITEM: ITEM, NPC_ID: NPC_ID, store: store, worldOf: worldOf, ptsTotal: ptsTotal, drink: drink, enter: enter, canEnter: canEnter,
+  W.__afkStarRoad = { CFG: CFG, noDrop: noDrop, MAP: MAP, ITEM: ITEM, NPC_ID: NPC_ID, store: store, worldOf: worldOf, usedToday: usedToday, ptsTotal: ptsTotal, drink: drink, enter: enter, canEnter: canEnter,
     DISC: DISC, discLeft: discLeft, costOf: costOf, run: function () { return run; }, pickBoss: pickBoss, dungeonBosses: dungeonBosses, render: render };
 })();

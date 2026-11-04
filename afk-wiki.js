@@ -3789,7 +3789,7 @@
     var cost = DC ? '龍之鑽石 ' + n0(DC.COST.starroad) + '＋金幣 ' + n0(DC.goldOf(DC.COST.starroad)) + '＋席琳結晶 ' + n0(DC.COST.starroadCrystal) : '免費';
     out += wCard('🚪 進場', wTbl(['項目', '說明'], [
       ['地點', '席琳神殿・喬斯達'],
-      ['次數', '每天 ' + C.daily + ' 次，進場就算一次'],
+      ['次數', '一般、瘋狂席琳、席琳夢域鏡三個世界<b>每天各 ' + C.daily + ' 次</b>（一天最多 ' + (C.daily * 3) + ' 次），進場就算一次'],
       ['費用', cost + '；在席琳夢域鏡另外要<b>夢艷結晶 1,000</b>' + (R.DISC ? '。一般世界（含一般席琳）每個角色<b>前 ' + R.DISC.n + ' 次</b>只要金幣 ' + n0(R.DISC.gold) + '＋席琳結晶 ' + n0(R.DISC.crystal) : '')],
       ['材料', window.__afkMatWh ? '背包不夠時直接從倉庫拿' : '要放在背包裡'],
       ['時限', '15 分鐘；倒下、時間到或自己離開就算失敗'],
