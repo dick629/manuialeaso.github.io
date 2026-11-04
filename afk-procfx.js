@@ -80,6 +80,8 @@
   // ── 掛點 ──
   // 面板傷害：每個攻擊者最近直接傷害（一般攻擊、魔法）的移動平均；給持續傷害上限用（玩家 2026-11-02 15:20 平衡 A）
   var PANEL = new WeakMap();
+  // 各系統的百分比加減傷（刻印 +3%、蝕刻 ×1.5、密奧、聖紋…）乘完會有小數；傷害一律取整數（玩家 2026-11-04：頭目身上飄出 0.599999999996275）
+  var whole = function (v) { v = Number(v); if (!isFinite(v) || !(v > 0)) return 0; return Math.floor(v); };
   W.__afkPanelDmg = function (actor) { return (actor && typeof actor === 'object' && PANEL.get(actor)) || 0; };
   var hookedC = false;
   var hookC = function () {
@@ -89,7 +91,7 @@
       var v = o.apply(this, arguments);
       try { var k = opt && opt.kind; if (v > 0 && actor && typeof actor === 'object' && (k === 'melee' || k === 'ranged' || k === 'magic')) { var pv = PANEL.get(actor); PANEL.set(actor, pv ? pv * 0.9 + v * 0.1 : v); } } catch (e) {}
       try { if (v > 0) for (var i = 0; i < H.dealt.length; i++) { var r = H.dealt[i](actor, target, v, opt || {}); if (typeof r === 'number' && r >= 0 && isFinite(r)) v = r; } } catch (e) { console.warn('[AFK-proc] dealt', e); }
-      return v;
+      return whole(v);
     };
   };
   hookC(); W.addEventListener('load', hookC);
@@ -100,9 +102,10 @@
       try {
         for (var i = 0; i < H.taken.length; i++) { var r = H.taken[i](ent, v, mob, kind); if (typeof r === 'number' && r >= 0 && isFinite(r)) v = r; }
         var p = P();
-        if (ent === p && v > 0 && p._afkShield > 0) { var a = Math.min(p._afkShield, v); p._afkShield -= a; v -= a; }
+        v = whole(v);
+        if (ent === p && v > 0 && p._afkShield > 0) { var a = Math.min(Math.floor(p._afkShield), v); p._afkShield -= a; v -= a; }
       } catch (e) { console.warn('[AFK-proc] taken', e); }
-      return v;
+      return whole(v);
     };
   }
   if (typeof W.tick === 'function') {

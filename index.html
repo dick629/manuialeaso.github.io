@@ -862,7 +862,7 @@
     <script src="afk-card-ascension.js?v=b30ce76b74"></script>
     <!-- afk-dollaffix：詞條娃娃合成（有詞條的娃娃不進一般合成；魔法娃娃商人專區：2 個同階 → 5%、無保底、詞條隨機繼承回一階） -->
     <script src="afk-dollaffix.js?v=28e81aeb07"></script>
-    <script src="afk-card-combat.js?v=cc7d222d53"></script>
+    <script src="afk-card-combat.js?v=f4e700d54b"></script>
     <!-- afk-saint-cloth：聖衣光輝（解除封印 5 次失去光輝、雅典娜祝福恢復）、光輝碎片升星（對最終頭目）、封印型態沒有翅膀；需 afk-card-ascension、afk-card-combat -->
     <script src="afk-saint-cloth.js?v=8c127b2a21"></script>
     <!-- afk-magefix（要在 afk-rebirth-rules 之前，溢補護盾才算得到多回的量）：法師修補——體力回復術智力加成不封頂、另外回復目前 HP 5% -->
@@ -1027,7 +1027,7 @@
     <!-- afk-bracelet：手環系統（靈魂石訓練所的王掉深淵靈魂、意志抵抗精華；席琳神殿手環工匠換六種手環、升到 3 階）；要在 afk-expedition、afk-soulstone 之前也可以（只看 _afkSoul 旗標） -->
     <script src="afk-bracelet.js?v=5c46c6bf14"></script>
     <!-- afk-procfx：觸發型特效的共用底層（密奧之卡、聖紋共用；沒有開關，本身不做事） -->
-    <script src="afk-procfx.js?v=63087ca9fc"></script>
+    <script src="afk-procfx.js?v=1b3e7ed2bb"></script>
     <!-- afk-mio：密奧之卡（22 張塔羅牌，夢域鏡掉密奧碎片；偉特→托特→馬賽；裝備視窗第二頁刻印下面那格）；要在 afk-rebirth（__afkMaxAdd）之後 -->
     <script src="afk-mio.js?v=450565473e"></script>
     <!-- afk-sigil：聖紋（25 個字母，Lv40～70 頭目與怪物掉；裝備視窗第二頁項鍊的位置，只能裝一個） -->
@@ -1090,6 +1090,8 @@
     <script src="afk-carve.js?v=4cddc2b708"></script>
     <!-- afk-siege2：每週守城戰（每週五 20:00 集結、血盟頁可關、攻城頁放棄城堡、回防副本 25 波（倒下轉攻城）、失城 7 天鎖與城陷之恥、奪回戰鏡像敵人）；預設開；要在 afk-castlewar、afk-castle-guards、afk-guardup、afk-soulstone 之後 -->
     <script src="afk-siege2.js?v=0f1cd36aa5"></script>
+    <!-- afk-intdmg：傷害與 HP 一律整數（卡冊結算、每一刻結束、能力重算、傷害飄字的最後一道保險）；要在所有包 AFK_CARD_COMBAT.damage、tick、recomputeStats 的外掛之後，放最後 -->
+    <script src="afk-intdmg.js?v=f2f7fd757f"></script>
     <!-- ═══════════ 加掛版外掛層 END ═══════════ -->
 </body>
 </html>
