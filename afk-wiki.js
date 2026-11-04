@@ -5405,7 +5405,7 @@
         wTbl(['Boss', '倍數'], FH.FISH.filter(function (x) { return x.boss; }).map(row)) +
         wDesc('Boss 會不定時出場（一次只有一隻），水龍法利昂出場前有警報。') +
         wDesc('<b>JP</b>：每發子彈的 1.5% 進獎池（畫面左上角）。抓到<b>水龍法利昂</b>時轉 JP 轉盤：' + FH.WHEEL.map(function (w) { return w[0] + '（獎池的 ' + Math.round(w[1] * 100) + '%）'; }).join('、') + '。轉出超級 JP 會上世界頻道。') +
-        wDesc('兩旁的漁夫阿德、茉莉是陪你打的 NPC，只打小魚，不影響你的錢。') +
+        wDesc('上下兩排共 6 位漁夫是陪你打的 NPC，只打小魚，不影響你的錢。魚會從上下左右四邊游進來。') +
         wDesc('長期返還率約 <b>93.5%</b>（含 JP）。關掉視窗或切到別的畫面時，捕魚畫面會暫停。'));
     }
     return out;
