@@ -744,6 +744,7 @@
       + 'color:#e2e8f0;font-family:Arial,"Microsoft JhengHei",sans-serif;font-size:13px;touch-action:manipulation;box-sizing:border-box}'
       + '.pk-win *{box-sizing:border-box}'
       + '.pk-head{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#1c1206e6;border-bottom:1px solid #a16207;position:sticky;top:0;z-index:2}'
+      + '.pk-head{cursor:move;touch-action:none;user-select:none;-webkit-user-select:none}.pk-head .pk-hb{cursor:pointer}.pk-ball{touch-action:none}'
       + '.pk-title{flex:1;min-width:0;font-weight:800;color:#fde68a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
       + '.pk-title small{color:#d6d3d1;font-weight:600;margin-left:4px}'
       + '.pk-hb{min-width:34px;height:30px;border:1px solid #d9bd70;border-radius:6px;background:#151b25;color:#fff3cf;font-size:13px;font-weight:700;padding:0 8px;cursor:pointer}'
@@ -811,6 +812,69 @@
     if (l) l.style.visibility = hide ? 'hidden' : '';
   }
   function watchVis() { if (!visObs && typeof MutationObserver === 'function') { visObs = new MutationObserver(updateVis); visObs.observe(document.body, { attributes: true, attributeFilter: ['class'] }); } }
+  // ── 拖曳：牌桌／大廳按標題列拖、縮小球整顆拖；位置記在本機，下次打開沿用（雙擊標題列回到預設位置）──
+  var POS_KEY = { win: 'afk_pk_winpos', ball: 'afk_pk_ballpos' };
+  function barTop() { try { var b = el('_orig_pbar'); if (b) { var h = b.getBoundingClientRect().height; if (h > 0) return Math.ceil(h) + 6; } } catch (e) {} return 0; }
+  function usableBottom() { try { var n = el('m-nav'); if (n && getComputedStyle(n).display !== 'none') return n.getBoundingClientRect().top; } catch (e) {} return innerHeight; }
+  function clampPos(node, x, y) {
+    var bt = barTop(), w = node.offsetWidth || 60, h = node.offsetHeight || 40;
+    return { x: Math.max(0, Math.min(Math.max(0, innerWidth - w), x)), y: Math.max(bt, Math.min(Math.max(bt, usableBottom() - Math.min(h, 80)), y)) };
+  }
+  function setPos(node, x, y) { node.style.left = x + 'px'; node.style.top = y + 'px'; node.style.right = 'auto'; node.style.bottom = 'auto'; node.style.transform = 'none'; }
+  function savePos(node, key) { try { localStorage.setItem(key, JSON.stringify({ left: parseInt(node.style.left, 10), top: parseInt(node.style.top, 10) })); } catch (e) {} }
+  function restorePos(node, key) {
+    var p = null; try { p = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) {}
+    if (!p || typeof p.left !== 'number' || typeof p.top !== 'number') return;
+    var c = clampPos(node, p.left, p.top); setPos(node, c.x, c.y);
+  }
+  function resetPos(node, key) {
+    try { localStorage.removeItem(key); } catch (e) {}
+    node.style.left = ''; node.style.top = ''; node.style.right = ''; node.style.bottom = ''; node.style.transform = '';
+  }
+  // handleSel：在 node 裡面哪一塊可以拖（null＝整個 node）；標題列每次重畫都會換新，所以用事件委派
+  function makeDraggable(node, handleSel, key) {
+    if (node._pkDrag) return; node._pkDrag = true;
+    var drag = null;
+    node.addEventListener('pointerdown', function (e) {
+      if (e.button != null && e.button !== 0) return;
+      if (handleSel && !(e.target.closest && e.target.closest(handleSel))) return;
+      if (e.target.closest && e.target.closest('button,input,select,a')) return;
+      var r = node.getBoundingClientRect();
+      drag = { id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top, sx: e.clientX, sy: e.clientY, moved: false };
+      try { node.setPointerCapture(e.pointerId); } catch (er) {}
+    });
+    node.addEventListener('pointermove', function (e) {
+      if (!drag || drag.id !== e.pointerId) return;
+      if (!drag.moved && Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) < 5) return;   // 小於 5px 當成點擊
+      drag.moved = true;
+      var c = clampPos(node, e.clientX - drag.dx, e.clientY - drag.dy); setPos(node, c.x, c.y);
+      e.preventDefault();
+    });
+    function end(e) {
+      if (!drag || drag.id !== e.pointerId) return;
+      try { node.releasePointerCapture(e.pointerId); } catch (er) {}
+      if (drag.moved) { savePos(node, key); node._pkDragged = Date.now(); }
+      drag = null;
+    }
+    node.addEventListener('pointerup', end);
+    node.addEventListener('pointercancel', end);
+    if (handleSel) node.addEventListener('dblclick', function (e) {
+      if (!(e.target.closest && e.target.closest(handleSel)) || e.target.closest('button')) return;
+      resetPos(node, key);
+    });
+  }
+  // 拖完放開時瀏覽器還會送一次 click → 擋掉，免得縮小球一放手就打開牌桌
+  function justDragged(node) { return node && node._pkDragged && Date.now() - node._pkDragged < 350; }
+  var pkResizeT = 0;
+  W.addEventListener('resize', function () {
+    clearTimeout(pkResizeT);
+    pkResizeT = setTimeout(function () {
+      ['afk-pk-win', 'afk-pk-lobby', 'afk-pk-ball'].forEach(function (id) {
+        var n = el(id); if (!n || n.style.display === 'none' || n.style.transform !== 'none') return;
+        var c = clampPos(n, parseInt(n.style.left, 10) || 0, parseInt(n.style.top, 10) || 0); setPos(n, c.x, c.y);
+      });
+    }, 150);
+  });
   function ensureWin() {
     css();
     var w = el('afk-pk-win');
@@ -818,6 +882,7 @@
       w = document.createElement('div'); w.id = 'afk-pk-win'; w.className = 'pk-win';
       w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', '德州撲克');
       document.body.appendChild(w);
+      makeDraggable(w, '.pk-head', POS_KEY.win);
       w.addEventListener('click', onClick);
       w.addEventListener('input', function (ev) {
         if (ev.target.id !== 'pk-rz-range') return;
@@ -837,13 +902,13 @@
     try { if (document.body.classList.contains('m-mobile') && W.__afkm && typeof W.__afkm.setView === 'function') W.__afkm.setView('center'); } catch (e) {}
     try { var tic = el('town-interaction-container'); if (tic && !tic.classList.contains('hidden') && tic.querySelector('.pk-tbl') && typeof W.closeNpcInteraction === 'function') W.closeNpcInteraction(); } catch (e) {}
     ui.min = false; var w = ensureWin(); w.style.display = ''; var b = el('afk-pk-ball'); if (b) b.style.display = 'none';
-    render(); updateVis();
+    render(); restorePos(w, POS_KEY.win); updateVis();
   }
   function toBall() {
     ui.min = true; var w = el('afk-pk-win'); if (w) w.style.display = 'none';
     var b = el('afk-pk-ball');
-    if (!b) { css(); b = document.createElement('div'); b.id = 'afk-pk-ball'; b.className = 'pk-ball'; b.setAttribute('role', 'button'); b.setAttribute('aria-label', '打開牌桌'); document.body.appendChild(b); b.addEventListener('click', openWin); }
-    b.style.display = ''; render(); updateVis();
+    if (!b) { css(); b = document.createElement('div'); b.id = 'afk-pk-ball'; b.className = 'pk-ball'; b.setAttribute('role', 'button'); b.setAttribute('aria-label', '打開牌桌'); document.body.appendChild(b); makeDraggable(b, null, POS_KEY.ball); b.addEventListener('click', function () { if (justDragged(b)) return; openWin(); }); }
+    b.style.display = ''; render(); restorePos(b, POS_KEY.ball); updateVis();
   }
   function seatHtml(i) {
     var H = tb.hand, s = tb.seats[i], res = H && H.done && H.result, show = res && res.showdown && inHand(s);
@@ -937,10 +1002,12 @@
       l.innerHTML = '<div class="pk-head"><div class="pk-title">♠︎ 德州撲克<small>荷官洛蒂的牌桌</small></div><button type="button" class="pk-hb" data-pkl="close" aria-label="關閉">✕</button></div><div class="pk-lobby-body" id="afk-pk-lobby-body"></div>';
       l.querySelector('[data-pkl="close"]').addEventListener('click', closeLobby);
       document.body.appendChild(l);
+      makeDraggable(l, '.pk-head', POS_KEY.win);
     }
     watchVis();
     l.style.display = '';
     panel(el('afk-pk-lobby-body'));
+    restorePos(l, POS_KEY.win);
     updateVis();
     return true;
   }
