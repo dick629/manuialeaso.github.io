@@ -121,7 +121,7 @@
   try { if (typeof MAP_DESC !== 'undefined' && !MAP_DESC[MAP]) MAP_DESC[MAP] = '喬斯達打開的星之通道。十道星門後面，各站著一名從各地召來的頭目。'; } catch (e) {}
   try { if (typeof SANCTUARY_MAP_NAMES !== 'undefined') SANCTUARY_MAP_NAMES[MAP] = MAP_N; } catch (e) {}
 
-  var run = null, lastMap = null;
+  var run = null, lastMap = null, leaving = false;
   // 2026-11-03：一般世界（含一般席琳）每個角色前 DISC.n 次進場只收金幣 500 萬＋席琳結晶 100（不收龍鑽）；之後照原價
   var DISC = { n: 30, gold: 5000000, crystal: 100 };
   var discLeft = function (p) { p = p || P(); if (!p || worldOf(p) !== 'normal') return 0; return Math.max(0, DISC.n - (Number(store(p).disc) || 0)); };
@@ -174,6 +174,7 @@
     mapState.mobs = [null, null, null, null, null]; mapState.spawnAt = [null, null, null, null, null];
     mapState.targetIdx = -1; mapState.forceBoss = false;
     run = { wave: 1, pending: true, done: false, until: Date.now() + CFG.timeMs };
+    s.run = run;   // 存進角色：換角色再回來、重新整理都接得上（玩家 2026-11-05「打星圖切去看其他角色，再回來就停住」）
     lastMap = MAP;
     sys('<span class="font-bold" style="color:#7dd3fc">喬斯達揮動星盤，你踏上了星之通道——第 1／' + CFG.waves + ' 道星門。（今天第 ' + usedToday(p) + '／' + CFG.daily + ' 次）</span>');
     try { if (typeof _vfxClearAll === 'function') _vfxClearAll(); } catch (e) {}
@@ -191,6 +192,7 @@
   };
   var leave = function (msg) {
     var t0 = run; run = null;
+    try { var ps = P(); if (ps && ps.afkStar) delete ps.afkStar.run; } catch (e) {}
     if (msg) sys(msg);
     setTimeout(function () { try { if (mapState.current === MAP && run === null) { setMapSelectors(TOWN); changeMap(true); try { saveGame(); } catch (e) {} } } catch (e) {} }, 1500);
     return t0;
@@ -211,7 +213,7 @@
         var keep = function () { if (!mapState.mobs[idx] || mapState.mobs[idx]._dead) mapState.mobs[idx] = null; };
         if (!run || run.done || !run.pending || idx !== 1) return keep();
         var p = P(), pk = p && pickBoss(p); if (!pk) return keep();
-        var m = L.boss.place(idx, pk.base, { mobId: pk.id, _starRun: true, _starWave: run.wave });
+        var m = L.boss.place(idx, pk.base, { mobId: pk.id, _starRun: true, _starWave: run.wave, noAutoTeleport: true, noCharm: true });   // 勾「迴避頭目」不會用瞬移卷軸把星門頭目甩掉（甩掉就等不到下一道門）
         var mult = 1 + CFG.step * (run.wave - 1);
         m.hp = Math.max(1, Math.round(m.hp * mult)); m.curHp = m.hp;
         if (Array.isArray(m.dmg)) m.dmg = [m.dmg[0], Math.max(2, Math.round(m.dmg[1] * mult))];
@@ -249,6 +251,14 @@
       try {
         var cur = mapState.current;
         if (cur !== lastMap) { if (lastMap === MAP && run) run = null; lastMap = cur; }
+        var pc = P();
+        if (run && pc && pc.afkStar && pc.afkStar.run !== run) run = null;   // 換了角色：這趟是別的角色的
+        if (!run && cur === MAP && pc && !pc.dead) {   // 在星之通道裡卻沒有進行中的這一趟（換角色回來、重新整理）→ 接回存著的那一趟，沒有就送回村莊
+          var sr = pc.afkStar && pc.afkStar.run;
+          if (sr && !sr.done && Number(sr.until) > Date.now() && Number(sr.wave) >= 1) { run = sr; run.pending = !mobs().some(function (x) { return x && x._starRun && !x._dead; }); }
+          else if (!leaving) { leaving = true; leave('<span class="text-amber-300">星之通道已經關閉，你回到了席琳神殿。</span>'); setTimeout(function () { leaving = false; }, 2000); }
+        }
+        if (run && cur === MAP && !run.done && !run.pending && !mobs().some(function (x) { return x && x._starRun && !x._dead; })) run.pending = true;   // 頭目沒有倒下就不見了（被甩掉、被清場）→ 同一道門重新開
         if (run && cur === MAP && !run.done) {
           var p = P();
           if (p && p.dead) leave('<span class="text-red-400">你在星之通道裡倒下了，這次遠征失敗。</span>');

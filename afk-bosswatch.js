@@ -22,6 +22,7 @@
   if (T && T.register) T.register({ id: 'bosswatch', name: '頭目卡住保險', group: '系統與其他',
     desc: '頭目 HP 歸零卻沒倒下時自動結算擊殺；過期的免疫屏障卡住時自動清掉；要打倒王才會前進的副本裡，王不能被迷魅' });
   var on = function () { return !T || T.enabled('bosswatch'); };
+  var P0 = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var CFG = { zombieTicks: 30, retryTicks: 100, stallTicks: 600, maxWall: 3000 };
   var S = function () { return (typeof state !== 'undefined' && state) ? state : null; };
   var tk = function () { var s = S(); return (s && Number(s.ticks)) || 0; };
@@ -86,7 +87,8 @@
     var t = tk(), ms = mapState.mobs, dg = instanceMap(cur);
     for (var i = 0; i < ms.length; i++) {
       var m = ms[i]; if (!watched(m)) continue;
-      if (dg && !m.noCharm) { m.noCharm = true; m._afkWdNoCharm = true; }   // 三、副本裡的王不能迷魅（迷魅只能手動、在兩刻之間施放，每一刻結束時標上就來得及）
+      if (dg && !m.noCharm) { m.noCharm = true; m._afkWdNoCharm = true; }
+      if (dg && !m.noAutoTeleport) { m.noAutoTeleport = true; m._afkWdNoTp = true; }   // 四、副本裡勾「迴避頭目」不會用瞬移卷軸把王甩掉（甩掉＝沒倒下就消失，層數／下一道門等不到；玩家 2026-11-05）   // 三、副本裡的王不能迷魅（迷魅只能手動、在兩刻之間施放，每一刻結束時標上就來得及）
       if (fixNaN(m)) continue;
       // 一、HP 0 卻沒倒下
       if (!(m.curHp > 0)) {
@@ -111,5 +113,28 @@
     };
     try { (0, eval)('tick = window.tick'); } catch (e) {}
   }
-  W.__afkBossWatch = { CFG: CFG, step: step, instanceMap: instanceMap, watched: watched, staleWall: staleWall, unstick: unstick, log: LOG };
+  // 五、要打倒王才會前進的副本裡不能瞬移（玩家 2026-11-05 01:24「使用瞬移會卡住不出怪」）：瞬移＝把場上的王直接清掉、沒有倒下，
+  //   下一道門／下一層永遠等不到。擋在瞬間移動卷軸與傳送術最前面：不消耗卷軸、不扣 MP。
+  var tpBlocked = function () { var p = P0(); if (!on() || !p || p.classicMode) return false; var cur = (typeof mapState !== 'undefined' && mapState) ? mapState.current : ''; return !!(cur && !/^town_/.test(cur) && cur !== 'training' && instanceMap(cur)); };
+  var tpMsg = function (what) { try { if (typeof logSys === 'function') logSys('<span class="text-red-400">副本裡的空間被封住了，無法使用' + what + '。</span>'); } catch (e) {} };
+  if (typeof W.useItem === 'function') {
+    var oUse = W.useItem;
+    W.useItem = function (u) {
+      try {
+        if (tpBlocked()) { var it = (P0().inv || []).find(function (x) { return x && x.uid === u; }), d = it && DB.items[it.id];
+          if (d && d.eff === 'teleport_scroll') { if (!arguments[1]) tpMsg('瞬間移動卷軸'); return; } }
+      } catch (e) {}
+      return oUse.apply(this, arguments);
+    };
+    try { (0, eval)('useItem = window.useItem'); } catch (e) {}
+  }
+  if (typeof W.manualCast === 'function') {
+    var oCast = W.manualCast;
+    W.manualCast = function (sid) {
+      try { if (tpBlocked() && DB.skills[sid] && DB.skills[sid].mEff === 'teleport') { tpMsg('傳送術'); return; } } catch (e) {}
+      return oCast.apply(this, arguments);
+    };
+    try { (0, eval)('manualCast = window.manualCast'); } catch (e) {}
+  }
+  W.__afkBossWatch = { CFG: CFG, step: step, instanceMap: instanceMap, tpBlocked: tpBlocked, watched: watched, staleWall: staleWall, unstick: unstick, log: LOG };
 })();

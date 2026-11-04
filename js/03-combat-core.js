@@ -307,7 +307,7 @@ function gameLoop() {
 function _ffFinishCatchup() {
     let _acc = _ffAcc;
     if (!_acc) { flushTickRender(); return; }
-    let _longCatchup = _acc.ticks >= 30;
+    let _longCatchup = _acc.ticks >= 30 && !_acc.fg;   /* 🔌 加掛版補丁:前景跟不上的收尾不算長補跑 */
     let _deferredSave = typeof takeCatchupSaveRequest === 'function' && takeCatchupSaveRequest();
     try { if (typeof flushCatchupAutoSort === 'function') flushCatchupAutoSort(); } catch (e) {}
     if (_longCatchup) {   // ≥3 秒的補跑（回前景補幀）：統一刷新＋存檔＋摘要
