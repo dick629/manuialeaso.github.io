@@ -8,9 +8,9 @@
  *   砲台（Ping 定）：金幣 5 萬起、龍鑽 100 起、血龍鑽 10 起，六個等級，子彈外觀依等級不同。
  *   特殊魚：雷電水精靈（全場同種魚一起判定）、炸彈蟹人（範圍內判定）、雷射海星（送雷射砲：一條線上 8 次判定）、
  *           鑽頭龍龜（送鑽頭砲：亂彈 10 次判定）。拿到沒用的特殊砲存進存檔。
- *   NPC 漁夫六位（下面 4、上面 2）：只打 2～5 倍的小魚，純熱鬧（他們打到的不影響你的錢與機率）。
- *   魚從上下左右四邊進場（Boss 只走左右），畫面約 60 條。
- *   效能：canvas 一張畫完、最多 75 條魚／你的子彈 60 顆＋NPC 子彈 36 顆、30 幀；視窗關掉、縮小、切到別的畫面就停。
+ *   NPC 漁夫八位（下面 4、上面 4）：只打 2～5 倍的小魚，純熱鬧（他們打到的不影響你的錢與機率）。
+ *   魚從上下左右四邊進場（Boss 只走左右），畫面約 65 條；魚潮 20 秒內 ×1.2～1.5。跑不動時自動少放魚、關發光。
+ *   效能：canvas 一張畫完、最多 100 條魚／你的子彈 60 顆＋NPC 子彈 40 顆、30 幀；視窗關掉、縮小、切到別的畫面就停。
  * ========================================================================== */
 (function () {
   'use strict';
@@ -34,7 +34,7 @@
   var BULLET_LOOK = [['#e2e8f0', 4], ['#7dd3fc', 5], ['#4ade80', 5], ['#facc15', 6], ['#f472b6', 6], ['#f97316', 7]];   // 依等級：顏色、半徑
   var JP_SEED = { gold: 5000000, dia: 10000, blood: 1000 };
   var WHEEL = [['迷你', 0.05, 60], ['小獎', 0.15, 25], ['大獎', 0.40, 12], ['超級 JP', 1.00, 3]];
-  var FIRE_MS = 200, BULLET_LIFE = 12000, BULLET_SPEED = 520, MAX_FISH = 75, MAX_BULLETS = 60, MAX_NPC_BULLETS = 36;
+  var FIRE_MS = 200, BULLET_LIFE = 12000, BULLET_SPEED = 520, MAX_FISH = 100, MAX_BULLETS = 60, MAX_NPC_BULLETS = 40, FISH_TARGET = 65;
   // 魚：n 名稱、img 圖資料夾、m 倍數 [下, 上]、sz 畫面高度、sp 速度、w 出現權重、tint 染色、sp2 特殊、boss
   var FISH = [
     { id: 'star', n: '海星', img: '海星', fr: 8, df: 8, m: [2, 2], sz: 38, sp: 55, w: 22 },
@@ -101,7 +101,7 @@
   var VW = 800, VH = 500;
   var st = null;
   function newState() {
-    return { fish: [], bullets: [], fx: [], npc: [{ x: 120, top: 0, n: '阿德' }, { x: 265, top: 0, n: '茉莉' }, { x: 535, top: 0, n: '老彼得' }, { x: 680, top: 0, n: '小翠' }, { x: 250, top: 1, n: '海音漁夫 卡洛' }, { x: 550, top: 1, n: '漁家女 蓮' }].map(function (n) { n.ang = n.top ? Math.PI / 2 : -Math.PI / 2; n.cd = Math.random() * 1500; return n; }), t: 0, nextSpawn: 0, nextWave: 60000,
+    return { fish: [], bullets: [], fx: [], npc: [{ x: 110, top: 0, n: '阿德' }, { x: 255, top: 0, n: '茉莉' }, { x: 545, top: 0, n: '老彼得' }, { x: 690, top: 0, n: '小翠' }, { x: 110, top: 1, n: '海音漁夫 卡洛' }, { x: 300, top: 1, n: '漁家女 蓮' }, { x: 500, top: 1, n: '老船長 葛雷' }, { x: 690, top: 1, n: '學徒 小奇' }].map(function (n) { n.ang = n.top ? Math.PI / 2 : -Math.PI / 2; n.cd = Math.random() * 1500; return n; }), t: 0, nextSpawn: 0, nextWave: 60000,
       boss: { ghost: 120000, drake: 300000, fafu: 600000 }, aim: -Math.PI / 2, firing: false, lastShot: 0, auto: false, lock: null, lockMode: false,
       lv: 0, cur: 'gold', won: 0, spent: 0, uid: 1, wheel: null, weapon: null, msg: '', dirty: 0 };
   }
@@ -142,23 +142,27 @@
     }
     st.fish.push(f); return f;
   }
+  // 目標魚量：平常 65、魚潮時 ×1.2～1.5；再乘上效能係數（電腦跑不動時自動少放一點魚）
+  function cap() { return Math.round(FISH_TARGET * (st.wave ? st.wave.k : 1) * (st.perf || 1)); }
   function pickNormal() { var r = Math.random() * NW; for (var i = 0; i < NORMAL.length; i++) { r -= NORMAL[i].w; if (r < 0) return NORMAL[i]; } return NORMAL[0]; }
   function spawnTick(dt) {
     st.nextSpawn -= dt;
     if (st.nextSpawn <= 0) {
-      st.nextSpawn = 110 + Math.random() * 160;
       var live = st.fish.filter(function (f) { return !f.dead; }).length;
-      if (live < 60) {
+      st.nextSpawn = live < cap() * 0.85 ? 50 + Math.random() * 70 : 110 + Math.random() * 160;   // 差比較多時補快一點
+      if (live < cap()) {
         var d = pickNormal(), n = d.m[0] <= 5 ? 2 + Math.floor(Math.random() * 5) : d.m[0] <= 12 ? 1 + Math.floor(Math.random() * 2) : 1;
         if (Math.random() < 0.3) { var top = Math.random() < 0.5, x0 = 80 + Math.random() * (VW - 160); for (var i = 0; i < n; i++) { var fv = spawnFish(d, { side: 'v', fromTop: top, x: x0 + (i % 2) * 24 }); if (fv) fv.y += (top ? -1 : 1) * i * 36; } }
         else { var left = Math.random() < 0.5, y = 50 + Math.random() * (VH - 120); for (var j = 0; j < n; j++) { var fh = spawnFish(d, { fromLeft: left, y: y + (j % 2) * 22 }); if (fh) fh.x += (left ? -1 : 1) * j * 40; } }
       }
     }
     st.nextWave -= dt;
+    if (st.wave) { st.wave.left -= dt; if (st.wave.left <= 0) st.wave = null; }
     if (st.nextWave <= 0) {   // 魚潮
-      st.nextWave = 90000; st.banner = { t: '🌊 魚潮來了！', life: 2200 };
-      var lf = Math.random() < 0.5;
-      for (var k = 0; k < 24; k++) { var w = spawnFish(NORMAL[k % 4], { fromLeft: lf, y: 50 + (k % 8) * 42 }); if (w) w.x += (lf ? -1 : 1) * Math.floor(k / 8) * 70; }
+      // 魚潮：接下來 20 秒魚量提高到平常的 1.2～1.5 倍，開頭先灌一大排小魚
+      st.nextWave = 90000; st.wave = { k: 1.2 + Math.random() * 0.3, left: 20000 }; st.banner = { t: '🌊 魚潮來了！', life: 2200 };
+      var lf = Math.random() < 0.5, extra = Math.round(FISH_TARGET * (st.wave.k - 1));
+      for (var k = 0; k < extra; k++) { var w = spawnFish(NORMAL[k % 4], { fromLeft: lf, y: 50 + (k % 8) * 42 }); if (w) w.x += (lf ? -1 : 1) * Math.floor(k / 8) * 70; }
     }
     ['ghost', 'drake', 'fafu'].forEach(function (id) {
       st.boss[id] -= dt;
@@ -338,7 +342,7 @@
     var ox = (b.x + b.w / 2) * sc, oy = (b.y + b.h / 2) * sc;
     var img = tinted(d, o, d.id + kind + i);
     ctx.save(); ctx.translate(f.x, f.y);
-    if (d.glow && !f.dead) { ctx.shadowColor = d.glow; ctx.shadowBlur = d.boss ? 26 : 14; }
+    if (d.glow && !f.dead && (!st.lowFx || d.boss)) { ctx.shadowColor = d.glow; ctx.shadowBlur = d.boss ? 26 : 14; }
     if (f.vx > 0) ctx.scale(-1, 1);
     if (f.dead) ctx.globalAlpha = Math.max(0, 1 - f.dead / 900);
     ctx.drawImage(img, -ox, -oy, w, h);
@@ -408,12 +412,22 @@
     var dt = now - lastT; acc += dt; lastT = now;
     if (acc < 33) return;
     var step = Math.min(acc, 100); acc = 0;
+    var t0 = performance.now();
     if (!st.wheel) {
       spawnTick(step); moveFish(step); stepBullets(step, now);
       if ((st.firing || st.auto) && now - st.lastShot >= FIRE_MS) fire(now);
     }
     draw(now);
+    perfGuard(performance.now() - t0, now);
     if (now - (st.hudT || 0) > 500) { st.hudT = now; hudBal(); }
+  }
+  // 效能保護：每格的運算＋繪圖平均超過 20ms（掉到 30 幀以下）就把魚量係數往下調，順了再慢慢加回來；也會先關掉發光
+  function perfGuard(ms, now) {
+    st.pAvg = st.pAvg == null ? ms : st.pAvg * 0.9 + ms * 0.1;
+    if (now - (st.pT || 0) < 2000) return; st.pT = now;
+    if (!st.perf) st.perf = 1;
+    if (st.pAvg > 20) { st.lowFx = true; st.perf = Math.max(0.55, st.perf - 0.1); }
+    else if (st.pAvg < 11) { st.perf = Math.min(1, st.perf + 0.05); if (st.perf >= 1) st.lowFx = false; }
   }
   function visible() {
     var w = el('afk-fish-win'); if (!w || w.style.display === 'none' || document.hidden) return false;
@@ -503,7 +517,7 @@
     var pos = null; try { pos = JSON.parse(LS('afk_fish_pos') || 'null'); } catch (e) {}
     if (pos && typeof pos.l === 'number') { w.style.left = Math.max(0, Math.min(innerWidth - 100, pos.l)) + 'px'; w.style.top = Math.max(0, Math.min(innerHeight - 100, pos.t)) + 'px'; w.style.transform = 'none'; }
     preload();
-    if (!st.fish.length) for (var k = 0; k < 44; k++) { var f = spawnFish(pickNormal()); if (f) { f.x = 60 + Math.random() * (VW - 120); f.y = 60 + Math.random() * (VH - 140); } }   // 一打開畫面就有魚
+    if (!st.fish.length) for (var k = 0; k < 50; k++) { var f = spawnFish(pickNormal()); if (f) { f.x = 60 + Math.random() * (VW - 120); f.y = 60 + Math.random() * (VH - 140); } }   // 一打開畫面就有魚
     hud(); kick();
     return true;
   }
