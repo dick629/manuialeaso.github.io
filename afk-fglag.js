@@ -10,7 +10,7 @@
  *     ‧每 0.3 秒一次（window.__afkFgShow）：沒跑完的整刻寄放在這裡（__afkFgCarryPut），最後一刻照一般路徑跑（有攻擊動畫、
  *       特效、音效），收尾重畫（_ffFinishCatchup：怪物格子、飄字、補印掉落日誌）；下一次 gameLoop 一開始把寄放的加回去
  *       （__afkFgCarryTake）——一刻都不少。寄放期間 catchupActive() 為假，存檔照常。
- *   不介入：外掛關掉、背景分頁、核心 queueCatchupMs 排入的背景補跑（從背景回來）、欠超過 30 刻（含寄放）→ 原樣補跑。
+ *   不介入：外掛關掉、背景分頁、核心 queueCatchupMs 排入的背景補跑（從背景回來）、欠超過 6000 刻（10 分鐘，含寄放）→ 原樣補跑。
  *   診斷：window.__afkFgLagStats（calls 介入次數、shows 收尾重畫次數、carryMax 最大寄放毫秒）。
  * ========================================================================== */
 (function () {
@@ -19,7 +19,7 @@
   if (T && T.register) T.register({ id: 'fglag', name: '前景跟不上時照常重畫', group: '效能', seal: true,
     desc: '手機跑不動時不再整段卡在「補跑」：怪物動畫、攻擊特效、傷害數字照常顯示（進度一刻都不少）' });
   var on = function () { return !T || T.enabled('fglag'); };
-  var WINDOW = 30;     // 刻；超過＝真的落後很多（或從背景回來），交給原本的補跑
+  var WINDOW = 6000;   // 刻（10 分鐘）；超過＝真的落後很多（切分頁回來那種），交給原本的補跑。原本 30 刻：手機進地圖那一下（載圖、探測動畫幀）就欠超過 30 刻，之後每刻又超過 100ms 永遠還不完 → 整段都走原本的靜音補跑，畫面完全不動（玩家 2026-11-04 20:20「動畫整個不會動」）
   var SHOW_MS = 300;   // 補跑中每隔多久收尾重畫一次
   var stats = W.__afkFgLagStats = { calls: 0, shows: 0, carryMax: 0 };
   var lastShow = 0;
