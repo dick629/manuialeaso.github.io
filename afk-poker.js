@@ -5,7 +5,11 @@
  *   牌桌（買入＝換成籌碼，1 籌碼＝1 單位該幣別）：
  *     金幣小桌 1,000／2,000，買入 4 萬～20 萬；金幣大桌 10 萬／20 萬，買入 400 萬～2,000 萬；
  *     龍鑽桌 1／2，買入 40～200 顆龍之鑽石；血龍鑽桌 1／2，買入 40～200 顆血龍鑽。
- *   不抽成。NPC 的籌碼由莊家出（NPC 輸光就換一位新的坐下）。
+ *   抽水 3%（2026-11-04 Ping）：每個池子發給贏家前先抽 3%（捨去零頭）；沒翻牌就結束的那手不抽（no flop no drop）；沒人跟到的下注先原數退回、不抽。NPC 贏也抽。
+ *   NPC 的籌碼由莊家出（NPC 輸光就換一位新的坐下）。
+ *   超難桌（入座前選「對手：一般／超難」）：全桌 hardDecide。不偷看——只用自己的牌、公牌、這手的下注、這張桌上記下的打法
+ *     （入池率、加注率、翻牌後被下注時棄牌率、攤牌時看到的詐唬比例）。依打法推估對手範圍再算勝率、被跟注時的勝率決定要不要下注拿價值、
+ *     對常棄牌的人加大詐唬、位置、對短籌碼逼全下。強度量測：scripts/sim-poker.cjs（數字見 NOTES-poker2.md）。
  *
  *   帳務（防複製）：
  *     - 入座時立刻扣幣別；離座才把籌碼換回去。桌上的籌碼只記一份「我還剩多少」（不含這手已經推進去的）。
@@ -95,6 +99,11 @@
     { n: '騎士 雷恩', p: 'std' }, { n: '法師 艾琳', p: 'tag' }, { n: '醉漢 多布', p: 'fish' }, { n: '海賊 傑克', p: 'lag' },
     { n: '商人 漢斯', p: 'rock' }, { n: '妖精 菲莉', p: 'std' }
   ];
+  // 超難桌：職業牌手（只靠看得到的資訊：自己的牌、公牌、大家下過的注與過去的打法紀錄）
+  PERS.hard = { tag: '超難', tight: 1, aggr: 0.6, bluff: 0.1, callMul: 1 };
+  var HARD_NPCS = [{ n: '賭神 維克多', p: 'hard' }, { n: '冷面 賽琳', p: 'hard' }, { n: '職業牌手 奧斯卡', p: 'hard' }, { n: '鐵面 卡珊', p: 'hard' },
+    { n: '狐狸 雷文', p: 'hard' }, { n: '莊家之子 洛克', p: 'hard' }, { n: '算牌師 伊芙', p: 'hard' }];
+  var RAKE = 0.03;   // 抽水 3%：每個池子（有翻牌才抽；沒人跟的下注先退回、不抽）
 
   // ════════════════ 牌局引擎（純邏輯，測試直接呼叫） ════════════════
   function newSeat(o) { return Object.assign({ stack: 0, bet: 0, total: 0, folded: false, allIn: false, out: false, hole: [], acted: false, actedAt: -1, last: '', won: 0 }, o); }
@@ -109,7 +118,9 @@
     if (live.length < 2) return null;
     tb.seats.forEach(function (s) { s.bet = 0; s.total = 0; s.allIn = false; s.hole = []; s.acted = false; s.actedAt = -1; s.last = ''; s.won = 0; s.out = s.stack <= 0; s.folded = s.out; s.score = 0; });
     tb.button = nextIdx(tb, tb.button < 0 ? -1 : tb.button, function (s) { return !s.out; });
-    var H = tb.hand = { no: ++tb.handNo, deck: shuffled(tb.rng), board: [], street: 0, cur: 0, minRaise: tb.def.bb, fr: 0, toAct: -1, done: false, result: null, log: [] };
+    var H = tb.hand = { no: ++tb.handNo, deck: shuffled(tb.rng), board: [], street: 0, cur: 0, minRaise: tb.def.bb, fr: 0, toAct: -1, done: false, result: null, log: [],
+      hist: tb.seats.map(function () { return { vp: false, pr: false, agg: [0, 0, 0, 0], call: [0, 0, 0, 0] }; }) };
+    tb.seats.forEach(function (s) { if (!s.out) modelOf(tb, s).h++; });
     var heads = live.length === 2;
     var sbI = heads ? tb.button : nextIdx(tb, tb.button, function (s) { return !s.out; });
     var bbI = nextIdx(tb, sbI, function (s) { return !s.out; });
@@ -141,6 +152,7 @@
       if (L.canRaise && L.maxTo > H.cur) { type = 'raise'; to = L.maxTo; }
       else if (L.toCall > 0) type = 'call'; else type = 'check';
     }
+
     if (type === 'fold') { s.folded = true; lbl = '棄牌'; }
     else if (type === 'check') { if (!L.canCheck) return { ok: false, err: '要跟注才能繼續' }; lbl = '過牌'; }
     else if (type === 'call') { if (L.toCall <= 0) return { ok: false, err: '不用跟注' }; put(s, L.callAmt); lbl = s.allIn ? '全下 ' + fmtS(s.bet) : '跟注 ' + fmtS(s.bet); }
@@ -158,6 +170,7 @@
       H.cur = to;
       lbl = s.allIn ? '全下 ' + fmtS(s.bet) : (wasBet ? '下注 ' : '加注到 ') + fmtS(s.bet);
     } else return { ok: false, err: '不認得的動作' };
+    observe(tb, i, type, L);
     s.acted = true; s.actedAt = H.fr; s.last = lbl;
     H.log.push(s.name + ' ' + lbl);
     advance(tb);
@@ -193,9 +206,10 @@
     levels.forEach(function (L) {
       var amt = 0; seats.forEach(function (s) { amt += Math.max(0, Math.min(s.total, L) - Math.min(s.total, prev)); });
       var el = []; seats.forEach(function (s, i) { if (inHand(s) && s.total >= L) el.push(i); });
+      var cn = seats.filter(function (s) { return s.total > prev; }).length;
       if (amt > 0) {
         var last = pots[pots.length - 1];
-        if (last && last.el.join() === el.join()) last.amt += amt; else pots.push({ amt: amt, el: el });
+        if (last && last.el.join() === el.join()) { last.amt += amt; last.n = Math.max(last.n, cn); } else pots.push({ amt: amt, el: el, n: cn });
       }
       prev = L;
     });
@@ -205,28 +219,40 @@
     return pots;
   }
   function finish(tb, showdown) {
-    var H = tb.hand, seats = tb.seats, res = { showdown: showdown, pots: [] };
+    var H = tb.hand, seats = tb.seats, res = { showdown: showdown, pots: [], rake: 0, returned: 0, retTo: -1 };
+    var flopped = H.board.length >= 3 || showdown;   // 沒有翻牌就結束的那手不抽水
     if (showdown) {
       while (H.board.length < 5) { H.deck.pop(); H.board.push(H.deck.pop()); }
       seats.forEach(function (s) { if (inHand(s)) s.score = evaluate(s.hole.concat(H.board)); });
+      learnShowdown(tb);
     }
-    var pots = buildPots(seats);
-    if (!showdown) {   // 其他人都棄牌：整池給剩下那位
-      var w = seats.findIndex(inHand), tot = potTotal(tb);
-      pots = [{ amt: tot, el: [w] }];
+    // 沒有人跟到的那一截下注，原數退回（不算贏、不抽水）
+    var tops = seats.map(function (s) { return s.total; }).sort(function (a, b) { return b - a; });
+    if (tops[0] > (tops[1] || 0)) {
+      var ti = seats.findIndex(function (s) { return s.total === tops[0]; }), ex = tops[0] - (tops[1] || 0);
+      seats[ti].total -= ex; seats[ti].stack += ex; res.returned = ex; res.retTo = ti;
+    }
+    var pots;
+    if (showdown) pots = buildPots(seats);
+    else {   // 其他人都棄牌：整池給剩下那位
+      var w = seats.findIndex(inHand);
+      pots = [{ amt: potTotal(tb), el: [w], n: seats.filter(function (s) { return s.total > 0; }).length }];
     }
     var n = seats.length;
     pots.forEach(function (p) {
+      if (!(p.amt > 0)) return;
       var win = p.el;
       if (p.el.length > 1) {
         var best = -1; p.el.forEach(function (i) { if (seats[i].score > best) best = seats[i].score; });
         win = p.el.filter(function (i) { return seats[i].score === best; });
       }
+      var rk = flopped && p.n >= 2 ? Math.floor(p.amt * RAKE) : 0, net = p.amt - rk;
+      res.rake += rk;
       // 平分；除不盡的零頭從莊家左手邊開始一人一枚
       var order = win.slice().sort(function (a, b) { return ((a - tb.button - 1 + n) % n) - ((b - tb.button - 1 + n) % n); });
-      var share = Math.floor(p.amt / win.length), rem = p.amt - share * win.length;
+      var share = Math.floor(net / win.length), rem = net - share * win.length;
       order.forEach(function (i, k) { var g = share + (k < rem ? 1 : 0); seats[i].stack += g; seats[i].won += g; });
-      res.pots.push({ amt: p.amt, el: p.el.slice(), win: order, hand: showdown && p.el.length > 1 ? handName(seats[win[0]].score) : '' });
+      res.pots.push({ amt: p.amt, net: net, rake: rk, el: p.el.slice(), win: order, hand: showdown && p.el.length > 1 ? handName(seats[win[0]].score) : '' });
     });
     seats.forEach(function (s) { s.bet = 0; });
     H.done = true; H.toAct = -1; H.result = res;
@@ -280,20 +306,207 @@
     if (L.canRaise && H.street > 0 && rng() < pr.bluff * 0.4) return sizeTo(tb, i, 0.7);
     return { t: 'fold' };
   }
+  // ════════════════ 超難 AI（不偷看：只用自己的牌、公牌、這手大家怎麼下注、以及這張桌上過去的打法紀錄） ════════════════
+  function modelOf(tb, s) { var m = tb.model || (tb.model = {}); return m[s.name] || (m[s.name] = { h: 0, vpip: 0, pfr: 0, agg: 0, calls: 0, checks: 0, fb: 0, ftb: 0, pfb: 0, pftb: 0, sdAgg: 0, sdBluff: 0 }); }
+  // 攤牌時大家都看得到的牌：記下「下注／加注過的人攤出來是真牌還是詐唬」
+  function learnShowdown(tb) {
+    var H = tb.hand; if (!H || !H.hist || H.board.length < 5) return;
+    tb.seats.forEach(function (s, j) { var h = H.hist[j]; if (!h || !inHand(s) || !(h.agg[1] + h.agg[2] + h.agg[3])) return; var m = modelOf(tb, s); m.sdAgg++; if (strength(s.hole, H.board) < 2) m.sdBluff++; });
+  }
+  function observe(tb, i, type, L) {
+    var H = tb.hand, s = tb.seats[i], m = modelOf(tb, s), h = H.hist && H.hist[i]; if (!h) return;
+    if (H.street === 0) {
+      if ((type === 'call' || type === 'raise') && !h.vp) { h.vp = true; m.vpip++; }
+      if (type === 'raise') { if (!h.pr) m.pfr++; h.pr = (h.pr || 0) + 1; }
+      if (H.cur > tb.def.bb) { m.pfb++; if (type === 'fold') m.pftb++; }   // 面對加注時棄牌的比例
+    } else {
+      if (type === 'raise') { m.agg++; h.agg[H.street]++; if (L.toCall > 0) h.rz = (h.rz || 0) + 1; }
+      else if (type === 'call') { m.calls++; h.call[H.street]++; }
+      else if (type === 'check') m.checks++;
+      if (L.toCall > 0) { m.fb++; if (type === 'fold') m.ftb++; }
+    }
+  }
+  var rate = function (x, n, prior, w) { return (x + prior * w) / (n + w); };
+  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+  function lcg(seed) { var n = seed >>> 0; return function () { n = (n * 1664525 + 1013904223) >>> 0; return n / 4294967296; }; }
+  var PF = null;   // 169 種起手牌的強弱百分位（0＝最強）
+  var pfKey = function (c1, c2) { var a = cRank(c1), b = cRank(c2); if (b > a) { var t = a; a = b; b = t; } return a * 16 + b + (a !== b && cSuit(c1) === cSuit(c2) ? 256 : 0); };
+  function pfTable() {
+    if (PF) return PF;
+    var rng = lcg(20261104), cls = [], a, b;
+    for (a = 14; a >= 2; a--) for (b = a; b >= 2; b--) for (var su = 0; su < (a === b ? 1 : 2); su++) {
+      var c1 = (a - 2) * 4, c2 = (b - 2) * 4 + (su ? 0 : 1);
+      cls.push({ k: pfKey(c1, c2), e: equity([c1, c2], [], 2, 260, rng), n: a === b ? 6 : (su ? 4 : 12) });
+    }
+    cls.sort(function (x, y) { return y.e - x.e; });
+    PF = {}; var cum = 0;
+    cls.forEach(function (c) { PF[c.k] = (cum + c.n / 2) / 1326; cum += c.n; });
+    return PF;
+  }
+  var pfPct = function (h) { return pfTable()[pfKey(h[0], h[1])]; };
+  // 手上的牌在這個牌面算什麼：0 什麼都沒有、1 聽牌或小對子、2 頂對／超對、3 兩對以上（有用到手牌）
+  function strength(hole, board) {
+    if (board.length < 3) return 0;
+    var all = catOf(evaluate(hole.concat(board))), bd = catOf(evaluate(board));
+    if (all > bd) {
+      if (all >= 2) return all >= 3 || bd === 0 ? 3 : 2;
+      var top = 0; board.forEach(function (c) { top = Math.max(top, cRank(c)); });
+      var r0 = cRank(hole[0]), r1 = cRank(hole[1]);
+      var pr = r0 === r1 ? r0 : (board.some(function (c) { return cRank(c) === r0; }) ? r0 : r1);
+      return pr >= top ? 2 : 1;
+    }
+    if (board.length >= 5) return 0;
+    var cards = hole.concat(board), sc = [0, 0, 0, 0], mask = 0;
+    cards.forEach(function (c) { sc[cSuit(c)]++; mask |= 1 << cRank(c); });
+    for (var q = 0; q < 4; q++) if (sc[q] >= 4 && (cSuit(hole[0]) === q || cSuit(hole[1]) === q)) return 1;
+    if (mask & (1 << 14)) mask |= 2;
+    for (var lo = 1; lo <= 10; lo++) if (((mask >> lo) & 15) === 15) return 1;   // 兩頭順
+    return 0;
+  }
+  function oppParams(tb, j) {
+    var H = tb.hand, m = modelOf(tb, tb.seats[j]), h = H.hist[j];
+    var range = 1;
+    if (h.pr >= 2) range = clamp(rate(m.pfr, m.h, 0.15, 8) * 0.4, 0.03, 0.25);
+    else if (h.pr) range = clamp(rate(m.pfr, m.h, 0.15, 8) * 1.1, 0.05, 0.6);
+    else if (h.vp) range = clamp(rate(m.vpip, m.h, 0.3, 8), 0.12, 0.95);
+    var af = rate(m.agg, m.agg + m.calls + m.checks, 0.3, 10);
+    var bl = rate(m.sdBluff, m.sdAgg, clamp(af * 0.5, 0.05, 0.3), 5);
+    return { j: j, range: range, aggN: h.agg[1] + h.agg[2] + h.agg[3], rz: h.rz || 0, callN: h.call[1] + h.call[2] + h.call[3], bluff: clamp(bl, 0.03, 0.6) };
+  }
+  // 依對手「這手怎麼下注」與過去打法推估他們可能拿的牌，再算勝率
+  // ifCalled＝假設對手只用「會跟注的牌」繼續（用來判斷值不值得下注拿價值）
+  function rangeEquity(tb, i, iters, ifCalled) {
+    var H = tb.hand, me = tb.seats[i], board = H.board, rng = tb.rng, pf = pfTable();
+    var ps = []; tb.seats.forEach(function (o, j) { if (j !== i && inHand(o)) { var q = oppParams(tb, j), m = modelOf(tb, o); q.fold = rate(m.ftb, m.fb, 0.4, 6); ps.push(q); } });
+    if (!ps.length) return 1;
+    var used = new Uint8Array(52), deck = [], c;
+    me.hole.concat(board).forEach(function (x) { used[x] = 1; });
+    for (c = 0; c < 52; c++) if (!used[c]) deck.push(c);
+    var D = deck.length, cache = {}, win = 0, taken = new Uint8Array(52);
+    var stOf = function (c1, c2) { var k = c1 * 52 + c2; if (!(k in cache)) cache[k] = strength([c1, c2], board); return cache[k]; };
+    var accept = function (p, c1, c2) {
+      if (pf[pfKey(c1, c2)] > p.range && rng() > 0.03) return false;
+      if (ifCalled && board.length >= 3) {
+        var s2 = stOf(c1, c2);
+        if (p.fold > 0.45 ? (s2 < 2 && !(s2 === 1 && rng() < 0.3)) : (s2 < 1 && rng() > 0.4)) return false;
+      }
+      if (board.length >= 3 && (p.aggN || p.callN)) {
+        var st = stOf(c1, c2);
+        if (p.rz) return st >= 3 || rng() < p.bluff * 0.5;   // 加注我的下注：多半是兩對以上
+        if (p.aggN) return st >= 2 || rng() < (st === 1 ? Math.max(p.bluff, 0.35) : p.bluff);
+        return st >= 1 || rng() < 0.3;
+      }
+      return true;
+    };
+    for (var it = 0; it < iters; it++) {
+      taken.fill(0);
+      var hands = [];
+      for (var q = 0; q < ps.length; q++) {
+        var c1 = -1, c2 = -1;
+        for (var t = 0; t < 30; t++) {
+          var a = deck[Math.floor(rng() * D)], b = deck[Math.floor(rng() * D)];
+          if (a === b || taken[a] || taken[b]) { t--; continue; }
+          c1 = a; c2 = b;
+          if (accept(ps[q], a, b)) break;
+        }
+        taken[c1] = taken[c2] = 1; hands.push([c1, c2]);
+      }
+      var bd = board.slice();
+      while (bd.length < 5) { var x = deck[Math.floor(rng() * D)]; if (taken[x]) continue; taken[x] = 1; bd.push(x); }
+      var mine = evaluate(me.hole.concat(bd)), lose = false, ties = 0;
+      for (q = 0; q < hands.length; q++) { var sc = evaluate(hands[q].concat(bd)); if (sc > mine) { lose = true; break; } if (sc === mine) ties++; }
+      if (!lose) win += 1 / (ties + 1);
+    }
+    return win / iters;
+  }
+  function allIn(tb, i) { var L = legal(tb, i); return L.canRaise ? { t: 'raise', to: L.maxTo } : (L.toCall > 0 ? { t: 'call' } : { t: 'check' }); }
+  function hardDecide(tb, i) {
+    var H = tb.hand, s = tb.seats[i], L = legal(tb, i), rng = tb.rng, bb = tb.def.bb, pot = potTotal(tb), n = tb.seats.length;
+    var opps = []; tb.seats.forEach(function (o, j) { if (j !== i && inHand(o)) opps.push(j); });
+    var maxOpp = 0; opps.forEach(function (j) { maxOpp = Math.max(maxOpp, tb.seats[j].stack + tb.seats[j].bet); });
+    var effBB = Math.min(s.stack + s.bet, maxOpp) / bb;
+    var dist = function (j) { return (j - tb.button - 1 + n) % n; };
+    var actLeft = tb.seats.filter(function (o, j) { return j !== i && canAct(o) && dist(j) > dist(i); }).length;   // 翻牌後還在我後面行動的人
+    var inPos = actLeft === 0;
+    var foldR = 0, cnt = 0; opps.forEach(function (j) { var m = modelOf(tb, tb.seats[j]); foldR += H.street === 0 ? rate(m.pftb, m.pfb, 0.55, 6) : rate(m.ftb, m.fb, 0.4, 6); cnt++; });
+    foldR = cnt ? foldR / cnt : 0.4;
+    var shortOpp = opps.some(function (j) { return tb.seats[j].stack + tb.seats[j].bet <= 18 * bb; });
+    var potOdds = L.callAmt / (pot + L.callAmt);
+    if (H.street === 0) {
+      var pct = pfPct(s.hole), raised = H.cur > bb;
+      var after = tb.seats.filter(function (o, j) { return j !== i && !o.out && !o.folded && dist(j) > dist(i); }).length;   // 翻牌前還沒行動的人數（含盲注）
+      if (!raised) {
+        var limpers = tb.seats.filter(function (o, j) { return j !== i && H.hist[j].vp; }).length;
+        var open = [0.45, 0.36, 0.26, 0.19, 0.15, 0.13][Math.min(5, after)] + (foldR > 0.6 ? 0.08 : 0) - limpers * 0.03;
+
+        if (pct <= open && L.canRaise) {
+          if (effBB <= 15 || (shortOpp && pct <= open * 0.7 && effBB <= 25)) return allIn(tb, i);
+          return { t: 'raise', to: Math.max(L.minTo, Math.min(L.maxTo, roundTo(tb, bb * (2.5 + limpers)))) };
+        }
+        if (L.canCheck) return { t: 'check' };
+        if (H.sbI === i && pct <= 0.45 && limpers === 0 && rng() < 0.3) return { t: 'call' };
+        return { t: 'fold' };
+      }
+      var rj = -1, best = -1; tb.seats.forEach(function (o, j) { if (j !== i && inHand(o) && o.bet === H.cur) rj = j; });
+      var rm = rj >= 0 ? modelOf(tb, tb.seats[rj]) : null, rRange = rm ? clamp(rate(rm.pfr, rm.h, 0.15, 8), 0.05, 0.6) : 0.15;
+      var e0 = rangeEquity(tb, i, 220);
+      var reraised = rj >= 0 && H.hist[rj].pr >= 2;
+      if (L.canRaise && (pct <= rRange * (reraised ? 0.25 : 0.4) || pct <= 0.025)) {
+        if (effBB <= 35 || reraised) return allIn(tb, i);
+        return { t: 'raise', to: Math.max(L.minTo, Math.min(L.maxTo, roundTo(tb, H.cur * (inPos ? 3 : 3.6)))) };
+      }
+      if (L.canRaise && !reraised && pct <= rRange * 1.1 && pct > rRange * 0.4 && rng() < 0.12 + (foldR > 0.6 ? 0.1 : 0)) {
+        if (effBB <= 30) return allIn(tb, i);
+        return { t: 'raise', to: Math.max(L.minTo, Math.min(L.maxTo, roundTo(tb, H.cur * 3.2))) };
+      }
+      if (effBB <= 20) return e0 > potOdds + 0.08 ? allIn(tb, i) : { t: 'fold' };
+      var setMine = cRank(s.hole[0]) === cRank(s.hole[1]) && L.callAmt <= (s.stack + s.bet) / 15;
+      if ((e0 >= potOdds + 0.04 && L.callAmt <= s.stack * 0.3) || setMine) return { t: 'call' };
+      return { t: 'fold' };
+    }
+    var e = rangeEquity(tb, i, 320), st = strength(s.hole, H.board), spr = s.stack / Math.max(1, pot);
+    var draw = st === 1 && H.street < 3 && e > 0.28;
+    if (L.canCheck) {
+      var eC = L.canRaise ? rangeEquity(tb, i, 240, true) : 0;   // 被跟注時的勝率
+      if (eC > 0.55 && L.canRaise) {
+        if (spr < 1.2 || (shortOpp && e > 0.7)) return allIn(tb, i);
+        var f = foldR < 0.35 ? 0.85 + rng() * 0.4 : (eC > 0.7 ? 0.7 : 0.5) + rng() * 0.25;
+        if (!inPos && e < 0.85 && opps.length === 1 && modelOf(tb, tb.seats[opps[0]]).agg > 3 && rng() < 0.2) return { t: 'check' };   // 對愛打的人偶爾過牌設陷阱
+        return sizeTo(tb, i, f);
+      }
+      if (e > 0.5 && eC > 0.45 && L.canRaise && (inPos || opps.length === 1) && rng() < 0.55) return sizeTo(tb, i, 0.45);
+      // 詐唬：對手越常棄牌越常打，尺寸做到讓他的小牌也跟不下去
+      var bf = foldR > 0.5 ? 0.9 : 0.75, need = bf / (1 + 2 * bf);
+      var pB = foldR > need + 0.12 ? 0.9 : foldR > need + 0.04 ? 0.6 : 0.2;
+      if (draw) pB = Math.max(pB, 0.55);
+      if (!inPos) pB *= 0.7;
+      if (opps.length === 2) pB *= foldR > 0.55 ? 0.7 : 0.35;
+      if (L.canRaise && opps.length <= 2 && rng() < pB) return sizeTo(tb, i, bf);
+      return { t: 'check' };
+    }
+    if (e > 0.75 && L.canRaise) { if (spr < 2.5 || shortOpp) return allIn(tb, i); return sizeTo(tb, i, 0.8 + rng() * 0.4); }
+    var implied = draw ? 0.06 : 0;
+    if (e + implied >= potOdds + 0.02) {
+      if (e > 0.62 && L.canRaise && rng() < 0.3) return sizeTo(tb, i, 0.9);
+      return { t: 'call' };
+    }
+    if (L.canRaise && H.street < 3 && opps.length === 1 && foldR > 0.55 && (draw || rng() < 0.08)) return sizeTo(tb, i, 1);
+    return { t: 'fold' };
+  }
   function npcAct(tb, i) {
-    var d = npcDecide(tb, i), r = act(tb, i, d.t, d.to);
+    var d = tb.seats[i].pers === 'hard' ? hardDecide(tb, i) : npcDecide(tb, i), r = act(tb, i, d.t, d.to);
     if (!r.ok) { tb.illegal = (tb.illegal || 0) + 1; console.warn('[AFK-poker] NPC 動作不合法', d, r.err); r = act(tb, i, legal(tb, i).canCheck ? 'check' : 'fold'); }
     return d;
   }
   var npcUsed = function (tb) { return tb.seats.map(function (s) { return s.name; }); };
   function newNpc(tb) {
-    var pool = NPCS.filter(function (x) { return npcUsed(tb).indexOf(x.n) < 0; });
-    var d = pool[Math.floor(tb.rng() * pool.length)] || NPCS[0];
+    var src = tb.hard ? HARD_NPCS : NPCS, pool = src.filter(function (x) { return npcUsed(tb).indexOf(x.n) < 0; });
+    var d = pool[Math.floor(tb.rng() * pool.length)] || src[0];
     var bbs = 60 + Math.floor(tb.rng() * 91);   // 60～150 個大盲
     return newSeat({ name: d.n, pers: d.p, stack: tb.def.bb * bbs, human: false });
   }
-  function newTable(def, humanStack, nNpc, rng) {
-    var tb = { def: def, seats: [], button: -1, handNo: 0, hand: null, rng: rng || Math.random };
+  function newTable(def, humanStack, nNpc, rng, hard) {
+    var tb = { def: def, seats: [], button: -1, handNo: 0, hand: null, rng: rng || Math.random, hard: !!hard, model: {} };
     tb.seats.push(newSeat({ name: '你', human: true, stack: humanStack }));
     for (var k = 0; k < nNpc; k++) tb.seats.push(newNpc(tb));
     tb.button = Math.floor(tb.rng() * tb.seats.length) - 1;
@@ -398,13 +611,13 @@
     var p = P();
     if (!debit(def.cur, amt)) return { ok: false, msg: CURS[def.cur] + '扣不下來，沒有入座' };
     var nNpc = (opt && opt.nNpc) || cfg.nNpc || (3 + Math.floor(Math.random() * 3));
-    tb = newTable(def, amt, nNpc, opt && opt.rng);
+    tb = newTable(def, amt, nNpc, opt && opt.rng, !!(opt && opt.hard));
     tb.owner = p;
     if (def.cur === 'dia') {
       if (!writeDia({ t: def.id, stack: amt, hb: Date.now(), tab: TAB_ID })) { diaAdjust(amt); tb = null; return { ok: false, msg: '籌碼紀錄寫不進去，龍之鑽石已退回' }; }
       heartbeat(true);
     } else { p.afkPoker = { t: def.id, stack: amt, hb: Date.now(), tab: TAB_ID }; safeSave(); }
-    sys('<span class="text-emerald-300">🃏 在' + esc(def.n) + '用' + esc(amtTxt(def.cur, amt)) + '換了籌碼入座。</span>');
+    sys('<span class="text-emerald-300">🃏 在' + esc(tblName()) + '用' + esc(amtTxt(def.cur, amt)) + '換了籌碼入座。</span>');
     try { if (typeof updateUI === 'function') updateUI(); } catch (e) {}
     return { ok: true, table: tb };
   }
@@ -443,6 +656,7 @@
     closeTable();
     return { ok: true, n: n };
   }
+  function tblName() { return tb ? tb.def.n + (tb.hard ? '・超難' : '') : ''; }
   function closeTable() { stopTimer(); heartbeat(false); tb = null; hideWin(); }
 
   // ════════════════ 牌局推進（計時） ════════════════
@@ -474,9 +688,10 @@
     var H = tb.hand, res = H.result, lines = [];
     res.pots.forEach(function (pt, k) {
       var names = pt.win.map(function (i) { return tb.seats[i].name; }).join('、');
-      if (pt.el.length === 1) lines.push(names + (k === 0 && !res.showdown ? ' 贏得底池 ' : ' 收回 ') + fmt(pt.amt));
-      else lines.push(names + (pt.win.length > 1 ? ' 以' + pt.hand + '平分' : ' 以' + pt.hand + '贏得') + (k === 0 ? '底池 ' : '邊池 ') + fmt(pt.amt));
+      if (pt.el.length === 1) lines.push(names + (k === 0 ? ' 贏得底池 ' : ' 拿下邊池 ') + fmt(pt.net));
+      else lines.push(names + (pt.win.length > 1 ? ' 以' + pt.hand + '平分' : ' 以' + pt.hand + '贏得') + (k === 0 ? '底池 ' : '邊池 ') + fmt(pt.net));
     });
+    if (res.rake > 0) lines.push('抽水 ' + fmt(res.rake));
     var fresh = refillNpcs(tb);
     ui.msg = lines.concat(fresh).join('；');
     persist();
@@ -545,7 +760,8 @@
       + '.pk-ball b{font-size:20px;line-height:1}.pk-ball span{font-size:10px;font-weight:800;margin-top:1px}'
       + '.pk-ball.turn{border-color:#facc15;box-shadow:0 0 12px #facc15cc;animation:pk-pulse .9s ease-in-out infinite}'
       + '@keyframes pk-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}'
-      + '.afk-ax .pk-tbl input{width:110px;background:#0f172a;color:#fde68a;border:1px solid #475569;border-radius:6px;padding:6px 8px;font-size:14px}';
+      + '.afk-ax.pk-tbl .pk-lv{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:#cbd5e1}#interaction-content .afk-ax.pk-tbl .pk-lv button{background:#1e293b;border-color:#475569;color:#cbd5e1;padding:6px 10px}#interaction-content .afk-ax.pk-tbl .pk-lv button.on{background:#7f1d1d;border-color:#f87171;color:#fff}#interaction-content .afk-ax.pk-tbl .pk-lv button.n.on{background:#166534;border-color:#4ade80}'
+      + '.afk-ax.pk-tbl input{width:110px;background:#0f172a;color:#fde68a;border:1px solid #475569;border-radius:6px;padding:6px 8px;font-size:14px}';
     document.head.appendChild(s);
   }
   function cardHtml(c, cls) {
@@ -621,7 +837,7 @@
     }
     var w = el('afk-pk-win'); if (!w || w.style.display === 'none') return;
     var def = tb.def, H = tb.hand, me = tb.seats[0], i;
-    var h = '<div class="pk-head"><div class="pk-title">♠︎ ' + esc(def.n) + '<small>盲注 ' + fmtS(def.sb) + '／' + fmtS(def.bb) + '</small></div>'
+    var h = '<div class="pk-head"><div class="pk-title">♠︎ ' + esc(tblName()) + '<small>盲注 ' + fmtS(def.sb) + '／' + fmtS(def.bb) + '・抽水 3%</small></div>'
       + '<button type="button" class="pk-hb" data-pk="min" aria-label="縮小">－</button><button type="button" class="pk-hb" data-pk="leave">離座</button></div>';
     h += '<div class="pk-opps">'; for (i = 1; i < tb.seats.length; i++) h += seatHtml(i); h += '</div>';
     var board = []; for (i = 0; i < 5; i++) board.push(cardHtml(H ? H.board[i] : null));
@@ -676,7 +892,7 @@
 
   // ════════════════ 荷官 NPC（歐瑞村莊） ════════════════
   var NPC_ID = 'npc_afk_poker', NPC_N = '洛蒂', NPC_T = '德州撲克';
-  var sel = {};   // 各桌輸入的買入金額
+  var sel = {}, selHard = {};   // 各桌輸入的買入金額、對手難度
   function panel(div) {
     if (!div) return;
     var K = W.__afkNpcKit; if (K && K.css) K.css();
@@ -685,16 +901,16 @@
     if (!p || p.classicMode || !on()) { div.innerHTML = '<div class="afk-ax"><p class="ax-lore">「今天不開桌。」</p></div>'; return; }
     refundStale();
     var h = '<div class="afk-ax pk-tbl"><p class="ax-lore">洛蒂俐落地洗著牌：「無限注德州撲克，輸贏都算你自己的。籌碼在離座時換回來；牌打到一半走人，那手就當你棄牌。」</p>';
-    if (tb) h += '<div class="ax-row"><div class="ax-main"><div><div class="ax-name">你正坐在' + esc(tb.def.n) + '</div><div class="ax-desc">籌碼 ' + fmt(tb.seats[0].stack) + '</div></div></div><div class="ax-act"><button type="button" data-pkn="open">回到牌桌</button></div></div>';
+    if (tb) h += '<div class="ax-row"><div class="ax-main"><div><div class="ax-name">你正坐在' + esc(tblName()) + '</div><div class="ax-desc">籌碼 ' + fmt(tb.seats[0].stack) + '</div></div></div><div class="ax-act"><button type="button" data-pkn="open">回到牌桌</button></div></div>';
     TABLES.forEach(function (t) {
       if (!curReady(t.cur)) return;
       var bal = balance(t.cur), v = sel[t.id] != null ? sel[t.id] : Math.max(t.min, Math.min(t.max, bal));
       var why = tb ? '' : whyNotSit(t, v);
       h += '<div class="ax-row" data-row="' + t.id + '"><div class="ax-main"><div style="min-width:0"><div class="ax-name">' + esc(t.n) + '</div>'
-        + '<div class="ax-desc">盲注 ' + fmt(t.sb) + '／' + fmt(t.bb) + '　買入 ' + fmt(t.min) + '～' + fmt(t.max) + '</div>'
+        + '<div class="ax-desc">盲注 ' + fmt(t.sb) + '／' + fmt(t.bb) + '　買入 ' + fmt(t.min) + '～' + fmt(t.max) + '　抽水 3%</div>'
         + '<div class="ax-note">你有' + esc(amtTxt(t.cur, bal)) + '</div>'
         + (why && !tb ? '<div class="ax-req"><span class="no" style="font-size:12px">' + esc(why) + '</span></div>' : '') + '</div></div>'
-        + (tb ? '' : '<div class="ax-act"><input type="number" inputmode="numeric" min="' + t.min + '" max="' + t.max + '" step="' + t.bb + '" value="' + v + '" data-pkin="' + t.id + '" aria-label="' + esc(t.n) + '買入金額">'
+        + (tb ? '' : '<div class="ax-act"><span class="pk-lv" role="group" aria-label="對手">對手：<button type="button" data-pkn="lv:' + t.id + ':0" class="n' + (selHard[t.id] ? '' : ' on') + '">一般</button><button type="button" data-pkn="lv:' + t.id + ':1"' + (selHard[t.id] ? ' class="on"' : '') + '>超難</button></span><input type="number" inputmode="numeric" min="' + t.min + '" max="' + t.max + '" step="' + t.bb + '" value="' + v + '" data-pkin="' + t.id + '" aria-label="' + esc(t.n) + '買入金額">'
           + '<button type="button" data-pkn="set:' + t.id + ':min">最少</button><button type="button" data-pkn="set:' + t.id + ':max">最多</button>'
           + '<button type="button" data-pkn="sit:' + t.id + '"' + (why ? ' disabled' : '') + '>入座</button></div>') + '</div>';
     });
@@ -706,8 +922,9 @@
       var a = bt.getAttribute('data-pkn').split(':');
       if (a[0] === 'open') return openWin();
       if (a[0] === 'set') { var t = TBL[a[1]], bal = balance(t.cur); sel[a[1]] = a[2] === 'min' ? t.min : Math.max(t.min, Math.min(t.max, bal)); return panel(div); }
+      if (a[0] === 'lv') { selHard[a[1]] = a[2] === '1'; return panel(div); }
       if (a[0] === 'sit') {
-        var r = buyIn(a[1], sel[a[1]] != null ? sel[a[1]] : (div.querySelector('[data-pkin="' + a[1] + '"]') || {}).value);
+        var r = buyIn(a[1], sel[a[1]] != null ? sel[a[1]] : (div.querySelector('[data-pkin="' + a[1] + '"]') || {}).value, { hard: !!selHard[a[1]] });
         if (!r.ok) { var e = div.querySelector('#pk-npc-err'); if (e) e.textContent = r.msg; return; }
         panel(div); openWin(); dealNext();
       }
@@ -729,6 +946,7 @@
     evaluate: evaluate, handName: handName, catOf: catOf, cardTxt: cardTxt,
     newTable: newTable, newSeat: newSeat, startHand: startHand, act: act, legal: legal, buildPots: buildPots, potTotal: potTotal,
     equity: equity, npcDecide: npcDecide, npcAct: npcAct, refillNpcs: refillNpcs,
+    hardDecide: hardDecide, rangeEquity: rangeEquity, pfPct: pfPct, strength: strength, modelOf: modelOf, RAKE: RAKE, HARD_NPCS: HARD_NPCS,
     balance: balance, buyIn: buyIn, cashOut: cashOut, topUp: topUp, refundStale: refundStale, humanAct: humanAct, dealNext: dealNext,
     table: function () { return tb; }, openWin: openWin, toBall: toBall, panel: panel, render: render, on: on
   };
