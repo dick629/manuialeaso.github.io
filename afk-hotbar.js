@@ -213,7 +213,7 @@
     if (want && host.parentElement !== want) { want.appendChild(host); host.classList.toggle('hb-mobile', want.id === 'col-center'); }
     try { var cc = document.getElementById('col-center'); if (cc) cc.classList.toggle('hb-host', host.parentElement === cc); } catch (e) {}
     var b = bar(), lk = locked();
-    var h = '<div class="hb-top">' + (W.AFK_SCREEN ? '<div class="hb-moon" title="掛機模式：螢幕常亮＋全黑省電畫面，遊戲照常 100% 戰鬥（點兩下螢幕回來）" onclick="window.AFK_SCREEN&&AFK_SCREEN.start()">🌙</div>' : '<div style="width:22px"></div>') + '<div class="hb-title">熱 鍵</div><div class="hb-lock' + (lk ? ' on' : '') + '" title="' + (lk ? '已鎖住：熱鍵照常可以按，但不能換內容（右鍵／長按無效）。點一下解鎖，沒有其他條件。' : '未鎖：右鍵或長按格子可以換內容。點一下鎖住，避免誤改。') + '">' + (lk ? '🔒' : '🔓') + '</div></div><div class="hb-row">';
+    var h = '<div class="hb-top">' + (W.AFK_SCREEN ? '<div class="hb-moon" title="掛機模式：螢幕常亮＋全黑省電畫面，遊戲照常 100% 戰鬥（點兩下螢幕回來）" onclick="window.AFK_SCREEN&&AFK_SCREEN.start()">🌙</div>' : '<div style="width:22px"></div>') + '<div class="hb-title">熱 鍵</div><div class="hb-lock' + (lk ? ' on' : '') + '" title="' + (lk ? '已鎖住（F5～F8 不會觸發熱鍵，F5 可重新整理網頁）：熱鍵照常可以按，但不能換內容（右鍵／長按無效）。點一下解鎖，沒有其他條件。' : '未鎖：右鍵或長按格子可以換內容。點一下鎖住，避免誤改。') + '">' + (lk ? '🔒' : '🔓') + '</div></div><div class="hb-row">';
     for (var i = 0; i < N; i++) {
       var id = b[i], skd = skOf(id);
       if (skd) {
@@ -334,6 +334,7 @@
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     var gs = document.getElementById('game-screen'); if (!gs || gs.classList.contains('hidden') || !P()) return;
     var t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    if (locked()) return;   // 熱鍵列鎖住時 F5～F8 交還給瀏覽器（F5 可以重新整理網頁；玩家 2026-11-04 11:53）
     e.preventDefault(); fire(i);
   }, true);
 
