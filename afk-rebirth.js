@@ -60,11 +60,25 @@
 
   // 超過屬性上限的部分（裝備、Buff、血盟等其他來源）仍算進「攻擊」與「魔法」公式：
   // 核心在夾上限前呼叫 __afkAttrBoost → 這裡記下夾之前的值；近戰／遠程／魔法的傷害、命中、爆擊、額外魔法點數改用夾之前的值查表
-  var oBoostR = window.__afkAttrBoost;
-  window.__afkAttrBoost = function (p, d) {
-    var r; if (typeof oBoostR === 'function') r = oBoostR.apply(this, arguments);
-    try { d._raw = { str: d.str, dex: d.dex, int: d.int, con: d.con, wis: d.wis, cha: d.cha }; } catch (e) {}
-    return r;
+  //   比本檔晚載入、又是「先呼叫舊的再加」的外掛（遺物的限時屬性 buff，afk-relic-integration）加的屬性會在這裡記完之後才加 →
+  //   載入完成時再包一層最外面的記錄（afk-siege2 的恥辱減值也是 load 才包、包在更外面，記的值不扣恥辱，跟之前一樣）
+  var recRaw = function (oB) {
+    return function (p, d) {
+      var r; if (typeof oB === 'function') r = oB.apply(this, arguments);
+      try { d._raw = { str: d.str, dex: d.dex, int: d.int, con: d.con, wis: d.wis, cha: d.cha }; } catch (e) {}
+      return r;
+    };
+  };
+  window.__afkAttrBoost = recRaw(window.__afkAttrBoost);
+  var outerRaw = function () { window.__afkAttrBoost = recRaw(window.__afkAttrBoost); };
+  if (document.readyState === 'complete') setTimeout(outerRaw, 0); else window.addEventListener('load', outerRaw);
+  // 面板上的總值（含超過上限的部分）：夾上限前的值，再加上夾完之後才加的（核心的四大軍王／白鳥套裝魅力、席琳夢域的魅力）
+  //   經典模式不經過 __afkAttrBoost，存檔裡的 _raw 是舊的 → 不用
+  window.__afkStatTotal = function (k) {
+    var d = player && player.d; if (!d) return 0;
+    var raw = d._raw, cap = window.__afkAttrCap(), v = Number(d[k]) || 0;
+    if (!raw || player.classicMode || typeof raw[k] !== 'number') return v;
+    return raw[k] + (v - Math.min(cap, raw[k]));
   };
   var useRaw = function (fn, key) {
     var o = window[fn]; if (typeof o !== 'function') return;
@@ -85,7 +99,7 @@
         var d = player && player.d, raw = d && d._raw, cap = window.__afkAttrCap();
         if (raw && reborn() && !(typeof _respec !== 'undefined' && _respec)) ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(function (k) {
           var el = document.getElementById('dt-' + k); if (!el) return;
-          var over = (raw[k] || 0) - cap;
+          var over = window.__afkStatTotal(k) - cap;
           if (over > 0 && d[k] >= cap) { var t = cap + '(+' + over + ')'; if (el.textContent !== t) el.textContent = t; }
         });
       } catch (e) {}

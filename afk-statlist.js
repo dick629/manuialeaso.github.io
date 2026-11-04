@@ -11,7 +11,8 @@
  *
  * 作法:以 CSS 為主——給 #tab-stats 加一個 class,整套規則都掛在它底下;
  *   DOM 結構、id(dt-*)、核心的 updateUI/配點流程完全不動。
- *   唯一的 JS 是包 updateUI 後幫「按下去不會有反應的 ± 按鈕」加一個灰化 class(純視覺,不攔點擊)。
+ *   唯一的 JS 是包 updateUI 後幫「按下去不會有反應的 ± 按鈕」加一個灰化 class 與說明(不攔點擊),
+ *   並在每個能力值上掛「基本值＋其他加成」的說明(title)。
  *   關閉外掛(或本檔沒載到)= class 不加,原版圖面原封不動。
  *   afk-statpts 的「點數來源」區塊插在 shell 後面,不受影響。
  *
@@ -94,34 +95,60 @@
     '}'
   ].join('\n');
 
-  /* ── 按不動的 ± 灰化 ──
-     核心 adjAlloc/adjBonusStat 的上限是「自然值(base+配點+萬能藥,不含裝備/buff)< 60」,
-     滿了就什麼都不做、也不給訊息(上游原版行為);這裡只補視覺,不攔點擊。
+  /* ── 按不動的 ± 灰化＋說明 ──
+     核心 adjAlloc/adjBonusStat 的上限是「自然值(base+配點+萬能藥,不含裝備/buff) < __afkAllocCap()」
+     (一般 60、轉生 200、經典 35;回憶蠟燭重配也一樣,補丁 patchRespecCap),滿了就什麼都不做、也不給訊息。
+     這裡補視覺＋說明(title,手機長按由 afk-touchtip 顯示;按下去也在系統訊息說一次),不攔點擊。
+     ⚠️ 上限不可寫死 60:轉生角色自然值 60～199 還能配,寫死會把按得動的＋灰掉(玩家回報:智力＋灰掉不能點)。
      ＋:一般狀態比 naturalStat;蠟燭重置中核心比的是「Lv1 基礎＋草稿」,而那個值就是 updateUI
         剛寫進 #dt-<s> 的數字,直接讀(textContent 不觸發 layout)最不會跟核心算法走鐘。
-     −:只有重置中才出現,核心條件是「草稿 > 0」→ 顯示值退到職業起始值(createBase)就按不動。 */
+     −:只有重置中才出現,核心條件是「草稿 > 0」→ 顯示值退到職業起始值(createBase)就按不動。
+     能力值那格的 title:基本值(出生＋配點＋萬能藥)＋其他加成(裝備、套裝、遺物、buff、血盟、勝者的榮耀…)＝面板數字;
+        超過能力值上限(一般 100、轉生 200)時另外說超過的點數算不算。 */
   var STATS = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
-  var CAP = 60;
-  var btns = null;      // s -> { plus, minus }(靜態 DOM,查一次重用)
+  var NAME = { str: '力量', dex: '敏捷', con: '體質', int: '智力', wis: '精神', cha: '魅力' };
+  // 轉生後超過上限的部分仍算進這些公式(afk-rebirth 的 useRaw);其他能力超過上限沒有效果
+  var OVER_USE = { str: '近距離傷害、命中、爆擊', dex: '遠距離傷害、命中、爆擊', int: '魔法傷害、命中、爆擊、額外魔法點數' };
+  var btns = null;      // s -> { ctl, plus, minus }(靜態 DOM,查一次重用)
   var lastSig = null;
 
+  function n0(o, s) { return (o && Number(o[s])) || 0; }
   function naturalOf(s) {
     if (typeof naturalStat === 'function') return naturalStat(s);
-    return (player.base[s] || 0) + ((player.alloc && player.alloc[s]) || 0) + ((player.panacea && player.panacea[s]) || 0);
+    return n0(player.base, s) + n0(player.alloc, s) + n0(player.panacea, s);
+  }
+  function allocCap() { try { if (typeof window.__afkAllocCap === 'function') return window.__afkAllocCap(); } catch (e) {} return 60; }
+  function attrCap() { try { if (typeof window.__afkAttrCap === 'function') return window.__afkAttrCap(); } catch (e) {} return 100; }
+  function totalOf(s) {   // 面板上的總值(含超過上限、被夾掉的部分);沒有轉生外掛就是 d[s]
+    try { if (typeof window.__afkStatTotal === 'function') return window.__afkStatTotal(s); } catch (e) {}
+    return n0(player.d, s);
+  }
+  function capText(s, cap, respecOn) { return NAME[s] + (respecOn ? '已達上限 ' : '的基本值（出生＋配點＋萬能藥）已達上限 ') + cap; }
+  function valueText(s, nat, tot, aCap) {
+    var add = tot - nat, t = '基本值 ' + nat + (add >= 0 ? '＋其他加成 ' + add : '－' + (-add)) + '＝' + tot;
+    if (tot > aCap) {
+      // 夾上限之後才加的(套裝、席琳夢域的魅力)照樣有效 → 沒效果的只有被夾掉的那段
+      var over = tot - aCap, lost = Math.min(over, tot - Math.max(aCap, n0(player.d, s))), reb = !!(player.rebirth > 0);
+      t += '，能力值上限 ' + aCap + '：超過的 ' + over + ' 點' + (reb && OVER_USE[s] ? '仍算進' + OVER_USE[s]
+        : (lost < over ? '中 ' + lost + ' 點' : '') + '沒有效果');
+    }
+    return t;
   }
 
   // updateUI 戰鬥中每秒被叫上百次 → 用簽章短路,值沒變就零 DOM 返回
   function syncCaps(tab) {
-    if (typeof player === 'undefined' || !player || !player.base) return;
+    if (typeof player === 'undefined' || !player || !player.base || !player.d) return;
     var respecOn = tab.classList.contains('is-respec');
     // 重置中的下限＝該職業起始值;讀不到 createBase 就不灰化 −(維持原樣,不亂猜)
     var floors = null;
     if (respecOn && typeof createBase !== 'undefined' && player.cls) floors = createBase[player.cls] || null;
-    var vals = [], sig = (respecOn ? 'r' : 'n') + (floors ? player.cls : '');
+    var cap = allocCap(), aCap = attrCap();
+    var vals = [], nats = [], tots = [], sig = (respecOn ? 'r' : 'n') + (floors ? player.cls : '') + '|' + cap + '|' + aCap + '|' + (player.rebirth > 0 ? 1 : 0) + (player.classicMode ? 'c' : '');
     for (var i = 0; i < STATS.length; i++) {
-      var el = respecOn ? document.getElementById('dt-' + STATS[i]) : null;
-      var v = respecOn ? (parseInt(el && el.textContent, 10) || 0) : naturalOf(STATS[i]);
-      vals.push(v); sig += '|' + v;
+      var k = STATS[i], el = respecOn ? document.getElementById('dt-' + k) : null;
+      var nat = naturalOf(k), tot = respecOn ? 0 : totalOf(k);
+      var v = respecOn ? (parseInt(el && el.textContent, 10) || 0) : nat;
+      vals.push(v); nats.push(nat); tots.push(tot); sig += '|' + v + ',' + tot;
     }
     if (sig === lastSig) return;
     lastSig = sig;
@@ -129,14 +156,29 @@
       btns = {};
       STATS.forEach(function (s) {
         var ctl = tab.querySelector('.ability-primary-' + s);
-        btns[s] = { plus: ctl && ctl.querySelector('.alloc-plus'), minus: ctl && ctl.querySelector('.alloc-minus') };
+        btns[s] = { ctl: ctl, plus: ctl && ctl.querySelector('.alloc-plus'), minus: ctl && ctl.querySelector('.alloc-minus') };
       });
     }
     STATS.forEach(function (s, i) {
-      var b = btns[s];
-      if (b.plus) b.plus.classList.toggle('afk-sl-cap', vals[i] >= CAP);
+      var b = btns[s], capped = vals[i] >= cap;
+      if (b.plus) {
+        b.plus.classList.toggle('afk-sl-cap', capped);
+        var pt = capped ? capText(s, cap, respecOn) : '';
+        if (pt) b.plus.title = pt; else b.plus.removeAttribute('title');
+      }
       if (b.minus) b.minus.classList.toggle('afk-sl-cap', !!floors && vals[i] <= (floors[s] || 0));
+      if (b.ctl) {
+        var vt = (respecOn || player.classicMode) ? '' : valueText(s, nats[i], tots[i], aCap);   // 經典模式能力值只有角色本身（其他加成全封印），不用說明
+        if (vt) b.ctl.title = vt; else b.ctl.removeAttribute('title');
+      }
     });
+  }
+
+  // 按到已滿的＋:核心什麼都不做,這裡在系統訊息說一次為什麼(不攔點擊,核心照樣自己擋)
+  function onCapClick(e) {
+    var b = e.target && e.target.closest && e.target.closest('.alloc-plus.afk-sl-cap');
+    if (!b || !b.title || typeof logSys !== 'function') return;
+    try { logSys('<span class="text-amber-300">' + b.title + '。</span>'); } catch (err) {}
   }
 
   function hookUpdateUI(tab) {
@@ -164,6 +206,7 @@
     st.textContent = css;
     (document.head || document.documentElement).appendChild(st);
     tab.classList.add('afk-sl');
+    tab.addEventListener('click', onCapClick, true);
 
     var tries = 0;
     (function tryHook() {

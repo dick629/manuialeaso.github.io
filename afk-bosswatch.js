@@ -10,6 +10,9 @@
  *   二、打不動：你鎖定的頭目 60 秒 HP 完全沒變 → 清掉「過期或時間不合理」的免疫／反彈屏障（_reflectWall：結束時間不是數字、
  *       已經過期、或還要超過 5 分鐘）。仍在有效期間內的免疫、女神與夢域鏡四龍的永久免疫（規則本身，不是旗標）、
  *       幽影、時空四龍、攻城鏡像都不碰。
+ *   三、要王倒下才會推進的副本裡，王不能迷魅（2026-11-04 Ping：所有副本都會王卡住）：迷魅成功會把怪直接從場上拿走、
+ *       不經過 killMob，謀叛者／異界祭壇的層數、火焰之影與哈爾巴斯、幽靈船長、安塔瑞斯巢穴的下一區、傲慢之塔的樓梯都等不到。
+ *       範圍：安塔瑞斯巢穴、時空裂痕、暗夢星迴、傲慢之塔攀登與外掛副本（軍王之室、祭壇、龍窟、聖地會自己重生，不受影響）。
  *   玩家看不到任何訊息（強制擊殺時 killMob 本來就會記「擊敗了…」）；診斷寫在 console 與 window.__afkBossWatch.log。
  *   要排在所有包 tick、killMob 的外掛之後（放 afk-intdmg 前一支）。
  * ========================================================================== */
@@ -17,7 +20,7 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'bosswatch', name: '頭目卡住保險', group: '系統與其他',
-    desc: '頭目 HP 歸零卻沒倒下時自動結算擊殺；過期的免疫屏障卡住時自動清掉' });
+    desc: '頭目 HP 歸零卻沒倒下時自動結算擊殺；過期的免疫屏障卡住時自動清掉；要打倒王才會前進的副本裡，王不能被迷魅' });
   var on = function () { return !T || T.enabled('bosswatch'); };
   var CFG = { zombieTicks: 30, retryTicks: 100, stallTicks: 600, maxWall: 3000 };
   var S = function () { return (typeof state !== 'undefined' && state) ? state : null; };
@@ -35,6 +38,17 @@
     if (!(m.boss || m._afkTrLayer)) return false;
     if (m.race === '建築' || m.trollPlayer || m._pvpDuelFoe || m._afkCharmSnap) return false;
     return true;
+  };
+  // 要「王倒下」才會推進的副本：安塔瑞斯巢穴、時空裂痕、暗夢星迴、傲慢之塔攀登與外掛副本。這些地方的王被迷魅會直接從場上消失、
+  //   不經過 killMob → 層數／波數／船長／下一區永遠等不到（王卡住）。軍王之室、底比斯／提卡爾祭壇、龍窟、聖地是空格 5 秒後重生
+  //   （雙王祭壇另有「兩隻都不在＝全滅」的核心保險），迷魅不會卡住，照原本規則可以迷魅。
+  var PLUGIN_DG = { afk_traitor_whisper: 1, afk_hardin_time: 1, afk_giltas_altar: 1, afk_flame_depth: 1, afk_halpas_nest: 1, afk_final_sea: 1,
+    afk_soul_room: 1, afk_ghostship: 1, afk_starroad: 1, rift_battle: 1 };
+  var instanceMap = function (cur) {
+    if (!cur || /^town_/.test(cur)) return false;
+    if (PLUGIN_DG[cur]) return true;
+    try { if (typeof ANTHARAS_AREA_BOSS !== 'undefined' && ANTHARAS_AREA_BOSS[cur]) return true; } catch (e) {}
+    var s = S(); return !!(s && (s.dreamStar || s.prideClimb || s.antharas || s.riftRun));
   };
   // 永久免疫是規則本身的頭目：打不動是設計，不清任何東西
   var designedImmune = function (m) { return !!(m._afkFinal || m._afkApostle || m._g3Dragon || m._afkDragonStage); };
@@ -69,9 +83,10 @@
     var s = S(); if (!s || typeof mapState === 'undefined' || !mapState || !mapState.mobs) return;
     if (typeof player === 'undefined' || !player || !player.cls) return;
     var cur = mapState.current; if (skipMap(cur)) return;
-    var t = tk(), ms = mapState.mobs;
+    var t = tk(), ms = mapState.mobs, dg = instanceMap(cur);
     for (var i = 0; i < ms.length; i++) {
       var m = ms[i]; if (!watched(m)) continue;
+      if (dg && !m.noCharm) { m.noCharm = true; m._afkWdNoCharm = true; }   // 三、副本裡的王不能迷魅（迷魅只能手動、在兩刻之間施放，每一刻結束時標上就來得及）
       if (fixNaN(m)) continue;
       // 一、HP 0 卻沒倒下
       if (!(m.curHp > 0)) {
@@ -96,5 +111,5 @@
     };
     try { (0, eval)('tick = window.tick'); } catch (e) {}
   }
-  W.__afkBossWatch = { CFG: CFG, step: step, watched: watched, staleWall: staleWall, unstick: unstick, log: LOG };
+  W.__afkBossWatch = { CFG: CFG, step: step, instanceMap: instanceMap, watched: watched, staleWall: staleWall, unstick: unstick, log: LOG };
 })();

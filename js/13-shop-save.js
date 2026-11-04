@@ -1979,7 +1979,7 @@ function startRespec() {
 }
 // 六大屬性的 +/- 路由：重置中＝改草稿；否則＝花用升級點數（僅 +、不可退）
 function adjAlloc(s, dir) {
-    let capN = 60;
+    let capN = (typeof window.__afkAllocCap === 'function' && !(typeof player !== 'undefined' && player && player.classicMode)) ? window.__afkAllocCap() : 60;   /* 🔌 加掛版補丁:重配點上限（經典模式照原版 60） */
     if (_respec) {
         let b = createBase[player.cls];
         if (dir > 0) { if (respecPtsLeft() > 0 && (b[s] + _respec.draft[s]) < capN) _respec.draft[s]++; }
