@@ -4,7 +4,7 @@
  *   外觀：解除封印＝有翅膀；封印型態（或失去光輝、或在副本裡）＝沒有翅膀（assets/morphanim/<聖衣>・封{,2,F}）。
  *   封印型態也能變身；30 分鐘冷卻期間不能穿任何聖衣（afk-card-ascension 原本就擋）。
  *   解除封印的效果（afk-card-combat RULES.samsaraOpen）：六項能力 +75、五屬性抗性 +250、爆擊傷害 +100%、開啟星座能力。
- *   光輝：已解除封印的聖衣，每「以解除封印的樣子穿上一次」算一次（在副本裡穿也算），五次之後失去光輝，回到封印型態；
+ *   光輝：已解除封印的聖衣，只有在四龍副本、最終女神戰、靈魂石訓練所裡以解除封印的樣子變身才算一次（2026-11-04 改；其他地方不消耗），五次之後失去光輝，回到封印型態；
  *     用「雅典娜祝福」恢復光輝（再五次）。
  *   聖衣光輝碎片：十二件聖衣都收集到（封印型態也算）後，10 張多餘的怪物鑽石卡合成 1 片。
  *   升星：5 片光輝碎片，隨機替一件聖衣升 1 星（最多 3 星）；穿著那件聖衣時，每星對最終頭目（死亡女神 席琳與冥界的使徒）
@@ -16,7 +16,7 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'saintcloth', name: '聖衣光輝與升星', group: '遊戲玩法', parent: 'card-ascension',
-    desc: '解除封印的聖衣穿上 5 次會失去光輝（要雅典娜祝福恢復）；收集滿聖衣後用鑽石卡合成光輝碎片替聖衣升星（對最終頭目更強）；封印型態沒有翅膀' });
+    desc: '解除封印的聖衣在四龍副本、最終女神戰、靈魂石訓練所裡變身 5 次會失去光輝（要雅典娜祝福恢復）；收集滿聖衣後用鑽石卡合成光輝碎片替聖衣升星（對最終頭目更強）；封印型態沒有翅膀' });
   if (T && !T.enabled('saintcloth')) return;
   var A = W.AFK_CARD_ASCENSION;
   if (!A || !A.catalog || !A.catalog.samsara) { console.warn('[AFK-saint-cloth] 找不到聖衣，略過'); return; }
@@ -43,14 +43,28 @@
   var inDungeon = function () { var C = W.AFK_CARD_COMBAT; return !!(C && C.inDungeon && C.inDungeon()); };
   var wornRow = function (actor) { try { var r = A.active(actor); return r && r.tier === 'samsara' ? r : null; } catch (e) { return null; } };
 
-  // ── 光輝的消耗：以解除封印的樣子穿上（換上這件）算一次 ──
+  // ── 光輝的消耗（玩家 2026-11-04 19:06）：只在四龍副本、最終女神戰、靈魂石訓練所裡，以解除封印的樣子變身才算一次 ──
+  //   每「進一次這些地方（或在裡面換上另一件）」算一次；其他地方穿上不消耗光輝。
+  var glowZone = function () {
+    try {
+      if (typeof state !== 'undefined' && state && state._afkFinal) return 'final';
+      var cur = (typeof mapState !== 'undefined' && mapState) ? mapState.current : '';
+      if (!cur) return '';
+      if (cur === 'afk_soul_room') return 'soul';
+      if (typeof ANTHARAS_AREA_BOSS !== 'undefined' && ANTHARAS_AREA_BOSS[cur]) return 'dragon:' + cur.replace(/_(nest_\d|lair)$/, '').replace(/^antharas_.*/, 'antharas');
+    } catch (e) {}
+    return '';
+  };
   var checkWear = function () {
     var p = P(), s = data(p); if (!s) return;
     var r = wornRow(p);
-    if (!r) { if (s.clothOn) s.clothOn = null; return; }
-    if (s.clothOn === r.id) return;
-    s.clothOn = r.id;
-    if (origSealed(r.id, p)) return;   // 玩家 2026-10-29：在副本裡穿上也算一次
+    if (!r) { if (s.clothOn) s.clothOn = null; s.clothZone = ''; return; }
+    var z = glowZone();
+    if (s.clothOn !== r.id) { s.clothOn = r.id; s.clothZone = ''; }
+    if (!z) { s.clothZone = ''; return; }
+    if (s.clothZone === z) return;
+    s.clothZone = z;
+    if (origSealed(r.id, p)) return;
     var c = s.cloth[r.id] = s.cloth[r.id] || { uses: 0, dim: false };
     if (c.dim) { sys('<span class="text-slate-300">' + esc(r.n) + ' 已經失去光輝，只能以封印的樣子穿上。用「雅典娜祝福」可以恢復。</span>'); return; }
     c.uses = (Number(c.uses) || 0) + 1;
@@ -177,7 +191,7 @@
     var btn = function (act, label, ok) { return '<button type="button" class="btn" data-cloth-act="' + act + '"' + (ok ? '' : ' disabled') + ' style="margin:2px">' + label + '</button>'; };
     return '<section id="afk-cloth-panel" class="afk-ca-panel"><h3>聖衣光輝</h3>'
       + '<p class="afk-lore">「聖衣的光不會永遠亮著。每一次解開封印，都在消耗它的光輝。」</p>'
-      + '<p>解除封印的聖衣每穿上一次（以解除封印的樣子）算一次，' + USES + ' 次後失去光輝、回到封印型態，用雅典娜祝福恢復。封印型態沒有翅膀，也能變身；冷卻中不能穿聖衣。</p>'
+      + '<p>解除封印的聖衣只有在四龍副本、最終女神戰、靈魂石訓練所裡變身（以解除封印的樣子）才算一次，其他地方穿上不會消耗；' + USES + ' 次後失去光輝、回到封印型態，用雅典娜祝福恢復。封印型態沒有翅膀，也能變身；冷卻中不能穿聖衣。</p>'
       + '<p>多餘的鑽石卡 ' + dc + ' 張｜聖衣光輝碎片 ' + sh + '｜雅典娜祝福 ' + bl + '</p>'
       + '<div>' + btn('shard', '合成光輝碎片（鑽石卡 ' + SHARD_COST + '）', full && dc >= SHARD_COST) + btn('star', '點亮聖衣（碎片 ' + SHARD_NEED + '）', sh >= SHARD_NEED) + btn('bless', '換雅典娜祝福（鑽石卡 ' + BLESS_COST + '）', dc >= BLESS_COST) + btn('use', '使用雅典娜祝福', bl > 0 && rows().some(function (r) { return dim(r.id, p); })) + '</div>'
       + (full ? '' : '<p style="color:#94a3b8">光輝碎片要先收集到十二件聖衣（封印型態也算）。</p>')
