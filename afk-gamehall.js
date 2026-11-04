@@ -39,7 +39,8 @@
   var CUR_ICON = { gold: '💰', dia: '💎', blood: '🩸' };
   var LIM = {
     bac: { gold: [50000, 100000000], dia: [10, 5000], blood: [1, 1000] },
-    slot: { gold: [50000, 5000000], dia: [10, 500], blood: [1, 50] }
+    slot: { gold: [50000, 5000000], dia: [10, 500], blood: [1, 50] },
+    mary: { gold: [50000, 5000000], dia: [10, 500], blood: [1, 50] }
   };
   var CHIPS = { gold: [50000, 100000, 500000, 1000000, 5000000, 10000000], dia: [10, 50, 100, 500, 1000], blood: [1, 5, 10, 50, 100] };
   var STEPS = { gold: [50000, 100000, 200000, 500000, 1000000, 2000000, 5000000], dia: [10, 20, 50, 100, 200, 500], blood: [1, 2, 5, 10, 20, 50] };
@@ -88,12 +89,17 @@
     d.frac[cur] = (Number(d.frac[cur]) || 0) + rem;
     if (d.frac[cur] >= 100) { var extra = Math.floor(d.frac[cur] / 100); whole += extra; d.frac[cur] -= extra * 100; }
     if (whole > 0 && !credit(cur, whole)) { console.warn('[AFK-gamehall] 入帳失敗', cur, whole); }
-    var key = game + ':' + cur, s = d.st[key] || (d.st[key] = { n: 0, bet: 0, won: 0, best: 0, day: '', tBet: 0, tWon: 0 });
-    var td = today(); if (s.day !== td) { s.day = td; s.tBet = 0; s.tWon = 0; }
-    s.n++; s.bet += bet; s.won += whole; s.tBet += bet; s.tWon += whole;
-    if (multX && multX > (s.best || 0)) s.best = multX;
+    statAdd(game, cur, bet, whole, multX, true);
     safeSave();
     return whole;
+  }
+  function statAdd(game, cur, bet, won, multX, round) {
+    var d = hallData(); if (!d) return;
+    var key = game + ':' + cur, s = d.st[key] || (d.st[key] = { n: 0, bet: 0, won: 0, best: 0, day: '', tBet: 0, tWon: 0 });
+    var td = today(); if (s.day !== td) { s.day = td; s.tBet = 0; s.tWon = 0; }
+    if (round) s.n++;
+    s.bet += bet; s.won += won; s.tBet += bet; s.tWon += won;
+    if (multX && multX > (s.best || 0)) s.best = multX;
   }
 
   // ════════════════ 百家樂 ════════════════
@@ -232,13 +238,56 @@
     if (res.total >= CAP) { res.total = CAP; res.capped = true; }
     return res;
   }
+  // ════════════════ 亞丁小瑪莉（水果盤） ════════════════
+  var MARY_NAME = '亞丁小瑪莉';
+  // 0 BAR 1 77 2 星星 3 西瓜 4 鈴鐺 5 檸檬 6 柳丁 7 蘋果 8 櫻桃
+  var MF = [
+    { k: 'f_bar', n: 'BAR', odds: 50 }, { k: 'f_77', n: '77', odds: 40 }, { k: 'f_star', n: '星星', odds: 30 }, { k: 'f_melon', n: '西瓜', odds: 20 },
+    { k: 'f_bell', n: '鈴鐺', odds: 20 }, { k: 'f_lemon', n: '檸檬', odds: 15 }, { k: 'f_orange', n: '柳丁', odds: 10 }, { k: 'f_apple', n: '蘋果', odds: 5 }, { k: 'f_cherry', n: '櫻桃', odds: 2 }
+  ];
+  // 一圈 24 格（上排左→右 0～6、右排上→下 7～11、下排右→左 12～18、左排下→上 19～23）：[水果, 小格?]；'O'＝ONCE MORE
+  var RING = [[6, 0], [4, 0], [0, 0], [0, 1], [7, 0], [3, 1], [3, 0], 'O', [7, 0], [5, 1], [5, 0], [2, 1], [2, 0], [7, 0], [8, 0], [1, 1], [1, 0], [4, 0], [6, 0], 'O', [7, 0], [4, 1], [5, 0], [8, 0]];
+  // 每格停下的機率：解方程讓 9 種水果「單押」的返還率都是 92%（另 1.5% 進 JP，合計 93.5%），押哪一種長期都一樣
+  var RING_P = [0.038497,0.016441,0.015207,0.010138,0.037692,0.019581,0.036365,0.052278,0.037692,0.020608,0.019136,0.014071,0.021107,0.037692,0.206217,0.011725,0.017588,0.016441,0.038497,0.052278,0.037692,0.017705,0.019136,0.206217];
+  var JP_CELL = 2, MARY_UNIT = { gold: 5000, dia: 1, blood: 1 }, MARY_MAXPT = 99, JP_RATE = 150 /* 1.5%，以萬分之一 */, JP_SEED = { gold: 1000000, dia: 100, blood: 10 };
+  var MEV = [['none', 30, '槓龜'], ['re1', 35, '再送一燈'], ['reN', 18, '送燈'], ['train', 9, '開火車'], ['san', 4, '小三元'], ['da', 2.5, '大三元'], ['si', 1.5, '大四喜']];
+  var MEV_CELLS = { san: [0, 10, 1], da: [6, 12, 16], si: [4, 8, 13, 20] };
+  var DBL_MAX = 5, JP_WIN = 777;
+  function cellPay(i, bets) { var c = RING[i]; if (c === 'O') return 0; return (bets[c[0]] || 0) * (c[1] ? 3 : MF[c[0]].odds); }
+  function pickCell(rng, noOnce) {
+    var tot = 0, i; for (i = 0; i < 24; i++) if (!(noOnce && RING[i] === 'O')) tot += RING_P[i];
+    var r = rng() * tot;
+    for (i = 0; i < 24; i++) { if (noOnce && RING[i] === 'O') continue; r -= RING_P[i]; if (r < 0) return i; }
+    return 23;
+  }
+  // 一局：回傳 { main, ev, extra:[格], lit:[所有亮的格], pts, jp }
+  function maryPlay(rng, bets) {
+    var main = pickCell(rng, false), res = { main: main, ev: null, extra: [], pts: 0, jp: false };
+    if (RING[main] === 'O') {
+      var tot = MEV.reduce(function (a, x) { return a + x[1]; }, 0), r = rng() * tot, ev = MEV[0];
+      for (var k = 0; k < MEV.length; k++) { r -= MEV[k][1]; if (r < 0) { ev = MEV[k]; break; } }
+      res.ev = ev[0];
+      if (ev[0] === 're1') res.extra = [pickCell(rng, true)];
+      else if (ev[0] === 'reN') { var n = 2 + Math.floor(rng() * 3); for (var j = 0; j < n; j++) res.extra.push(pickCell(rng, true)); }
+      else if (ev[0] === 'train') { var L = 3 + Math.floor(rng() * 5); for (var t = 1; t <= L; t++) res.extra.push((main + t) % 24); }
+      else if (MEV_CELLS[ev[0]]) res.extra = MEV_CELLS[ev[0]].slice();
+    }
+    var lit = [main].concat(res.extra);
+    lit.forEach(function (i) { res.pts += cellPay(i, bets); });
+    var all = MF.every(function (f, i) { return (bets[i] || 0) > 0; });
+    // JP：9 種全押、大 BAR 亮起 → 中間 LED 跳 000～999，開出 777 才中（Ping 2026-11-05 定）
+    res.jpNum = null; res.jp = false;
+    if (all && lit.indexOf(JP_CELL) >= 0) { res.jpNum = Math.floor(rng() * 1000); res.jp = res.jpNum === JP_WIN; }
+    res.lit = lit;
+    return res;
+  }
   var rng = function () {
     try { var a = new Uint32Array(1); W.crypto.getRandomValues(a); return a[0] / 4294967296; } catch (e) { return Math.random(); }
   };
 
   // ── 像素圖示（12×12，粗外框、每張 5 色上下；第一次打開時用 canvas 畫成圖） ──
   var PAL = { k: '#1a1008', y: '#f5c542', Y: '#a8741a', b: '#2f5fd0', B: '#18306e', w: '#fff6d8', s: '#c98a5a', r: '#d23a2a', R: '#7a1712',
-    g: '#38b24a', G: '#16602a', o: '#ff9a2a' };
+    g: '#38b24a', G: '#16602a', o: '#ff9a2a', O: '#b4530f' };
   var GEM = { gy: ['#ffd84a', '#b8860b'], gb: ['#3d8bff', '#16408f'], gg: ['#2fd46a', '#0f6b33'], gr: ['#ff4a5a', '#8f1020'] };
   var ART = {
     pharaoh: ['...kkkkkk...', '..kyYyyYyk..', '.kybyyyybyk.', '.kyyssssyyk.', 'kbyskssksybk', 'kyyssssssyyk', 'kbyssrrssybk', 'kyyksssskyyk', 'kbyykssyyybk', 'kyyyyssyyyyk', '.kbyykkyybk.', '..kkk..kkk..'],
@@ -250,6 +299,15 @@
     gb: ['............', '...kkkkkk...', '..kwwxxxxk..', '.kwxxxxxxXk.', '.kwxxxxxxXk.', '.kxxxxxxxXk.', '.kxxxxxxxXk.', '.kxxxxxxXXk.', '..kxXXXXXk..', '...kkkkkk...', '............', '............'],
     gg: ['....kkkk....', '...kwxxxk...', '..kwxxxxxk..', '.kwxxxxxxxk.', '.kxxxxxxxxk.', '.kxxxxxxxXk.', '.kxxxxxxxXk.', '.kxxxxxxXXk.', '..kxxxxXXk..', '...kxXXXk...', '....kkkk....', '............'],
     gr: ['............', '..kkk..kkk..', '.kwxxkkxxxk.', 'kwxxxxxxxxXk', 'kxxxxxxxxxXk', 'kxxxxxxxxxXk', '.kxxxxxxxXk.', '..kxxxxxXk..', '...kxxxXk...', '....kxXk....', '.....kk.....', '............'],
+    f_bar: ['............', '.kkkkkkkkkk.', '.kwwwwwwwwk.', '.kkkkkkkkkk.', '............', '.kkkkkkkkkk.', '.kwwwwwwwwk.', '.kkkkkkkkkk.', '............', '.kkkkkkkkkk.', '.kwwwwwwwwk.', '.kkkkkkkkkk.'],
+    f_77: ['............', 'kkkkkk.kkkkk', 'krrrrrkkrrrk', 'kkkkrrkkkrrk', '...krrk.krrk', '...krk..krk.', '..krrk.krrk.', '..krk..krk..', '.krrk.krrk..', '.krk..krk...', '.kkk..kkk...', '............'],
+    f_star: ['.....kk.....', '.....kyk....', '....kyyk....', 'kkkkkywykkkk', 'kyyyyyyyyyyk', '.kyyyyyyyyk.', '..kyyyyyyk..', '..kyyYYyyk..', '.kyyYkkYyyk.', '.kyYk..kYyk.', '.kYk....kYk.', '.kk......kk.'],
+    f_melon: ['............', '............', 'kkkkkkkkkkkk', 'krrwrrrrrrrk', '.krkrrrkrrk.', '.krrrrrrrrk.', '..krrkrrrk..', '...krrrrk...', '...kwwwwk...', '....kggk....', '.....kk.....', '............'],
+    f_bell: ['.....kk.....', '....kyyk....', '...kywyyk...', '..kywyyyyk..', '..kywyyyyk..', '..kyyyyyyk..', '.kyyyyyyyyk.', '.kyyyyyyyYk.', 'kyyyyyyyyYYk', 'kkkkkkkkkkkk', '.....kYk....', '......k.....'],
+    f_lemon: ['............', '.......kk...', '.....kkGGk..', '...kkyyykk..', '..kywyyyyyk.', '.kywyyyyyyk.', '.kyyyyyyyyk.', '.kyyyyyyyYk.', '..kyyyyyYk..', '...kkyyYk...', '.....kkk....', '............'],
+    f_orange: ['......kk....', '.....kGGk...', '...kkkGkkk..', '..kowooooOk.', '.kowoooooOk.', '.kooooooooOk', '.koooooooOOk', '.kooooooOOk.', '..koooooOOk.', '..kkOOOOkk..', '....kkkk....', '............'],
+    f_apple: ['.....kk.....', '......kGk...', '..kkkkGkkk..', '.krrwrrrrrk.', 'krrwrrrrrrRk', 'krwrrrrrrrRk', 'krrrrrrrrrRk', 'krrrrrrrrRRk', '.krrrrrrRRk.', '..krRRrRRk..', '...kk..kk...', '............'],
+    f_cherry: ['.......kk...', '......kGk...', '.....kGk....', '....kG.kk...', '...kG...kG..', '..kkk...kGk.', '.krwrk.kkkk.', '.krrrkkrwrrk', '.krrRkkrrrrk', '..kkk.krrRk.', '.......kkk..', '............'],
     S: ['.....kk.....', '....kwYk....', '....kyYk....', '...kwyYYk...', '...kyyYYk...', '..kwyyYYYk..', '..kyyyYYYk..', '.kwyyyYYYYk.', '.kyyyyYYYYk.', 'kwyyyyYYYYYk', 'kkkkkkkkkkkk', '............'],
     M: ['....kkkk....', '..kkoyyokk..', '.koyyyyyyok.', '.kyywyyyyyk.', 'kywwyyyyyyok', 'kyyyyyyyyyok', 'kyyyyyyyyyok', 'koyyyyyyyook', '.koyyyyyook.', '.kooyyyoook.', '..kkooookk..', '....kkkk....']
   };
@@ -336,6 +394,31 @@
       + '.sl-bet{display:flex;align-items:center;gap:6px;margin-top:7px}.sl-bet button{min-width:40px;height:36px;border-radius:8px;border:1px solid #d9bd70;background:#3a2f0c;color:#fde68a;font-size:18px;font-weight:900;cursor:pointer}'
       + '.sl-bet .amt{flex:1;text-align:center;font-weight:900;color:#fde68a;font-size:15px}'
       + '.sl-pay{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px}.sl-pay td,.sl-pay th{border:1px solid #3f3f46;padding:2px 4px;text-align:center}.sl-pay img{width:22px;height:22px;image-rendering:pixelated;vertical-align:middle}'
+      // 小瑪莉
+      + '.gh-win.mary{background:linear-gradient(#5b3a1e,#3b2412);border-color:#d9bd70}'
+      + '.my-led{display:flex;gap:8px;justify-content:center;margin-bottom:6px}.my-led div{flex:1;text-align:center;background:#2a0a0a;border:2px solid #f97316;border-radius:8px;padding:2px 4px}'
+      + '.my-led small{display:block;font-size:11px;font-weight:900;color:#fdba74;letter-spacing:2px}.my-led b{display:block;font-family:"Courier New",monospace;font-size:20px;color:#ef4444;text-shadow:0 0 6px #ef4444;letter-spacing:2px;line-height:1.1}'
+      + '.my-board{display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);gap:2px;padding:4px;background:#f5deb3;border:3px solid #7c4a1e;border-radius:6px;aspect-ratio:1/1}'
+      + '.my-cell{position:relative;background:#fff8e7;border:1px solid #c8a26a;border-radius:3px;display:flex;align-items:center;justify-content:center;overflow:hidden}'
+      + '.my-cell img{width:80%;height:80%;image-rendering:pixelated}.my-cell.sm img{width:52%;height:52%}.my-cell.sm i{position:absolute;right:1px;bottom:0;font-style:normal;font-size:9px;font-weight:900;color:#b91c1c}'
+      + '.my-cell.once{background:#fde68a;font-size:9px;font-weight:900;color:#b91c1c;text-align:center;line-height:1.05}'
+      + '.my-cell::after{content:"";position:absolute;top:2px;left:2px;width:6px;height:6px;border-radius:50%;background:#7f1d1d}'
+      + '.my-cell.on{background:#fff;box-shadow:inset 0 0 0 3px #ef4444}.my-cell.on::after{background:#ff2d2d;box-shadow:0 0 6px #ff2d2d}'
+      + '.my-cell.lit{background:#fef08a;box-shadow:inset 0 0 0 3px #f59e0b}.my-cell.lit::after{background:#facc15;box-shadow:0 0 6px #facc15}'
+      + '.my-center{grid-column:2/7;grid-row:2/7;position:relative;background:linear-gradient(#7dd3fc,#bae6fd 60%,#86efac 60%,#4ade80);border:2px solid #7c4a1e;border-radius:4px;overflow:hidden}'
+      + '.my-center img{position:absolute;image-rendering:pixelated;pointer-events:none}'
+      + '.my-kn{left:-26%;bottom:-8%;width:112%}.my-sl{right:2%;bottom:10%;width:40%;transform:scaleX(-1)}'
+      + '.my-jp{position:absolute;left:0;right:0;top:4%;text-align:center}.my-jp b{display:inline-block;font-size:20px;font-weight:900;color:#dc2626;text-shadow:2px 2px 0 #fde047,-1px -1px 0 #7f1d1d;font-style:italic}'
+      + '.my-jp span{display:block;margin:2px auto 0;width:max-content;min-width:60%;background:#2a0a0a;border:2px solid #f97316;border-radius:5px;font-family:"Courier New",monospace;font-size:14px;color:#ef4444;text-shadow:0 0 6px #ef4444;padding:0 6px}'
+      + '.my-dig{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);min-width:54px;padding:0 6px;height:54px;background:#2a0a0a;border:3px solid #f97316;border-radius:8px;font-family:"Courier New",monospace;font-size:40px;font-weight:900;color:#ef4444;text-shadow:0 0 8px #ef4444;display:flex;align-items:center;justify-content:center}'
+      + '.my-ev{position:absolute;left:0;right:0;top:40%;text-align:center;font-size:22px;font-weight:900;color:#fde047;text-shadow:0 2px 0 #7c2d12,0 0 10px #000;animation:sl-pop .4s ease-out}'
+      + '.my-pay{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;margin-top:6px}.my-pay div{text-align:center;background:#1c1917;border:1px solid #78350f;border-radius:4px;padding:1px 0}'
+      + '.my-pay small{display:block;font-size:11px;font-weight:900;color:#fde68a;background:#c2410c;border-radius:3px 3px 0 0}.my-pay img{width:22px;height:22px;image-rendering:pixelated;display:block;margin:1px auto}'
+      + '.my-pay b{display:block;font-family:"Courier New",monospace;font-size:14px;color:#ef4444;text-shadow:0 0 4px #ef4444}'
+      + '.my-keys{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;margin-top:4px}.my-keys button{height:40px;border-radius:6px;border:2px solid #a8a29e;background:linear-gradient(#fafaf9,#d6d3d1);cursor:pointer;padding:0;touch-action:manipulation}'
+      + '.my-keys button img{width:24px;height:24px;image-rendering:pixelated}.my-keys button:active{transform:translateY(1px)}.my-keys button[disabled]{opacity:.5}'
+      + '.my-ctl{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:6px}.my-ctl button{min-height:40px;border-radius:7px;border:2px solid #78350f;background:linear-gradient(#fde68a,#f59e0b);color:#431407;font-weight:900;font-size:12px;cursor:pointer;padding:0 2px;line-height:1.1}'
+      + '.my-ctl button.go{background:linear-gradient(#bae6fd,#3b82f6);color:#0c1a3a}.my-ctl button.out{background:linear-gradient(#fecaca,#ef4444);color:#450a0a}.my-ctl button[disabled]{opacity:.4;cursor:not-allowed}'
       + '.gh-stat{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}.gh-stat td,.gh-stat th{border:1px solid #334155;padding:3px 5px;text-align:right}.gh-stat td:first-child,.gh-stat th:first-child{text-align:left}'
       + '.gh-ball{position:fixed;z-index:75;right:12px;bottom:calc(var(--m-nav-h,0px) + 200px);width:54px;height:54px;border-radius:50%;border:2px solid #d9bd70;'
       + 'background:radial-gradient(circle at 40% 35%,#7c2d12,#1c1206);color:#fde68a;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 16px #000b;user-select:none;touch-action:none}'
@@ -409,11 +492,11 @@
     return true;
   }
   function close() {
-    stopAuto(); stopAnims(); finishShow();
+    stopAuto(); stopAnims(); finishShow(); ui.busy = false; maryCollect(true);
     var w = el('afk-gh-win'), b = el('afk-gh-ball'); if (w) w.style.display = 'none'; if (b) b.style.display = 'none'; ui.min = false;
   }
   function toBall() {
-    stopAuto(); stopAnims(); finishShow();
+    stopAuto(); stopAnims(); finishShow(); ui.busy = false; maryCollect(true);
     var w = el('afk-gh-win'); if (w) w.style.display = 'none'; ui.min = true;
     var b = el('afk-gh-ball');
     if (!b) { css(); b = document.createElement('div'); b.id = 'afk-gh-ball'; b.className = 'gh-ball'; b.setAttribute('role', 'button'); b.setAttribute('aria-label', '打開遊戲廳'); b.innerHTML = '<b>🎰</b><span>遊戲廳</span>'; document.body.appendChild(b); makeDraggable(b, null, POS.ball); b.addEventListener('click', function () { if (b._ghDragged && Date.now() - b._ghDragged < 350) return; open(); }); }
@@ -421,8 +504,9 @@
   }
   function go(view) {
     if (ui.busy) return;
+    if (ui.view === 'mary' && view !== 'mary') maryCollect(true);
     stopAuto(); ui.view = view; ui.msg = '';
-    var w = win(); w.className = 'gh-win' + (view === 'bac' ? ' bac' : view === 'slot' ? ' slot' : '');
+    var w = win(); w.className = 'gh-win' + (view === 'bac' ? ' bac' : view === 'slot' ? ' slot' : view === 'mary' ? ' mary' : '');
     render();
   }
   function classic() { var p = P(); return !!(p && p.classicMode); }
@@ -446,6 +530,7 @@
     var h;
     if (ui.view === 'bac' && !classic()) h = renderBac();
     else if (ui.view === 'slot' && !classic()) h = renderSlot();
+    else if (ui.view === 'mary' && !classic()) h = renderMary();
     else if (ui.view === 'stats') h = renderStats();
     else h = renderHome();
     w.innerHTML = h;
@@ -456,6 +541,7 @@
     if (!cl && W.__afkPoker && W.__afkPoker.on && W.__afkPoker.on()) h += '<button type="button" class="gh-card" data-gh="poker"><span class="ico">♠︎</span><b>德州撲克</b><span>無限注，對 3～5 位 NPC；有超難桌</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:bac"><span class="ico">🃏</span><b>百家樂</b><span>押莊、閒、和、對子；8 副牌</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:slot"><span class="ico">🔺</span><b>' + SLOT_NAME + '</b><span>埃及拉霸：消除連鎖、太陽倍數、免費遊戲</span></button>';
+    if (!cl) h += '<button type="button" class="gh-card" data-gh="go:mary"><span class="ico">🍒</span><b>' + MARY_NAME + '</b><span>水果盤跑燈、ONCE MORE 送燈、比倍、JP</span></button>';
     if (typeof W.openRaceWindow === 'function') h += '<button type="button" class="gh-card" data-gh="dog"><span class="ico">🐕</span><b>賽狗場</b><span>奇岩賽狗，押冠軍</span></button>';
     h += '</div>';
     if (!cl) h += '<div class="gh-btns"><button type="button" data-gh="go:stats">📊 戰績</button></div>';
@@ -464,7 +550,7 @@
   }
   function renderStats() {
     var d = hallData() || { st: {} }, td = today(), h = head('📊 遊戲廳戰績', '', true) + '<div class="gh-body">';
-    [['bac', '🃏 百家樂'], ['slot', '🔺 ' + SLOT_NAME]].forEach(function (g) {
+    [['bac', '🃏 百家樂'], ['slot', '🔺 ' + SLOT_NAME], ['mary', '🍒 ' + MARY_NAME]].forEach(function (g) {
       h += '<div style="font-weight:800;color:#fde68a;margin:6px 0 2px">' + g[1] + '</div><table class="gh-stat"><tr><th>幣別</th><th>局數</th><th>今日淨輸贏</th><th>累計淨輸贏</th><th>最大一筆</th></tr>';
       ['gold', 'dia', 'blood'].forEach(function (c) {
         var s = d.st[g[0] + ':' + c]; if (!s) return h += '<tr><td>' + CURS[c] + '</td><td colspan="4" class="gh-sm">還沒玩過</td></tr>';
@@ -670,18 +756,198 @@
     return true;
   }
 
+  // ── 亞丁小瑪莉畫面 ──
+  var my = { bets: [0, 0, 0, 0, 0, 0, 0, 0, 0], last: null, pos: 0, on: -1, lit: [], ev: '', dig: '', knF: 0, slF: 0, slKind: 'idle', anim: null };
+  var KN = 'assets/classanim/' + encodeURIComponent('男騎士d6') + '/', SL = 'assets/anim/' + encodeURIComponent('象牙塔果凍怪') + '/';
+  var KN_ATK = 7;
+  var fr = function (base, kind, i) { return base + kind + '_' + i + (i === 0 ? '.png' : '.webp'); };
+  function maryUnit(cur) { return MARY_UNIT[cur]; }
+  function maryPts(bets) { return bets.reduce(function (a, b) { return a + b; }, 0); }
+  function maryPend() { var d = hallData(); return d && d.mary && d.mary.win > 0 ? d.mary : null; }
+  function jpGet(cur) {
+    if (cur === 'dia') { var v = Number(LS('afk_gh_jp_dia')); return v > 0 ? v : JP_SEED.dia * 100; }
+    var d = hallData(); if (!d) return JP_SEED[cur] * 100; d.jp = d.jp || {}; return d.jp[cur] > 0 ? d.jp[cur] : JP_SEED[cur] * 100;
+  }
+  function jpSet(cur, v100) { if (cur === 'dia') LS('afk_gh_jp_dia', String(v100)); else { var d = hallData(); if (d) { d.jp = d.jp || {}; d.jp[cur] = v100; } } }
+  // 收分：WIN 錶 → 身上
+  function maryCollect(quiet) {
+    var m = maryPend(); if (!m) return 0;
+    var amt = m.win, cur = m.cur, base = m.base || amt;
+    if (!credit(cur, amt)) return 0;
+    statAdd('mary', cur, 0, amt, base && m.cost ? amt / m.cost : 0, false);
+    var d = hallData(); d.mary = null; safeSave();
+    if (!quiet) ui.msg = '收分 ' + amtTxt(cur, amt) + '。';
+    return amt;
+  }
+  function renderMary() {
+    var cur = ui.cur, unit = maryUnit(cur), pend = maryPend(), I = art();
+    if (pend && pend.cur !== cur) cur = ui.cur = pend.cur;
+    var credit_ = Math.floor(shownBal(cur) / unit), win = pend ? Math.floor(pend.win / unit) : 0;
+    if (ui.busy && my.showWin != null) win = my.showWin;
+    var h = head('🍒 ' + MARY_NAME, '1 分＝' + fmt(unit) + (cur === 'gold' ? ' 金幣' : ' 顆'), true) + '<div class="gh-body">';
+    h += curBar('mary');
+    h += '<div class="my-led"><div><small>WIN</small><b>' + String(win).padStart(6, '0').slice(-8) + '</b></div><div><small>CREDIT</small><b>' + String(credit_).padStart(6, '0').slice(-8) + '</b></div></div>';
+    // 盤面
+    var pos = function (i) { if (i <= 6) return [1, i + 1]; if (i <= 11) return [i - 5, 7]; if (i <= 18) return [7, 7 - (i - 12)]; return [7 - (i - 18), 1]; };
+    h += '<div class="my-board">';
+    for (var i = 0; i < 24; i++) {
+      var c = RING[i], rc = pos(i), cls = 'my-cell' + (my.on === i ? ' on' : '') + (my.lit.indexOf(i) >= 0 ? ' lit' : '');
+      if (c === 'O') h += '<div class="' + cls + ' once" style="grid-row:' + rc[0] + ';grid-column:' + rc[1] + '">ONCE<br>MORE</div>';
+      else h += '<div class="' + cls + (c[1] ? ' sm' : '') + '" style="grid-row:' + rc[0] + ';grid-column:' + rc[1] + '"><img alt="' + MF[c[0]].n + '" src="' + I[MF[c[0]].k] + '">' + (c[1] ? '<i>×3</i>' : '') + '</div>';
+    }
+    var jp = Math.floor(jpGet(cur) / 100);
+    h += '<div class="my-center"><div class="my-jp"><b>JP</b><span>' + fmt(jp) + '</span></div>'
+      + '<img class="my-kn" alt="" src="' + fr(KN, my.knAtk ? 'sword2_attack' : 'sword2_idle', my.knF) + '">'
+      + (my.slKind !== 'gone' ? '<img class="my-sl" alt="" src="' + fr(SL, my.slKind, my.slF) + '">' : '')
+      + (my.dig !== '' ? '<div class="my-dig">' + my.dig + '</div>' : '')
+      + (my.ev ? '<div class="my-ev">' + esc(my.ev) + '</div>' : '') + '</div>';
+    h += '</div>';
+    // 賠率＋押注 LED
+    h += '<div class="my-pay">' + MF.map(function (f, i) { return '<div><small>' + f.odds + '</small><img alt="" src="' + I[f.k] + '"><b>' + String(my.bets[i]).padStart(2, '0') + '</b></div>'; }).join('') + '</div>';
+    var lock = ui.busy || !!pend || !!ui.auto;
+    h += '<div class="my-keys">' + MF.map(function (f, i) { return '<button type="button" data-gh="mb:' + i + '" aria-label="押' + f.n + '"' + (lock ? ' disabled' : '') + '><img alt="" src="' + I[f.k] + '"></button>'; }).join('') + '</div>';
+    var dbl = pend && !ui.busy && !ui.auto && (pend.n || 0) < DBL_MAX;
+    h += '<div class="my-ctl">'
+      + '<button type="button" class="out" data-gh="home">離開</button>'
+      + '<button type="button" data-gh="mcol"' + (pend && !ui.busy ? '' : ' disabled') + '>WIN→<br>CREDIT</button>'
+      + '<button type="button" data-gh="mdbl:s"' + (dbl ? '' : ' disabled') + '>比倍<br>小 1-4</button>'
+      + '<button type="button" data-gh="mdbl:b"' + (dbl ? '' : ' disabled') + '>比倍<br>大 6-9</button>'
+      + '<button type="button" data-gh="mall"' + (lock ? ' disabled' : '') + '>全押<br>+1</button>'
+      + (ui.auto ? '<button type="button" class="out" data-gh="stop">停止<br>' + ui.autoLeft + '</button>' : '<button type="button" class="go" data-gh="mgo"' + (ui.busy ? ' disabled' : '') + '>開始</button>')
+      + '</div>';
+    h += '<div class="gh-msg" id="gh-msg">' + esc(ui.msg || (pend ? '贏分 ' + fmt(Math.floor(pend.win / unit)) + ' 分：可以比倍（猜小 1-4／大 6-9，開 5 莊家通殺），或按 WIN→CREDIT 收分。' : '點下面的水果押分（每種 0～99 分），按「開始」。9 種全押、大 BAR 亮起時開出 777 就中 JP。')) + '</div>';
+    var tot = maryPts(my.bets);
+    h += '<div class="gh-sm">這局押 ' + tot + ' 分＝' + esc(amtTxt(cur, tot * unit)) + '</div>';
+    h += '<div class="gh-btns"><button type="button" data-gh="mclr"' + (lock ? ' disabled' : '') + '>清除</button><button type="button" data-gh="mre"' + (lock || !my.last ? ' disabled' : '') + '>重複上一局</button>'
+      + '<button type="button" data-gh="mauto:10"' + (lock ? ' disabled' : '') + '>自動 10</button><button type="button" data-gh="mauto:25"' + (lock ? ' disabled' : '') + '>25</button><button type="button" data-gh="mauto:50"' + (lock ? ' disabled' : '') + '>50</button></div>';
+    h += '<div style="margin-top:6px"><label class="gh-tog"><input type="checkbox" data-gh="quick"' + (ui.quick ? ' checked' : '') + '> 快速（縮短跑燈）</label></div>';
+    h += '<details style="margin-top:6px"><summary class="gh-sm" style="cursor:pointer">規則</summary><div class="gh-sm" style="line-height:1.6">'
+      + '燈停在哪一格，就賠那種水果押的分數 × 賠率；畫小一號、標 ×3 的格子固定賠 3 倍。<br>'
+      + 'ONCE MORE：隨機送燈——再送一燈、送 2～4 燈、開火車（後面 3～7 格一起亮）、小三元（柳丁、檸檬、鈴鐺）、大三元（西瓜、星星、77）、大四喜（4 個蘋果），也可能槓龜。<br>'
+      + 'JP：每局押注的 1.5% 進獎池；9 種全押、而且大 BAR 那格亮起時，中間會跳一組 000～999 的號碼，開出 777 就整池給你（不能比倍）。<br>'
+      + '比倍：開 1～9，猜中小（1～4）或大（6～9）贏分翻倍，猜錯或開 5 歸零；最多比 ' + DBL_MAX + ' 次。</div></details>';
+    return h + '</div>';
+  }
+  function maryAnimSprites(kind) {   // 中間插畫：贏了騎士出拳、果凍怪挨打（大獎打飛）
+    var kt = 0, st = 0;
+    my.knAtk = true; my.knF = 0; my.slKind = kind === 'big' ? 'death' : 'hurt'; my.slF = 0;
+    var n = kind === 'big' ? 11 : 2;
+    var step = function () {
+      if (my.knF < KN_ATK - 1) my.knF++; else { my.knAtk = false; my.knF = 0; }
+      if (my.slF < n - 1) my.slF++; else if (my.slKind === 'death') my.slKind = 'gone';
+      render();
+      if (++kt < 12) later(step, 90); else { my.slKind = 'idle'; my.slF = 0; my.knAtk = false; my.knF = 0; render(); }
+    };
+    later(step, 90);
+  }
+  function maryRound() {
+    if (ui.busy) return false;
+    if (maryPend()) { ui.msg = '先收分或比倍。'; render(); return false; }
+    var cur = ui.cur, unit = maryUnit(cur), pts = maryPts(my.bets), cost = pts * unit, lim = LIM.mary[cur];
+    if (!pts) { ui.msg = '先押分。'; stopAuto(); render(); return false; }
+    if (cost < lim[0]) { ui.msg = '這局至少要押 ' + fmt(Math.ceil(lim[0] / unit)) + ' 分（' + amtTxt(cur, lim[0]) + '）。'; stopAuto(); render(); return false; }
+    if (cost > lim[1]) { ui.msg = '這局最多押 ' + fmt(Math.floor(lim[1] / unit)) + ' 分（' + amtTxt(cur, lim[1]) + '）。'; stopAuto(); render(); return false; }
+    if (balance(cur) < cost) { ui.msg = CURS[cur] + '不夠（這局要 ' + fmt(cost) + '）。'; stopAuto(); render(); return false; }
+    if (!debit(cur, cost)) { ui.msg = '扣款失敗，這局沒有開。'; stopAuto(); render(); return false; }
+    ui.hold = { cur: cur, v: balance(cur) };
+    var bets = my.bets.slice(), r = maryPlay(rng, bets), winAmt = r.pts * unit, jpAmt = 0;
+    // JP：先抽 1.5% 進池，再看有沒有中
+    var pool = jpGet(cur) + cost * JP_RATE / 100;
+    if (r.jp) { jpAmt = Math.floor(pool / 100); pool = JP_SEED[cur] * 100 + (pool - jpAmt * 100); }
+    jpSet(cur, pool);
+    settle('mary', cur, cost, jpAmt * 100, null);
+    var d = hallData();
+    if (winAmt > 0) d.mary = { cur: cur, win: winAmt, base: winAmt, cost: cost, n: 0 };
+    safeSave();
+    if (ui.auto && winAmt > 0) maryCollect(true);
+    my.last = bets; ui.msg = '';
+    var evName = r.ev ? (MEV.filter(function (x) { return x[0] === r.ev; })[0] || [0, 0, ''])[2] : '';
+    var fin = function () {
+      ui.busy = false; my.showWin = null; my.ev = ''; my.on = -1;
+      var big = r.jp || r.pts >= pts * 20;
+      if (r.jp) { ui.msg = '🎰 JP！拿走整個獎池 ' + amtTxt(cur, jpAmt) + '！' + (winAmt ? '另外贏分 ' + fmt(r.pts) + ' 分。' : ''); announceJp(cur, jpAmt); }
+      else if (winAmt > 0) ui.msg = (evName && r.ev !== 'none' ? evName + '！' : '') + '贏分 ' + fmt(r.pts) + ' 分（' + amtTxt(cur, winAmt) + '）' + (ui.auto ? '，已收分。' : '：可以比倍或收分。');
+      else ui.msg = r.ev === 'none' ? 'ONCE MORE……槓龜。' : '沒中。';
+      if (r.jpNum != null && !r.jp) ui.msg += '（JP 號碼開出 ' + String(r.jpNum).padStart(3, '0') + '，差一點）';
+      if (winAmt > 0 || r.jp) maryAnimSprites(big ? 'big' : 'hit');
+      render();
+      if (ui.auto) {
+        if (r.jp || (r.ev && r.ev !== 'none' && r.ev !== 're1')) { ui.msg += '（中了大獎，自動停下）'; stopAuto(); return render(); }
+        if (--ui.autoLeft <= 0) { stopAuto(); return render(); }
+        later(function () { if (ui.auto) maryRound(); }, ui.quick ? 300 : 900);
+      }
+    };
+    my.lit = []; my.ev = ''; my.dig = '';
+    if (ui.quick) { my.on = r.main; my.lit = r.lit.slice(); my.pos = r.main; fin(); return true; }
+    ui.busy = true; my.showWin = 0;
+    // 跑燈：至少兩圈，越跑越慢
+    var path = function (from, to, laps) { var n = laps * 24 + ((to - from + 24) % 24), a = []; for (var k = 1; k <= n; k++) a.push((from + k) % 24); return a; };
+    var seq = [], main = path(my.pos, r.main, 2);
+    main.forEach(function (c, k) { var t = k / main.length; seq.push({ on: c, wait: 30 + Math.round(220 * t * t * t) }); });
+    seq.push({ lit: r.main, wait: 350 });
+    if (r.ev) {
+      seq.push({ ev: evName, wait: 900 });
+      var at = r.main;
+      if (r.ev === 're1' || r.ev === 'reN') r.extra.forEach(function (c) { var pa = path(at, c, 1); pa.forEach(function (x, k) { var t = k / pa.length; seq.push({ on: x, wait: 25 + Math.round(160 * t * t * t) }); }); seq.push({ lit: c, wait: 300 }); at = c; });
+      else if (r.ev === 'train') r.extra.forEach(function (c) { seq.push({ on: c, lit: c, wait: 220 }); });
+      else r.extra.forEach(function (c) { seq.push({ lit: c, wait: 260 }); });
+      seq.push({ ev: '', wait: 10 });
+    }
+    if (r.jpNum != null) {
+      seq.push({ ev: 'JP 號碼', wait: 700 });
+      for (var q = 0; q < 14; q++) seq.push({ dig: String(Math.floor(Math.random() * 1000)).padStart(3, '0'), wait: 60 + q * 10 });
+      seq.push({ dig: String(r.jpNum).padStart(3, '0'), ev: r.jp ? 'JP！777！' : '沒開到 777', wait: 1300 });
+      seq.push({ ev: '', dig: '', wait: 10 });
+    }
+    var shown = 0;
+    var tick = function () {
+      var x = seq.shift(); if (!x) { my.pos = r.lit[r.lit.length - 1]; if (r.ev === 'train' || MEV_CELLS[r.ev]) my.pos = r.main; return fin(); }
+      if (x.on != null) my.on = x.on;
+      if (x.lit != null) { if (RING[x.lit] !== 'O') { my.lit.push(x.lit); shown += cellPay(x.lit, bets); my.showWin = shown; } else my.lit.push(x.lit); }
+      if (x.ev != null) my.ev = x.ev;
+      if (x.dig != null) my.dig = x.dig;
+      render(); later(tick, x.wait);
+    };
+    tick();
+    return true;
+  }
+  function announceJp(cur, amt) {
+    try { var p = P(), nm = esc((p && p.name) || '冒險者'); if (typeof W.logWorld === 'function') W.logWorld('<span class="wc-answer">🍒【遊戲廳】<b style="color:#fde047">' + nm + '</b> 在' + MARY_NAME + '中了 <b style="color:#ef4444">JP</b>，拿走 ' + esc(amtTxt(cur, amt)) + '！</span>'); } catch (e) {}
+  }
+  function maryDouble(side) {
+    var m = maryPend(); if (!m || ui.busy || (m.n || 0) >= DBL_MAX) return;
+    var dg = 1 + Math.floor(rng() * 9), ok = side === 's' ? dg <= 4 : dg >= 6;
+    var unit = maryUnit(m.cur), cap = LIM.mary[m.cur][1] * 100;
+    // 先結算再演
+    var before = m.win;
+    if (ok) { m.win *= 2; m.n = (m.n || 0) + 1; } else { statAdd('mary', m.cur, 0, 0, 0, false); hallData().mary = null; }
+    if (ok && (m.n >= DBL_MAX || m.win >= cap)) { safeSave(); } else safeSave();
+    var fin = function () {
+      ui.busy = false; my.showWin = null;
+      if (ok) {
+        ui.msg = '開 ' + dg + '，猜中！贏分翻倍成 ' + fmt(Math.floor(m.win / unit)) + ' 分。';
+        if (m.n >= DBL_MAX || m.win >= cap) { var got = maryCollect(true); ui.msg += '已經比到上限，自動收分 ' + amtTxt(m.cur, got) + '。'; }
+        maryAnimSprites(m.n >= 3 ? 'big' : 'hit');
+      } else ui.msg = '開 ' + dg + (dg === 5 ? '，莊家通殺' : '，猜錯了') + '……贏分歸零。';
+      render();
+    };
+    if (ui.quick) { my.dig = String(dg); fin(); return; }
+    ui.busy = true; my.showWin = Math.floor(before / unit); var k = 0;
+    var spin = function () { my.dig = String(1 + Math.floor(Math.random() * 9)); render(); if (++k < 12) later(spin, 60 + k * 8); else { my.dig = String(dg); render(); later(fin, 400); } };
+    spin();
+  }
   function onClick(ev) {
     var t = ev.target.closest('[data-gh]'); if (!t || t.disabled) return;
     var a = t.getAttribute('data-gh'), p = a.split(':');
     if (a === 'close') return close();
     if (a === 'min') return toBall();
-    if (a === 'home') { if (ui.busy) { stopAnims(); finishShow(); } stopAuto(); return go('home'); }
+    if (a === 'home') { if (ui.busy) { stopAnims(); finishShow(); ui.busy = false; } stopAuto(); return go('home'); }
     if (a === 'quick') { ui.quick = !!t.checked; LS('afk_gh_quick', ui.quick ? '1' : '0'); return; }
     if (a === 'poker') { close(); try { W.__afkPoker.openLobby(); } catch (e) {} return; }
     if (a === 'dog') { close(); toCenter(); try { W.openRaceWindow(); } catch (e) {} return; }
     if (p[0] === 'go') return go(p[1]);
     if (ui.busy && a !== 'stop') return;
-    if (p[0] === 'cur') { if (ui.auto) return; ui.cur = p[1]; LS('afk_gh_cur', ui.cur); bac.bets = {}; ui.msg = ''; return render(); }
+    if (p[0] === 'cur') { if (ui.auto) return; maryCollect(true); ui.cur = p[1]; LS('afk_gh_cur', ui.cur); bac.bets = {}; ui.msg = ''; return render(); }
     if (a === 'stop') { stopAuto(); return render(); }
     // 百家樂
     if (p[0] === 'chip') { bac.chip[ui.cur] = Number(p[1]); return render(); }
@@ -698,6 +964,15 @@
       if (!bacDealRound(true)) stopAuto();
       return;
     }
+    // 小瑪莉
+    if (p[0] === 'mb') { var mi = Number(p[1]); if (my.bets[mi] < MARY_MAXPT) my.bets[mi]++; ui.msg = ''; return render(); }
+    if (a === 'mall') { for (var q = 0; q < 9; q++) if (my.bets[q] < MARY_MAXPT) my.bets[q]++; ui.msg = ''; return render(); }
+    if (a === 'mclr') { my.bets = [0, 0, 0, 0, 0, 0, 0, 0, 0]; ui.msg = ''; return render(); }
+    if (a === 'mre') { if (my.last) my.bets = my.last.slice(); return render(); }
+    if (a === 'mgo') return maryRound();
+    if (a === 'mcol') { maryCollect(false); return render(); }
+    if (p[0] === 'mdbl') return maryDouble(p[1]);
+    if (p[0] === 'mauto') { if (!maryPts(my.bets) && my.last) my.bets = my.last.slice(); ui.auto = 1; ui.autoLeft = Number(p[1]); if (!maryRound()) stopAuto(); return; }
     // 拉霸
     if (a === 'bet-' || a === 'bet+') { var st = STEPS[ui.cur], i = st.indexOf(slBet(ui.cur)); i = Math.max(0, Math.min(st.length - 1, i + (a === 'bet+' ? 1 : -1))); sl.bet[ui.cur] = st[i]; return render(); }
     if (a === 'spin') return slotRound();
@@ -708,7 +983,7 @@
   W.__afkGameHall = {
     on: on, open: open, close: close, go: go, CURS: CURS, LIM: LIM, CHIPS: CHIPS, STEPS: STEPS, SPOTS: SPOTS, SYMS: SYMS, MV: MV, SCAT_PAY: SCAT_PAY,
     SLOT_NAME: SLOT_NAME, SLOT_CAP: SLOT_CAP, DECKS: DECKS, CUT: CUT,
-    newShoe: newShoe, bacDeal: bacDeal, bacReturn: bacReturn, bigRoad: bigRoad, slotSpin: slotSpin, slotPlay: slotPlay, settle: settle, balance: balance, art: art, _testQ: TESTQ
+    newShoe: newShoe, bacDeal: bacDeal, bacReturn: bacReturn, bigRoad: bigRoad, slotSpin: slotSpin, slotPlay: slotPlay, settle: settle, balance: balance, art: art, _testQ: TESTQ, MF: MF, RING: RING, RING_P: RING_P, MEV: MEV, maryPlay: maryPlay, MARY_NAME: MARY_NAME, MARY_UNIT: MARY_UNIT, JP_SEED: JP_SEED, JP_WIN: JP_WIN, JP_RATE: JP_RATE, DBL_MAX: DBL_MAX, maryCollect: maryCollect
   };
   if (!on()) return;
 
@@ -736,8 +1011,9 @@
   // 換角色時關掉（不同角色的錢）
   if (typeof W.loadGame === 'function' && !W.loadGame._afkGh) {
     var oLoad = W.loadGame;
-    W.loadGame = function () { try { close(); } catch (e) {} return oLoad.apply(this, arguments); };
+    W.loadGame = function () { try { close(); } catch (e) {} var r = oLoad.apply(this, arguments); setTimeout(function () { try { maryCollect(true); } catch (e) {} }, 1200); return r; };
     W.loadGame._afkGh = true;
   }
-  console.log('[AFK-gamehall] 已啟用：遊戲廳（百家樂、' + SLOT_NAME + '）');
+  setTimeout(function () { try { if (P()) maryCollect(true); } catch (e) {} }, 3000);
+  console.log('[AFK-gamehall] 已啟用：遊戲廳（百家樂、' + SLOT_NAME + '、' + MARY_NAME + '）');
 })();

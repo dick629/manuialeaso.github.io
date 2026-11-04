@@ -1024,7 +1024,7 @@
     refundStale();
     var h = '<div class="afk-ax pk-tbl"><p class="ax-lore">洛蒂俐落地洗著牌：「無限注德州撲克，輸贏都算你自己的。籌碼在離座時換回來；牌打到一半走人，那手就當你棄牌。」</p>';
     var GH = W.__afkGameHall;
-    if (GH && GH.on && GH.on()) h += '<div class="ax-row"><div class="ax-main"><div><div class="ax-name">🎰 遊戲廳</div><div class="ax-desc">百家樂、' + esc(GH.SLOT_NAME) + '（埃及拉霸）、賽狗場</div></div></div><div class="ax-act"><button type="button" data-pkn="gh:bac">百家樂</button><button type="button" data-pkn="gh:slot">拉霸</button><button type="button" data-pkn="gh:home">遊戲廳</button></div></div>';
+    if (GH && GH.on && GH.on()) h += '<div class="ax-row"><div class="ax-main"><div><div class="ax-name">🎰 遊戲廳</div><div class="ax-desc">百家樂、' + esc(GH.SLOT_NAME) + '（埃及拉霸）、' + esc(GH.MARY_NAME || '小瑪莉') + '、賽狗場</div></div></div><div class="ax-act"><button type="button" data-pkn="gh:bac">百家樂</button><button type="button" data-pkn="gh:slot">拉霸</button><button type="button" data-pkn="gh:mary">小瑪莉</button><button type="button" data-pkn="gh:home">遊戲廳</button></div></div>';
     if (tb) h += '<div class="ax-row"><div class="ax-main"><div><div class="ax-name">你正坐在' + esc(tblName()) + '</div><div class="ax-desc">籌碼 ' + fmt(tb.seats[0].stack) + '</div></div></div><div class="ax-act"><button type="button" data-pkn="open">回到牌桌</button></div></div>';
     TABLES.forEach(function (t) {
       if (!curReady(t.cur)) return;

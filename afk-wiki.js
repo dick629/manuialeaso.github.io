@@ -5181,6 +5181,7 @@
         ['會不會祝福', '固定 <b>1%</b>（<b>不吃席琳世界倍率</b>，那是擊殺掉落才有的）']
       ]) +
       ((window.__afkBloodDia && (!window.AFK_TOGGLES || AFK_TOGGLES.enabled('blooddia'))) ? wDesc('<b>血龍鑽兌換</b>：黑市上方切到「血龍鑽兌換」分頁，<b>龍之鑽石 50 顆換 1 顆血龍鑽</b>，沒有每日上限，換了不能換回。血龍鑽不能販賣。') : '') +
+      ((window.__afkDmgFont && window.__afkDmgFont.on()) ? wDesc('<b>字體販賣所</b>：黑市上方切到「字體販賣所」分頁，用龍之鑽石買<b>傷害數字的字體</b>（每款 ' + Number(window.__afkDmgFont.FONTS[0].price).toLocaleString() + ' 顆）。每款都能先看預覽；買一次<b>全帳號共用</b>，隨時可以換回「經典」。只換你這邊（含傭兵、召喚物）打出去的數字，「未命中」不變。現有：' + window.__afkDmgFont.FONTS.map(function (f) { return f.n; }).join('、') + '。「繁星」會用中文單位顯示（例如 1億 2345萬）。') + wDesc('<b>交易所</b>：分頁已經開好，跟其他冒險者買賣的功能之後開放。') : '') +
       wDesc('<b>收購單</b>：你可以指定「想要的物品名稱＋願意出的價錢」掛著。之後<b>每次有新東西要上架時，系統會先幫那個物品擲一次市價</b>；<b>只要擲出來的價錢不高於你的出價，就算命中</b>，直接用<b>你的出價</b>把它擺上架給你買。命中一次就清空，要再掛得重設。') +
       wDesc('可以指定的範圍：<b>魔法書、萬能藥、怪物卡片，以及耳環以外的一般穿戴裝備</b>。<b>材料、支配符、遺物、魔法娃娃、寵物裝備不能指定</b>。') +
       ((window.AFK_TOGGLES && AFK_TOGGLES.enabled('marketnocard')) ? wDesc('🎴 黑市的隨機陳列<b>不會出現怪物卡片</b>；想要卡片可以掛收購單，命中時照下表的區間擲價：') :
@@ -5343,9 +5344,9 @@
     var G = window.__afkGameHall;
     if (!G || !G.on()) return '<div class="m-wiki-note">遊戲廳目前沒有開放。</div>';
     var u = function (c) { return c === 'gold' ? '' : ' 顆'; }, f = function (n) { return Number(n).toLocaleString(); };
-    var out = '<div class="m-wiki-note">打開<b>設定</b>分頁「🔌 外掛」那一列，按「<b>🎰 遊戲廳</b>」，裡面有<b>德州撲克、百家樂、' + G.SLOT_NAME + '（埃及拉霸）、賽狗場</b>。歐瑞村莊的荷官「<b>洛蒂</b>」也能帶你進百家樂和拉霸。用<b>金幣、龍之鑽石或血龍鑽</b>下注；經典模式只開放賽狗場。</div>';
+    var out = '<div class="m-wiki-note">打開<b>設定</b>分頁「🔌 外掛」那一列，按「<b>🎰 遊戲廳</b>」，裡面有<b>德州撲克、百家樂、' + G.SLOT_NAME + '（埃及拉霸）、' + (G.MARY_NAME || '小瑪莉') + '、賽狗場</b>。歐瑞村莊的荷官「<b>洛蒂</b>」也能帶你進百家樂和拉霸。用<b>金幣、龍之鑽石或血龍鑽</b>下注；經典模式只開放賽狗場。</div>';
     out += wCard('💰 幣別與限額',
-      wTbl(['幣別', '百家樂每局', '拉霸每轉'], ['gold', 'dia', 'blood'].map(function (c) {
+      wTbl(['幣別', '百家樂每局', '拉霸／小瑪莉每局'], ['gold', 'dia', 'blood'].map(function (c) {
         return [G.CURS[c], f(G.LIM.bac[c][0]) + '～' + f(G.LIM.bac[c][1]) + u(c), f(G.LIM.slot[c][0]) + '～' + f(G.LIM.slot[c][1]) + u(c)];
       })) +
       wDesc('每一局<b>按下去就扣款、當下就結算</b>，贏的錢立刻入帳，不會有錢留在桌上；中途關掉遊戲也不會吃錢。') +
@@ -5376,6 +5377,19 @@
       wDesc('長期返還率約 <b>93.5%</b>（每押 100 平均拿回 93.5）；大部分轉不中或中一點點，偶爾一轉幾百倍。') +
       wDesc('贏 20 倍以上是「大獎」、100 倍以上「超級大獎」、500 倍以上「<b>傳說大獎</b>」，傳說大獎會上世界頻道。') +
       wDesc('「自動」可以連轉 10／25／50／100 次；錢不夠、贏到 100 倍以上、或進了免費遊戲時會自動停。'));
+    if (G.MF) {
+      var mI = G.art();
+      out += wCard('🍒 ' + G.MARY_NAME,
+        wDesc('水果盤跑燈機。下面 9 種水果各自押 <b>0～99 分</b>，按「開始」後燈繞著 24 格跑，停在哪一格就賠那種水果押的分數 × 賠率。') +
+        wTbl(['水果', '賠率'], G.MF.map(function (f) { return ['<img alt="" src="' + mI[f.k] + '" style="width:22px;height:22px;image-rendering:pixelated;vertical-align:middle"> ' + f.n, f.odds + ' 倍']; })) +
+        wDesc('畫得小一號、旁邊標「×3」的格子固定賠 <b>3 倍</b>。') +
+        wDesc('<b>1 分</b>＝金幣 ' + f(G.MARY_UNIT.gold) + '、龍之鑽石 1 顆、血龍鑽 1 顆；每局限額同拉霸。') +
+        wDesc('<b>ONCE MORE</b>：隨機送燈——再送一燈、送 2～4 燈、<b>開火車</b>（後面 3～7 格一起亮）、<b>小三元</b>（柳丁、檸檬、鈴鐺）、<b>大三元</b>（西瓜、星星、77）、<b>大四喜</b>（4 個蘋果），也可能槓龜。送的燈全部照賠。') +
+        wDesc('<b>JP</b>：每局押注的 1.5% 進獎池（中間的 LED 會顯示）。<b>9 種全押</b>、而且大 BAR 那格亮起時，會跳一組 000～999 的號碼，開出 <b>777</b> 就整池給你，並上世界頻道。') +
+        wDesc('<b>比倍</b>：有贏分時可以比大小：開 1～9，猜中「小 1-4」或「大 6-9」贏分翻倍，猜錯或開出 <b>5</b> 歸零；最多比 ' + G.DBL_MAX + ' 次。不想比就按「WIN→CREDIT」收分。') +
+        wDesc('還沒收的贏分會存進存檔；關掉遊戲、切換幣別或離開機台時會自動收進來。') +
+        wDesc('長期返還率約 <b>93.5%</b>（含 JP）；押哪一種水果長期都一樣。'));
+    }
     return out;
   }
 
