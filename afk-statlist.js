@@ -132,7 +132,27 @@
       t += '，能力值上限 ' + aCap + '：超過的 ' + over + ' 點' + (reb && OVER_USE[s] ? '仍算進' + OVER_USE[s]
         : (lost < over ? '中 ' + lost + ' 點' : '') + '沒有效果');
     }
+    if (s === 'int') { var nx = intNext(tot, aCap); if (nx) t += '。' + nx; }
     return t;
+  }
+  // 智力的魔法傷害／額外魔法點數是階梯表(js/01 getIntMagicDmg/getIntExtraMp):不是每 1 點都加,
+  //   轉生後 100 以上照 80→100 那段延伸＝每 2 點 +1(afk-rebirth)。玩家回報「智力 +1 魔法傷害沒增加」→ 說還差幾點。
+  //   查表用「戰鬥實際拿去查的值」:沒轉生夾在 100、轉生夾在 200,超過 200 的部分轉生後照算(夾上限前的總值)。
+  var INT_FX = [['getIntMagicDmg', '魔法傷害'], ['getIntExtraMp', '額外魔法點數']];
+  function intNext(tot, aCap) {
+    var reb = !!(player.rebirth > 0), cur = reb ? tot : Math.min(tot, aCap), parts = [], same = null;
+    INT_FX.forEach(function (f) {
+      var fn = window[f[0]]; if (typeof fn !== 'function') return;
+      var v0 = fn(cur);
+      for (var n = 1; n <= 30; n++) {
+        if (!reb && cur + n > aCap) return;   // 沒轉生：超過上限不會再加
+        var dv = fn(cur + n) - v0;
+        if (dv > 0) { parts.push([n, f[1] + ' +' + dv]); return; }
+      }
+    });
+    if (!parts.length) return '';
+    if (parts.length === 2 && parts[0][0] === parts[1][0]) return '再 ' + parts[0][0] + ' 點智力：' + parts[0][1] + '、' + parts[1][1];
+    return parts.map(function (x) { return '再 ' + x[0] + ' 點智力：' + x[1]; }).join('；');
   }
 
   // updateUI 戰鬥中每秒被叫上百次 → 用簽章短路,值沒變就零 DOM 返回
