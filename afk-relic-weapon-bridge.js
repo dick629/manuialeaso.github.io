@@ -426,13 +426,26 @@
   }; });
   wrap('allyAttackIntervalTicks',function(native){return function(a){var d=mainWeapon(a);return enabled()&&d&&d.relicFixedAttackInterval?Math.max(1,d.relicFixedAttackInterval*10):native.apply(this,arguments);};});
 
-  function weaponSources(a) { return runtime().sources(a).filter(function (s) { return s.catalogId <= 131; }); }
-  function teamSources() {
-    var r = runtime(), out = []; r.api.team().forEach(function (a) { weaponSources(a).forEach(function (s) { out.push({ owner: a, source: s, def: s.def }); }); }); return out;
+  // runtime().sources(a) returns the same immutable array until that actor's
+  // equipment or the runtime revision changes, so derived views can be keyed by
+  // that array. Callers only read these arrays.
+  var weaponViews = new WeakMap(), teamView = null, NO_SOURCES = [];
+  function weaponSources(a) {
+    var list = runtime().sources(a); if (!list.length) return NO_SOURCES;
+    var v = weaponViews.get(list);
+    if (!v) { v = list.filter(function (s) { return s.catalogId <= 131; }); weaponViews.set(list, v); }
+    return v;
   }
-  function petBonus(p, field) {
+  function teamSources() {
+    var r = runtime(), members = r.api.team(), n = members.length, lists = new Array(n), same = !!teamView && teamView.members.length === n;
+    for (var i = 0; i < n; i++) { lists[i] = weaponSources(members[i]); if (same && (teamView.members[i] !== members[i] || teamView.lists[i] !== lists[i])) same = false; }
+    if (same) return teamView.out;
+    var out = []; for (var j = 0; j < n; j++) { var a = members[j]; lists[j].forEach(function (s) { out.push({ owner: a, source: s, def: s.def }); }); }
+    teamView = { members: members, lists: lists, out: out }; return out;
+  }
+  function petBonus(p, field, team) {
     if (!enabled()) return 0; var n = 0, form = (p.form || '').replace(/^高等/, '');
-    teamSources().forEach(function (x) {
+    (team || teamSources()).forEach(function (x) {
       var d = x.def, generic = d.relicPetStats, specific = d.relicPartnerStats && (d.relicPartnerStats[p.form] || d.relicPartnerStats[form]);
       n += number(generic && generic[field]);
       // Core already consumes partnerHit; partnerDmg has no native consumer.
@@ -458,7 +471,8 @@
   }
   wrap('petGearBonus', function (native) { return function (p) {
     var d = native.apply(this, arguments); if (!enabled() || !d) return d;
-    d.dmg += petBonus(p, 'dmg'); d.hit += petBonus(p, 'hit'); return d;
+    var team = teamSources();   // 兩次加總之間沒有任何會動裝備的程式，同一份隊伍來源直接共用
+    d.dmg += petBonus(p, 'dmg', team); d.hit += petBonus(p, 'hit', team); return d;
   }; });
   wrap('petDerive', function (native) { return function (p) {
     var d = native.apply(this, arguments); if (!enabled() || !d) return d;

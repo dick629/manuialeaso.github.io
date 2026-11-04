@@ -28,9 +28,17 @@
   var cache = { key: '', v: null };
   var compute = function () {
     var p = P(); if (!p || !on() || p.classicMode) return null;
+    // 快速路徑：同一 tick、每位成員的 (_slot||'p') 與 cls 跟上次完全相同（===）→ 組出來的 key 必然相同，不必再組字串
+    var t = tk(), raw = cache.raw, al = p.allies || [];
+    if (raw && cache.tick === t && raw[0] === (p._slot || 'p') && raw[1] === p.cls) {
+      var j = 2, same = true;
+      for (var i = 0; i < al.length; i++) { var am = al[i]; if (!am) continue; if (raw[j] !== (am._slot || 'p') || raw[j + 1] !== am.cls) { same = false; break; } j += 2; }
+      if (same && j === raw.length) return cache.v;
+    }
     var allies = (p.allies || []).filter(Boolean), members = [p].concat(allies);
-    var key = tk() + '|' + members.map(function (m) { return (m._slot || 'p') + ':' + m.cls; }).join(',');
-    if (cache.key === key) return cache.v;
+    var key = t + '|' + members.map(function (m) { return (m._slot || 'p') + ':' + m.cls; }).join(',');
+    var raws = []; members.forEach(function (m) { raws.push(m._slot || 'p', m.cls); });
+    if (cache.key === key) { cache.tick = t; cache.raw = raws; return cache.v; }
     var hasRoyal = members.some(function (m) { return m.cls === 'royal'; }), party = members.length >= NO_ROYAL.min;
     var out = new Map(), byCls = {};
     members.forEach(function (m) { (byCls[m.cls] = byCls[m.cls] || []).push(m); out.set(m, 1); });
@@ -48,7 +56,7 @@
     var noRoyal = party && !hasRoyal;
     if (noRoyal) { members.forEach(function (m) { out.set(m, out.get(m) * NO_ROYAL.out); }); inc *= NO_ROYAL.inc; }
     var v = { out: out, inc: inc, guard: guard, noRoyal: noRoyal, ac: noRoyal ? NO_ROYAL.ac : 0, mr: noRoyal ? NO_ROYAL.mr : 0, drop: noRoyal ? NO_ROYAL.drop : 1, members: members };
-    cache = { key: key, v: v };
+    cache = { key: key, v: v, tick: t, raw: raws };
     return v;
   };
   var outMult = function (actor) { var v = compute(); if (!v || !actor) return 1; var m = v.out.get(actor); return m == null ? 1 : m; };

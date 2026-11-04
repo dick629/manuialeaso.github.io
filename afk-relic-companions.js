@@ -17,8 +17,9 @@
   var active=function(){return R.api.activeContext?R.api.activeContext():R.context?R.context():null;};
   function source(owner,id){return R.sources(owner).find(function(x){return x.catalogId===id;})||null;}
   function teamSource(id){var best=null;characters().forEach(function(owner){var s=source(owner,id);if(s&&(!best||s.stage>best.source.stage||s.stage===best.source.stage&&num(s.n)>num(best.source.n)))best={owner:owner,source:s};});return best;}
-  function characters(includeDown){var p=playerNow();return p?[p].concat(p.allies||[]).filter(includeDown?Boolean:live):[];}
-  function team(){var out=characters();if(typeof W.guardAliveList==='function')out=out.concat(W.guardAliveList());return uniq(out);}
+  // Loop forms of [p].concat(allies).filter(...) and uniq(characters().concat(guards)): same members, same order.
+  function characters(includeDown){var p=playerNow();if(!p)return [];var out=[],keep=includeDown?Boolean:live;if(keep(p))out.push(p);var al=p.allies||[];for(var i=0;i<al.length;i++){if(!(i in al))continue;var a=al[i];if(keep(a))out.push(a);}return out;}
+  function team(){var out=characters(),n=out.length,dup=false;for(var i=1;i<n&&!dup;i++)if(out.lastIndexOf(out[i],i-1)>=0)dup=true;if(dup)out=uniq(out);if(typeof W.guardAliveList==='function'){var g=W.guardAliveList();for(var j=0;j<g.length;j++){var e=g[j];if(e&&out.indexOf(e)<0)out.push(e);}}return out;}
   function pets(owner,includeDown){
     var p=playerNow();owner=owner||p;if(!p||owner!==p)return [];
     var a=typeof W.petsOutList==='function'?W.petsOutList():p.pets||[];
@@ -32,7 +33,11 @@
     if(p&&(p.allies||[]).some(function(a){return a&&a.summon===e;}))return (p.allies||[]).find(function(a){return a&&a.summon===e;});
     return p;
   }
-  function kindOf(e){if(!e)return 'summon';if(e.skId==='sk_elf_summon'||e.skId==='sk_elf_summon2')return 'spirit';if(pets(null,true).indexOf(e)>=0)return 'pet';return 'summon';}
+  // Same membership test as pets(null,true).indexOf(e)>=0 (e is truthy here), without the two copies.
+  function isOutPet(e){var p=playerNow();if(!p)return false;var a=typeof W.petsOutList==='function'?W.petsOutList():p.pets||[];return a.indexOf(e)>=0;}
+  function kindOf(e){if(!e)return 'summon';if(e.skId==='sk_elf_summon'||e.skId==='sk_elf_summon2')return 'spirit';if(isOutPet(e))return 'pet';return 'summon';}
+  // Training whip (18) summon HP over the whole team, summed in the original order.
+  function teamSummonHp(){var list=characters(),n=0;for(var i=0;i<list.length;i++){var ss=R.sources(list[i]);for(var j=0;j<ss.length;j++){var s=ss[j];if(s.catalogId===18)n=n+num(s.def.relicSummonHp);}}return n;}
   function summons(owner,includeDown){
     var p=playerNow();owner=owner||p;if(!owner)return [];
     var a=owner===p?(p.summonsV2||[]).slice():[];
@@ -49,8 +54,7 @@
   function companionStats(owner,e,stats){
     var k=kindOf(e),c=dispatchCompanion('onCompanionStats',owner,e,{stats:stats||{},maxHpMult:1,directDamageMult:1});
     // Training whip protects and strengthens the entire team, including allies' summons.
-    var all=characters().flatMap(function(a){return R.sources(a).filter(function(s){return s.catalogId===18;});});
-    c.maxHpAdd=k==='pet'?0:all.reduce(function(n,s){return n+num(s.def.relicSummonHp);},0);
+    c.maxHpAdd=k==='pet'?0:teamSummonHp();
     var B=W.AFK_RELIC_WEAPON_BRIDGE;if(B&&B.companionDamageMult)c.directDamageMult*=B.companionDamageMult(owner,e);
     var speed=k==='pet'?0:R.sources(owner).reduce(function(n,s){return Math.max(n,num(s.def.relicCompanionAttackSpeed));},0);c.attackSpeedPct=speed;
     var buffs=R.state(e,'_buffs');Object.keys(buffs).forEach(function(k){var b=buffs[k];if(b.until>now()&&b.values&&b.values.directDamageMult)c.directDamageMult*=b.values.directDamageMult;});

@@ -765,7 +765,9 @@
     return reduction;
   }
 
-  var exported = {byId:byId,byKey:byKey,configure:configure,tier:configure,dispatch:dispatch,stage:tier,dynamicStatsKey:dynamicStatsKey,hpSpeedBonus:hpSpeedBonus,targetModifiers:targetModifiers,incomingModifiers:incomingModifiers,healingReduction:healingReduction};
+  // dispatch 對這個事件／遺物會不會做事：與 dispatch 開頭三道 return 同一套判斷（runtime 用來略過一定立刻 return 的呼叫）
+  function handles(event,id){return !!HANDLED_EVENTS[event]&&!!byId[id]&&!(NARROW_EVENTS[event]&&!NARROW_EVENTS[event][id]);}
+  var exported = {handles:handles,byId:byId,byKey:byKey,configure:configure,tier:configure,dispatch:dispatch,stage:tier,dynamicStatsKey:dynamicStatsKey,hpSpeedBonus:hpSpeedBonus,targetModifiers:targetModifiers,incomingModifiers:incomingModifiers,healingReduction:healingReduction};
   global.AFK_RELIC_DEFENSE = exported;
   if (typeof module !== 'undefined' && module.exports) module.exports = exported;
 })(typeof window !== 'undefined' ? window : globalThis);

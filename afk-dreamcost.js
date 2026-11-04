@@ -187,7 +187,7 @@
   }
 
   // 復活卷軸張數 ×倍率：不夠就當作沒有卷軸；夠的話原本扣 1 張，之後補扣其餘
-  var scrollCount = function () { return (player.inv || []).reduce(function (s, i) { return s + (i && i.id === 'scroll_revive' ? (i.cnt || 0) : 0); }, 0); };
+  var scrollCount = function () { var inv = player.inv || [], s = 0; for (var k = 0; k < inv.length; k++) { var i = inv[k]; if (i && i.id === 'scroll_revive') s = s + (i.cnt || 0); } return s; };   // 背包上千格、每 tick 會問好幾次：不用 reduce 閉包
   var takeScrolls = function (n) {
     for (var i = 0; i < (player.inv || []).length && n > 0; i++) {
       var it = player.inv[i]; if (!it || it.id !== 'scroll_revive') continue;

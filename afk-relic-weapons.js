@@ -710,5 +710,5 @@
       var spend=Math.min(ts.curse,s>=3?2:1);ts.curse-=spend;var curseD=hit(t,spend*(ts.curseUnit||v(150,300,500,800)),'water','magic');if(s===4&&c.actor===a)heal(a,curseD*.2);
     }
   }
-  window.AFK_RELIC_WEAPONS={version:1,entries:META,byKey:BY_KEY,byId:BY_ID,tier:tier,configure:configure,dispatch:dispatch};
+  window.AFK_RELIC_WEAPONS={version:1,entries:META,byKey:BY_KEY,byId:BY_ID,tier:tier,configure:configure,dispatch:dispatch,handles:function(event){return !!HANDLED_EVENTS[event];}};   // handles＝dispatch 對這個事件會不會做事（runtime 用來略過一定立刻 return 的呼叫）
 })();

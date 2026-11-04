@@ -184,9 +184,18 @@ function petMasteryTakenMult() { return petMasteryOn() ? 0.5 : 1; }   // 受到�
 // 🏺 遺物 馴獸師手做寵物專用盔甲：該寵物裝備的護甲（p.eq.arm）帶 petDmgReduce → 受到傷害 ×(1−petDmgReduce)。與 petMasteryTakenMult 同列乘算。
 function petArmorDmgReduceMult(p) { let a = p && p.eq && p.eq.arm; let d = a ? DB.items[a.id] : null; return (d && d.petDmgReduce) ? Math.max(0, 1 - d.petDmgReduce) : 1; }
 // 🏺 v3.7.20 蜥蜴領主的王冠等「全寵物光環」欄位加總：掃玩家＋未倒地傭兵全部裝備欄（範圍與 petGearBonus 的 petDmgAll 一致）
+const _petAuraSnap = new WeakMap();   /* 🔌 加掛版補丁:寵物光環快取 */
+function _petAuraVals(c, field) {   // 這個人身上帶 field 的裝備值（依 for-in 欄位順序）；裝備欄、物件、id 都沒變就沿用
+    let eq = c.eq, items = DB.items, sn = _petAuraSnap.get(c), ok = !!(sn && sn.eq === eq && sn.items === items);
+    if (ok) { let i = 0, keys = sn.keys, ents = sn.ents, ids = sn.ids, defs = sn.defs; for (let k in eq) { let e = eq[k]; if (keys[i] !== k || ents[i] !== e || (e && (ids[i] !== e.id || (defs[i] == null && items[e.id] != null)))) { ok = false; break; } i++; } if (ok && i !== keys.length) ok = false; }
+    if (!ok) { sn = { eq: eq, items: items, keys: [], ents: [], ids: [], defs: [], vals: Object.create(null) }; for (let k in eq) { let e = eq[k]; sn.keys.push(k); sn.ents.push(e); sn.ids.push(e ? e.id : undefined); sn.defs.push(e ? items[e.id] : undefined); } _petAuraSnap.set(c, sn); }
+    let v = sn.vals[field];
+    if (!v) { v = []; for (let i = 0; i < sn.defs.length; i++) { let d = sn.defs[i]; if (sn.ents[i] && d && d[field]) v.push(d[field]); } sn.vals[field] = v; }
+    return v;
+}
 function petAuraSum(field) {
     let s = 0;
-    let _scan = function (c) { if (!c || !c.eq) return; for (let k in c.eq) { let e = c.eq[k]; if (!e) continue; let d = DB.items[e.id]; if (d && d[field]) s += d[field]; } };
+    let _scan = function (c) { if (!c || !c.eq) return; let v = _petAuraVals(c, field); for (let i = 0; i < v.length; i++) s += v[i]; };   /* 🔌 加掛版補丁:寵物光環快取 */
     if (typeof player !== 'undefined' && player) { _scan(player); (player.allies || []).forEach(a => { if (a && !a._downed) _scan(a); }); }
     return s;
 }
@@ -455,7 +464,7 @@ window.addEventListener('storage', ev => {
     } catch (e) {}
 });
 
-function petsOutList() { let owner = _petCurrentOwnerKey(); return owner ? petRoster().filter(p => String(p.outOwner || '') === owner) : []; }
+function petsOutList() { let owner = _petCurrentOwnerKey(); if (!owner) return []; let r = petRoster(), out = []; for (let i = 0; i < r.length; i++) { if (!(i in r)) continue; let p = r[i], o = p.outOwner || ''; if ((typeof o === 'string' ? o : String(o)) === owner) out.push(p); } return out; }   /* 🔌 加掛版補丁:寵物光環快取 */
 function petChaUsed() { return petsOutList().reduce((s, p) => s + ((PET_BOOK[p.form] || {}).cha || 6), 0); }
 function _petEnforceCarry() {   // 換角色載入：魅力不足/超過4隻→自動收回超出的
     let out = petsOutList();

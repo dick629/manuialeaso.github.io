@@ -40,26 +40,30 @@ function _buildCatchupGainItemIndex() {
     };
     return _catchupGainItemIndex;
 }
+const _sameItemSigCore = sameItemSig;   /* 🔌 加掛版補丁:撿物堆疊少掃一輪 */
 function _findCatchupGainItemStack(probe) {
     let inv = player.inv;
     let cache = _catchupGainItemIndex;
     let first = inv.length ? inv[0] : null;
     let last = inv.length ? inv[inv.length - 1] : null;
+    let _built = false;   /* 🔌 加掛版補丁:撿物堆疊少掃一輪 */
     if (!cache || cache.inv !== inv || cache.length !== inv.length || cache.first !== first || cache.last !== last) {
-        cache = _buildCatchupGainItemIndex();
+        cache = _buildCatchupGainItemIndex(); _built = true;
     }
 
     let sig = itemSig(probe);
     let entry = cache.bySig.get(sig);
     if (entry && inv[entry.index] === entry.item && !entry.item.gw && sameItemSig(entry.item, probe)) return entry.item;
-    if (entry) cache = _buildCatchupGainItemIndex();
+    if (entry) { cache = _buildCatchupGainItemIndex(); _built = true; }
     entry = cache.bySig.get(sig);
     if (entry && inv[entry.index] === entry.item && !entry.item.gw && sameItemSig(entry.item, probe)) return entry.item;
+    if (_built && !entry && sameItemSig === _sameItemSigCore) return null;   /* 🔌 加掛版補丁:撿物堆疊少掃一輪 */
+    let _fastSig = sameItemSig === _sameItemSigCore;
 
     // 索引未命中仍保留舊路徑，涵蓋補跑讓步期間玩家修改物品簽章的極端情況。
     for (let index = 0; index < inv.length; index++) {
         let item = inv[index];
-        if (item && !item.gw && sameItemSig(item, probe)) {
+        if (item && !item.gw && (_fastSig ? itemSig(item) === sig : sameItemSig(item, probe))) {   /* 🔌 加掛版補丁:撿物堆疊少掃一輪 */
             cache.bySig.set(sig, { item: item, index: index });
             return item;
         }

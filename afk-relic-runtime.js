@@ -28,6 +28,8 @@
   var hp = function (e) { return e ? Math.max(0, finite(e[hpKey(e)])) : 0; };
   var mhp = function (e) { var C=W.AFK_RELIC_COMPANIONS;return e ? Math.max(1,finite(C&&C.maxHp?C.maxHp(e):(e.mhp != null ? e.mhp : e.hp))) : 1; };
   var targets = function () { return typeof mapState !== 'undefined' && mapState.mobs ? mapState.mobs.filter(function (m) { if(m&&!m._relicDefenseMarks)transient(m,'_relicDefenseMarks',{});return m && hp(m) > 0 && !m._dead; }) : []; };
+  // Same result and the same mark side effect as targets().length > 0, without building the array.
+  var hasTargets = function () { if (typeof mapState === 'undefined' || !mapState.mobs) return false; var ms = mapState.mobs, any = false; for (var i = 0; i < ms.length; i++) { var m = ms[i]; if (m && !m._relicDefenseMarks) transient(m,'_relicDefenseMarks',{}); if (!any && m && hp(m) > 0 && !m._dead) any = true; } return any; };
   var ownerPlayer = function () { return typeof player !== 'undefined' ? player : null; };
   var team = function () { var p = ownerPlayer(); return p ? [p].concat((p.allies || []).filter(function (a) { return a && !a._downed && hp(a) > 0; })) : []; };
   var pets = function () { var p = ownerPlayer(); return p && p.pets ? p.pets.filter(function (x) { return x && !x._downed && hp(x) > 0 && !x.stored; }) : []; };
@@ -49,8 +51,16 @@
     // Equipment mutates in place, so object identity alone is not sufficient.
     // Compare the same slot/id information as the former sorted string, without
     // allocating/sorting/joining a new signature on every hot-path query.
-    var keys=Object.keys(actor.eq),old=caches.get(actor),same=!!(old&&old.revision===revision&&old.count===keys.length);
-    if(same){for(var at=0;at<keys.length;at++){var entry=actor.eq[keys[at]];if(old.ids[keys[at]]!==String(entry&&entry.id||'')){same=false;break;}}if(same)return old.sources;}
+    // Validate against the slot order/ids snapshot with a for-in walk (same own
+    // keys in the same order as Object.keys for plain equipment objects) instead
+    // of allocating a key array and doing dictionary lookups on every query.
+    var eq=actor.eq,old=caches.get(actor);
+    if(old&&old.revision===revision){
+      var okeys=old.keys,oids=old.idList,at=0,same=true;
+      for(var sk in eq){if(okeys[at]!==sk){same=false;break;}var entry=eq[sk],eid=entry&&entry.id||'';if(typeof eid!=='string')eid=String(eid);if(oids[at]!==eid){same=false;break;}at++;}
+      if(same&&at===okeys.length)return old.sources;
+    }
+    var keys=Object.keys(eq);
     var selected = {};
     keys.forEach(function (k) {
       var e = actor.eq[k]; if (!e || e._relicVirtual) return;
@@ -61,8 +71,8 @@
       var d = ultimate(c.key); if (d) selected[c.key] = sourceInfo(c.key, d, { id: c.key, en: 0, _relicProjection: true });
     });
     var list = Object.keys(selected).map(function (k) { return selected[k]; }).sort(function (a, b) { return a.catalogId - b.catalogId; });
-    var ids=Object.create(null);for(var ix=0;ix<keys.length;ix++){var e=actor.eq[keys[ix]];ids[keys[ix]]=String(e&&e.id||'');}
-    caches.set(actor, { revision:revision,count:keys.length,ids:ids,sources:list }); return list;
+    var idList=new Array(keys.length);for(var ix=0;ix<keys.length;ix++){var e=actor.eq[keys[ix]];idList[ix]=String(e&&e.id||'');}
+    caches.set(actor, { revision:revision,keys:keys,idList:idList,sources:list }); return list;
   }
   var ultimateCache = {};
   function ultimate(key) {
@@ -99,14 +109,30 @@
     if(!selected){selected={weapon:[],all:[]};for(var j=0;j<list.length;j++){var x=list[j];if(!x||!x.def)continue;if(x.catalogId>131)selected.all.push(x);else if(x.key===channel){selected.weapon.push(x);selected.all.push(x);}}view.channels[channel]=selected;}
     return module==='weapon'?selected.weapon:selected.all;
   }
+  // Sources whose module returns before doing anything for this event (the
+  // module's own event tables say so) are left out of the loop. Lists are the
+  // immutable cached views above, so the filtered copy is cached with them.
+  var runViews = new WeakMap();
+  function runnable(list, event, weaponEvent, wm, dm) {
+    var byEvent=runViews.get(list);if(!byEvent){byEvent=Object.create(null);runViews.set(list,byEvent);}
+    var r=byEvent[event];
+    if(r&&r.wm===wm&&r.dm===dm)return r;
+    var out=[],tail=null,wh=wm&&typeof wm.handles==='function'?wm.handles:null,dh=dm&&typeof dm.handles==='function'?dm.handles:null;
+    for(var i=0;i<list.length;i++){var s=list[i];if(!s||!s.def)continue;tail=s;
+      var weapon=s.catalogId<=131,skip=weapon?(wh&&!wh(weaponEvent)):(dh&&s.catalogId&&!dh(event,Number(s.catalogId)));
+      if(!skip)out.push(s);}
+    r={wm:wm,dm:dm,list:out,tail:tail};byEvent[event]=r;return r;
+  }
   function dispatch(event, ctx, only) {
     if (!enabled() || !ctx || !ctx.actor || depth > 16) return ctx;
     ctx.now = now(); ctx.actionId = ctx.actionId || (action && action.id) || ++seq; ctx.battleId = battle;
-    ctx.inBattle = typeof mapState !== 'undefined' && !/^town_/.test(mapState.current || '') && targets().length > 0;
+    ctx.inBattle = typeof mapState !== 'undefined' && !/^town_/.test(mapState.current || '') && hasTargets();
     var movement = stateOf(ctx.actor, '_movement'); ctx.stationaryFor = Math.max(0, now() - (movement.last || 0)); ctx.movingFor = movement.movingFor || 0; ctx.moving = !!movement.moving;
     var list = only ? [only] : sourceList(ctx.actor), prior = active;
     list=dispatchList(list,ctx._module,channelEvents[event]&&ctx.channelKey);
     var weaponModule=W.AFK_RELIC_WEAPONS,defenseModule=W.AFK_RELIC_DEFENSE,weaponEvent=aliasesWeapon[event]||event,once=gmOnceEvents[event];
+    var tail=null;
+    if(!only&&!(action&&action.gm)){var run=runnable(list,event,weaponEvent,weaponModule,defenseModule);list=run.list;tail=run.tail;}
     depth++;
     try {
       for(var ix=0,length=list.length;ix<length;ix++) {
@@ -120,6 +146,8 @@
         var weapon=s.catalogId<=131,mod=weapon?weaponModule:defenseModule;
         if (mod && typeof mod.dispatch === 'function') mod.dispatch(weapon?weaponEvent:event, ctx, api);
       }
+      // Skipped sources only had their fields written into ctx; leave ctx exactly as the full loop would.
+      if(tail&&(!length||list[length-1]!==tail)){ctx.source = ctx.item = tail.def; ctx.sourceId = tail.key; ctx.catalogId = tail.catalogId; ctx.stage = tail.stage; ctx.n = tail.n; ctx.asc = tail.asc; ctx.api = api;}
     } finally { depth--; active = prior; }
     return ctx;
   }

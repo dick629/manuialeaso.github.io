@@ -33,6 +33,17 @@
     var force = {};
 
     function find(id) { return byId[id] || null; }
+    var memo = Object.create(null), memoOk = true;
+    function enabledRaw(id) {
+        if (MERGED[id]) return (id in force) ? force[id] : api.enabled(MERGED[id]);
+        var r = find(id), def = r ? r.def : true;
+        if (r && r.locked) return false;   // 暫時停用中：不管 localStorage 存過什麼都當關閉
+        if (r && r.parent && !api.enabled(r.parent)) return false;   // 父項關掉 → 子選項一律失效（子選項自己不必再問一次父項）
+        var v;
+        if (id in lsCache) v = lsCache[id];
+        else { try { v = lsCache[id] = localStorage.getItem(LS + id); } catch (e) { memoOk = false; return def; } }
+        return v === null ? def : v === '1';
+    }
 
     // ── 次元封印（玩家 2026-10-30 18:45）：玩家自己改的外掛全部集中在面板最下面的「次元封印」分類 ──
     //   判準：開關第一次出現在 Ping 的提交（2026-10-20 起）。原本的分類（遊戲玩法、遊戲介面…）在次元封印底下當小標題保留。
@@ -68,21 +79,22 @@
                 seal: !!(spec.seal || SEAL[spec.id]),   // 次元封印：玩家自己改的外掛
                 merged: MERGED[spec.id] || ''           // 已併入夢域鏡模式開關：面板不列
             };
-            registry.push(entry);
+            registry.push(entry); memo = Object.create(null);
             byId[entry.id] = entry;
         },
         // 這支外掛現在是否啟用（讀 localStorage，未設過→用預設；讀不到 localStorage→啟用）
+        // 結果只取決於 registry／force／lsCache，三者變動的地方（register、set、恢復預設）都會清掉 memo；
+        // 讀 localStorage 失敗的那次不記（下次照舊再讀）。戰鬥中每 tick 會被問上千次。
         enabled: function (id) {
-            if (MERGED[id]) return (id in force) ? force[id] : api.enabled(MERGED[id]);
-            var r = find(id), def = r ? r.def : true;
-            if (r && r.locked) return false;   // 暫時停用中：不管 localStorage 存過什麼都當關閉
-            if (r && r.parent && !api.enabled(r.parent)) return false;   // 父項關掉 → 子選項一律失效（子選項自己不必再問一次父項）
-            var v;
-            if (id in lsCache) v = lsCache[id];
-            else { try { v = lsCache[id] = localStorage.getItem(LS + id); } catch (e) { return def; } }
-            return v === null ? def : v === '1';
+            var m = memo[id];
+            if (m !== undefined) return m;
+            memoOk = true;
+            var r = enabledRaw(id);
+            if (memoOk) memo[id] = r;
+            return r;
         },
-        set: function (id, on) { if (MERGED[id]) { force[id] = !!on; return; } try { localStorage.setItem(LS + id, on ? '1' : '0'); lsCache[id] = on ? '1' : '0'; } catch (e) {} },
+        set: function (id, on) { memo = Object.create(null); if (MERGED[id]) { force[id] = !!on; return; } try { localStorage.setItem(LS + id, on ? '1' : '0'); lsCache[id] = on ? '1' : '0'; } catch (e) {} },
+
         list: function () { return registry.slice(); },
         merged: function () { return Object.keys(MERGED); },
         openPanel: openPanel
@@ -181,6 +193,7 @@
         { id: 'offline', name: '離線快速結算', desc: '關掉遊戲回來自動結算掛機收益', group: '遊戲玩法' },
         { id: 'traditional', name: '傳統模式(偽)', desc: '打到或做出來的裝備自帶隨機強化值（在選角卡右上角逐角色開關）', group: '遊戲玩法' },
         { id: 'dograce', name: '賽狗場', desc: '賭哪隻狗第一，押金幣或龍鑽、中了自動入袋（自動化分頁開啟）', group: '遊戲玩法' },
+        { id: 'gamehall', name: '遊戲廳（百家樂、沙海法老的寶庫）', desc: '設定分頁「🔌 外掛」列的「🎰 遊戲廳」：德州撲克、百家樂、沙海法老的寶庫（埃及拉霸）、賽狗場集中在一起；用金幣、龍之鑽石或血龍鑽下注', group: '遊戲內容', def: true, seal: true },
         { id: 'anyclass', name: '裝備不限職業/性別', desc: '所有裝備都不看職業與性別，任何角色都能裝；關掉後穿不上的會自動卸回背包', group: '遊戲玩法', def: false }
     ].forEach(api.register);
 
@@ -280,7 +293,7 @@
         });
         card.querySelector('#afk-tg-reset').addEventListener('click', function () {
             registry.forEach(function (r) { try { localStorage.removeItem(LS + r.id); } catch (e) {} });
-            lsCache = {};
+            lsCache = {}; memo = Object.create(null);
             card.querySelectorAll('input[data-tgid]').forEach(function (cb) { cb.checked = api.enabled(cb.getAttribute('data-tgid')); });
             note.style.display = 'block';
         });
