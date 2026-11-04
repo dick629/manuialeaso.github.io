@@ -5346,7 +5346,7 @@
     var u = function (c) { return c === 'gold' ? '' : ' 顆'; }, f = function (n) { return Number(n).toLocaleString(); };
     var out = '<div class="m-wiki-note">打開<b>設定</b>分頁「🔌 外掛」那一列，按「<b>🎰 遊戲廳</b>」，裡面有<b>德州撲克、百家樂、' + G.SLOT_NAME + '（埃及拉霸）、' + (G.MARY_NAME || '小瑪莉') + '、賽狗場</b>。歐瑞村莊的荷官「<b>洛蒂</b>」也能帶你進百家樂和拉霸。用<b>金幣、龍之鑽石或血龍鑽</b>下注；經典模式只開放賽狗場。</div>';
     out += wCard('💰 幣別與限額',
-      wTbl(['幣別', '百家樂每局', '拉霸／小瑪莉每局'], ['gold', 'dia', 'blood'].map(function (c) {
+      wTbl(['幣別', '百家樂每局', '拉霸每轉'], ['gold', 'dia', 'blood'].map(function (c) {
         return [G.CURS[c], f(G.LIM.bac[c][0]) + '～' + f(G.LIM.bac[c][1]) + u(c), f(G.LIM.slot[c][0]) + '～' + f(G.LIM.slot[c][1]) + u(c)];
       })) +
       wDesc('每一局<b>按下去就扣款、當下就結算</b>，贏的錢立刻入帳，不會有錢留在桌上；中途關掉遊戲也不會吃錢。') +
@@ -5383,7 +5383,7 @@
         wDesc('水果盤跑燈機。下面 9 種水果各自押 <b>0～99 分</b>，按「開始」後燈繞著 24 格跑，停在哪一格就賠那種水果押的分數 × 賠率。') +
         wTbl(['水果', '賠率'], G.MF.map(function (f) { return ['<img alt="" src="' + mI[f.k] + '" style="width:22px;height:22px;image-rendering:pixelated;vertical-align:middle"> ' + f.n, f.odds + ' 倍']; })) +
         wDesc('畫得小一號、旁邊標「×3」的格子固定賠 <b>3 倍</b>。') +
-        wDesc('<b>1 分</b>＝金幣 ' + f(G.MARY_UNIT.gold) + '、龍之鑽石 1 顆、血龍鑽 1 顆；每局限額同拉霸。') +
+        wDesc('<b>1 分</b>＝金幣 ' + f(G.MARY_UNIT.gold) + '、龍之鑽石 1 顆、血龍鑽 1 顆。每局最少押 1 分（單押一種水果也可以），最多金幣 ' + f(G.LIM.mary.gold[1]) + '、龍之鑽石 ' + f(G.LIM.mary.dia[1]) + ' 顆、血龍鑽 ' + f(G.LIM.mary.blood[1]) + ' 顆。') +
         wDesc('<b>ONCE MORE</b>：隨機送燈——再送一燈、送 2～4 燈、<b>開火車</b>（後面 3～7 格一起亮）、<b>小三元</b>（柳丁、檸檬、鈴鐺）、<b>大三元</b>（西瓜、星星、77）、<b>大四喜</b>（4 個蘋果），也可能槓龜。送的燈全部照賠。') +
         wDesc('<b>JP</b>：每局押注的 1.5% 進獎池（中間的 LED 會顯示）。<b>9 種全押</b>、而且大 BAR 那格亮起時，會跳一組 000～999 的號碼，開出 <b>777</b> 就整池給你，並上世界頻道。') +
         wDesc('<b>比倍</b>：有贏分時可以比大小：開 1～9，猜中「小 1-4」或「大 6-9」贏分翻倍，猜錯或開出 <b>5</b> 歸零；最多比 ' + G.DBL_MAX + ' 次。不想比就按「WIN→CREDIT」收分。') +
