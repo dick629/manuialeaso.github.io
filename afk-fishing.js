@@ -9,7 +9,7 @@
  *   特殊魚：雷電水精靈（全場同種魚一起判定）、炸彈蟹人（範圍內判定）、雷射海星（送雷射砲：一條線上 8 次判定）、
  *           鑽頭龍龜（送鑽頭砲：亂彈 10 次判定）。拿到沒用的特殊砲存進存檔。
  *   NPC 漁夫兩位：只打 2～5 倍的小魚，純熱鬧（他們打到的不影響你的錢與機率）。
- *   效能：canvas 一張畫完、最多 40 條魚／60 顆子彈、30 幀；視窗關掉、縮小、切到別的畫面就停。
+ *   效能：canvas 一張畫完、最多 60 條魚／60 顆子彈、30 幀；視窗關掉、縮小、切到別的畫面就停。
  * ========================================================================== */
 (function () {
   'use strict';
@@ -33,7 +33,7 @@
   var BULLET_LOOK = [['#e2e8f0', 4], ['#7dd3fc', 5], ['#4ade80', 5], ['#facc15', 6], ['#f472b6', 6], ['#f97316', 7]];   // 依等級：顏色、半徑
   var JP_SEED = { gold: 5000000, dia: 10000, blood: 1000 };
   var WHEEL = [['迷你', 0.05, 60], ['小獎', 0.15, 25], ['大獎', 0.40, 12], ['超級 JP', 1.00, 3]];
-  var FIRE_MS = 200, BULLET_LIFE = 12000, BULLET_SPEED = 520, MAX_FISH = 40, MAX_BULLETS = 60;
+  var FIRE_MS = 200, BULLET_LIFE = 12000, BULLET_SPEED = 520, MAX_FISH = 60, MAX_BULLETS = 60;
   // 魚：n 名稱、img 圖資料夾、m 倍數 [下, 上]、sz 畫面高度、sp 速度、w 出現權重、tint 染色、sp2 特殊、boss
   var FISH = [
     { id: 'star', n: '海星', img: '海星', fr: 8, df: 8, m: [2, 2], sz: 38, sp: 55, w: 22 },
@@ -137,10 +137,10 @@
   function spawnTick(dt) {
     st.nextSpawn -= dt;
     if (st.nextSpawn <= 0) {
-      st.nextSpawn = 400 + Math.random() * 600;
+      st.nextSpawn = 220 + Math.random() * 330;
       var live = st.fish.filter(function (f) { return !f.dead; }).length;
-      if (live < 30) {
-        var d = pickNormal(), n = d.m[0] <= 5 ? 1 + Math.floor(Math.random() * 4) : 1, left = Math.random() < 0.5, y = 40 + Math.random() * (VH - 170);
+      if (live < 48) {
+        var d = pickNormal(), n = d.m[0] <= 5 ? 2 + Math.floor(Math.random() * 5) : d.m[0] <= 12 ? 1 + Math.floor(Math.random() * 2) : 1, left = Math.random() < 0.5, y = 40 + Math.random() * (VH - 170);
         for (var i = 0; i < n; i++) { var f = spawnFish(d, { fromLeft: left, y: y + (i % 2) * 22 }); if (f) f.x += (left ? -1 : 1) * i * 40; }
       }
     }
@@ -148,7 +148,7 @@
     if (st.nextWave <= 0) {   // 魚潮
       st.nextWave = 90000; st.banner = { t: '🌊 魚潮來了！', life: 2200 };
       var lf = Math.random() < 0.5;
-      for (var k = 0; k < 16; k++) { var w = spawnFish(NORMAL[k % 4], { fromLeft: lf, y: 50 + (k % 8) * 42 }); if (w) w.x += (lf ? -1 : 1) * Math.floor(k / 8) * 70; }
+      for (var k = 0; k < 24; k++) { var w = spawnFish(NORMAL[k % 4], { fromLeft: lf, y: 50 + (k % 8) * 42 }); if (w) w.x += (lf ? -1 : 1) * Math.floor(k / 8) * 70; }
     }
     ['ghost', 'drake', 'fafu'].forEach(function (id) {
       st.boss[id] -= dt;
@@ -490,7 +490,7 @@
     var pos = null; try { pos = JSON.parse(LS('afk_fish_pos') || 'null'); } catch (e) {}
     if (pos && typeof pos.l === 'number') { w.style.left = Math.max(0, Math.min(innerWidth - 100, pos.l)) + 'px'; w.style.top = Math.max(0, Math.min(innerHeight - 100, pos.t)) + 'px'; w.style.transform = 'none'; }
     preload();
-    if (!st.fish.length) for (var k = 0; k < 18; k++) { var f = spawnFish(pickNormal()); if (f) f.x = 60 + Math.random() * (VW - 120); }   // 一打開畫面就有魚
+    if (!st.fish.length) for (var k = 0; k < 34; k++) { var f = spawnFish(pickNormal()); if (f) f.x = 60 + Math.random() * (VW - 120); }   // 一打開畫面就有魚
     hud(); kick();
     return true;
   }
