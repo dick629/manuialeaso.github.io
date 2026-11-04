@@ -912,6 +912,7 @@
     function injectAutoNav() {
         var panel = document.getElementById('tab-automation');
         if (!panel) return false;
+        if (window.AFK_TOGGLES && AFK_TOGGLES.enabled('gamehall')) return true;   // 遊戲廳開著：入口在「🎰 遊戲廳」裡
         if (document.getElementById('m-afk-nav-dograce')) return true;
         var row = document.getElementById('m-afk-navrow');
         if (!row) {

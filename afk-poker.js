@@ -1023,6 +1023,8 @@
     if (!p || p.classicMode || !on()) { div.innerHTML = '<div class="afk-ax"><p class="ax-lore">「今天不開桌。」</p></div>'; return; }
     refundStale();
     var h = '<div class="afk-ax pk-tbl"><p class="ax-lore">洛蒂俐落地洗著牌：「無限注德州撲克，輸贏都算你自己的。籌碼在離座時換回來；牌打到一半走人，那手就當你棄牌。」</p>';
+    var GH = W.__afkGameHall;
+    if (GH && GH.on && GH.on()) h += '<div class="ax-row"><div class="ax-main"><div><div class="ax-name">🎰 遊戲廳</div><div class="ax-desc">百家樂、' + esc(GH.SLOT_NAME) + '（埃及拉霸）、賽狗場</div></div></div><div class="ax-act"><button type="button" data-pkn="gh:bac">百家樂</button><button type="button" data-pkn="gh:slot">拉霸</button><button type="button" data-pkn="gh:home">遊戲廳</button></div></div>';
     if (tb) h += '<div class="ax-row"><div class="ax-main"><div><div class="ax-name">你正坐在' + esc(tblName()) + '</div><div class="ax-desc">籌碼 ' + fmt(tb.seats[0].stack) + '</div></div></div><div class="ax-act"><button type="button" data-pkn="open">回到牌桌</button></div></div>';
     TABLES.forEach(function (t) {
       if (!curReady(t.cur)) return;
@@ -1043,6 +1045,7 @@
       var bt = ev.target.closest('[data-pkn]'); if (!bt || bt.disabled) return;
       var a = bt.getAttribute('data-pkn').split(':');
       if (a[0] === 'open') return openWin();
+      if (a[0] === 'gh') { try { if (typeof W.closeNpcInteraction === 'function') W.closeNpcInteraction(); } catch (e) {} try { W.__afkGameHall.open(a[1]); } catch (e) {} return; }
       if (a[0] === 'set') { var t = TBL[a[1]], bal = balance(t.cur); sel[a[1]] = a[2] === 'min' ? t.min : Math.max(t.min, Math.min(t.max, bal)); return panel(div); }
       if (a[0] === 'lv') { selHard[a[1]] = a[2] === '1'; return panel(div); }
       if (a[0] === 'sit') {
@@ -1086,6 +1089,7 @@
   var navTries = 0;
   function injectNav() {
     if (!el('tab-automation')) return false;
+    if (T && T.enabled && T.enabled('gamehall')) return true;   // 遊戲廳開著：入口改由 afk-gamehall 的「🎰 遊戲廳」統一放
     if (el('m-afk-nav-poker')) return true;
     var dg = el('m-afk-nav-dograce');
     if (!dg && T && T.enabled && T.enabled('dograce') && navTries < 20) return false;   // 等賽狗場的鈕先放好

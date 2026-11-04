@@ -1167,6 +1167,7 @@
     { k: 'pvp', n: 'PVP／性向值' },
     { k: 'arena', n: '決鬥競技場' },
     { k: 'poker', n: '德州撲克' },
+    { k: 'gamehall', n: '遊戲廳' },
     { k: 'mode', n: '遊戲模式' },
     { k: 'npc', n: 'NPC總覽' }
   ];
@@ -1389,6 +1390,7 @@
     if (key === 'pvp') return renderPvp();
     if (key === 'arena') return renderArena();
     if (key === 'poker') return renderPoker();
+    if (key === 'gamehall') return renderGameHall();
     return '';
   }
 
@@ -1461,6 +1463,7 @@
     { key: 'pvp', cls: false, label: 'PVP／性向值' },
     { key: 'arena', cls: false, label: '決鬥競技場' },
     { key: 'poker', cls: false, label: '德州撲克' },
+    { key: 'gamehall', cls: false, label: '遊戲廳' },
     { key: 'mode', cls: false, label: '遊戲模式' },
     { key: 'npc', cls: false, label: 'NPC總覽' }
   ];
@@ -5295,7 +5298,7 @@
     var K = window.__afkPoker;
     if (!K || !K.on()) return '<div class="m-wiki-note">德州撲克目前沒有開放。</div>';
     var unit = function (t) { return t.cur === 'gold' ? '' : ' 顆'; };
-    var out = '<div class="m-wiki-note">到<b>歐瑞村莊</b>找荷官「<b>洛蒂</b>」，用<b>金幣、龍之鑽石或血龍鑽</b>換籌碼入座，跟 3～5 位 NPC 玩<b>無限注德州撲克</b>。不想走回村莊時，打開<b>設定</b>分頁「🔌 外掛」那一列，按「<b>♠︎ 德州撲克</b>」（就在賽狗場旁邊），一樣能看到所有牌桌、直接入座。經典模式沒有這張牌桌。</div>';
+    var out = '<div class="m-wiki-note">到<b>歐瑞村莊</b>找荷官「<b>洛蒂</b>」，用<b>金幣、龍之鑽石或血龍鑽</b>換籌碼入座，跟 3～5 位 NPC 玩<b>無限注德州撲克</b>。不想走回村莊時，打開<b>設定</b>分頁「🔌 外掛」那一列，按「<b>' + (window.__afkGameHall && window.__afkGameHall.on() ? '🎰 遊戲廳</b>」→「<b>德州撲克</b>' : '♠︎ 德州撲克') + '</b>」，一樣能看到所有牌桌、直接入座。經典模式沒有這張牌桌。</div>';
     out += wCard('🃏 牌桌',
       wTbl(['牌桌', '用什麼買籌碼', '小盲／大盲', '買入'], K.TABLES.map(function (t) {
         return ['<b>' + t.n + '</b>', K.CURS[t.cur], t.sb.toLocaleString() + '／' + t.bb.toLocaleString(), t.nomax ? t.min.toLocaleString() + unit(t) + ' 起，<b>無上限</b>' : t.min.toLocaleString() + '～' + t.max.toLocaleString() + unit(t)];
@@ -5332,6 +5335,47 @@
       wDesc('牌打到一半按「離座」＝<b>這手直接棄牌</b>，已經推進底池的籌碼拿不回來，其餘照常換回。') +
       wDesc('牌局中途關掉遊戲、重新整理或換角色，也算這手棄牌；桌上剩下的籌碼會在<b>下次進入遊戲時自動換回</b>。') +
       wDesc('打牌時掛機照常進行；按「－」可以把牌桌縮成小球，輪到你時小球會閃。'));
+    return out;
+  }
+
+  // 遊戲廳(afk-gamehall.js;限額、賠率直接讀 __afkGameHall)
+  function renderGameHall() {
+    var G = window.__afkGameHall;
+    if (!G || !G.on()) return '<div class="m-wiki-note">遊戲廳目前沒有開放。</div>';
+    var u = function (c) { return c === 'gold' ? '' : ' 顆'; }, f = function (n) { return Number(n).toLocaleString(); };
+    var out = '<div class="m-wiki-note">打開<b>設定</b>分頁「🔌 外掛」那一列，按「<b>🎰 遊戲廳</b>」，裡面有<b>德州撲克、百家樂、' + G.SLOT_NAME + '（埃及拉霸）、賽狗場</b>。歐瑞村莊的荷官「<b>洛蒂</b>」也能帶你進百家樂和拉霸。用<b>金幣、龍之鑽石或血龍鑽</b>下注；經典模式只開放賽狗場。</div>';
+    out += wCard('💰 幣別與限額',
+      wTbl(['幣別', '百家樂每局', '拉霸每轉'], ['gold', 'dia', 'blood'].map(function (c) {
+        return [G.CURS[c], f(G.LIM.bac[c][0]) + '～' + f(G.LIM.bac[c][1]) + u(c), f(G.LIM.slot[c][0]) + '～' + f(G.LIM.slot[c][1]) + u(c)];
+      })) +
+      wDesc('每一局<b>按下去就扣款、當下就結算</b>，贏的錢立刻入帳，不會有錢留在桌上；中途關掉遊戲也不會吃錢。') +
+      wDesc('算出來<b>不足 1 的零頭</b>（例如押莊抽 5% 後剩下的小數）會先記起來，累積滿 1 再補給你。') +
+      wDesc('「📊 戰績」可以看每種幣別今日／累計的淨輸贏和最大一筆獎。'));
+    out += wCard('🃏 百家樂',
+      wDesc('用 <b>' + G.DECKS + ' 副牌</b>的牌靴，剩不到 ' + G.CUT + ' 張就換新靴（路單跟著重新開始）。') +
+      wDesc('點數：A＝1、2～9 照點數、10／J／Q／K＝0，加總只看個位數。最接近 9 的一邊贏。') +
+      wDesc('前兩張任一邊 8 或 9 點（天牌）就不補牌；其他時候依<b>標準補牌表</b>：閒 0～5 點補一張、6～7 點不補；莊依自己的點數和閒的第三張決定。') +
+      wTbl(['押法', '賠率'], [
+        ['閒', '1 賠 1'], ['莊', '1 賠 1，<b>抽 5% 佣金</b>'], ['和', '1 賠 8（開和時押莊、押閒的退回本金）'],
+        ['閒對', '閒前兩張是同一種牌（例如兩張 K），1 賠 11'], ['莊對', '莊前兩張是同一種牌，1 賠 11']
+      ]) +
+      wDesc('同一局可以押好幾門；限額算的是<b>這局所有下注格加起來</b>。') +
+      wDesc('「自動」會用同一注連發 10／25／50 局；錢不夠、或單局贏回 50 倍以上時會自動停。') +
+      wDesc('下方有<b>珠盤路</b>（最近 60 局）和<b>大路</b>（同一邊連開往下排，排滿往右拖；斜線＝那局之後開了和）。'));
+    var I = G.art();
+    out += wCard('🔺 ' + G.SLOT_NAME,
+      wDesc('6 欄 × 5 列，<b>同一種圖示全盤 8 個以上就中獎</b>，不管位置。中獎的圖示會消掉，上面的掉下來、空格補新的，<b>可以一直連鎖</b>。') +
+      wTbl(['圖示', '8～9 個', '10～11 個', '12 個以上'], G.SYMS.map(function (s) {
+        return ['<img alt="" src="' + I[s.k] + '" style="width:22px;height:22px;image-rendering:pixelated;vertical-align:middle"> ' + s.n, (s.pay[0] / 100) + ' 倍', (s.pay[1] / 100) + ' 倍', (s.pay[2] / 100) + ' 倍'];
+      })) +
+      wDesc('倍數都是「× 每轉注額」。') +
+      wDesc('<b>金字塔</b>：全盤 4／5／6 個 → 當下贏 ' + G.SCAT_PAY[4] / 100 + '／' + G.SCAT_PAY[5] / 100 + '／' + G.SCAT_PAY[6] / 100 + ' 倍，並進入<b>免費遊戲 15 轉</b>。') +
+      wDesc('<b>太陽圓盤</b>：帶 ×2～×500 的倍數。這一轉有中獎時，盤面上所有太陽的倍數<b>相加</b>，再乘上這一轉的獎金。') +
+      wDesc('<b>免費遊戲</b>：不扣錢，注額照進來時那一注。3 個以上金字塔再 <b>+5 轉</b>。有中獎時太陽倍數會加進「<b>總倍數</b>」一直累積，之後每次中獎都乘上總倍數。') +
+      wDesc('每次下注（含整段免費遊戲）<b>最多贏 ' + f(G.SLOT_CAP) + ' 倍</b>注額，到頂就提前結束。') +
+      wDesc('長期返還率約 <b>93.5%</b>（每押 100 平均拿回 93.5）；大部分轉不中或中一點點，偶爾一轉幾百倍。') +
+      wDesc('贏 20 倍以上是「大獎」、100 倍以上「超級大獎」、500 倍以上「<b>傳說大獎</b>」，傳說大獎會上世界頻道。') +
+      wDesc('「自動」可以連轉 10／25／50／100 次；錢不夠、贏到 100 倍以上、或進了免費遊戲時會自動停。'));
     return out;
   }
 
