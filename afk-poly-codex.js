@@ -197,7 +197,9 @@
     } catch (e) {}
     // 跟怪物圖鑑一樣面向玩家：同名怪物有動畫就先用怪物的待機圖（怪物的圖是面對鏡頭的）
     var mobDir = null; try { mobDir = typeof _animDir === 'function' ? _animDir(name) : name; } catch (e) { mobDir = name; }
-    var face = (typeof MOB_ANIM_NAMES === 'undefined' || MOB_ANIM_NAMES.has(name)) ? ['assets/anim/' + enc(mobDir) + '/idle_0.png'] : [];
+    //   改譯名後跟變身同名的血盟敵人（afk-knightnames：絲莉安）不算——那是另一個角色，縮圖維持變身自己的圖
+    var renamedFoe = !!(window.__afkKnightNames && window.__afkKnightNames.isRenamed(name));
+    var face = (!renamedFoe && (typeof MOB_ANIM_NAMES === 'undefined' || MOB_ANIM_NAMES.has(name))) ? ['assets/anim/' + enc(mobDir) + '/idle_0.png'] : [];
     if (typeof MOB_ANIM_NAMES !== 'undefined' && !face.length && MOB_ANIM_NAMES.has(alias)) face.push('assets/anim/' + enc(typeof _animDir === 'function' ? _animDir(alias) : alias) + '/idle_0.png');
     // 三方向變身：「2」資料夾是朝左下（跟怪物圖鑑一樣面向畫面）
     if (typeof MORPH_ANIM_3DIR !== 'undefined' && MORPH_ANIM_3DIR.has(alias)) face.push('assets/morphanim/' + enc(alias + '2') + '/idle_0.png');

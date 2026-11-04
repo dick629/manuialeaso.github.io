@@ -590,7 +590,7 @@
          無開關：這是顯示正確性，不是功能。實測 forceDarkModeEnabled+darkModeImagePolicy=smart 可重現、加這行即解。 -->
     <style>:root{color-scheme:dark}</style>
     <!-- afk-toggles 必須最先載入：外掛開關中樞（逃生門，自己不可被關；某支外掛壞掉時玩家關掉它就能用原版繼續玩） -->
-    <script src="afk-toggles.js?v=8dcbad6dfc"></script>
+    <script src="afk-toggles.js?v=484caab7dd"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=8d0c4c2a8b"></script>
@@ -680,10 +680,10 @@
     <!-- 資訊頁 / 查詢頁 -->
     <script src="afk-slotinfo.js?v=c904c3ca3a"></script>
     <script src="afk-loadslots.js?v=fdc549e696"></script>
-    <script src="afk-dex.js?v=ce52a036b3"></script>
+    <script src="afk-dex.js?v=af5556a4bd"></script>
     <!-- afk-illufix：幻術士修補（疼痛的歡愉 −50%、反彈、蝕刻印記；立方：燃燒 每 2 秒 5～50 火傷、灼熱印記、吸血回魔；立方：和諧回 MP 5 → 15，原 afk-classtweak）；排在 afk-wiki 之前（小百科說明跟著改）；需核心補丁 69 -->
     <script src="afk-illufix.js?v=7149276189"></script>
-    <script src="afk-wiki.js?v=d241974d01"></script>
+    <script src="afk-wiki.js?v=2f2d596921"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=302890a0df"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
@@ -748,7 +748,7 @@
     <!-- afk-uifix：切換地區優先飛到村莊 -->
     <script src="afk-uifix.js?v=f0dc17c37c"></script>
     <!-- afk-castlewar：七城攻城、城堡收成、宣戰與統一伺服器（需核心補丁 27；排在 afk-dreamhell／afk-arts 之後） -->
-    <script src="afk-castlewar.js?v=34657bb31f"></script>
+    <script src="afk-castlewar.js?v=a22dda3809"></script>
     <!-- afk-castle-guards：持有的每座城都能招該城部隊、四座新城部隊、統一七城後亞丁「聖十字近衛」（最多 8 名，湊滿 4 名可融合 ×4，融合體替玩家擋傷害） -->
     <script src="afk-castle-guards.js?v=5b3ac5020b"></script>
     <script src="afk-bmprice.js?v=ec643849be"></script>
@@ -843,6 +843,8 @@
     <script src="afk-ttmi-items-data.js?v=3468dd975f"></script>
     <script src="afk-ttmi-icons-data.js?v=601b04b77c"></script>
     <script src="afk-ttmi-items.js?v=00e05b964f"></script>
+    <!-- afk-knightnames：守護騎士譯名（依詩蒂→伊席蘿蒂、朱利安→絲莉安、歐薇→歐文；怪物、NPC、物品、載入畫面）。素材沿用舊名資料夾；排在 afk-castlewar、afk-ttmi-items 之後，afk-matprice、afk-poly-codex 之前 -->
+    <script src="afk-knightnames.js?v=6547e025db"></script>
     <!-- afk-junkquest：奇岩「古物學者 塞勒斯」——雜項素材的劇情委託與常駐委託（新手／中階／高階） -->
     <script src="afk-junkquest.js?v=be3ebb17ab"></script>
     <!-- 遺物戰鬥掛接、同伴與固定終階 GM 測試道具。 -->
@@ -906,7 +908,7 @@
     <!-- afk-petinherit：寵物繼承主人 30% 面板與 HP／MP -->
     <script src="afk-petinherit.js?v=1fb86b21df"></script>
     <!-- afk-poly-codex：變身收集冊（普通／銀／金，打怪掉卡、登錄加能力、金卡合成神話）（需 afk-card-ascension） -->
-    <script src="afk-poly-codex.js?v=8ca138ce1c"></script>
+    <script src="afk-poly-codex.js?v=b6e58719ab"></script>
     <!-- afk-card-codex：變身卡冊（點亮／升星，五抗加成）與燃柳村 NPC「至幻者」（需 afk-card-ascension） -->
     <script src="afk-card-codex.js?v=b9ccc8041c"></script>
     <!-- afk-cloth-art：十二星座聖衣的背飾（SVG，12 種各不相同） -->
@@ -914,7 +916,7 @@
     <!-- 小百科從目前物品與變身資料生成分階說明。 -->
     <!-- afk-icon-fix：道具圖示對齊天堂透視鏡（由 scripts/gen-icon-fix.mjs 依 data/ttmi-icon-check.json 產生） -->
     <script src="afk-icon-fix.js?v=f74421a931"></script>
-    <script src="afk-game-guide.js?v=4c7919c7bd"></script>
+    <script src="afk-game-guide.js?v=3118e5afaa"></script>
     <script src="afk-readability.js?v=fccbd2ca1e"></script>
     <!-- afk-craftinfo：製作清單每列多一行「成品能力」（點開看成品資料，手機不用長按）；手機版製作按鈕換到下一行 -->
     <script src="afk-craftinfo.js?v=b9d223e9c2"></script>
@@ -943,7 +945,7 @@
     <!-- afk-lore-kit：劇情任務線與新 Boss 共用工具（試煉接取制、套裝、召喚） -->
     <script src="afk-lore-kit.js?v=3bf7a15822"></script>
     <!-- afk-lore-main：主線劇情「紅獅之誓」Lv10～55（甘特）＋通緝犯庫傑；需 afk-lore-kit、afk-kurt-hunt（紅獅王的守護） -->
-    <script src="afk-lore-main.js?v=c5b3f1602d"></script>
+    <script src="afk-lore-main.js?v=b3143be56b"></script>
     <!-- afk-hardin：支線劇情「知識與背叛」Lv20～70（象牙塔 魔法師 喬）＋隊伍副本「哈汀的時空」＋大魔法師歐林＋四色／哈汀之影重做；需 afk-lore-kit、afk-npc-kit -->
     <script src="afk-hardin.js?v=6db89ecc89"></script>
     <!-- afk-halpas：終章劇情「闇龍的低語」Lv85～100（燃柳村 奧拉奇里亞）＋火焰之影（真身）＋闇龍 哈爾巴斯＋反王肯恩／死亡騎士重做；需 afk-lore-kit、afk-npc-kit、afk-arts -->
@@ -1100,6 +1102,9 @@
     <script src="afk-carve.js?v=4cddc2b708"></script>
     <!-- afk-siege2：每週守城戰（每週五 20:00 集結、血盟頁可關、攻城頁放棄城堡、回防副本 25 波（倒下轉攻城）、失城 7 天鎖與城陷之恥、奪回戰鏡像敵人）；預設開；要在 afk-castlewar、afk-castle-guards、afk-guardup、afk-soulstone 之後 -->
     <script src="afk-siege2.js?v=0f1cd36aa5"></script>
+    <!-- afk-bosslines：頭目台詞（登場、半血、四分之一、倒下各一句；資料在 afk-bosslines-data.js）；包 tick、killMob，要在各副本外掛之後 -->
+    <script src="afk-bosslines-data.js?v=86608732aa"></script>
+    <script src="afk-bosslines.js?v=267f3917ef"></script>
     <!-- afk-bosswatch：頭目卡住保險（HP 0 卻沒倒下 3 秒→走正常 killMob；鎖定的頭目 60 秒 HP 沒變→清掉過期的免疫屏障）；要在所有包 tick、killMob 的外掛之後，afk-intdmg 之前 -->
     <script src="afk-bosswatch.js?v=5a43e60d64"></script>
     <!-- afk-intdmg：傷害與 HP 一律整數（卡冊結算、每一刻結束、能力重算、傷害飄字的最後一道保險）；要在所有包 AFK_CARD_COMBAT.damage、tick、recomputeStats 的外掛之後，放最後 -->

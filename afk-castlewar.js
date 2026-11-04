@@ -103,7 +103,7 @@
         DB.towns[castle] = { n: C.name, npcs: [
           { id: 'npc_wh_' + key, n: '城堡管家', title: '倉庫', type: 'warehouse', d: C.name + '的管家替你存放物品與金幣，存檔角色共用。' },
           { id: 'npc_ally_' + key + 'c', n: '傭兵公會', title: '協力', type: 'ally', d: '傭兵公會替你牽起命運的絲線，召喚其他存檔位的角色一起作戰。' },
-          { id: 'npc_esti', n: '依詩蒂', title: '血盟', type: 'pledge', d: '依詩蒂低聲訴說著血盟的古老誓言，為你尋找以血為盟的夥伴。' },
+          { id: 'npc_esti', n: '伊席蘿蒂', title: '血盟', type: 'pledge', d: '伊席蘿蒂低聲訴說著血盟的古老誓言，為你尋找以血為盟的夥伴。' },
           { id: 'npc_tros', n: '特羅斯', title: '血盟', type: 'pledge', d: '特羅斯握劍而立，為你尋找以血為盟的夥伴。' }
         ] };
       }

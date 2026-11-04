@@ -33,7 +33,7 @@
   var gear = {
     afk_lion_cloak: { n: '紅獅見習披風', type: 'arm', slot: 'cloak', ac: 4, mr: 8, hpR: 3, safe: 6, req: 'all', img: IC('armors/保護者斗篷'), d: '杜克‧德比年輕時穿過的見習騎士披風，繡著紅髮獅子。AC 4、魔防 +8、HP 自然恢復 +3。' },
     afk_lion_badge: { n: '血盟徽記', type: 'acc', slot: 'amulet', ac: 2, mr: 6, mhp: 80, extraHit: 1, safe: 5, req: 'all', img: IC('accessories/守護項鍊'), d: '五名誓約騎士立下血的誓約時佩戴的徽記。AC 2、魔防 +6、最大 HP +80、額外命中 +1。' },
-    afk_lion_gloves: { n: '月光騎士手套', type: 'arm', slot: 'gloves', ac: 4, extraHit: 3, er: 2, safe: 6, req: 'all', img: IC('armors/影子手套'), d: '朱利安留給特羅斯的手套，滿月時會微微發光。AC 4、額外命中 +3、迴避 +2。' },
+    afk_lion_gloves: { n: '月光騎士手套', type: 'arm', slot: 'gloves', ac: 4, extraHit: 3, er: 2, safe: 6, req: 'all', img: IC('armors/影子手套'), d: '絲莉安留給特羅斯的手套，滿月時會微微發光。AC 4、額外命中 +3、迴避 +2。' },
     afk_lion_ring: { n: '紅獅王的指環', type: 'acc', slot: 'ring', ac: 2, mr: 5, mhp: 100, extraDmg: 2, extraHit: 2, safe: 5, req: 'all', img: IC('accessories/哈維戒指'), d: '杜克‧德比的王者指環，特羅斯把它交給了一路保護他的人。AC 2、魔防 +5、最大 HP +100、額外傷害 +2、額外命中 +2。' },
     afk_lion_crown: { n: '紅獅王冠', type: 'arm', slot: 'helm', ac: 5, mr: 10, mhp: 120, extraHit: 2, safe: 4, req: 'royal', img: IC('armors/騎士面甲'), d: '亞丁王族的王冠——只有真正的王族戴得上。王族專用：AC 5、魔防 +10、最大 HP +120、額外命中 +2。' }
   };
@@ -78,8 +78,8 @@
       { lv: 25, title: '港口的幽靈船', map: '船舶之墓（說話之島港口外海）', story: '每當有新的王族誕生，說話之島港口外就會出現一艘幽靈船——那是克特的船。沉在船舶之墓的亡者，還留著幽靈船的航海日誌。',
         reqs: [{ id: 'afk_q_lion_log', n: '幽靈船的航海日誌', img: IC('items/古代的卷軸'), d: '被海水泡爛的航海日誌，記著幽靈船每次靠岸的日期——每一天都有一名王族失蹤。', need: 5, mobs: ['深海殭屍', '船舶之墓殭屍(男)', '船舶之墓殭屍(女)', '惡靈'] }],
         rewards: { all: ['afk_lion_badge'] }, first: [['scroll_armor_b', 2]] },
-      { lv: 35, title: '月光騎士', map: '鏡子森林', story: '保護特羅斯長大的，是半妖精的月光騎士朱利安。受詛咒的他會在月圓時化成月光仙子歐薇。鏡子森林的魔物吞了月光花——把花瓣帶回來，解開朱利安的詛咒。',
-        reqs: [{ id: 'afk_q_lion_petal', n: '月光花瓣', img: IC('items/光明的鱗片'), d: '只在滿月下盛開的花瓣，散發著歐薇身上的氣味。', need: 5, mobs: ['變形怪', '多眼怪', '蛇女'] }],
+      { lv: 35, title: '月光騎士', map: '鏡子森林', story: '保護特羅斯長大的，是半妖精的月光騎士絲莉安。受詛咒的他會在月圓時化成月光仙子歐文。鏡子森林的魔物吞了月光花——把花瓣帶回來，解開絲莉安的詛咒。',
+        reqs: [{ id: 'afk_q_lion_petal', n: '月光花瓣', img: IC('items/光明的鱗片'), d: '只在滿月下盛開的花瓣，散發著歐文身上的氣味。', need: 5, mobs: ['變形怪', '多眼怪', '蛇女'] }],
         rewards: { all: ['afk_lion_gloves'] }, first: [['scroll_weapon_b', 1]] },
       { lv: 45, title: '王后的眼淚', map: '傲慢之塔 41～50 樓', story: '王后佳蒂亞嫁給了篡位者。可她愛的是那個叫阿斯泰的男人，不是王座上的反王。肯恩把她的書信鎖進傲慢之塔——帶回來，交給她的兒子。',
         reqs: [{ id: 'afk_q_lion_letter', n: '佳蒂亞的書信', img: IC('items/感謝信'), d: '王后寫給阿斯泰、從未寄出的書信，字跡被淚水暈開。', need: 5, mobs: ['火焰之魔法師', '骨龍', '幼龍'] }],
