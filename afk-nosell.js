@@ -21,6 +21,21 @@
     desc: '聖紋、手環、密奧之卡、聖物、靈魂石、符文石、席琳遺骸和各系統的專屬材料不會被自動賣出，也不能販賣' });
   if (typeof DB === 'undefined' || !DB.items) { console.warn('[AFK-nosell] 找不到 DB，停用'); return; }
   var on = function () { return !T || T.enabled('nosell'); };
+  // 回憶蠟燭：點下去會直接進配點重置、打不開物品視窗，標成廢品後就取消不了（玩家 2026-11-04 10:16）→ 不能標成廢品，已標的清掉
+  try { if (DB.items.candle) DB.items.candle.noJunk = true; } catch (e) {}
+  var clearNoJunk = function () {
+    var p = P(); if (!p || !p.inv) return 0; var n = 0;
+    p.inv.forEach(function (i) {
+      var d = i && DB.items[i.id];
+      if (d && d.noJunk && (i.junk || i._ruleJunk)) {
+        i.junk = false; i._ruleJunk = false; delete i.junkSince; delete i._autoSellQty; n++;
+        try { if (p.junkPrefs && typeof itemSig === 'function') delete p.junkPrefs[itemSig(i)]; } catch (e) {}
+      }
+    });
+    return n;
+  };
+  W.__afkClearNoJunk = clearNoJunk;
+  setInterval(function () { try { clearNoJunk(); } catch (e) {} }, 3000);
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var wrapG = function (name, mk) { if (typeof W[name] !== 'function') return false; var o = W[name]; W[name] = mk(o); try { (0, eval)(name + ' = window.' + name); } catch (e) {} return true; };
 
