@@ -192,6 +192,7 @@
       var r = oTick.apply(this, arguments);
       try {
         var t = Number(S().ticks) || 0;
+        if (t % 10 === 0 && typeof mapState !== 'undefined' && mapState.current === MAP) audit();
         if (t - last >= 50 && typeof mapState !== 'undefined' && mapState.current === MAP && P()) {
           last = t;
           if (!unlocked()) { setMapSelectors('town_aden'); changeMap(true); if (typeof logSys === 'function') logSys('<span class="text-amber-300">' + (ownsAden() ? '天下不再歸一，' : '亞丁城易主，') + '密室的門在你身後關上了。你回到了亞丁。</span>'); }
@@ -205,7 +206,7 @@
   var run = null;   // { layer, queue, killed, need }
   var sysMsg = function (h) { try { if (typeof logSys === 'function' && !S().ff) logSys(h); } catch (e) {} };
   var startLayer = function (i) {
-    var L = LAYERS[i]; run = { layer: i, queue: L.ids.slice(), killed: 0, need: L.ids.length };
+    var L = LAYERS[i]; run = { layer: i, queue: L.ids.slice(), killed: 0, need: L.ids.length, live: [] };
     sysMsg('<span class="font-bold" style="color:#c084fc">【謀叛者的低語】' + L.n + '</span>　' + L.msg + '（' + L.ids.length + ' 名，全部擊倒才能深入）');
   };
   var resetRun = function () { run = null; };
@@ -218,16 +219,59 @@
       var alive = (mapState.mobs || []).filter(function (m) { return m && !m._dead && m.curHp > 0; }).length;
       if (!run.queue.length || alive >= LAYERS[run.layer].conc) { if (!mapState.mobs[idx] || mapState.mobs[idx]._dead) mapState.mobs[idx] = null; return; }
       var id = run.queue.shift(), b = DB.mobs[id]; if (!b) return;
-      mapState.mobs[idx] = Object.assign({}, b, { curHp: b.hp, uid: uid(), _born: ++_mobBornSeq, _bornMs: Date.now(), _magCd: {}, justHit: false, st: newMobStatus(), _afkTrLayer: run.layer + 1 });
+      // noCharm（2026-11-04）：迷魅成功會把怪從場上拿走、不經過 killMob → 這一層永遠數不到「全部擊倒」，下一層不出（王卡住）
+      mapState.mobs[idx] = Object.assign({}, b, { curHp: b.hp, uid: uid(), _born: ++_mobBornSeq, _bornMs: Date.now(), _magCd: {}, justHit: false, st: newMobStatus(), _afkTrLayer: run.layer + 1, _afkTrId: id, noCharm: true });
       try { if (typeof applySherineBuff === 'function') applySherineBuff(idx); } catch (e) {}
       try { weaken(mapState.mobs[idx]); } catch (e) {}
       try { if (mapState.mobs[idx].hard && typeof initHardSkin === 'function') initHardSkin(mapState.mobs[idx]); } catch (e) {}
       try { if (typeof vfxBossEntrance === 'function' && !S().ff) vfxBossEntrance(mapState.mobs[idx]); } catch (e) {}
+      if (mapState.mobs[idx]) { mapState.mobs[idx]._afkTrLayer = run.layer + 1; mapState.mobs[idx]._afkTrId = id; mapState.mobs[idx].noCharm = true; run.live.push(mapState.mobs[idx]); }   // 頭目登場的加成可能換掉整個物件：記最後在格子上的那一隻
       try { if (!S().ff) renderMobs(); } catch (e) {}
     };
   }
   var lastMap = null;
   var watchMap = function () { var cur = (typeof mapState !== 'undefined') ? mapState.current : null; if (cur !== lastMap) { if (cur === MAP || lastMap === MAP) resetRun(); lastMap = cur; } };
+
+  // ── 這一層的擊倒計數（killMob 與下面的保險共用）──
+  var doneAt = -1;
+  var countKill = function (m) {
+    if (!m || !m._afkTrLayer || m._afkTrCounted || !run || run.done || mapState.current !== MAP) return;
+    if (m._afkTrLayer !== run.layer + 1) return;   // 上一輪留下來的
+    m._afkTrCounted = true; run.killed++;
+    if (run.killed < run.need) return;
+    if (run.layer + 1 < LAYERS.length) { var nx = run.layer + 1; sysMsg('<span class="text-emerald-300">' + LAYERS[run.layer].n.split('・')[0] + '肅清完畢，你推開通往更深處的門。</span>'); startLayer(nx); return; }
+    run = { done: true, layer: LAYERS.length - 1, queue: [], killed: 0, need: 0, live: [] };
+    doneAt = Number(S().ticks) || 0;
+    var backTo = clearDest();   // 玩家 2026-10-30 17:24：打完回亞丁城堡（持有亞丁城時；沒有城的人照城堡規則回亞丁城鎮）
+    sysMsg('<span class="text-yellow-300 font-bold">🏆 謀叛者全數伏誅！亞丁的王座保住了。</span>你帶著戰果回到' + (backTo === CASTLE_TOWN ? '亞丁城堡' : '亞丁') + '。');
+    setTimeout(leaveCleared, 1500);
+  };
+  var leaveCleared = function () {
+    try { if (run && run.done && mapState.current === MAP) { doneAt = -1; setMapSelectors(clearDest()); changeMap(true); try { saveGame(); } catch (e) {} } } catch (e) {}
+  };
+  // 保險（玩家 2026-11-04「謀反者副本 會有王卡住」）：每秒對一次帳
+  //   ‧這一層的怪從場上消失卻沒經過 killMob（迷魅、其他外掛直接清格子…）：倒下的照算擊倒；沒倒下的放回這一層的佇列重新出場
+  //   ‧通關後 1.5 秒的送回沒有發生（背景分頁計時器被凍結、補跑中）：5 秒後由這裡送回
+  var audit = function () {
+    if (!run || mapState.current !== MAP) return;
+    var t = Number(S().ticks) || 0;
+    if (run.done) { if (doneAt >= 0 && t - doneAt >= 50) leaveCleared(); return; }
+    if (!run.live || !run.live.length) return;
+    var ms = mapState.mobs || [];
+    run.live = run.live.map(function (m) {   // 別的外掛換掉了整個物件（同一個 uid）：改追新的那隻
+      if (ms.indexOf(m) >= 0 || m.uid == null) return m;
+      for (var i = 0; i < ms.length; i++) if (ms[i] && ms[i] !== m && ms[i].uid === m.uid) { if (!ms[i]._afkTrLayer) { ms[i]._afkTrLayer = m._afkTrLayer; ms[i]._afkTrId = m._afkTrId; } return ms[i]; }
+      return m;
+    }).filter(function (m) {
+      if (m._afkTrCounted) return false;
+      if (ms.indexOf(m) >= 0) return true;
+      if (m._afkTrLayer !== run.layer + 1) return false;
+      if (m._dead || !(m.curHp > 0)) { m._dead = true; countKill(m); }
+      else if (m._afkTrId) { run.queue.unshift(m._afkTrId); m._afkTrCounted = true; try { console.warn('[AFK-traitor] ' + m.n + ' 沒倒下就離開了場上，重新排入這一層'); } catch (e) {} }
+      return false;
+    });
+  };
+  W.__afkTraitorAudit = audit;
 
   // ── 主謀掉落 ──
   if (typeof W.killMob === 'function') {
@@ -245,20 +289,7 @@
           if (typeof logSys === 'function') logSys('<span class="text-fuchsia-300">' + m.n + ' 倒下了，留下席琳結晶 × ' + c + extra + '。</span>');
         }
       } catch (e) { console.warn('[AFK-traitor] drop', e); }
-      try {
-        if (m && m._dead && m._afkTrLayer && !m._afkTrCounted && run && !run.done && mapState.current === MAP) {
-          m._afkTrCounted = true; run.killed++;
-          if (run.killed >= run.need) {
-            if (run.layer + 1 < LAYERS.length) { var nx = run.layer + 1; sysMsg('<span class="text-emerald-300">' + LAYERS[run.layer].n.split('・')[0] + '肅清完畢，你推開通往更深處的門。</span>'); startLayer(nx); }
-            else {
-              run = { done: true, layer: LAYERS.length - 1, queue: [], killed: 0, need: 0 };
-              var backTo = clearDest();   // 玩家 2026-10-30 17:24：打完回亞丁城堡（持有亞丁城時；沒有城的人照城堡規則回亞丁城鎮）
-              sysMsg('<span class="text-yellow-300 font-bold">🏆 謀叛者全數伏誅！亞丁的王座保住了。</span>你帶著戰果回到' + (backTo === CASTLE_TOWN ? '亞丁城堡' : '亞丁') + '。');
-              setTimeout(function () { try { if (mapState.current === MAP) { setMapSelectors(backTo); changeMap(true); try { saveGame(); } catch (e) {} } } catch (e) {} }, 1500);
-            }
-          }
-        }
-      } catch (e) { console.warn('[AFK-traitor] layer', e); }
+      try { if (m && m._dead) countKill(m); } catch (e) { console.warn('[AFK-traitor] layer', e); }
       return r;
     };
   }

@@ -55,11 +55,25 @@
   W.__afkIntSweep = sweep;
 
   // ── 一、卡冊結算最外層 ──
-  var wrapDamage = function () {
-    var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function' || C.damage.__afkInt) return;
-    var o = C.damage;
+  //   2026-11-04 修（玩家「謀反者副本 會有王卡住」）：原本每一刻檢查「最外層不是我就再包一層」，afk-goddess3 也每一刻做同樣的事
+  //   → 兩支輪流各包一層、每一刻多兩層，打一兩分鐘就「Maximum call stack size exceeded」，之後每一下卡冊結算都丟例外、王打不動。
+  //   改成存取子：之後任何外掛把 C.damage 換成新函式，寫入當下就自動包上取整數這一層（新函式身上的旗標如 __g3 一併複製到外層，
+  //   各外掛「最外層沒有我的旗標就再包」的檢查才會停手）；寫回本來就是我包過的函式（暫時換掉再還原）不再多包。
+  var mkInt = function (o) {
+    if (typeof o !== 'function' || o.__afkInt) return o;
     var f = function () { var v = o.apply(this, arguments); return on() ? whole(v) : v; };
-    f.__afkInt = true; C.damage = f;
+    try { Object.keys(o).forEach(function (k) { f[k] = o[k]; }); } catch (e) {}
+    f.__afkInt = true;
+    return f;
+  };
+  var wrapDamage = function () {
+    var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function') return;
+    var d = Object.getOwnPropertyDescriptor(C, 'damage');
+    if (d && d.get && d.get.__afkInt) return;
+    var cur = mkInt(C.damage);
+    var get = function () { return cur; }; get.__afkInt = true;
+    try { Object.defineProperty(C, 'damage', { configurable: true, enumerable: true, get: get, set: function (v) { cur = mkInt(v); } }); }
+    catch (e) { try { if (!C.damage.__afkInt) C.damage = cur; } catch (e2) {} }
   };
 
   // ── 二、每一刻結束 ──

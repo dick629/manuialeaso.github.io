@@ -882,7 +882,7 @@
     <!-- afk-dragon-npcs：四龍副本入口分村（地＝沉默洞穴、火＝威頓村、水＝海音、風＝亞丁）、米米製作改版與四龍盔甲（需 afk-corrupt、afk-affix-plus） -->
     <script src="afk-dragon-npcs.js?v=c4936cea7e"></script>
     <!-- afk-traitor：亞丁城副本「謀叛者的低語」（持有亞丁城＋統一七城，經由亞丁城的伊菈進入；冥皇丹特斯、反王肯恩、魔女賽尼斯＋四大軍王與長老）（需 afk-castlewar、afk-sets） -->
-    <script src="afk-traitor.js?v=d8f03594ff"></script>
+    <script src="afk-traitor.js?v=969bca3b4d"></script>
     <!-- afk-hidden：隱藏條件（謀叛三人組、王族之敵）；需 afk-card-combat、afk-affix-plus 的受傷掛點 -->
     <script src="afk-hidden.js?v=8d2238ab2d"></script>
     <!-- afk-dropcap：掉落種類下修 30%（必掉不算；需核心補丁 68） -->
@@ -1090,8 +1090,10 @@
     <script src="afk-carve.js?v=4cddc2b708"></script>
     <!-- afk-siege2：每週守城戰（每週五 20:00 集結、血盟頁可關、攻城頁放棄城堡、回防副本 25 波（倒下轉攻城）、失城 7 天鎖與城陷之恥、奪回戰鏡像敵人）；預設開；要在 afk-castlewar、afk-castle-guards、afk-guardup、afk-soulstone 之後 -->
     <script src="afk-siege2.js?v=0f1cd36aa5"></script>
+    <!-- afk-bosswatch：頭目卡住保險（HP 0 卻沒倒下 3 秒→走正常 killMob；鎖定的頭目 60 秒 HP 沒變→清掉過期的免疫屏障）；要在所有包 tick、killMob 的外掛之後，afk-intdmg 之前 -->
+    <script src="afk-bosswatch.js?v=1622f1db76"></script>
     <!-- afk-intdmg：傷害與 HP 一律整數（卡冊結算、每一刻結束、能力重算、傷害飄字的最後一道保險）；要在所有包 AFK_CARD_COMBAT.damage、tick、recomputeStats 的外掛之後，放最後 -->
-    <script src="afk-intdmg.js?v=f2f7fd757f"></script>
+    <script src="afk-intdmg.js?v=1c92a3b8d5"></script>
     <!-- ═══════════ 加掛版外掛層 END ═══════════ -->
 </body>
 </html>
