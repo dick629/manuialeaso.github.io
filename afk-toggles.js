@@ -28,7 +28,8 @@
     var MERGED = {};
     ['illufix', 'magefix', 'knightshock', 'stunfix', 'hitstun', 'debuffresist', 'bossfoul', 'resonancenerf', 'callallycd',
      'relicfx', 'resist', 'statcap', 'offhandstats', 'petinherit'].forEach(function (id) { MERGED[id] = MERGED_TO; });
-    MERGED.mech1031 = 'hiddenbonus';   // 深蝕、幻影箭、騎士單體衝暈、王暈眩破綻：隱藏規則（玩家 2026-10-31 02:50）
+    MERGED.mech1031 = 'hiddenbonus';
+    MERGED.starweaver = 'hiddenbonus';   // 織星者稱號：隱藏條件，跟著隱藏規則開關（玩家 2026-11-04 18:01）   // 深蝕、幻影箭、騎士單體衝暈、王暈眩破綻：隱藏規則（玩家 2026-10-31 02:50）
     var force = {};
 
     function find(id) { return byId[id] || null; }
