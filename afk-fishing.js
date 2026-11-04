@@ -2,6 +2,7 @@
  * afk-fishing.js — 🐟 海音深海獵場（捕魚機；玩家 2026-11-05；外掛開關 fishing，預設開；經典模式沒有）
  *
  *   遊戲廳裡的一台捕魚機。用遊戲裡現有的天堂水中怪物圖當魚（assets/anim/<怪物名>/idle_n、death_n）。
+ *   2026-11-05 Ping：獎勵下修——大魚、黃金魚、Boss 倍數大降（單隻最多 100 倍；原法利昂最高 800 倍），返還率不變（倍數降、捕獲率跟著升）。
  *   每發子彈當下扣錢；子彈一定會打到一條魚（碰牆反彈、12 秒沒打到就退錢），打到時判定一次：
  *     捕獲機率＝0.92 ÷ 倍數（Boss 用平均倍數；特殊魚另外加上「效果的期望值」），所以打哪一種長期都一樣。
  *     另 1.5% 進 JP 獎池；抓到水龍法利昂時轉 JP 轉盤。合計返還率 93.5%（Ping 定，跟拉霸、小瑪莉一樣）。
@@ -32,7 +33,7 @@
   var CURS = { gold: '金幣', dia: '龍之鑽石', blood: '血龍鑽' }, ICON = { gold: '💰', dia: '💎', blood: '🩸' };
   var LEVELS = { gold: [50000, 100000, 200000, 300000, 500000, 1000000], dia: [100, 200, 300, 500, 800, 1000], blood: [10, 20, 30, 50, 80, 100] };
   var BULLET_LOOK = [['#e2e8f0', 4], ['#7dd3fc', 5], ['#4ade80', 5], ['#facc15', 6], ['#f472b6', 6], ['#f97316', 7]];   // 依等級：顏色、半徑
-  var JP_SEED = { gold: 5000000, dia: 10000, blood: 1000 };
+  var JP_SEED = { gold: 1000000, dia: 2000, blood: 200 };   // 2026-11-05 Ping：獎勵下修（原 500 萬／1 萬／1,000）
   var WHEEL = [['迷你', 0.05, 60], ['小獎', 0.15, 25], ['大獎', 0.40, 12], ['超級 JP', 1.00, 3]];
   var FIRE_MS = 200, BULLET_LIFE = 12000, BULLET_SPEED = 520, MAX_FISH = 100, MAX_BULLETS = 60, MAX_NPC_BULLETS = 40, FISH_TARGET = 65;
   // 魚：n 名稱、img 圖資料夾、m 倍數 [下, 上]、sz 畫面高度、sp 速度、w 出現權重、tint 染色、sp2 特殊、boss
@@ -46,19 +47,19 @@
     { id: 'spirit', n: '水屬性精靈', img: '水屬性精靈', sub: 'd2/', fr: 10, df: 10, m: [12, 12], sz: 56, sp: 50, w: 5 },
     { id: 'turtle', n: '龍龜', img: '龍龜', fr: 11, df: 8, m: [15, 15], sz: 66, sp: 36, w: 4 },
     { id: 'abyss', n: '深淵水靈', img: '深淵水靈', fr: 19, df: 16, m: [20, 20], sz: 76, sp: 40, w: 3 },
-    { id: 'shark', n: '鯊魚', img: '鯊魚', fr: 8, df: 16, m: [30, 30], sz: 96, sp: 44, w: 2 },
-    { id: 'gcroc', n: '巨大鱷魚', img: '巨大鱷魚', fr: 10, df: 8, m: [50, 50], sz: 82, sp: 34, w: 1.2 },
-    { id: 'gturtle', n: '黃金龍龜', img: '龍龜', fr: 11, df: 8, m: [80, 80], sz: 84, sp: 32, w: 0.5, tint: 'rgba(255,200,40,.55)', glow: '#facc15' },
-    { id: 'gshark', n: '黃金鯊魚', img: '鯊魚', fr: 8, df: 16, m: [120, 120], sz: 112, sp: 38, w: 0.3, tint: 'rgba(255,200,40,.55)', glow: '#facc15' },
+    { id: 'shark', n: '鯊魚', img: '鯊魚', fr: 8, df: 16, m: [25, 25], sz: 96, sp: 44, w: 2 },
+    { id: 'gcroc', n: '巨大鱷魚', img: '巨大鱷魚', fr: 10, df: 8, m: [35, 35], sz: 82, sp: 34, w: 1.2 },
+    { id: 'gturtle', n: '黃金龍龜', img: '龍龜', fr: 11, df: 8, m: [40, 40], sz: 84, sp: 32, w: 0.5, tint: 'rgba(255,200,40,.55)', glow: '#facc15' },
+    { id: 'gshark', n: '黃金鯊魚', img: '鯊魚', fr: 8, df: 16, m: [50, 50], sz: 112, sp: 38, w: 0.3, tint: 'rgba(255,200,40,.55)', glow: '#facc15' },
     // 特殊魚
     { id: 'bolt', n: '雷電水精靈', img: '強力水屬性精靈', sub: 'd2/', fr: 10, df: 9, m: [15, 15], sz: 62, sp: 46, w: 0.45, sp2: 'bolt', badge: '⚡', glow: '#60a5fa' },
     { id: 'bomb', n: '炸彈蟹人', img: '蟹人', fr: 6, df: 11, m: [10, 10], sz: 54, sp: 46, w: 0.45, sp2: 'bomb', badge: '💣', tint: 'rgba(255,40,40,.45)', glow: '#ef4444' },
     { id: 'laser', n: '雷射海星', img: '海星', fr: 8, df: 8, m: [8, 8], sz: 48, sp: 50, w: 0.4, sp2: 'laser', badge: '🔫', tint: 'rgba(170,80,255,.5)', glow: '#c084fc' },
     { id: 'drill', n: '鑽頭龍龜', img: '龍龜', fr: 11, df: 8, m: [10, 10], sz: 70, sp: 36, w: 0.4, sp2: 'drill', badge: '🌀', tint: 'rgba(40,220,230,.5)', glow: '#22d3ee' },
     // Boss（定時出場）
-    { id: 'ghost', n: '幽靈船長', img: '幽靈船長', fr: 12, df: 12, m: [100, 300], sz: 150, sp: 22, boss: 300, glow: '#a78bfa' },
-    { id: 'drake', n: '沉沒的海賊王 德雷克', img: '沉沒的海賊王 德雷克', fr: 12, df: 12, m: [150, 400], sz: 160, sp: 20, boss: 480, glow: '#34d399' },
-    { id: 'fafu', n: '水龍 法利昂', img: '法利昂', fr: 16, df: 27, m: [300, 800], sz: 250, sp: 16, boss: 900, glow: '#38bdf8', jp: true }
+    { id: 'ghost', n: '幽靈船長', img: '幽靈船長', fr: 12, df: 12, m: [30, 60], sz: 150, sp: 22, boss: 300, glow: '#a78bfa' },
+    { id: 'drake', n: '沉沒的海賊王 德雷克', img: '沉沒的海賊王 德雷克', fr: 12, df: 12, m: [40, 80], sz: 160, sp: 20, boss: 480, glow: '#34d399' },
+    { id: 'fafu', n: '水龍 法利昂', img: '法利昂', fr: 16, df: 27, m: [60, 100], sz: 250, sp: 16, boss: 900, glow: '#38bdf8', jp: true }
   ];
   var FBY = {}; FISH.forEach(function (f) { FBY[f.id] = f; f.avg = (f.m[0] + f.m[1]) / 2; });
   var NORMAL = FISH.filter(function (f) { return !f.boss; }), NW = NORMAL.reduce(function (a, f) { return a + f.w; }, 0);
@@ -182,7 +183,7 @@
       if (f.vert) { f.x += (f.vx + Math.sin(f.ph) * 14) * s; f.y += f.vy * s; if (f.x < 30) f.vx = Math.abs(f.vx); if (f.x > VW - 30) f.vx = -Math.abs(f.vx); }
       else { f.x += f.vx * s; f.y += (f.vy + Math.sin(f.ph) * 14) * s; if (f.y < 30) f.vy = Math.abs(f.vy); if (f.y > VH - 70) f.vy = -Math.abs(f.vy); }
       f.fi = (f.fi + s * 10) % f.d.fr;
-      if (f.d.boss && Math.random() < 0.08) f.disp = f.d.m[0] + Math.floor(Math.random() * (f.d.m[1] - f.d.m[0] + 1) / 10) * 10;
+      if (f.d.boss && Math.random() < 0.08) f.disp = f.d.m[0] + Math.floor(Math.random() * (f.d.m[1] - f.d.m[0] + 1) / 5) * 5;
     });
     st.fish = st.fish.filter(function (f) {
       if (f.dead) return f.dead < 900;

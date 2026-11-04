@@ -5181,7 +5181,7 @@
         ['會不會祝福', '固定 <b>1%</b>（<b>不吃席琳世界倍率</b>，那是擊殺掉落才有的）']
       ]) +
       ((window.__afkBloodDia && (!window.AFK_TOGGLES || AFK_TOGGLES.enabled('blooddia'))) ? wDesc('<b>血龍鑽兌換</b>：黑市上方切到「血龍鑽兌換」分頁，<b>龍之鑽石 50 顆換 1 顆血龍鑽</b>，沒有每日上限，換了不能換回。血龍鑽不能販賣。') : '') +
-      ((window.__afkDmgFont && window.__afkDmgFont.on()) ? wDesc('<b>字體販賣所</b>：黑市上方切到「字體販賣所」分頁，用龍之鑽石買<b>傷害數字的字體</b>（每款 ' + Number(window.__afkDmgFont.FONTS[0].price).toLocaleString() + ' 顆）。每款都能先看預覽；買一次<b>全帳號共用</b>，隨時可以換回「經典」。只換你這邊（含傭兵、召喚物）打出去的數字，「未命中」不變。現有：' + window.__afkDmgFont.FONTS.map(function (f) { return f.n; }).join('、') + '。「繁星」會用中文單位顯示（例如 1億 2345萬）。') + wDesc('<b>交易所</b>：分頁已經開好，跟其他冒險者買賣的功能之後開放。') : '') +
+      ((window.__afkDmgFont && window.__afkDmgFont.on()) ? wDesc('<b>字體販賣所</b>：黑市上方切到「字體販賣所」分頁，用龍之鑽石買<b>傷害數字的字體</b>（每款 ' + Number(window.__afkDmgFont.FONTS[0].price).toLocaleString() + ' 顆）。每款都能先看預覽；買一次<b>全帳號共用</b>，隨時可以換回「經典」。只換你這邊（含傭兵、召喚物）打出去的數字，「未命中」不變。現有：' + window.__afkDmgFont.FONTS.map(function (f) { return f.n; }).join('、') + '。「繁星」「泡泡彩虹」會用中文單位顯示（例如 1億 2345萬）。') + wDesc('<b>交易所</b>：分頁已經開好，跟其他冒險者買賣的功能之後開放。') : '') +
       wDesc('<b>收購單</b>：你可以指定「想要的物品名稱＋願意出的價錢」掛著。之後<b>每次有新東西要上架時，系統會先幫那個物品擲一次市價</b>；<b>只要擲出來的價錢不高於你的出價，就算命中</b>，直接用<b>你的出價</b>把它擺上架給你買。命中一次就清空，要再掛得重設。') +
       wDesc('可以指定的範圍：<b>魔法書、萬能藥、怪物卡片，以及耳環以外的一般穿戴裝備</b>。<b>材料、支配符、遺物、魔法娃娃、寵物裝備不能指定</b>。') +
       ((window.AFK_TOGGLES && AFK_TOGGLES.enabled('marketnocard')) ? wDesc('🎴 黑市的隨機陳列<b>不會出現怪物卡片</b>；想要卡片可以掛收購單，命中時照下表的區間擲價：') :

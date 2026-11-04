@@ -4,8 +4,8 @@
  *   潘朵拉黑市多一個分頁「🔤 字體販賣所」：用龍之鑽石買傷害字體，買一次全帳號共用，隨時可換回「經典」。
  *   只換「你這邊打出去的傷害」——遊戲裡所有飄字都畫在怪物身上（你、傭兵、召喚物打出去的），所以整層換；
  *   「未命中」維持原樣。每款只收錄數字與少數字（爆擊、重擊、億、萬…），字型檔 1～4 KB（assets/fonts/dmg/，皆 OFL 授權）。
- *   第一批 8 款（Ping 定：每款 500 萬龍鑽）。加新款＝在 FONTS 加一筆（id、名稱、說明、價格、字型檔、CSS）。
- *   繁星：數字改用中文單位（1億 2345萬）。
+ *   第一批 8 款＋泡泡彩虹（Ping 定：每款 500 萬龍鑽）。加新款＝在 FONTS 加一筆（id、名稱、說明、價格、字型檔、CSS）。
+ *   繁星、泡泡彩虹：數字改用中文單位（1億 2345萬）。
  * ========================================================================== */
 (function () {
   'use strict';
@@ -55,7 +55,12 @@
       return s + '{font-family:"afkdmg-starry",sans-serif!important;' + GRAD('linear-gradient(100deg,#4338ca,#7c3aed 35%,#d946ef 65%,#3b82f6)') + '-webkit-text-stroke:1.5px #fff!important;text-shadow:none!important;filter:drop-shadow(0 0 2px #c4b5fd) drop-shadow(0 2px 1px #1e1b4b)}'
         + s + '::before,' + s + '::after{content:"✦";position:absolute;font-family:sans-serif;color:#fde68a;-webkit-text-fill-color:#fde68a;-webkit-text-stroke:0;pointer-events:none;animation:dmgfTwinkle .45s ease-in-out infinite alternate}'
         + s + '::before{left:-4px;top:-6px;font-size:.5em}' + s + '::after{right:-6px;top:30%;font-size:.4em;animation-delay:.2s}'
-        + c + '{' + GRAD('linear-gradient(100deg,#6d28d9,#c026d3 45%,#2563eb)') + '}' + TAG('starry', '#fde68a'); } }
+        + c + '{' + GRAD('linear-gradient(100deg,#6d28d9,#c026d3 45%,#2563eb)') + '}' + TAG('starry', '#fde68a'); } },
+    { id: 'rainbow', n: '泡泡彩虹', d: '粉嫩的彩虹漸層圓體字，像肥皂泡一樣閃著流光；數字用中文單位（1億 2345萬）。', price: 5000000, fam: 'nova', zh: true, css: function (s, c) {
+      return s + '{font-family:"afkdmg-nova",sans-serif!important;' + GRAD('linear-gradient(100deg,#ffb3d9,#fff3a8 20%,#b8ffd9 40%,#a8e8ff 60%,#d9b8ff 80%,#ffb3d9)') + 'background-size:200% 100%!important;-webkit-text-stroke:1.5px rgba(255,255,255,.95)!important;text-shadow:none!important;filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px #e9d5ff) drop-shadow(0 1px 1px #6b21a8);animation-name:dmgfPop!important}'
+        + s + '::before{content:"✦";position:absolute;left:-10px;top:-4px;font-size:.55em;font-family:sans-serif;color:#fff;-webkit-text-fill-color:#fff;-webkit-text-stroke:0;text-shadow:0 0 6px #fbcfe8;pointer-events:none;animation:dmgfTwinkle .4s ease-in-out infinite alternate}'
+        + c + '{' + GRAD('linear-gradient(100deg,#ff8fc8,#ffe96b 20%,#7dffbf 40%,#7fd8ff 60%,#c49bff 80%,#ff8fc8)') + 'background-size:200% 100%!important;animation:dmgfShimmer 1s linear infinite}'
+        + TAG('rainbow', '#fff0fb'); } }
   ];
   var FBY = {}; FONTS.forEach(function (f) { FBY[f.id] = f; });
 
@@ -96,7 +101,7 @@
       + '@keyframes dmgfDrift{0%{transform:translate(-50%,-50%);opacity:1}70%{opacity:1}100%{transform:translate(-20%,-190%);opacity:0}}'
       + '@keyframes dmgfBurst{0%{transform:translate(-50%,-50%) scale(2.2);opacity:.2}12%{transform:translate(-50%,-50%) scale(1);opacity:1}70%{opacity:1}100%{transform:translate(-30%,-170%) scale(1);opacity:0}}'
       + '@keyframes dmgfShake{0%,100%{transform:none}25%{transform:translateX(-3px) rotate(-4deg)}75%{transform:translateX(3px) rotate(4deg)}}'
-      + '@keyframes dmgfFlicker{50%{opacity:.55}}'
+      + '@keyframes dmgfFlicker{50%{opacity:.55}}@keyframes dmgfShimmer{from{background-position:0 0}to{background-position:200% 0}}'
       + '@keyframes dmgfTwinkle{from{opacity:.25;transform:scale(.6)}to{opacity:1;transform:scale(1.15)}}'
       + '@media (prefers-reduced-motion:reduce){[class*="dmgf-"] .vfx-dmg::before,[class*="dmgf-"] .vfx-dmg::after{animation:none!important}}'
       // 預覽：不飄、不消失
@@ -129,7 +134,7 @@
     var nw = function (x, y, dmg, ele, big) {
       var r = o.apply(this, arguments);
       try {
-        var u = document.body.classList.contains('dmgf-starry');
+        var cu = using(), u = !!(cu && FBY[cu].zh && document.body.classList.contains('dmgf-' + cu));   // 用中文單位的字體（繁星、泡泡彩虹）
         if (u && ele !== 'miss' && typeof dmg === 'number' && dmg >= 1e4) {
           var L = el('vfx-layer'), n = L && L.lastElementChild;
           if (n && n.classList.contains('vfx-dmg')) { var v = n.querySelector('.vfx-dmg-value'); (v || n).textContent = zhNum(dmg); }
@@ -147,7 +152,7 @@
   var tab = 'market', msg = '';
   function pv(id, extra) {
     var c = id ? ' dmgf-' + id : '';
-    var big = id === 'starry' ? '1億 2345萬' : '123456', nrm = id === 'starry' ? '2萬 3456' : '23456';
+    var zh = id && FBY[id] && FBY[id].zh, big = zh ? '1億 2345萬' : '123456', nrm = zh ? '2萬 3456' : '23456';
     return '<div class="dmgf-pv' + c + '"' + (extra || '') + '><div class="vfx-dmg" style="font-size:20px;color:#f1f5f9">' + nrm + '</div><div class="vfx-dmg vfx-crit vfx-critical" style="font-size:32px;color:#ff3b30"><span class="vfx-dmg-tag">爆擊</span><span class="vfx-dmg-value">' + big + '</span></div></div>';
   }
   function shopHtml() {
