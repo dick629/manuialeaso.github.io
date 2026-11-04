@@ -34,6 +34,7 @@
       '#afk-syncinfo,#afk-syncinfo-links{color:#64748b;font-size:12px;text-align:center;letter-spacing:.3px;line-height:1.6;}' +
       '.afk-si-row{margin-top:1px;}' +
       '.afk-si-link{color:#7dd3fc;text-decoration:underline;}' +
+      '.afk-si-line{display:inline-block;margin-top:4px;padding:6px 14px;border-radius:8px;background:#06c755;color:#fff !important;font-size:1.25em;font-weight:700;text-decoration:none !important;line-height:1.3;}' +
       '.afk-si-dot{color:#475569;margin:0 5px;}' +
       // 原作者名:彩虹漸層流動(會動)
       '.afk-si-name{font-weight:bold;background:linear-gradient(90deg,#f472b6,#fb923c,#fde047,#34d399,#22d3ee,#a78bfa,#f472b6);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:afk-si-flow 6s linear infinite;}' +
@@ -60,7 +61,7 @@
     links.id = 'afk-syncinfo-links';
     links.innerHTML =
       '<div class="afk-si-row"><a class="afk-si-link" href="https://forum.gamer.com.tw/C.php?bsn=84452&amp;snA=8362" target="_blank" rel="noopener">巴哈討論串</a>（本加掛版發布在 <a class="afk-si-link" href="https://forum.gamer.com.tw/Co.php?bsn=84452&amp;sn=37297" target="_blank" rel="noopener">301</a> 樓）</div>' +
-      '<div class="afk-si-row"><a class="afk-si-link" href="https://line.me/ti/g2/RRXPx6rMc8ZhxiuNSSziKtcjnhc2AXEPuIOpVA?utm_source=invitation&amp;utm_medium=link_copy&amp;utm_campaign=default" target="_blank" rel="noopener">[加入Line群討論]</a></div>';
+      '<div class="afk-si-row"><a class="afk-si-link afk-si-line" href="https://line.me/ti/g2/RRXPx6rMc8ZhxiuNSSziKtcjnhc2AXEPuIOpVA?utm_source=invitation&amp;utm_medium=link_copy&amp;utm_campaign=default" target="_blank" rel="noopener">加入 LINE 群討論</a></div>';
     menu.appendChild(links);
     console.log('[AFK-syncinfo] hooks OK — 首頁顯示原作者與加掛版版本號。');
 
