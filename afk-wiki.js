@@ -5344,7 +5344,7 @@
     var G = window.__afkGameHall;
     if (!G || !G.on()) return '<div class="m-wiki-note">遊戲廳目前沒有開放。</div>';
     var u = function (c) { return c === 'gold' ? '' : ' 顆'; }, f = function (n) { return Number(n).toLocaleString(); };
-    var out = '<div class="m-wiki-note">打開<b>設定</b>分頁「🔌 外掛」那一列，按「<b>🎰 遊戲廳</b>」，裡面有<b>德州撲克、百家樂、' + G.SLOT_NAME + '（埃及拉霸）、' + (G.MARY_NAME || '小瑪莉') + '、賽狗場</b>。歐瑞村莊的荷官「<b>洛蒂</b>」也能帶你進百家樂和拉霸。用<b>金幣、龍之鑽石或血龍鑽</b>下注；經典模式只開放賽狗場。</div>';
+    var out = '<div class="m-wiki-note">打開<b>設定</b>分頁「🔌 外掛」那一列，按「<b>🎰 遊戲廳</b>」，裡面有<b>德州撲克、百家樂、' + G.SLOT_NAME + '（埃及拉霸）、' + (G.MARY_NAME || '小瑪莉') + '、' + ((window.__afkFish && window.__afkFish.NAME) || '捕魚機') + '、賽狗場</b>。歐瑞村莊的荷官「<b>洛蒂</b>」也能帶你進百家樂和拉霸。用<b>金幣、龍之鑽石或血龍鑽</b>下注；經典模式只開放賽狗場。</div>';
     out += wCard('💰 幣別與限額',
       wTbl(['幣別', '百家樂每局', '拉霸每轉'], ['gold', 'dia', 'blood'].map(function (c) {
         return [G.CURS[c], f(G.LIM.bac[c][0]) + '～' + f(G.LIM.bac[c][1]) + u(c), f(G.LIM.slot[c][0]) + '～' + f(G.LIM.slot[c][1]) + u(c)];
@@ -5389,6 +5389,24 @@
         wDesc('<b>比倍</b>：有贏分時可以比大小：開 1～9，猜中「小 1-4」或「大 6-9」贏分翻倍，猜錯或開出 <b>5</b> 歸零；最多比 ' + G.DBL_MAX + ' 次。不想比就按「WIN→CREDIT」收分。') +
         wDesc('還沒收的贏分會存進存檔；關掉遊戲、切換幣別或離開機台時會自動收進來。') +
         wDesc('長期返還率約 <b>93.5%</b>（含 JP）；押哪一種水果長期都一樣。'));
+    }
+    var FH = window.__afkFish;
+    if (FH && FH.on()) {
+      var nm = function (id) { return FH.FISH.filter(function (x) { return x.id === id; })[0]; };
+      var row = function (x) { return [(x.badge ? x.badge + ' ' : '') + x.n, x.m[0] === x.m[1] ? x.m[0] + ' 倍' : x.m[0] + '～' + x.m[1] + ' 倍']; };
+      out += wCard('🐟 ' + FH.NAME,
+        wDesc('捕魚機。點畫面往那個方向射，按住連發（每秒最多 5 發）；也可以開「自動射擊」或「鎖定」一隻魚讓子彈追著打。子彈碰到牆壁會反彈。') +
+        wTbl(['幣別', '每發子彈（6 個等級）'], ['gold', 'dia', 'blood'].map(function (c) { return [G.CURS[c], FH.LEVELS[c].map(function (v) { return f(v); }).join('、') + u(c)]; })) +
+        wDesc('每一發<b>當下扣錢</b>，抓到魚<b>當下入帳</b>。子彈一定會打到一條魚，打到時判定一次能不能抓到：<b>倍數越高越難抓</b>，長期打哪一種都一樣。子彈一直沒打到魚會退錢。') +
+        wTbl(['魚', '倍數'], FH.FISH.filter(function (x) { return !x.sp2 && !x.boss; }).map(row)) +
+        wDesc('<b>特殊魚</b>：' + ['bolt', 'bomb', 'laser', 'drill'].map(function (id) { var x = nm(id); return x.badge + ' ' + x.n + '（' + x.m[0] + ' 倍）'; }).join('、') + '。') +
+        wDesc('⚡ 雷電水精靈：抓到時，畫面上數量最多的那一種魚全部一起判定。💣 炸彈蟹人：周圍一圈的魚一起判定。') +
+        wDesc('🔫 雷射海星：送一發<b>雷射砲</b>（免費），一條線上的魚判定 ' + FH.LASER_N + ' 次。🌀 鑽頭龍龜：送一發<b>鑽頭砲</b>（免費），在畫面裡亂彈，碰到的魚判定 ' + FH.DRILL_N + ' 次。特殊砲用拿到時的砲台等級算錢，沒用的會留到下次。') +
+        wTbl(['Boss', '倍數'], FH.FISH.filter(function (x) { return x.boss; }).map(row)) +
+        wDesc('Boss 會不定時出場（一次只有一隻），水龍法利昂出場前有警報。') +
+        wDesc('<b>JP</b>：每發子彈的 1.5% 進獎池（畫面左上角）。抓到<b>水龍法利昂</b>時轉 JP 轉盤：' + FH.WHEEL.map(function (w) { return w[0] + '（獎池的 ' + Math.round(w[1] * 100) + '%）'; }).join('、') + '。轉出超級 JP 會上世界頻道。') +
+        wDesc('兩旁的漁夫阿德、茉莉是陪你打的 NPC，只打小魚，不影響你的錢。') +
+        wDesc('長期返還率約 <b>93.5%</b>（含 JP）。關掉視窗或切到別的畫面時，捕魚畫面會暫停。'));
     }
     return out;
   }

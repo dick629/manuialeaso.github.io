@@ -40,7 +40,7 @@
   var LIM = {
     bac: { gold: [50000, 100000000], dia: [10, 5000], blood: [1, 1000] },
     slot: { gold: [50000, 5000000], dia: [10, 500], blood: [1, 50] },
-    mary: { gold: [5000, 5000000], dia: [1, 500], blood: [1, 50] }   // 小瑪莉每局最少 1 分（單押一格也能開；Ping 2026-11-05）
+    mary: { gold: [50000, 5000000], dia: [1, 500], blood: [1, 50] }   // 小瑪莉每局最少 1 分（單押一格也能開）；金幣 1 分＝5 萬（Ping 2026-11-05）
   };
   var CHIPS = { gold: [50000, 100000, 500000, 1000000, 5000000, 10000000], dia: [10, 50, 100, 500, 1000], blood: [1, 5, 10, 50, 100] };
   var STEPS = { gold: [50000, 100000, 200000, 500000, 1000000, 2000000, 5000000], dia: [10, 20, 50, 100, 200, 500], blood: [1, 2, 5, 10, 20, 50] };
@@ -83,14 +83,14 @@
   }
   function today() { var t = new Date(Date.now() + 8 * 3600000); return t.toISOString().slice(0, 10); }   // 台灣時間
   // 結算：bet＝已扣的本金；ret100＝要還給玩家的總額（以 1/100 為單位）。回傳實際入帳的整數
-  function settle(game, cur, bet, ret100, multX) {
+  function settle(game, cur, bet, ret100, multX, opt) {   // opt：{ noRound 不算一局, noSave 先不存檔（呼叫端自己節流） }
     var d = hallData(); if (!d) return 0;
     var whole = Math.floor(ret100 / 100), rem = ret100 - whole * 100;
     d.frac[cur] = (Number(d.frac[cur]) || 0) + rem;
     if (d.frac[cur] >= 100) { var extra = Math.floor(d.frac[cur] / 100); whole += extra; d.frac[cur] -= extra * 100; }
     if (whole > 0 && !credit(cur, whole)) { console.warn('[AFK-gamehall] 入帳失敗', cur, whole); }
-    statAdd(game, cur, bet, whole, multX, true);
-    safeSave();
+    statAdd(game, cur, bet, whole, multX, !(opt && opt.noRound));
+    if (!(opt && opt.noSave)) safeSave();
     return whole;
   }
   function statAdd(game, cur, bet, won, multX, round) {
@@ -249,7 +249,7 @@
   var RING = [[6, 0], [4, 0], [0, 0], [0, 1], [7, 0], [3, 1], [3, 0], 'O', [7, 0], [5, 1], [5, 0], [2, 1], [2, 0], [7, 0], [8, 0], [1, 1], [1, 0], [4, 0], [6, 0], 'O', [7, 0], [4, 1], [5, 0], [8, 0]];
   // 每格停下的機率：解方程讓 9 種水果「單押」的返還率都是 92%（另 1.5% 進 JP，合計 93.5%），押哪一種長期都一樣
   var RING_P = [0.038497,0.016441,0.015207,0.010138,0.037692,0.019581,0.036365,0.052278,0.037692,0.020608,0.019136,0.014071,0.021107,0.037692,0.206217,0.011725,0.017588,0.016441,0.038497,0.052278,0.037692,0.017705,0.019136,0.206217];
-  var JP_CELL = 2, MARY_UNIT = { gold: 5000, dia: 1, blood: 1 }, MARY_MAXPT = 99, JP_RATE = 150 /* 1.5%，以萬分之一 */, JP_SEED = { gold: 1000000, dia: 100, blood: 10 };
+  var JP_CELL = 2, MARY_UNIT = { gold: 50000, dia: 1, blood: 1 }, MARY_MAXPT = 99, JP_RATE = 150 /* 1.5%，以萬分之一 */, JP_SEED = { gold: 1000000, dia: 100, blood: 10 };
   var MEV = [['none', 30, '槓龜'], ['re1', 35, '再送一燈'], ['reN', 18, '送燈'], ['train', 9, '開火車'], ['san', 4, '小三元'], ['da', 2.5, '大三元'], ['si', 1.5, '大四喜']];
   var MEV_CELLS = { san: [0, 10, 1], da: [6, 12, 16], si: [4, 8, 13, 20] };
   var DBL_MAX = 5, JP_WIN = 777;
@@ -541,6 +541,7 @@
     if (!cl && W.__afkPoker && W.__afkPoker.on && W.__afkPoker.on()) h += '<button type="button" class="gh-card" data-gh="poker"><span class="ico">♠︎</span><b>德州撲克</b><span>無限注，對 3～5 位 NPC；有超難桌</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:bac"><span class="ico">🃏</span><b>百家樂</b><span>押莊、閒、和、對子；8 副牌</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:slot"><span class="ico">🔺</span><b>' + SLOT_NAME + '</b><span>埃及拉霸：消除連鎖、太陽倍數、免費遊戲</span></button>';
+    if (!cl && W.__afkFish && W.__afkFish.on()) h += '<button type="button" class="gh-card" data-gh="fish"><span class="ico">🐟</span><b>' + W.__afkFish.NAME + '</b><span>捕魚機：法利昂、幽靈船長、特殊武器、JP 轉盤</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:mary"><span class="ico">🍒</span><b>' + MARY_NAME + '</b><span>水果盤跑燈、ONCE MORE 送燈、比倍、JP</span></button>';
     if (typeof W.openRaceWindow === 'function') h += '<button type="button" class="gh-card" data-gh="dog"><span class="ico">🐕</span><b>賽狗場</b><span>奇岩賽狗，押冠軍</span></button>';
     h += '</div>';
@@ -550,7 +551,7 @@
   }
   function renderStats() {
     var d = hallData() || { st: {} }, td = today(), h = head('📊 遊戲廳戰績', '', true) + '<div class="gh-body">';
-    [['bac', '🃏 百家樂'], ['slot', '🔺 ' + SLOT_NAME], ['mary', '🍒 ' + MARY_NAME]].forEach(function (g) {
+    [['bac', '🃏 百家樂'], ['slot', '🔺 ' + SLOT_NAME], ['mary', '🍒 ' + MARY_NAME], ['fish', '🐟 ' + ((W.__afkFish && W.__afkFish.NAME) || '捕魚機')]].forEach(function (g) {
       h += '<div style="font-weight:800;color:#fde68a;margin:6px 0 2px">' + g[1] + '</div><table class="gh-stat"><tr><th>幣別</th><th>局數</th><th>今日淨輸贏</th><th>累計淨輸贏</th><th>最大一筆</th></tr>';
       ['gold', 'dia', 'blood'].forEach(function (c) {
         var s = d.st[g[0] + ':' + c]; if (!s) return h += '<tr><td>' + CURS[c] + '</td><td colspan="4" class="gh-sm">還沒玩過</td></tr>';
@@ -944,6 +945,7 @@
     if (a === 'home') { if (ui.busy) { stopAnims(); finishShow(); ui.busy = false; } stopAuto(); return go('home'); }
     if (a === 'quick') { ui.quick = !!t.checked; LS('afk_gh_quick', ui.quick ? '1' : '0'); return; }
     if (a === 'poker') { close(); try { W.__afkPoker.openLobby(); } catch (e) {} return; }
+    if (a === 'fish') { close(); try { W.__afkFish.open(); } catch (e) { console.warn(e); } return; }
     if (a === 'dog') { close(); toCenter(); try { W.openRaceWindow(); } catch (e) {} return; }
     if (p[0] === 'go') return go(p[1]);
     if (ui.busy && a !== 'stop') return;
@@ -981,7 +983,7 @@
 
   // ════════════════ 入口 ════════════════
   W.__afkGameHall = {
-    on: on, open: open, close: close, go: go, CURS: CURS, LIM: LIM, CHIPS: CHIPS, STEPS: STEPS, SPOTS: SPOTS, SYMS: SYMS, MV: MV, SCAT_PAY: SCAT_PAY,
+    on: on, open: open, close: close, go: go, debit: debit, credit: credit, statAdd: statAdd, hallData: hallData, safeSave: safeSave, curReady: curReady, amtTxt: amtTxt, rng: rng, settle: settle, CURS: CURS, LIM: LIM, CHIPS: CHIPS, STEPS: STEPS, SPOTS: SPOTS, SYMS: SYMS, MV: MV, SCAT_PAY: SCAT_PAY,
     SLOT_NAME: SLOT_NAME, SLOT_CAP: SLOT_CAP, DECKS: DECKS, CUT: CUT,
     newShoe: newShoe, bacDeal: bacDeal, bacReturn: bacReturn, bigRoad: bigRoad, slotSpin: slotSpin, slotPlay: slotPlay, settle: settle, balance: balance, art: art, _testQ: TESTQ, MF: MF, RING: RING, RING_P: RING_P, MEV: MEV, maryPlay: maryPlay, MARY_NAME: MARY_NAME, MARY_UNIT: MARY_UNIT, JP_SEED: JP_SEED, JP_WIN: JP_WIN, JP_RATE: JP_RATE, DBL_MAX: DBL_MAX, maryCollect: maryCollect
   };
