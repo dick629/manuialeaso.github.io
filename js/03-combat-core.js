@@ -215,12 +215,14 @@ function gameLoop() {
 
     if (!Number.isFinite(elapsed) || elapsed < 0) elapsed = 0;
     _tickDebt += _hidden ? elapsed : Math.min(elapsed, FF_MAX_ELAPSED_MS);   // 背景凍結可能超過 5 分鐘：全額保留在債務中，不能因單次上限遺失收益
+    if (typeof window.__afkFgCarryTake === 'function') _tickDebt += window.__afkFgCarryTake();   /* 🔌 加掛版補丁:前景跟不上時照常重畫 */
     if (_tickDebt < TICK_MS) {
         if (!_hidden && _ffAcc) _ffFinishCatchup();
         return;
     }
 
     let owed = Math.floor(_tickDebt / TICK_MS);
+    let _fg = owed > 1 && !_hidden && (!_ffAcc || _ffAcc.fg) && typeof window.__afkFgLag === 'function' && !!window.__afkFgLag(owed);   /* 🔌 加掛版補丁:前景跟不上時照常重畫 */
     if (owed <= 1 && !_hidden && !_ffAcc) {   // 即時路徑：背景／既有補跑摘要一律走下方靜音路徑
         _tickDebt -= TICK_MS;
         state.inTick = true;
@@ -235,10 +237,10 @@ function gameLoop() {
     if (!_ffAcc) {
         if (typeof resetCatchupGainItemIndex === 'function') resetCatchupGainItemIndex();
         _ffAcc = { t0: Date.now(), ticks: 0, gold: (player.gold || 0), invStart: _ffInventoryCounts() };   // ⏩ 整段補跑只在起點與終點各掃一次背包
-        try { if (typeof _vfxClearAll === 'function') _vfxClearAll(); } catch (e) {}   // 補跑只保留最終收益，立即釋放尚未播完的戰鬥特效
+        if (_fg) _ffAcc.fg = true; else try { if (typeof _vfxClearAll === 'function') _vfxClearAll(); } catch (e) {}   // 補跑只保留最終收益，立即釋放尚未播完的戰鬥特效
     }
     // 長補跑先讓瀏覽器畫出進度提示再開始重運算；只做一次，不增加每批額外等待。
-    if (!_hidden && !_ffAcc.progressPrimed && (_ffAcc.ticks * TICK_MS + _tickDebt) >= FF_PROGRESS_MIN_MS) {
+    if (!_fg && !_hidden && !_ffAcc.progressPrimed && (_ffAcc.ticks * TICK_MS + _tickDebt) >= FF_PROGRESS_MIN_MS) {
         _ffAcc.progressPrimed = true;
         _ffProgressUpdate(_ffAcc, _tickDebt);
         _ffScheduleNext();
@@ -249,7 +251,7 @@ function gameLoop() {
     state.ff = true;
     state.ffSmall = false;   // 真實補跑一律略過動畫；小補跑也只保留最終畫面與收益
     let ran = 0, budget0 = now;
-    let _burstMax = owed;
+    let _burstMax = _fg ? owed - 1 : owed;   /* 🔌 加掛版補丁:前景跟不上時照常重畫 */
     try {
         while (ran < _burstMax && ran < FF_HARD_CAP) {
             let tickError = null;
@@ -288,6 +290,13 @@ function gameLoop() {
     }
     if (player.dead) _tickDebt = 0;   // 進入下方統一收尾與最終重繪，不留下死亡後的補跑債務
     if (!_hidden) _ffProgressUpdate(_ffAcc, _tickDebt);
+    if (_fg && !_hidden && !_ffAcc.failed && !_ffAcc.aborted && !player.dead && state.running && typeof window.__afkFgShow === 'function' && window.__afkFgShow()) {   /* 🔌 加掛版補丁:前景跟不上時照常重畫 */
+        let _live = _tickDebt >= TICK_MS, _rest = _live ? _tickDebt - TICK_MS : _tickDebt, _carry = _rest - (_rest % TICK_MS);
+        if (_carry > 0) { _tickDebt -= _carry; window.__afkFgCarryPut(_carry); }
+        if (_live) { _tickDebt -= TICK_MS; state.inTick = true; try { tick(); _ffAcc.ticks++; } finally { state.inTick = false; settleDeadMobs(); } }
+        _ffFinishCatchup();
+        return;
+    }
     if (_tickDebt < TICK_MS) {   // 補跑完畢
         if (!_hidden) _ffFinishCatchup();   // 背景已追平也先保留摘要；回到前景後才重繪、存檔與顯示一次
     } else {

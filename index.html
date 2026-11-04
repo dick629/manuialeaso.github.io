@@ -554,13 +554,13 @@
     <script src="js/00-data.js?v=2f8dce5aab.8.34-merc-trial-class-loot"></script>
 <script src="js/01-drops-config.js?v=5e761b4d43.8.26-flywing-relics"></script>
 <script src="js/02-stats-recompute.js?v=76fb7400cf.8.26-flywing-relics"></script>
-    <script src="js/03-combat-core.js?v=eef0bd3ad9.8.26-flywing-relics"></script>
+    <script src="js/03-combat-core.js?v=1c8a6710f6.8.26-flywing-relics"></script>
     <script src="js/04-combat-attack.js?v=6b3217a738.8.26-flywing-relics"></script>
 <script src="js/05-kill-progression.js?v=eb74300ee5.8.34-merc-trial-class-loot"></script>
     <script src="js/06-status-allies.js?v=ae041a8e11.8.34-merc-trial-class-loot"></script>
     <script src="js/07-skills-cast.js?v=cc9227d69c.8.26-flywing-relics"></script>
 <script src="js/08-items-equip.js?v=9229dcb81d.8.16-wis-regen-interval"></script>
-<script src="js/09-vfx-render.js?v=733f30f684.8.32-merc-vfx-origin"></script>
+<script src="js/09-vfx-render.js?v=36c64b41e7.8.32-merc-vfx-origin"></script>
     <script src="js/10-ui-tabs.js?v=606b5ea7af.8.14-merc-guild"></script>
 <script src="js/11-world-map.js?v=35d1e90d8a.8.17-item-stack-source"></script>
 <script src="js/12-npc-quests.js?v=500a81a03f.8.34-merc-trial-class-loot"></script>
@@ -605,6 +605,8 @@
     <script src="afk-mobborn.js?v=0cc80ad95a"></script>
     <!-- afk-fpscap：畫面幀率上限（省電模式選 15／30／60 FPS：rAF 排隊放行、CSS／Web 動畫改由這裡按頻率推進）；要早載入，讓之後的外掛呼叫 requestAnimationFrame 都經過它 -->
     <script src="afk-fpscap.js?v=006887f31c"></script>
+    <!-- afk-fglag：前景跟不上時照常重畫（手機一刻＋重畫超過 100ms 時不再整段卡在補跑：怪物動畫、攻擊特效、傷害數字照常，進度一刻都不少；需核心補丁 patchFgLag） -->
+    <script src="afk-fglag.js?v=b459a62b31"></script>
     <!-- afk-classic-core：經典版先記住原版的能力值計算、NPC 名單與變身表（必須排在其他外掛之前） -->
     <script src="afk-classic-core.js?v=8925e965b6"></script>
     <!-- afk-banner：非官方轉載橫幅讓位（基礎設施、無開關；不可掛在 afk-mobile 裡，玩家關掉手機版面就會整個頂端被蓋住） -->
@@ -1041,7 +1043,7 @@
     <!-- afk-goddess3：女神與夢域鏡四龍的新機制（永久雙免疫＋汙濁之水／粉碎能量解除 30 秒、女神斬殺、二轉女神幽影與狂暴、次元裂縫龍之護甲）；要在 afk-finalboss、afk-finaltiers、afk-corrupt、afk-debuff-rules、afk-illufix、afk-hidden 之後 -->
     <script src="afk-goddess3.js?v=f4a02b8419"></script>
     <!-- afk-village：村長與地區聲望（王都傳令 米恩、懸殊、霸主出現率、商店 5 折）＋隱藏稱號；要在 afk-region-boss、afk-special-collection、afk-procfx 之後 -->
-    <script src="afk-village.js?v=b68bfa028e"></script>
+    <script src="afk-village.js?v=cff2e160e2"></script>
     <!-- afk-starroad：副本「星途遠征」（席琳神殿 喬斯達）與純白的萬能藥水 -->
     <script src="afk-starroad.js?v=970a147e8b"></script>
     <!-- afk-craftui：NPC 製作配方的材料卡（圖示、持有／需要、還差幾個、可不可以合成） -->

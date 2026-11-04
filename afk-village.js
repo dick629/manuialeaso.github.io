@@ -190,7 +190,16 @@
     { id: 'history', n: '知曉歷史', c: '#93c5fd' },
     { id: 'reborn', n: '轉生者', c: '#f0abfc' }
   ];
-  var heldN = function () { try { var c = W.__afkCastleWar; return c && c.held ? c.held().length : 0; } catch (e) { return 0; } };
+  // 持有城堡數：每次都要讀整份血盟存檔（localStorage 幾十 KB），能力列每次重畫都會問（稱號）→ 1 秒內重用（換了 held 函式就重算）
+  var heldMemo = { fn: null, t: 0, n: 0 };
+  var heldN = function () {
+    try {
+      var c = W.__afkCastleWar; if (!c || !c.held) return 0;
+      var t = Date.now();
+      if (heldMemo.fn === c.held && t - heldMemo.t < 1000 && t >= heldMemo.t) return heldMemo.n;
+      var n = c.held().length; heldMemo = { fn: c.held, t: t, n: n }; return n;
+    } catch (e) { return 0; }
+  };
   var historyDone = function (p) {
     var SC = W.__afkSpecialCollection; if (!SC || !SC.progress) return false;
     var pr = SC.progress(p), st = pr.find(function (x) { return x.k === 'story'; }), q = pr.find(function (x) { return x.k === 'quest'; });
