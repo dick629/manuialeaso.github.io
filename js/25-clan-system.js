@@ -618,7 +618,7 @@ function npcClanEnsureWorld(p) {
     let world = preview && preview.npcWorlds && preview.npcWorlds[mode];
     if (world && world.clans && world.clans.length === NPC_CLAN_WORLD_COUNT &&
         world.clans.every(c => c && c.leader && c.leader.n) &&
-        !_npcClanNamesNeedDiversify(world)) return world;
+        !_npcClanNamesNeedDiversify(world)) { _npcClanEnsureFresh = world; return world; }   /* 🔌 加掛版補丁:第二輪效能 */
     let result = _clanWithLock(st => {
         let live = st.npcWorlds[mode];
         if (!live) {
@@ -630,8 +630,12 @@ function npcClanEnsureWorld(p) {
     return result && result.ok ? result.world : world;
 }
 
+let _npcClanEnsureFresh = null;   /* 🔌 加掛版補丁:第二輪效能 */
 function npcClanGetWorld(p) {
-    npcClanEnsureWorld(p || player);
+    _npcClanEnsureFresh = null;
+    let _ew = npcClanEnsureWorld(p || player);
+    if (_ew && _ew === _npcClanEnsureFresh) { _npcClanEnsureFresh = null; return _ew; }   /* 🔌 加掛版補丁:第二輪效能 */
+    _npcClanEnsureFresh = null;
     let st = _clanReadState();
     return st && st.npcWorlds ? st.npcWorlds[clanModeKey(p || player)] : null;
 }

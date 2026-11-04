@@ -190,6 +190,25 @@
             };
             window._clanWriteState.__afkClanRead = true;
         }
+
+        // 主城（clanGetCastleCity）：畫面每次重畫會問好幾次（城堡徽章、稱號、地圖清單逐區、村長稱號…），
+        // 每次都整份 JSON.parse 血盟資料。答案是字串、只取決於「血盟資料原字串＋模式」，兩者都沒變就沿用。
+        if (typeof window.clanGetCastleCity === 'function' && typeof window.clanModeKey === 'function' && !window.clanGetCastleCity.__afkClanRead) {
+            var ccOrig = window.clanGetCastleCity, ccRaw = null, ccMode = null, ccVal = null;
+            window.clanGetCastleCity = function (p) {
+                if (!crOK) return ccOrig.apply(this, arguments);
+                var raw, mode;
+                try { raw = _lsGet(crKey); mode = clanModeKey(p || player); } catch (e) { return ccOrig.apply(this, arguments); }
+                if (raw != null && raw === ccRaw && mode === ccMode) return ccVal;
+                var v = ccOrig.apply(this, arguments);
+                var after = null; try { after = _lsGet(crKey); } catch (e) {}
+                if (raw != null && after === raw) { ccRaw = raw; ccMode = mode; ccVal = v; } else { ccRaw = ccMode = ccVal = null; }   // 讀的過程中被救回/改寫過就不記
+                return v;
+            };
+            window.clanGetCastleCity.__afkClanRead = true;
+            window.__afkClanCityReset = function () { ccRaw = ccMode = ccVal = null; };
+            try { (0, eval)('clanGetCastleCity = window.clanGetCastleCity'); } catch (e) {}
+        }
     }
 
     window.AFK_LZCACHE = {   // 供 afk-diag / 問題回報取證（唯讀）
@@ -200,7 +219,7 @@
                 clanReadHits: crHits, clanReadMisses: crMisses, clanReadOn: crOK
             };
         },
-        clear: function () { cache.clear(); chars = 0; cbCache.clear(); crRaw = crNorm = null; }
+        clear: function () { cache.clear(); chars = 0; cbCache.clear(); crRaw = crNorm = null; if (window.__afkClanCityReset) window.__afkClanCityReset(); }
     };
 
     if (window.AFK_TOGGLES) AFK_TOGGLES.register({

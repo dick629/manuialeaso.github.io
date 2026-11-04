@@ -265,9 +265,21 @@ body.afk-no-animation .afk-trans-aura *,body.afk-card-background .afk-trans-aura
   // 特效跟著角色動（玩家 2026-10-26）：每一幀的身體位置（頭頂中線、腳底）跟量光環時那一幀比，差多少就把光環／背飾／動態特效一起平移
   //   每張幀圖只量一次（快取），不影響效能
   var frameCache=Object.create(null),frameN=0;
+  // 第一次看到的幀圖不在當下逐像素分析（手機上一張要好幾毫秒、剛進遊戲會連著幾十張）：排到瀏覽器有空時再量，量好之前特效先不平移
+  var geoQueue=[],geoQueued=Object.create(null),geoSched=false,idle=typeof requestIdleCallback==='function'?requestIdleCallback:function(f){return setTimeout(function(){f({timeRemaining:function(){return 8;}});},50);};
+  function geoRun(dl){
+    geoSched=false;
+    while(geoQueue.length&&(!dl||dl.timeRemaining()>2)){var x=geoQueue.shift();delete geoQueued[x.k];var im=x.img;if(im&&im.complete&&im.naturalWidth&&(im.currentSrc||im.src)===x.k&&frameCache[x.k]===undefined)frameGeoNow(im,x.k);}
+    if(geoQueue.length&&!geoSched){geoSched=true;idle(geoRun,{timeout:1000});}
+  }
   function frameGeo(img){
     if(!img||!img.complete||!img.naturalWidth)return null;
     var k=img.currentSrc||img.src;if(!k)return null;if(frameCache[k]!==undefined)return frameCache[k];
+    if(!geoQueued[k]&&geoQueue.length<200){geoQueued[k]=1;geoQueue.push({k:k,img:img});}
+    if(!geoSched){geoSched=true;idle(geoRun,{timeout:1000});}
+    return null;
+  }
+  function frameGeoNow(img,k){
     var out=null,w=img.naturalWidth,h=img.naturalHeight;
     try{
       if(w*h<=1048576){

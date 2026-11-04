@@ -1009,7 +1009,11 @@
     days = offDays;
     if (typeof window.__afkSiege2On === 'function' && window.__afkSiege2On()) days = 0;   // 每週守城戰（afk-siege2）開著：不再判定離線跨午夜 5% 失城
     for (var i = 0; i < days; i++) { var h = held(); if (!h.length) break; if (Math.random() >= LOSS_RATE) continue; loseCastle(h[Math.floor(Math.random() * h.length)]); }   // 玩家 2026-10-28：離線期間跨過的每個午夜 5% 機率
-    try { syncWar(true); badgeCache.at = -1e9; titleCache.at = -1e9; updateUI(); saveGame(); } catch (e) {}
+    try { syncWar(true); badgeCache.at = -1e9; titleCache.at = -1e9; updateUI(); } catch (e) {}
+    // 存檔延到瀏覽器有空時（手機上整份存檔壓縮要 1 秒，不要卡在戰鬥 tick 裡）；換了角色／存檔位就不存
+    var slot0 = currentSlot, p0 = player;
+    var later = function () { try { if (currentSlot === slot0 && player === p0 && player && player.cls) saveGame(); } catch (e) {} };
+    try { if (typeof requestIdleCallback === 'function') requestIdleCallback(later, { timeout: 5000 }); else setTimeout(later, 0); } catch (e) { later(); }
   };
   // 主城修復（玩家 2026-11-02 21:02：反王肯恩「篡位者的懸賞」一次都沒遇過）：
   //   七城清單裡有城、血盟卻沒記主城時，遊戲把你當成「沒有城」——商店 8 折、城主的世界事件、攻城獲勝的城鎮都不算。

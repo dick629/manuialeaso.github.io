@@ -50,13 +50,28 @@
       while (extra-- > 0 && el.children.length > 1) el.removeChild(el.firstChild);
       return q.locked() ? null : el;
     };
+    // 看不到的日誌框（手機收起來的日誌、別的分頁）不量 scrollHeight：量一次就是一次強制排版。
+    //   用 IntersectionObserver 記可見與否（不會觸發排版）；重新看得到時，若沒被玩家往上捲住就捲到底一次。
+    var logVis = {}, logPend = {}, logIO = null;
+    try {
+      if (typeof IntersectionObserver === 'function') logIO = new IntersectionObserver(function (ents) {
+        ents.forEach(function (en) {
+          var id = en.target.id; logVis[id] = en.isIntersecting;
+          if (en.isIntersecting && logPend[id]) { logPend[id] = false; var el = en.target, q = queues[id]; try { if (!q || !q.locked()) el.scrollTop = el.scrollHeight; } catch (e) {} }
+        });
+      });
+    } catch (e) { logIO = null; }
     var flushAll = function () {
       scheduled = false;
       var scroll = [];
       // Finish every channel's DOM writes before reading any layout. Otherwise
       // combat's scrollHeight flushes layout, then system/world invalidate it
       // again. Keep the same nodes, trimming, lock checks and flush timing.
-      for (var id in queues) { try { var el = flushOne(id); if (el) scroll.push({ el: el }); } catch (e) {} }
+      for (var id in queues) { try { var el = flushOne(id); if (el) {
+        if (logIO && !(id in logVis)) { logVis[id] = null; try { logIO.observe(el); } catch (e) {} }
+        if (logVis[id] === false) { logPend[id] = true; continue; }
+        scroll.push({ el: el });
+      } } catch (e) {} }
       for (var i = 0; i < scroll.length; i++) { try { scroll[i].top = scroll[i].el.scrollHeight; scroll[i].ready = true; } catch (e) {} }
       for (var j = 0; j < scroll.length; j++) { if (scroll[j].ready) { try { scroll[j].el.scrollTop = scroll[j].top; } catch (e) {} } }
     };

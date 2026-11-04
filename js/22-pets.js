@@ -932,12 +932,13 @@ function _petPickTarget(p) {
     // 🐾 v3.2.42 稽核修：距離選出的目標與出生序備援分開存——原本剛出生尚未渲染的怪會以出生序「搶走」已依距離選定的目標
     let best = null, bd = Infinity, fb = null;
     let pr = p._px != null ? { x: p._px, y: p._py } : null;
+    let _hrOnce = null;   // 同一次挑目標的迴圈裡只有讀版面、沒有寫入：容器矩形量一次就好 /* 🔌 加掛版補丁:第二輪效能 */
     for (let m of alive) {
         let r = (pr && typeof _vfxSlotRect === 'function') ? _vfxSlotRect(m.uid) : null;
         if (pr && r && r.width) {
             let host = _petLayerHost();
             if (host) {
-                let hr = host.getBoundingClientRect();
+                let hr = _hrOnce && _hrOnce.el === host ? _hrOnce.r : (_hrOnce = { el: host, r: host.getBoundingClientRect() }).r;   /* 🔌 加掛版補丁:第二輪效能 */
                 let mx = (r.left + r.width / 2 - hr.left) / Math.max(1, hr.width), my = (r.top + r.height / 2 - hr.top) / Math.max(1, hr.height);
                 let dd = (mx - pr.x) * (mx - pr.x) + (my - pr.y) * (my - pr.y);
                 if (dd < bd) { bd = dd; best = m; }

@@ -259,6 +259,7 @@
       }
       return;
     }
+    if (ACTS && !actsOn(event, id)) return;   // 這個事件底下沒有任何一段會用到這件遺物：不必建下面五十個閉包
     var st = api.state(p, src), now = Number(c.now) || 0;
     var t = c.target, enemy = c.attacker || t, a5 = s === 4, asc = s >= 3;
     var hp = function (x) { return api.hp(x); }, mhp = function (x) { return api.mhp(x); };
@@ -765,9 +766,73 @@
     return reduction;
   }
 
+  // ── 事件→遺物對照（從 dispatch 自己的原始碼算出來，不另外手寫）──
+  //   dispatch 在閉包與旗標之後是一段段 `    if(event==='X'...) {...}`。一段只有在「看得出整段都以 id 為前提」時才限定遺物：
+  //   ① 一行式 if(event==='X'&&id===N&&…)；② 段內第一層只有 switch(id){case…}（沒有 default）；③ 段內第一層每句都是 if(<每個 || 分支都以 id===N 開頭>)。
+  //   其他寫法＝這個事件每件遺物都可能；有看不懂的段落＝整張表作廢（照原本每次都跑）。之前的閉包與旗標都是純計算。
+  var ACTS = null;
+  function actsOn(event, id) { var e = ACTS[event]; return !!e && (e === true || !!e[id]); }
+  function buildActs(text) {
+    var at = text.indexOf('var st = api.state(p, src)'); if (at < 0) return null;
+    var lines = text.slice(at).split('\n').slice(1), first = -1;
+    for (var li = 0; li < lines.length; li++) if (/^    if\s*\(\s*event\s*===/.test(lines[li])) { first = li; break; }
+    if (first < 0) return null; lines = lines.slice(first);
+    var segs = [], cur = null, bad = false;
+    lines.forEach(function (ln) {
+      if (/^    if\s*\(/.test(ln)) { cur = { head: ln, rows: [ln] }; segs.push(cur); }
+      else if (/^    \S/.test(ln) && !/^    \}/.test(ln)) { if (!/^    (\/\/|return\b)/.test(ln) && !/^  \}/.test(ln)) bad = true; cur = null; }
+      else if (cur) cur.rows.push(ln);
+    });
+    if (bad || segs.length < 20) return null;
+    // 從 s[i]（'('）找到配對的 ')'，略過字串
+    var close = function (s, i) { var d = 0, q = null; for (var k = i; k < s.length; k++) { var ch = s[k]; if (q) { if (ch === '\\') k++; else if (ch === q) q = null; continue; } if (ch === "'" || ch === '"' || ch === '`') { q = ch; continue; } if (ch === '(') d++; else if (ch === ')') { d--; if (!d) return k; } } return -1; };
+    var split = function (s, op) { var out = [], d = 0, q = null, st = 0; for (var k = 0; k < s.length; k++) { var ch = s[k]; if (q) { if (ch === '\\') k++; else if (ch === q) q = null; continue; } if (ch === "'" || ch === '"' || ch === '`') { q = ch; continue; } if (ch === '(' || ch === '[' || ch === '{') d++; else if (ch === ')' || ch === ']' || ch === '}') d--; else if (!d && s.substr(k, 2) === op) { out.push(s.slice(st, k)); st = k + 2; k++; } } out.push(s.slice(st)); return out.map(function (x) { return x.trim(); }); };
+    var idTerm = function (t) {   // 'id===N' 或 '(id===N||id===M)' → [N…]；不是就 null
+      var m = /^id\s*===\s*(\d+)$/.exec(t); if (m) return [m[1]];
+      if (t[0] === '(' && close(t, 0) === t.length - 1) { var ors = split(t.slice(1, -1), '||'), all = []; for (var i = 0; i < ors.length; i++) { var r = idTerm(ors[i]); if (!r) return null; all = all.concat(r); } return all; }
+      return null;
+    };
+    var restrict = function (cond) {   // 每個 || 分支的第一個 && 項都是 id 限定 → 回傳 id 清單
+      var out = [], ors = split(cond, '||');
+      for (var i = 0; i < ors.length; i++) { var ands = split(ors[i], '&&'), got = null; for (var j = 0; j < ands.length && !got; j++) got = idTerm(ands[j]); if (!got) return null; out = out.concat(got); }
+      return out;
+    };
+    var condOf = function (ln) { var i = ln.indexOf('('); var j = close(ln, i); return j < 0 ? null : { cond: ln.slice(i + 1, j), rest: ln.slice(j + 1) }; };
+    var table = {};
+    for (var g = 0; g < segs.length; g++) {
+      var sg = segs[g], h = condOf(sg.head); if (!h) return null;
+      var evs = [], m, re = /event\s*===\s*'(\w+)'/g; while ((m = re.exec(h.cond))) evs.push(m[1]);
+      if (!evs.length) return null;
+      // 事件條件：可以是 event==='A'||event==='B'（整個包起來）或 event==='A'&&…；其餘 && 項看有沒有 id 限定
+      var ors = split(h.cond, '||'), ids = null;
+      var evOnly = ors.every(function (o) { return /^event\s*===\s*'\w+'$/.test(o); });
+      if (!evOnly) {
+        if (ors.length !== 1) ids = null;   // event==='A'&&x||… 這種：保守
+        else { var ands = split(h.cond, '&&').filter(function (t) { return !/^event\s*===/.test(t); }), cond2 = ands.join('&&'); ids = ands.length ? restrict(cond2) : null; }
+      }
+      if (!ids && sg.rows.length > 1) {
+        var body = sg.rows.slice(1), top = body.filter(function (r) { return /^      \S/.test(r); });
+        var sw = /^      switch\s*\(\s*id\s*\)\s*\{\s*$/.test(top[0] || '');
+        if (sw) {
+          var swIdx = body.indexOf(top[0]), endIdx = -1; for (var r = body.length - 1; r >= 0; r--) if (/^      \}\s*$/.test(body[r])) { endIdx = r; break; }
+          var after = body.slice(endIdx + 1).join('\n').trim(), before = body.slice(0, swIdx).join('\n').trim(), inner = body.slice(swIdx + 1, endIdx);
+          var innerTop = inner.filter(function (r) { return /^      \S/.test(r); });
+          if (endIdx > swIdx && !before && /^\}?$/.test(after) && innerTop.every(function (r) { return /^      case\s+\d+\s*:/.test(r) || /^      \}\s*$/.test(r) || /^      \S/.test(r) && false; }) && !/\bdefault\s*:/.test(inner.join('\n'))) {
+            ids = []; inner.join('\n').replace(/\bcase\s+(\d+)\s*:/g, function (x, n) { ids.push(n); return x; });
+          }
+        } else if (top.length && top.length === body.filter(function (r) { return r.trim() && !/^\s*\}\s*$/.test(r); }).length - body.filter(function (r) { return /^       /.test(r) && r.trim(); }).length) {
+          var all = []; for (var t = 0; t < top.length; t++) { var c2 = /^      if\s*\(/.test(top[t]) ? condOf(top[t]) : null; var rr = c2 && restrict(c2.cond); if (!rr) { all = null; break; } all = all.concat(rr); }
+          ids = all;
+        }
+      }
+      evs.forEach(function (ev) { if (!ids || !ids.length) table[ev] = true; else if (table[ev] !== true) { table[ev] = table[ev] || {}; ids.forEach(function (k) { table[ev][k] = 1; }); } });
+    }
+    return table;
+  }
+  try { ACTS = buildActs(String(dispatch)); } catch (e) { ACTS = null; }
   // dispatch 對這個事件／遺物會不會做事：與 dispatch 開頭三道 return 同一套判斷（runtime 用來略過一定立刻 return 的呼叫）
-  function handles(event,id){return !!HANDLED_EVENTS[event]&&!!byId[id]&&!(NARROW_EVENTS[event]&&!NARROW_EVENTS[event][id]);}
-  var exported = {handles:handles,byId:byId,byKey:byKey,configure:configure,tier:configure,dispatch:dispatch,stage:tier,dynamicStatsKey:dynamicStatsKey,hpSpeedBonus:hpSpeedBonus,targetModifiers:targetModifiers,incomingModifiers:incomingModifiers,healingReduction:healingReduction};
+  function handles(event,id){return !!HANDLED_EVENTS[event]&&!!byId[id]&&!(NARROW_EVENTS[event]&&!NARROW_EVENTS[event][id])&&(!ACTS||actsOn(event,id)||(id===163&&event==='beforeHurt'));}   // 163＝未強化時唯一還有作用的那段（dispatch 開頭的 !s 分支）
+  var exported = {handles:handles,_acts:function(){return ACTS;},byId:byId,byKey:byKey,configure:configure,tier:configure,dispatch:dispatch,stage:tier,dynamicStatsKey:dynamicStatsKey,hpSpeedBonus:hpSpeedBonus,targetModifiers:targetModifiers,incomingModifiers:incomingModifiers,healingReduction:healingReduction};
   global.AFK_RELIC_DEFENSE = exported;
   if (typeof module !== 'undefined' && module.exports) module.exports = exported;
 })(typeof window !== 'undefined' ? window : globalThis);
