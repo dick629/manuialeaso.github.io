@@ -194,6 +194,8 @@
         { id: 'offline', name: '離線快速結算', desc: '關掉遊戲回來自動結算掛機收益', group: '遊戲玩法' },
         { id: 'traditional', name: '傳統模式(偽)', desc: '打到或做出來的裝備自帶隨機強化值（在選角卡右上角逐角色開關）', group: '遊戲玩法' },
         { id: 'dograce', name: '賽狗場', desc: '賭哪隻狗第一，押金幣或龍鑽、中了自動入袋（自動化分頁開啟）', group: '遊戲玩法' },
+        { id: 'guardmats', name: '四龍眼淚改在四龍副本掉', desc: '地／火／水／風龍之渴望的眼淚只在席琳夢域鏡的四龍副本，由小怪掉落', group: '遊戲內容', seal: true },
+        { id: 'exprebirth', name: '轉生後經驗藥水無效', desc: '轉生後，增加狩獵經驗的藥水、料理不再生效（魔法娃娃、符文、聖紋、組隊加成照樣有效）', group: '遊戲玩法', seal: true },
         { id: 'bosslines', name: '頭目台詞', desc: '頭目登場、血量剩一半、剩四分之一、倒下時，在戰鬥日誌說一句話', group: '遊戲介面', seal: true },
         { id: 'gamehall', name: '遊戲廳（百家樂、沙海法老的寶庫）', desc: '設定分頁「🔌 外掛」列的「🎰 遊戲廳」：德州撲克、百家樂、沙海法老的寶庫（埃及拉霸）、賽狗場集中在一起；用金幣、龍之鑽石或血龍鑽下注', group: '遊戲內容', def: true, seal: true },
         { id: 'anyclass', name: '裝備不限職業/性別', desc: '所有裝備都不看職業與性別，任何角色都能裝；關掉後穿不上的會自動卸回背包', group: '遊戲玩法', def: false }

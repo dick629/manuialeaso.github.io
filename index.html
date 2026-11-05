@@ -590,7 +590,7 @@
          無開關：這是顯示正確性，不是功能。實測 forceDarkModeEnabled+darkModeImagePolicy=smart 可重現、加這行即解。 -->
     <style>:root{color-scheme:dark}</style>
     <!-- afk-toggles 必須最先載入：外掛開關中樞（逃生門，自己不可被關；某支外掛壞掉時玩家關掉它就能用原版繼續玩） -->
-    <script src="afk-toggles.js?v=484caab7dd"></script>
+    <script src="afk-toggles.js?v=062bf16a5d"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=8d0c4c2a8b"></script>
@@ -845,10 +845,12 @@
     <script src="afk-ttmi-items-data.js?v=3468dd975f"></script>
     <script src="afk-ttmi-icons-data.js?v=601b04b77c"></script>
     <script src="afk-ttmi-items.js?v=00e05b964f"></script>
+    <!-- afk-exprebirth：轉生後經驗藥水、料理無效（娃娃、符文、聖紋、組隊照算）；要緊接在 afk-ttmi-items 之後、符文／聖紋包經驗倍率之前 -->
+    <script src="afk-exprebirth.js?v=e2274c6340"></script>
     <!-- afk-knightnames：守護騎士譯名（依詩蒂→伊席蘿蒂、朱利安→絲莉安、歐薇→歐文；怪物、NPC、物品、載入畫面）＋變身形態伊詩蒂→伊席蘿蒂（只改顯示，形態名、收集冊與存檔 key 照舊）。素材沿用舊名資料夾；排在 afk-castlewar、afk-ttmi-items 之後，afk-matprice、afk-poly-codex 之前 -->
     <script src="afk-knightnames.js?v=69d85afcf3"></script>
     <!-- afk-junkquest：奇岩「古物學者 塞勒斯」——雜項素材的劇情委託與常駐委託（新手／中階／高階） -->
-    <script src="afk-junkquest.js?v=be3ebb17ab"></script>
+    <script src="afk-junkquest.js?v=d535b07533"></script>
     <!-- 遺物戰鬥掛接、同伴與固定終階 GM 測試道具。 -->
     <script src="afk-relic-weapon-bridge.js?v=df5ee760a1"></script>
     <script src="afk-relic-companions.js?v=3318cfeee9"></script>
@@ -1104,6 +1106,8 @@
     <script src="afk-carve.js?v=4cddc2b708"></script>
     <!-- afk-siege2：每週守城戰（每週五 20:00 集結、血盟頁可關、攻城頁放棄城堡、回防副本 25 波（倒下轉攻城）、失城 7 天鎖與城陷之恥、奪回戰鏡像敵人）；預設開；要在 afk-castlewar、afk-castle-guards、afk-guardup、afk-soulstone 之後 -->
     <script src="afk-siege2.js?v=0f1cd36aa5"></script>
+    <!-- afk-guardmats：守護者之戒的材料先開始掉（四龍眼淚改在夢域鏡四龍副本的小怪掉、原本的掉落拿掉、古物學者常駐委託不抽）；包 killMob，要在各副本外掛之後 -->
+    <script src="afk-guardmats.js?v=a01c3b33cf"></script>
     <!-- afk-bosslines：頭目台詞（登場、半血、四分之一、倒下各一句；資料在 afk-bosslines-data.js）；包 tick、killMob，要在各副本外掛之後 -->
     <script src="afk-bosslines-data.js?v=86608732aa"></script>
     <script src="afk-bosslines.js?v=2809f51f0c"></script>
