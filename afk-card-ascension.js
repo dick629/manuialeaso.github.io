@@ -557,7 +557,8 @@
     function head(t){var h=document.createElement('div');h.className='afk-ca-sub';h.textContent=t;return h;}
     function draw(){var q=search.value.trim();list.innerHTML='';tabs.innerHTML='';
       PICK_GROUPS.forEach(function(g){var b=document.createElement('button');b.type='button';b.className='btn afk-ca-tab'+(g[0]===pickTab&&!q?' on':'');b.disabled=!cnt[g[0]];b.textContent=g[1]+' '+(use[g[0]]||0)+'/'+(cnt[g[0]]||0);b.onclick=function(){pickTab=g[0];search.value='';draw();};tabs.appendChild(b);});
-      var rows=avail.filter(function(x){return q?x.form.n.indexOf(q)>=0:x.group===pickTab;});
+      var shownN=function(n){try{var kn=window.__afkKnightNames;return kn&&kn.poly&&kn.poly.text?kn.poly.text(n):n;}catch(e){return n;}};   // 譯名（afk-knightnames）：同時比形態 key 與畫面上的名字（伊詩蒂→伊席蘿蒂），key 不變
+      var rows=avail.filter(function(x){return q?(x.form.n.indexOf(q)>=0||shownN(x.form.n).indexOf(q)>=0):x.group===pickTab;});
       // 玩家 2026-10-30 11:30：同一分區裡「有可用變身」的小節排前面、全灰的小節排後面並收起，免得一打開看到的全是灰色
       var okSub={},gRank={};PICK_GROUPS.forEach(function(g,i){gRank[g[0]]=i;});rows.forEach(function(x){if(!x.off)okSub[x.group+'|'+x.sub]=(okSub[x.group+'|'+x.sub]||0)+1;});
       rows=rows.map(function(x,i){return [x,i];}).sort(function(a,b){var A=a[0],B=b[0];return ((gRank[A.group]||0)-(gRank[B.group]||0))||((okSub[A.group+'|'+A.sub]?0:1)-(okSub[B.group+'|'+B.sub]?0:1))||(a[1]-b[1]);}).map(function(x){return x[0];});
