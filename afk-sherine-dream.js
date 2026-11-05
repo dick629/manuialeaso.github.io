@@ -186,7 +186,8 @@
   }
   if (typeof W.getItemFullName === 'function') {
     var oName = W.getItemFullName;
-    W.getItemFullName = function (it) { if (it && it.id === SOUL) return '之魂'; var s = oName.apply(this, arguments); try { if (isDream(it)) { var g = grp(it); if (DN[g]) s = String(s).replace(g + DB.items[it.id].n, DN[g] + DB.items[it.id].n); } } catch (e) {} return s; };
+    W.getItemFullName = function (it) { if (it && it.id === SOUL) return '之魂' + ((Number(it.cnt) || 1) > 1 ? ' (' + Number(it.cnt).toLocaleString() + ')' : '');   // 一疊要看得到數量（玩家 2026-11-06：可以堆疊後卻不能顯示數量）
+      var s = oName.apply(this, arguments); try { if (isDream(it)) { var g = grp(it); if (DN[g]) s = String(s).replace(g + DB.items[it.id].n, DN[g] + DB.items[it.id].n); } } catch (e) {} return s; };
   }
   var tierText = function (g) { var o = DREAM[g]; return [2, 3, 5].map(function (t) { return t + ' 件：' + o[t].t; }); };
   if (typeof W.buildItemDescHTML === 'function') {
