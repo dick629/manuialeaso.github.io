@@ -153,10 +153,22 @@
   // 蓋時間戳(=現在),順手記下「即時所在地圖」(changeMap 不會存檔,光看存檔 blob 會誤判還在村莊)。
   // ⚠ 結算期間(catchingUp)一律跳過:錨點只能由檢查點以「已結算到的時間點」推進——
   //   否則心跳/存檔/落點 changeMap 把錨點蓋成「現在」,結算一被中斷整段離線時間就此蒸發(2026-07-10 修)。
+  // ⚠ 背景跟不上（2026-11-05 玩家回報：同時開別的遊戲、分頁在背景放半小時，回來「離線掛機 0 分鐘」、整段沒掛到）：
+  //   背景只靠 Worker 每秒跑一次主迴圈（每次最多算 80ms），一刻太慢就越欠越多，欠著的時候存檔也延後不寫。
+  //   這時心跳若照樣把錨點蓋成「現在」，分頁被瀏覽器回收、重新載入後 → 讀到的是半小時前的存檔，離線時間卻只算到幾秒前
+  //   → 整段時間蒸發。錨點改成「遊戲實際算到的時間」＝現在 − 還欠著的時間；欠超過 3 秒就不推進錨點
+  //   （停在最後一次跟上的時間點，重新載入時由離線結算補回）。
+  var LAG_HOLD_MS = 3000;
+  function coreLagMs() {
+    try { var d = (typeof _tickDebt !== 'undefined') ? Number(_tickDebt) : 0; return d > 0 && isFinite(d) ? d : 0; } catch (e) { return 0; }
+  }
   function stamp() {
     if (catchingUp) return;
-    stampCore(Date.now());
+    var lag = coreLagMs();
+    if (lag >= LAG_HOLD_MS) return;
+    stampCore(Date.now() - lag);
   }
+  window.__afkOfflineLagMs = coreLagMs;
   function stampCore(ts) {
     try {
       if (!validSlot()) return;
