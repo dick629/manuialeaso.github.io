@@ -17,7 +17,7 @@
  *   百分比減傷特效（你和傭兵）合計上限 75%（核心補丁 31、32）。
  *
  * 滿抗轉物理（2026-11-04 03:14 玩家；子開關 res1000，預設開；經典模式照舊）：
- *   ‧火水風地抗性的總上限 800 → 1000（無屬性抗性上限 300 不變、分開算）。你與傭兵都一樣（傭兵重算能力時也走這裡夾）。
+ *   ‧火水風地抗性的總上限 800 → 1000（無屬性抗性 2026-11-05 起跟火水風地同一個上限）。你與傭兵都一樣（傭兵重算能力時也走這裡夾）。
  *   ‧抗性到 1000（滿抗）：那個屬性的傷害改當成物理傷害——不再吃屬性抗性，改吃防禦（AC 隨機減傷）、傷害減免等物理的減傷。
  *       席琳夢域鏡：原本就寫好的「1000 屬性免疫」（一般攻擊走純物理、魔法改吃無屬性抗性的物理減傷比例）現在打得到了。
  *       其他地方：原版曲線 300 起就是 100% 減傷；滿 1000 時改成倍率 1（物理），一般攻擊照物理流程、魔法照扣傷害減免與魔防。
@@ -160,13 +160,14 @@
   }
 
   // ── 抗性總上限（玩家 2026-10-25）：火水風地各最多 800、無屬性最多 300（所有來源加總後才夾）──
-  //   2026-11-04：滿抗轉物理（res1000）開著時火水風地改成 1000；無屬性維持 300
+  //   2026-11-04：滿抗轉物理（res1000）開著時火水風地改成 1000
+  //   2026-11-05 20:09（玩家）：無屬性抗性超過 300 也有效，上限跟火水風地一樣（800／1000）；席琳夢域鏡照無屬性的表（400→7%、500→10%、500(+X)…）
   var ELE4 = ['resFire', 'resWater', 'resWind', 'resEarth'], CAP4_OLD = 800, CAP4_NEW = 1000;
-  var TOTAL_CAP = { resFire: CAP4_OLD, resWater: CAP4_OLD, resWind: CAP4_OLD, resEarth: CAP4_OLD, resNone: 300 };
+  var TOTAL_CAP = { resFire: CAP4_OLD, resWater: CAP4_OLD, resWind: CAP4_OLD, resEarth: CAP4_OLD, resNone: CAP4_OLD };
   window.__afkResCap = TOTAL_CAP;
   var clampRes = function () {
     try {
-      var c4 = fullOn() ? CAP4_NEW : CAP4_OLD; ELE4.forEach(function (k) { TOTAL_CAP[k] = c4; });
+      var c4 = fullOn() ? CAP4_NEW : CAP4_OLD; ELE4.forEach(function (k) { TOTAL_CAP[k] = c4; }); TOTAL_CAP.resNone = c4;
       var d = typeof player !== 'undefined' && player && player.d; if (!d) return;
       for (var k in TOTAL_CAP) if ((Number(d[k]) || 0) > TOTAL_CAP[k]) { d['_raw_' + k] = d[k]; d[k] = TOTAL_CAP[k]; } else d['_raw_' + k] = d[k];
     } catch (e) {}
