@@ -4020,7 +4020,7 @@
   function renderMioSigil() {
     var out = '', M = window.__afkMio, S = window.__afkSigil;
     if (!M && !S) return '<div class="m-wiki-note">密奧之卡、聖紋在設定裡被關掉了。經典模式沒有這兩個系統。</div>';
-    out += '<div class="m-wiki-note">兩格都在裝備視窗<b>第二頁</b>：<b>聖紋</b>在項鍊的位置、<b>密奧之卡</b>在左邊、手環對面那格。不需要轉生，經典模式沒有。觸發特效時角色頭上會浮出卡或字母的圖。</div>';
+    out += '<div class="m-wiki-note">密奧之卡也可以在<b>歐瑞村莊</b>找<b>洛蒂</b>打開。兩格都在裝備視窗<b>第二頁</b>：<b>聖紋</b>在項鍊的位置、<b>密奧之卡</b>在左邊、手環對面那格。不需要轉生，經典模式沒有。觸發特效時角色頭上會浮出卡或字母的圖。</div>';
     if (M) {
       out += wCard('🃏 密奧之卡（塔羅牌 22 張）',
         wDesc('給剛進<b>席琳夢域鏡</b>的新手用。每張卡有三個階段：<b style="color:#93c5fd">偉特</b> → <b style="color:#c4b5fd">托特</b> → <b style="color:#fcd34d">馬賽</b>。') +
@@ -5382,7 +5382,7 @@
     var K = window.__afkPoker;
     if (!K || !K.on()) return '<div class="m-wiki-note">德州撲克目前沒有開放。</div>';
     var unit = function (t) { return t.cur === 'gold' ? '' : ' 顆'; };
-    var out = '<div class="m-wiki-note">到<b>歐瑞村莊</b>找荷官「<b>洛蒂</b>」，用<b>金幣、龍之鑽石或血龍鑽</b>換籌碼入座，跟 3～5 位 NPC 玩<b>無限注德州撲克</b>。不想走回村莊時，打開<b>設定</b>分頁「🔌 外掛」那一列，按「<b>' + (window.__afkGameHall && window.__afkGameHall.on() ? '🎰 遊戲廳</b>」→「<b>德州撲克</b>' : '♠︎ 德州撲克') + '</b>」，一樣能看到所有牌桌、直接入座。經典模式沒有這張牌桌。</div>';
+    var out = '<div class="m-wiki-note">打開<b>設定</b>分頁「🔌 外掛」那一列，按「<b>' + (window.__afkGameHall && window.__afkGameHall.on() ? '🎰 遊戲廳</b>」→「<b>德州撲克</b>' : '♠︎ 德州撲克') + '</b>」，用<b>金幣、龍之鑽石或血龍鑽</b>換籌碼入座，跟 3～5 位 NPC 玩<b>無限注德州撲克</b>。經典模式沒有這張牌桌。</div>';
     out += wCard('🃏 牌桌',
       wTbl(['牌桌', '用什麼買籌碼', '小盲／大盲', '買入'], K.TABLES.map(function (t) {
         return ['<b>' + t.n + '</b>', K.CURS[t.cur], t.sb.toLocaleString() + '／' + t.bb.toLocaleString(), t.nomax ? t.min.toLocaleString() + unit(t) + ' 起，<b>無上限</b>' : t.min.toLocaleString() + '～' + t.max.toLocaleString() + unit(t)];

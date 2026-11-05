@@ -1078,13 +1078,7 @@
   setTimeout(function () { try { if (P()) refundStale(); } catch (e) {} }, 3000);
   if (!on()) return;   // 關掉時只留「把沒離座的籌碼換回去」
 
-  try {
-    var L = W.__afkLore, def = { id: NPC_ID, n: NPC_N, title: NPC_T, type: 'poker', classicHide: true,
-      d: '在歐瑞村莊開牌桌的荷官洛蒂。用金幣、龍之鑽石或血龍鑽換籌碼，跟各路冒險者玩無限注德州撲克。' };
-    if (L && L.addNpc) L.addNpc('town_oren', def, '6804', [58, 80]);
-    else if (DB.towns && DB.towns.town_oren) DB.towns.town_oren.npcs.push(def);
-    var K = W.__afkNpcKit; if (K && K.hookNpc) K.hookNpc(NPC_ID, NPC_N, NPC_T, panel);
-  } catch (e) { console.warn('[AFK-poker] NPC', e); }
+  // 2026-11-05 23:53（玩家）：歐瑞村莊的洛蒂不再開牌桌，改當密奧之卡的 NPC（afk-mio）；德州撲克只從遊戲廳進
   // ── 設定分頁「🔌 外掛」列：「♠︎ 德州撲克」排在「🐕 賽狗場」旁邊，在哪裡都能開牌桌清單 ──
   var navTries = 0;
   function injectNav() {

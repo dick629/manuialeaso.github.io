@@ -504,7 +504,29 @@
     try { (0, eval)('openModal = window.openModal'); } catch (e) {}
   }
 
+  // ── NPC：歐瑞村莊的洛蒂（玩家 2026-11-05 23:53：原本的德州撲克荷官改當密奧之卡的 NPC）──
+  var NPC_ID = 'npc_afk_mio', NPC_N = '洛蒂', NPC_T = '密奧之卡';
+  var npcPanel = function (div) {
+    if (!div) return;
+    var Kt = W.__afkNpcKit; if (Kt && Kt.css) Kt.css();
+    var p = P();
+    if (!p || !on(p)) { div.innerHTML = '<div class="afk-ax"><p class="ax-lore">「牌今天不想說話。」</p></div>'; return; }
+    var c = compute(p), n = CARDS.length;
+    div.innerHTML = '<div class="afk-ax"><p class="ax-lore">洛蒂把二十二張牌在桌上攤成一個圓：「牌會記得你走過的夢。拼回來的牌，裝在身上的那張，才會露出它真正的樣子。」</p>'
+      + '<div class="ax-row"><div class="ax-main"><div><div class="ax-name">🃏 密奧之卡</div><div class="ax-desc">密奧碎片 ' + count(SHARD).toLocaleString() + ' 個；點亮 ' + c.lit + '／' + n + '、馬賽以上 ' + c.ma + '／' + n + '、淵源以上 ' + c.ab + '／' + n + '</div></div></div>'
+      + '<div class="ax-act"><button type="button" class="ax-btn" data-mio-npc="open">打開</button></div></div></div>';
+    var b = div.querySelector('[data-mio-npc="open"]'); if (b) b.onclick = function () { open(); };
+  };
+  try {
+    var Lr = W.__afkLore, ndef = { id: NPC_ID, n: NPC_N, title: NPC_T, type: 'quest', classicHide: true,
+      d: '在歐瑞村莊替人解牌的洛蒂。點亮、升級、裝備密奧之卡。' };
+    if (Lr && Lr.addNpc) Lr.addNpc('town_oren', ndef, '6804', [58, 80]);
+    else if (DB.towns && DB.towns.town_oren && !DB.towns.town_oren.npcs.some(function (x) { return x.id === NPC_ID; })) DB.towns.town_oren.npcs.push(ndef);
+    var Kn = W.__afkNpcKit; if (Kn && Kn.hookNpc) Kn.hookNpc(NPC_ID, NPC_N, NPC_T, npcPanel);
+  } catch (e) { console.warn('[AFK-mio] NPC', e); }
+
   var api = W.__afkMio = { SHARD: SHARD, RATE: RATE, COST: COST, CARDS: CARDS, K: K, SET: SET, AURA: AURA, STD: STD, STD_N: STD_N, STAGE: STAGE, ROMAN: ROMAN, idOf: idOf, idxOf: idxOf,
     store: store, compute: compute, UP_COST: UP_COST, DIM: DIM, dimDesc: dimDesc, DIM_CARD: DIM_CARD, DIM_RATE: DIM_RATE, maxStage: maxStage, needOf: needOf, missOf: missOf, summary: summary, rawVal: rawVal, descOf: descOf, auraTxt: auraTxt, openCard: openCard, upgrade: upgrade, equipCard: equipCard, open: open, close: close,
+    NPC_ID: NPC_ID, npcPanel: npcPanel,
     roll: function () { return Math.random(); }, count: count, wheel: wheel, refresh: refresh };
 })();

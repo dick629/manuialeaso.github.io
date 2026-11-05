@@ -211,6 +211,29 @@
     };
   }
 
+  // ── 遺骸（含之魂）同一種就疊在一起（玩家 2026-11-05 23:52：之魂、淬鍊過的遺骸不會疊）──
+  //   原因：淬鍊時從一疊拆一件出來、改成夢域後直接放回背包，沒有併進已經淬鍊好的那一疊。舊存檔裡已經散開的，讀檔時整理一次。
+  //   同一種＝核心物品簽章相同（同部位、同套裝組、同是否淬鍊）；有一件上鎖整疊就上鎖、取消廢品標記。
+  var stackRemains = function (p) {
+    if (!p || !Array.isArray(p.inv) || typeof itemSig !== 'function') return 0;
+    var seen = {}, merged = 0;
+    for (var i = 0; i < p.inv.length; i++) {
+      var it = p.inv[i], d = it && DB.items[it.id];
+      if (!d || !d.remains || it.gw) continue;
+      var k = itemSig(it), first = seen[k];
+      if (!first) { seen[k] = it; continue; }
+      first.cnt = (Number(first.cnt) || 1) + (Number(it.cnt) || 1);
+      if (it.lock) { first.lock = true; first.junk = false; }
+      p.inv.splice(i, 1); i--; merged++;
+    }
+    return merged;
+  };
+  W.__afkStackRemains = stackRemains;
+  if (typeof W.loadGame === 'function') {
+    var oLoadSt = W.loadGame;
+    W.loadGame = function () { var r = oLoadSt.apply(this, arguments); try { if (stackRemains(P())) { try { renderTabs(); } catch (e) {} } } catch (e) {} return r; };
+    try { (0, eval)('loadGame = window.loadGame'); } catch (e) {}
+  }
   // ── 伊奧：夢域淬鍊 ──
   var listRemains = function (p) {
     var out = [];
@@ -236,6 +259,7 @@
     if (!it || !it.seteff || isDream(it)) return;
     take('sherine_crystal', cost.crystal); take('afk_dream_crystal', cost.dream);
     it.seteff = grp(it) + '夢';
+    if (where !== 'eq') { try { stackRemains(p); } catch (e) {} }   // 淬鍊好的併回同一疊（玩家 2026-11-05 23:52）
     try { logSys(isSoul ? '<span class="c-sherine-dream font-bold">✦ 之魂粹煉</span>：魂魄的低語安靜了下來……好像還缺了些什麼。（消耗 席琳結晶 ×' + cost.crystal + '、夢艷結晶 ×' + cost.dream + '）'
       : '<span class="c-sherine-dream font-bold">✦ 夢域淬鍊</span>：' + getItemFullName(it) + ' 在席琳的夢裡甦醒了。（消耗 席琳結晶 ×' + cost.crystal + '、夢艷結晶 ×' + cost.dream + '）'); } catch (e) {}
     try { if (typeof calcStats === 'function') calcStats(); renderTabs(); updateUI(); saveGame(); } catch (e) {}
