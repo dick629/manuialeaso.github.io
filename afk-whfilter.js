@@ -108,6 +108,9 @@
 
   var oRender = window.renderWarehouseNPC;
   window.renderWarehouseNPC = function () {
+    // 條件存入列是重繪完才補插在清單上方的：插進去以前裡面的捲動位置已經被恢復過一次，插完內容整個往下推 → 畫面先跳一下、下一幀才被拉回來（電腦版取物時列表彈跳，玩家 2026-11-05）。
+    //   這裡記住重繪前的捲動位置，插完再同步恢復一次，同一幀內就定位。
+    var c0 = document.getElementById('warehouse-window-content'), s0 = c0 ? c0.scrollTop : 0;
     var r = oRender.apply(this, arguments);
     try {
       var root = document.getElementById('warehouse-window-content') || document.getElementById('interaction-content');
@@ -118,6 +121,7 @@
         grid.parentNode.insertBefore(box.firstChild, grid);
       }
     } catch (e) { console.warn('[AFK-whfilter] ui', e); }
+    try { var c1 = document.getElementById('warehouse-window-content'); if (c1 && s0 > 0 && c1.scrollTop !== s0) c1.scrollTop = s0; } catch (e) {}
     return r;
   };
   window.__afkWhFilter = { match: match, state: st, depositable: depositable };
