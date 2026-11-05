@@ -1148,6 +1148,8 @@
     { k: 'engrave', n: '刻印與印記' },
     { k: 'soulstone', n: '靈魂石' },
     { k: 'miosigil', n: '密奧與聖紋' },
+    { k: 'miodim', n: '密奧・次元升級' },
+    { k: 'guardring', n: '守護者之戒' },
     { k: 'combat', n: '戰鬥機制' },
     { k: 'stats', n: '能力值' },
     { k: 'load', n: '負重' },
@@ -1166,7 +1168,6 @@
     { k: 'relicmarket', n: '遺物市場' },
     { k: 'pvp', n: 'PVP／性向值' },
     { k: 'arena', n: '決鬥競技場' },
-    { k: 'poker', n: '德州撲克' },
     { k: 'gamehall', n: '遊戲廳' },
     { k: 'mode', n: '遊戲模式' },
     { k: 'npc', n: 'NPC總覽' }
@@ -1377,6 +1378,8 @@
     if (key === 'engrave') return renderEngrave();
     if (key === 'soulstone') return renderSoulStone();
     if (key === 'miosigil') return renderMioSigil();
+    if (key === 'miodim') return renderMioDim();
+    if (key === 'guardring') return renderGuardRing();
     if (key === 'story') return renderStory();
     if (key === 'tower') return renderTower();
     if (key === 'oblivion') return renderOblivion();
@@ -1389,7 +1392,7 @@
     if (key === 'relicmarket') return renderRelicMarket();
     if (key === 'pvp') return renderPvp();
     if (key === 'arena') return renderArena();
-    if (key === 'poker') return renderPoker();
+    if (key === 'poker') return renderGameHall();   // 德州撲克併進遊戲廳（玩家 2026-11-05 21:56）
     if (key === 'gamehall') return renderGameHall();
     return '';
   }
@@ -1458,11 +1461,11 @@
     { key: 'worldev', cls: false, label: '世界事件與地區霸主' },
     { key: 'adventurer', cls: false, label: '冒險者' },
     { key: 'starroad', cls: false, label: '星途遠征' },
+    { key: 'guardring', cls: false, label: '守護者之戒' },
     { key: 'pledge', cls: false, label: '血盟' },
     { key: 'relicmarket', cls: false, label: '遺物市場' },
     { key: 'pvp', cls: false, label: 'PVP／性向值' },
     { key: 'arena', cls: false, label: '決鬥競技場' },
-    { key: 'poker', cls: false, label: '德州撲克' },
     { key: 'gamehall', cls: false, label: '遊戲廳' },
     { key: 'mode', cls: false, label: '遊戲模式' },
     { key: 'npc', cls: false, label: 'NPC總覽' }
@@ -4054,6 +4057,78 @@
     return out;
   }
 
+  // 2026-11-05：密奧之卡・次元升級（afk-mio 淵源／起源／創世）
+  function renderMioDim() {
+    var M = window.__afkMio;
+    if (!M || !M.UP_COST) return '<div class="m-wiki-note">密奧之卡在設定裡被關掉了。經典模式沒有這個系統。</div>';
+    var fm = function (n) { return Number(n || 0).toLocaleString(); };
+    var C = M.UP_COST, open = M.maxStage() >= 6, ks = open ? [4, 5, 6] : [4];
+    var out = '<div class="m-wiki-note">馬賽之後還能再升：<b style="color:#f472b6">淵源</b>' + (open ? '、<b style="color:#22d3ee">起源</b>、<b style="color:#fef3c7">創世</b>' : '') + '。在密奧之卡視窗選一張卡升級，每張卡各自升。</div>';
+    out += wCard('🃏 升級材料（每張卡）', wTbl(['升到', '材料'], ks.map(function (k) {
+      var c = C[k], parts = [];
+      if (c.shard) parts.push('密奧碎片 ' + fm(c.shard)); if (c.dim) parts.push('次元密奧卡 ' + fm(c.dim)); if (c.blood) parts.push('血龍鑽 ' + fm(c.blood));
+      if (c.dia) parts.push('龍之鑽石 ' + fm(c.dia)); if (c.gold) parts.push('金幣 ' + fm(c.gold));
+      return ['<b style="color:' + ['', '', '', '', '#f472b6', '#22d3ee', '#fef3c7'][k] + '">' + M.STAGE[k] + '</b>', parts.join('、')];
+    })) + (open ? wDesc('次元密奧卡在次元裂縫裡掉：一般怪物 ' + (M.DIM_RATE.mob * 100) + '%、頭目 ' + (M.DIM_RATE.boss * 100) + '%，乘隊伍人數（最多 ×16）。血龍鑽在潘朵拉黑市用龍之鑽石換。') : ''));
+    out += wCard('✨ 裝著的卡', wTbl(['階段', '特效', '光環', '保底'], ks.map(function (k) {
+      return ['<b>' + M.STAGE[k] + '</b>', '同馬賽', esc(M.auraTxt(k)), '基本能力不足時補到' + M.STAGE[k] + '標準（各職業的標準在密奧之卡視窗）'];
+    })) + wDesc('沒裝著的點亮卡照舊只給偉特的效果。'));
+    if (open) out += wCard('🌌 次元效果（只在次元裂縫裡生效）', wTbl(['卡', '淵源／起源／創世'], M.CARDS.map(function (c, i) {
+      return [M.ROMAN[i] + ' ' + esc(c[0]), [4, 5, 6].map(function (k) { return esc(M.dimDesc(i, k)); }).join('<br>')];
+    })));
+    out += wCard('🏅 收集加成（跟原本的疊加）', wTbl(['條件', '加成'], M.SET.slice(3, open ? 6 : 4).map(function (x) { return [esc(x.n), esc(x.txt)]; })));
+    return out;
+  }
+
+  // 2026-11-05：守護者之戒（afk-guardring）
+  function renderGuardRing() {
+    var G = window.__afkGuardRing;
+    if (!G) return '<div class="m-wiki-note">守護者之戒在設定裡被關掉了。經典模式沒有這個系統。</div>';
+    var fm = function (n) { return Number(n || 0).toLocaleString(); };
+    var nm = function (id) { return esc((DB.items[id] || {}).n || id); };
+    var full = !!(window.__afkDimRiftOn && window.__afkDimRiftOn()), STG = full ? [1, 2, 3, 4, 5, 6] : [1, 2, 3];   // 次元裂縫開放前只寫上半部（還沒開放的內容不放進小百科）
+    var out = '<div style="display:flex;justify-content:center;margin:4px 0 8px"><img src="' + esc(G.ART.finalBig) + '" alt="" style="width:120px;height:120px;object-fit:contain"></div><div class="m-wiki-note">紅獅王的五名誓約騎士，把誓約按在一塊石頭上——守護者之石。<b>轉生後</b>才能使用，經典模式沒有。戒指裝在裝備視窗<b>第二頁、密奧上面</b>那一格，點它可以查看；角色資訊的能力分頁也有「守護者之誓」可以打開。</div>';
+    out += wCard('💍 流程', wTbl(['步驟', '說明'], [
+      ['1. 劇情', '每名騎士一條劇情：找 NPC 說話 → 打倒指定的怪 → 回去說話。要先完成劇情「紅獅之誓」。'],
+      ['2. 試煉', '劇情做完，到<b>海音的' + esc(G.estiName()) + '</b>「守護者之誓」分頁進入該騎士的試煉：3 波小怪＋1 個王，限時 15 分鐘，打倒王才算通過。只有<b>席琳夢域鏡</b>能進，每名騎士每天 ' + G.DG.daily.dream + ' 次' + (full ? '；次元裂縫難度另外每天 ' + G.DG.daily.rift + ' 次' : '') + '。'],
+      ['3. 升級', '在同一個分頁用材料升級：上半部 ★1～★3（★3 得到<b>銀印</b>）' + (full ? '→ 完整 ★1～★3（★3 得到<b>金印</b>）' : '') + '。'],
+      ['4. 配戴', '同時只能配戴一枚（主誓約）。第一枚免費，之後更換要金幣 ' + fm(G.COST.change) + '，只能在村莊換。']
+    ]) + wTbl(['騎士', '劇情 NPC', '地點', '試煉的王'], G.KEYS.map(function (k) {
+      var Q = G.QUESTS[k]; return ['<b style="color:' + G.KN[k].c + '">' + esc(G.KN[k].n) + '</b>', esc(Q.n), esc((DB.towns[G.KN[k].town] || {}).n || ''), esc(G.DGK[k].boss)];
+    })));
+    out += wCard('💍 五名騎士（每一星）', G.KEYS.map(function (k) {
+      return '<div style="margin-top:8px;display:flex;align-items:center;gap:8px"><img src="' + esc(G.KN[k].ring) + '" style="width:48px;height:48px;object-fit:contain"><b style="color:' + G.KN[k].c + '">' + esc(G.KN[k].n) + '</b></div>'
+        + wTbl(['階段', '效果'], STG.map(function (s) { return [G.stageN(s), G.txtOf(k, G.valOf(k, s, { face: 'none' })).map(esc).join('<br>')]; }));
+    }).join('') + wDesc('上半部 ★1、★2 是上半部 ★3 的 50%、80%（冷卻、間隔跟上半部 ★3 一樣）' + (full ? '；完整 ★1、★2 介在上半部 ★3 與完整 ★3 之間（約三分之一、三分之二），冷卻、間隔也一樣往完整 ★3 縮短' : '') + '。') + wDesc('滿月：現實時間每 24 分鐘有 4 分鐘是滿月，戰鬥畫面左上角會出現月亮。')
+      + wDesc('宙斯可以在' + esc(G.estiName()) + '那裡切換「幸運之子」（預設：恢復量再 +' + G.ZEUS.light.regen[0] + '／+' + G.ZEUS.light.regen[1] + '、受到的魔法傷害再 −5%）或「黑暗之星」（魔法傷害 +' + G.ZEUS.dark.magDmg[0] + '%／+' + G.ZEUS.dark.magDmg[1] + '%、攻擊魔法 MP 消耗 −' + G.ZEUS.dark.mpCost[0] + '%／−' + G.ZEUS.dark.mpCost[1] + '%，受到的治療 −10%），免費，只能在村莊切換。'));
+    out += wCard('💍 每一枚都有的效果（只算配戴中的那一枚）', wTbl(['階段', '異常狀態抵抗', '異常狀態持續時間', '寵物與召喚物傷害／命中', '負重', '最大 HP'], STG.map(function (s) {
+      var C = G.COMMON, i = s - 1; return [G.stageN(s), '+' + C.abn[i] + '%', '−' + C.dur[i] + '%', '+' + C.pet[i], '+' + fm(C.weight[i]), '+' + fm(C.mhp[i])];
+    })));
+    out += wCard('💍 騎士之印', wTbl(full ? ['印數', '銀印', '金印'] : ['印數', '銀印'], [2, 3, 4, 5].map(function (n) {
+      var R = G.RESO[n], t = function (x) { return x.abn ? '異常狀態抵抗 +' + x.abn + '%' : x.dur ? '異常狀態持續時間 −' + x.dur + '%' : x.pet ? '寵物與召喚物傷害／命中 +' + x.pet + '、負重 +' + fm(x.weight) : 'HP 第一次低於 25% 時解除身上所有異常狀態，5 秒內受到的傷害 −' + x.guard + '%（冷卻 ' + x.cd + ' 秒）' + (x.mercs ? '；傭兵也各有一次' : ''); };
+      return full ? [n + ' 印', t(R.silver), t(R.gold)] : [n + ' 印', t(R.silver)];
+    })) + (full ? wDesc('上半部 ★3＝銀印、完整 ★3＝金印（配戴中的那一枚也算）。印數夠就開那一段；金印數也夠時，那一段改用金印的效果。5 印：銀印叫「五騎士的守護」，金印叫「王的五騎士」。') : wDesc('上半部 ★3＝銀印（配戴中的那一枚也算）。印數夠就開那一段。5 印叫「五騎士的守護」。'))
+      + (!full ? '' : wDesc('<b>庇護者之戒</b>：五枚都是金印時，除了主誓約的完整 ★3，再得到其他四名騎士上半部 ★3 的專屬效果（月光的歐文形態除外；宙斯照目前選的那一面）。在次元裂縫裡另有<b>守護者光環</b>：火、水、風、地、無五種屬性抗性被侵蝕時最多扣到 500（本來就不到 500 的照原本的數字）。')));
+    var up = G.COST.up, fu = G.COST.full;
+    out += wCard('💍 升級材料', wTbl(['星', '材料'], [0, 1, 2].map(function (i) {
+      var c = up[i], r = Object.keys(c.refine).map(function (part) { return '夢域淬鍊過的' + esc(DB.items[G.REFINE_PART[part]].n) + ' ×' + c.refine[part]; }).join('、');
+      return ['上半部 ★' + (i + 1), nm(G.M.emblem) + ' ×' + c.emblem + '、該騎士的信物 ×' + c.token + '、' + r + '（該騎士的席琳套裝）、滅魔蔑視水晶（該屬性）×' + c.contempt + (c.dream ? '、' + nm(G.M.dream) + ' ×' + fm(c.dream) : '') + (c.dim ? '、' + nm(G.M.dim) + ' ×' + fm(c.dim) : '') + '、龍之鑽石 ' + fm(c.dia) + '＋金幣'];
+    }).concat((full ? [0, 1, 2] : []).map(function (i) {
+      var f = fu[i], rk = Object.keys(f.rift)[0];
+      return ['完整 ★' + (i + 1), nm(G.M.shard) + ' ×' + f.shard + '、龍誓結晶（該屬性）×' + f.oath + '、' + nm(G.RIFT.scale) + ' ×' + f.scale + '、該屬性的龍之渴望的眼淚 ×' + f.tear + '、' + nm(G.RIFT[rk]) + ' ×' + f.rift[rk] + (rk === 'memory' ? '（天鵝 ×2）' : '') + '、龍之鑽石 ' + fm(f.dia) + '＋金幣'];
+    }))) + wDesc('席琳套裝：月光騎士＝月光（血月）、鋼鐵騎士＝鐵衛（冥鐵）、天鵝騎士＝白鳥（冥鴉）、影子騎士＝暗影（深淵）。遺骸要先在席琳神殿的伊奧那裡夢域淬鍊，放在背包、不要上鎖。')
+      + wDesc('屬性：月光＝風、鋼鐵＝火、天鵝＝水、影子＝地。宙斯：淬鍊遺骸改成四套各四分之一、滅魔蔑視水晶四種各一半，另外要境滅亡域鑰匙 ×1／×3／×5' + (full ? '；完整版的龍誓結晶與眼淚四種各四分之一，完整 ★2 另外要' + nm(G.RIFT.sand) + ' ×5' : '') + '。')
+      + wDesc('材料背包不夠時會從倉庫補。'));
+    out += wCard('💍 材料取得', wTbl(['材料', '地點'], [
+      [nm(G.M.emblem), '騎士試煉的王：每次 3～5 個' + (full ? '（次元裂縫難度 +1）' : '')],
+      ['信物（' + G.KEYS.map(function (k) { return nm(G.tokenId(k)); }).join('、') + '）', '該騎士試煉的王：每次 1 個。原本的同名道具不能拿來用，也不再從怪物身上掉'],
+      ['龍之渴望的眼淚（地／火／水／風）', '只在四龍副本（席琳夢域鏡）的小怪身上掉，一場大約 50～100 個'],
+      [nm(G.M.dim), '次元裂縫裡的怪（頭目必掉 3 個）'],
+      [nm(G.M.shard) + '、龍誓結晶', '四龍副本・次元裂縫（最終龍必掉）；騎士試煉的裂縫難度也給 1 個環片']
+    ].filter(function (r, i) { return full || i < 4; })));
+    return out;
+  }
+
   // 2026-11-02 02:56：靈魂石分頁（靈魂石系統＋靈魂石王的手環）
   function renderSoulStone() {
     var out = '', SS = window.__afkSoulStone, BR = window.__afkBracelet;
@@ -5416,6 +5491,8 @@
         wDesc('上下兩排共 8 位漁夫是陪你打的 NPC，只打小魚，不影響你的錢。魚會從上下左右四邊游進來。') +
         wDesc('長期返還率約 <b>86.5%</b>（含 JP）。關掉視窗或切到別的畫面時，捕魚畫面會暫停。'));
     }
+    // 德州撲克（2026-11-05 21:56：併進遊戲廳，不另開分頁）
+    var pk = window.__afkPoker; if (pk && pk.on && pk.on()) out += '<div class="m-wiki-note" style="margin-top:10px"><b>♠︎ 德州撲克</b></div>' + renderPoker();
     return out;
   }
 

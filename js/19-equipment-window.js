@@ -48,7 +48,8 @@
             { k: 'bracelet', x: 80.1, y: 58.46, w: 19.67, h: 8.82, reb: 1, lbl: '手環' },
             { k: 'bracelet2', x: 80.1, y: 67.77, w: 19.67, h: 8.82, reb: 1, lbl: '手環' },   /* 🔌 加掛版補丁:密奧聖紋 */
             { k: 'mio',      x: 19.4, y: 67.77, w: 19.67, h: 8.82, gate: '__afkMioSlotOn', lbl: '密奧' },
-            { k: 'sigil',    x: 50.0, y: 33.46, w: 19.67, h: 8.82, gate: '__afkSigilSlotOn', lbl: '聖紋' }
+            { k: 'sigil',    x: 50.0, y: 33.46, w: 19.67, h: 8.82, gate: '__afkSigilSlotOn', lbl: '聖紋' },   /* 🔌 加掛版補丁:守護者格 */
+            { k: 'guard', x: 19.4, y: 58.46, w: 19.67, h: 8.82, gate: '__afkGuardSlotOn', lbl: '守護者', click: '__afkGuardSlotClick' }
         ]
     ];
 
@@ -146,6 +147,7 @@
             } else {
                 slot.title = pos.lbl ? (pos.lbl + '：尚未裝備') : '尚未裝備'; if (pos.lbl) { const _l = document.createElement('span'); _l.className = 'equipment-slot-lbl'; _l.textContent = pos.lbl; slot.appendChild(_l); }   /* 🔌 加掛版補丁:轉生欄位 */
             }
+            if (pos.click && typeof window[pos.click] === 'function') { slot.onclick = function () { window[pos.click](player); }; slot.ondblclick = null; slot.classList.remove('tip-host'); slot.removeAttribute('data-tip-uid'); slot.removeAttribute('data-tip-src'); slot.title = pos.lbl || ''; }   /* 🔌 加掛版補丁:守護者格 */
             host.appendChild(slot);
         });
         const pageOne = el('equipment-window-prev');

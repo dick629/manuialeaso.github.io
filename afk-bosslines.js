@@ -35,11 +35,14 @@
   var keyOf = function (n) { return names()[n] || n; };
   var enc = {};   // 多階段頭目同一場的進度：key → { s, h, q, at }
   var lastPick = {};   // key|階段 → 上次說的那句（避免連續同一句）
+  // 抽台詞用自己的亂數（不動 Math.random）：台詞只是表演，不能改變戰鬥的亂數序列（固定種子的測試、重播都靠它）
+  var seed = (Date.now() ^ 0x9e3779b9) >>> 0;
+  var rnd = function () { seed ^= seed << 13; seed >>>= 0; seed ^= seed >>> 17; seed ^= seed << 5; seed >>>= 0; return seed / 4294967296; };
   var pick = function (k, stage, v) {
     if (!Array.isArray(v)) return v;
     var arr = v.filter(Boolean); if (!arr.length) return null; if (arr.length === 1) return arr[0];
     var id = k + '|' + stage, prev = lastPick[id], t, n = 0;
-    do { t = arr[Math.floor(Math.random() * arr.length)]; } while (t === prev && ++n < 8);
+    do { t = arr[Math.floor(rnd() * arr.length)]; } while (t === prev && ++n < 8);
     lastPick[id] = t; return t;
   };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };

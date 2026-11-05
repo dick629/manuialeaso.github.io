@@ -39,12 +39,12 @@
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var wrapG = function (name, mk) { if (typeof W[name] !== 'function') return false; var o = W[name]; W[name] = mk(o); try { (0, eval)(name + ' = window.' + name); } catch (e) {} return true; };
 
-  var SLOTS = { sigil: 1, bracelet: 1, mio: 1, holy: 1, engrave: 1 };
+  var SLOTS = { sigil: 1, bracelet: 1, mio: 1, holy: 1, engrave: 1, guard: 1 };
   var PREFIX = ['afk_sigil_', 'afk_brace_', 'afk_mio_', 'afk_scarab', 'afk_engrave_', 'afk_soul_', 'afk_dull_', 'afk_rune_', 'afk_runebox_',
     'rem_', 'sherine_crystal', 'afk_dream_', 'afk_hell_', 'afk_contempt_', 'afk_ts_', 'afk_dark_', 'afk_abyss_', 'afk_lament_', 'afk_miasma_',
     'afk_bone_', 'afk_void_', 'afk_fate_', 'afk_asc_', 'afk_dmark_', 'afk_dres_', 'afk_bless_', 'afk_lost_', 'afk_gt_', 'afk_will_', 'afk_yin_',
     'afk_reverie_', 'afk_cloth_', 'afk_athena_', 'afk_cs_', 'afk_q_', 'afk_aq_', 'afk_card_', 'afk_kurt_order', 'afk_kurt_guard', 'afk_star_',
-    'afk_cancel_', 'afk_matgift_'];
+    'afk_cancel_', 'afk_matgift_', 'afk_guard_'];
   var cache = {};
   var classify = function (id) {
     if (cache[id] !== undefined) return cache[id];

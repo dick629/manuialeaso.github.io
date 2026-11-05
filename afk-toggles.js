@@ -61,7 +61,7 @@
         'npcspace', 'heartbeat', 'clickaway', 'staticglow', 'killlog', 'sherinedream', 'runes', 'redguard', 'kurthunt', 'loremain', 'lorehardin',
         'lorehalpas', 'wesenis', 'weslayer', 'wedragon', 'wekenn', 'wewinter', 'ghostship', 'regionboss', 'hunter', 'fate', 'callallycd',
         'resonancenerf', 'savelite', 'arrowsmith', 'radio', 'relicreroll', 'bosstrack', 'noviceecon', 'rift2', 'finaltiers', 'statcap',
-        'offhandstats', 'art-v3-wings', 'batchopen', 'boxkey'
+        'offhandstats', 'art-v3-wings', 'batchopen', 'boxkey', 'guardring'
     ].forEach(function (id) { SEAL[id] = 1; });
 
     var api = {
@@ -158,6 +158,7 @@
         { id: 'dreamhell', name: '瘋狂席琳＋席琳夢域鏡模式', desc: '席琳神殿多一個祈禱選項：怪物 HP×50、隨時狂暴、會回血、出生隨機免疫；經驗×10、金幣×3，掉落×50、裝備 50% 祝福，並掉落昇華支配材料。另外統一控制改技能、改戰鬥機制的規則（在各模式照原本生效），關掉就全部回到原作', group: '遊戲玩法' },
         { id: 'dreamstar', name: '暗夢星迴（單機）', desc: '只在席琳夢域鏡：時空裂痕入口多一個暗夢星迴，只出裂縫夢境者投影頭目，有相消、聖結界、反射、四屬性風暴、15 分自爆等時間軸；掉昇華支配材料、昇華支配遺物、夢域塵', group: '遊戲玩法' },
         { id: 'corrupt', name: '四大龍副本', desc: '威頓村可挑戰四座龍巢；龍王有七階變身，巢穴持續造成屬性傷害，並有反射與治療詛咒。', group: '遊戲玩法' },
+        { id: 'guardring', name: '守護者之戒', desc: '轉生後在海音找伊席蘿蒂：五名騎士各自的劇情與副本，收集材料升級守護者之戒，配戴一枚當主誓約', group: '遊戲內容' },
         { id: 'cardplus', name: '白金／鑽石卡', desc: '卡片多兩階：白金（瘋狂席琳掉落）與鑽石（席琳夢域鏡掉落），地區加成往上一階；圖鑑全滿在席琳夢域鏡加成 ×3；鑽白金幻化可自選鑽石卡', group: '遊戲玩法' },
         { id: 'card-ascension', name: '鑽石變身與高階卡合成', desc: '鑽石卡解鎖怪物變身；集滿任一地區的鑽石卡可用重複卡合成神話，再逐階解鎖天上與時空。', group: '遊戲玩法', parent: 'cardplus' },
         { id: 'card-aura', name: '變身光環', desc: '顯示鑽石、神話、天上與時空變身的光環；關閉後保留全部能力。', group: '遊戲介面', parent: 'card-ascension' },

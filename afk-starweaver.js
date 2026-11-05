@@ -43,7 +43,7 @@
   };
   var mioAll = function (p) {
     var M = W.__afkMio; if (!M || !M.CARDS || (T && !T.enabled('mio'))) return false;
-    var top = (M.STAGE && M.STAGE.length - 1) || 3, cards = (p.afkMio && p.afkMio.cards) || {};
+    var top = 3, cards = (p.afkMio && p.afkMio.cards) || {};
     return M.CARDS.length > 0 && M.CARDS.every(function (c, i) { return (Number(cards[i]) || 0) >= top; });
   };
   var starDone = function (p) {

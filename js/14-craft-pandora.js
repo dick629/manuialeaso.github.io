@@ -1982,7 +1982,7 @@ window.onload = () => {
     function findTipItem(src, uidv){
         try {
             if(src === 'wh'){ let w = loadWarehouse(); return ((w && w.items) || []).find(x => x.uid === uidv) || null; }
-            if(src === 'eq'){ let e = (typeof player !== 'undefined' && player && player.eq) || {}; for(let k in e){ if(e[k] && e[k].uid === uidv) return e[k]; } return null; }   // 🖱️ 已裝備物品（裝備視窗格）：從 player.eq 找實例
+            if(src === 'eq'){ let e = (typeof player !== 'undefined' && player && player.eq) || {}; for(let k in e){ if(e[k] && e[k].uid === uidv) return e[k]; } if(e.guard && e.guard.uid === uidv) return e.guard; /* 🔌 加掛版補丁:守護者格條列 */ return null; }   // 🖱️ 已裝備物品（裝備視窗格）：從 player.eq 找實例
             return (player.inv || []).find(x => x.uid === uidv) || null;
         } catch(e){ return null; }
     }

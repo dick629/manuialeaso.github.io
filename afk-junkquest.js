@@ -125,7 +125,7 @@
     return s.story[t - 1] >= 3 && num(p.lv) >= TIER[t].lv;
   };
   var newBounty = function (t) {
-    var skip = window.__afkBountySkip, list = loadTiers()[t].filter(function (id) { try { return !(typeof skip === 'function' && skip(id)); } catch (e) { return true; } }), k = Math.min(TIER[t].bounty[0], list.length), pick = [];   // 掉落被改走的素材（四龍眼淚等）不抽進常駐委託；劇情委託的排序清單不動
+    var skip = window.__afkBountySkip, list = loadTiers()[t].filter(function (id) { try { return !(typeof skip === 'function' && skip(id)); } catch (e) { return true; } }), k = Math.min(TIER[t].bounty[0], list.length), pick = [];   // 掉落被改走的素材（守護者之戒：專屬信物的原道具、四龍眼淚）不抽進常駐委託；劇情委託的排序清單不動
     while (pick.length < k) { var i = Math.floor(Math.random() * list.length); pick.push(list.splice(i, 1)[0]); }
     return { req: pick.map(function (id) { return { id: id, cnt: TIER[t].bounty[1] }; }), at: Date.now() };
   };

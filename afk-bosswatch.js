@@ -44,7 +44,8 @@
   //   不經過 killMob → 層數／波數／船長／下一區永遠等不到（王卡住）。軍王之室、底比斯／提卡爾祭壇、龍窟、聖地是空格 5 秒後重生
   //   （雙王祭壇另有「兩隻都不在＝全滅」的核心保險），迷魅不會卡住，照原本規則可以迷魅。
   var PLUGIN_DG = { afk_traitor_whisper: 1, afk_hardin_time: 1, afk_giltas_altar: 1, afk_flame_depth: 1, afk_halpas_nest: 1, afk_final_sea: 1,
-    afk_soul_room: 1, afk_ghostship: 1, afk_starroad: 1, rift_battle: 1 };
+    afk_soul_room: 1, afk_ghostship: 1, afk_starroad: 1, rift_battle: 1,
+    afk_guard_dg_moon: 1, afk_guard_dg_steel: 1, afk_guard_dg_swan: 1, afk_guard_dg_shadow: 1, afk_guard_dg_magic: 1 };   // 守護者之戒的五個騎士副本（afk-guardring）
   var instanceMap = function (cur) {
     if (!cur || /^town_/.test(cur)) return false;
     if (PLUGIN_DG[cur]) return true;

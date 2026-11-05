@@ -23,3 +23,4 @@ logs/
 
 # 手環圖的 GPT 原圖（scripts/build-brace-icons.py 的來源，不進版控）
 brace-art/src/
+assets/guardring/src/

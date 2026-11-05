@@ -327,6 +327,7 @@
     try { var SD = W.__afkSherineDream; if (SD && SD.soulRefined && !p.classicMode && SD.soulRefined(p)) out.push(['粹煉之魂', 1 - SD.SOUL_CUT]); } catch (e) {}
     try { var EP = W.__afkExpedition, r = EP && EP.stoneOf && EP.stoneOf(p); if (r && r.debuff && EP.slotOn(p)) out.push([nm('afk_engrave_4') || '上位者的刻印石', 1 - r.debuff]); } catch (e) {}
     var f = fx(p); if (f.dur > 0) out.push(['鯤 6 格', f.dur]);
+    try { var GR = W.__afkGuardRing; if (GR && GR.durCut) { var gc = GR.durCut(p); if (gc > 0) out.push(['守護者之戒', gc]); } } catch (e) {}   // afk-guardring 自己縮短（跟其他來源一起最多 −70%）
     return out;
   };
   var durTotal = function (p) { var m = 1; durParts(p).forEach(function (x) { m *= 1 - x[1]; }); return 1 - m; };

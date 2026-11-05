@@ -561,16 +561,16 @@
     <script src="js/07-skills-cast.js?v=cc9227d69c.8.26-flywing-relics"></script>
 <script src="js/08-items-equip.js?v=ef902929cd.8.16-wis-regen-interval"></script>
 <script src="js/09-vfx-render.js?v=36c64b41e7.8.32-merc-vfx-origin"></script>
-    <script src="js/10-ui-tabs.js?v=606b5ea7af.8.14-merc-guild"></script>
+    <script src="js/10-ui-tabs.js?v=115aaf588d.8.14-merc-guild"></script>
 <script src="js/11-world-map.js?v=35d1e90d8a.8.17-item-stack-source"></script>
 <script src="js/12-npc-quests.js?v=500a81a03f.8.34-merc-trial-class-loot"></script>
 <script src="js/13-shop-save.js?v=f4880e91e5.8.18-desktop-save-isolation"></script>
-<script src="js/14-craft-pandora.js?v=3335e41014.8.17-item-stack-source"></script>
+<script src="js/14-craft-pandora.js?v=6ee9d36c8c.8.17-item-stack-source"></script>
 <script src="js/15-cards.js?v=9a420e48e7.7.66"></script>
 <script src="js/16-equip-book.js?v=b65ee3ef7a.8.15-legacy-import-smooth"></script>
 <script src="js/18-misc-book.js?v=efb9d0a866.8.15-legacy-import-smooth"></script>
 <script src="js/17-audio.js?v=07c972f6fe.8.1-monia-sfx"></script>
-<script src="js/19-equipment-window.js?v=e2d47ea95f.7.57"></script>
+<script src="js/19-equipment-window.js?v=21d908c222.7.57"></script>
 <script src="js/20-warehouse-window.js?v=f0ce1aeb02.5.100-audit-tail"></script>
 <script src="js/21-relic-book.js?v=7d118874fb.8.15-legacy-import-smooth"></script>
     <script src="js/23-summons.js?v=8d5174eb1b.8.23-sherine-set-rework"></script>
@@ -590,7 +590,7 @@
          無開關：這是顯示正確性，不是功能。實測 forceDarkModeEnabled+darkModeImagePolicy=smart 可重現、加這行即解。 -->
     <style>:root{color-scheme:dark}</style>
     <!-- afk-toggles 必須最先載入：外掛開關中樞（逃生門，自己不可被關；某支外掛壞掉時玩家關掉它就能用原版繼續玩） -->
-    <script src="afk-toggles.js?v=701ac4c105"></script>
+    <script src="afk-toggles.js?v=bce60303f5"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=8d0c4c2a8b"></script>
@@ -687,7 +687,7 @@
     <script src="afk-dex.js?v=af5556a4bd"></script>
     <!-- afk-illufix：幻術士修補（疼痛的歡愉 −50%、反彈、蝕刻印記；立方：燃燒 每 2 秒 5～50 火傷、灼熱印記、吸血回魔；立方：和諧回 MP 5 → 15，原 afk-classtweak）；排在 afk-wiki 之前（小百科說明跟著改）；需核心補丁 69 -->
     <script src="afk-illufix.js?v=7149276189"></script>
-    <script src="afk-wiki.js?v=a72cb5f649"></script>
+    <script src="afk-wiki.js?v=b3db326e87"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=302890a0df"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
@@ -770,7 +770,7 @@
     <!-- afk-npclabel：村莊 NPC 名牌不要跑出畫面 -->
     <script src="afk-npclabel.js?v=21861a88d8"></script>
     <script src="afk-mobname.js?v=d74c25c2c9"></script>
-    <script src="afk-trackinfo.js?v=0c2bccdfe4"></script>
+    <script src="afk-trackinfo.js?v=2a5fc655c6"></script>
     <!-- afk-trackmaps：追蹤選單補上選不到的圖（黑暗妖精聖地＝地獄奴隸唯一產地、傲慢之塔2~10樓、六張隱藏區域）；三批來歷不同,檔頭有表 -->
     <script src="afk-trackmaps.js?v=368c42d9fa"></script>
     <script src="afk-relicguard.js?v=fb3d923c3e"></script>
@@ -854,7 +854,7 @@
     <!-- afk-knightnames：守護騎士譯名（依詩蒂→伊席蘿蒂、朱利安→絲莉安、歐薇→歐文；怪物、NPC、物品、載入畫面）＋變身形態伊詩蒂→伊席蘿蒂（只改顯示，形態名、收集冊與存檔 key 照舊）。素材沿用舊名資料夾；排在 afk-castlewar、afk-ttmi-items 之後，afk-matprice、afk-poly-codex 之前 -->
     <script src="afk-knightnames.js?v=69d85afcf3"></script>
     <!-- afk-junkquest：奇岩「古物學者 塞勒斯」——雜項素材的劇情委託與常駐委託（新手／中階／高階） -->
-    <script src="afk-junkquest.js?v=d535b07533"></script>
+    <script src="afk-junkquest.js?v=65d7037663"></script>
     <!-- 遺物戰鬥掛接、同伴與固定終階 GM 測試道具。 -->
     <script src="afk-relic-weapon-bridge.js?v=df5ee760a1"></script>
     <script src="afk-relic-companions.js?v=3318cfeee9"></script>
@@ -1043,7 +1043,7 @@
     <!-- afk-procfx：觸發型特效的共用底層（密奧之卡、聖紋共用；沒有開關，本身不做事） -->
     <script src="afk-procfx.js?v=1b3e7ed2bb"></script>
     <!-- afk-mio：密奧之卡（22 張塔羅牌，夢域鏡掉密奧碎片；偉特→托特→馬賽；裝備視窗第二頁刻印下面那格）；要在 afk-rebirth（__afkMaxAdd）之後 -->
-    <script src="afk-mio.js?v=450565473e"></script>
+    <script src="afk-mio.js?v=671d808e31"></script>
     <!-- afk-sigil：聖紋（25 個字母，Lv40～70 頭目與怪物掉；裝備視窗第二頁項鍊的位置，只能裝一個） -->
     <script src="afk-sigil.js?v=5030a3781a"></script>
     <!-- afk-scarab：成長型遺物「日輪聖甲蟲」（說話之島莉娜給；聖物格；Lv1～100、三型態）；要在 afk-questweapon、afk-expedition、afk-procfx 之後 -->
@@ -1075,7 +1075,7 @@
     <!-- afk-guardup：亞丁佐姆格用靈魂石強化城堡護衛（六種生存能力各 10 階）；要在 afk-castle-guards、afk-aden-quests、afk-soulstone 之後 -->
     <script src="afk-guardup.js?v=6c003095ec"></script>
     <!-- afk-nosell：系統專屬道具（聖紋、手環、密奧之卡、聖物、靈魂石、符文石、席琳遺骸、專屬材料）不能賣、不會被自動賣出；要在 afk-itemguard、afk-sellguard、afk-relicsell、afk-soulstone 之後（包它們包過的販賣函式） -->
-    <script src="afk-nosell.js?v=e63019c085"></script>
+    <script src="afk-nosell.js?v=592cd13fa5"></script>
     <!-- afk-blooddia：潘朵拉黑市「血龍鑽兌換」分頁（龍之鑽石 50 → 血龍鑽 1）；包 pandoraRenderMarket，要在 afk-bmprice、afk-craftui 之後 -->
     <script src="afk-blooddia.js?v=58135c84da"></script>
     <!-- afk-poker：德州撲克（歐瑞村莊 荷官 洛蒂；金幣／龍之鑽石／血龍鑽買籌碼對 3～5 位 NPC）；要在 afk-lore-kit、afk-npc-kit、afk-blooddia 之後 -->
@@ -1105,9 +1105,11 @@
     <!-- afk-petbite：寵物傷口撕咬（一般攻擊打中疊 AC +5、魔防 −5、四屬性抗性 −1，最多 5 層、5 秒） -->
     <script src="afk-petbite.js?v=a52b0b4597"></script>
     <!-- afk-starweaver：稱號「織星者」（七城、S 級、上位者、村長、密奧、織羽手環、隱藏稱號、轉生、聖甲蟲、卡冊、星途遠征、6 件至高的支配全部達成）；只在檢查時讀其他系統，放最後 -->
-    <script src="afk-starweaver.js?v=8897b32f30"></script>
+    <script src="afk-starweaver.js?v=a4b398e283"></script>
     <!-- afk-carve：歐瑞村莊刻印師邪迪克爾——武器、盔甲、頭盔、手套、長靴、斗篷各 1 孔的刻印（7 種 Lv1～5）與尤／鯤／彌之印記、3／6 格套裝；要在 afk-procfx、afk-overflow、afk-balance1101、afk-hidden、afk-matwh、afk-expedition、afk-sherine-dream 之後 -->
-    <script src="afk-carve.js?v=4cddc2b708"></script>
+    <script src="afk-carve.js?v=3b43491866"></script>
+    <!-- afk-guardring：守護者之戒（五騎士的劇情、副本、上半部／完整 ★1～★3、主誓約、騎士之印、庇護者之戒、滿月；裝備視窗第二頁密奧上面那格；轉生後、經典模式沒有）；要在 afk-procfx、afk-lore-kit、afk-npc-kit、afk-npctabs、afk-carve 之後，afk-bosslines、afk-bosswatch 之前 -->
+    <script src="afk-guardring.js?v=4b25d3340b"></script>
     <!-- afk-siege2：每週守城戰（每週五 20:00 集結、血盟頁可關、攻城頁放棄城堡、回防副本 25 波（倒下轉攻城）、失城 7 天鎖與城陷之恥、奪回戰鏡像敵人）；預設開；要在 afk-castlewar、afk-castle-guards、afk-guardup、afk-soulstone 之後 -->
     <script src="afk-siege2.js?v=93bce1937b"></script>
     <!-- afk-guardmats：守護者之戒的材料先開始掉（四龍眼淚改在夢域鏡四龍副本的小怪掉、原本的掉落拿掉、古物學者常駐委託不抽）；包 killMob，要在各副本外掛之後 -->
@@ -1116,9 +1118,9 @@
     <script src="afk-pettank.js?v=247901fb50"></script>
     <!-- afk-bosslines：頭目台詞（登場、半血、四分之一、倒下各一句；資料在 afk-bosslines-data.js）；包 tick、killMob，要在各副本外掛之後 -->
     <script src="afk-bosslines-data.js?v=baaf7ca125"></script>
-    <script src="afk-bosslines.js?v=0923df0a96"></script>
+    <script src="afk-bosslines.js?v=5ccff751a7"></script>
     <!-- afk-bosswatch：頭目卡住保險（HP 0 卻沒倒下 3 秒→走正常 killMob；鎖定的頭目 60 秒 HP 沒變→清掉過期的免疫屏障）；要在所有包 tick、killMob 的外掛之後，afk-intdmg 之前 -->
-    <script src="afk-bosswatch.js?v=5a43e60d64"></script>
+    <script src="afk-bosswatch.js?v=3cdd34e686"></script>
     <!-- afk-intdmg：傷害與 HP 一律整數（卡冊結算、每一刻結束、能力重算、傷害飄字的最後一道保險）；要在所有包 AFK_CARD_COMBAT.damage、tick、recomputeStats 的外掛之後，放最後 -->
     <script src="afk-intdmg.js?v=1c92a3b8d5"></script>
     <!-- ═══════════ 加掛版外掛層 END ═══════════ -->
