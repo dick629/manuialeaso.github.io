@@ -148,6 +148,7 @@
   var nameOf = function (t) { return t === player ? '你' : '協力·' + (t._allyName || '傭兵'); };
   var hurt = function (t, dmg, why) {
     dmg = Math.max(1, Math.floor(dmg));
+    if (window.__afkPetTank && why !== '死亡藥水' && why !== '血壁空間') { dmg = window.__afkPetTank.split(t, dmg); if (!(dmg > 0)) return false; }   // 寵物頑強抵抗：頭目技能由出戰寵物分擔（afk-pettank.js；藥水反轉與反彈不算）
     if (t === player) {
       player.hp -= dmg;
       if (player.hp <= 0 && typeof killPlayer === 'function') { killPlayer(); return true; }

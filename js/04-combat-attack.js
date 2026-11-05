@@ -1187,6 +1187,7 @@ function _enemyPhysicalAttackInner(mob, idx, stunChance = 0, atkDmg = null, atkD
         let totalDmg = baseWeaponDmg + dmgBonus;
         if (mob._sherine) totalDmg = (totalDmg * (mob._sherineMad ? 3 : 2));   // 🔮 席琳的世界：怪物一般攻擊傷害 ×2（瘋狂×3）
         if (mob._grace) totalDmg = (totalDmg * 1.5);   // 🔮 席琳的恩賜：再 ×1.5
+        if (window.__afkPetTankRaw) totalDmg = totalDmg * window.__afkPetTankRaw(player, totalDmg, mob, 'phys', null);   /* 🔌 加掛版補丁:頑強抵抗 */
 
         let resFactor = 1.0;
         if(mob.e === 'fire' && player.d.resFire) resFactor -= effResistPct(player.d.resFire)/100;
@@ -1567,6 +1568,7 @@ function _enemyAttackAllyInner(mob, ally, isBasicAttack = false) {
     let totalDmg = (heavy ? dc * ds : roll(dc, ds)) + ((mob.db || 0) - (isBasicAttack ? Math.max(0, Number(mob._corrosiveJellyAtkDown) || 0) : 0) - (st.weaken > 0 ? 4 : 0) - (st.broken > 0 ? 2 : 0) - ((st.confuse > 0 || st.panic > 0) ? 10 : 0) - (st.doom > 0 ? 20 : 0) + ((mob._siegeDmgEnd > state.ticks) ? 4 : 0));
     if (mob._sherine) totalDmg = (totalDmg * (mob._sherineMad ? 3 : 2));
     if (mob._grace) totalDmg = (totalDmg * 1.5);
+    if (window.__afkPetTankRaw) totalDmg = totalDmg * window.__afkPetTankRaw(ally, totalDmg, mob, 'phys', null);   /* 🔌 加掛版補丁:頑強抵抗 */
     let resFactor = 1.0;
     if (mob.e === 'fire' && d.resFire) resFactor -= effResistPct(d.resFire) / 100;
     if (mob.e === 'water' && d.resWater) resFactor -= effResistPct(d.resWater) / 100;
@@ -2013,6 +2015,7 @@ function _applyMobMagicToAllyInner(mob, sk, ally) {
             logCombat(`<span class="font-bold" style="color:#fca5a5;">【火熱愛意】</span>協力·${ally._allyName} 化解了 <span class="${getMobColor(mob.lv)}">${mob.n}</span> 的火屬性傷害。`, 'magic');
             return;
         }
+        if (window.__afkPetTankRaw) { let __ptm = window.__afkPetTankRaw(ally, baseM + extra, mob, sk.fixedDmg ? 'fixed' : 'magic', sk); baseM *= __ptm; extra *= __ptm; }   /* 🔌 加掛版補丁:頑強抵抗 */
         let dmg = sk.fixedDmg ? (baseM + extra) : (((baseM + extra) * resF * mrMult(mr)) - (d.dr || 0));
         if (!sk.fixedDmg && d.wearerEle && sk.ele && sk.ele !== 'none') dmg = Math.max(1, (dmg * elementCounterMult(sk.ele, d.wearerEle)));   // 🏺 v3.1.76 火焰/寒冷化身（傭兵）：受剋屬性魔法×1.4、受剋制×0.6（固定傷害不受影響·鏡像玩家 js/04:1445）
         if (st.freeze > 0 && sk.ext_freeze) { dmg += sk.ext_freeze; if (sk.extUnfreeze) (window.AFK_RELIC_DEFENSE_BRIDGE?window.AFK_RELIC_DEFENSE_BRIDGE.setStatus(ally,'freeze',0,mob):(st.freeze=0)); }
@@ -2435,6 +2438,7 @@ function _applyMobMagicInner(mob, sk) {
 
         // 屬性抗性與魔防一律生效：有屬性者受該屬性抗性折減、所有魔法傷害受抗魔(MR)折減（alwaysHit 不再無視防禦）
         // 怪物技能傷害公式: (怪物技能傷害 × 屬抗係數) × 抗魔係數 - 傷害減免
+        if (window.__afkPetTankRaw) { let __ptm = window.__afkPetTankRaw(player, baseMagicDmg + extraMagicDmg, mob, sk.fixedDmg ? 'fixed' : 'magic', sk); baseMagicDmg *= __ptm; extraMagicDmg *= __ptm; }   /* 🔌 加掛版補丁:頑強抵抗 */
         let dmg;
         if (sk.fixedDmg) {
             dmg = baseMagicDmg + extraMagicDmg;   // 🔧 固定傷害（如 卡瑞·龍的一擊）：不受屬性抗性/抗魔/傷害減免影響

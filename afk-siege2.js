@@ -600,7 +600,7 @@
       try {
         var hitAmt = 0, victim = null;
         ms.forEach(function (t, i) { var now1 = t === player ? player.hp : t.curHp; var dd = before[i] - now1; if (dd > hitAmt) { hitAmt = dd; victim = t; } });
-        if (hitAmt > 0) ms.forEach(function (t) { if (t !== victim && !player.dead) { if (t !== player && (t._downed || t.curHp <= 0)) return; hurt(t, hitAmt * CFG.splash); } });
+        if (hitAmt > 0) ms.forEach(function (t) { if (t !== victim && !player.dead) { if (t !== player && (t._downed || t.curHp <= 0)) return; var sp = hitAmt * CFG.splash; if (W.__afkPetTank) sp = W.__afkPetTank.split(t, Math.max(1, Math.floor(sp))); if (sp > 0) hurt(t, sp); } });   // 寵物頑強抵抗：濺射由出戰寵物分擔（afk-pettank.js）
       } catch (e) {}
       return r;
     };

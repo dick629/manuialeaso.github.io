@@ -20,3 +20,6 @@ desktop.ini
 
 # 腳本執行日誌（本機留存，不進版控）
 logs/
+
+# 手環圖的 GPT 原圖（scripts/build-brace-icons.py 的來源，不進版控）
+brace-art/src/

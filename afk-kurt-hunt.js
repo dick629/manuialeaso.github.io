@@ -197,6 +197,7 @@
   // ── 每 tick：追殺計時、跨圖追蹤、技能 ──
   var hurt = function (t, dmg) {
     var p = P(); if (!t || !(dmg > 0)) return;
+    if (W.__afkPetTank) { dmg = W.__afkPetTank.split(t, dmg); if (!(dmg > 0)) return; }   // 寵物頑強抵抗（afk-pettank.js）
     if (typeof W.__afkTrueCut === 'function') dmg = W.__afkTrueCut(t, dmg);
     if (t === p) { p.hp -= dmg; if (p.hp <= 0 && !p.dead) { try { killPlayer(); } catch (e) {} } }
     else { t.curHp -= dmg; if (t.curHp <= 0) { t.curHp = 0; t._downed = true; t._reviveCd = 150; } }

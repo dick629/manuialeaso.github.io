@@ -75,12 +75,15 @@
     return t.join('、');
   };
   var idOf = function (type, lv) { return 'afk_brace_' + type + '_' + lv; };
+  // 手環圖：玩家 2026-11-05 給的波西米亞＋埃及風新圖放在 brace-art/（scripts/build-brace-icons.py 產生）；還沒有新圖的種類用舊圖
+  var BRACE_ART = { resist: 1, element: 1, weight: 1, panel: 1, combo: 1, weave: 1 };
+  var braceImg = function (type) { return BRACE_ART[type] ? 'brace-art/' + type + '-128.png' : 'assets/icons/items/afk_brace_' + type + '.png'; };
   TYPES.forEach(function (t) {
     LV.forEach(function (lv) {
       var id = idOf(t[0], lv); if (DB.items[id]) return;
       var st = statsOf(t[0], lv);
       DB.items[id] = Object.assign({ n: t[1] + LV_N[lv], type: 'acc', slot: 'bracelet', req: 'all', safe: 0, p: 0, gachaWeight: 0, noEnhance: true, noTrade: true, c: t[2],
-        img: 'assets/icons/items/afk_brace_' + t[0] + '.png', afkBrace: { type: t[0], lv: lv },
+        img: braceImg(t[0]), afkBrace: { type: t[0], lv: lv },
         d: '裝在手環欄位（轉生後才開放；最多兩個，同一種只能裝一個）。' + lv + ' 階：' + txtOf(st) + '。' + (t[0] === 'combo' && lv < 3 ? '升滿 3 階另外加上力量之手環一半的面板加成。' : '') + '席琳神殿的手環工匠 赫菲可以升階（最高 3 階）。' }, st);
       ['petDmg', 'petHit'].forEach(function (k) { if (DB.items[id][k] != null) { DB.items[id]['_afk' + k] = DB.items[id][k]; delete DB.items[id][k]; } });
     });
@@ -98,7 +101,7 @@
   if (!DB.items[WEAVE_ID]) {
     var wst = weaveStats();
     DB.items[WEAVE_ID] = Object.assign({ n: WEAVE.n, type: 'acc', slot: 'bracelet', req: 'all', safe: 0, p: 0, gachaWeight: 0, noEnhance: true, noTrade: true, c: WEAVE.c,
-      img: 'assets/icons/items/afk_brace_weave.png', afkBrace: { type: 'weave', lv: 3 },
+      img: braceImg('weave'), afkBrace: { type: 'weave', lv: 3 },
       d: '六種手環的力量織成一環。裝在手環欄位（轉生後才開放），可以和其他任一種手環一起裝。效果：' + txtOf(wst) + '。每個角色只能擁有一個。席琳神殿的手環工匠 赫菲用六種 3 階手環各一個合成。' }, wst);
     ['petDmg', 'petHit'].forEach(function (k) { DB.items[WEAVE_ID]['_afk' + k] = DB.items[WEAVE_ID][k]; delete DB.items[WEAVE_ID][k]; });
   }

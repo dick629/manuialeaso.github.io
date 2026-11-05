@@ -29,8 +29,8 @@
  *
  * 圖桶失效走 reconcileImages 逐張對帳(見上);不再背景預抓——圖片一律 on-demand 用到才抓、不主動下載整包。
  * ========================================================================== */
-const CODE_VERSION = 'code-33a323bfbe48';   // ← scripts/stamp-sw-version.mjs 自動覆寫,勿手改(只用來讓 sw.js 內容變動→觸發更新偵測,不是桶名)
-const BUILD_ID     = '1105-1603'; // ← stamp 在 CODE_VERSION 變動時一起更新成台灣時間 MMDD-HHMM(僅供畫面辨識版本)
+const CODE_VERSION = 'code-01140b0cd2df';   // ← scripts/stamp-sw-version.mjs 自動覆寫,勿手改(只用來讓 sw.js 內容變動→觸發更新偵測,不是桶名)
+const BUILD_ID     = '1105-1725'; // ← stamp 在 CODE_VERSION 變動時一起更新成台灣時間 MMDD-HHMM(僅供畫面辨識版本)
 const IMG_VERSION  = 'img-v3';    // 固定桶名,不再 bump(失效改走逐張對帳,見 reconcileImages)
 const CODE_CACHE = 'code-v1';     // 固定桶名,不隨版本換(檔案以 ?v= 定址;殘留由 reconcileCode 對帳清掉)
 const IMG_CACHE  = IMG_VERSION;
@@ -339,8 +339,8 @@ self.addEventListener('fetch', (e) => {
   //   reject,離線行為不變);讓它流經 SW 只會讓 SW 掛著長壽的 fetch 事件(BGM 一放就是整首)、無法閒置。
   if (sameOrigin && /\/assets\/(?:bgm|sfx)\//.test(url.pathname)) return;
 
-  // 圖桶:同源 assets 圖＋GPT變身檔的逐幀圖(art-v3/frames,用到才抓、抓過離線可用)
-  if (sameOrigin && (url.pathname.includes('/assets/') || url.pathname.includes('/art-v3/frames/'))) {
+  // 圖桶:同源 assets 圖＋GPT變身檔的逐幀圖(art-v3/frames)＋手環圖(brace-art),用到才抓、抓過離線可用
+  if (sameOrigin && (url.pathname.includes('/assets/') || url.pathname.includes('/art-v3/frames/') || url.pathname.includes('/brace-art/'))) {
     e.respondWith(cacheFirst(req, IMG_CACHE));
     return;
   }

@@ -555,7 +555,7 @@
 <script src="js/01-drops-config.js?v=5e761b4d43.8.26-flywing-relics"></script>
 <script src="js/02-stats-recompute.js?v=76fb7400cf.8.26-flywing-relics"></script>
     <script src="js/03-combat-core.js?v=ff25783995.8.26-flywing-relics"></script>
-    <script src="js/04-combat-attack.js?v=6b3217a738.8.26-flywing-relics"></script>
+    <script src="js/04-combat-attack.js?v=36824802a2.8.26-flywing-relics"></script>
 <script src="js/05-kill-progression.js?v=eb74300ee5.8.34-merc-trial-class-loot"></script>
     <script src="js/06-status-allies.js?v=ae041a8e11.8.34-merc-trial-class-loot"></script>
     <script src="js/07-skills-cast.js?v=cc9227d69c.8.26-flywing-relics"></script>
@@ -573,8 +573,8 @@
 <script src="js/19-equipment-window.js?v=e2d47ea95f.7.57"></script>
 <script src="js/20-warehouse-window.js?v=f0ce1aeb02.5.100-audit-tail"></script>
 <script src="js/21-relic-book.js?v=7d118874fb.8.15-legacy-import-smooth"></script>
-    <script src="js/23-summons.js?v=b0c2214f56.8.23-sherine-set-rework"></script>
-    <script src="js/22-pets.js?v=f55d8e6a9d.8.23-sherine-set-rework"></script>
+    <script src="js/23-summons.js?v=8d5174eb1b.8.23-sherine-set-rework"></script>
+    <script src="js/22-pets.js?v=8fd8722f44.8.23-sherine-set-rework"></script>
     <script src="js/24-pandora-relic-market.js?v=79d0df9d33.7.70"></script>
     <script src="js/25-clan-system.js?v=55b3602a5e.8.7-social-private"></script>
     <script src="js/26-world-channel.js?v=9f45eaff51.8.13-private-bond"></script>
@@ -590,7 +590,7 @@
          無開關：這是顯示正確性，不是功能。實測 forceDarkModeEnabled+darkModeImagePolicy=smart 可重現、加這行即解。 -->
     <style>:root{color-scheme:dark}</style>
     <!-- afk-toggles 必須最先載入：外掛開關中樞（逃生門，自己不可被關；某支外掛壞掉時玩家關掉它就能用原版繼續玩） -->
-    <script src="afk-toggles.js?v=062bf16a5d"></script>
+    <script src="afk-toggles.js?v=701ac4c105"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=8d0c4c2a8b"></script>
@@ -683,7 +683,7 @@
     <script src="afk-dex.js?v=af5556a4bd"></script>
     <!-- afk-illufix：幻術士修補（疼痛的歡愉 −50%、反彈、蝕刻印記；立方：燃燒 每 2 秒 5～50 火傷、灼熱印記、吸血回魔；立方：和諧回 MP 5 → 15，原 afk-classtweak）；排在 afk-wiki 之前（小百科說明跟著改）；需核心補丁 69 -->
     <script src="afk-illufix.js?v=7149276189"></script>
-    <script src="afk-wiki.js?v=31a38f04b5"></script>
+    <script src="afk-wiki.js?v=5f80366963"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=302890a0df"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
@@ -734,7 +734,7 @@
     <!-- afk-geniewish：巨靈的三個願望——沒有願望的（合成、昇華、舊存檔、被併成一疊）補抽三個（依 uid 固定）；願望不同不再併成一疊 -->
     <script src="afk-geniewish.js?v=f5c5330ef3"></script>
     <!-- afk-dreamstar：暗夢星迴（單機版）；需 afk-dreamhell、afk-relicplus，排在 afk-relicplus 之後 -->
-    <script src="afk-dreamstar.js?v=86fb532d02"></script>
+    <script src="afk-dreamstar.js?v=0778307463"></script>
     <!-- afk-corrupt：侵蝕的法利昂／巴拉卡斯／林德拜爾巢穴（複製安塔瑞斯副本；需核心補丁 23） -->
     <script src="afk-corrupt.js?v=0bdc4a6228"></script>
     <!-- afk-relicsell：席琳夢域鏡遺物詞條、商人收遺物（龍鑽）、昇華支配分解；排在 afk-relicaffix／relicplus／dreamhell 之後 -->
@@ -882,7 +882,7 @@
     <!-- afk-debuff-rules：負面效果一律計算抵抗、頭目不再免疫；污濁之水全體 15 秒、冷卻 30 秒（冷卻中改三重矢） -->
     <script src="afk-debuff-rules.js?v=3e11f02193"></script>
     <!-- afk-finalboss：世界最終頭目「死亡女神 席琳」（死亡之海・席琳的沉沒神殿；瘋狂席琳＋席琳夢域鏡、每角色一次；挑戰後才能冥王域轉生；需 afk-dreamhell、afk-dreamstar、afk-rebirth） -->
-    <script src="afk-finalboss.js?v=c40f71545e"></script>
+    <script src="afk-finalboss.js?v=b1f98d032f"></script>
     <!-- afk-rebirth2：二轉決戰（席琳方傷害 +5%）、次元突破者／封印輪迴光環、第二次轉生（需 afk-finalboss、afk-dreamstar） -->
     <script src="afk-rebirth2.js?v=a9d85e9ec9"></script>
     <!-- afk-affix-plus：詞綴擴充（祝福／遠古三階只能打怪取得；燃柳村龍紋師艾格尼絲「龍紋賦予」：不屈者意志、龍的印記／傷痕、神樹者的讚禮、闇龍的抵抗者） -->
@@ -945,7 +945,7 @@
     <!-- afk-redguard：避免紅人持續追殺（席琳神殿「女神嘆息信徒 京」：10 龍鑽或 100 萬金幣，正義值歸 0、追殺散去、追殺永久解除）；需 afk-npc-kit -->
     <script src="afk-redguard.js?v=d7fcf19c46"></script>
     <!-- afk-kurt-hunt：世界事件「克特的追殺令」（隊伍有王族、Lv30+、每次出怪 5%、冷卻 15 分；地圖等級縮放；副本不出現）＋克特技能組 -->
-    <script src="afk-kurt-hunt.js?v=49cbfb0460"></script>
+    <script src="afk-kurt-hunt.js?v=82ecceb55f"></script>
     <!-- afk-lore-kit：劇情任務線與新 Boss 共用工具（試煉接取制、套裝、召喚） -->
     <script src="afk-lore-kit.js?v=3bf7a15822"></script>
     <!-- afk-lore-main：主線劇情「紅獅之誓」Lv10～55（甘特）＋通緝犯庫傑；需 afk-lore-kit、afk-kurt-hunt（紅獅王的守護） -->
@@ -970,7 +970,7 @@
     <!-- afk-savelite：存檔減負——頭目擊殺存檔最多 30 秒一次＋存檔前角色檢查快取（要在包 saveGame 的外掛之後） -->
     <script src="afk-savelite.js?v=00ce3c2ab5"></script>
     <!-- afk-dreamboss：夢域鏡頭目強化——出場全隊目前 HP 傷害＋流血（戒指王 30%、副本王 20%、一般 10%、霸主 5%）；副本王群體衝擊之暈、相消術、疼痛的歡愉、吸魔、蝕抗 -->
-    <script src="afk-dreamboss.js?v=8b650350db"></script>
+    <script src="afk-dreamboss.js?v=cc26bd637f"></script>
     <!-- afk-revive：復活規則——復活卷軸自己復活 HP 100%；席琳夢域鏡同一張地圖最多自己復活 3 次 -->
     <script src="afk-revive.js?v=7d4b641d59"></script>
     <!-- afk-bossrules：頭目開場規則——鑰匙／道具頭目房開場 2 秒無敵；多王時只有第一隻放全體 % 傷害 -->
@@ -1035,7 +1035,7 @@
     <!-- afk-expedition：轉生欄位（聖物、手環、刻印；核心補丁 83）、冒險者遠征點數與位階、刻印石；要在 afk-hunter、afk-finalboss、afk-card-combat 之後 -->
     <script src="afk-expedition.js?v=7242d7da08"></script>
     <!-- afk-bracelet：手環系統（靈魂石訓練所的王掉深淵靈魂、意志抵抗精華；席琳神殿手環工匠換六種手環、升到 3 階）；要在 afk-expedition、afk-soulstone 之前也可以（只看 _afkSoul 旗標） -->
-    <script src="afk-bracelet.js?v=5c46c6bf14"></script>
+    <script src="afk-bracelet.js?v=0223ecc654"></script>
     <!-- afk-procfx：觸發型特效的共用底層（密奧之卡、聖紋共用；沒有開關，本身不做事） -->
     <script src="afk-procfx.js?v=1b3e7ed2bb"></script>
     <!-- afk-mio：密奧之卡（22 張塔羅牌，夢域鏡掉密奧碎片；偉特→托特→馬賽；裝備視窗第二頁刻印下面那格）；要在 afk-rebirth（__afkMaxAdd）之後 -->
@@ -1105,9 +1105,11 @@
     <!-- afk-carve：歐瑞村莊刻印師邪迪克爾——武器、盔甲、頭盔、手套、長靴、斗篷各 1 孔的刻印（7 種 Lv1～5）與尤／鯤／彌之印記、3／6 格套裝；要在 afk-procfx、afk-overflow、afk-balance1101、afk-hidden、afk-matwh、afk-expedition、afk-sherine-dream 之後 -->
     <script src="afk-carve.js?v=4cddc2b708"></script>
     <!-- afk-siege2：每週守城戰（每週五 20:00 集結、血盟頁可關、攻城頁放棄城堡、回防副本 25 波（倒下轉攻城）、失城 7 天鎖與城陷之恥、奪回戰鏡像敵人）；預設開；要在 afk-castlewar、afk-castle-guards、afk-guardup、afk-soulstone 之後 -->
-    <script src="afk-siege2.js?v=0f1cd36aa5"></script>
+    <script src="afk-siege2.js?v=93bce1937b"></script>
     <!-- afk-guardmats：守護者之戒的材料先開始掉（四龍眼淚改在夢域鏡四龍副本的小怪掉、原本的掉落拿掉、古物學者常駐委託不抽）；包 killMob，要在各副本外掛之後 -->
     <script src="afk-guardmats.js?v=a01c3b33cf"></script>
+    <!-- afk-pettank：寵物被動「頑強抵抗」（出戰寵物替隊伍其他人承受怪物傷害 10%／20%）；在 load 時包遺物受傷處理的最外層，排在 afk-fate、afk-hunter、afk-siege2 之後 -->
+    <script src="afk-pettank.js?v=247901fb50"></script>
     <!-- afk-bosslines：頭目台詞（登場、半血、四分之一、倒下各一句；資料在 afk-bosslines-data.js）；包 tick、killMob，要在各副本外掛之後 -->
     <script src="afk-bosslines-data.js?v=86608732aa"></script>
     <script src="afk-bosslines.js?v=2809f51f0c"></script>

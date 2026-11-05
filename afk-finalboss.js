@@ -128,6 +128,7 @@
   var hurt = function (t, dmg, why) {
     var mm = modeMult(); if (!(mm > 0)) return false;
     dmg = Math.max(1, Math.floor(dmg * mm));
+    if (window.__afkPetTank) { dmg = window.__afkPetTank.split(t, dmg); if (!(dmg > 0)) return false; }   // 寵物頑強抵抗：出戰寵物分擔（afk-pettank.js）
     if (typeof window.__afkTrueCut === 'function') dmg = window.__afkTrueCut(t, dmg);   // 符文「骸」：真實傷害減免
     if (typeof window.__afkIncomingMod === 'function') { try { dmg = Math.max(1, Math.floor(window.__afkIncomingMod(t, dmg))); } catch (e) {} }   // 隱藏規則「命運」等：受到的傷害（afk-fate.js）
     if (typeof window.__afkFbHurtMod === 'function') { try { dmg = window.__afkFbHurtMod(t, dmg, why); } catch (e) {} if (!(dmg > 0)) return false; }   // 魔物獵人：S 級冒險者的減傷與護盾（afk-hunter.js）

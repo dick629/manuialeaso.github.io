@@ -1096,6 +1096,7 @@ function enemyAttackPet(mob, p) {
     let dmg = (heavy ? dc * ds : roll(dc, ds)) + ((mob.db || 0) - (st.weaken > 0 ? 4 : 0) - (st.broken > 0 ? 2 : 0));
     if (mob._sherine) dmg = Math.floor(dmg * (mob._sherineMad ? 3 : 2));
     if (mob._grace) dmg = Math.floor(dmg * 1.5);
+    if (window.__afkPetTankRaw) dmg = dmg * window.__afkPetTankRaw(p, dmg, mob, 'phys', null);   /* 🔌 加掛版補丁:頑強抵抗 */
     dmg -= (d.dr || 0) + petRandomPhysicalDr(p, d) + petHardenDr(p);
     dmg = Math.floor(Math.max(1, dmg) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult(true) : 1) * petMasteryTakenMult() * petArmorDmgReduceMult(p));   // 👑 夥伴精通：受到傷害 −50%；🏺 寵物專用盔甲：受傷 ×(1−petDmgReduce)
     if (typeof ironGuardTauntWeakensAttack === 'function' && ironGuardTauntWeakensAttack(mob)) dmg = Math.floor(dmg * 0.9);   // 🔮 鐵衛 5/5：受嘲諷目標的一般攻擊傷害 -10%
@@ -1138,6 +1139,7 @@ function applyMobMagicToPet(mob, sk, p) {
     if (!sk.dmg) return;
     let baseM = roll(sk.dmg[0], sk.dmg[1]);
     let extra = (sk.db || 0) + (sk.dbLv ? (mob.lv || 0) * (sk.dbLvMult || 1) : 0);
+    if (window.__afkPetTankRaw) { let __ptm = window.__afkPetTankRaw(p, baseM + extra, mob, sk.fixedDmg ? 'fixed' : 'magic', sk); baseM *= __ptm; extra *= __ptm; }   /* 🔌 加掛版補丁:頑強抵抗 */
     let dmg = sk.fixedDmg ? (baseM + extra) : (Math.floor((baseM + extra) * mrMult(mr)) - (d.dr || 0) - petHardenDr(p));
     if (st.freeze > 0 && sk.ext_freeze) { dmg += sk.ext_freeze; if (sk.extUnfreeze) st.freeze = 0; }
     dmg = Math.max(1, Math.floor(Math.max(1, dmg * shMul) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult(true) : 1) * petMasteryTakenMult() * petArmorDmgReduceMult(p)));   // 👑 夥伴精通：受到傷害 −50%；🏺 寵物專用盔甲：受傷 ×(1−petDmgReduce)

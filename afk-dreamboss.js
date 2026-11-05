@@ -218,7 +218,7 @@
         if (pn && r > 0 && actor && actor === pn.who && tk() <= pn.until && !(opt && opt.origin === 'reflection') && on()) {
           target._dbPain = null;   // 只反彈一下就消失（玩家 2026-10-31 00:47）
           var d = Math.max(1, Math.floor(r * SK.painRf)), L = W.__afkLore;
-          if (L && L.boss && L.boss.hurt) L.boss.hurt(actor, d);
+          if (L && L.boss && L.boss.hurt) { if (W.__afkPetTank && W.__afkPetTank.noTank) W.__afkPetTank.noTank(function () { L.boss.hurt(actor, d); }); else L.boss.hurt(actor, d); }   // 反彈不由寵物頑強抵抗分擔（afk-pettank.js）
           else if (actor === P()) { actor.hp -= d; if (actor.hp <= 0 && typeof killPlayer === 'function') killPlayer(); }
           else { actor.curHp -= d; if (actor.curHp <= 0) { actor.curHp = 0; actor._downed = true; actor._reviveCd = 150; } }
           var now = Date.now(); if (now - painLogAt > 1000) { painLogAt = now; log(tag('疼痛的歡愉', '#e879f9') + nameOf(actor) + '的攻擊被反彈了 ' + d + ' 點傷害。'); }
