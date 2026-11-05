@@ -2087,8 +2087,8 @@
     var bite = (function () {   // 傷口撕咬（afk-petbite，2026-11-03）
       var B = window.__afkPetBite; if (!B || (window.AFK_TOGGLES && !AFK_TOGGLES.enabled('petbite'))) return '';
       var C = B.CFG;
-      return wCard('🐾 傷口撕咬', wDesc('寵物的<b>一般攻擊打中</b>怪物時疊 1 層：每層 <b>AC +' + C.ac + '</b>（更容易被命中）、<b>魔防 −' + C.mr + '</b>（最低到 0）、<b>火水風地抗性各 −' + C.res + '</b>；最多 <b>' + C.max + ' 層</b>。'
-        + '持續 <b>' + (C.dur / 10) + ' 秒</b>，每次打中重新計時，沒被寵物打中就全部消失。寵物技能（例如熊貓爆擊）不算。'));
+      return wCard('🐾 傷口撕咬', wDesc('寵物的<b>一般攻擊或施放的法術打中</b>怪物時疊 1 層（範圍法術每隻各疊 1 層）：每層 <b>AC +' + C.ac + '</b>（更容易被命中）、<b>魔防 −' + C.mr + '</b>（最低到 0）、<b>火水風地抗性各 −' + C.res + '</b>；最多 <b>' + C.max + ' 層</b>。'
+        + '持續 <b>' + (C.dur / 10) + ' 秒</b>，每次打中重新計時，沒被寵物打中就全部消失。熊貓爆擊、勾爪這類一般攻擊附帶的追擊不算。'));
     })();
     return note
       + bite
