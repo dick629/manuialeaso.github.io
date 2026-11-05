@@ -1,7 +1,8 @@
 /* ============================================================================
  * afk-bosslines.js — 頭目台詞（玩家 2026-11-05 05:29／05:32：全部地圖的王都要有登場、死亡台詞，含半血、四分之一血；先上線）
  *
- *   每隻頭目：登場、HP 第一次 ≤ 50%、第一次 ≤ 25%、倒下，各在系統日誌顯示一句（以頭目名稱開頭）。
+ *   每隻頭目：登場、HP 第一次 ≤ 70%、≤ 50%、≤ 25%、倒下，各在系統日誌顯示一句（以頭目名稱開頭）。
+ *   每個階段可以有多句（陣列），每次到那個階段才從裡面隨機挑一句（玩家 2026-11-05 19:44：五個階段各 10 句輪換）；同一隻頭目同一階段不會連續兩次同一句。
  *   台詞資料在 afk-bosslines-data.js（window.__afkBossLinesData = { lines: { key: {open,half,quarter,death} }, names: { 怪物名: key } }）；
  *   同一個角色的不同版本（夢域鏡、瘋狂、謀叛…）共用一個 key。其他外掛可以 __afkBossLines.add(名稱, {...}) 登記自己的頭目。
  *   補跑期間不顯示（一刻都不影響戰鬥）；經典模式不顯示；開關 bosslines（預設開）。
@@ -10,7 +11,7 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'bosslines', name: '頭目台詞', group: '遊戲介面', seal: true,
-    desc: '頭目登場、血量剩一半、剩四分之一、倒下時，在戰鬥日誌說一句話' });
+    desc: '頭目登場、血量剩七成、剩一半、剩四分之一、倒下時，在系統日誌說一句話' });
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var on = function () { var p = P(); return (!T || T.enabled('bosslines')) && !!p && !p.classicMode; };
   var S = function () { return (typeof state !== 'undefined' && state) ? state : {}; };
@@ -32,7 +33,15 @@
     return NAMES;
   };
   var keyOf = function (n) { return names()[n] || n; };
-  var enc = {};   // 多階段頭目同一場的進度：key → { h, q, at }
+  var enc = {};   // 多階段頭目同一場的進度：key → { s, h, q, at }
+  var lastPick = {};   // key|階段 → 上次說的那句（避免連續同一句）
+  var pick = function (k, stage, v) {
+    if (!Array.isArray(v)) return v;
+    var arr = v.filter(Boolean); if (!arr.length) return null; if (arr.length === 1) return arr[0];
+    var id = k + '|' + stage, prev = lastPick[id], t, n = 0;
+    do { t = arr[Math.floor(Math.random() * arr.length)]; } while (t === prev && ++n < 8);
+    lastPick[id] = t; return t;
+  };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var linesOf = function (m) {
     if (!m || !m.n) return null;
@@ -48,7 +57,7 @@
     try { if (typeof logSys === 'function') logSys('<span class="font-bold" style="color:#fda4af">' + esc(n) + '</span><span style="color:#fecdd3">：「' + esc(t) + '」</span>'); } catch (e) {}
   };
   var say = function (m, key) {
-    var L = linesOf(m), t = L && L[key]; if (!t) return;
+    var L = linesOf(m), t = L && pick(keyOf(m.n), key, L[key]); if (!t) return;
     if (quiet()) { queue.push({ n: m.n, t: t, at: Date.now() }); if (queue.length > 4) queue.shift(); return; }
     out(m.n, t);
   };
@@ -65,13 +74,15 @@
       var m = ms[i]; if (!isBoss(m) || m._dead) continue;
       var st = m._afkBl || (m._afkBl = {});
       var k = keyOf(m.n), staged = !!STAGEKEY[k], e = null;
-      if (staged) { if (FIRST[m.n] || !enc[k] || Date.now() - enc[k].at > 1800000) { if (!st.o) enc[k] = { h: 0, q: 0, at: Date.now() }; } e = enc[k] || (enc[k] = { h: 0, q: 0, at: Date.now() }); }
+      if (staged) { if (FIRST[m.n] || !enc[k] || Date.now() - enc[k].at > 1800000) { if (!st.o) enc[k] = { s: 0, h: 0, q: 0, at: Date.now() }; } e = enc[k] || (enc[k] = { s: 0, h: 0, q: 0, at: Date.now() }); }
       if (!st.o) { st.o = 1; if (!staged || FIRST[m.n]) say(m, 'open'); }
       var hp = Number(m.hp) || 0, cur = Number(m.curHp);
       if (!(hp > 0) || !(cur > 0)) continue;
       var h = e || st;
-      if (!h.h && cur <= hp * 0.5) { h.h = 1; say(m, 'half'); }
-      if (!h.q && cur <= hp * 0.25) { h.q = 1; h.h = 1; say(m, 'quarter'); }
+      // 一下掉很多（例如 80% → 20%）只說最低那一階，跳過的不補說
+      if (!h.q && cur <= hp * 0.25) { h.q = h.h = h.s = 1; say(m, 'quarter'); }
+      else if (!h.h && cur <= hp * 0.5) { h.h = h.s = 1; say(m, 'half'); }
+      else if (!h.s && cur <= hp * 0.7) { h.s = 1; say(m, 'p70'); }
     }
   };
   if (typeof W.tick === 'function') {
