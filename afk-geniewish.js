@@ -4,6 +4,7 @@
  *   核心在「拿到 +0 的那一刻」才抽願望（gainItem，存在物品的 gw）。遺物合成／昇華支配做出來的、舊存檔、
  *   倉庫或傭兵退回時被併成一疊的，有可能沒有 gw → 物品說明不列願望、能力也沒加。
  *   ‧沒有願望的巨靈戒指（任何合成階段）補抽三個：用物品 uid 當種子，同一只戒指永遠抽到同樣三個（不能靠重新整理重抽）。
+ *   ‧背包、身上、傭兵、倉庫裡的都補。
  *   ‧一疊共用一組願望；從一疊拿一只出來穿上也帶著同樣的願望。
  *   ‧願望不同的兩只戒指不會再被併成一疊（物品簽章加上願望）。
  * ========================================================================== */
@@ -50,6 +51,19 @@
     var oLoad = W.loadGame;
     W.loadGame = function () { var r = oLoad.apply(this, arguments); try { sweep(); } catch (e) {} return r; };
     try { (0, eval)('loadGame = window.loadGame'); } catch (e) {}
+  }
+  // 倉庫裡的也要補（在倉庫看說明、取出來都要有願望）：讀倉庫時補上，有補到就寫回一次
+  if (typeof W.loadWarehouse === 'function') {
+    var oWh = W.loadWarehouse;
+    W.loadWarehouse = function () {
+      var w = oWh.apply(this, arguments);
+      try {
+        var n = 0; (w && Array.isArray(w.items) ? w.items : []).forEach(function (it) { if (fix(it)) n++; });
+        if (n && typeof _whLoadOk !== 'undefined' && _whLoadOk !== false && typeof saveWarehouse === 'function') saveWarehouse(w);
+      } catch (e) {}
+      return w;
+    };
+    try { (0, eval)('loadWarehouse = window.loadWarehouse'); } catch (e) {}
   }
   setInterval(function () { try { if (!document.hidden) sweep(); } catch (e) {} }, 3000);
   W.__afkGenieWish = { sweep: sweep, roll: roll, fix: fix };

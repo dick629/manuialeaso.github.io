@@ -38,6 +38,7 @@
     desc: '離線結算與分頁在背景補跑期間，HP 歸零時不會倒下，直接回滿 HP 繼續掛；關掉＝照原本撞死即停'
   });
   var _noDeathN = 0;
+  var _fastStepOn = false;   // ⚡ 快速段正在跑一步(fastStepGuarded 期間為 true)
   function noDeathOn() { return !window.AFK_TOGGLES || AFK_TOGGLES.enabled('offlinenodeath'); }
   function offlineNow() {
     if (catchingUp) return true;
@@ -49,6 +50,9 @@
     if (typeof window.killPlayer !== 'function' || window.killPlayer.__afkNoDeath) return;
     var _kp = window.killPlayer;
     window.killPlayer = function () {
+      // ⚡ 快速段的一步(見 runCatchup 的 fastStepGuarded):那段時間的 HP 軌跡不模擬,步驟結束會把隊伍 HP/MP 還原,
+      //   步驟中途被「擊殺時扣血」的效果扣到 0 不算真的倒下(線上同一段時間會被喝水/治療補回來)。與「不會死亡」開關無關。
+      if (_fastStepOn && typeof player !== 'undefined' && player && !player.dead) { player.hp = 1; return; }
       if (noDeathOn() && offlineNow() && typeof player !== 'undefined' && player && !player.dead) {
         player.hp = player.mhp || 1; _noDeathN++;
         return;
@@ -1045,6 +1049,55 @@
         } catch (e2) { break; }
       }
     }
+    // 🤝 快速段的一步不改變任何人的 HP/MP(2026-11-05 玩家回報:同一張圖線上掛傭兵不會倒,離線一晚回來全躺)。
+    //   快速段本來就「不模擬 HP/MP 軌跡」(不跑 tick → 沒有喝水、治療、HoT、自然回復),但擊殺仍走真實 killMob,
+    //   掛在擊殺上的扣血效果(例:席琳夢域鏡每殺一隻小怪全隊扣最大 HP 1%,afk-dreamcost)照扣、回血那一半卻沒有
+    //   → 實測 Lv106 王族帶 7 名 Lv150 傭兵在夢域火龍窟:線上 5 分鐘傭兵最低 56%、0 人倒;離線取樣 5 分鐘後一進快速段,
+    //     第 6~8 分鐘 7 人全倒(擊殺扣掉 240 萬 HP,沒有任何回補)。
+    //   這段時間的代價已由取樣量到的「每拍消耗」扣在藥水上,HP 的危險由取樣與 BOSS 真打的血量門檻把關(傭兵也算)。
+    //   所以每一步前後記住隊伍 HP/MP/倒地狀態並還原;步驟中途被扣到 0 的隊長由 killPlayer 包裝擋下(見 installNoDeath)。
+    //   經典模式不動(規則不改;經典模式沒有夢域,這條扣血不存在)。
+    function partySnap() {
+      var s = { hp: player.hp, mp: player.mp, al: [], pets: [], sums: [] };
+      (player.allies || []).forEach(function (a) { if (a) s.al.push([a, a.curHp, a.mp, a._downed, a._reviveCd]); });
+      try { if (typeof petsOutList === 'function') petsOutList().forEach(function (p) { if (p) s.pets.push([p, p.hp, p._downed]); }); } catch (e) {}
+      (player.summonsV2 || []).forEach(function (m) { if (m) s.sums.push([m, m.hp, m._downed]); });
+      return s;
+    }
+    function partyRestore(s) {
+      if (!player.dead) {
+        player.hp = Math.min(s.hp, player.mhp || s.hp);
+        player.mp = Math.min(s.mp, player.mmp || s.mp);
+      }
+      s.al.forEach(function (r) {
+        var a = r[0];
+        if ((player.allies || []).indexOf(a) < 0) return;
+        a._downed = r[3]; a._reviveCd = r[4];
+        a.curHp = Math.min(r[1], a.mhp || r[1]);
+        a.mp = Math.min(r[2], a.mmp || r[2]);
+      });
+      s.pets.forEach(function (r) { if (!r[2] && !r[0]._downed) r[0].hp = r[1]; });   // 寵物倒地另有流程(_petDown),不硬拉回;只還原血量
+      s.sums.forEach(function (r) { if (!r[2] && !r[0]._downed) r[0].hp = r[1]; });
+    }
+    // 🎫 倒地傭兵的自動復活(線上 alliesTick:15 秒冷卻一過,身上有復活卷軸就自動用;巨靈的承諾耳環立即)。
+    //   快速段不跑 tick → 冷卻不倒數、卷軸不會用,取樣或 BOSS 真打時倒下的傭兵會整晚躺著。這裡照推進的拍數倒數,直接呼叫原作那支函式。
+    function fastAllyRevive(adv) {
+      if (!(adv > 0)) return;
+      (player.allies || []).forEach(function (a) {
+        if (!a || !a._downed) return;
+        if ((a._reviveCd || 0) > 0) a._reviveCd = Math.max(0, a._reviveCd - adv);
+        try { if (typeof tryAutoReviveMercScroll === 'function') tryAutoReviveMercScroll(a); } catch (e) {}
+      });
+    }
+    function fastStepGuarded() {
+      if (player.classicMode) return fastEventStep();
+      var snap = partySnap(), t0 = state.ticks, ok;
+      _fastStepOn = true;
+      try { ok = fastEventStep(); }
+      finally { _fastStepOn = false; partyRestore(snap); }
+      fastAllyRevive(state.ticks - t0);
+      return ok;
+    }
     function fastEventStep() {   // ⚡ 事件驅動快速段的一步:原作排程出怪 → 殺「最早出生」那隻(或推進到下一個出怪時點);回 false = 退回全模擬
       try {
         maybeSpawnMobs();   // 核心 js/03 與 tick() 同一份排程:空格排 delay、到時 spawnMob——出怪延遲/長老之室節流/後排格/加速效果全照原作
@@ -1269,7 +1322,7 @@
             //   失敗分兩種:消耗品斷貨(_dryHit)=戰局質變 → 重新取樣(固定 70% 門檻)評估「沒藥的新戰局」,
             //   撐得穩就回快速;其他(出怪異常等)→ 安全網,永久退回全模擬。
             _fastEvents++;
-            if (!fastEventStep()) {
+            if (!fastStepGuarded()) {
               if (_dryHit) {
                 _dryHit = false;
                 fastMode = false; fastWhy = 'dry'; sampleGrew = false; hpFloorFixed = true;
@@ -1312,6 +1365,17 @@
             if (_ks > _prevKillSum) { deathEvents++; _prevKillSum = _ks; }
             var _hpP = (player.mhp > 0) ? (player.hp / player.mhp) : 1;
             if (_hpP < sampleMinHp) sampleMinHp = _hpP;
+            // 🤝 傭兵也算進血量門檻(還站著的才算;倒地的照線上規則留在地上):快速段不模擬任何人的 HP 軌跡,
+            //   線上會把傭兵慢慢磨倒的圖,要靠取樣這段真模擬撐過門檻才放行快轉——否則只有隊長安全就快轉,傭兵的危險被跳過。
+            if (!player.classicMode) {
+              var _al = player.allies;
+              if (_al) for (var _ai = 0; _ai < _al.length; _ai++) {
+                var _a = _al[_ai];
+                if (!_a || _a._downed || !(_a.mhp > 0)) continue;
+                var _ap = (_a.curHp || 0) / _a.mhp;
+                if (_ap < sampleMinHp) sampleMinHp = _ap;
+              }
+            }
             if (player.lv !== lastLv) lastLv = player.lv;   // 取樣中升級:樣本自然涵蓋新戰力,不需特別處理
             if (done >= sampleEnd) {
               if (totalTicks - done >= FAST_MIN_REMAIN) evalSample();
