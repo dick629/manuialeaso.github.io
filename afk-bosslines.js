@@ -1,7 +1,7 @@
 /* ============================================================================
  * afk-bosslines.js — 頭目台詞（玩家 2026-11-05 05:29／05:32：全部地圖的王都要有登場、死亡台詞，含半血、四分之一血；先上線）
  *
- *   每隻頭目：登場、HP 第一次 ≤ 50%、第一次 ≤ 25%、倒下，各在戰鬥日誌顯示一句（以頭目名稱開頭）。
+ *   每隻頭目：登場、HP 第一次 ≤ 50%、第一次 ≤ 25%、倒下，各在系統日誌顯示一句（以頭目名稱開頭）。
  *   台詞資料在 afk-bosslines-data.js（window.__afkBossLinesData = { lines: { key: {open,half,quarter,death} }, names: { 怪物名: key } }）；
  *   同一個角色的不同版本（夢域鏡、瘋狂、謀叛…）共用一個 key。其他外掛可以 __afkBossLines.add(名稱, {...}) 登記自己的頭目。
  *   補跑期間不顯示（一刻都不影響戰鬥）；經典模式不顯示；開關 bosslines（預設開）。
@@ -44,7 +44,8 @@
   // 補跑（含手機跟不上時的靜音快跑）期間先排隊，下一次正常畫面時補印；排太久（> 5 秒）或太多（> 4 句）的丟掉，免得一次洗版
   var queue = [];
   var out = function (n, t) {
-    try { if (typeof logCombat === 'function') logCombat('<span class="font-bold" style="color:#fda4af">' + esc(n) + '</span><span style="color:#fecdd3">：「' + esc(t) + '」</span>', 'enemy'); } catch (e) {}
+    // 放在系統日誌（玩家 2026-11-05 14:45：不要放在「敵人」戰鬥紀錄裡）
+    try { if (typeof logSys === 'function') logSys('<span class="font-bold" style="color:#fda4af">' + esc(n) + '</span><span style="color:#fecdd3">：「' + esc(t) + '」</span>'); } catch (e) {}
   };
   var say = function (m, key) {
     var L = linesOf(m), t = L && L[key]; if (!t) return;
