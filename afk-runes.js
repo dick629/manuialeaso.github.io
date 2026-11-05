@@ -3,10 +3,10 @@
  *
  * 原本叫「蝕刻」，跟無屬性印記的「蝕刻」撞名，改名「星蝕·解」，並從艾格尼絲那裡獨立出來交給符文師。
  * 符文孔（it.sockets：陣列長度＝開了幾孔，內容是符文 id 或 null）：
- *   武器 3 孔：第一孔「墜蝕·解」同一組原版席琳遺骸 8 套（8 部位各 8 件）；第二孔「刻解·骸」同一組夢域遺骸 8 套
- *              （2026-10-30 20:54 起這兩孔只有鑲嵌符文的功能，不再讓刻上的套裝算滿 5 件；開過的孔不能改刻）
- *              第三孔「瘴骸·破」解命石 1
- *   防具 2 孔（盔甲、盾、頭盔、斗篷、手套、長靴、脛甲、T恤）：第一孔夢域遺骸 5 套（8 部位各 5 件，不限套裝組）、第二孔回夢水晶 3
+ *   武器 3 孔（2026-11-05 改材料）：第一孔「墜蝕·解」夢域遺骸 8 套（8 部位各 8 件，不限套裝組）；
+ *              第二孔「刻解·骸」哀石水晶 1500、哀石精華 1000、哀石結晶 500、回夢水晶 100；
+ *              第三孔「瘴骸·破」哀石結晶 1000、回夢水晶 500、解命石 10（三孔都只有鑲嵌符文的功能）
+ *   防具 2 孔（盔甲、盾、頭盔、斗篷、手套、長靴、脛甲、T恤）：第一孔夢域遺骸 5 套（8 部位各 5 件，不限套裝組）、第二孔回夢水晶 500＋解命石 5
  *   戒指、項鍊、耳環 1 孔：哀石結晶 5
  *   腰帶 3 孔：每孔解命石 1（三孔都是瘴骸·破等級）
  * 鑲嵌：武器＝攻擊、套裝、職業；防具＝減傷、藥水、寵物；飾品與腰帶＝補助。
@@ -51,6 +51,21 @@
     belt: { n: '腰帶', max: 3, cats: RD.SLOT_CATS.acc, names: [NAMES[2], NAMES[2], NAMES[2]] }
   };
   var COST = { armor1: 5, armor2: 3, acc: 5, fate: 1, reverie: 'afk_reverie_crystal' };
+  // 開孔材料（玩家 2026-11-05 20:14／20:15）：
+  //   武器第一孔＝夢域淬鍊過的席琳遺骸 8 套（八個部位各 8 件，不限套裝組，可以混組）
+  //   武器第二孔＝哀石水晶 1500、哀石精華 1000、哀石結晶 500、回夢水晶 100
+  //   武器第三孔＝哀石結晶 1000、回夢水晶 500、解命石 10
+  //   防具第二孔＝回夢水晶 500、解命石 5（第一孔照舊）
+  var HOLE = {
+    w2: [[RD.CUR[1], 1500], [RD.CUR[2], 1000], [RD.CUR[3], 500], ['afk_reverie_crystal', 100]],
+    w3: [[RD.CUR[3], 1000], ['afk_reverie_crystal', 500], [RD.FATE.id, 10]],
+    a2: [['afk_reverie_crystal', 500], [RD.FATE.id, 5]]
+  };
+  var holeOk = function (list) { return list.every(function (q) { return have(q[0]) >= q[1]; }); };
+  var holeMiss = function (list) { var m = list.filter(function (q) { return have(q[0]) < q[1]; }).map(function (q) { return (DB.items[q[0]] || {}).n + ' ' + have(q[0]).toLocaleString() + '/' + q[1].toLocaleString(); }); return m.length ? '材料不夠：' + m.join('、') + '。' : ''; };
+  var holeTake = function (list) { list.forEach(function (q) { take(q[0], q[1]); }); };
+  var holeReq = function (list) { return list.map(function (q) { return K.reqTxt(have(q[0]), q[1], (DB.items[q[0]] || {}).n || q[0]); }).join('　'); };
+  var holeTxt = function (list) { return list.map(function (q) { return ((DB.items[q[0]] || {}).n || q[0]) + ' ' + q[1].toLocaleString(); }).join('、'); };
   var PARTS = SD.PARTS;
   var have = K.have, take = K.take;
   var nm = function (id) { return (DB.items[id] || {}).n || id; };
@@ -133,32 +148,29 @@
 
   // ── 動作（回傳錯誤訊息，成功回傳 null）──
   var ACT = {
-    open1: function (ref, g) {
+    open1: function (ref) {
       var p = P(); if (!p) return '請先進入遊戲。';
-      if (GROUPS.indexOf(g) < 0) return '請選一組席琳套裝。';
       var c = find(ref); if (!c || c.kind !== 'weapon') return '先選一把武器。';
       if (c.it.etch) return '第一孔已經開了。';
-      if (sets(p, g) < 1) return '需要「' + g + '」席琳遺骸 8 套（八個部位各 ' + PER + ' 件，未上鎖）。';
+      if (dreamAnySets(p) < PER) return '需要夢域淬鍊過的席琳遺骸 8 套（爪、眼、血、肉、心、骨、牙、鱗各 ' + PER + ' 件，不限套裝組，未上鎖）。';
       var it = resolve(ref); if (!it) return '找不到這把武器。';
-      SD.migrate(it); SD.etchTake(p, g);
-      var re = !!it.etch; it.etch = g; it._starV = 1;
+      SD.migrate(it); dreamAnyTake(p, PER);
+      it.etch = '墜蝕'; it._starV = 1;
       if (socks(it).length < 1) it.sockets.push(null);
-      done('<span class="c-sherine font-bold">' + NPC_N + '把 8 套「' + esc(g) + '」席琳遺骸碾成星屑，' + (re ? '重新刻進' : '鑿開了') + '武器的第一個符文孔「' + NAMES[0] + '」</span>→ ' + full(it) + '。');
+      done('<span class="c-sherine-dream font-bold">' + NPC_N + '把 8 套夢域遺骸碾成星屑，鑿開了武器的第一個符文孔「' + NAMES[0] + '」</span>→ ' + full(it) + '。');
       return null;
     },
-    open2: function (ref, g) {
+    open2: function (ref) {
       var p = P(); if (!p) return '請先進入遊戲。';
-      if (GROUPS.indexOf(g) < 0) return '請選一組夢域席琳套裝。';
       var c = find(ref); if (!c || c.kind !== 'weapon') return '先選一把武器。';
       if (!c.it.etch) return '要先開第一孔「' + NAMES[0] + '」。';
-      var se = g + '夢';
       if (c.it.etchD) return '第二孔已經開了。';
-      if (sets(p, se) < 1) return '需要夢域「' + SD.DN[g] + '」席琳遺骸 8 套（八個部位各 ' + PER + ' 件，未上鎖）。';
+      var m = holeMiss(HOLE.w2); if (m) return m;
       var it = resolve(ref); if (!it) return '找不到這把武器。';
-      SD.migrate(it); SD.etchTake(p, se);
-      var re = !!it.etchD; it.etchD = se; it._starV = 1;
+      SD.migrate(it); holeTake(HOLE.w2);
+      it.etchD = '刻解夢'; it._starV = 1;
       while (socks(it).length < 2) it.sockets.push(null);
-      done('<span class="c-sherine-dream font-bold">夢域的遺骸在' + NPC_N + '手裡發出紅光，' + (re ? '重新刻進' : '鑿開了') + '第二個符文孔「' + NAMES[1] + '」</span>→ ' + full(it) + '。');
+      done('<span class="c-sherine-dream font-bold">哀石在' + NPC_N + '手裡發出紅光，鑿開了第二個符文孔「' + NAMES[1] + '」</span>→ ' + full(it) + '。');
       return null;
     },
     // 其餘的孔：武器第三孔、防具兩孔、飾品一孔、腰帶三孔
@@ -169,12 +181,12 @@
       if (n >= K2.max) return '孔已經全部打開了。';
       var pay = null, label = '';
       if (kd === 'weapon') {
-        if (n < 2) return '武器要先開第一、二孔（用席琳遺骸刻上套裝）。';
-        if (have(RD.FATE.id) < COST.fate) return '需要解命石 1。';
-        pay = function () { take(RD.FATE.id, COST.fate); }; label = '第三孔「' + NAMES[2] + '」';
+        if (n < 2) return '武器要先開第一、二孔。';
+        var m3 = holeMiss(HOLE.w3); if (m3) return m3;
+        pay = function () { holeTake(HOLE.w3); }; label = '第三孔「' + NAMES[2] + '」';
       } else if (kd === 'armor') {
         if (n === 0) { if (dreamAnySets(p) < COST.armor1) return '需要夢域遺骸 ' + COST.armor1 + ' 套（八個部位各 ' + COST.armor1 + ' 件，不限套裝組，未上鎖）。'; pay = function () { dreamAnyTake(p, COST.armor1); }; label = '第一孔「' + NAMES[0] + '」'; }
-        else { if (have(COST.reverie) < COST.armor2) return '需要回夢水晶 ' + COST.armor2 + '。'; pay = function () { take(COST.reverie, COST.armor2); }; label = '第二孔「' + NAMES[1] + '」'; }
+        else { var m2 = holeMiss(HOLE.a2); if (m2) return m2; pay = function () { holeTake(HOLE.a2); }; label = '第二孔「' + NAMES[1] + '」'; }
       } else if (kd === 'acc') {
         if (have(RD.CUR[3]) < COST.acc) return '需要哀石結晶 ' + COST.acc + '。';
         pay = function () { take(RD.CUR[3], COST.acc); }; label = '符文孔「' + NAMES[0] + '」';
@@ -372,26 +384,24 @@
     h += '<div class="ax-h">② 開孔與鑲嵌</div>';
     var noSel = '先在上面選一件裝備', it = x && x.it, n = it ? (it.sockets || []).length : 0;
     if (!x || x.kind === 'weapon') {
-      var s1 = groupSelect('afk-zo-g1', false, ui.g1); ui.g1 = s1.cur;
-      var s2 = groupSelect('afk-zo-g2', true, ui.g2); ui.g2 = s2.cur;
-      var have1 = sets(p, ui.g1), have2 = sets(p, ui.g2 + '夢');
-      h += K.rowHtml({ key: 'open1', ico: remIco(), name: '武器第一孔「' + NAMES[0] + '」', color: '#4ade80',
-        desc: '消耗同一組原版席琳遺骸 8 套（爪、眼、血、肉、心、骨、牙、鱗各 ' + PER + ' 件），鑿開第一個符文孔（只用來鑲嵌符文）。',
-        req: K.reqTxt(have1, 1, '套 × 8（' + esc(ui.g1) + '）'), why: !x ? noSel : (it.etch ? '已經開了' : ''),
-        pick: s1.html, btns: [['open1', '開孔', have1 >= 1 && !(it && it.etch)]] }, 'data-zo');
-      h += K.rowHtml({ key: 'open2', ico: remIco(), name: '武器第二孔「' + NAMES[1] + '」', color: '#fb7185',
-        desc: '要先開第一孔。消耗同一組夢域席琳遺骸 8 套，鑿開第二個符文孔（只用來鑲嵌符文）。',
-        req: K.reqTxt(have2, 1, '套 × 8（夢域' + esc(SD.DN[ui.g2] || '') + '）'), why: !x ? noSel : !it.etch ? '要先開第一孔「' + NAMES[0] + '」' : (it.etchD ? '已經開了' : ''), off: !!(x && !it.etch),
-        pick: s2.html, btns: [['open2', '開孔', have2 >= 1 && !(it && it.etchD)]] }, 'data-zo');
+      var dsW = dreamAnySets(p);
+      h += K.rowHtml({ key: 'open1', ico: remIco(), name: '武器第一孔「' + NAMES[0] + '」', color: '#fb7185',
+        desc: '消耗夢域淬鍊過的席琳遺骸 8 套（爪、眼、血、肉、心、骨、牙、鱗各 ' + PER + ' 件，不限套裝組，可以混著用），鑿開第一個符文孔。',
+        req: K.reqTxt(dsW, PER, '件（每個部位）'), why: !x ? noSel : (it.etch ? '已經開了' : ''),
+        btns: [['open1', '開孔', dsW >= PER && !(it && it.etch)]] }, 'data-zo');
+      h += K.rowHtml({ key: 'open2', ico: K.itemIco(RD.CUR[1]), name: '武器第二孔「' + NAMES[1] + '」', color: '#c4b5fd',
+        desc: '要先開第一孔。' + holeTxt(HOLE.w2) + '，鑿開第二個符文孔。',
+        req: holeReq(HOLE.w2), why: !x ? noSel : !it.etch ? '要先開第一孔「' + NAMES[0] + '」' : (it.etchD ? '已經開了' : ''), off: !!(x && !it.etch),
+        btns: [['open2', '開孔', holeOk(HOLE.w2) && !(it && it.etchD)]] }, 'data-zo');
       h += K.rowHtml({ key: 'open3', ico: K.itemIco(RD.FATE.id), name: '武器第三孔「' + NAMES[2] + '」', color: '#facc15',
-        desc: '要先開第一、二孔。解命石 1 顆鑿開最後一個孔。',
-        req: K.reqTxt(have(RD.FATE.id), 1, '解命石'), why: !x ? noSel : n < 2 ? '要先開第一、二孔' : n >= 3 ? '已經打開了' : '', off: !!(x && n < 2), btns: [['open', '開孔', have(RD.FATE.id) >= 1]] }, 'data-zo');
+        desc: '要先開第一、二孔。' + holeTxt(HOLE.w3) + '，鑿開最後一個孔。',
+        req: holeReq(HOLE.w3), why: !x ? noSel : n < 2 ? '要先開第一、二孔' : n >= 3 ? '已經打開了' : '', off: !!(x && n < 2), btns: [['open', '開孔', holeOk(HOLE.w3)]] }, 'data-zo');
     } else if (x.kind === 'armor') {
       var ds = dreamAnySets(p);
       h += K.rowHtml({ key: 'armor', ico: n === 0 ? remIco() : K.itemIco(COST.reverie), name: n === 0 ? '防具第一孔「' + NAMES[0] + '」' : '防具第二孔「' + NAMES[1] + '」', color: '#c4b5fd',
-        desc: '第一孔：夢域遺骸 ' + COST.armor1 + ' 套（八個部位各 ' + COST.armor1 + ' 件，不限套裝組）；第二孔：回夢水晶 ' + COST.armor2 + ' 個。防具的孔不會刻上套裝，只用來鑲減傷、藥水、寵物類符文。',
-        req: n === 0 ? K.reqTxt(ds, COST.armor1, '套夢域遺骸') : K.reqTxt(have(COST.reverie), COST.armor2, '回夢水晶'), why: n >= 2 ? '兩個孔都打開了' : '',
-        btns: [['open', '開孔', n === 0 ? ds >= COST.armor1 : have(COST.reverie) >= COST.armor2]] }, 'data-zo');
+        desc: '第一孔：夢域遺骸 ' + COST.armor1 + ' 套（八個部位各 ' + COST.armor1 + ' 件，不限套裝組）；第二孔：' + holeTxt(HOLE.a2) + '。防具的孔只用來鑲減傷、藥水、寵物類符文。',
+        req: n === 0 ? K.reqTxt(ds, COST.armor1, '套夢域遺骸') : holeReq(HOLE.a2), why: n >= 2 ? '兩個孔都打開了' : '',
+        btns: [['open', '開孔', n === 0 ? ds >= COST.armor1 : holeOk(HOLE.a2)]] }, 'data-zo');
     } else if (x.kind === 'acc') {
       h += K.rowHtml({ key: 'acc', ico: K.itemIco(RD.CUR[3]), name: '飾品符文孔「' + NAMES[0] + '」', color: '#fda4af', desc: '戒指、項鍊、耳環各 1 孔，哀石結晶 ' + COST.acc + ' 個。只能鑲補助類符文。',
         req: K.reqTxt(have(RD.CUR[3]), COST.acc, '哀石結晶'), why: n >= 1 ? '已經打開了' : '', btns: [['open', '開孔', have(RD.CUR[3]) >= COST.acc]] }, 'data-zo');
