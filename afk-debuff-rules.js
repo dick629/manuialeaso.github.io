@@ -101,6 +101,23 @@
     return n;
   };
   W.__afkFoulBreak = breakPhys;
+  // 汙濁之水「放下去就破除物理免疫」，負面狀態照公式（抵抗）判定：全場敵人都已經帶著汙濁之水時，核心會略過不放（不扣魔）；
+  //   這時畫面上若還有物理免疫的敵人，照樣施放：扣魔、進冷卻、沖散免疫（負面狀態已經在身上，不重複上）
+  var physWalls = function () { var t = (typeof state !== 'undefined' && state) ? state.ticks : 0, n = 0; try { (mapState.mobs || []).forEach(function (m) { var w = m && !m._dead && m.curHp > 0 && m._reflectWall; if (w && w.block && PHYS[w.kind] && t <= (w.until || 0)) n++; }); } catch (e) {} return n; };
+  var allFoul = function () { var live = (mapState.mobs || []).filter(function (m) { return m && !m._dead && m.curHp > 0; }); return live.length > 0 && live.every(function (m) { return m.st && (m.st.muddywater || 0) > 0; }); };
+  var forceBreak = function (who, isPlayer) {
+    try {
+      if (!physWalls() || !allFoul()) return false;
+      if (who.dead || who._downed || (who.curHp != null && !isPlayer && !(who.curHp > 0))) return false;
+      var stt = who.statuses || {}; if ((stt.silence || 0) > 0 || (stt.magicseal || 0) > 0 || (stt.stun || 0) > 0 || (stt.freeze || 0) > 0 || (stt.stone || 0) > 0 || (stt.sleep || 0) > 0 || (stt.paralyze || 0) > 0) return false;
+      if (isPlayer && (who.skills || []).indexOf(FOUL) < 0) return false;
+      var sk = DB.skills[FOUL], cost = Number(sk && sk.mp) || 0;
+      if (isPlayer && who.d && typeof who.d.getMpCost === 'function') cost = who.d.getMpCost(sk.mp, sk.tier);
+      if ((who.mp || 0) < cost) return false;
+      who.mp -= cost;
+      return true;
+    } catch (e) { return false; }
+  };
   try { if (sk && sk.desc && sk.desc.indexOf('物理免疫') < 0) sk.desc += '施放時沖散畫面上敵人的物理免疫。'; } catch (e) {}
   W.__afkFoulCd = function (a) { return cdLeft(a || (typeof player !== 'undefined' ? player : null)); };
   if (typeof W.castSkill === 'function') {
@@ -113,6 +130,7 @@
         return false;
       }
       var r = oCast.apply(this, arguments);
+      if (!r && forceBreak(player, true)) r = true;   // 全場都已經有汙濁之水（核心會略過不放）但還有物理免疫 → 照樣施放沖散免疫
       if (r) { player._afkFoulCdUntil = now() + CD; breakPhys('你'); }
       return r;
     };
@@ -125,6 +143,19 @@
       if (cdLeft(ally) > 0) return false;
       var r = oAlly.apply(this, arguments);
       if (r !== false) { ally._afkFoulCdUntil = now() + CD; breakPhys('協力·' + (ally._allyName || '傭兵')); }
+      return r;
+    };
+  }
+  // 傭兵的汙濁之水走 allyCastNonDamage（純狀態技），原本只有女神的免疫會被沖散；夢域小怪、巨大骷髏的物理免疫也要（玩家 2026-11-05「放下去就是破除物免」）
+  if (typeof W.allyCastNonDamage === 'function') {
+    var oND = W.allyCastNonDamage;
+    W.allyCastNonDamage = function (ally, s) {
+      var isFoul = s === FOUL || (s && DB.skills[FOUL] === s);
+      if (!isFoul || !ally) return oND.apply(this, arguments);
+      if (cdLeft(ally) > 0) return false;
+      var r = oND.apply(this, arguments);
+      if (r !== true && forceBreak(ally, false)) r = true;
+      if (r === true) { ally._afkFoulCdUntil = now() + CD; breakPhys('協力·' + (ally._allyName || '傭兵')); }
       return r;
     };
   }
