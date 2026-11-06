@@ -81,7 +81,7 @@
     guardBase[h.k] = id;
   });
   var allyN = function () { var p = P(); return p ? (p.allies || []).filter(Boolean).length : 0; };
-  var run = null, lastMap = null;
+  var run = null, lastMap = null, leaving = 0;
   var enter = function (k) {
     var p = P(), h = BYK[k], why = canEnter(p); if (!h) return; if (why) { sys('<span class="text-amber-300">' + esc(NPC_N) + '：' + esc(why) + '</span>'); return; }
     if (today().indexOf(h) < 0) { sys('<span class="text-amber-300">今天沒有開這一宮。</span>'); return; }
@@ -101,7 +101,7 @@
     try { renderMobs(); syncMapSelectors(); updateUI(); renderTabs(true); saveGame(); } catch (e) {}
   };
   var leave = function (msg) {
-    run = null; if (msg) sys(msg);
+    run = null; leaving = Date.now(); if (msg) sys(msg);
     setTimeout(function () { try { if (mapState.current === MAP && run === null) { setMapSelectors(TOWN); changeMap(true); try { saveGame(); } catch (e) {} } } catch (e) {} }, 1500);
   };
   var isBossWave = function () { return run.wave === ZT.waves; };
@@ -177,7 +177,7 @@
       case 'silence': if (t >= M.at) { M.at = t + 250; party().forEach(function (x) { status(x, 'silence', 40); }); clog('<span class="font-bold" style="color:#93c5fd">【靜默】</span>全隊沉默 4 秒。'); } break;
       case 'balance': if (t >= M.at) { M.at = t + 300; var ps = party(), avg = ps.reduce(function (s, x) { return s + hpOf(x) / mhpOf(x); }, 0) / Math.max(1, ps.length); ps.forEach(function (x) { setHp(x, Math.max(1, Math.floor(mhpOf(x) * avg))); }); clog('<span class="font-bold" style="color:#fde047">【衡量】</span>全隊的 HP 比例被拉平成 ' + Math.round(avg * 100) + '%。'); } break;
       case 'poison': if (t >= M.at) { M.at = t + 100; M.layers = Math.min(10, M.layers + 1); } if (M.layers && t % 10 === 0) party().forEach(function (x) { L.boss.hurt(x, mhpOf(x) * 0.005 * M.layers); }); break;
-      case 'judge': [0.7, 0.4].forEach(function (th) { if (!M.judged[th] && b.curHp <= b.hp * th) { M.judged[th] = 1; var ps2 = party().sort(function (a, c) { return hpOf(c) - hpOf(a); }), v = ps2[0]; if (v) { setHp(v, Math.max(1, Math.floor(mhpOf(v) * 0.3))); clog('<span class="font-bold" style="color:#f87171">【斷罪】</span>' + esc(v === P() ? '你' : (v._allyName || '傭兵')) + ' 的 HP 剩下 30%！'); } } }); break;
+      case 'judge': [0.7, 0.4].forEach(function (th) { if (!M.judged[th] && b.curHp <= b.hp * th) { M.judged[th] = 1; var ps2 = party().sort(function (a, c) { return hpOf(c) - hpOf(a); }), v = ps2[0]; if (v) { setHp(v, Math.max(1, Math.floor(mhpOf(v) * 0.3))); clog('<span class="font-bold" style="color:#f87171">【斷罪】</span>' + esc(v === P() ? '你' : (v.name || '傭兵')) + ' 的 HP 剩下 30%！'); } } }); break;
       case 'frost': if (t >= M.at) { M.at = t + 100; M.ice = Math.min(20, M.ice + 1); } if (M.ice && t % 10 === 0) party().forEach(function (x) { L.boss.hurt(x, mhpOf(x) * 0.003 * M.ice); }); break;
     }
   }
@@ -209,11 +209,11 @@
       var t0 = tk(), r = oTick.apply(this, arguments);
       try {
         var cur = mapState.current; if (cur !== lastMap) { if (lastMap === MAP && run) run = null; lastMap = cur; }
-        if (!run && cur === MAP) leave('<span class="text-amber-300">十二宮的星光已經熄滅，你回到了席琳神殿。</span>');
-        if (run && cur === MAP && tk() !== t0) {
-          var p = P();
-          if (p && p.dead) leave('<span class="text-red-400">你在十二宮倒下了，這次挑戰失敗。</span>');
-          else if (Date.now() > run.until) leave('<span class="text-red-400">時間到，十二宮的星光熄滅了——挑戰失敗。</span>');
+        if (!run && cur === MAP && Date.now() - leaving > 3000) leave('<span class="text-amber-300">十二宮的星光已經熄滅，你回到了席琳神殿。</span>');
+        var p = P();
+        if (run && cur === MAP && p && p.dead) leave('<span class="text-red-400">你在十二宮倒下了，這次挑戰失敗。</span>');
+        else if (run && cur === MAP && tk() !== t0) {
+          if (Date.now() > run.until) leave('<span class="text-red-400">時間到，十二宮的星光熄滅了——挑戰失敗。</span>');
           else { if (!run.pending && !mobs().some(function (x) { return x && x._zd && !x._dead && x.curHp > 0; })) run.pending = true; mech(); }
         }
       } catch (e) { console.warn('[AFK-zodiac] tick', e); }
