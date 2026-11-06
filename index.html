@@ -810,7 +810,7 @@
     <!-- afk-buyercompat：收購 NPC 向下兼容（收 +6 也可以繳 +15）——需搭配 apply-core-patches 補丁 13 的 __afkBuyerEnMatch 鉤子；排在 afk-locksafe 之後＝在最外層 -->
     <script src="afk-buyercompat.js?v=68a8198b02"></script>
     <!-- 傳統模式(偽)/自動衝裝：需搭配 scripts/apply-core-patches.mjs 的 gainItem _tEn 鉤子 -->
-    <script src="afk-traditional.js?v=99472abfb1"></script>
+    <script src="afk-traditional.js?v=316ccbadc0"></script>
     <script src="afk-warehouse.js?v=ae8c589300"></script>
     <!-- 倉庫批次存取:勾選/全選一次搬完(核心是一件一件搬、每件都 saveGame,幾千格搬不動);排在 afk-warehouse 之後 → afterRender 在它的注入之後才跑 -->
     <script src="afk-whbatch.js?v=17f6179ede"></script>
@@ -995,7 +995,7 @@
     <!-- afk-bosstrack：魔物追蹤 24 小時＋BOSS 追蹤（奧貝勒等追蹤 NPC；消耗任意遺物追蹤頭目 8 小時，每延長一次多 1 件，最多 24 小時） -->
     <script src="afk-bosstrack.js?v=0e91857a90"></script>
     <!-- afk-trackfind：魔物追蹤視窗可以直接輸入魔物名稱搜尋；包 renderObelNPC，要在 afk-bosstrack 之後 -->
-    <script src="afk-trackfind.js?v=0bf0495ab4"></script>
+    <script src="afk-trackfind.js?v=bf65a64fc4"></script>
     <!-- afk-novice-econ：新手曲線（無用掉落物 ×0.2、Lv30 以下必掉金幣、魔物追蹤收費依等級）；排在 afk-classic、afk-ttmi-items、afk-bosstrack 之後 -->
     <script src="afk-novice-econ.js?v=aaf846d09a"></script>
     <!-- afk-rift2：時空裂痕改用遊戲時間；席琳三模式新規則（80 分鐘完全通關、頭目暴走、60 分鐘起壓力牆、哀石系列、結算符文石、瘴骸·破材料）；需 afk-runedata、核心補丁 67 -->

@@ -9,6 +9,7 @@
  *     強化值在 gainItem「簽章疊加之前」就定好，堆疊/詞綴全走上游原路，正確不出錯。
  *   - 本外掛提供 __afkTradRollEn：對「該角色有開 + 非商店(forceNormal 假) + 裝備(武/防/飾·非箭矢·可強化·非遺物)」
  *     回傳隨機強化值（權重表 1:1 沿用舊傳統模式，夾到該裝備強化上限 capEn），其餘一律 0。
+ *   - 遺物（玩家 2026-11-06）：隨機 +0～+5（RELIC_EN），由 afk-relicplus 轉成遺物合成等級。
  *   - 每角色開關存 localStorage afk_trad_<slot>；未開/未載/關掉本外掛 → 恆 0，與原版完全一致。
  *
  * 開關：afk-toggles 的 'traditional'（整個功能總開關）＋ 每存檔位各自的開關（本檔）。
@@ -46,6 +47,15 @@
         return (typeof capEn === 'function') ? capEn(lvl, d) : Math.min(lvl, 15);
     }
 
+    // 遺物的隨機強化值：+0 50%、+1 20%、+2 13%、+3 9%、+4 5%、+5 3%
+    var RELIC_EN = [[5, 3], [4, 5], [3, 9], [2, 13], [1, 20], [0, 50]];
+    function rollRelic() {
+        var total = 0, i; for (i = 0; i < RELIC_EN.length; i++) total += RELIC_EN[i][1];
+        var r = rnd() * total, acc = 0;
+        for (i = 0; i < RELIC_EN.length; i++) { acc += RELIC_EN[i][1]; if (r < acc) return RELIC_EN[i][0]; }
+        return 0;
+    }
+
     // ── 每存檔位開關 ──────────────────────────────────────────
     function slotOf() { return (typeof currentSlot !== 'undefined' && currentSlot != null) ? currentSlot : null; }
     function key(slot) { return 'afk_trad_' + slot; }
@@ -67,8 +77,9 @@
         if (!d) return 0;
         var isEquip = (d.type === 'wpn' && !d.isArrow) || d.type === 'arm' || d.type === 'acc';
         if (!isEquip) return 0;                                     // 只給裝備（武/防/飾），箭矢/材料/消耗品不給
+        // 🏺 遺物：最多 +5（玩家 2026-11-06）。回傳的強化值由 afk-relicplus 每 3 秒轉成遺物合成等級（+1～+5）；遺物合成沒開就維持 +0
+        if ((typeof isRelic === 'function' && isRelic(d)) || d.relic) return (window.__afkRelicData && window.__afkRelicData.enabled && window.__afkRelicData.enabled()) ? rollRelic() : 0;
         if (d.noEnhance) return 0;                                  // 無法強化的裝備（古老系列）恆 +0
-        if (typeof isRelic === 'function' && isRelic(d)) return 0;  // 遺物不給
         return rollEnhance(d);
     };
 
