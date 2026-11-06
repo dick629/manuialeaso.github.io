@@ -746,11 +746,12 @@
   }
 
   // ── NPC：席琳神殿 技藝導師 薇爾娜 ──
-  var NPC_ID = 'npc_afk_skillup', TOWN = 'town_sherine';
+  var NPC_ID = 'npc_afk_skillup', TOWN = 'town_sherine', NPC_SPR = '6804';   // 女性外型（席琳神殿裡沒人用）
   try {
     var def = { id: NPC_ID, n: '技藝導師 薇爾娜', title: '技能強化', type: 'quest', classicHide: true,
       d: '在席琳神殿替冒險者重新磨亮技藝的導師。她說，技藝不會因為輪迴而消失，只會被遺忘。' };
-    var L = W.__afkLore; if (L && L.addNpc) L.addNpc(TOWN, def, null, null); else if (DB.towns && DB.towns[TOWN]) DB.towns[TOWN].npcs.push(def);
+    var L = W.__afkLore; if (L && L.addNpc) L.addNpc(TOWN, def, NPC_SPR, null); else if (DB.towns && DB.towns[TOWN]) DB.towns[TOWN].npcs.push(def);
+    if (typeof NPC_SPR_FIXED !== 'undefined' && !NPC_SPR_FIXED[NPC_ID]) NPC_SPR_FIXED[NPC_ID] = NPC_SPR;
   } catch (e) {}
 
   // 介面只顯示自己職業的招牌技能（玩家 2026-11-06 20:19）；隱藏規則的部分只寫「更強」
