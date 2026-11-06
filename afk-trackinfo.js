@@ -214,7 +214,8 @@
         try { var SWv = window.__afkStarWeaver; if (SWv && SWv.has && SWv.has(player)) ttl.push('織星者'); } catch (e) {}   // 2026-11-04：稱號「織星者」（afk-starweaver）
         try { var GRg = window.__afkGuardRing; if (GRg && GRg.legacy && GRg.legacy(player)) ttl.push('守護傳承'); } catch (e) {}   // 守護者之戒（afk-guardring）
         rs.textContent = '🔄 ' + (rb === 1 ? '轉生者' : rb >= 2 ? '轉生者（' + (RB_N[rb] || (rb + ' 轉')) + '）' : RB_N[0]) + (ttl.length ? '・' + ttl.join('・') : '');
-        rs.style.color = rb >= 2 ? '#f0abfc' : rb === 1 ? '#fcd34d' : '#94a3b8';
+        // 玩家 11-06：打贏死亡女神（勝者的榮耀）還沒轉生也亮黃色
+        rs.style.color = rb >= 2 ? '#f0abfc' : (rb === 1 || ttl.indexOf('勝者的榮耀') >= 0) ? '#fcd34d' : '#94a3b8';
         rs.title = rb ? '已轉生 ' + rb + ' 次' : '還沒轉生';
         if (ttl.indexOf('勝者的榮耀') >= 0) rs.title += '\n勝者的榮耀：全能力 +50、五屬性抗性 +100、AC −50、魔防 +50、傷害減免 +10、受到一般攻擊 10% 閃避';
         rebirthTag = rs;
