@@ -16,7 +16,7 @@
  * 結果
  *   ‧打倒：通關，得到「勝者的榮耀」光環
  *       全能力 +50（2026-11-03 加）、五屬性抗性 +100、AC −50、魔防 +50、受到一般攻擊時 10% 閃避、傷害減免 +10（轉生的面板 +50 另外照算）
- *       轉生時面板傳承：打倒當下的六項屬性面板（含裝備），轉生後變成 Lv1 的基礎屬性（上限 200）
+ *       轉生時六大主屬性傳承：打倒當下的六大主屬性（含裝備），轉生後變成 Lv1 的基礎屬性（上限 200）
  *   ‧失敗：得到「絕望轉生者」光環——升級的 HP 成長改以體質 200 計算（只有這一項）
  *   ‧兩種結果都會開放冥王域的輪迴轉生
  *   ‧2026-10-25 修正：打倒＝當場點亮卡冊裡全部神話＋天上變身；失敗（絕望轉生者）＝轉生時送一件隨機「解除封印」聖衣
@@ -358,7 +358,7 @@
     if (player.rebirth > 0) { r.rebirthApplied = true; if (result !== 'win' && !r.gifted) { gift = samsaraGift(player); r.gifted = true; } }   // 已轉生：光環照給，不再套轉生傳承
     if (result === 'win') {
       sys('<span class="font-bold" style="color:#fde047;">🏆 ' + BOSS_NAME + '的身影化作千萬滴海水落下。</span><span class="afk-lore">「……原來，還有人願意走到這裡。去吧，帶著這份光，回到生者的世界。」</span>'
-        + '<span class="text-amber-200">通關！得到光環「勝者的榮耀」：全能力 +50、五屬性抗性 +100、AC −50、魔防 +50、受到一般攻擊 10% 閃避、傷害減免 +10。' + (player.rebirth > 0 ? '' : '時空裂痕-冥王域的輪迴已向你敞開（轉生時面板屬性會傳承）。') + '</span>');
+        + '<span class="text-amber-200">通關！得到光環「勝者的榮耀」：全能力 +50、五屬性抗性 +100、AC −50、魔防 +50、受到一般攻擊 10% 閃避、傷害減免 +10。' + (player.rebirth > 0 ? '' : '時空裂痕-冥王域的輪迴已向你敞開（轉生時六大主屬性會傳承）。') + '</span>');
     } else {
       sys('<span class="font-bold text-slate-200">你倒在沉沒神殿冰冷的石階上（' + (why || '挑戰失敗') + '）。</span><span class="afk-lore">「別害怕。絕望，也是一種重生的方式。」</span>'
         + '<span class="text-fuchsia-200">得到光環「絕望轉生者」：升級時的 HP 成長以體質 200 計算。' + (player.rebirth > 0 ? '' : '時空裂痕-冥王域的輪迴已向你敞開。') + '</span>');
@@ -416,7 +416,7 @@
       try { if (!document.getElementById('item-modal').classList.contains('hidden')) closeModal(); } catch (e) {}
       try { updateUI(); } catch (e) {}
     };
-    var msg = '⚠ 最終決戰：死亡女神 席琳\n\n每個角色只能挑戰一次——進場就算用掉，倒下、回村或中途重新整理都算失敗。\n打倒：光環「勝者的榮耀」（轉生時面板傳承），當場點亮神話＋天上全部卡冊。\n失敗：光環「絕望轉生者」，轉生時送一件解除封印的聖衣。\n兩種結果都會開放冥王域的輪迴轉生。\n\n確定要進入嗎？';
+    var msg = '⚠ 最終決戰：死亡女神 席琳\n\n每個角色只能挑戰一次——進場就算用掉，倒下、回村或中途重新整理都算失敗。\n打倒：光環「勝者的榮耀」（轉生時六大主屬性傳承），當場點亮神話＋天上全部卡冊。\n失敗：光環「絕望轉生者」，轉生時送一件解除封印的聖衣。\n兩種結果都會開放冥王域的輪迴轉生。\n\n確定要進入嗎？';
     if (window.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '最終決戰', message: msg, okText: '沉入死亡之海', cancelText: '再準備一下', danger: true, onOk: go });
     else if (confirm(msg)) go();
   };
@@ -485,7 +485,7 @@
         var want = Math.min(200, Math.floor(r.panel[k] || 0)), cur = (player.base[k] || 0) + (player.alloc[k] || 0) + (pn[k] || 0) + rfd;
         if (want > cur) player.base[k] = (player.base[k] || 0) + (want - cur);
       });
-      sys('<span class="text-amber-200 font-bold">勝者的榮耀：打倒席琳時的面板屬性傳承到了新生的身軀。</span>');
+      sys('<span class="text-amber-200 font-bold">勝者的榮耀：打倒席琳時的六大主屬性傳承到了新生的身軀。</span>');
     }
     if (r.result !== 'win' && !r.gifted) { var g = samsaraGift(player); r.gifted = true; if (g) sys('<span class="text-amber-300 font-bold">冥王域的盡頭，席琳留下的聖衣在等你：' + g + '（解除封印）。</span>'); }
     try { calcStats(); player.hp = player.mhp; player.mp = player.mmp; updateUI(); saveGame(); } catch (e) {}
