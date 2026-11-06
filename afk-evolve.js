@@ -1,0 +1,316 @@
+/* ============================================================================
+ * afk-evolve.js — 職業進化（第一批：召喚、寵物、爆發流派＋王族「意志」；設計稿 skill-evolution-design 第四版、evolution-batch1、decisions-1107）
+ *
+ *   NPC：席琳神殿 技藝導師 薇爾娜（跟技能強化同一位，頁面下方多一段「職業進化」）。
+ *   三段（照順序，選了流派就不能換）：
+ *     一：本人 1 轉以上；交出同職業 0 轉 Lv100 的存檔 → 選流派，拿第一段效果。
+ *     二：本人 2 轉；交出同職業 1 轉 Lv100 的存檔 → 第二段效果＋第二段光環。
+ *     三：本人 2 轉、而且打贏終焉第三階層；交出同職業 2 轉 Lv100 的存檔 → 第三段效果＋第三段光環。
+ *   交出的存檔會被刪除（兩次確認，第二次要打字輸入角色名）；交過的角色（enSeed）記在帳號上，不能再交一次。
+ *   傭兵：不能進化；隊長（你）的光環會分享給傭兵。
+ *   這一版做的是「數值類」效果（召喚物／寵物的 HP 與傷害、爆擊傷害、對低血頭目的加成、光環）；
+ *     需要改核心機制的（召喚隻數、寵物出戰上限、繼承面板、召喚物替你施法、幼龍、全職業增益技能…）列在 TODO，第二輪再做。
+ *   經典模式沒有；外掛開關 evolve。
+ * ========================================================================== */
+(function () {
+  'use strict';
+  var W = window;
+  if (W.AFK_TOGGLES && W.AFK_TOGGLES.register) W.AFK_TOGGLES.register({ id: 'evolve', name: '職業進化', desc: '席琳神殿 技藝導師 薇爾娜：交出同職業存檔，三段進化（流派、光環）', group: '成長', def: true });
+  if (W.AFK_TOGGLES && !W.AFK_TOGGLES.enabled('evolve')) return;
+  if (typeof DB === 'undefined') return;
+  var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var esc = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
+  var NPC_ID = 'npc_afk_skillup', USED_KEY = 'afk_evo_used_v1';
+  var CLS_N = { knight: '騎士', mage: '法師', elf: '妖精', dark: '黑暗妖精', illusion: '幻術士', dragon: '龍騎士', warrior: '戰士', royal: '王族' };
+
+  // ── 流派（數值已含混合 ×1.2）──
+  //   comp：玩家自己的同伴（pet／summon／spirit）最大 HP、直接傷害 +%（累計）
+  //   crit：玩家自己的爆擊傷害 +點（%）；lowBoss：對 HP 低於 30% 的頭目，爆擊傷害再 +點
+  //   team：隊伍（不含你）的直接傷害 +%（爆擊傷害加成以期望值換算：爆擊率 30%）
+  //   selfCut：你給隊伍的精準目標、呼喚盟友效果 −%（影之君主的代價）
+  //   aura：[二段, 三段] 光環；aura 物件 { dmg（全隊造成傷害 +%）, crit（全隊爆擊傷害 +點）, comp（全隊召喚物、寵物傷害 +%）, compTaken（召喚物、寵物受到的傷害 −%）, exSelf（不含你） }
+  var AURA_SUMMON = [{ comp: 10 }, { compTaken: 15 }], AURA_SUMMON_X = [{ comp: 12 }, { compTaken: 18 }];
+  var AURA_BURST = [{ dmg: 5 }, { crit: 10 }], AURA_BURST_X = [{ dmg: 6 }, { crit: 12 }];
+  var S = {
+    mage_minion: { cls: 'mage', n: '眷屬之主', type: '召喚・本職（召喚精通）', st: [
+      { comp: [{ k: ['summon'], hp: 20, dmg: 20 }], t: '召喚術、造屍術的眷屬 HP、傷害 +20%' },
+      { comp: [{ k: ['summon'], hp: 10, dmg: 10 }], t: '眷屬 HP、傷害再 +10%（召喚隻數 +1：第二輪）' },
+      { comp: [{ k: ['summon'], hp: 30, dmg: 30 }], t: '眷屬繼承你的力量：HP、傷害再 +30%（替你施法：第二輪）' }], aura: AURA_SUMMON },
+    mage_spirit: { cls: 'mage', n: '精靈使', type: '召喚・混合（借妖精，強化召喚效果）', st: [
+      { comp: [{ k: ['summon'], dmg: 48 }], t: '眷屬傷害 +48%（含屬性附加 24%）' },
+      { comp: [{ k: ['summon'], dmg: 18 }], t: '眷屬傷害再 +18%（同屬性全體法術：第二輪）' },
+      { comp: [{ k: ['summon'], hp: 36, dmg: 36 }], t: '眷屬繼承你的力量：HP、傷害再 +36%' }], aura: AURA_SUMMON_X },
+    elf_king: { cls: 'elf', n: '精靈王的契約', type: '召喚・本職（精靈精通）', st: [
+      { comp: [{ k: ['spirit'], hp: 20, dmg: 20 }], t: '精靈王 HP、傷害 +20%' },
+      { comp: [{ k: ['spirit'], dmg: 15 }], t: '精靈王傷害再 +15%（多召一隻精靈：第二輪）' },
+      { comp: [{ k: ['spirit'], hp: 30, dmg: 30 }], t: '精靈王繼承你的力量：HP、傷害再 +30%' }], aura: AURA_SUMMON },
+    illu_legion: { cls: 'illusion', n: '幻象軍團', type: '召喚・本職（幻術精通）', st: [
+      { comp: [{ k: ['summon'], dmg: 20 }], t: '幻象傷害 +20%' },
+      { comp: [{ k: ['summon'], hp: 20, dmg: 15 }], t: '幻象 HP +20%、傷害再 +15%（各多一隻：第二輪）' },
+      { comp: [{ k: ['summon'], hp: 30, dmg: 30 }], t: '幻象繼承你的智力：HP、傷害再 +30%' }], aura: AURA_SUMMON },
+    dragon_brood: { cls: 'dragon', n: '龍之眷屬', type: '召喚・混合（借法師召喚）', st: [
+      { comp: [{ k: ['summon', 'pet'], hp: 12, dmg: 24 }], t: '你的召喚物、寵物傷害 +24%、HP +12%（幼龍：第二輪）' },
+      { comp: [{ k: ['summon', 'pet'], dmg: 18 }], t: '傷害再 +18%' },
+      { comp: [{ k: ['summon', 'pet'], hp: 36, dmg: 36 }], t: '繼承你的力量：HP、傷害再 +36%' }], aura: AURA_SUMMON_X },
+    warrior_cry: { cls: 'warrior', n: '戰吼統帥', type: '召喚・混合（借王族號令，作用在傭兵與城堡護衛）', st: [
+      { team: 12, t: '傭兵、城堡護衛造成的傷害 +12%' },
+      { team: 12, t: '戰吼：傭兵、護衛造成的傷害再 +12%' },
+      { team: 12, t: '傭兵、護衛造成的傷害再 +12%（吃斬殺撐住：第二輪）' }], aura: AURA_SUMMON_X },
+    royal_pet: { cls: 'royal', n: '王者的夥伴', type: '寵物・本職（夥伴精通）', st: [
+      { comp: [{ k: ['pet'], hp: 20, dmg: 20 }], t: '出戰寵物 HP、傷害 +20%' },
+      { comp: [{ k: ['pet'], hp: 10, dmg: 15 }], t: '寵物 HP +10%、傷害再 +15%（出戰上限 +1：第二輪）' },
+      { comp: [{ k: ['pet'], hp: 30, dmg: 30 }], t: '寵物繼承你的力量：HP、傷害再 +30%' }], aura: AURA_SUMMON },
+    illu_beast: { cls: 'illusion', n: '幻獸使', type: '寵物・混合（借王族夥伴）', st: [
+      { comp: [{ k: ['pet'], hp: 24, dmg: 24 }], t: '出戰寵物傷害、HP +24%' },
+      { comp: [{ k: ['pet'], dmg: 12 }], t: '寵物傷害再 +12%（幻惑：第二輪）' },
+      { comp: [{ k: ['pet'], hp: 36, dmg: 36 }], t: '寵物繼承你的智力：HP、傷害再 +36%' }], aura: AURA_SUMMON_X },
+    royal_morale: { cls: 'royal', n: '士氣爆發', type: '爆發・本職（血盟精通）——只給隊伍，你本人吃不到', st: [
+      { team: 5, comp: [{ k: ['pet', 'summon', 'spirit'], dmg: 5 }], t: '隊伍（不含你）爆擊傷害 +15%（換算傷害 +5%）' },
+      { team: 6, comp: [{ k: ['pet', 'summon', 'spirit'], dmg: 6 }], t: '士氣高昂：隊伍攻擊速度、爆擊率提升（換算傷害 +6%）' },
+      { teamLow: 10, t: '頭目 HP 低於 30% 時，隊伍爆擊傷害再 +30%（換算傷害 +10%）' }], aura: [{ dmg: 5, exSelf: true }, { crit: 10, exSelf: true }] },
+    royal_shadow: { cls: 'royal', n: '影之君主', type: '爆發・混合（借黑暗妖精）——自己爆發，給隊伍的變少', st: [
+      { crit: 18, selfCut: 50, t: '你的爆擊傷害 +18%；代價：呼喚盟友讓傭兵補的那一下 −50%（精準目標的部分：第二輪）' },
+      { crit: 12, t: '你的爆擊傷害再 +12%（勇猛意志後必爆：第二輪）' },
+      { lowBoss: 36, t: '頭目 HP 低於 30% 時，你的爆擊傷害再 +36%' }], aura: AURA_BURST_X },
+    royal_will: { cls: 'royal', n: '意志', type: '混合・只有隊長能用（減傷、爆發、治療的單人短時間型）', st: [
+      { taken: 6, t: '受到的傷害 −6%（增益持續時間 +24%、學會全職業增益技能：第二輪）' },
+      { buffMult: 50, taken: 6, t: '自身增益的數值 ×1.5；受到的傷害再 −6%' },
+      { buffMult: 50, crit: 36, t: '自身增益的數值 ×2；爆擊傷害 +36%' }], aura: [{ dmg: 6, selfOnly: true }, { crit: 12, selfOnly: true }] },
+    dark_fatal: { cls: 'dark', n: '致命一擊', type: '爆發・本職（爆擊精通）', st: [
+      { crit: 15, t: '爆擊傷害 +15%' },
+      { crit: 15, t: '爆擊傷害再 +15%（會心一擊冷卻 −30%：第二輪）' },
+      { lowBoss: 30, t: '頭目 HP 低於 30% 時，爆擊傷害再 +30%' }], aura: AURA_BURST },
+    mage_dragon: { cls: 'mage', n: '龍語者', type: '爆發・混合（借龍騎士）', st: [
+      { mcrit: 18, t: '攻擊魔法爆擊傷害 +18%' },
+      { mcrit: 18, t: '攻擊魔法爆擊傷害再 +18%（龍語：第二輪）' },
+      { mcrit: 36, t: '攻擊魔法爆擊傷害再 +36%' }], aura: AURA_BURST_X },
+    illu_blade: { cls: 'illusion', n: '幻刃', type: '爆發・混合（借黑暗妖精）', st: [
+      { crit: 18, critRate: 6, t: '爆擊率 +6%、爆擊傷害 +18%' },
+      { crit: 12, t: '爆擊傷害再 +12%（疼痛的歡愉後必爆：第二輪）' },
+      { lowBoss: 36, t: '頭目 HP 低於 30% 時，爆擊傷害再 +36%' }], aura: AURA_BURST_X }
+  };
+  var TODO = '第二輪：召喚隻數 +1、寵物出戰上限 +1、多召一隻精靈、召喚物替你施法、幼龍、幻惑、戰吼撐住斬殺、會心一擊冷卻、龍語、勇猛意志後必爆、疼痛的歡愉後必爆、意志學會全職業增益技能。騎士、戰士本職等其他流派也在第二輪。';
+
+  var rec = function (p) { p = p || P(); if (!p) return null; if (!p.afkEvo || typeof p.afkEvo !== 'object') p.afkEvo = { school: '', stage: 0 }; return p.afkEvo; };
+  var stageOf = function (p) { var r = p && p.afkEvo; return r && S[r.school] ? Math.max(0, Math.min(3, r.stage | 0)) : 0; };
+  var schoolOf = function (p) { var r = p && p.afkEvo; return r && S[r.school] ? S[r.school] : null; };
+  var sum = function (p, key) { var sc = schoolOf(p), n = stageOf(p), v = 0; if (!sc) return 0; for (var i = 0; i < n; i++) v += Number(sc.st[i][key]) || 0; return v; };
+  var compBonus = function (p, kind) { var sc = schoolOf(p), n = stageOf(p), hp = 0, dmg = 0; if (!sc) return { hp: 0, dmg: 0 }; for (var i = 0; i < n; i++) (sc.st[i].comp || []).forEach(function (c) { if (c.k.indexOf(kind) >= 0) { hp += c.hp || 0; dmg += c.dmg || 0; } }); return { hp: hp, dmg: dmg }; };
+  var auraOf = function (p) { var sc = schoolOf(p), n = stageOf(p), a = []; if (!sc || !sc.aura) return a; if (n >= 2) a.push(sc.aura[0]); if (n >= 3) a.push(sc.aura[1]); return a; };
+  var classic = function (p) { return !!(p && p.classicMode); };
+  var leader = function () { var p = P(); return p && !classic(p) ? p : null; };
+
+  // ── 數值：玩家自己（爆擊傷害、爆擊率、受到傷害、增益）──
+  if (typeof W.recomputeStats === 'function') {
+    var oRe = W.recomputeStats;
+    W.recomputeStats = function () {
+      var r = oRe.apply(this, arguments);
+      try {
+        var p = leader(); if (p && p.d && stageOf(p)) {
+          var c = sum(p, 'crit'), mc = sum(p, 'mcrit'), cr = sum(p, 'critRate');
+          auraOf(p).forEach(function (a) { if (a.crit && !a.exSelf) c += a.crit; });
+          if (c) { p.d.meleeCritDmg = (p.d.meleeCritDmg || 0) + c; p.d.rangedCritDmg = (p.d.rangedCritDmg || 0) + c; p.d.magicCritDmg = (p.d.magicCritDmg || 0) + c; }
+          if (mc) p.d.magicCritDmg = (p.d.magicCritDmg || 0) + mc;
+          if (cr) { p.d.meleeCrit = (p.d.meleeCrit || 0) + cr; p.d.rangedCrit = (p.d.rangedCrit || 0) + cr; p.d.magicCrit = (p.d.magicCrit || 0) + cr; }
+          scaleBuffs(p);
+        }
+      } catch (e) { console.warn('[AFK-evolve] stats', e); }
+      return r;
+    };
+  }
+  // 意志：自身增益數值 ×1.5／×2（做法同技能強化：身上有效的職業增益技能，數值欄位再加一份）
+  var BUFF_KEYS = ['meleeDmg', 'meleeHit', 'rangedDmg', 'rangedHit', 'extraDmg', 'extraHit', 'magicDmg', 'er', 'mpR', 'dr'];
+  function scaleBuffs(p) {
+    var m = sum(p, 'buffMult') / 100; if (!m) return;
+    var d = p.d, b = p.buffs || {};
+    Object.keys(b).forEach(function (sid) {
+      if (!(b[sid] > 0)) return; var sk = DB.skills[sid]; if (!sk || !sk.d || sk.type === 'atk') return;
+      BUFF_KEYS.forEach(function (key) { var v = Number(sk.d[key]) || 0; if (v) d[key] = (Number(d[key]) || 0) + Math.round(v * m); });
+      if (sk.d.ac) d.ac = (Number(d.ac) || 0) - Math.round(sk.d.ac * m);
+    });
+  }
+
+  // ── 同伴（寵物、召喚物、精靈）：HP、傷害 ──
+  var R = W.AFK_RELIC_RUNTIME;
+  if (R && typeof R.dispatch === 'function') {
+    var oDis = R.dispatch;
+    R.dispatch = function (event, c) {
+      var r = oDis.apply(this, arguments);
+      try {
+        if (event === 'onCompanionStats' && c) {
+          var p = leader(); if (p && stageOf(p)) {
+            var kind = c.companionKind || 'summon';
+            if (c.owner === p) { var b = compBonus(p, kind); if (b.hp) c.maxHpMult = (c.maxHpMult || 1) * (1 + b.hp / 100); if (b.dmg) c.directDamageMult = (c.directDamageMult || 1) * (1 + b.dmg / 100); }
+            auraOf(p).forEach(function (a) { if (a.comp && !a.selfOnly) c.directDamageMult = (c.directDamageMult || 1) * (1 + a.comp / 100); });
+          }
+        }
+      } catch (e) {}
+      return r;
+    };
+  }
+
+  // ── 造成的傷害：隊伍加成、對低血頭目的爆擊、光環 ──
+  var isAlly = function (p, a) { return !!(p && a && a !== p && (p.allies || []).indexOf(a) >= 0); };
+  var lowBoss = function (t) { return !!(t && t.boss && (t.curHp || 0) < (t.hp || t.mhp || 1) * 0.3); };
+  var critRatio = function (a, kind, add) { var d = (a && a.d) || {}, cd = Number(kind === 'magic' ? d.magicCritDmg : kind === 'ranged' ? d.rangedCritDmg : d.meleeCritDmg) || 50; return (1 + (cd + add) / 100) / (1 + cd / 100); };
+  function outgoing(actor, target, amount, opt) {
+    var p = leader(); if (!p || !stageOf(p) || !(amount > 0)) return amount;
+    var mine = actor === p, ally = isAlly(p, actor), pk = opt && opt.packet, crit = !!(pk && pk.crit), kind = opt && opt.kind;
+    if (mine) {
+      var lb = sum(p, 'lowBoss'); if (lb && crit && lowBoss(target)) amount *= critRatio(p, kind, lb);
+    }
+    if (ally) {
+      var tm = sum(p, 'team'); if (tm) amount *= 1 + tm / 100;
+      var tl = sum(p, 'teamLow'); if (tl && lowBoss(target)) amount *= 1 + tl / 100;
+    }
+    auraOf(p).forEach(function (a) {
+      if (!a.dmg) return;
+      if (a.selfOnly && !mine) return;
+      if (a.exSelf && mine) return;
+      if (mine || ally) amount *= 1 + a.dmg / 100;
+    });
+    return amount;
+  }
+  var hooked = false;
+  var hookDamage = function () {
+    var C = W.AFK_CARD_COMBAT; if (hooked || !C || typeof C.damage !== 'function') return hooked;
+    var o = C.damage; hooked = true;
+    C.damage = function (actor, target, amount, opt) { try { amount = Math.max(1, Math.floor(outgoing(actor, target, amount, opt || {}))); } catch (e) {} return o.call(this, actor, target, amount, opt); };
+    return true;
+  };
+  if (!hookDamage()) { try { document.addEventListener('DOMContentLoaded', hookDamage); } catch (e) {} }
+  // 影之君主：呼喚盟友讓傭兵補的那一下 ×0.5
+  var inCall = false;
+  if (typeof W.castSkill === 'function') {
+    var oCast = W.castSkill;
+    W.castSkill = function (skId) { var sk = DB.skills[skId]; if (!sk || !sk.callAllies) return oCast.apply(this, arguments); inCall = true; try { return oCast.apply(this, arguments); } finally { inCall = false; } };
+  }
+  if (typeof W.allyAttackOnce === 'function') {
+    var oAo = W.allyAttackOnce;
+    W.allyAttackOnce = function () {
+      var p = leader(), cut = p ? sum(p, 'selfCut') : 0, C = W.AFK_CARD_COMBAT, o = C && C.damage;
+      if (!cut || !inCall || !o) return oAo.apply(this, arguments);
+      C.damage = function (a, t, n, opt) { return o.call(this, a, t, Math.max(1, Math.floor(n * (1 - cut / 100))), opt); };
+      try { return oAo.apply(this, arguments); } finally { C.damage = o; }
+    };
+  }
+  // 受到的傷害（意志第二段 −12%；召喚物、寵物光環）
+  var RI = R && R.incoming;
+  if (R && typeof RI === 'function') {
+    R.incoming = function (target, damage, attacker, opts) {
+      var out = RI.apply(this, arguments);
+      try {
+        var p = leader(); if (p && stageOf(p) && typeof out === 'number') {
+          if (target === p) { var tk = sum(p, 'taken'); if (tk) out = out * (1 - tk / 100); }
+          else if (target && !isAlly(p, target) && target !== p) { auraOf(p).forEach(function (a) { if (a.compTaken) out = out * (1 - a.compTaken / 100); }); }
+        }
+      } catch (e) {}
+      return out;
+    };
+  }
+
+  // ── 交出存檔 ──
+  var usedList = function () { try { return JSON.parse(localStorage.getItem(USED_KEY) || '[]') || []; } catch (e) { return []; } };
+  var markUsed = function (seed) { var a = usedList(); if (seed && a.indexOf(seed) < 0) a.push(seed); try { localStorage.setItem(USED_KEY, JSON.stringify(a)); } catch (e) {} };
+  var slotMax = function () { return typeof SAVE_SLOT_MAX !== 'undefined' ? SAVE_SLOT_MAX : 16; };
+  var readSlot = function (n) { try { return typeof _roleReadSavePlayer === 'function' ? _roleReadSavePlayer(n) : null; } catch (e) { return null; } };
+  var needRebirth = function (stage) { return stage - 1; };   // 第 N 段要交 (N−1) 轉的存檔
+  var candidates = function (p, stage) {
+    var out = [], used = usedList();
+    for (var n = 1; n <= slotMax(); n++) {
+      if (n === currentSlot) continue;
+      var q = readSlot(n); if (!q || q.cls !== p.cls) continue;
+      var why = '';
+      if ((q.lv || 1) < 100) why = '要 Lv100';
+      else if (Math.floor(q.rebirth || 0) !== needRebirth(stage)) why = '要 ' + needRebirth(stage) + ' 轉';
+      else if (!!q.classicMode !== !!p.classicMode) why = '模式不同';
+      else if (q.enSeed && used.indexOf(q.enSeed) >= 0) why = '已經交過';
+      out.push({ slot: n, q: q, why: why });
+    }
+    return out;
+  };
+  var gate = function (p, stage) {
+    if (classic(p)) return '經典模式沒有職業進化。';
+    var rb = Math.floor(p.rebirth || 0);
+    if (stage === 1 && rb < 1) return '要先轉生一次。';
+    if (stage === 2 && rb < 2) return '第二段要二轉。';
+    if (stage === 3 && (rb < 2 || !(p.afkFinalTier && p.afkFinalTier.t3 === 'win'))) return '第三段要二轉，而且本人打贏終焉第三階層（次元裂縫資格）。';
+    return '';
+  };
+  function deleteSlot(n) {
+    var old = readSlot(n), fp = (typeof _roleFingerprint === 'function') ? _roleFingerprint(old) : '';
+    if (fp && typeof _roleMarkDeleted === 'function' && !_roleMarkDeleted(fp)) return false;
+    try { if (typeof petReleaseSlotAssignments === 'function') petReleaseSlotAssignments(n); } catch (e) {}
+    try { if (typeof mercLedgerPurgeSlot === 'function') mercLedgerPurgeSlot(n); } catch (e) {}
+    try { if (typeof antharasForgetRoleClear === 'function') antharasForgetRoleClear(old, n); } catch (e) {}
+    _lsRemove('lineage_idle_save_' + n); _lsRemove('lineage_idle_save_' + n + '_bak');
+    try { if (typeof clanOnRoleDeleted === 'function') clanOnRoleDeleted(old); } catch (e) {}
+    return !_lsGet('lineage_idle_save_' + n);
+  }
+  function evolve(slot, schoolId) {
+    var p = P(), r = rec(p); if (!p) return;
+    var stage = stageOf(p) + 1; if (stage > 3) return;
+    var why = gate(p, stage); if (why) { sys('<span class="text-amber-300">' + esc(why) + '</span>'); return; }
+    if (stage === 1) { if (!S[schoolId] || S[schoolId].cls !== p.cls) { sys('<span class="text-amber-300">請先選一個流派。</span>'); return; } }
+    var c = candidates(p, stage).filter(function (x) { return x.slot === slot && !x.why; })[0];
+    if (!c) { sys('<span class="text-amber-300">這個存檔不能交出。</span>'); return; }
+    var q = c.q, nm = q.name || '未命名', sc = stage === 1 ? S[schoolId] : schoolOf(p);
+    if (!confirm('職業進化第 ' + stage + ' 段：' + sc.n + '\n\n要交出存檔 ' + slot + '：' + CLS_N[q.cls] + ' Lv' + q.lv + '（' + Math.floor(q.rebirth || 0) + ' 轉）「' + nm + '」。\n這個角色會被永久刪除。' + (stage === 1 ? '\n流派選了以後不能換。' : '') + '\n\n確定嗎？')) return;
+    var typed = prompt('請輸入要交出的角色名稱「' + nm + '」確認：', '');
+    if (typed === null) return;
+    if (typed.trim() !== nm) { alert('角色名稱不正確，已取消。'); return; }
+    if (typeof _roleOtherActiveSessions === 'function' && _roleOtherActiveSessions().length) { alert('偵測到其他遊戲分頁，已取消。請先關閉其他角色。'); return; }
+    if (!deleteSlot(slot)) { alert('刪除存檔失敗，已取消。'); return; }
+    markUsed(q.enSeed);
+    if (stage === 1) r.school = schoolId;
+    r.stage = stage; r.at = Date.now();
+    try { if (typeof calcStats === 'function') calcStats(); } catch (e) {}
+    try { saveGame(); } catch (e) {}
+    sys('<span class="text-fuchsia-300 font-bold">✦ 職業進化第 ' + stage + ' 段：' + esc(sc.n) + '。</span><span class="text-slate-300">' + esc(sc.st[stage - 1].t) + '</span>');
+  }
+
+  // ── 介面（薇爾娜頁面下方）──
+  var CSS = '.aev{margin-top:12px;padding:10px;border:1px solid #6b3f6e;border-radius:6px;background:rgba(60,24,64,.22)}.aev h4{font-size:15px;font-weight:bold;color:#f0c4f5;margin-bottom:6px}.aev .row{font-size:13px;line-height:1.6;color:#ddd3c3}.aev .sc{display:block;margin:6px 0;padding:6px 8px;border:1px solid #514138;border-radius:4px;background:#24222a;cursor:pointer}.aev .sc.on{border-color:#e879f9}.aev .sl{display:flex;gap:8px;align-items:center;margin:4px 0}.aev .muted{color:#8f877d}';
+  var pick = '';
+  function render(div) {
+    var p = P(); if (!p || !div) return;
+    if (!document.getElementById('aev-css')) { var st = document.createElement('style'); st.id = 'aev-css'; st.textContent = CSS; document.head.appendChild(st); }
+    var box = div.querySelector('#aev') || document.createElement('div'); box.id = 'aev'; box.className = 'aev';
+    var n = stageOf(p), sc = schoolOf(p), h = '<h4>✦ 職業進化' + (sc ? '：' + esc(sc.n) + '（第 ' + n + '／3 段）' : '') + '</h4>';
+    if (classic(p)) { box.innerHTML = h + '<div class="row muted">經典模式沒有職業進化。</div>'; if (!box.parentNode) div.appendChild(box); return; }
+    h += '<div class="row muted">交出同職業 Lv100 的存檔（第一段 0 轉、第二段 1 轉、第三段 2 轉），讓這個角色走上一條流派。交出的存檔會被刪除；流派選了以後不能換。傭兵不能進化，但吃得到你的光環。</div>';
+    if (sc) {
+      h += '<div class="row">' + sc.st.map(function (s, i) { return (i < n ? '✅' : '▫️') + ' 第 ' + (i + 1) + ' 段：' + esc(s.t); }).join('<br>') + '</div>';
+      var au = sc.aura || []; if (au.length) h += '<div class="row muted">光環：第二段 ' + esc(auraTxt(au[0])) + '；第三段 ' + esc(auraTxt(au[1])) + '</div>';
+    } else {
+      var mine = Object.keys(S).filter(function (k) { return S[k].cls === p.cls; });
+      if (!mine.length) h += '<div class="row muted">' + CLS_N[p.cls] + '的流派在第二輪開放。</div>';
+      mine.forEach(function (k) { var x = S[k]; h += '<label class="sc' + (pick === k ? ' on' : '') + '" data-aev-pick="' + k + '"><b style="color:#f1d9a6">' + esc(x.n) + '</b>　<span class="muted">' + esc(x.type) + '</span><br>' + x.st.map(function (s, i) { return '第 ' + (i + 1) + ' 段：' + esc(s.t); }).join('<br>') + '</label>'; });
+    }
+    if (n < 3 && (sc || Object.keys(S).some(function (k) { return S[k].cls === p.cls; }))) {
+      var stage = n + 1, why = gate(p, stage);
+      h += '<div class="row" style="margin-top:6px"><b>第 ' + stage + ' 段：</b>交出同職業 ' + needRebirth(stage) + ' 轉 Lv100 的存檔</div>';
+      if (why) h += '<div class="row" style="color:#f87171">' + esc(why) + '</div>';
+      else {
+        var cs = candidates(p, stage);
+        if (!cs.length) h += '<div class="row muted">沒有可以交出的同職業存檔。</div>';
+        cs.forEach(function (c) { h += '<div class="sl"><span>存檔 ' + c.slot + '：' + esc(c.q.name || '未命名') + ' Lv' + c.q.lv + '（' + Math.floor(c.q.rebirth || 0) + ' 轉）</span>' + (c.why ? '<span class="muted">' + esc(c.why) + '</span>' : '<button class="btn py-1 px-3 font-bold" data-aev-slot="' + c.slot + '">交出並進化</button>') + '</div>'; });
+      }
+    }
+    box.innerHTML = h;
+    if (!box.parentNode) div.appendChild(box);
+    box.onclick = function (e) {
+      var a = e.target.closest('[data-aev-pick]'); if (a) { pick = a.getAttribute('data-aev-pick'); render(div); return; }
+      var b = e.target.closest('[data-aev-slot]'); if (b) { evolve(Number(b.getAttribute('data-aev-slot')), pick); render(div); }
+    };
+  }
+  function auraTxt(a) { if (!a) return ''; var t = []; if (a.dmg) t.push('造成的傷害 +' + a.dmg + '%'); if (a.crit) t.push('爆擊傷害 +' + a.crit + '%'); if (a.comp) t.push('召喚物、寵物傷害 +' + a.comp + '%'); if (a.compTaken) t.push('召喚物、寵物受到的傷害 −' + a.compTaken + '%'); return (a.selfOnly ? '你自己' : a.exSelf ? '全隊（不含你）' : '全隊') + t.join('、'); }
+  if (typeof W.interactNPC === 'function') {
+    var oNpc = W.interactNPC;
+    W.interactNPC = function (npcId) { var r = oNpc.apply(this, arguments); if (npcId === NPC_ID) { try { render(document.getElementById('interaction-content')); } catch (e) { console.warn('[AFK-evolve] ui', e); } } return r; };
+  }
+
+  W.__afkEvolve = { S: S, TODO: TODO, stageOf: stageOf, schoolOf: schoolOf, sum: sum, compBonus: compBonus, auraOf: auraOf, candidates: candidates, gate: gate, evolve: evolve, render: render, outgoing: outgoing };
+  console.log('[AFK-evolve] 已啟用：職業進化（第一批 14 流派）');
+})();
