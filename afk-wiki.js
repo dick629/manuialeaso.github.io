@@ -4826,6 +4826,7 @@
       var fate = RDx.FATE && RDx.FATE.need ? Object.keys(RDx.FATE.need).map(function (id) { return esc(nm(id)) + ' ×' + RDx.FATE.need[id].toLocaleString(); }).join('＋') : '瘴氣魔石 ×1,000＋骸骨魔石 ×500＋破空石 ×100';
       if (R2) out += wCard('🌀 時空裂痕（席琳三模式）',
         wTbl(['項目', '說明'], [
+          ['進入條件', '夢域鏡模式的時空裂痕要一轉以上才能進入（暗夢星迴照舊）'],
           ['時間', '用遊戲時間計算；一趟最長 ' + R2.TUNE.clearMin + ' 分鐘，撐滿＝完全通關'],
           ['怪物', (function () { var T2 = R2.TUNE, c = T2.dmgCurve || [], dm = c.map(function (x) { return x[0] + ' 分 ×' + x[1]; }).join('、');
             return '怪物等級慢慢變高，' + (T2.lvFull || 30) + ' 分鐘到最高（四大龍也是那時才出現）；' + (T2.bossHalf || 20) + ' 分鐘前每 5 分鐘一隻頭目，之後一半機率是頭目。'

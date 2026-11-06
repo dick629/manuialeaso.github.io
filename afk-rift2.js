@@ -15,8 +15,10 @@
  *   ‧哀石系列：一般怪 1%、60 等以下頭目 10%、60 等以上頭目 25%、第 60 分鐘起頭目必掉；頭目另有 0.001% 掉該模式的失去光芒的符文石。
  *   ‧結算（取代原本的潘朵拉抽獎）：
  *       席琳：失去光芒的符文石（階段一）
- *       瘋狂：0～12 分隨機遺物 +5；12～76 分階段二；76 分以上或完全通關階段三
- *       夢域：0～12 分隨機遺物 +10；12～60 分階段二；60～76 分階段三；76 分以上或完全通關瘴骸·破材料（隨機一種）
+ *       瘋狂：0～12 分階段一；12～76 分階段二；76 分以上或完全通關階段三
+ *       夢域：0～12 分階段一；12～60 分階段二；60～76 分階段三；76 分以上或完全通關瘴骸·破材料（隨機一種）
+ *       （玩家 2026-11-06）撐過 12 分鐘另給隨機遺物：瘋狂 +5、夢域 +10；每個角色每天最多 5 件（兩模式合計），超過改給階段一。
+ *       夢域鏡模式的時空裂痕要一轉以上才能進入。
  *   ‧完全通關另給：瘴氣魔石 100／骸骨魔石 50／破空石 10。
  * 2026-11-03：席琳三模式的裂痕裡，場上有頭目時自動鎖定最早出場（暴走計時最久）的頭目（包 getTarget；原本變身頭目每一階都鎖在同一格，
  *   另一隻同時在場的頭目只吃到濺射、暴走一直疊 → 團滅）。暴走抑制劑（afk-riftsupply）用 calm() 把暴走層數歸零。
@@ -110,13 +112,18 @@
   };
   var DROP = { mob: 0.01, bossLow: 0.10, bossHigh: 0.25, bossFrom: 60, box: 0.00001, relicX: 10,
     legend: 0.01, legendPct: 0.15, legendId: 'afk_rune_po_l' };   // 玩家 2026-10-29：席琳模式前 15% 時間（80 分的前 12 分）每次擊殺 1% 掉傳說符文「破」，給新手用；一趟最多一顆
-  var SEG = { mad: [[12, 'relic5'], [76, 'box2'], [1e9, 'box3']], dream: [[12, 'relic10'], [60, 'box2'], [76, 'box3'], [1e9, 'fate']] };
+  var SEG = { mad: [[12, 'box1'], [76, 'box2'], [1e9, 'box3']], dream: [[12, 'box1'], [60, 'box2'], [76, 'box3'], [1e9, 'fate']] };
+  // 撐過 RELIC.min 分鐘另給隨機遺物（玩家 2026-11-06）：每個角色每天最多 RELIC.day 件，瘋狂與夢域鏡合計
+  var RELIC = { min: 12, day: 5, lv: { mad: 5, dream: 10 } };
+  var relicDay = function () { return Math.floor((Date.now() + 8 * 3600000) / 86400000); };
+  var relicUsed = function (p) { var r = p && p.afkRift2RelicDay; return r && r.d === relicDay() ? (Number(r.n) || 0) : 0; };
   var segTxt = function (mode) {
     var sg = SEG[mode]; if (!sg) return '失去光芒的符文石（階段一）';
-    var nm = { relic5: '隨機遺物 +5', relic10: '隨機遺物 +10', box2: '失去光芒的符文石（階段二）', box3: '失去光芒的符文石（階段三）', fate: '瘴骸·破材料（隨機一種）' };
+    var nm = { box1: '失去光芒的符文石（階段一）', box2: '失去光芒的符文石（階段二）', box3: '失去光芒的符文石（階段三）', fate: '瘴骸·破材料（隨機一種）' };
     var out = [], from = 0;
     sg.forEach(function (x, i) { out.push((i === sg.length - 1 ? from + ' 分以上或完全通關' : from + '～' + x[0] + ' 分') + '：' + nm[x[1]]); from = x[0]; });
-    return out.join('；');
+    var lv = RELIC.lv[mode];
+    return out.join('；') + (lv ? '；撐過 ' + RELIC.min + ' 分鐘另給隨機遺物 +' + lv + '（每個角色每天最多 ' + RELIC.day + ' 件，瘋狂與夢域鏡合計；超過改給失去光芒的符文石（階段一））' : '');
   };
   // 裂痕裡每秒最多一次（玩家 2026-11-03 23:39）：小怪死亡代價、王的死亡詛咒、屍爆…同一秒好幾隻倒下只算一次。席琳三模式的裂痕才作用；其他地方一律放行。
   var onceAt = {};
@@ -140,6 +147,12 @@
   };
   var oEnter = W.enterRift;
   W.enterRift = function () {
+    try {
+      var p0 = P();
+      if (ON && p0 && !S().dreamStar && modeNow() === 'dream' && !(Number(p0.rebirth) >= 1)) {   // 暗夢星迴也走 enterRift，不擋
+        logSys('<span class="text-rose-300">夢域鏡的時空裂痕要一轉以上才能進入。</span>'); return;
+      }
+    } catch (e) {}
     var r = oEnter.apply(this, arguments);
     var s = S();
     if (s.riftRun) { s._riftRunKey = s.riftStartMs; s._r2Start = s.ticks || 0; s._r2BossDue = s._r2Start + 3000; s._r2Mode = modeNow(); s._r2Clear = false; s._r2Wall = 0; s._r2Legend = false; sync(); }
@@ -358,9 +371,15 @@
     var got = [], add = function (id, n) { if (!id || !DB.items[id]) return; gainItem(id, n || 1, true, true); got.push('<span class="' + (DB.items[id].c || '') + '">' + DB.items[id].n + '</span>' + ((n || 1) > 1 ? ' ×' + n : '')); };
     var m = info.min, mode = info.mode, kind = 'box1';
     if (mode === 'mad' || mode === 'dream') { var seg = SEG[mode], k = info.clear ? 1e9 - 1 : m; for (var i = 0; i < seg.length; i++) if (k < seg[i][0]) { kind = seg[i][1]; break; } }
-    if (kind === 'relic5' || kind === 'relic10') add(randomRelic(kind === 'relic5' ? 5 : 10));
-    else if (kind === 'fate') got.push(giveFate());
+    if (kind === 'fate') got.push(giveFate());
     else add(RD.BOX[Number(kind.slice(3))]);
+    if (RELIC.lv[mode] && (info.clear || m >= RELIC.min)) {
+      var p = P();
+      if (p && relicUsed(p) < RELIC.day) {
+        var rid = randomRelic(RELIC.lv[mode]);
+        if (rid) { add(rid); p.afkRift2RelicDay = { d: relicDay(), n: relicUsed(p) + 1 }; }
+      } else add(RD.BOX[1]);
+    }
     if (info.clear && RD.CLEAR[mode]) add(RD.CLEAR[mode][0], RD.CLEAR[mode][1]);
     return got;
   };
@@ -400,6 +419,6 @@
       return r;
     };
   }
-  W.__afkRift2 = { segTxt: segTxt, TUNE: TUNE, DROP: DROP, SEG: SEG, minutes: minutes, modeNow: modeNow, rule: rule, reward: reward, hpMult: hpMult, dmgMult: dmgMult, fixStages: fixStages, riftBan: riftBan, enrage: enrageNow, calm: calm, oldestBoss: oldestBoss };
+  W.__afkRift2 = { segTxt: segTxt, RELIC: RELIC, relicUsed: relicUsed, TUNE: TUNE, DROP: DROP, SEG: SEG, minutes: minutes, modeNow: modeNow, rule: rule, reward: reward, hpMult: hpMult, dmgMult: dmgMult, fixStages: fixStages, riftBan: riftBan, enrage: enrageNow, calm: calm, oldestBoss: oldestBoss };
   console.log('[AFK-rift2] 已啟用：時空裂痕改用遊戲時間' + (ON ? '＋席琳三模式新規則' : ''));
 })();
