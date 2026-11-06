@@ -13,7 +13,7 @@
  *     ‧30 分鐘到還沒守完 25 波、或按「放棄守城」→ 失去被打的那座城
  *     ‧中途離開戰場（讀檔、關掉遊戲）：進度保留，計時不停；回來從那一波重打。還沒進場就到 21:00＝失守
  *     ‧守住：龍之鑽石 5,000、滅魔蔑視水晶四種各 20、至暗星塵 5、骸骨魔石 5、破空石 1、隨機靈魂石 10、密奧碎片 10
- * 四、失城：該城 7 天內不能宣戰（每座各自算）；城陷之恥 1 天（現實時間）：在狩獵區六項能力與四屬性抗性 −50（副本、村莊不算）
+ * 四、失城：該城 7 天內不能宣戰（每座各自算）；城陷之恥 1 天（現實時間）：在狩獵區面板 −50（近遠魔傷害與命中、額外魔法點數、魔防、五屬性抗性；不扣六大主屬性）（副本、村莊不算）
  * 五、奪回戰：7 天後對失去的城宣戰＝奪回戰（自己的副本）：5 波×8 名鏡像敵人（八職業各 1），強度 ×0.7→×1.5，第 2 波起放職業技能；
  *     你倒下＝奪回戰失敗；傭兵倒下照常復活，但全隊合計倒下第 6 次也算失敗；
  *     30 分鐘；贏＝拿回城＋龍之鑽石 5,000；輸＝照攻城戰敗 30 分鐘不能宣戰。鏡像敵人照遺物掉落率掉昇華支配 +0 遺物。
@@ -196,7 +196,7 @@
     var t = now();
     o.lost[city] = { at: t, lockUntil: t + CFG.lockMs };
     o.shameUntil = Math.max(o.shameUntil || 0, t + CFG.shameMs);
-    sys('<span class="text-red-400 font-bold">🏴 ' + esc(why || '敵軍') + '攻破了' + esc(cityName(city)) + '——你的血盟失去了這座城。</span><span class="text-slate-300">7 天內不能對它宣戰；你身上多了「城陷之恥」（1 天：在狩獵區六項能力與四屬性抗性 −50）。</span>');
+    sys('<span class="text-red-400 font-bold">🏴 ' + esc(why || '敵軍') + '攻破了' + esc(cityName(city)) + '——你的血盟失去了這座城。</span><span class="text-slate-300">7 天內不能對它宣戰；你身上多了「城陷之恥」（1 天：在狩獵區面板 −50）。</span>');
     return true;
   };
   var afterLoss = function () { try { CW.syncWar(true); } catch (e) {} try { calcStats(); updateUI(); saveGame(); } catch (e) {} };
@@ -392,7 +392,7 @@
     o = store(); defenseFail(o, '放棄守城'); ui(); return true;
   };
 
-  // ── 城陷之恥：在狩獵區六項能力、四屬性抗性 −50 ──
+  // ── 城陷之恥：在狩獵區面板 −50（近遠魔傷害與命中、額外魔法點數、魔防、五屬性抗性；不扣六大主屬性）──
   var DUNGEON_RX = /^(afk_traitor_whisper|afk_hardin_time|afk_giltas_altar|afk_flame_depth|afk_halpas_nest|afk_final_sea|afk_soul_room|rift_battle)$/;
   var inHunt = function () {
     try {
@@ -412,24 +412,22 @@
   var shameOn = function () { return shameLeft() > 0 && inHunt(); };
   var shameKey = null;
   var shameWatch = function () { var k = shameOn(); if (shameKey !== null && k !== shameKey) { try { calcStats(); } catch (e) {} } shameKey = k; };
-  var ABIL = ['str', 'dex', 'con', 'int', 'wis', 'cha'], RES = ['resFire', 'resWater', 'resWind', 'resEarth'];
+  // 玩家 11-06：只扣面板（能力面板兩頁的戰鬥數值），不扣六大主屬性
+  var PANEL = ['meleeDmg', 'meleeHit', 'rangedDmg', 'rangedHit', 'magicDmg', 'magicHit', 'extraMp', 'mr'],
+      RES = ['resFire', 'resWater', 'resWind', 'resEarth', 'resNone'];
   var hookStats = function () {   // 等所有外掛都包完再包在最外層（不然被其他外掛加回去）
-    var oBoost = W.__afkAttrBoost;
-    W.__afkAttrBoost = function (p, d) {
-      var r; if (typeof oBoost === 'function') r = oBoost.apply(this, arguments);
-      try {
-        if (p === player && d && shameOn()) {
-          var cap = (typeof W.__afkAttrCap === 'function') ? W.__afkAttrCap() : 100;
-          ABIL.forEach(function (k) { d[k] = Math.max(1, Math.min(cap, Number(d[k]) || 0) - CFG.shameVal); });
-        }
-      } catch (e) {}
-      return r;
-    };
     if (typeof W.recomputeStats === 'function') {
       var oRe = W.recomputeStats;
       W.recomputeStats = function () {
         var r = oRe.apply(this, arguments);
-        try { if (player && player.d && shameOn()) RES.forEach(function (k) { player.d[k] = (Number(player.d[k]) || 0) - CFG.shameVal; }); } catch (e) {}
+        try {
+          if (player && player.d && shameOn()) {
+            var d = player.d, v = CFG.shameVal;
+            PANEL.forEach(function (k) { d[k] = Math.max(0, (Number(d[k]) || 0) - v); });
+            if (d.itemSp != null) d.itemSp = Math.max(0, (Number(d.itemSp) || 0) - v);   // 魔法公式用的額外魔法點數跟著扣
+            RES.forEach(function (k) { d[k] = (Number(d[k]) || 0) - v; });
+          }
+        } catch (e) {}
         return r;
       };
       try { (0, eval)('recomputeStats = window.recomputeStats'); } catch (e) {}
@@ -1247,7 +1245,7 @@
       } else if (c && c.status === 'assembled') h = '⚔ 「' + esc(c.clan) + '」正在集結（' + mmss(c.askAt - t) + ' 後宣戰）';
       else if (c && c.status === 'asked') h = '⚔ 「' + esc(c.clan) + '」宣戰！（' + mmss(c.deadline - t) + '）<button type="button" data-s2="yes">回防</button><button type="button" class="s2-no" data-s2="no">不回防</button>';
       else if (c && c.status === 'defending') h = '🏰 回防' + esc(cityName(c.target)) + (c.prog ? '（第 ' + ((c.prog.wave | 0) + 1) + ' 波，剩 ' + mmss((CFG.def.limitTicks - (c.prog.used || 0)) * 100 - Math.max(0, t - (c.prog.at || t))) + '，還能倒下 ' + Math.max(0, CFG.downs - (c.prog.downs || 0)) + ' 次，' + lvText(c.lvl || 0) + '）' : '（21:00 前進場，' + mmss(c.endAt - t) + '，' + lvText(c.lvl != null ? c.lvl : lvOf()) + '）') + '<button type="button" data-s2="enter">' + (c.prog ? '回到戰場' : '進入守城戰') + '</button><button type="button" class="s2-no" data-s2="giveup">放棄守城</button>';
-      else { var sl = shameLeft(); if (sl > 0) h = '🏴 城陷之恥（狩獵區六項能力、四屬性抗性 −50）剩 ' + Math.floor(sl / 3600000) + ' 小時 ' + Math.floor(sl % 3600000 / 60000) + ' 分'; }
+      else { var sl = shameLeft(); if (sl > 0) h = '🏴 城陷之恥（狩獵區面板 −50）剩 ' + Math.floor(sl / 3600000) + ' 小時 ' + Math.floor(sl % 3600000 / 60000) + ' 分'; }
     }
     if (h) { if (bar.innerHTML !== h) bar.innerHTML = h; bar.classList.remove('hidden'); } else bar.classList.add('hidden');
   };
