@@ -75,6 +75,36 @@
     return null;
   };
 
+  // ── 消除宣戰（玩家 2026-11-06 21:59：誰都可以用）──
+  //   七城宣戰（持有城堡數帶來的宣戰）的血盟全部撤回；一直到你的城數再變動為止（打回、攻下新城或又失城都會失效）。
+  //   每個宣戰中的血盟 100 龍之鑽石或 1,000 萬金幣。不影響每週守城戰、強制宣戰、你自己主動宣戰；連續擊殺數不動。
+  var WAR_COST = { dia: 100, gold: 10000000 };
+  var CWa = function () { return W.__afkCastleWar || null; };
+  var warN = function () { try { var c = CWa(); return c ? (c.data().warIds || []).length : 0; } catch (e) { return 0; } };
+  var truceOn = function () { try { var c = CWa(); if (!c) return false; var d = c.data(); return !!(d.truceN && d.truceN === c.held().length); } catch (e) { return false; } };
+  var endWar = function (pay) {
+    var p = P(), c = CWa(); if (!p || !c) return '請先進入遊戲。';
+    var d = c.data(), ids = (d.warIds || []).slice(), n = ids.length;
+    if (!n) return '目前沒有血盟因為你持有的城堡而對你宣戰。';
+    if (pay === 'dia') {
+      var need = n * WAR_COST.dia;
+      if (typeof W.pandoraAdjustSharedDiamonds !== 'function') return '龍之鑽石帳戶暫時無法使用。';
+      if (dia() < need) return '龍之鑽石不夠（需要 ' + need.toLocaleString() + '，目前 ' + dia().toLocaleString() + '）。';
+      var r = {}; try { r = W.pandoraAdjustSharedDiamonds(-need) || {}; } catch (e) {}
+      if (!r.ok) return '龍之鑽石扣款失敗。';
+    } else {
+      var g = n * WAR_COST.gold;
+      if ((Number(p.gold) || 0) < g) return '金幣不夠（需要 ' + g.toLocaleString() + '）。';
+      p.gold -= g;
+    }
+    d.truceN = c.held().length; c.save(d);
+    try { c.syncWar(true); } catch (e) {}
+    try { (mapState.mobs || []).forEach(function (m, i) { if (m && m.trollPlayer && m._npcClanId && ids.indexOf(m._npcClanId) >= 0 && !m._afkForcedWar) mapState.mobs[i] = null; }); } catch (e) {}
+    say('<span class="font-bold" style="color:#f9a8d4">🕊 ' + NPC_N + '為你向女神祈禱：' + n + ' 個血盟撤回了對你的宣戰。只要你持有的城堡數不變，他們就不會再來。</span>');
+    try { renderMobs(); } catch (e) {} try { updateUI(); } catch (e) {} try { saveGame(); } catch (e) {}
+    return null;
+  };
+
   var ui = { err: '' };
   var render = function (host) {
     var p = P(); if (!p) { host.innerHTML = '<div class="ax-note">請先進入遊戲。</div>'; return; }
@@ -88,6 +118,13 @@
     var desc = '正義值歸 0；追殺你的紅人全部散去、等著尋仇的密語作廢；追殺永久解除，之後不會再被紅人追殺（記仇、嗆聲、密語尋仇、世界頻道記仇都不會加進追殺名單）。自己打開的 PVP 模式、血盟宣戰、攻城不受影響。';
     h += K.rowHtml({ key: 'dia', ico: '', name: '用龍之鑽石淨化', color: '#f9a8d4', desc: desc, req: K.reqTxt(dia(), COST.dia, '龍之鑽石'), btns: [['dia', '淨化', dia() >= COST.dia]] }, 'data-rg');
     h += K.rowHtml({ key: 'gold', ico: '', name: '用金幣淨化', color: '#fde68a', desc: '同上。', req: K.reqTxt(Number(p.gold) || 0, COST.gold, '金幣'), btns: [['gold', '淨化', (Number(p.gold) || 0) >= COST.gold]] }, 'data-rg');
+    if (CWa()) {
+      var wn = warN(), nd = wn * WAR_COST.dia, ng = wn * WAR_COST.gold;
+      var wdesc = (truceOn() ? '<b style="color:#86efac">停戰中</b>：城堡數不變就不會再被宣戰。' : '目前因為你持有的城堡而對你宣戰的血盟：<b>' + wn + '</b> 個。') +
+        '<br>消除後這些血盟全部撤回宣戰，一直到你持有的城堡數再變動為止。每個血盟 ' + WAR_COST.dia + ' 龍之鑽石或 ' + WAR_COST.gold.toLocaleString() + ' 金幣。每週五的守城戰、強制宣戰不在這裡。';
+      h += K.rowHtml({ key: 'wdia', ico: '', name: '消除宣戰（龍之鑽石）', color: '#fca5a5', desc: wdesc, req: wn ? K.reqTxt(dia(), nd, '龍之鑽石') : '沒有宣戰中的血盟', btns: [['wdia', '消除', wn > 0 && dia() >= nd]] }, 'data-rg');
+      h += K.rowHtml({ key: 'wgold', ico: '', name: '消除宣戰（金幣）', color: '#fde68a', desc: '同上。', req: wn ? K.reqTxt(Number(p.gold) || 0, ng, '金幣') : '沒有宣戰中的血盟', btns: [['wgold', '消除', wn > 0 && (Number(p.gold) || 0) >= ng]] }, 'data-rg');
+    }
     K.repaint(host, h);
   };
   var embed = function (div) {
@@ -97,6 +134,11 @@
     host.addEventListener('click', function (ev) {
       var b = ev.target.closest('button[data-rg]'); if (!b || b.disabled) return;
       var pay = b.getAttribute('data-rg'), p = P();
+      if (pay === 'wdia' || pay === 'wgold') {
+        var wn = warN(), cost = pay === 'wdia' ? (wn * WAR_COST.dia).toLocaleString() + ' 顆龍之鑽石' : (wn * WAR_COST.gold).toLocaleString() + ' 金幣';
+        if (typeof confirm === 'function' && !confirm('確定要花 ' + cost + '，讓 ' + wn + ' 個血盟撤回宣戰嗎？\n城堡數一變動（打回、攻下新城或又失城）就會失效。')) return;
+        ui.err = endWar(pay === 'wdia' ? 'dia' : 'gold') || ''; render(host); return;
+      }
       var msg = '確定要花 ' + (pay === 'dia' ? COST.dia + ' 顆龍之鑽石' : COST.gold.toLocaleString() + ' 金幣') + '，讓正義值歸 0、解除紅人追殺嗎？' + (p && Number(p.alignmentValue) > 0 ? '\n（你現在是正義，正義值也會歸 0。）' : '');
       if (typeof confirm === 'function' && !confirm(msg)) return;
       ui.err = purify(pay) || ''; render(host);
@@ -104,7 +146,7 @@
     render(host);
   };
   K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: TITLE, type: 'quest',
-    d: '在席琳神殿為女神的嘆息祈禱的信徒京。花 10 顆龍之鑽石或 100 萬金幣，替你把正義值洗回 0、讓追殺你的紅人散去，而且追殺永久解除。' });
+    d: '在席琳神殿為女神的嘆息祈禱的信徒京。花 10 顆龍之鑽石或 100 萬金幣，替你把正義值洗回 0、讓追殺你的紅人散去，而且追殺永久解除；也能替你向對你宣戰的血盟求和。' });
   K.hookNpc(NPC_ID, NPC_N, TITLE, embed);
-  W.__afkRedGuard = { NPC_ID: NPC_ID, COST: COST, FOREVER: FOREVER, purify: purify, chasers: chasers, isProtected: isProtected };
+  W.__afkRedGuard = { endWar: endWar, warN: warN, truceOn: truceOn, NPC_ID: NPC_ID, COST: COST, FOREVER: FOREVER, purify: purify, chasers: chasers, isProtected: isProtected };
 })();
