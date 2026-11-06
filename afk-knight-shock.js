@@ -20,7 +20,7 @@
   var MS = function () { return (typeof mapState !== 'undefined' && mapState) ? mapState : null; };
   var ok = function (p) { return !!(p && p.cls === 'knight' && p.rebirth > 0); };
   var stat = function (p, k) { return Math.max(0, Math.floor(Number(p && p.d && p.d[k]) || 0)); };
-  var stunP = function (p) { return Math.min(0.6, 0.1 + stat(p, 'dex') * 0.005); };
+  var stunP = function (p) { var cap = 0.6; try { if (typeof W.__afkSkillUpStunCap === 'function') cap = W.__afkSkillUpStunCap(p); } catch (e) {} return Math.min(cap, 0.1 + stat(p, 'dex') * 0.005); };   // 上限 60%；技能強化二 70%（afk-skillup）
   var hitOff = function (p, wpn) { return Math.floor(stat(p, 'dex') / 10) + ((wpn && wpn.stunHitBonus && !wpn.isBow) ? Math.round(wpn.stunHitBonus / 5) : 0); };
   var C = function () { return W.AFK_CARD_COMBAT; };
   var hurt = function (actor, m, v) {

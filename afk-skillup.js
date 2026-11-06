@@ -8,7 +8,8 @@
  *     三：轉生用時空材料六種各 1,000 → 再 +10%（累計 +20%），招牌技能第三段
  *   傭兵：吃「他自己的」階段。傭兵是招募當下的快照，所以來源角色升級後要重新招募才生效（Ping 18:33）。
  *
- *   這一版做到的（其餘見 SIG_TODO，下一批做）：
+ *   第一批（施放當下讀的數值）＋第二批（戰鬥內部的倍率、機率，11-06 晚）都做完；跟設計稿不同的地方見 SIG_NOTE。
+ *   這一版做到的：
  *     ‧+%：施放職業技能當下造成的傷害（玩家 castSkill、傭兵各種施技函式）、立方與冰雪颶風這類持續技能的每一跳、治療技能的回復量。
  *     ‧招牌技能：施放當下讀技能資料的那些數值（發數、骰數、持續、HP／MP 消耗、追加傷害、箭數、刀數），
  *       施放那一下暫時把 DB.skills 換成「施放者自己的階段」的數值，放完立刻還原（玩家、傭兵各算各的）。
@@ -103,12 +104,6 @@
     // 王族
     sk_royal_precise:   { 1: function (sk) { return { dur: (sk.dur || 16) * 2 }; } }                         // 16 → 32
   };
-  // 這一版還沒做、要改戰鬥內部算法的（下一批）：
-  var SIG_TODO = ['衝擊之暈：暈眩率上限 70%、暈眩 8 秒、暈住頭目全隊傷害 +10%', '反擊屏障：×2.5、必定爆擊', '增幅防禦三：HP<30% 減免 ×2',
-    '流星雨二以外的範圍冷卻細節', '冰雪颶風：每 3 秒一次、冰凍命中、凍住受傷 +15%', '魔法屏障三段', '三重矢：夢域鏡 12 箭與遞減、最後一箭必爆', '精準射擊：爆擊率、無視硬皮',
-    '召喚強力屬性精靈三段', '會心一擊三段', '雙重破壞三段', '暗隱術三段', '屠宰者：每層 +15', '奪命之雷三：王的易傷', '血之渴望：攻速 +20%',
-    '疼痛的歡愉三：反彈 +30%', '鏡像：反擊、擋攻擊', '立方：間隔 −1 秒、同時兩種', '粉碎、狂暴、泰坦三段', '呼喚盟友：×1.3、寵物／召喚物／護衛也補一下',
-    '精準目標：等級÷8、對頭目 ×1.5', '勇猛意志三段', '增益數值與異常機率的全域 +%'];
 
   var patchFor = function (actor, sk) {
     var id = sk && sk._afkSuId; if (!id || !SIG[id]) return null;
@@ -121,6 +116,7 @@
 
   // ── 施放情境：誰在放哪一招 ──
   var stack = [];
+  var FLAGS = ['darkCrit', 'call', 'counter', 'atk', 'spirit', 'frost', 'cube'];
   var cur = function () { return stack.length ? stack[stack.length - 1] : null; };
   // 暫時換欄位：有的欄位是別的外掛裝的 getter（例：三重矢的 hits），所以存「描述子」、換成一般欄位、用完把描述子裝回去
   var applyPatch = function (sk, patch) {
@@ -136,9 +132,11 @@
       }
     };
   };
-  var withCtx = function (actor, sk, fn, self, args) {
+  var withCtx = function (actor, sk, fn, self, args, extra) {
     var patch = sk ? patchFor(actor, sk) : null, undo = patch ? applyPatch(sk, patch) : null;
-    stack.push({ actor: actor, sk: sk });
+    var par = cur(), inh = {};
+    if (par && par.actor === actor) FLAGS.forEach(function (f) { if (par[f]) inh[f] = par[f]; });   // 同一個人巢狀施放（例：會心一擊、呼喚盟友外層）沿用外層的標記
+    stack.push(Object.assign(inh, { actor: actor, sk: sk, pct: true, n: 0 }, extra || {}));
     try { return fn.apply(self, args); }
     finally { stack.pop(); if (undo) undo(); }
   };
@@ -156,17 +154,17 @@
     };
   }
   // 傭兵施技（第一個參數是傭兵；sk 在第二個參數，沒有的用 null）
-  var wrapAlly = function (name, skArg) {
+  var wrapAlly = function (name, skArg, extra) {
     var o = W[name]; if (typeof o !== 'function' || o._afkSu) return;
     var f = function (ally) {
       if (!ally || !stageOf(ally)) return o.apply(this, arguments);
       var sk = skArg != null ? arguments[skArg] : null;
-      return withCtx(ally, (sk && typeof sk === 'object') ? sk : null, o, this, arguments);
+      return withCtx(ally, (sk && typeof sk === 'object') ? sk : null, o, this, arguments, extra);
     };
     f._afkSu = true; W[name] = f;
   };
   [['allyCastMagic', 1], ['allyCastNonDamage', 1], ['allyCastPhysicalSkill', 1], ['allyCastCrush', 1], ['allyCastFixedStatus', 1],
-    ['allyCastSlaughter', 1], ['allyCastMpDmg', 1], ['allyStormTick', 1], ['allyDarkCrit', null], ['allyCubeTick', null]].forEach(function (x) { wrapAlly(x[0], x[1]); });
+    ['allyCastSlaughter', 1], ['allyCastMpDmg', 1], ['allyStormTick', 1], ['allyDarkCrit', null], ['allyCubeTick', null, { cube: true }]].forEach(function (x) { wrapAlly(x[0], x[1], x[2]); });
   // 傭兵三重矢：核心固定射 3 箭，一階再補 1 箭
   if (typeof W.allyTripleShot === 'function') {
     var oTri = W.allyTripleShot;
@@ -207,7 +205,7 @@
   // 玩家的持續技能（立方每一跳、冰雪颶風這類增益每一跳）
   if (typeof W.cubeTick === 'function') {
     var oCube = W.cubeTick;
-    W.cubeTick = function () { var p = P(); if (!p || !stageOf(p)) return oCube.apply(this, arguments); return withCtx(p, null, oCube, this, arguments); };
+    W.cubeTick = function () { var p = P(); if (!p || !stageOf(p)) return oCube.apply(this, arguments); return withCtx(p, null, oCube, this, arguments, { cube: true }); };
   }
   if (typeof W.stormBuffTick === 'function') {
     var oStorm = W.stormBuffTick;
@@ -217,21 +215,30 @@
     };
   }
 
-  // ── +%：傷害 ──
+  // ── +%：傷害（以及第二批各種「打出去那一下」的加成，見 dealt）──
   var dmgHooked = false;
   var hookDamage = function () {
     var C = W.AFK_CARD_COMBAT; if (dmgHooked) return true; if (!C || typeof C.damage !== 'function') return false; dmgHooked = true;
     var o = C.damage;
     var f = function (actor, target, amount, opt) {
-      var c = cur();
-      if (c && actor && actor === c.actor && target && !isMember(target) && amount > 0) {
-        var k = pctOf(actor); if (k > 0) amount = Math.max(1, Math.floor(amount * (1 + k)));
-      }
+      try { if (actor && target && !isMember(target) && amount > 0) amount = dealt(actor, target, amount, opt || {}); } catch (e) {}
       return o.call(this, actor, target, amount, opt);
     };
     f._afkSu = true; C.damage = f; return true;
   };
   var dmgOk = function () { return dmgHooked; };
+  var dealtHooks = [];
+  var dealt = function (actor, target, amount, opt) {
+    var c = cur();
+    if (c && actor === c.actor) {
+      c.n++;
+      for (var i = 0; i < dealtHooks.length; i++) amount = dealtHooks[i](c, actor, target, amount, opt);
+      if (c.pct) { var k = pctOf(actor); if (k > 0) amount = amount * (1 + k); }
+      if (c.mult) amount = amount * c.mult;
+    }
+    amount = markMult(actor, target, amount);
+    return Math.max(1, Math.floor(amount));
+  };
   if (!hookDamage()) { try { document.addEventListener('DOMContentLoaded', hookDamage); } catch (e) {} }
 
   // ── +%：治療 ──
@@ -291,6 +298,453 @@
   };
   linkHidden(); try { document.addEventListener('DOMContentLoaded', linkHidden); } catch (e) {}
 
+  // ════════════════ 第二批：要改戰鬥內部算法的招牌效果（11-06 18:50 Ping：繼續做到完成）════════════════
+  //   原則：核心檔不動，只包全域函式；核心裡寫死的機率／倍率（狂暴、雙重破壞、勇猛意志）用「施放者是升過級的人時，
+  //   先把核心那一段關掉、改由這裡照新數值重擲」的方式做，所以不會跟原本的疊兩次。
+  var EV = function (x) { try { return (0, eval)(x); } catch (e) { return undefined; } };
+  var rnd = function () { return Math.random(); };
+  var hasSk = function (a, id) { return !!(a && a.skills && a.skills.indexOf(id) >= 0); };
+  var mOf = function (a, id) { try { if (typeof W._afkM === 'function') return !!W._afkM(a, id); } catch (e) {} return !!(a && a.mastery === id); };
+  var tagsOf = function (a) { try { return (a && a.eq && a.eq.wpn && typeof getWeaponTags === 'function') ? getWeaponTags(a.eq.wpn.id) : []; } catch (e) { return []; } };
+  var artOf = function (a) { return a && a.rebirth > 0 ? a.rebirthArt : null; };
+  var party = function () { var p = P(); return p ? [p].concat(p.allies || []) : []; };
+  var PHYS = { melee: 1, ranged: 1, phys: 1 };
+
+  // ── 目標身上的印記：暈住的頭目、被凍住、奪命之雷打到的王（全隊打牠都加）──
+  var mark = function (t, key, ticks, k) { if (!t) return; var m = t._afkSuMk || (t._afkSuMk = {}); m[key] = { until: tk() + ticks, k: k }; };
+  var partyBuff = { until: -1, k: 0 };   // 勇猛意志三：全隊 3 秒傷害 +10%
+  var markMult = function (actor, target, amount) {
+    if (!isMember(actor)) return amount;
+    var m = target && target._afkSuMk, t = tk();
+    if (m) Object.keys(m).forEach(function (key) {
+      var x = m[key]; if (!x || x.until < t) return;
+      if (key === 'frost' && !(target.st && target.st.freeze > 0)) return;
+      amount *= 1 + x.k;
+    });
+    if (partyBuff.until >= t) amount *= 1 + partyBuff.k;
+    return amount;
+  };
+
+  // ── 一般攻擊：狂暴、雙重破壞、勇猛意志、粉碎對頭目 ──
+  var DD_W = ['雙刀', '鋼爪'];
+  var ddChance = function (a) { return 10 + ((a.lv || 1) >= 45 ? Math.floor(((a.lv || 1) - 45) / 5) : 0); };
+  var hide = function (a) {   // 回傳還原函式；只關掉「這個角色有升級、而且會由這裡重擲」的那幾項
+    var st = stageOf(a), undo = [];
+    if (!st) return null;
+    if (hasSk(a, 'sk_warrior_berserk')) { var i = a.skills.indexOf('sk_warrior_berserk'); a.skills.splice(i, 1); undo.push(function () { a.skills.splice(i, 0, 'sk_warrior_berserk'); }); a._afkSuBz = true; }
+    if (a.buffs && a.buffs.sk_dark_double > 0) { var v = a.buffs.sk_dark_double; a.buffs.sk_dark_double = 0; undo.push(function () { a.buffs.sk_dark_double = v; }); a._afkSuDd = true; }
+    if (a.buffs && a.buffs.sk_royal_bravewill > 0 && artOf(a) !== 'r_sword') { var b = a.buffs.sk_royal_bravewill; a.buffs.sk_royal_bravewill = 0; undo.push(function () { a.buffs.sk_royal_bravewill = b; }); a._afkSuBw = true; }
+    return function () { for (var j = undo.length - 1; j >= 0; j--) undo[j](); };
+  };
+  var rerollAtk = function (a, amount, ranged) {
+    var st = stageOf(a), t = tk();
+    if (a._afkSuBz && !ranged && rnd() < 0.07) {   // 狂暴一：5% → 7%；二：×2 → ×2.5；三：之後 3 秒攻速 +20%
+      amount *= st >= 2 ? 2.5 : 2;
+      if (st >= 3 && a === P()) { var was = (a._afkSuBzUntil || 0) > t; a._afkSuBzUntil = t + 30; if (!was) { try { calcStats(); } catch (e) {} } }
+    }
+    if (a._afkSuDd) {   // 雙重破壞一：+3%；二：×2.5；三：匕首也有效
+      var tg = tagsOf(a), okW = DD_W.some(function (x) { return tg.indexOf(x) >= 0; }) || (st >= 3 && tg.indexOf('匕首') >= 0);
+      if (okW && rnd() * 100 < ddChance(a) + 3) amount *= st >= 2 ? 2.5 : 2;
+    }
+    if (a._afkSuBw && rnd() < (mOf(a, 'k_royal_sword') ? 0.2 : 0.1) + 0.05) {   // 勇猛意志一：+5%；二：×1.8；三：全隊 3 秒 +10%
+      amount *= st >= 2 ? 1.8 : 1.5;
+      if (st >= 3) { partyBuff.until = t + 30; partyBuff.k = 0.10; }
+    }
+    return amount;
+  };
+  var unflag = function (a) { a._afkSuBz = a._afkSuDd = a._afkSuBw = false; };
+  if (typeof W.playerAttack === 'function') {
+    var oPA = W.playerAttack;
+    W.playerAttack = function () {
+      var p = P(); if (!p || !stageOf(p)) return oPA.apply(this, arguments);
+      var undo = hide(p);
+      try { return withCtx(p, null, oPA, this, arguments, { pct: false, atk: true }); }
+      finally { if (undo) undo(); unflag(p); }
+    };
+  }
+  dealtHooks.push(function (c, a, t, amount, opt) {
+    if (!c.atk || !PHYS[opt.kind]) return amount;
+    amount = rerollAtk(a, amount, opt.kind === 'ranged');
+    var st = stageOf(a);
+    if (st >= 3 && hasSk(a, 'sk_warrior_crush') && t.boss && opt.kind !== 'ranged') amount += crushBonus(a) * 1.2 * 0.25;   // 粉碎三：對頭目再 ×1.25（加在粉碎那一份上）
+    return amount;
+  });
+  if (typeof W._allyAtkBuffProcs === 'function') {   // 傭兵一般攻擊的增益判定（狂暴、勇猛意志、雙重破壞都在這裡）
+    var oAB = W._allyAtkBuffProcs;
+    W._allyAtkBuffProcs = function (ally, dmg, isRanged) {
+      if (!ally || !stageOf(ally)) return oAB.apply(this, arguments);
+      var undo = hide(ally), r;
+      try { r = oAB.apply(this, arguments); r = Math.max(1, Math.floor(rerollAtk(ally, r, !!isRanged))); }
+      finally { if (undo) undo(); unflag(ally); }
+      return r;
+    };
+  }
+  var crushBonus = function (a) { return 2 + Math.max(0, (a.lv || 1) - 44); };
+
+  // ── 反擊屏障：二 ×2 → ×2.5；三 必定爆擊 ──
+  var counterCtx = 0;
+  ['procCounter', 'procIai'].forEach(function (name) {
+    var o = W[name]; if (typeof o !== 'function') return;
+    W[name] = function () {
+      var p = P(); if (!p || !stageOf(p)) return o.apply(this, arguments);
+      counterCtx++;
+      try { return withCtx(p, null, o, this, arguments, { pct: false, counter: true }); } finally { counterCtx--; }
+    };
+  });
+  dealtHooks.push(function (c, a, t, amount) {
+    if (c.counter && stageOf(a) >= 2 && a.buffs && a.buffs.sk_counter_barrier > 0) amount *= 1.25;
+    return amount;
+  });
+  var allyReact = 0;
+  ['allyReactCounter', 'allyReactIai'].forEach(function (name) {
+    var o = W[name]; if (typeof o !== 'function') return;
+    W[name] = function () { allyReact++; try { return o.apply(this, arguments); } finally { allyReact--; } };
+  });
+  if (typeof W._allyStrikeWithIllu === 'function') {
+    var oASI = W._allyStrikeWithIllu;
+    W._allyStrikeWithIllu = function (ally, mob, opts) {
+      var st = stageOf(ally), bar = !!(ally && ally.buffs && ally.buffs.sk_counter_barrier > 0);
+      if (allyReact && st >= 3 && bar) { opts = Object.assign({}, opts || {}, { forceCrit: true }); arguments[2] = opts; }
+      var r = oASI.apply(this, arguments);
+      try { if (allyReact && st >= 2 && bar && r && r.dmg > 0) r.dmg = Math.max(1, Math.floor(r.dmg * 1.25)); } catch (e) {}
+      return r;
+    };
+  }
+
+  // ── getPhysicalDmg：強制爆擊（反擊屏障三、暗隱術二、三重矢三的最後一箭）──
+  if (typeof W.getPhysicalDmg === 'function') {
+    var oGPD = W.getPhysicalDmg;
+    W.getPhysicalDmg = function () {
+      try {
+        var p = P(), c = cur(), force = false;
+        if (p && c && c.actor === p) {
+          var st = stageOf(p);
+          if (c.counter && st >= 3 && p.buffs && p.buffs.sk_counter_barrier > 0) force = true;
+          if (c.atk && p._afkSuSure) { force = true; p._afkSuSure = false; }
+          if (c.sk && c.sk._afkSuId === 'sk_elf_triple' && st >= 3) { c.arrow = (c.arrow || 0) + 1; if (c.arrow === (c.sk.hits || 3)) force = true; }
+        }
+        if (force) { var args = Array.prototype.slice.call(arguments); while (args.length < 8) args.push(undefined); args[7] = true; return oGPD.apply(this, args); }
+      } catch (e) {}
+      return oGPD.apply(this, arguments);
+    };
+  }
+
+  // ── 三重矢二：夢域鏡遞減 −10% → −6%（每支箭）──
+  if (typeof W.__afkTripleArrowMult === 'function') {
+    var oTAM = W.__afkTripleArrowMult;
+    W.__afkTripleArrowMult = function (actor, opt) {
+      var v = oTAM.apply(this, arguments);
+      try {
+        if (stageOf(actor) >= 2 && !(opt && opt.second)) {
+          var c = cur(); if (c && c.actor === actor) { c.tri = (c.tri || 0) + 1; var n = c.tri; v = n <= 3 ? 1 : Math.max(0.30, 1 - 0.06 * (n - 3)); }
+        }
+      } catch (e) {}
+      return v;
+    };
+  }
+
+  // ── 精準射擊三：期間無視硬皮（玩家一般攻擊與技能）──
+  if (typeof W.mobHardSkin === 'function') {
+    var oMHS = W.mobHardSkin;
+    W.mobHardSkin = function (m) {
+      try { var p = P(), c = cur(); if (p && c && c.actor === p && stageOf(p) >= 3 && p.buffs && p.buffs.sk_elf_preciseshot > 0) return 0; } catch (e) {}
+      return oMHS.apply(this, arguments);
+    };
+  }
+
+  // ── 屠宰者一：每層弱點曝光 +10 → +15（每刀）；會心一擊二：倍率上限 ×10 → ×12 ──
+  dealtHooks.push(function (c, a, t, amount) {
+    var id = c.sk && c.sk._afkSuId, st = stageOf(a);
+    if (id === 'sk_dragon_slaughter' && st >= 1 && (t.weakExpose || 0) > 0) amount += 5 * t.weakExpose;
+    if (c.darkCrit && st >= 2) amount *= 1.2;
+    return amount;
+  });
+  // 會心一擊：一 HP 消耗 50% → 40%；二 ×1.2（上面）；三 MP 只扣一半
+  var DCRIT = DB.skills.sk_dark_crit;
+  if (DCRIT) { try { Object.defineProperty(DCRIT, '_afkSuId', { value: 'sk_dark_crit', enumerable: false }); } catch (e) {} }
+  var darkCritAround = function (a, fn, self, args) {
+    var st = stageOf(a), hp0 = a === P() ? a.hp : a.curHp, mp0 = a.mp, mhp = a.mhp || 1;
+    var r = withCtx(a, null, fn, self, args, { pct: true, darkCrit: true });
+    try {
+      var hp1 = a === P() ? a.hp : a.curHp;
+      if (hp1 < hp0 && st >= 1) { var back = Math.floor(mhp * 0.1); if (a === P()) a.hp = Math.min(mhp, a.hp + back); else a.curHp = Math.min(mhp, a.curHp + back); }
+      if (st >= 3 && a.mp < mp0) a.mp = Math.floor(mp0 / 2);
+    } catch (e) {}
+    return r;
+  };
+  if (DCRIT && typeof W.castSkill === 'function') {
+    var oCast2 = W.castSkill;
+    W.castSkill = function (skId) {
+      var p = P(); if (skId === 'sk_dark_crit' && p && stageOf(p)) return darkCritAround(p, oCast2, this, arguments);
+      return oCast2.apply(this, arguments);
+    };
+  }
+  if (typeof W.allyDarkCrit === 'function') {
+    var oADC = W.allyDarkCrit;
+    W.allyDarkCrit = function (ally) { if (ally && stageOf(ally)) return darkCritAround(ally, oADC, this, arguments); return oADC.apply(this, arguments); };
+  }
+
+  // ── 呼喚盟友：二 傭兵補的那一下 ×1.3；三 寵物、召喚物、城堡護衛也補一下 ──
+  if (typeof W.allyAttackOnce === 'function') {
+    var oAAO = W.allyAttackOnce;
+    W.allyAttackOnce = function (ally) {
+      var c = cur();
+      if (c && c.call && stageOf(c.actor) >= 2 && ally) return withCtx(ally, null, oAAO, this, arguments, { pct: false, mult: 1.3 });
+      return oAAO.apply(this, arguments);
+    };
+  }
+  var callExtras = function () {
+    var t = null; try { t = getTarget(); } catch (e) {} if (!t || !(t.curHp > 0)) return;
+    var p = P(); if (!p) return;
+    try { if (typeof petsOutList === 'function' && typeof petAttackOnce === 'function' && typeof petDerive === 'function') petsOutList().forEach(function (pet) { if (!pet || pet._downed) return; var d = petDerive(pet); if (d && t.curHp > 0) petAttackOnce(pet, d, t); }); } catch (e) {}
+    try { if (typeof guardAttackOnce === 'function' && typeof guardDerive === 'function') (p.guardsV2 || []).forEach(function (g) { if (!g || g._downed || t.curHp <= 0) return; var d = guardDerive(g); if (d) guardAttackOnce(g, d, t); }); } catch (e) {}
+    try { if (typeof summonV2AttackOnce === 'function') (p.summonsV2 || []).forEach(function (s) { if (!s || s._downed || t.curHp <= 0) return; var d = EV('typeof _sumDeriveAny === "function" ? _sumDeriveAny : null'); d = d ? d(s) : null; if (d) summonV2AttackOnce(s, d, t); }); } catch (e) {}
+    try { var i = mapState.mobs.findIndex(function (m) { return m && m.uid === t.uid; }); if (t.curHp <= 0 && i !== -1) killMob(i); } catch (e) {}
+  };
+  if (typeof W.castSkill === 'function') {
+    var oCast3 = W.castSkill;
+    W.castSkill = function (skId) {
+      var p = P(), sk = DB.skills[skId];
+      if (!p || !sk || !sk.callAllies || !stageOf(p)) return oCast3.apply(this, arguments);
+      var r = withCtx(p, null, oCast3, this, arguments, { pct: false, call: true });
+      if (r && stageOf(p) >= 3) callExtras();
+      return r;
+    };
+  }
+  if (typeof W.allyRoyalAct === 'function') {
+    var oRA2 = W.allyRoyalAct;
+    W.allyRoyalAct = function (ally) { if (ally && stageOf(ally) >= 2) return withCtx(ally, null, oRA2, this, arguments, { pct: false, call: true }); return oRA2.apply(this, arguments); };
+  }
+
+  // ── 精準目標：二 等級 ÷10 → ÷8（沒精通 ÷15 → ÷12）；三 對頭目效果 ×1.5 ──
+  if (typeof W.fragileMult === 'function') {
+    var oFM = W.fragileMult;
+    W.fragileMult = function (t) {
+      var v = oFM.apply(this, arguments);
+      try {
+        var p = P(), pp = null;
+        if (p && p.buffs && p.buffs.sk_royal_precise > 0) pp = p;
+        else if (p) (p.allies || []).some(function (a) { if (a && !a._downed && a.buffs && a.buffs.sk_royal_precise > 0) { pp = a; return true; } return false; });
+        var st = stageOf(pp);
+        if (pp && st >= 2) {
+          var div = pp.mastery === 'k_royal_pledge' || mOf(pp, 'k_royal_pledge') ? 10 : 15, lv = pp.lv || 1;
+          var oldK = (1 + lv / div) / 100, newK = (1 + lv / (div === 10 ? 8 : 12)) / 100;
+          if (st >= 3 && t && t.boss) newK *= 1.5;
+          v = v / (1 + oldK) * (1 + newK);
+        }
+        if (titanFlag.on && titanFlag.t === tk()) { titanFlag.on = false; var a0 = titanFlag.a; if (stageOf(a0) >= 2) v *= 1.3; if (stageOf(a0) >= 3) { var heal = Math.floor((a0.mhp || 0) * 0.01); if (a0 === P()) a0.hp = Math.min(a0.mhp, a0.hp + heal); } }
+      } catch (e) {}
+      return v;
+    };
+  }
+
+  // ── 泰坦：一 門檻 80% → 90%（沒精通 40% → 50%）；二 反射量 +30%；三 每次反射回 HP 1% ──
+  var titanFlag = { on: false, t: -1, a: null };
+  if (typeof W.titanThreshold === 'function') {
+    var oTT = W.titanThreshold;
+    W.titanThreshold = function () {
+      var v = oTT.apply(this, arguments);
+      try {
+        var p = P();
+        if (p && stageOf(p) >= 1) {
+          v = Math.min(0.95, v + 0.1);
+          if (p.hp < p.mhp * v && (hasSk(p, 'sk_warrior_titan_rock') || hasSk(p, 'sk_warrior_titan_magic'))) { titanFlag.on = true; titanFlag.t = tk(); titanFlag.a = p; }   // 下一個傷害倍率查詢＝這一下的反射
+        }
+      } catch (e) {}
+      return v;
+    };
+  }
+
+  // ── 精靈：一 精靈傷害 +20%；二 全體法術 15% → 25%；三 全體法術傷害 +30% ──
+  if (typeof W.spiritAttackOnce === 'function') {
+    var oSAO = W.spiritAttackOnce;
+    W.spiritAttackOnce = function (s, t, owner) {
+      var o = owner || P(), st = stageOf(o);
+      if (!st) return oSAO.apply(this, arguments);
+      var K = EV('typeof SPIRIT_KING !== "undefined" ? SPIRIT_KING : null'), p0 = K && K.aoe ? K.aoe.p : null;
+      if (K && K.aoe && st >= 2) K.aoe.p = 0.25;
+      try { return withCtx(o, null, oSAO, this, arguments, { pct: false, spirit: true }); }
+      finally { if (K && K.aoe && p0 != null) K.aoe.p = p0; }
+    };
+  }
+  dealtHooks.push(function (c, a, t, amount) {
+    if (!c.spirit) return amount;
+    var st = stageOf(a);
+    amount *= 1.2;
+    if (c.n > 1 && st >= 3) amount *= 1.3;   // 第一下是精靈本身，之後是全體法術
+    return amount;
+  });
+
+  // ── 疼痛的歡愉三：反彈 +30% ──
+  var linkPain = function () {
+    if (typeof W.__afkPainRf !== 'function' || W.__afkPainRf._afkSu) return;
+    var o = W.__afkPainRf;
+    var f = function (ent) { var v = o.apply(this, arguments); try { if (stageOf(ent) >= 3 && v > 0) v = v * 1.3; } catch (e) {} return v; };
+    f._afkSu = true; W.__afkPainRf = f;
+  };
+  linkPain(); try { document.addEventListener('DOMContentLoaded', linkPain); } catch (e) {}
+
+  // ── 冰雪颶風：二 每 4 秒 → 3 秒（玩家）；三 冰凍命中 −3 → +3、被凍住的敵人受到的傷害 +15% ──
+  var STORM = DB.skills.sk_blizzard_storm;
+  if (STORM) {
+    try {
+      var baseIv = STORM.stormInterval || 40;
+      Object.defineProperty(STORM, 'stormInterval', { configurable: true, enumerable: true,
+        get: function () { var p = P(), c = cur(); if (!c && p && stageOf(p) >= 2 && p.buffs && p.buffs.sk_blizzard_storm > 0) return 30; return baseIv; },
+        set: function (v) { baseIv = v; } });
+    } catch (e) {}
+  }
+  if (typeof W.stormBuffTick === 'function') {
+    var oSBT = W.stormBuffTick;
+    W.stormBuffTick = function (sk) {
+      var p = P();
+      if (!(sk === STORM && p && stageOf(p) >= 3)) return oSBT.apply(this, arguments);
+      var undo = applyPatch(sk, { freezeHitOff: 3 });
+      try { return withCtx(p, null, oSBT, this, arguments, { pct: true, frost: true }); } finally { undo(); }
+    };
+  }
+  dealtHooks.push(function (c, a, t, amount) { if (c.frost) mark(t, 'frost', 60, 0.15); return amount; });
+
+  // ── 立方：二 四種的觸發間隔各 −1 秒；三 立方的傷害、回復 +30% ──
+  var CUBES = ['sk_illu_cube_burn', 'sk_illu_cube_quake', 'sk_illu_cube_shock', 'sk_illu_cube_harmony'];
+  var cubePatch = function (a) {
+    var st = stageOf(a), undos = [];
+    if (st < 2) return null;
+    CUBES.forEach(function (id) {
+      var sk = DB.skills[id]; if (!sk || !sk.cube) return;
+      var pt = { iv: Math.max(10, (sk.cube.iv || 40) - 10) };
+      if (st >= 3 && sk.cube.val) pt.val = Math.round(sk.cube.val * 1.3);
+      undos.push(applyPatch(sk.cube, pt));
+    });
+    return function () { for (var i = undos.length - 1; i >= 0; i--) undos[i](); };
+  };
+  ['cubeTick', 'allyCubeTick'].forEach(function (name) {
+    var o = W[name]; if (typeof o !== 'function') return;
+    W[name] = function () {
+      var a = name === 'cubeTick' ? P() : arguments[0];
+      var undo = a ? cubePatch(a) : null;
+      try { return o.apply(this, arguments); } finally { if (undo) undo(); }
+    };
+  });
+  dealtHooks.push(function (c, a, t, amount) { if (c.cube && stageOf(a) >= 3) amount *= 1.3; return amount; });
+
+  // ── 異常狀態：技能施放中的異常 → 持續 +%、失敗時依 +% 再判定一次；衝擊之暈三 8 秒、暈住頭目；奪命之雷三 王的易傷 ──
+  if (typeof W.applyMobStatus === 'function') {
+    var oAMS = W.applyMobStatus;
+    W.applyMobStatus = function (m, st0, name) {
+      var c = cur(), a = c && c.actor, s = stageOf(a);
+      if (!m || !st0 || !s || !c.pct) return oAMS.apply(this, arguments);
+      var k = pctOf(a), stx = Object.assign({}, st0), kind = stx.kind;
+      if (stx.dur) stx.dur = Math.round(stx.dur * (1 + k) * 10) / 10;
+      if (name === '衝擊之暈' && kind === 'stun' && s >= 3) stx.dur = Math.max(stx.dur, Math.round(8 * (1 + k) * 10) / 10);
+      var args = Array.prototype.slice.call(arguments); args[1] = stx;
+      var before = m.st ? (m.st[kind] || 0) : 0, r = oAMS.apply(this, args);
+      var ok = !!(m.st && (m.st[kind] || 0) > before);
+      if (!ok && !(m.boss && typeof BOSS_IMMUNE !== 'undefined' && BOSS_IMMUNE.indexOf(kind) >= 0) && rnd() < k) { r = oAMS.apply(this, args); ok = !!(m.st && (m.st[kind] || 0) > before); }
+      try {
+        if (name === '衝擊之暈' && s >= 3 && ok && m.boss) mark(m, 'stunboss', 80, 0.10);
+        if (c.sk && c.sk._afkSuId === 'sk_dragon_deathlightning' && s >= 3 && m.boss && !ok) mark(m, 'dlvuln', 60, 0.10);
+      } catch (e) {}
+      return r;
+    };
+  }
+  // 衝擊之暈二：敏捷加的暈眩率上限 60% → 70%（轉生騎士的全畫面衝擊之暈，afk-knight-shock 問這裡）
+  W.__afkSkillUpStunCap = function (a) { return stageOf(a) >= 2 ? 0.7 : 0.6; };
+
+  // ── 受到傷害：增幅防禦、暗隱術三、鏡像三 ──
+  var R = W.AFK_RELIC_RUNTIME;
+  if (R && typeof R.incoming === 'function') {
+    var oInc = R.incoming;
+    R.incoming = function (actor, amount, attacker, opts) {
+      var v = oInc.apply(this, arguments);
+      try {
+        var s = stageOf(actor); if (!s || !(v > 0) || !isMember(actor)) return v;
+        var b = actor.buffs || {}, kind = (opts && opts.kind) || 'melee', t = tk(), me = actor === P();
+        var hp = me ? actor.hp : actor.curHp, mhp = actor.mhp || 1;
+        if (b.sk_dark_stealth > 0 && s >= 3 && kind === 'magic') {   // 暗隱術三：也能迴避一次魔法
+          b.sk_dark_stealth = 0; actor._darkStealthCd = t + 30;
+          try { logCombat('<span class="text-fuchsia-300">' + (me ? '你' : '協力·' + (actor._allyName || '')) + '的暗影隱蔽擋下了魔法。</span>', 'evade'); } catch (e) {}
+          if (me) { try { calcStats(); } catch (e) {} }
+          return 0;
+        }
+        if (b.sk_illu_mirror > 0 && s >= 3 && t >= (actor._afkSuMirror || 0)) {   // 鏡像三：每 20 秒擋下一次攻擊
+          actor._afkSuMirror = t + 200;
+          try { logCombat('<span class="text-sky-300">' + (me ? '你' : '協力·' + (actor._allyName || '')) + '的鏡像替你擋下了這一擊。</span>', 'evade'); } catch (e) {}
+          return 0;
+        }
+        if (b.sk_reduction_armor > 0) {
+          var lv = Math.max(1, actor.lv || 1), dr = s >= 3 ? Math.floor(lv / 6) : Math.floor(lv / 8);
+          if (s >= 2 && kind === 'magic') v = Math.max(1, v - dr);   // 增幅防禦二：同樣多的魔法傷害減免
+          if (s >= 3 && hp < mhp * 0.3) v = Math.max(1, v - dr);    // 增幅防禦三：HP<30% 減免再 ×2
+        }
+      } catch (e) {}
+      return v;
+    };
+  }
+
+  // ── 迴避之後：暗隱術二 下一擊必定爆擊；鏡像二 20% 反擊 ──
+  (function () {
+    var prev = W.__afkOnEvade;
+    W.__afkOnEvade = function (ent, mob) {
+      if (typeof prev === 'function') { try { prev.apply(this, arguments); } catch (e) {} }
+      try {
+        var s = stageOf(ent); if (!s || ent !== P()) return;
+        if (s >= 2 && ent.buffs && ent.buffs.sk_dark_stealth > 0) ent._afkSuSure = true;
+        if (s >= 2 && ent.buffs && ent.buffs.sk_illu_mirror > 0 && mob && mob.curHp > 0 && rnd() < 0.2 && typeof W.procCounter === 'function') W.procCounter(mob);
+      } catch (e) {}
+    };
+  })();
+
+  // ── 每一刻之後：暗隱術冷卻、魔法屏障、狂暴的攻速結束 ──
+  var lastShield = 0;
+  var postTick = function () {
+    var p = P(); if (!p || p.classicMode) return;
+    var t = tk();
+    party().forEach(function (a) {   // 暗隱術：一 冷卻 5 → 4 秒；三 3 秒
+      if (!a) return; var s = stageOf(a); if (!s) return;
+      var cd = a._darkStealthCd || 0;
+      if (cd > t && a._afkSuCdSeen !== cd && cd - t >= 45) { var nc = cd - (s >= 3 ? 20 : 10); a._darkStealthCd = nc; a._afkSuCdSeen = nc; }
+    });
+    var s = stageOf(p);
+    if (s) {
+      var sh = (p.buffs && p.buffs.sk_magic_shield) || 0;
+      if (lastShield > 0 && sh <= 0 && (p.magicShieldCd || 0) >= 3) {   // 魔法屏障剛擋下：一 冷卻 3 → 1 秒；二 回 MP 10%
+        p.magicShieldCd = 1;
+        if (s >= 2) p.mp = Math.min(p.mmp || 0, (p.mp || 0) + Math.floor((p.mmp || 0) * 0.1));
+      }
+      lastShield = sh;
+      if (s >= 3 && sh <= 0 && !(p.magicShieldCd > 0) && hasSk(p, 'sk_magic_shield') && t % 10 === 0 && !String(mapState.current || '').startsWith('town_')) { try { castSkill('sk_magic_shield'); } catch (e) {} }   // 三：自動重新展開
+      if (p._afkSuBzUntil && p._afkSuBzUntil <= t) { p._afkSuBzUntil = 0; try { calcStats(); } catch (e) {} }
+    }
+  };
+  if (typeof W.tick === 'function') {
+    var oTick = W.tick;
+    W.tick = function () { var r = oTick.apply(this, arguments); try { postTick(); } catch (e) {} return r; };
+  }
+
+  // ── 面板（recomputeStats 之後）：血之渴望、狂暴攻速、粉碎、精準射擊、全部增益的數值 +% ──
+  var BUFF_KEYS = ['meleeDmg', 'meleeHit', 'rangedDmg', 'rangedHit', 'extraDmg', 'extraHit', 'magicDmg', 'er', 'mpR', 'dr'];
+  if (typeof W.recomputeStats === 'function') {
+    var oRe2 = W.recomputeStats;
+    W.recomputeStats = function () {
+      var r = oRe2.apply(this, arguments);
+      try {
+        var p = P(), s = stageOf(p); if (!p || !s || !p.d) return r;
+        var d = p.d, b = p.buffs || {}, k = pctOf(p), t = tk();
+        if (b.sk_dragon_bloodlust > 0 && d.aspd) d.aspd = d.aspd * 1.15 / 1.20;   // 血之渴望一：+15% → +20%
+        if ((p._afkSuBzUntil || 0) > t && d.aspd) d.aspd = d.aspd / 1.2;          // 狂暴三：3 秒攻速 +20%
+        if (hasSk(p, 'sk_warrior_crush')) { var cb = crushBonus(p); d.meleeDmg = (d.meleeDmg || 0) + Math.round(cb * 0.2); if (s >= 2) d.rangedDmg = (d.rangedDmg || 0) + Math.round(cb * 1.2 * 0.5); }   // 粉碎一 ×1.2、二 遠程吃一半
+        if (s >= 2 && b.sk_elf_preciseshot > 0) d.rangedCrit = (d.rangedCrit || 0) + 5;   // 精準射擊二
+        if (k > 0) Object.keys(b).forEach(function (sid) {   // 增益數值 +%（只算自己學會的職業技能）
+          if (!(b[sid] > 0) || !hasSk(p, sid)) return; var sk = DB.skills[sid]; if (!sk || !sk.d) return;
+          BUFF_KEYS.forEach(function (key) { var v = Number(sk.d[key]) || 0; if (v) d[key] = (Number(d[key]) || 0) + Math.round(v * k); });
+          if (sk.d.ac) d.ac = (Number(d.ac) || 0) - Math.round(sk.d.ac * k);
+        });
+      } catch (e) {}
+      return r;
+    };
+  }
+
   // ── NPC：席琳神殿 技藝導師 薇爾娜 ──
   var NPC_ID = 'npc_afk_skillup', TOWN = 'town_sherine';
   try {
@@ -301,9 +755,12 @@
 
   var STAGE_TXT = [
     null,
-    { n: '第一階段', all: '全部職業技能 +5%', sig: '招牌技能的數值強化（例：衝擊之暈的追加傷害提高、流星雨 15 發、三重矢 4 箭、精準射擊與反擊屏障持續加倍、奪命之雷骰數增加、疼痛的歡愉持續加倍、立方持續 30 秒、鏡像迴避 +35、精準目標持續加倍、增幅防禦的減免提高、呼喚盟友冷卻縮短）' },
-    { n: '第二階段', all: '全部職業技能累計 +10%', sig: '招牌技能的追加效果（例：流星雨範圍更強、屠宰者 4 刀、奪命之雷 HP 消耗降低、血之渴望持續加倍、疼痛的歡愉不再消耗 HP）' },
-    { n: '第三階段', all: '全部職業技能累計 +20%', sig: '招牌技能的質變（例：流星雨消耗 MP 降低、冷卻更短，屠宰者、血之渴望幾乎不消耗 HP，增幅防禦的減免再提高）' }
+    { n: '第一階段', all: '全部職業技能 +5%（傷害、治療、增益數值、異常狀態的機率與持續）',
+      sig: '衝擊之暈追加傷害提高；反擊屏障、精準射擊、精準目標、疼痛的歡愉持續加倍，冰雪颶風、立方持續 1.5 倍；增幅防禦減免提高；流星雨 15 發；三重矢多 1 箭；精靈傷害 +20%；會心一擊 HP 消耗 40%；雙重破壞、狂暴、勇猛意志更容易觸發；暗隱術冷卻縮短；屠宰者每層弱點曝光加成提高；奪命之雷骰數增加；血之渴望攻速 +20%；鏡像迴避提高；粉碎加成 ×1.2；泰坦更早觸發；呼喚盟友冷卻縮短；魔法屏障擋下後更快能再放' },
+    { n: '第二階段', all: '全部職業技能累計 +10%',
+      sig: '衝擊之暈暈眩率上限提高；反擊、居合傷害 ×2.5；增幅防禦也減少魔法傷害；流星雨範圍更強；冰雪颶風每 3 秒一次；魔法屏障擋下時回復 MP；夢域鏡三重矢後面的箭不容易變弱；精準射擊期間遠距離爆擊率 +5%；精靈王更常放全體法術；會心一擊倍率提高；雙重破壞 ×2.5；暗隱術迴避後下一擊必定爆擊；屠宰者 4 刀；奪命之雷、疼痛的歡愉 HP 消耗降低；血之渴望持續加倍；鏡像迴避後可能反擊；立方間隔縮短；粉碎遠程也有一半；狂暴 ×2.5；泰坦反射 +30%；呼喚盟友傭兵那一下 ×1.3；精準目標效果提高；勇猛意志 ×1.8' },
+    { n: '第三階段', all: '全部職業技能累計 +20%',
+      sig: '衝擊之暈暈眩 8 秒、暈住頭目時全隊對牠傷害 +10%；反擊、居合必定爆擊；增幅防禦減免再提高、HP 低時加倍；流星雨 MP 降低、冷卻更短；冰雪颶風更容易凍住、凍住的敵人受到傷害 +15%；魔法屏障自動重新展開；三重矢最後一箭必定爆擊；精準射擊期間無視硬皮；精靈王全體法術傷害 +30%；會心一擊只消耗一半 MP；雙重破壞拿匕首也有效；暗隱術冷卻更短、也能擋一次魔法；屠宰者、血之渴望、疼痛的歡愉幾乎不耗 HP；奪命之雷打不暈王時讓王受到傷害 +10%；疼痛的歡愉反彈 +30%；鏡像每 20 秒擋下一次攻擊；立方效果 +30%；粉碎對頭目更強；狂暴觸發後攻速提高；泰坦每次反射回 HP；呼喚盟友時寵物、召喚物、城堡護衛也一起出手；精準目標對頭目 ×1.5；勇猛意志觸發時全隊 3 秒傷害 +10%' }
   ];
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var render = function (box) {
@@ -348,7 +805,10 @@
     };
   }
 
-  W.__afkSkillUp = { dmgOk: dmgOk, stageOf: stageOf, pctOf: pctOf, upgrade: upgrade, SIG: SIG, SIG_TODO: SIG_TODO, COST: COST, patchFor: patchFor, NPC_ID: NPC_ID,
+  var SIG_NOTE = ['召喚強力屬性精靈：只做傷害 +20%（HP 沒加）；三改成「全體法術傷害 +30%」', '立方三：改成「效果 +30%」（立方本來就能同時展開）', '魔法屏障三：改成「自動重新展開」（傭兵沒有屏障的擋招判定）',
+    '泰坦三：改成「每次反射回 HP 1%」（子彈的迴避 +50 寫死在核心）', '只有你本人有：冰雪颶風每 3 秒、泰坦門檻與反射、暗隱術迴避後必爆、鏡像反擊、三重矢最後一箭必爆、狂暴攻速、呼喚盟友三（寵物等一起出手）',
+    '勇猛意志：修習「血誓王劍」的人維持原本的觸發（技藝那一段另外擲），不換成強化後的數值'];
+  W.__afkSkillUp = { dmgOk: dmgOk, stageOf: stageOf, pctOf: pctOf, upgrade: upgrade, SIG: SIG, SIG_NOTE: SIG_NOTE, COST: COST, patchFor: patchFor, NPC_ID: NPC_ID,
     _set: function (n) { var p = P(); if (p) { p.afkSkillUp = Math.max(0, Math.min(3, n | 0)); try { calcStats(); } catch (e) {} } } };
   console.log('[AFK] 已啟用：技能強化（席琳神殿 技藝導師 薇爾娜）');
 })();
