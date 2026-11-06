@@ -9,7 +9,8 @@
  *     強化值在 gainItem「簽章疊加之前」就定好，堆疊/詞綴全走上游原路，正確不出錯。
  *   - 本外掛提供 __afkTradRollEn：對「該角色有開 + 非商店(forceNormal 假) + 裝備(武/防/飾·非箭矢·可強化·非遺物)」
  *     回傳隨機強化值（權重表 1:1 沿用舊傳統模式，夾到該裝備強化上限 capEn），其餘一律 0。
- *   - 遺物（玩家 2026-11-06）：隨機 +0～+5（RELIC_EN），由 afk-relicplus 轉成遺物合成等級。
+ *   - 遺物（玩家 2026-11-06）：隨機 +0～+5（RELIC_EN），由 afk-relicplus 轉成遺物合成等級；
+ *     遺物掉落機率不算隊伍組合加成（一律 1 人），再加「偷懶懲罰」÷2。
  *   - 每角色開關存 localStorage afk_trad_<slot>；未開/未載/關掉本外掛 → 恆 0，與原版完全一致。
  *
  * 開關：afk-toggles 的 'traditional'（整個功能總開關）＋ 每存檔位各自的開關（本檔）。
@@ -83,8 +84,45 @@
         return rollEnhance(d);
     };
 
+    // ── 遺物掉落機率（玩家 2026-11-06）：有開傳統的角色 ──
+    //   1. 不算隊伍組合加成：核心的遺物機率會乘「有效隊伍人數」（partyDropRate），這裡除回去 → 一律當 1 人算
+    //      （夢域鏡另有「最多 ×8」的調整，一樣除掉）
+    //   2. 偷懶懲罰：再 ÷2
+    //   兔腳等其他遺物掉落加成照舊。核心每次判定遺物都會問 __afkRelicDropMult，所以包在它外面。
+    var TRAD_RELIC_LAZY = 0.5;
+    function partyNow() {
+        try {
+            var p = (typeof player !== 'undefined') ? player : null; if (!p) return 1;
+            var have = Math.max(1, Number(typeof partyRewardMult === 'function' ? partyRewardMult() : 1) || 1);
+            if (p.sherineDream && p.sherineMad) return Math.min(8, 1 + (p.allies || []).filter(function (a) { return a && !a._downed; }).length);   // 夢域鏡：relicplus 已把隊伍倍率換成最多 ×8
+            return have;
+        } catch (e) { return 1; }
+    }
+    var inRelicMult = false;
+    function wrapRelicMult() {
+        var o = window.__afkRelicDropMult;
+        if (o && o.__afkTrad) return true;
+        var base = (typeof o === 'function') ? o : function () { return (typeof mainPlayerHasEquippedEffect === 'function' && mainPlayerHasEquippedEffect('relicDropX2')) ? 2 : 1; };
+        var w = function () {
+            if (inRelicMult) return base.apply(this, arguments);   // 被別的外掛（afk-rift2）夾在中間包了兩層時，只算一次
+            inRelicMult = true;
+            var m;
+            try { m = base.apply(this, arguments); } finally { inRelicMult = false; }
+            try {
+                var p = (typeof player !== 'undefined') ? player : null;
+                if (p && !p._allyName && isOn()) m = m / partyNow() * TRAD_RELIC_LAZY;
+            } catch (e) {}
+            return m;
+        };
+        w.__afkTrad = true;
+        window.__afkRelicDropMult = w;
+        return true;
+    }
+    wrapRelicMult();
+    window.addEventListener('load', wrapRelicMult);   // 萬一 afk-relicplus 晚一步才定義，load 時再包一次
+
     // ── 對外 API ──────────────────────────────────────────────
-    window.AFK_TRAD = { isOn: isOn, setOn: setOn, roll: rollEnhance };
+    window.AFK_TRAD = { isOn: isOn, setOn: setOn, roll: rollEnhance, relicLazy: TRAD_RELIC_LAZY, partyNow: partyNow };
 
     // ── UI：選角卡片右上角「傳統」checkbox ──────────────────────
     //   卡片每次 renderLoadSelect 都 innerHTML 重建 → wrap 後每次重繪重注入（同 afk-slotinfo 手法）。
