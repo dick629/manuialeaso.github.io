@@ -85,6 +85,27 @@
   var heal = function (pct) { party().forEach(function (x) { setHp(x, Math.min(mhp(x), Math.floor(hpOf(x) + mhp(x) * pct))); }); };
   var execute = function (th, back, label) { party().forEach(function (x) { if (hpOf(x) < mhp(x) * th) { setHp(x, 1); (function (y) { setTimeout(function () { try { if (run && !y.dead) setHp(y, Math.max(hpOf(y), Math.floor(mhp(y) * back))); } catch (e) {} }, 1000); })(x); } }); if (label) clog(label); };
   var tag = function (c, s) { return '<span class="font-bold" style="color:' + c + '">【' + s + '】</span>'; };
+  // 增益全消：清掉身上的增益（變身、72 分鐘以上的長效增益不算）
+  var dispel = function (label, list) { (list || party()).forEach(function (x) { var b = x && x.buffs; if (!b) return; Object.keys(b).forEach(function (k) { if (k !== 'poly' && typeof b[k] === 'number' && b[k] > 0 && b[k] < 43200) b[k] = 0; }); }); try { calcStats(); } catch (e) {} if (label) clog(label); };
+  var barrier = function (x) { var b = x && x.buffs; return !!(b && ((b.sk_magic_shield || 0) > 0 || (b.sk_abs_barrier || 0) > 0)); };
+  var MELEE = { knight: 1, dark: 1, dragon: 1, warrior: 1, royal: 1 };
+  var front = function (x) { return !!(x && MELEE[x.cls]); };
+  // 四龍・裂縫的房間傷害（每秒，侵蝕、光蝕另外算）：物理 1,000（扣傷害減免）＋真實 1,000＋魔法 1,000（照魔防）＋該龍屬性 1,000（照屬性抗性）＋最大 HP 1%
+  var DRAGON_ELE = { '安塔瑞斯': 'earth', '法利昂': 'water', '林德拜爾': 'wind', '巴拉卡斯': 'fire' };
+  var ROOM = { phys: 1000, tru: 1000, mag: 1000, ele: 1000, pct: 0.01 };
+  var roomDmg = function (run) {
+    var ele = DRAGON_ELE[run.pick] || 'none';
+    party().forEach(function (x) {
+      var d = x.d || x, ph = Math.max(0, ROOM.phys - (Number(d.dr) || 0));
+      var mg = ROOM.mag * (typeof mrMult === 'function' ? mrMult(Math.max(0, Number(d.mr) || 0)) : 1);
+      var el = ROOM.ele * (1 - (typeof magicAttrDefense === 'function' ? magicAttrDefense(x, ele) : 0));
+      L.boss.hurt(x, ph + mg + el, false); L.boss.hurt(x, ROOM.tru + mhp(x) * ROOM.pct);
+    });
+  };
+  // 封印戰：四龍守四角（第一段會被墜落物打，不能治療，倒下就失去那一項）
+  var DRAGONS = [['ant', '安塔瑞斯', '全隊受到的傷害 −10%'], ['fa', '法利昂', '受到的治療 +20%'], ['val', '巴拉卡斯', '造成的傷害 +10%'], ['lin', '林德拜爾', '裁決之光的傷害 −50%']];
+  var dragonOn = function (k) { return !!(run && run.dragons && run.dragons[k] > 0); };
+  var judge = function (x, back) { var cur = hpOf(x); if (cur >= mhp(x) * 0.5) return; var to = dragonOn('lin') ? Math.max(1, Math.floor(cur - (cur - 1) / 2)) : 1; setHp(x, to); setTimeout(function () { try { if (run) setHp(x, Math.max(hpOf(x), Math.floor(mhp(x) * back))); } catch (e) {} }, 1000); };
 
   // ── 副本表 ──
   // stage：{ n 名稱, waves 一般波數, pool 怪物地圖, per 每波隻數, dur 秒（時間到就叫頭目／timed 撐滿就過）, boss:{ n, re, hp 絕對值或 hpX 倍率, lv, adds, mech(run,b,t,M), dmgIn(run,b,amt,kind,M) } }
@@ -113,7 +134,7 @@
         mech: function (run, b, t, M) {
           if (every(M, 'senis', 15, t)) heal(0.05);
           if (!M.wit && b.curHp <= b.hp * 0.2) { M.wit = t + 600; clog(tag('#fde047', '作證') + '肯恩舉起了手——裁決之光要落下了（撐 60 秒）。'); }
-          if (M.wit) { if (every(M, 'pillar', 10, t)) { party().sort(function () { return Math.random() - 0.5; }).slice(0, 3).forEach(function (x) { L.boss.hurt(x, mhp(x) * 0.4); }); clog(tag('#fde047', '光柱') + '三道光柱落下。'); }
+          if (M.wit) { if (every(M, 'pillar', 10, t)) { var blk = 0; party().sort(function () { return Math.random() - 0.5; }).slice(0, 3).forEach(function (x) { if (barrier(x) && !blk) { blk = 1; return; } L.boss.hurt(x, mhp(x) * 0.4); }); clog(tag('#fde047', '光柱') + '三道光柱落下。' + (blk ? '<span class="text-sky-300">（魔法屏障擋下了一道）</span>' : '')); }
             if (t >= M.wit) { clog('<span class="text-amber-200">最後一道光落在肯恩身上。他沒有躲。</span>'); b.curHp = 0; b._rdForce = true; } }
         }, dmgIn: function (run, b, amt, kind, M) { return M.wit && !b._rdForce ? 0 : amt; } } }
     ],
@@ -123,13 +144,16 @@
     stages: [
       { n: '艾爾摩礦坑', waves: 4, onTick: function (run, t, M) { if (every(M, 'gold', 45, t)) { if (cnt('afk_cancel_scroll') > 0) { take('afk_cancel_scroll', 1); clog('<span class="text-emerald-300">金線碰到相消的光，縮了回去（用掉相消術卷軸 1）。</span>'); } else { run.meter -= 25; clog(tag('#fde047', '金線') + '金線碰到了阿斯泰——穩定度 −25%。'); } } },
         boss: { n: '搜尋之光', re: '光|天使', hp: 1e7 } },
-      { n: '紅獅王的冬至夜', waves: 3, onTick: function (run, t, M) { if (!M.horn) M.horn = t + 3600; if (t >= M.horn && !M.hornEnd) { M.hornEnd = t + 300; clog(tag('#fde047', '號角') + '聖光滿溢，30 秒全隊每秒 −2%。'); } if (M.hornEnd && t < M.hornEnd && t % 10 === 0) allPct(0.02); },
+      { n: '紅獅王的冬至夜', waves: 3, onTick: function (run, t, M) { if (!M.horn) M.horn = t + 3600; if (t >= M.horn && !M.hornEnd) { M.hornEnd = t + 300; clog(tag('#fde047', '號角') + '聖光滿溢，30 秒全隊每秒 −2%。'); } if (M.hornEnd && t < M.hornEnd && t % 10 === 0) allPct(0.02);
+          if (every(M, 'shadow', 60, t)) { L.boss.summon(findBase('影'), 1, { _rd: true, _dimRift: true, _rdShadow: t + 150, n: '走向窗邊的影子', noAutoTeleport: true }); clog(tag('#a78bfa', '影子') + '一道影子往窗邊走——15 秒內打倒牠！'); }
+          alive(function (x) { return x._rdShadow && t >= x._rdShadow; }).forEach(function (x) { x.curHp = 0; x._dead = true; run.meter -= 15; clog('<span class="text-red-400">影子走到了窗邊——穩定度 −15%。</span>'); }); },
         boss: { n: '守門影', re: '影', hp: 1.5e7 } },
       { n: '反王之夜', waves: 3, boss: { n: '裂痕的窺視者', re: '窺視|眼', hp: 4.5e7, final: true,
         mech: function (run, b, t, M) {
           if (!M.t0) M.t0 = t;
           if (every(M, 'chant', 40, t)) { M.chant = t + 80; M.mark = b.curHp; clog(tag('#a78bfa', '詠唱') + '8 秒內打掉牠 3%！'); }
           if (M.chant && t >= M.chant) { if (M.mark - b.curHp < b.hp * 0.03) { run.meter -= 20; clog('<span class="text-red-400">詠唱完成——穩定度 −20%。</span>'); } M.chant = 0; }
+          if (every(M, 'disp', 20, t)) { dispel(tag('#93c5fd', '黑夜') + '全隊的增益被抹去，目盲 5 秒。'); party().forEach(function (x) { status(x, 'blind', 50); }); }
           if (every(M, 'call', 15, t)) L.boss.summon(findBase('呼喊|亡靈|幽靈'), 2, { _rd: true, _dimRift: true, _rdWorm: true, noAutoTeleport: true });
         }, dmgOut: function (run, b, M) { return M.t0 && tk() - M.t0 > 5400 ? 2 : 1; } } }
     ],
@@ -137,19 +161,26 @@
     reward: function (r) { return [give('afk_rd_sand', rr(3, 5) + (r.meter >= 80 ? 2 : 0)), Math.random() < 0.2 ? give('afk_rd_water', 1) : '', give('afk_rift_shard', rr(30, 50)), give('afk_dream_crystal', 30)]; } });
 
   def({ id: 'clock', n: 'A 沉默的鐘樓', tier: 1, fee: { blood: 200 }, min: 20, limit: 2, lore: '10 層，每層打倒鐘擺守衛拿鑰匙上樓；第 5 層鏽蝕的鐘匠、第 10 層停擺之主 克羅諾斯塔（每 60 秒敲鐘，全隊時間停止 2 秒）。剩下的時間越多寶箱越好（>10 分、>5 分、其他）。',
-    stages: (function () { var a = []; for (var i = 1; i <= 10; i++) a.push({ n: '第 ' + i + ' 層', waves: 1, per: 3, boss: i === 10 ? { n: '停擺之主 克羅諾斯塔', re: '時|鐘|守護', hpX: 14, final: true, mech: function (run, b, t, M) { if (every(M, 'bell', 60, t)) { party().forEach(function (x) { if (Math.random() < 0.5) status(x, 'stun', 20); }); clog(tag('#93c5fd', '敲鐘') + '時間停止了 2 秒（站在發光齒輪上的人不受影響）。'); } } }
+    stages: (function () { var a = []; for (var i = 1; i <= 10; i++) a.push({ n: '第 ' + i + ' 層', waves: 1, per: 3, boss: i === 10 ? { n: '停擺之主 克羅諾斯塔', re: '時|鐘|守護', hpX: 14, final: true, mech: function (run, b, t, M) {
+        if (!M.bell) M.bell = t + 600;
+        if (!M.gear && t >= M.bell - 50) { M.gear = 1; M.safe = false; L.boss.summon('afk_rd_base', 1, { _rd: true, _dimRift: true, _rdGear: true, n: '發光的齒輪', hp: Math.max(1000, Math.floor(b.hp * 0.004)), noAutoTeleport: true }); clog(tag('#fde047', '齒輪') + '發光的齒輪轉起來了——5 秒內打倒它，鐘聲就停不住你們。'); }
+        if (t >= M.bell) { M.bell = t + 600; M.gear = 0; alive(function (x) { return x._rdGear; }).forEach(function (x) { x.curHp = 0; x._dead = true; }); if (M.safe) clog('<span class="text-emerald-300">鐘響了，但齒輪的光護住了全隊。</span>'); else { party().forEach(function (x) { status(x, 'stun', 20); }); clog(tag('#93c5fd', '敲鐘') + '時間停止了 2 秒。'); } }
+      } }
       : { n: i === 5 ? '鏽蝕的鐘匠' : '鐘擺守衛', re: '機械|人偶|守衛', hpX: i === 5 ? 6 : 2 } }); return a; })(),
+    onKill: function (r, m) { if (m._rdGear && r.M) { r.M.safe = true; clog('<span class="text-emerald-300">齒輪的光亮了起來。</span>'); } },
     reward: function (r) { var left = (r.until - Date.now()) / 60000, g = left > 10 ? 3 : left > 5 ? 2 : 1; return [give('afk_dim_crystal', 20 * g), give('afk_rift_shard', 15 * g), g >= 3 && Math.random() < 0.2 ? give('afk_mio_dim', 1) : '']; } });
 
   def({ id: 'mirror', n: 'B 倒影迴廊', tier: 1, fee: { blood: 300 }, min: 15, lore: '3 個房間，敵人是你隊伍的倒影（你們裂縫面板的 70%）。最後的映照者 米菈：倒影活著時她受到的傷害 −50%。',
-    stages: [1, 2, 3].map(function (i) { return { n: '第 ' + i + ' 房', waves: 0, mirror: true, boss: i === 3 ? { n: '映照者 米菈', re: '鏡|映', hpX: 12, final: true, mirrorAdds: true, dmgIn: function (run, b, amt) { return alive(function (x) { return x._rdMirror; }).length ? amt * 0.5 : amt; } } : null }; }),
+    stages: [1, 2, 3].map(function (i) { return { n: '第 ' + i + ' 房', waves: 0, mirror: true, boss: i === 3 ? { n: '映照者 米菈', re: '鏡|映', hpX: 12, final: true, mirrorAdds: true,
+      mech: function (run, b, t, M) { if (!every(M, 'swap', 25, t)) return; var ms = alive(function (x) { return x._rdMirror; }); if (!ms.length) return; var m = ms[Math.floor(Math.random() * ms.length)], x = m._rdOf === 'p' ? P() : (P().allies || [])[m._rdOf]; if (!x || hpOf(x) <= 0) return; var rx = hpOf(x) / mhp(x), rm = m.curHp / m.hp; setHp(x, Math.max(1, Math.floor(mhp(x) * rm))); m.curHp = Math.max(1, Math.floor(m.hp * rx)); clog(tag('#c4b5fd', '映照') + who(x) + '和自己的倒影交換了位置（HP 比例對調）。'); },
+      dmgIn: function (run, b, amt) { return alive(function (x) { return x._rdMirror; }).length ? amt * 0.5 : amt; } } : null }; }),
     reward: function () { return [give('afk_rd_mirror', 1), give('afk_dim_crystal', 30)]; } });
 
-  def({ id: 'dragons', n: '四龍副本・裂縫', tier: 2, fee: { blood: 500 }, min: 40, pick: [['安塔瑞斯', '安塔瑞斯'], ['法利昂', '法利昂'], ['林德拜爾', '林德拜爾'], ['巴拉卡斯', '巴拉卡斯']], lore: '每座龍每天 1 次。房間的傷害每秒最大 HP 1%（暫定）；龍之護甲每 40 秒 10 秒，每一下先扣 5,000；每 4 分鐘沒打倒「龍怒」傷害 +20%。',
+  def({ id: 'dragons', n: '四龍副本・裂縫', tier: 2, fee: { blood: 500 }, min: 40, pick: [['安塔瑞斯', '安塔瑞斯'], ['法利昂', '法利昂'], ['林德拜爾', '林德拜爾'], ['巴拉卡斯', '巴拉卡斯']], onTick: null, lore: '每座龍每天 1 次。整場房間每秒造成物理 1,000、真實 1,000、魔法 1,000、該龍屬性 1,000（各自照減傷、魔防、屬性抗性算）與最大 HP 1%；龍之護甲每 40 秒 10 秒，每一下先扣 5,000；每 4 分鐘沒打倒「龍怒」傷害 +20%。',
     stages: [
-      { n: '巢穴前段', waves: 3 },
-      { n: '巢穴深處', waves: 2, boss: { n: '', re: '', hpX: 30, final: true, dragon: true,
-        mech: function (run, b, t, M) { if (t % 10 === 0) allPct(0.01); if (every(M, 'armor', 40, t)) { M.armor = t + 100; clog(tag('#fb923c', '龍之護甲') + '10 秒內每一下先扣 5,000。'); } if (every(M, 'fury', 240, t)) { M.fury = (M.fury || 0) + 1; clog(tag('#f87171', '龍怒') + '傷害 +' + (M.fury * 20) + '%'); } },
+      { n: '巢穴前段', waves: 3, onTick: function (run, t) { if (t % 10 === 0) roomDmg(run); } },
+      { n: '巢穴深處', waves: 2, onTick: function (run, t) { if (t % 10 === 0 && !bossOf()) roomDmg(run); }, boss: { n: '', re: '', hpX: 30, final: true, dragon: true,
+        mech: function (run, b, t, M) { if (t % 10 === 0) roomDmg(run); if (every(M, 'armor', 40, t)) { M.armor = t + 100; clog(tag('#fb923c', '龍之護甲') + '10 秒內每一下先扣 5,000。'); } if (every(M, 'fury', 240, t)) { M.fury = (M.fury || 0) + 1; clog(tag('#f87171', '龍怒') + '傷害 +' + (M.fury * 20) + '%'); } },
         dmgIn: function (run, b, amt, kind, M) { return (M.armor || 0) > tk() ? Math.max(0, amt - 5000) : amt; }, dmgOut: function (run, b, M) { return 1 + 0.2 * (M.fury || 0); } } }
     ],
     reward: function () { return [give('afk_rd_scale', rr(3, 5)), Math.random() < 0.02 ? give('afk_abyss_key', 1) : '', give('afk_rift_shard', 50)]; } });
@@ -178,7 +209,7 @@
       mech: function (run, b, t, M) {
         var f = +run.pick || 1, cd = f === 5 ? 0.6 : 1;
         if (every(M, 'block', 20, t)) { M.block = t + 60; clog(tag('#fde047', '擋') + '6 秒內受傷 −80%。'); }
-        if ((f === 1 || f === 5) && every(M, 'sil', 30 * cd, t)) { party().forEach(function (x) { status(x, 'silence', 30); }); clog(tag('#93c5fd', '號角') + '全隊沉默 3 秒。'); }
+        if ((f === 1 || f === 5) && every(M, 'sil', 30 * cd, t)) { party().forEach(function (x) { status(x, 'silence', 30); }); dispel(tag('#93c5fd', '號角') + '全隊沉默 3 秒，增益全部消失。'); }
         if ((f === 2 || f === 5) && every(M, 'rain', 20 * cd, t)) { party().sort(function () { return Math.random() - 0.5; }).slice(0, 3).forEach(function (x) { L.boss.hurt(x, mhp(x) * 0.15); }); clog(tag('#fde047', '光羽雨') + '三個人被光羽打中。'); }
         if (f === 3 || f === 5) [0.7, 0.4].forEach(function (th) { if (!M['fly' + th] && b.curHp <= b.hp * th) { M['fly' + th] = 1; M.fly = t + 100; clog(tag('#fde047', '光翼') + '阿納金飛了起來，10 秒打不到。'); } });
         if ((f === 4 || f === 5) && every(M, 'guard', 60 * cd, t)) { L.boss.summon(findBase('天使|守衛'), 3, { _rd: true, _dimRift: true, _rdAdd: true, n: '天梯守衛', noAutoTeleport: true }); clog(tag('#fde047', '天梯') + '三名天梯守衛降下。'); }
@@ -192,17 +223,20 @@
     stages: [
       { n: '墜星', waves: 0, boss: { n: '墜星', re: '星|石像', hpX: 6, adds: 3, addN: '墜星', stars: true, dmgIn: function (run, b, amt, kind) { return amt; } } },
       { n: '星蝕者', waves: 0, boss: { n: '星蝕者 艾斯崔亞', re: '星|女神|天使', hpX: 40, final: true,
-        mech: function (run, b, t, M) { if (every(M, 'line', 45, t)) { party().sort(function () { return Math.random() - 0.5; }).slice(0, 2).forEach(function (x) { L.boss.hurt(x, mhp(x) * 0.5); }); clog(tag('#a78bfa', '星線') + '兩個人被星線連住，各受到最大 HP 50%。'); } if (b.curHp <= b.hp * 0.2 && every(M, 'meteor', 3, t)) allPct(0.1 * 0.3); } } }
+        mech: function (run, b, t, M) { if (every(M, 'line', 45, t)) { var two = party().sort(function () { return Math.random() - 0.5; }).slice(0, 2); if (two.length === 2) { var k = front(two[0]) && front(two[1]) ? 0.5 : (front(two[0]) || front(two[1])) ? 0.1 : 0; if (k) two.forEach(function (x) { L.boss.hurt(x, mhp(x) * k); }); clog(tag('#a78bfa', '星線') + who(two[0]) + '和' + who(two[1]) + '被星線連住' + (k === 0.5 ? '——兩個人都站在前排，太近了，各受到最大 HP 50%。' : k ? '——一前一後，各受到最大 HP 10%。' : '——兩個人都在後排，距離夠遠。')); } } if (b.curHp <= b.hp * 0.2 && every(M, 'meteor', 3, t)) allPct(0.1 * 0.3); } } }
     ],
     reward: function () { return [give('afk_rd_eclipse', rr(1, 2)), give('afk_mio_dim', 1), give('afk_dim_crystal', 100)]; } });
 
   def({ id: 'seal', n: '封印戰「裂縫之中」', tier: 3, per: 'week', fee: { blood: 1500, items: [['afk_abyss_key', 1]] }, min: 30, needClear: 'anakin5', lore: '每週 1 次，三段。被鑿穿的天空（墜落的天使）→ 裂縫之中（第一世、第二世的你；監視之眼每 10 秒裁決之光：HP 低於 50% 剩 1，1 秒內補回 60%；你本人不吃）→ 封印（殷海薩：每 45 秒吸走增益、回 1%；HP 75／50／25% 縫合 3 個縫口，20 秒內打掉，沒打掉每個回 5%；HP 10% 光核 30 秒內打掉＝封印成功，不然回到 15%）。',
     stages: [
-      { n: '被鑿穿的天空', waves: 6, pool: ['pride_91_100'] },
-      { n: '裂縫之中', waves: 0, boss: { n: '第二世的你', re: '騎士|戰士', hpX: 16, adds: 1, addN: '第一世的你', mech: function (run, b, t, M) { if (every(M, 'eye', 10, t)) { party().forEach(function (x) { if (x !== P() && hpOf(x) < mhp(x) * 0.5) { setHp(x, 1); (function (y) { setTimeout(function () { try { setHp(y, Math.max(hpOf(y), Math.floor(mhp(y) * 0.6))); } catch (e) {} }, 1000); })(x); } }); clog(tag('#fde047', '裁決之光') + '監視之眼的光落下（死亡是不會被裁決的——你本人不受影響）。'); } } } },
+      { n: '被鑿穿的天空', waves: 6, pool: ['pride_91_100'], onTick: function (run, t, M) { if (!every(M, 'fall', 10, t)) return; var ks = DRAGONS.filter(function (d) { return run.dragons[d[0]] > 0; }); if (!ks.length) return; var d = ks[Math.floor(Math.random() * ks.length)]; run.dragons[d[0]] -= rr(12, 25); if (run.dragons[d[0]] <= 0) clog('<span class="text-red-400">' + d[1] + ' 被墜落的天使壓垮了——失去「' + d[2] + '」。</span>'); } },
+      { n: '裂縫之中', waves: 0, boss: { n: '第二世的你', re: '騎士|戰士', hpX: 16, adds: 1, addN: '第一世的你', mech: function (run, b, t, M) {
+        if (every(M, 'eyes', 20, t)) L.boss.summon(findBase('眼'), 2, { _rd: true, _dimRift: true, _rdAdd: true, _rdEye: true, n: '監視之眼', noAutoTeleport: true });
+        if (every(M, 'eye', 10, t) && alive(function (x) { return x._rdEye; }).length) { party().forEach(function (x) { if (x !== P()) judge(x, 0.6); }); clog(tag('#fde047', '裁決之光') + '監視之眼的光落下（死亡是不會被裁決的——你本人不受影響）。'); }
+      } } },
       { n: '封印', waves: 0, boss: { n: '殷海薩', re: '殷海薩|女神', hp: 6e8, final: true,
         mech: function (run, b, t, M) {
-          if (every(M, 'need', 45, t)) { b.curHp = Math.min(b.hp, b.curHp + Math.floor(b.hp * 0.01)); clog(tag('#fde047', '我需要') + '殷海薩吸走了光，回復 1%。'); }
+          if (every(M, 'need', 45, t)) { b.curHp = Math.min(b.hp, b.curHp + Math.floor(b.hp * 0.01)); dispel(tag('#fde047', '我需要') + '殷海薩吸走了全隊的增益，回復 1%。'); }
           [0.75, 0.5, 0.25].forEach(function (th) { if (!M['st' + th] && b.curHp <= b.hp * th) { M['st' + th] = 1; M.stitch = t + 200; L.boss.summon('afk_rd_base', 3, { _rd: true, _dimRift: true, _rdAdd: true, _rdStitch: true, n: '縫口', hp: Math.floor(b.hp * 0.02), noAutoTeleport: true }); clog(tag('#a78bfa', '縫合') + '3 個縫口出現了——20 秒內打掉！'); } });
           if (M.stitch && t >= M.stitch) { var left = alive(function (x) { return x._rdStitch; }); left.forEach(function (x) { x.curHp = 0; x._dead = true; }); if (left.length) { b.curHp = Math.min(b.hp, b.curHp + Math.floor(b.hp * 0.05 * left.length)); clog('<span class="text-red-400">沒打掉的縫口讓她回復了 ' + (5 * left.length) + '%。</span>'); } M.stitch = 0; }
           if (!M.core && b.curHp <= b.hp * 0.1) { M.core = t + 300; L.boss.summon('afk_rd_base', 1, { _rd: true, _dimRift: true, _rdAdd: true, _rdCore: true, n: '最早的那一點光', hp: Math.floor(b.hp * 0.03), noAutoTeleport: true }); clog(tag('#fde047', '光核') + '30 秒內打掉「最早的那一點光」！'); }
@@ -210,11 +244,21 @@
         },
         dmgIn: function (run, b, amt, kind, M) { return M.core ? 0 : amt; } } }
     ],
-    onKill: function (r, m) { if (m._rdCore) { var b = bossOf(); if (b) { b.curHp = 0; b._rdForce = true; clog('<span class="text-yellow-200 font-bold">最早的那一點光熄滅了。天空被縫上了。</span>'); } } },
+    onStart: function (r) { r.dragons = { ant: 100, fa: 100, val: 100, lin: 100 }; r.mirBuff = 0; clog('<span class="text-amber-200">四龍守住了四角：' + DRAGONS.map(function (d) { return d[1] + '（' + d[2] + '）'; }).join('、') + '。</span>'); },
+    onKill: function (r, m) { if (r.si === 1 && (m._rdBoss || (m._rdAdd && !m._rdEye))) { r.mirBuff += 0.1; clog('<span class="text-emerald-300">收回了' + esc(m.n) + '——全隊造成的傷害 +' + Math.round(r.mirBuff * 100) + '%。</span>'); } if (m._rdCore) { var b = bossOf(); if (b) { b.curHp = 0; b._rdForce = true; clog('<span class="text-yellow-200 font-bold">最早的那一點光熄滅了。天空被縫上了。</span>'); } } },
     reward: function (r) { var s = store(), a = []; if (!s.sealFirst) { s.sealFirst = Date.now(); a.push(give('afk_rd_remnant', 1), give('afk_rd_thread', 10)); a.push('稱號「代理之人」'); try { var dr = DR.rec(P()); dr.agent = true; } catch (e) {} } a.push(give('afk_rd_thread', rr(3, 5)), Math.random() < 0.1 ? give('afk_rd_remnant', 1) : '', give('afk_rift_shard', 200)); return a; } });
 
   def({ id: 'endless', n: '無盡的裂縫', tier: 3, fee: { blood: 500, items: [['afk_star_core', 15], ['afk_rift_shard', 50]] }, min: 0, limit: 2, needClear: 'seal', endless: true, lore: '沒有時間上限，每 5 分鐘一層，每層最後一隻頭目。怪物 HP、傷害 ×（1＋0.15×層數）。你倒下或自己撤離就結束，記最高層數。每層頭目碎光 10＋層數；第 5 層起每層 5% 天空的縫線；第 10 層起每隻頭目 0.5% 殷海薩的殘光。',
     stages: [], reward: function (r) { var s = store(); s.best = Math.max(s.best || 0, r.floor || 0); return ['最高到第 ' + (r.floor || 0) + ' 層（紀錄 ' + s.best + '）']; } });
+  def({ id: 'doom', n: '屠龍者的劍塚', npc: 'doom', tier: 0, noRift: true, fee: {}, min: 15, lore: '只有修習「絕望屠龍者」的龍騎士能進入（一轉後、席琳夢域鏡）。三段：劍塚的亡者 → 斷劍的龍騎士 → 握劍的回憶。最後的頭目每 15 秒「龍之咆哮」全隊受到最大 HP 10%；HP 50% 召喚兩把「不肯放下的劍」，劍還在時他受到的傷害 −50%。通關後就能在絕望屠龍者下拿起武器（拿著武器時一般攻擊的倍率從 ×10 變 ×5）。',
+    stages: [
+      { n: '劍塚的亡者', waves: 3, pool: ['dragon_valley'] },
+      { n: '斷劍的龍騎士', waves: 2, pool: ['dragon_valley'], boss: { n: '斷劍的龍騎士', re: '龍騎士|騎士', hpX: 6 } },
+      { n: '握劍的回憶', waves: 0, boss: { n: '握劍的回憶', re: '龍騎士|騎士', hpX: 14, final: true,
+        mech: function (run, b, t, M) { if (every(M, 'roar', 15, t)) allPct(0.1, tag('#f87171', '龍之咆哮') + '全隊受到最大 HP 10%。'); if (!M.sw && b.curHp <= b.hp * 0.5) { M.sw = 1; L.boss.summon(findBase('劍|騎士'), 2, { _rd: true, _rdAdd: true, n: '不肯放下的劍', noAutoTeleport: true }); clog(tag('#fde047', '劍') + '兩把劍從塚裡站了起來。'); } },
+        dmgIn: function (run, b, amt) { return alive(function (x) { return x._rdAdd; }).length ? amt * 0.5 : amt; } } }
+    ],
+    reward: function () { var p = P(), a = []; if (!p.afkDoomWield) { p.afkDoomWield = Date.now(); a.push('「握劍」：絕望屠龍者也能裝備武器了'); } a.push(give('afk_dream_crystal', 50)); return a; } });
   var BYID = {}; D.forEach(function (d) { BYID[d.id] = d; });
 
   // ── 記錄 ──
@@ -226,8 +270,8 @@
   var feeTxt = function (d) { var a = []; if (d.fee.blood) a.push('血龍鑽 ' + d.fee.blood.toLocaleString()); (d.fee.items || []).forEach(function (x) { a.push(nm(x[0]) + ' ×' + x[1]); }); return a.join('＋'); };
   var canEnter = function (d, pick) {
     var p = P(); if (!p) return '請先進入遊戲。'; if (p.classicMode) return '經典模式沒有。';
-    if (!DR.on()) return '要先在席琳那裡打開次元裂縫。';
-    if (DR.recoverPct(p) < tierNeed(d)) return '要取回 ' + tierNeed(d) + '% 以上的力量。';
+    if (d.id === 'doom') { if (p.cls !== 'dragon' || p.rebirthArt !== 'k_doom') return '只有修習絕望屠龍者的龍騎士能進入。'; if (!(Math.floor(p.rebirth || 0) >= 1)) return '一轉後才能進入。'; if (!(p.sherineDream && p.sherineMad)) return '要在席琳夢域鏡。'; if (p.afkDoomWield) return '你已經握回了劍。'; }
+    else { if (!DR.on()) return '要先在席琳那裡打開次元裂縫。'; if (DR.recoverPct(p) < tierNeed(d)) return '要取回 ' + tierNeed(d) + '% 以上的力量。'; }
     var s = store(p); if (d.needClear && !s.clear[d.needClear]) return '要先通關「' + (d.needClear === 'anakin5' ? '阿納金第 5 形態' : BYID[d.needClear].n) + '」。';
     if (d.pickChain && +pick > 1 && !s.clear['anakin' + (+pick - 1)]) return '要先打倒前一個形態。';
     if (used(d, pick) >= d.limit) return d.per === 'week' ? '這週已經挑戰過了。' : '今天的次數用完了。';
@@ -276,19 +320,19 @@
   function finish(endless) {
     var r = run, d = r.D, s = store(), got;
     if (!endless) s.clear[d.id + (d.pickChain ? r.pick : '')] = s.clear[d.id] = Date.now();
-    got = (d.reward(r) || []).filter(Boolean); var pt = endless ? (r.floor > 1 ? points() : '') : points(); if (pt) got.push(pt);
+    got = (d.reward(r) || []).filter(Boolean); var pt = d.noRift ? '' : endless ? (r.floor > 1 ? points() : '') : points(); if (pt) got.push(pt);
     leave('<span class="text-cyan-200 font-bold">🏆 「' + esc(d.n) + '」' + (endless ? '結束' : '通關') + '。</span><span class="text-amber-200">得到：' + (got.length ? got.map(esc).join('、') : '—') + '</span>');
   }
   var place = function (idx, baseId, Lv, hpMult, extra, absHp) {
     var b = DB.mobs[baseId] || DB.mobs.afk_rd_base, m = scale(b, Lv, hpMult);
     if (absHp) m.hp = Math.round(absHp);
-    var mob = L.boss.place(idx, m, Object.assign({ mobId: baseId, _rd: true, _dimRift: true, noAutoTeleport: true, noCharm: true }, extra || {}));
+    var mob = L.boss.place(idx, m, Object.assign({ mobId: baseId, _rd: true, _dimRift: !(run && run.D.noRift), noAutoTeleport: true, noCharm: true }, extra || {}));
     if (extra && extra.n) mob.n = extra.n;
     return mob;
   };
   var endlessK = function () { return run.D.endless ? 1 + 0.15 * run.floor : 1; };
   var spawnWave = function () {
-    var st = curStage(), d = run.D, hpk = (1 + R.allyHp * allyN()) * R.riftHp * endlessK(), lv = run.lv;
+    var st = curStage(), d = run.D, hpk = (1 + R.allyHp * allyN()) * (d.noRift ? 1 : R.riftHp) * endlessK(), lv = d.noRift ? Math.max(60, Number(P().lv) || 80) : run.lv;
     run.pending = false;
     var bossTime = st.boss && (st.dur ? (tk() - run.st0) >= st.dur * 10 : run.wave >= (st.waves || 0));
     if (st.timed) bossTime = st.waveBoss && st.waveBoss[run.wave + 1];
@@ -315,7 +359,7 @@
     var p = P(), list = [p].concat((p.allies || []).filter(Boolean)).slice(0, skipBoss ? 2 : 4), slots = skipBoss ? [1, 3] : [0, 1, 3, 4];
     list.forEach(function (x, i) {
       var mh = Math.max(1000, Math.round((x.mhp || 1000) * 0.7 * 15 * (hpk / R.riftHp))), dmg = Math.max(20, Math.round(((x.d && (x.d.meleeDmg || x.d.dmg)) || 60) * 0.7));
-      var m = place(slots[i], findBase('騎士|戰士'), lv, 1, { _rdMirror: true, _rdAdd: !!skipBoss, n: (x === p ? '你' : (x.name || '傭兵')) + '的倒影', boss: false }, mh);
+      var m = place(slots[i], findBase('騎士|戰士'), lv, 1, { _rdMirror: true, _rdOf: x === p ? 'p' : (p.allies || []).indexOf(x), _rdAdd: !!skipBoss, n: (x === p ? '你' : (x.name || '傭兵')) + '的倒影', boss: false }, mh);
       m.dmg = [1, dmg];
     });
     if (!skipBoss) run.wave++;
@@ -363,6 +407,8 @@
         if (run && target && target._rd && amount > 0) {
           var bd = run.bd;
           if (target._rdBoss && bd && bd.dmgIn) amount = bd.dmgIn(run, target, amount, opt && opt.kind, run.M);
+          if (dragonOn('val')) amount *= 1.1;
+          if (run.mirBuff) amount *= 1 + run.mirBuff;
           if (target._rdStar) { var k = opt && opt.kind; if (target._rdStar === k) amount = 0; else if (target._rdStar === 'all' && !(opt && opt.trueDmg)) amount *= 0.2; }
         }
       } catch (e) {}
@@ -371,7 +417,17 @@
     return true;
   };
   if (!hookDamage()) { try { document.addEventListener('DOMContentLoaded', hookDamage); } catch (e) {} }
-  (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) { if (!mob || !mob._rd || !run) return 1; var k = endlessK(); if (mob._rdBoss && run.bd && run.bd.dmgOut) k *= run.bd.dmgOut(run, mob, run.M); return k; });
+  (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) { if (!mob || !mob._rd || !run) return 1; var k = endlessK(); if (dragonOn('ant')) k *= 0.9; if (mob._rdBoss && run.bd && run.bd.dmgOut) k *= run.bd.dmgOut(run, mob, run.M); return k; });
+  if (typeof W.foulWaterHealMult === 'function') {
+    var oFoul = W.foulWaterHealMult;
+    W.foulWaterHealMult = function () { var m = oFoul.apply(this, arguments); try { if (dragonOn('fa') && mapState.current === MAP) m *= 1.2; } catch (e) {} return m; };
+    try { (0, eval)('foulWaterHealMult = window.foulWaterHealMult'); } catch (e) {}
+  }
+  // 紅獅王的冬至夜不能用相消（−30%）
+  if (typeof W.useItem === 'function') {
+    var oUse = W.useItem;
+    W.useItem = function (uid) { var p = P(), it = p && (p.inv || []).find(function (x) { return x && x.uid === uid; }), r = oUse.apply(this, arguments); try { if (it && it.id === 'afk_cancel_scroll' && run && run.id === 'past' && run.si === 1) { run.meter -= 30; clog('<span class="text-red-400">在聖光滿溢的夜裡用了相消——光暗了下來，穩定度 −30%。</span>'); } } catch (e) {} return r; };
+  }
   if (typeof W.tick === 'function') {
     var oTick = W.tick;
     W.tick = function () {
@@ -408,12 +464,17 @@
 
   // ── 裂縫之門 ──
   var TIERS = [[1, '第一段（剛進裂縫）'], [2, '第二段（取回 20% 以上）'], [3, '第三段（取回 40%）']];
+  var paintDoom = function (div) {
+    var box = div.querySelector('#afk-rd-doom'); if (!box) return; var p = P(); if (!p) return; var d = BYID.doom, why = canEnter(d);
+    K.repaint(box, K.rowHtml({ key: 'doom', name: esc(d.n) + (p.afkDoomWield ? '　<span style="color:#86efac">✓ 已握回劍</span>' : ''), color: '#f87171', desc: esc(d.lore), note: '每天 1 次　時限 15 分鐘', why: why, btns: [['go:doom:', '進入', !why]] }, 'data-rd'));
+  };
   var paint = function (div) {
+    if (div.querySelector('#afk-rd-doom')) return paintDoom(div);
     var box = div.querySelector('#afk-rd-gate'); if (!box) return; var p = P(); if (!p) return;
     var h = '<div class="ax-note">取回的力量：' + DR.recoverPct(p) + '%　血龍鑽：' + cnt(BLOOD).toLocaleString() + (DR.on() ? '' : '　<span class="no">次元裂縫沒有打開</span>') + '</div>';
     TIERS.forEach(function (tr) {
       h += '<div class="ax-h" style="margin-top:8px">' + tr[1] + '</div>';
-      D.filter(function (d) { return d.tier === tr[0]; }).forEach(function (d) {
+      D.filter(function (d) { return d.tier === tr[0] && !d.npc; }).forEach(function (d) {
         var picks = d.pick || [['', '']], s = store(p);
         picks.forEach(function (pk) {
           var why = canEnter(d, pk[0] || undefined), cap = d.limit - used(d, pk[0] || undefined);
@@ -427,10 +488,18 @@
     if (!div) return; K.css();
     div.innerHTML = '<div class="afk-ax"><div class="ax-lore">那道縫在神殿的角落裡呼吸。「這扇門只能從外面開。」有人在門框上刻過這行字，又被劃掉了一半。</div></div>';
     var box = document.createElement('div'); box.className = 'afk-ax'; box.id = 'afk-rd-gate'; div.appendChild(box); paint(div);
-    if (!div.__afkRdBound) { div.__afkRdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-rd]'); if (!b || b.disabled || !div.querySelector('#afk-rd-gate')) return; var k = (b.getAttribute('data-rd') || '').split(':'); if (k[0] === 'go') enter(k[1], k[2] || undefined); paint(div); }); }
+    if (!div.__afkRdBound) { div.__afkRdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-rd]'); if (!b || b.disabled || !(div.querySelector('#afk-rd-gate') || div.querySelector('#afk-rd-doom'))) return; var k = (b.getAttribute('data-rd') || '').split(':'); if (k[0] === 'go') enter(k[1], k[2] || undefined); paint(div); }); }
   };
   K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: '次元裂縫', type: 'quest', classicHide: true, d: '神殿角落一道會呼吸的縫。次元裂縫打開時，從這裡進入裂縫的副本。' });
   K.hookNpc(NPC_ID, NPC_N, '次元裂縫', render);
+  var renderDoom = function (div) {
+    if (!div) return; K.css();
+    div.innerHTML = '<div class="afk-ax"><div class="ax-lore">「我們放下劍，是因為劍再也砍不動龍了。」守墓的老龍騎士看著你空著的手，「可是你不一樣。」</div></div>';
+    var box = document.createElement('div'); box.className = 'afk-ax'; box.id = 'afk-rd-doom'; div.appendChild(box); paintDoom(div);
+    if (!div.__afkRdBound) { div.__afkRdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-rd]'); if (!b || b.disabled) return; var k = (b.getAttribute('data-rd') || '').split(':'); if (k[0] === 'go') enter(k[1], k[2] || undefined); paint(div); }); }
+  };
+  K.addNpc(TOWN, { id: 'npc_afk_doomgrave', n: '劍塚的守墓人', title: '龍騎士', type: 'quest', classicHide: true, d: '在席琳神殿外守著一座劍塚的老龍騎士。' });
+  K.hookNpc('npc_afk_doomgrave', '劍塚的守墓人', '龍騎士', renderDoom);
 
   W.__afkRiftDg = { D: D, BYID: BYID, R: R, canEnter: canEnter, enter: enter, run: function () { return run; }, store: store, MAP: MAP, findBase: findBase, nextStage: nextStage };
   try { console.log('[AFK-riftdg] 已載入：次元裂縫的副本 ' + D.length + ' 個'); } catch (e) {}
