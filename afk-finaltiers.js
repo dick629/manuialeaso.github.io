@@ -58,7 +58,7 @@
     var go = function () {
       var r = rec(); r.pending = md;
       if (md === 'tier3') r.t3 = 'lose';   // 進場就算用掉
-      FB.startMode(md, '<span class="font-bold" style="color:#c084fc;">你再次沉入死亡之海——這一次，迎接你的是「' + nm + '」。</span><span class="text-amber-200">' + powTxt(md) + '；時間封印照舊。</span>');
+      FB.startMode(md, '<span class="afk-lore">殷海薩的神諭：「這次她只剩……不，她變強了。」</span><span class="font-bold" style="color:#c084fc;">你再次沉入死亡之海——這一次，迎接你的是「' + nm + '」。</span>' + (md === 'tier3' ? '<span class="afk-lore">夢的底層好像少了一半。</span>' : '') + '<span class="text-amber-200">' + powTxt(md) + '；時間封印照舊。</span>');
     };
     var msg = '⚠ 終焉第' + (t === 2 ? '二' : '三') + '階層：' + nm + '\n\n席琳的' + powTxt(md) + '（使徒的 HP 與傷害 ×' + FB.TIER[md].k + '），時間封印、凝視、死亡之潮照舊。\n'
       + (t === 3 ? '只能挑戰一次——進場就算用掉，倒下、回村或中途重新整理都算失敗。\n' : '可以重複挑戰，直到打贏為止；打贏後不能再回頭打這一層。\n')

@@ -149,7 +149,7 @@
   try {
     var town = DB.towns && DB.towns[TOWN];
     if (town && Array.isArray(town.npcs) && !town.npcs.some(function (x) { return x.id === NPC_ID; }))
-      town.npcs.push({ id: NPC_ID, n: '次元裂隙', title: '異界祭壇', type: 'craft', d: '長老會議廳角落裂開的一道時空縫隙，另一頭隱約傳來吉爾塔斯的低吼。湊齊次元時空鑰匙，就能穿過它前往異界祭壇。' });
+      town.npcs.push({ id: NPC_ID, n: '次元裂隙', title: '異界祭壇', type: 'craft', d: '長老會議廳角落裂開的一道時空縫隙，另一頭隱約傳來吉爾塔斯的低吼。湊齊次元時空鑰匙，就能穿過它前往異界祭壇。「裂痕的另一頭，有人在往這邊看。」' });
     if (typeof NPC_SPR_FIXED !== 'undefined' && !NPC_SPR_FIXED[NPC_ID]) NPC_SPR_FIXED[NPC_ID] = '6690';
   } catch (e) {}
   var render = function (div) {
