@@ -76,6 +76,10 @@
   var LIBV = [{ red: 100, cd: 20 }, { ch: 22 }, { pct: 4, dur: 12, cd: 45 }, { pct: 70 }, { pct: 12 }, { ch: 50, heal: 10 }, { pct: 8, n: 2 }, { per: 3, max: 12 },
     { pct: 60 }, { per: 2 }, { dmg: 16, red: 16, reg: 2.5 }, { pct: 120 }, { pct: 45, th: 35 }, { pct: 25 }, { pot: 40, cap: 18 }, { leech: 4, cost: 0 },
     { pct: 45 }, { hp: 70, cd: 4 }, { er: 18, crit: 1 }, { pct: 4 }, { pct: 25 }, { mult: 1.8 }];
+  // 淵源的特效（玩家 2026-11-06 18:19 確認；介於馬賽與解放淵源之間）
+  var ABV = [{ red: 100, cd: 25 }, { ch: 18 }, { pct: 3.5, dur: 11, cd: 50 }, { pct: 60 }, { pct: 10 }, { ch: 42, heal: 9 }, { pct: 10 }, { per: 2, max: 12 },
+    { pct: 50 }, { per: 1.75 }, { dmg: 14, red: 14, reg: 2 }, { pct: 100 }, { pct: 40 }, { pct: 22 }, { pot: 35, cap: 15 }, { leech: 3.5, cost: 1 },
+    { pct: 38 }, { hp: 60, cd: 5 }, { er: 15, crit: 1 }, { pct: 3.5 }, { pct: 21 }, { mult: 1.65 }];
   var K = {}; ['fool', 'magician', 'priestess', 'empress', 'emperor', 'hierophant', 'lovers', 'chariot', 'strength', 'hermit', 'wheel', 'justice', 'hanged', 'death', 'temperance', 'devil', 'tower', 'star', 'moon', 'sun', 'judgement', 'world'].forEach(function (k, i) { K[k] = i; });
   var SET = [
     { n: '22 張全部點亮', txt: '最大 HP +5%、五屬性抗性 +10', fx: { mhpPct: 5, res: 10 } },
@@ -94,7 +98,7 @@
   var STD_N = ['最大 HP', '傷害減免', '魔防', '防禦', '迴避', '額外傷害', '額外命中'];
   var idOf = function (i) { return 'afk_mio_' + (i < 10 ? '0' : '') + i; };
   var idxOf = function (id) { var m = /^afk_mio_(\d\d)$/.exec(id || ''); return m ? Number(m[1]) : -1; };
-  var rawVal = function (i, st, lib) { var o = {}, V = CARDS[i][1]; Object.keys(V).forEach(function (k) { o[k] = V[k][Math.max(1, Math.min(3, st)) - 1]; }); if (lib && LIBV[i]) Object.assign(o, LIBV[i]); return o; };
+  var rawVal = function (i, st, lib) { var o = {}, V = CARDS[i][1]; Object.keys(V).forEach(function (k) { o[k] = V[k][Math.max(1, Math.min(3, st)) - 1]; }); if (lib && LIBV[i]) Object.assign(o, LIBV[i]); else if (st >= 4 && ABV[i]) Object.assign(o, ABV[i]); return o; };
   var descOf = function (i, st, lib) { return CARDS[i][2](rawVal(i, st, lib)); };
   var auraTxt = function (st, lib) { var a = lib ? AURA_LIB : AURA[st]; return a ? '五屬性抗性 +' + a.res + (a.abn ? '、異常狀態抵抗 +' + a.abn + '%' : '') + (a.dur ? '、受到的異常狀態持續時間 −' + a.dur + '%' : '') + (a.weight ? '、負重上限 +' + a.weight.toLocaleString() : '') + (a.ero ? '；次元裂縫的地圖侵蝕扣 AC、抗性最多扣到 −' + a.ero : '') : ''; };
   var stdKeyC = function (c) { return c.eqLib ? '95' : stdKey(c.eqSt); };
@@ -137,8 +141,8 @@
     var id = idOf(i), d = DB.items[id] || (DB.items[id] = {});
     Object.assign(d, { n: '密奧之卡・' + ROMAN[i] + ' ' + c[0], type: 'acc', slot: 'mio', req: 'all', safe: 0, p: 0, gachaWeight: 0, noEnhance: true, noTrade: true, noSell: true, noJunk: true,
       c: 'text-fuchsia-300', img: 'assets/icons/items/' + id + '.png', afkMio: i,
-      d: '只能裝一張。偉特：' + descOf(i, 1) + '。托特：' + descOf(i, 2) + '；' + auraTxt(2) + '；基本能力不足時補到托特標準。馬賽：' + descOf(i, 3) + '；' + auraTxt(3) + '；基本能力不足時補到馬賽標準（各職業的標準在密奧之卡介面）。'
-        + '淵源：特效同馬賽；' + auraTxt(4) + '；基本能力不足時補到淵源標準。沒裝著的點亮卡只給偉特。' });
+      d: '只能裝一張。偉特：' + descOf(i, 1) + '。托特：' + descOf(i, 2) + '；' + auraTxt(2) + '。馬賽：' + descOf(i, 3) + '；' + auraTxt(3) + '。'
+        + '淵源：' + descOf(i, 4) + '；' + auraTxt(4) + '。沒裝著的點亮卡只給偉特。' });
     try { if (typeof ITEM_WEIGHTS !== 'undefined' && ITEM_WEIGHTS[d.n] == null) ITEM_WEIGHTS[d.n] = 0; } catch (e) {}
   });
   try { if (typeof WEIGHT_COUNT_SLOTS !== 'undefined' && WEIGHT_COUNT_SLOTS.indexOf('mio') < 0) WEIGHT_COUNT_SLOTS.push('mio'); } catch (e) {}
@@ -492,10 +496,10 @@
       + '<table>' + [1, 2, 3, 4, 5, 6].filter(function (k) { return k <= maxStage(); }).map(function (k) {
           var locked = false;   // 次元裂縫開放前只列到淵源（未開放的內容不放進介面說明）
           return '<tr class="' + (k === st && !libOf(p, i) ? 'now' : '') + '"><td class="s" style="color:' + STAGE_C[k] + '">' + STAGE[k] + '</td><td>'
-            + (k >= 4 ? '特效同馬賽' : esc(descOf(i, k)))
-            + (k >= 2 ? '<div style="color:#a8a29e;font-size:11px">裝著時另有：' + esc(auraTxt(k)) + '；基本能力不足時補到' + (k === 2 ? '托特' : k === 3 ? '馬賽' : '淵源') + '標準</div>' : '')
+            + esc(descOf(i, k))
+            + (k >= 2 ? '<div style="color:#a8a29e;font-size:11px">裝著時另有：' + esc(auraTxt(k)) + '</div>' : '')
             + (k >= 4 && riftOpen() ? '<div style="color:#67e8f9;font-size:11px">次元效果（只在次元裂縫）：' + esc(dimDesc(i, k)) + '</div>' : '')
-            + (locked ? '<div style="color:#78716c;font-size:11px">次元裂縫開放後開放</div>' : '') + '</td></tr>'; }).join('') + (v.ab >= n ? '<tr class="' + (libOf(p, i) ? 'now' : '') + '"><td class="s" style="color:#fb7185">解放淵源</td><td>' + esc(descOf(i, 4, true)) + '<div style="color:#a8a29e;font-size:11px">裝著時另有：' + esc(auraTxt(4, true)) + '；基本能力不足時補到解放淵源標準</div></td></tr>' : '') + '</table>'
+            + (locked ? '<div style="color:#78716c;font-size:11px">次元裂縫開放後開放</div>' : '') + '</td></tr>'; }).join('') + (v.ab >= n ? '<tr class="' + (libOf(p, i) ? 'now' : '') + '"><td class="s" style="color:#fb7185">解放淵源</td><td>' + esc(descOf(i, 4, true)) + '<div style="color:#a8a29e;font-size:11px">裝著時另有：' + esc(auraTxt(4, true)) + '</div></td></tr>' : '') + '</table>'
       + '<div class="acts">'
       + (st > 0 && st < maxStage() ? (function () {
           var nd = needOf(st), m = missOf(st), DC = window.__afkDiaCost, parts = nd.list.map(function (x) { return x.name + ' ×' + x.n.toLocaleString(); });
