@@ -1029,6 +1029,8 @@
   }
   try { var NR = W.__afkNpcTabs && W.__afkNpcTabs.RULES; if (NR && !NR.some(function (r) { return r[1] === 'guardoath'; })) NR.push(['#afk-guard-oath', 'guardoath', '守護者之誓'], ['.afk-gd-qtab', 'gdquest', '守護者']); } catch (e) {}
   var QNPC = {}; KEYS.forEach(function (k) { if (!QUESTS[k].own) QNPC[QUESTS[k].npc] = k; });
+  // 布魯迪卡發布影子騎士的守護者任務 → 所有職業都看得到他（玩家 2026-11-06）；黑暗妖精試煉仍只有黑妖能接（核心會對其他職業回「外人不得參與」）
+  try { var ts = DB.towns && DB.towns.town_silent; (ts && ts.npcs || []).forEach(function (n) { if (n && n.id === 'npc_brudica') delete n.darkOnly; }); } catch (e) {}
   if (typeof W.interactNPC === 'function') {
     var oNpc = W.interactNPC;
     W.interactNPC = function (npcId, townId) {
