@@ -4076,7 +4076,14 @@
     if (open) out += wCard('🌌 次元效果（只在次元裂縫裡生效）', wTbl(['卡', '淵源／起源／創世'], M.CARDS.map(function (c, i) {
       return [M.ROMAN[i] + ' ' + esc(c[0]), [4, 5, 6].map(function (k) { return esc(M.dimDesc(i, k)); }).join('<br>')];
     })));
-    out += wCard('🏅 收集加成（跟原本的疊加）', wTbl(['條件', '加成'], M.SET.slice(3, open ? 6 : 4).map(function (x) { return [esc(x.n), esc(x.txt)]; })));
+    if (M.LIB_COST) {
+      var L = M.LIB_COST;
+      out += wCard('🔓 淵源解放', wDesc('22 張密奧之卡<b>全部升到淵源</b>之後，每張淵源卡的視窗多一顆「淵源解放」按鈕。<b>每張卡各解放一次</b>，每次要：密奧碎片 ' + fm(L.shard) + '、夢艷結晶 ' + fm(L.dream) + '、席琳結晶 ' + fm(L.sherine) + '、龍之鑽石 ' + fm(L.dia) + '、金幣 ' + fm(L.gold) + '。')
+        + wDesc('裝著解放過的卡：特效換成解放值；光環變成' + esc(M.auraTxt(4, true)) + '；基本能力不足時補到解放淵源標準（各職業的標準在密奧之卡視窗）。沒裝著的卡照舊只給偉特。')
+        + wDesc('<b>注意</b>：進過次元裂縫之後就不能再解放（已經解放的卡不受影響）。')
+        + wTbl(['卡', '解放淵源的特效'], M.CARDS.map(function (c, i) { return [M.ROMAN[i] + ' ' + esc(c[0]), esc(M.descOf(i, 4, true))]; })));
+    }
+    out += wCard('🏅 收集加成（跟原本的疊加）', wTbl(['條件', '加成'], M.SET.slice(3, open ? 6 : 4).concat(M.SET[6] ? [M.SET[6]] : []).map(function (x) { return [esc(x.n), esc(x.txt)]; })));
     return out;
   }
 
