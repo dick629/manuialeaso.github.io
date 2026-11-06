@@ -33,6 +33,21 @@
             }).join('');
         };
     }
+    // 說明文字去掉重複數值時，「最大 HP +50」會剩下「最大」，套裝【…】段落也會被誤刪 → 套裝段落原樣保留、先拿掉「最大」前綴
+    if (typeof window.tooltipItemDescription === 'function' && !window.tooltipItemDescription.__afkFix) {
+        var oldTip = window.tooltipItemDescription;
+        var fixTip = function (d, itemId) {
+            if (!d || typeof d.d !== 'string' || !d.d) return oldTip.apply(this, arguments);
+            var raw = d.d, cut = raw.indexOf('【'), head = cut >= 0 ? raw.slice(0, cut) : raw, tail = cut >= 0 ? raw.slice(cut) : '';
+            head = head.replace(/最大\s*(?=[HM]P\s*[+＋])/g, '');
+            if (d.ac) head = head.replace(new RegExp('(^|[、，；;。\\s])AC\\s*' + Math.abs(Number(d.ac)) + '(?!\\d)', 'g'), '$1AC +' + Math.abs(Number(d.ac)));
+            var out = oldTip.call(this, Object.assign({}, d, { d: head }), itemId);
+            return (out + tail).trim();
+        };
+        fixTip.__afkFix = true;
+        window.tooltipItemDescription = fixTip;
+        try { (0, eval)('tooltipItemDescription = window.tooltipItemDescription'); } catch (e) {}
+    }
     var s = document.createElement('style'); s.id = 'afk-readability-style';
     s.textContent = `
 body.afk-readable{--afk-text:14px;--afk-caption:13px;--afk-title:17px}
