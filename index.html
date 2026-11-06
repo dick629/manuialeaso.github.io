@@ -1124,6 +1124,8 @@
     <script src="afk-bosslines.js?v=5ccff751a7"></script>
     <!-- afk-bosswatch：頭目卡住保險（HP 0 卻沒倒下 3 秒→走正常 killMob；鎖定的頭目 60 秒 HP 沒變→清掉過期的免疫屏障）；要在所有包 tick、killMob 的外掛之後，afk-intdmg 之前 -->
     <script src="afk-bosswatch.js?v=3cdd34e686"></script>
+    <!-- afk-skillup：技能強化（席琳神殿 技藝導師 薇爾娜）；要在 afk-hidden、afk-callally、afk-card-combat 之後，afk-intdmg 之前 -->
+    <script src="afk-skillup.js?v=6e8e805535"></script>
     <!-- afk-intdmg：傷害與 HP 一律整數（卡冊結算、每一刻結束、能力重算、傷害飄字的最後一道保險）；要在所有包 AFK_CARD_COMBAT.damage、tick、recomputeStats 的外掛之後，放最後 -->
     <script src="afk-intdmg.js?v=1c92a3b8d5"></script>
     <!-- ═══════════ 加掛版外掛層 END ═══════════ -->
