@@ -13,8 +13,8 @@
  *     ‧30 分鐘到還沒守完 25 波、或按「放棄守城」→ 失去被打的那座城
  *     ‧中途離開戰場（讀檔、關掉遊戲）：進度保留，計時不停；回來從那一波重打。還沒進場就到 21:00＝失守
  *     ‧守住：龍之鑽石 5,000、滅魔蔑視水晶四種各 20、至暗星塵 5、骸骨魔石 5、破空石 1、隨機靈魂石 10、密奧碎片 10
- * 四、失城：該城 7 天內不能宣戰（每座各自算）；城陷之恥 1 天（現實時間）：在狩獵區面板 −50（近遠魔傷害與命中、額外魔法點數、魔防、五屬性抗性；不扣六大主屬性）（副本、村莊不算）
- * 五、奪回戰：7 天後對失去的城宣戰＝奪回戰（自己的副本）：5 波×8 名鏡像敵人（八職業各 1），強度 ×0.7→×1.5，第 2 波起放職業技能；
+ * 四、失城：該城 3 天內不能宣戰（每座各自算）；城陷之恥 1 天（現實時間）：在狩獵區面板 −50（近遠魔傷害與命中、額外魔法點數、魔防、五屬性抗性；不扣六大主屬性）（副本、村莊不算）
+ * 五、奪回戰：3 天後對失去的城宣戰＝奪回戰（自己的副本）：5 波×8 名鏡像敵人（八職業各 1），強度 ×0.7→×1.5，第 2 波起放職業技能；
  *     你倒下＝奪回戰失敗；傭兵倒下照常復活，但全隊合計倒下第 6 次也算失敗；
  *     30 分鐘；贏＝拿回城＋龍之鑽石 5,000；輸＝照攻城戰敗 30 分鐘不能宣戰。鏡像敵人照遺物掉落率掉昇華支配 +0 遺物。
  * 六、豁免：身上裝滿 6 件至高的支配 → 不會被集結，也不會遇到敵對血盟（宣戰／強制宣戰）的人；自己宣戰照舊。
@@ -37,7 +37,7 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'siege2', name: '每週守城戰（攻城守城第二版）', group: '遊戲內容', seal: true, def: true,
-    desc: '每週五 20:00～21:00 有血盟來攻你的城：回防進守城戰副本（30 分鐘 25 波），不回防就可能失去 1～2 座城；失去的城 7 天後可以打回來' });
+    desc: '每週五 20:00～21:00 有血盟來攻你的城：回防進守城戰副本（30 分鐘 25 波），不回防就可能失去 1～2 座城；失去的城 3 天後可以打回來' });
   if (T && !T.enabled('siege2')) return;
   if (typeof DB === 'undefined' || !DB.mobs || typeof SIEGE_CITY === 'undefined' || !W.__afkCastleWar) { console.warn('[AFK-siege2] 找不到攻城／七城系統，略過'); return; }
 
@@ -56,7 +56,8 @@
     tz: 8 * 3600000, day: 5, startH: 20, endH: 21, entryMin: 30, askDelay: 3 * 60000, answerWindow: 3 * 60000,
     peaceMs: 7 * 86400000,   // 放棄城堡後的和平期（現實時間）
     loss: [[0.30, 1], [0.50, 2], [0.20, 0]],
-    lockMs: 7 * 86400000, shameMs: 86400000, shameVal: 50,
+    lockMs: 3 * 86400000,   // 玩家 11-06：失守的城 3 天後可以奪回（原本 7 天）
+    shameMs: 86400000, shameVal: 50,
     // 守城戰：rounds 輪 × perRound 波；每波 size 名（八職業各 1）。強度：
     //   mult(w) = roundStart[r] + waveSteps[r] × k，r＝floor((w−1) ÷ perRound)（0 起算）、k＝(w−1) mod perRound
     //   11-03 11:19 原版：每輪起點 2、3、4、5、6，每波 +0.5（第 25 波 ×8）
@@ -118,6 +119,8 @@
     var o = read();
     o.lost = (o.lost && typeof o.lost === 'object') ? o.lost : {};
     o.shameUntil = Number(o.shameUntil) || 0;
+    // 舊存檔的 7 天鎖縮成「失守時間＋3 天」
+    Object.keys(o.lost).forEach(function (c) { var li = o.lost[c]; if (li && li.at && li.lockUntil > li.at + CFG.lockMs) li.lockUntil = li.at + CFG.lockMs; });
     return o;
   };
   var write = function (o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
@@ -196,7 +199,7 @@
     var t = now();
     o.lost[city] = { at: t, lockUntil: t + CFG.lockMs };
     o.shameUntil = Math.max(o.shameUntil || 0, t + CFG.shameMs);
-    sys('<span class="text-red-400 font-bold">🏴 ' + esc(why || '敵軍') + '攻破了' + esc(cityName(city)) + '——你的血盟失去了這座城。</span><span class="text-slate-300">7 天內不能對它宣戰；你身上多了「城陷之恥」（1 天：在狩獵區面板 −50）。</span>');
+    sys('<span class="text-red-400 font-bold">🏴 ' + esc(why || '敵軍') + '攻破了' + esc(cityName(city)) + '——你的血盟失去了這座城。</span><span class="text-slate-300">3 天內不能對它宣戰；你身上多了「城陷之恥」（1 天：在狩獵區面板 −50）。</span>');
     return true;
   };
   var afterLoss = function () { try { CW.syncWar(true); } catch (e) {} try { calcStats(); updateUI(); saveGame(); } catch (e) {} };
@@ -1095,7 +1098,7 @@
     try { (0, eval)('loadGame = window.loadGame'); } catch (e) {}
   }
 
-  // ── 宣戰：守城戰流程中不能宣戰；失去的城 7 天內不能打，之後＝奪回戰 ──
+  // ── 宣戰：守城戰流程中不能宣戰；失去的城 3 天內不能打，之後＝奪回戰 ──
   var lostInfo = function (city) { var o = store(); return o.lost[city] || null; };
   var flowActive = function () { var c = store().cur; return !!(run || (c && (c.status === 'assembled' || c.status === 'asked' || c.status === 'defending'))); };
   var daysLeft = function (ms) { return Math.max(1, Math.ceil(ms / 86400000)); };
@@ -1147,7 +1150,7 @@
           else if (st) st.textContent = '奪回戰';
         });
         var note = el.querySelector('.border-t.border-slate-700');
-        if (note) note.textContent = '七座城都可以宣戰，最多持有 7 座。每週五 20:00～21:00 會有血盟來攻你的城（守城戰，可以在血盟頁關掉）；失去的城 7 天後可以打回來。持有越多城，攻城越難。3 座以上每小時有收成；持有 2 座以上會有血盟對你宣戰。';
+        if (note) note.textContent = '七座城都可以宣戰，最多持有 7 座。每週五 20:00～21:00 會有血盟來攻你的城（守城戰，可以在血盟頁關掉）；失去的城 3 天後可以打回來。持有越多城，攻城越難。3 座以上每小時有收成；持有 2 座以上會有血盟對你宣戰。';
         // 放棄城堡：只列自己持有的城
         var h = held(), old = el.querySelector('#afk-s2-abandon'); if (old) old.remove();
         if (h.length) {
@@ -1213,7 +1216,7 @@
     if (a === 'yes') answer(true); else if (a === 'no') answer(false);
     else if (a === 'enter') enterDefense();
     else if (a === 'giveup') {
-      var msg = '放棄守城就會失去' + cityName((store().cur || {}).target) + '（7 天內不能打回來，城陷之恥 1 天）。';
+      var msg = '放棄守城就會失去' + cityName((store().cur || {}).target) + '（3 天內不能打回來，城陷之恥 1 天）。';
       if (W.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '放棄守城', message: msg, okText: '放棄', cancelText: '再想想', danger: true, onOk: giveUp });
       else if (W.confirm(msg)) giveUp();
     }
