@@ -77,7 +77,7 @@
   var setHp = function (x, v) { if (x === P()) x.hp = v; else x.curHp = v; };
   var mhp = function (x) { return x.mhp || 1; };
   var status = function (x, k, t) { try { var B = W.AFK_RELIC_DEFENSE_BRIDGE; if (B && B.setStatus) B.setStatus(x, k, t, null); else (x.statuses || (x.statuses = {}))[k] = t; } catch (e) {} };
-  var who = function (x) { return x === P() ? '你' : (x.name || '傭兵'); };
+  var who = function (x) { return x === P() ? '你' : (x._allyName || x.name || '傭兵'); };
   var allPct = function (pct, label) { party().forEach(function (x) { L.boss.hurt(x, mhp(x) * pct); }); if (label) clog(label); };
   var every = function (M, key, sec, t) { if (!M[key]) M[key] = t + sec * 10; if (t >= M[key]) { M[key] = t + sec * 10; return true; } return false; };
   var alive = function (f) { return mobs().filter(function (x) { return x && !x._dead && x.curHp > 0 && (!f || f(x)); }); };
@@ -359,7 +359,7 @@
     var p = P(), list = [p].concat((p.allies || []).filter(Boolean)).slice(0, skipBoss ? 2 : 4), slots = skipBoss ? [1, 3] : [0, 1, 3, 4];
     list.forEach(function (x, i) {
       var mh = Math.max(1000, Math.round((x.mhp || 1000) * 0.7 * 15 * (hpk / R.riftHp))), dmg = Math.max(20, Math.round(((x.d && (x.d.meleeDmg || x.d.dmg)) || 60) * 0.7));
-      var m = place(slots[i], findBase('騎士|戰士'), lv, 1, { _rdMirror: true, _rdOf: x === p ? 'p' : (p.allies || []).indexOf(x), _rdAdd: !!skipBoss, n: (x === p ? '你' : (x.name || '傭兵')) + '的倒影', boss: false }, mh);
+      var m = place(slots[i], findBase('騎士|戰士'), lv, 1, { _rdMirror: true, _rdOf: x === p ? 'p' : (p.allies || []).indexOf(x), _rdAdd: !!skipBoss, n: (x === p ? '你' : (x._allyName || x.name || '傭兵')) + '的倒影', boss: false }, mh);
       m.dmg = [1, dmg];
     });
     if (!skipBoss) run.wave++;
@@ -472,6 +472,7 @@
     if (div.querySelector('#afk-rd-doom')) return paintDoom(div);
     var box = div.querySelector('#afk-rd-gate'); if (!box) return; var p = P(); if (!p) return;
     var h = '<div class="ax-note">取回的力量：' + DR.recoverPct(p) + '%　血龍鑽：' + cnt(BLOOD).toLocaleString() + (DR.on() ? '' : '　<span class="no">次元裂縫沒有打開</span>') + '</div>';
+    if (DR.RANKS) { var rk = DR.rec(p).rank || 0, nx = DR.RANKS[rk + 1], rw = DR.rankWhy(p); h += K.rowHtml({ key: 'drank', name: '遠征位階（裂縫）：' + DR.RANKS[rk].n, color: '#67e8f9', desc: nx ? '下一階「' + nx.n + '」：' + (nx.cur === 'exped' ? '遠征點數 ' : '裂縫點數 ') + nx.cost + '。' + nx.d : '已經是最高位階。', note: '裂縫點數 ' + (DR.rec(p).pts || 0) + '（每個副本最後頭目每天第一次 10 點，一天最多 60）', why: nx ? rw : '', btns: nx ? [['rank:', '升階', !rw]] : [] }, 'data-rd'); }
     TIERS.forEach(function (tr) {
       h += '<div class="ax-h" style="margin-top:8px">' + tr[1] + '</div>';
       D.filter(function (d) { return d.tier === tr[0] && !d.npc; }).forEach(function (d) {
@@ -488,7 +489,7 @@
     if (!div) return; K.css();
     div.innerHTML = '<div class="afk-ax"><div class="ax-lore">那道縫在神殿的角落裡呼吸。「這扇門只能從外面開。」有人在門框上刻過這行字，又被劃掉了一半。</div></div>';
     var box = document.createElement('div'); box.className = 'afk-ax'; box.id = 'afk-rd-gate'; div.appendChild(box); paint(div);
-    if (!div.__afkRdBound) { div.__afkRdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-rd]'); if (!b || b.disabled || !(div.querySelector('#afk-rd-gate') || div.querySelector('#afk-rd-doom'))) return; var k = (b.getAttribute('data-rd') || '').split(':'); if (k[0] === 'go') enter(k[1], k[2] || undefined); paint(div); }); }
+    if (!div.__afkRdBound) { div.__afkRdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-rd]'); if (!b || b.disabled || !(div.querySelector('#afk-rd-gate') || div.querySelector('#afk-rd-doom'))) return; var k = (b.getAttribute('data-rd') || '').split(':'); if (k[0] === 'go') enter(k[1], k[2] || undefined); else if (k[0] === 'rank') DR.rankUp(); paint(div); }); }
   };
   K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: '次元裂縫', type: 'quest', classicHide: true, d: '神殿角落一道會呼吸的縫。次元裂縫打開時，從這裡進入裂縫的副本。' });
   K.hookNpc(NPC_ID, NPC_N, '次元裂縫', render);

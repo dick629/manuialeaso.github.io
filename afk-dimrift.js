@@ -54,7 +54,8 @@
   ];
   var RECOVER = [   // 取回力量（%）
     ['取回繁星之力', function (p) { return Math.min(3, (p.afkDimRift && p.afkDimRift.stars) || 0) * 5; }],
-    ['遠征星途者', function (p) { return p.afkDimRift && p.afkDimRift.starfarer ? 5 : 0; }],
+    ['次元探險者', function (p) { return p.afkDimRift && (p.afkDimRift.rank || 0) >= 1 ? 5 : 0; }],
+    ['遠征星途者', function (p) { return p.afkDimRift && ((p.afkDimRift.rank || 0) >= 2 || p.afkDimRift.starfarer) ? 5 : 0; }],
     ['之魂憶起＋太陽神凱布利', function (p) { return p.afkDimRift && p.afkDimRift.soulMem && p.afkDimRift.khepri ? 5 : 0; }],
     ['庇護者之戒', function (p) { return guardAll(p, 6) ? 5 : 0; }],
     ['占星者', function (p) { var o = mio(p); return o && o.ma >= 22 ? 5 : 0; }],
@@ -122,7 +123,7 @@
   var reduceSum = function (p) { return REDUCE.reduce(function (s, x) { return s + (x[2](p) ? x[1] : 0); }, 0); };
   var floorSum = function (p) { return Math.min(R.floorMax, FLOOR.reduce(function (s, x) { return s + (x[2](p) ? x[1] : 0); }, 0)); };
   var weightCut = function (p) { var d = p.d || {}, pct = Number(d.weightPct); if (!isFinite(pct)) return 0; return Math.max(0, Math.min(0.5, 0.5 * (1 - pct / 100))); };
-  var pctCut = function (p) { return (p.afkDimRift && Number(p.afkDimRift.sealCut)) || 0; };   // 遠征刻印石（之後接上）
+  var pctCut = function (p) { var t = sealTier(p); return t ? [0, 0.05, 0.10, 0.15][t] : 0; };   // 刻印石徽記：侵蝕扣血 −5／−10／−15%
   var recoverPct = function (p) { return Math.min(40, RECOVER.reduce(function (s, x) { return s + (Number(x[1](p)) || 0); }, 0)); };
   function clearErosion(p, all) { var r = rec(p); r.ero = 0; if (all) { /* 光蝕不因回村清除 */ } }
   var members = function () { var p = P(), out = []; if (!p) return out; if (!p.dead) out.push(p); (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); }); return out; };
@@ -167,7 +168,7 @@
     var oTick = W.tick;
     W.tick = function () {
       var t0 = tk(), r = oTick.apply(this, arguments);
-      try { if (on() && tk() !== t0 && tk() % 10 === 0) { erodeSecond(); lightSecond(); bossRegen(); } } catch (e) { console.warn('[AFK-dimrift] tick', e); }
+      try { if (on() && tk() !== t0 && tk() % 10 === 0) { var off = typeof W.__afkOfflineNow === 'function' && W.__afkOfflineNow(); if (!off) { erodeSecond(); lightSecond(); } bossRegen(); allyPanel(); sealDebuff(); } else if (!on() && tk() % 10 === 0) allyPanel(); } catch (e) { console.warn('[AFK-dimrift] tick', e); }
       return r;
     };
   }
@@ -185,7 +186,7 @@
   // 受到的治療 −2%／層
   if (typeof W.foulWaterHealMult === 'function') {
     var oFoul = W.foulWaterHealMult;
-    W.foulWaterHealMult = function (target) { var m = oFoul.apply(this, arguments); try { var p = P(); if (on() && p && (target === p || (p.allies || []).indexOf(target) >= 0)) m *= Math.max(0, 1 - (rec(p).light || 0) * R.lightHeal / 100); } catch (e) {} return m; };
+    W.foulWaterHealMult = function (target) { var m = oFoul.apply(this, arguments); try { var p = P(); if (on() && p && (target === p || (p.allies || []).indexOf(target) >= 0)) m *= Math.max(0, 1 - (rec(p).light || 0) * R.lightHeal / 100 * (1 - lightCut(p))); } catch (e) {} return m; };
     try { (0, eval)('foulWaterHealMult = window.foulWaterHealMult'); } catch (e) {}
   }
 
@@ -194,7 +195,7 @@
   var RES4 = ['resFire', 'resWater', 'resWind', 'resEarth'];
   if (W.__afkMaxAdd && W.__afkMaxAdd.add) W.__afkMaxAdd.add(function (p) {
     if (!on() || p !== P()) return;
-    var f = 0.5 + recoverPct(p) / 100, light = (rec(p).light || 0) * R.lightHp / 100;
+    var f = 0.5 + recoverPct(p) / 100, light = (rec(p).light || 0) * R.lightHp / 100 * (1 - lightCut(p));
     p.mhp = Math.max(1, Math.floor((Number(p.mhp) || 1) * f * (1 - light)));
     p.mmp = Math.max(0, Math.floor((Number(p.mmp) || 0) * f));
   });
@@ -253,7 +254,7 @@
     C.damage = function (actor, target, amount, opt) { try { if (on() && actor && !actor.mobId && target && target.mobId && amount > 0) amount = Math.max(1, Math.floor(amount * outMult())); } catch (e) {} return o.call(this, actor, target, amount, opt); };
     return true;
   };
-  var outMult = function () { var p = P(), r = rec(p), k = R.dmgOut; if (r.clothEx) k += 0.15; if (r.athena) k += 0.15; if (r.dimWpn) k *= 1.3; return k; };
+  var outMult = function () { var p = P(), r = rec(p), k = R.dmgOut; if (r.clothEx) k += 0.15; if (r.athena) k += 0.15; if (r.dimWpn) k *= 1.3; var st = sealTier(p); if (st) k *= 1 + [0, 0.01, 0.03, 0.05][st]; return k; };
   if (!hookDamage()) { try { document.addEventListener('DOMContentLoaded', hookDamage); } catch (e) {} }
 
   // ── 掉落 ──
@@ -282,6 +283,71 @@
     };
   }
 
-  W.__afkDimRift = { R: R, REDUCE: REDUCE, FLOOR: FLOOR, RECOVER: RECOVER, on: on, open: on, canOpen: canOpen, toggle: toggle, rec: rec, reduceSum: reduceSum, floorSum: floorSum, recoverPct: recoverPct, weightCut: weightCut, erodeSecond: erodeSecond, lightSecond: lightSecond, drops: drops, outMult: outMult };
+  // ── 傭兵：面板減半、侵蝕（每秒照隊長的取回比例與侵蝕層數，從原本的數值重算） ──
+  function allyPanel() {
+    var p = P(); if (!p || !p.allies) return; var live = on(), f = 0.5 + recoverPct(p) / 100, ero = live ? (rec(p).ero || 0) : 0, keep = floorSum(p);
+    p.allies.forEach(function (a) {
+      if (!a || !a.d) return;
+      if (!live) { if (a._dimBase) { var b0 = a._dimBase; a.mhp = b0.mhp; a.mmp = b0.mmp; Object.keys(b0.d).forEach(function (k) { a.d[k] = b0.d[k]; }); delete a._dimBase; } return; }
+      if (!a._dimBase) { var bd = {}; HALF.concat(['ac']).forEach(function (k) { if (typeof a.d[k] === 'number') bd[k] = a.d[k]; }); a._dimBase = { mhp: a.mhp, mmp: a.mmp, d: bd }; }
+      var b = a._dimBase, light = (rec(p).light || 0) * R.lightHp / 100 * (1 - lightCut(p));
+      a.mhp = Math.max(1, Math.floor(b.mhp * f * (1 - light))); a.mmp = Math.floor((b.mmp || 0) * f);
+      if (a.curHp > a.mhp) a.curHp = a.mhp; if (a.mp > a.mmp) a.mp = a.mmp;
+      Object.keys(b.d).forEach(function (k) { var v = b.d[k]; if (k === 'ac') a.d.ac = (v < 0 ? Math.ceil(v * f) : v) + ero; else a.d[k] = v > 0 ? Math.floor(v * f) : v; });
+      if (ero) ['mr'].concat(RES4).forEach(function (k) { var v = Number(a.d[k]) || 0; if (v <= 0) return; a.d[k] = Math.max(Math.min(v, keep), v - ero); });
+    });
+  }
+
+  // ── 遠征位階（裂縫）與刻印石徽記（decisions-1107 1.6） ──
+  var DR_RANKS = [
+    { n: '（尚未入階）' },
+    { n: '次元探險者', cost: 1000, cur: 'exped', d: '取回力量 +5%' },
+    { n: '遠征星途者', cost: 100, cur: 'rift', stone: 'afk_engrave_s1', d: '取回力量 +5%；上位者的遠征徽記變成「刻印石徽記・壹」' },
+    { n: '次元探索者', cost: 300, cur: 'rift', stone: 'afk_engrave_s2', d: '刻印石徽記升為「貳」' },
+    { n: '次元守護者', cost: 500, cur: 'rift', stone: 'afk_engrave_s3', d: '刻印石徽記升為「參」' }
+  ];
+  var SEAL = { erode: [0, 5, 10, 15], light: [0, 5, 10, 15], pot: [0, 10, 15, 20], debuff: [0, 5, 10, 15], seal: [0, 1, 3, 5], dmg: [0, 1, 3, 5] };
+  ['壹', '貳', '參'].forEach(function (x, i) {
+    var id = 'afk_engrave_s' + (i + 1), t = i + 1; if (DB.items[id]) return;
+    DB.items[id] = { n: '刻印石徽記・' + x, type: 'acc', slot: 'engrave', req: 'all', safe: 0, p: 0, gachaWeight: 0, noTrade: true, noEnhance: true, noSell: true, c: 'text-cyan-300', img: 'assets/icons/items/靈魂之球.png', afkEngrave: 4, afkSeal: t,
+      d: '上位者的遠征徽記在次元裂縫裡重新刻過的徽記（保留上位者徽記的效果）。次元裂縫裡：侵蝕扣血 −' + SEAL.erode[t] + '%、光蝕每層效果 −' + SEAL.light[t] + '%、藥水恢復量 +' + SEAL.pot[t] + '%、受到的異常狀態持續時間 −' + SEAL.debuff[t] + '%、封印戰受到的傷害 −' + SEAL.seal[t] + '%、造成的傷害 +' + SEAL.dmg[t] + '%。' };
+  });
+  var sealTier = function (p) { var e = p && p.eq && p.eq.engrave, d = e && DB.items[e.id]; return d && d.afkSeal ? d.afkSeal : 0; };
+  var lightCut = function (p) { var t = sealTier(p); return t ? SEAL.light[t] / 100 : 0; };
+  var exped = function (p) { return p && p.afkExped && typeof p.afkExped === 'object' ? p.afkExped : null; };
+  var rankWhy = function (p) {
+    var r = rec(p), cur = r.rank || 0, nx = DR_RANKS[cur + 1]; if (!nx) return '已經是最高位階';
+    if (cur === 0) { var x = exped(p); if (!x || (x.rank || 0) < 4) return '要先升到遠征位階「上位者」'; if ((x.pts || 0) < nx.cost) return '遠征點數不夠（' + (x.pts || 0) + '／' + nx.cost + '）'; return ''; }
+    if ((r.pts || 0) < nx.cost) return '裂縫點數不夠（' + (r.pts || 0) + '／' + nx.cost + '）'; return '';
+  };
+  var swapStone = function (p, to) {
+    var e = p.eq || {}, inv = p.inv || [], from = ['afk_engrave_4', 'afk_engrave_s1', 'afk_engrave_s2'];
+    if (e.engrave && from.indexOf(e.engrave.id) >= 0) { e.engrave.id = to; return true; }
+    var it = inv.filter(function (x) { return x && from.indexOf(x.id) >= 0; })[0]; if (it) { it.id = to; return true; }
+    try { gainItem(to, 1, true, true); } catch (e2) {} return true;
+  };
+  function rankUp() {
+    var p = P(); if (!p) return; var why = rankWhy(p); if (why) { sys('<span class="text-amber-300">' + esc(why) + '</span>'); return; }
+    var r = rec(p), cur = r.rank || 0, nx = DR_RANKS[cur + 1];
+    if (nx.cur === 'exped') exped(p).pts -= nx.cost; else r.pts -= nx.cost;
+    r.rank = cur + 1; if (r.rank >= 2) r.starfarer = true;
+    if (nx.stone) swapStone(p, nx.stone);
+    sys('<span class="font-bold" style="color:#67e8f9">🧭 遠征位階升為「' + nx.n + '」！</span>' + (nx.stone ? '<span class="text-cyan-200">' + esc(DB.items[nx.stone].n) + '。</span>' : ''));
+    try { calcStats(); saveGame(); } catch (e) {}
+  }
+  // 刻印石徽記：藥水、異常持續、封印戰受傷
+  if (typeof W.playerEquipPotionBonusPct === 'function') {
+    var oPot = W.playerEquipPotionBonusPct;
+    W.playerEquipPotionBonusPct = function () { var v = oPot.apply(this, arguments); try { var p = P(), t = sealTier(p); if (t && on()) v += SEAL.pot[t]; } catch (e) {} return v; };
+    try { (0, eval)('playerEquipPotionBonusPct = window.playerEquipPotionBonusPct'); } catch (e) {}
+  }
+  var lastSt = {};
+  function sealDebuff() {
+    var p = P(), t = sealTier(p), st = p && p.statuses; if (!st || !t) return; var k0 = 1 - SEAL.debuff[t] / 100;
+    Object.keys(st).forEach(function (k) { var v = Number(st[k]) || 0; if (v > 0 && v > (lastSt[k] || 0) + 1) { v = Math.max(1, Math.round(v * k0)); st[k] = v; } lastSt[k] = v; });
+  }
+  (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) { try { var p = P(), t = sealTier(p), R2 = W.__afkRiftDg && W.__afkRiftDg.run(); if (t && ent === p && R2 && R2.id === 'seal') return 1 - SEAL.seal[t] / 100; } catch (e) {} return 1; });
+
+  W.__afkDimRift = { R: R, RANKS: DR_RANKS, rankUp: rankUp, rankWhy: rankWhy, sealTier: sealTier, allyPanel: allyPanel, REDUCE: REDUCE, FLOOR: FLOOR, RECOVER: RECOVER, on: on, open: on, canOpen: canOpen, toggle: toggle, rec: rec, reduceSum: reduceSum, floorSum: floorSum, recoverPct: recoverPct, weightCut: weightCut, erodeSecond: erodeSecond, lightSecond: lightSecond, drops: drops, outMult: outMult };
   try { console.log('[AFK-dimrift] 已載入：次元裂縫（世界規則）'); } catch (e) {}
 })();
