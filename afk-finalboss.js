@@ -113,7 +113,7 @@
   var mode = function () { return S()._afkFinalMode || 'first'; };
   // 2026-10-29 晚：終焉三階層——'first'＝第一階層「席琳夢境」、'tier2'＝第二階層「席琳幻影」（HP、傷害 ×1.25）、'tier3'＝第三階層「席琳伴身」（×1.5625，只能挑戰一次）
   // 2026-11-04 03:14（玩家）：第二階層的席琳 HP 再 ×0.70（hpK；傷害照 ×1.25，使徒 HP 照 ×1.25）→ 席琳 HP 合計 ×0.875
-  var TIER = { first: { n: '席琳夢境', k: 1 }, tier2: { n: '席琳幻影', k: 1.25, hpK: 0.70 }, tier3: { n: '席琳伴身', k: 1.5625 } };
+  var TIER = { first: { n: '席琳夢境', k: 1 }, tier2: { n: '席琳幻影', k: 1.25, hpK: 0.70 }, tier3: { n: '席琳伴身', k: 1.30 } };
   var tierK = function () { var t = TIER[mode()]; return t ? t.k : 1; };
   var tierHpK = function () { var t = TIER[mode()]; return t ? t.k * (t.hpK || 1) : 1; };   // 只用在席琳本人的 HP
   var novice = function () { return mode() === 'first' && !!S()._afkFinalNovice; };
@@ -163,7 +163,7 @@
     S()._afkFinalSpawned = true;
     if (novice()) sys('<span class="text-cyan-200">初次輪迴：席琳還沒認真看待你——她的 HP 只有平常的一半左右，造成的傷害也比較低（隊伍人數越少，她的傷害越低）。</span>');
     if (S()._afkFinalScale < 1) sys('<span class="text-cyan-200">隊伍 ' + S()._afkFinalParty + ' 人：席琳的 HP 調整為 ' + m.hp.toLocaleString() + '（' + S()._afkFinalParty + '／' + FB.base + '），冥界的使徒同比例。</span>');
-    sys('<span class="font-bold" style="color:#7dd3fc;">死亡之海的水面倒映著無數亡者的臉。沉沒神殿的最深處，' + BOSS_NAME + '緩緩睜開了眼睛。</span><span class="afk-lore">「孩子……你終於走到夢的盡頭了。留下來吧，這裡就是萬物的歸宿。」</span>');
+    sys('<span class="font-bold" style="color:#7dd3fc;">死亡之海的水面倒映著無數亡者的臉。沉沒神殿的最深處，' + BOSS_NAME + '緩緩睜開了眼睛。</span><span class="afk-lore">「孩子……你終於走到夢的盡頭了。……你也是被送來的嗎？」</span>');
     if (typeof vfxBossEntrance === 'function') { try { vfxBossEntrance(m); } catch (e) {} }
     if (!S().ff) { try { renderMobs(); } catch (e) {} }
   };
@@ -270,7 +270,7 @@
     var ph = pct > 0.75 ? 1 : pct > 0.5 ? 2 : pct > 0.25 ? 3 : 4;
     if (ph > (m._fbPhase || 1)) {
       m._fbPhase = ph; m._fbPhaseAt = age;
-      var line = ['', '', '「你們以為死亡只是終點？不，它是我的權柄。」', '「被放逐的，是我；被遺忘的，也是我。現在輪到你們了。」', '「回來吧……回到我懷裡，一切都會安靜下來。」'][ph];
+      var line = ['', '', '「死亡是我僅剩的東西了。」', '「被放逐的，是我；被遺忘的，也是我。現在輪到你們了。」', '「回去吧……別再往下沉了。」'][ph];
       sys('<span class="font-bold" style="color:#7dd3fc;">' + tag('第' + ph + '段・' + phaseName[ph], '#7dd3fc') + line + '</span>');
       if (ph === 2) summon(2);
       if (ph === 3) m.rageDmgMult = (m._fbRage || 1) * FB.rage;
@@ -357,7 +357,7 @@
     if (result === 'win' && !r.codexLit) { lit = lightCodex(player); r.codexLit = true; r.gifted = true; }
     if (player.rebirth > 0) { r.rebirthApplied = true; if (result !== 'win' && !r.gifted) { gift = samsaraGift(player); r.gifted = true; } }   // 已轉生：光環照給，不再套轉生傳承
     if (result === 'win') {
-      sys('<span class="font-bold" style="color:#fde047;">🏆 ' + BOSS_NAME + '的身影化作千萬滴海水落下。</span><span class="afk-lore">「……原來，還有人願意走到這裡。去吧，帶著這份光，回到生者的世界。」</span>'
+      sys('<span class="font-bold" style="color:#fde047;">🏆 ' + BOSS_NAME + '的身影化作千萬滴海水落下。</span><span class="afk-lore">「……原來，還有人願意走到這裡。去吧，回到生者的世界……別回頭看天上的光。」</span>'
         + '<span class="text-amber-200">通關！得到光環「勝者的榮耀」：全能力 +50、五屬性抗性 +100、AC −50、魔防 +50、受到一般攻擊 10% 閃避、傷害減免 +10。' + (player.rebirth > 0 ? '' : '時空裂痕-冥王域的輪迴已向你敞開（轉生時六大主屬性會傳承）。') + '</span>');
     } else {
       sys('<span class="font-bold text-slate-200">你倒在沉沒神殿冰冷的石階上（' + (why || '挑戰失敗') + '）。</span><span class="afk-lore">「別害怕。絕望，也是一種重生的方式。」</span>'
@@ -443,7 +443,7 @@
           '<div id="afk-final-card" class="bg-slate-950/80 border border-sky-700 rounded p-3 text-sm leading-relaxed">'
           + '<div class="font-bold mb-1 text-sky-300">🌊 最終決戰：' + BOSS_NAME + '（' + st + '）</div>'
           + '<div class="afk-lore">「你在夢裡殺過的每一個，都會回到我身邊。那麼你呢？」</div>'
-          + '<div class="text-slate-200 text-xs">夢的最底層是死亡之海。席琳——殷海薩被放逐的長女、六龍之母、魔族追隨的女神、死亡世界的主人——在沉沒神殿等著你。'
+          + '<div class="text-slate-200 text-xs"><span class="afk-lore">殷海薩的神諭：「那一半的她要掀起第二次諸神之戰。沉下去，斬斷源頭。」</span><br>夢的最底層是死亡之海。席琳——殷海薩被放逐的長女、六龍之母、魔族追隨的女神、死亡世界的主人——在沉沒神殿等著你。'
           + '每個角色只能挑戰一次；打倒得到「勝者的榮耀」，失敗得到「絕望轉生者」。<b>沒有挑戰過，冥王域不會為你開啟輪迴。</b></div></div>'
           + '<button type="button" class="btn py-3 text-base font-bold ' + (ok ? 'bg-sky-950 hover:bg-sky-900 border-sky-500' : 'bg-slate-700 border-slate-600 opacity-60 cursor-not-allowed') + '" ' + (ok ? '' : 'disabled') + ' onclick="afkFinalEnter()">'
           + (rr ? '已面對過死亡女神' : (!dreamOn() ? '需在席琳夢域鏡中' : (ok ? '🌊 沉入死亡之海（最終決戰）' : '需要 Lv100'))) + '</button>');

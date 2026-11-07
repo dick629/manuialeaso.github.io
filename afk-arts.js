@@ -506,7 +506,7 @@
   // 攻速提到 0.1 秒（面板顯示）：實際 1 秒一擊、傷害 ×10
   var fast = function (p, t) {
     var a = art(p);
-    if (a === 'k_doom') return { t: 10, mult: 10, show: 1 };
+    if (a === 'k_doom') return { t: 10, mult: (p && p.afkDoomWield && p.eq && p.eq.wpn) ? 5 : 10, show: 1 };   // 屠龍者的劍塚通關後可以拿武器：拿著時 ×5（Ping 11-07）
     if (a === 'n_heine' && isFaf(t || (typeof getTarget === 'function' ? getTarget() : null))) return { t: 10, mult: 10, show: 1 };
     if (a === 'i_sorc') return { t: 5, mult: 1, show: 5, min: true };
     return null;
@@ -753,7 +753,7 @@
   if (typeof window.equipItem === 'function') {
     var oEq = window.equipItem;
     window.equipItem = function (item) {
-      try { var d = item && DB.items[item.id]; if (d && d.type === 'wpn' && art(P()) === 'k_doom') { logSys('<span class="text-amber-300">絕望屠龍者的雙手已不再握劍。</span>'); return; } } catch (e) {}
+      try { var d = item && DB.items[item.id]; if (d && d.type === 'wpn' && art(P()) === 'k_doom' && !P().afkDoomWield) { logSys('<span class="text-amber-300">絕望屠龍者的雙手已不再握劍。</span>'); return; } } catch (e) {}
       return oEq.apply(this, arguments);
     };
   }
@@ -847,7 +847,7 @@
         else { p.curHp = 0; p._downed = true; p._reviveCd = Math.max(p._reviveCd || 0, 150); }
         if (!s.doomLog) { s.doomLog = 1; log(tag('絕望屠龍者', '#f87171') + nm(p) + '的命運在此斷絕……（離開暗夢星迴方能復原）', 'enemy'); }
       } else s.doomLog = 0;
-      if (isLeader && p.eq && (p.eq.wpn || p.eq.offwpn) && !S().ff) stripWeapons(p);
+      if (isLeader && !p.afkDoomWield && p.eq && (p.eq.wpn || p.eq.offwpn) && !S().ff) stripWeapons(p);
     }
     if (!isLeader && (p._downed || (p.curHp || 0) <= 0)) {
       if ((p._reviveCd || 0) >= 149 && !doomDead(p) && trySaves(p, true)) { p._downed = false; p._reviveCd = 0; if (p.curHp <= 0) p.curHp = 1; }
@@ -968,7 +968,7 @@
   var learn = function (id) {
     var p = P(); if (!p || !(p.rebirth > 0) || !ARTS[id] || ARTS[id].cls !== p.cls) return { ok: false, msg: '無法修習。' };
     p.rebirthArt = id;
-    if (id === 'k_doom') stripWeapons(p);
+    if (id === 'k_doom' && !p.afkDoomWield) stripWeapons(p);
     try { calcStats(); } catch (e) {}
     try { logSys('<span class="text-fuchsia-300 font-bold">奧拉奇里亞將「' + ARTS[id].n + '」刻進了你的靈魂。</span>'); } catch (e) {}
     try { if (typeof saveGame === 'function') saveGame(); if (typeof renderTabs === 'function') renderTabs(true); } catch (e) {}

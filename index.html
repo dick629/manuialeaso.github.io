@@ -593,7 +593,7 @@
     <script src="afk-toggles.js?v=bce60303f5"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
-    <script src="afk-webp-frames-data.js?v=8d0c4c2a8b"></script>
+    <script src="afk-webp-frames-data.js?v=178fe715ed"></script>
     <script src="afk-dup-frames-data.js?v=d19c412b59"></script>
     <script src="afk-dup-frames.js?v=8163cf8e2a"></script>
     <!-- afk-gptart-icons：GPT新美術——裝備圖示光影修補 837 張（原圖 → assets/icons/gpt/）；要早於其他外掛，開關 art-v3 -->
@@ -631,8 +631,6 @@
     <script src="afk-update.js?v=632fceedc3"></script>
     <!-- afk-dreamhell：瘋狂席琳席琳夢域鏡模式（需核心補丁 18）；排在 afk-droplog／afk-dropcount 之前，讓它們看得到新掉落 -->
     <script src="afk-dreamhell.js?v=f699b3f38c"></script>
-    <!-- afk-dimrift：次元裂縫入口（席琳神殿祈禱介面，目前灰色、尚未開放）；包 renderSherinePray，要在 afk-dreamhell 之後 -->
-    <script src="afk-dimrift.js?v=c4bdb501f8"></script>
     <!-- afk-cardplus：白金／鑽石卡、圖鑑全滿夢域 ×3、鑽白金幻化（需核心補丁 20）；排在 afk-dropcount 之前，讓掉落統計數得到白金／鑽石卡 -->
     <script src="afk-cardplus.js?v=ae0c57bc69"></script>
     <!-- afk-droplog：短暫卡頓補跑中的擊殺／掉落照常顯示（原版 <3 秒補跑完全不印） -->
@@ -667,7 +665,7 @@
     <script src="afk-ui.js?v=db35758978"></script>
     <script src="afk-extradata.js?v=922fc13e44"></script>
     <!-- 離線快速結算（自己 monkey-patch 包核心 saveGame/loadGame/changeMap/killMob/gainItem；搭配 maybeSpawnMobs 補丁） -->
-    <script src="afk-offline.js?v=1dada17b60"></script>
+    <script src="afk-offline.js?v=d491c50ec4"></script>
     <!-- 手機版面 / 返回鍵 -->
     <script src="afk-mobile.js?v=20dea9ad53"></script>
     <!-- afk-uiscale：畫面調整（只縮放遊戲畫面 60～100%、每個框都能拖曳調整；外掛開關，預設關；手機版禁用）；排在 afk-mobile 之後 -->
@@ -690,7 +688,7 @@
     <script src="afk-dex.js?v=af5556a4bd"></script>
     <!-- afk-illufix：幻術士修補（疼痛的歡愉 −50%、反彈、蝕刻印記；立方：燃燒 每 2 秒 5～50 火傷、灼熱印記、吸血回魔；立方：和諧回 MP 5 → 15，原 afk-classtweak）；排在 afk-wiki 之前（小百科說明跟著改）；需核心補丁 69 -->
     <script src="afk-illufix.js?v=7149276189"></script>
-    <script src="afk-wiki.js?v=9acf8af9ee"></script>
+    <script src="afk-wiki.js?v=1718f10e97"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=302890a0df"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
@@ -731,7 +729,7 @@
     <!-- 完整遺物階段與事件規則；資料與設定先於遺物合成載入。 -->
     <script src="afk-relic-catalog.js?v=55e39f25f5"></script>
     <script src="afk-relic-weapons.js?v=fa1b13e7cf"></script>
-    <script src="afk-relic-defense.js?v=5765e9cd4a"></script>
+    <script src="afk-relic-defense.js?v=d703c9082f"></script>
     <script src="afk-relic-runtime.js?v=0609e3001e"></script>
     <!-- afk-npc-kit：NPC 服務面板共用外觀（哈瑪大師、艾格尼絲、佐爾頓、艾彼迪爾）；排在這些 NPC 外掛之前 -->
     <script src="afk-npc-kit.js?v=0749913a7d"></script>
@@ -741,7 +739,7 @@
     <!-- afk-geniewish：巨靈的三個願望——沒有願望的（合成、昇華、舊存檔、被併成一疊）補抽三個（依 uid 固定）；願望不同不再併成一疊 -->
     <script src="afk-geniewish.js?v=f5c5330ef3"></script>
     <!-- afk-dreamstar：暗夢星迴（單機版）；需 afk-dreamhell、afk-relicplus，排在 afk-relicplus 之後 -->
-    <script src="afk-dreamstar.js?v=0778307463"></script>
+    <script src="afk-dreamstar.js?v=bbefd66dce"></script>
     <!-- afk-corrupt：侵蝕的法利昂／巴拉卡斯／林德拜爾巢穴（複製安塔瑞斯副本；需核心補丁 23） -->
     <script src="afk-corrupt.js?v=0bdc4a6228"></script>
     <!-- afk-relicsell：席琳夢域鏡遺物詞條、商人收遺物（龍鑽）、昇華支配分解；排在 afk-relicaffix／relicplus／dreamhell 之後 -->
@@ -751,7 +749,7 @@
     <!-- afk-ancient：古代藥水系列（天堂透視鏡古代體力恢復劑）、席琳夢域鏡藥水基礎補量 ×3 -->
     <script src="afk-ancient.js?v=81bbe91a68"></script>
     <!-- afk-arts：轉生技藝（奧拉奇里亞；需 afk-rebirth，排在它之後） -->
-    <script src="afk-arts.js?v=c35de8855e"></script>
+    <script src="afk-arts.js?v=e88f2a8c23"></script>
     <!-- afk-knight-shock：轉生騎士的衝擊之暈打全畫面（力量加傷害、敏捷加暈眩率，頭目也會暈） -->
     <script src="afk-knight-shock.js?v=d2ef630377"></script>
     <!-- afk-uifix：切換地區優先飛到村莊 -->
@@ -759,7 +757,7 @@
     <!-- afk-castlewar：七城攻城、城堡收成、宣戰與統一伺服器（需核心補丁 27；排在 afk-dreamhell／afk-arts 之後） -->
     <script src="afk-castlewar.js?v=e7c235210e"></script>
     <!-- afk-castle-guards：持有的每座城都能招該城部隊、四座新城部隊、統一七城後亞丁「聖十字近衛」（最多 8 名，湊滿 4 名可融合 ×4，融合體替玩家擋傷害） -->
-    <script src="afk-castle-guards.js?v=5b3ac5020b"></script>
+    <script src="afk-castle-guards.js?v=ec4d423546"></script>
     <script src="afk-bmprice.js?v=ec643849be"></script>
     <!-- 只迴避指定頭目：把上游「迴避頭目(瞬移卷軸)」的範圍從「全部的王」縮小到玩家挑的那幾隻（每張地圖各自一份） -->
     <script src="afk-bossavoid.js?v=57b4e8083e"></script>
@@ -841,7 +839,7 @@
     <!-- afk-resist：屬性抗性查表、無屬性抗性減物理傷害（需核心補丁 31） -->
     <!-- afk-curves：魔防／屬性抗性曲線統一（一份表、一個內插函式；afk-resist 也用這份表） -->
     <script src="afk-curves.js?v=ccee11f154"></script>
-    <script src="afk-resist.js?v=1c4566ad1b"></script>
+    <script src="afk-resist.js?v=0720bd573d"></script>
     <!-- afk-dreamcost：席琳夢域鏡的死亡詛咒、轉生夢域技能／復活代價、寵物 MP 恢復吃玩家面板（需 afk-dreamhell） -->
     <script src="afk-dreamcost.js?v=f735cbb185"></script>
     <!-- afk-healstat：本圖效率統計的恢復統計、面板 HP恢復量完整算式（需 afk-arts） -->
@@ -889,7 +887,7 @@
     <!-- afk-debuff-rules：負面效果一律計算抵抗、頭目不再免疫；污濁之水全體 15 秒、冷卻 30 秒（冷卻中改三重矢） -->
     <script src="afk-debuff-rules.js?v=3e11f02193"></script>
     <!-- afk-finalboss：世界最終頭目「死亡女神 席琳」（死亡之海・席琳的沉沒神殿；瘋狂席琳＋席琳夢域鏡、每角色一次；挑戰後才能冥王域轉生；需 afk-dreamhell、afk-dreamstar、afk-rebirth） -->
-    <script src="afk-finalboss.js?v=d551f3d1a9"></script>
+    <script src="afk-finalboss.js?v=f536cf4973"></script>
     <!-- afk-rebirth2：二轉決戰（席琳方傷害 +5%）、次元突破者／封印輪迴光環、第二次轉生（需 afk-finalboss、afk-dreamstar） -->
     <script src="afk-rebirth2.js?v=63751cfc2c"></script>
     <!-- afk-affix-plus：詞綴擴充（祝福／遠古三階只能打怪取得；燃柳村龍紋師艾格尼絲「龍紋賦予」：不屈者意志、龍的印記／傷痕、神樹者的讚禮、闇龍的抵抗者） -->
@@ -905,11 +903,11 @@
     <!-- afk-dropcap：掉落種類下修 30%（必掉不算；需核心補丁 68） -->
     <script src="afk-dropcap.js?v=4fb44bb8a1"></script>
     <!-- afk-giltas：吉爾塔斯副本「異界祭壇」（長老會議廳・次元裂隙；鑰匙碎片、信仰的寶珠、四色反擊屏障、真．吉爾塔斯之劍、支配者吉爾塔斯變身卡）（需 afk-traitor、afk-card-ascension、afk-relicplus） -->
-    <script src="afk-giltas.js?v=c74fcc814d"></script>
+    <script src="afk-giltas.js?v=82f88d344f"></script>
     <!-- afk-aden-quests：亞丁的陰影（55～75 級任務，近衛隊長 雷歐）、佐姆格祝福卷軸強化亞丁近衛裝備（安定值 +9） -->
     <script src="afk-aden-quests.js?v=8cdc2c0130"></script>
     <!-- afk-class-saga：八職業 55～80 級專屬劇情（第二部；各職業試煉導師發派）、世界觀「八職業／主要人物的現況」資料 -->
-    <script src="afk-class-saga.js?v=bea16f9c70"></script>
+    <script src="afk-class-saga.js?v=9afdffb2dc"></script>
     <!-- afk-rebirthquest：轉生後再跑一次職業任務（外掛開關，預設關；排在 afk-class-saga／afk-aden-quests 之後，TRIAL_Q 才完整） -->
     <script src="afk-rebirthquest.js?v=dacea1768f"></script>
     <!-- afk-matprice：材料賣價依來源怪物等級、稀缺性、配方需求重算（最低 500；商店有賣的不碰）；排在所有加掉落、加配方的外掛之後 -->
@@ -927,7 +925,7 @@
     <!-- 小百科從目前物品與變身資料生成分階說明。 -->
     <!-- afk-icon-fix：道具圖示對齊天堂透視鏡（由 scripts/gen-icon-fix.mjs 依 data/ttmi-icon-check.json 產生） -->
     <script src="afk-icon-fix.js?v=f74421a931"></script>
-    <script src="afk-game-guide.js?v=aa32eef80a"></script>
+    <script src="afk-game-guide.js?v=66cb3afc54"></script>
     <script src="afk-readability.js?v=eb0acc5890"></script>
     <!-- afk-craftinfo：製作清單每列多一行「成品能力」（點開看成品資料，手機不用長按）；手機版製作按鈕換到下一行 -->
     <script src="afk-craftinfo.js?v=b9d223e9c2"></script>
@@ -946,7 +944,7 @@
     <!-- afk-killlog：同一隻怪的掉落合併成一行「擊敗 X：物品 ×數量、…」（包 killMob 最外層，必須放在所有包 killMob 的外掛之後） -->
     <script src="afk-killlog.js?v=9c2bea76c9"></script>
     <!-- afk-sherine-dream：夢域席琳遺骸（伊奧夢域淬鍊，紅字、效果強化）與第 9 格遺骸「之魂」（謀叛者的低語頭目 5%；套裝件數 −1）；須在 afk-caps 之前 -->
-    <script src="afk-sherine-dream.js?v=8bfc61c2cb"></script>
+    <script src="afk-sherine-dream.js?v=83db98f346"></script>
     <!-- afk-runes：說話之島符文師佐爾頓——武器的星蝕·解三個符文孔（墜蝕·解、刻解·骸、瘴骸·破）；需 afk-sherine-dream -->
     <script src="afk-runes.js?v=bebf71b782"></script>
     <!-- afk-redguard：避免紅人持續追殺（席琳神殿「女神嘆息信徒 京」：10 龍鑽或 100 萬金幣，正義值歸 0、追殺散去、追殺永久解除）；需 afk-npc-kit -->
@@ -956,11 +954,11 @@
     <!-- afk-lore-kit：劇情任務線與新 Boss 共用工具（試煉接取制、套裝、召喚） -->
     <script src="afk-lore-kit.js?v=3bf7a15822"></script>
     <!-- afk-lore-main：主線劇情「紅獅之誓」Lv10～55（甘特）＋通緝犯庫傑；需 afk-lore-kit、afk-kurt-hunt（紅獅王的守護） -->
-    <script src="afk-lore-main.js?v=b3143be56b"></script>
+    <script src="afk-lore-main.js?v=53224ba609"></script>
     <!-- afk-hardin：支線劇情「知識與背叛」Lv20～70（象牙塔 魔法師 喬）＋隊伍副本「哈汀的時空」＋大魔法師歐林＋四色／哈汀之影重做；需 afk-lore-kit、afk-npc-kit -->
-    <script src="afk-hardin.js?v=6db89ecc89"></script>
+    <script src="afk-hardin.js?v=4eb54ea8f7"></script>
     <!-- afk-halpas：終章劇情「闇龍的低語」Lv85～100（燃柳村 奧拉奇里亞）＋火焰之影（真身）＋闇龍 哈爾巴斯＋反王肯恩／死亡騎士重做；需 afk-lore-kit、afk-npc-kit、afk-arts -->
-    <script src="afk-halpas.js?v=801012865d"></script>
+    <script src="afk-halpas.js?v=df04fe70ca"></script>
     <!-- afk-world-events：世界事件第二批（魔女賽尼斯「血的誓約詛咒」、暗殺軍王史雷佛「刺殺令」、魔族的獵龍隊、反王肯恩「篡位者的懸賞」）；需 afk-lore-kit，和 afk-kurt-hunt 共用規則 -->
     <script src="afk-world-events.js?v=7335782944"></script>
     <script src="afk-ghostship.js?v=4a18ea6606"></script>
@@ -1003,7 +1001,7 @@
     <!-- afk-runefx：符文石與符文之語的效果（減傷、藥水、寵物、套裝、攻擊、補助）；排在 afk-runes、afk-rift2、afk-caps、afk-sherine-dream 之後 -->
     <script src="afk-runefx.js?v=9481a37a60"></script>
     <!-- afk-finaltiers：終焉三階層（席琳夢境／席琳幻影 ×1.25／席琳伴身 ×1.5625 只能一次）；需 afk-finalboss -->
-    <script src="afk-finaltiers.js?v=87118daea3"></script>
+    <script src="afk-finaltiers.js?v=5bc79c7ec0"></script>
     <!-- afk-caps：轉生雙持的副手武器固定加成計入能力；爆擊率上限 80%（包 recomputeStats 最外層，必須最後載入）；迴避上限見核心補丁 patchEvadeCap -->
     <script src="afk-caps.js?v=ba8e334ab7"></script>
     <!-- afk-overflow：命中／迴避溢出（命中超過上限每 50 點多 5 點真實傷害、迴避超過 200 每 50 點最終減傷 +5）；包 AFK_CARD_COMBAT.damage／finalDR 最外層，排在 afk-caps 之後 -->
@@ -1050,7 +1048,7 @@
     <!-- afk-sigil：聖紋（25 個字母，Lv40～70 頭目與怪物掉；裝備視窗第二頁項鍊的位置，只能裝一個） -->
     <script src="afk-sigil.js?v=5030a3781a"></script>
     <!-- afk-scarab：成長型遺物「日輪聖甲蟲」（說話之島莉娜給；聖物格；Lv1～100、三型態）；要在 afk-questweapon、afk-expedition、afk-procfx 之後 -->
-    <script src="afk-scarab.js?v=6e9f223355"></script>
+    <script src="afk-scarab.js?v=207eae215b"></script>
     <!-- afk-balance1102：11/02 戰鬥平衡（夢域鏡三重矢遞減、幻影箭連發遞減、新手保障 Lv1～49、9 人以上怪物 HP 與傷害 +7%/人）；要在 afk-mech1031、afk-procfx 之後 -->
     <script src="afk-balance1102.js?v=5594ad6ce3"></script>
     <!-- afk-goddess3：女神與夢域鏡四龍的新機制（永久雙免疫＋汙濁之水／粉碎能量解除 30 秒、女神斬殺、二轉女神幽影與狂暴、次元裂縫龍之護甲）；要在 afk-finalboss、afk-finaltiers、afk-corrupt、afk-debuff-rules、afk-illufix、afk-hidden 之後 -->
@@ -1126,6 +1124,23 @@
     <script src="afk-bosswatch.js?v=3cdd34e686"></script>
     <!-- afk-skillup：技能強化（席琳神殿 技藝導師 薇爾娜）；要在 afk-hidden、afk-callally、afk-card-combat 之後，afk-intdmg 之前 -->
     <script src="afk-skillup.js?v=938e7de5aa"></script>
+    <!-- afk-dreamquest：夢域鏡任務線「水面下的證詞」7 章（伊奧、扎爾、喬、迷幻森林之母、奧拉奇里亞、無名的說書人）；要在 afk-lore-kit、afk-hardin、afk-rift2、afk-soulstone 之後 -->
+    <script src="afk-dreamquest.js?v=27f0d2488e"></script>
+    <!-- afk-evolve：職業進化（席琳神殿 技藝導師 薇爾娜；第一批召喚、寵物、爆發流派＋意志）；要在 afk-skillup、afk-relic-runtime、afk-card-combat 之後 -->
+    <script src="afk-evolve.js?v=baf1d02245"></script>
+    <!-- afk-mapboss：地圖王（野外打倒 300 隻）、副本王（地監待滿 10 分鐘）、王之徽章；要在 afk-lore-kit、afk-region-boss 之後 -->
+    <script src="afk-mapboss.js?v=3a16c4ac73"></script>
+    <!-- afk-dimrift：次元裂縫（世界規則：侵蝕、光蝕、面板減半、怪物倍率、掉落）；要在 afk-rebirth、afk-relic-companions、afk-lore-kit、afk-mio、afk-bracelet 之後 -->
+    <script src="afk-dimrift.js?v=7d5d8cd549"></script>
+    <!-- afk-zodiac：副本「黃道十二宮」（席琳神殿 星鑄師 艾琳娜）與聖衣 EX；要在 afk-saint-cloth、afk-dimrift、afk-npc-kit 之後 -->
+    <script src="afk-zodiac.js?v=574da44416"></script>
+    <!-- afk-riftdungeons：次元裂縫的副本（席琳神殿 裂縫之門）；要在 afk-dimrift、afk-lore-kit、afk-npc-kit 之後 -->
+    <script src="afk-riftdungeons.js?v=c8f4e10ea8"></script>
+    <!-- afk-dimrelic：次元遺物 180 件與四龍專屬的次元時空武器（席琳神殿 次元的鍛造師）；要在 afk-relic-*、afk-dimrift、afk-riftdungeons 之後 -->
+    <script src="afk-dimrelic.js?v=afc3d46f08"></script>
+    <!-- afk-breakskills：粉碎能量魔防 −150、污濁之水 AC +150 -->
+    <script src="afk-breakskills.js?v=2962c87a57"></script>
+    <script src="afk-riftlock.js?v=ec037b2615"></script>
     <!-- afk-intdmg：傷害與 HP 一律整數（卡冊結算、每一刻結束、能力重算、傷害飄字的最後一道保險）；要在所有包 AFK_CARD_COMBAT.damage、tick、recomputeStats 的外掛之後，放最後 -->
     <script src="afk-intdmg.js?v=1c92a3b8d5"></script>
     <!-- ═══════════ 加掛版外掛層 END ═══════════ -->

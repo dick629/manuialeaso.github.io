@@ -43,6 +43,10 @@
   var fullOn = function () { if (T && !T.enabled('res1000')) return false; var p = realP(); return !(p && p.classicMode); };
 
   var CAP = 500, IMMUNE = 1000;
+  // 次元裂縫（Ping 11-07）：火水風地滿抗門檻 1000 → 2000（減傷曲線照新門檻等比例拉長）；無屬性維持 1000
+  var riftOn = function () { try { return !!(window.__afkDimRiftOn && window.__afkDimRiftOn()); } catch (e) { return false; } };
+  var IMM = function () { return riftOn() ? 2000 : IMMUNE; };
+  var RIFT_K = 2;   // 測試可用 window.__afkRiftResK 覆寫
   var CONV = { take: 0.5, heal: 0.1 };   // 滿抗轉物理：只受 50%、回復 10%
   var ELE_KEY = { fire: 'resFire', water: 'resWater', wind: 'resWind', earth: 'resEarth' };
   // [抗性, 受到傷害倍率]
@@ -83,8 +87,8 @@
   var eleMult = function (d, ele, isPhys, direct) {
     var key = ELE_KEY[ele]; if (!key || !d) return 1;
     var v = Number(d[key]) || 0;
-    if (v >= IMMUNE) return conv(d, isPhys, isPhys ? 1 : nonePctMult(d.resNone), direct);   // 屬性免疫：一般攻擊當純物理；魔法改吃物理減傷
-    return eleFactor(v);
+    if (v >= IMM()) return conv(d, isPhys, isPhys ? 1 : nonePctMult(d.resNone), direct);   // 屬性免疫：一般攻擊當純物理；魔法改吃物理減傷
+    return eleFactor(riftOn() ? v / (window.__afkRiftResK || RIFT_K) : v);
   };
   var noneRes = function (d, dmg) {
     if (!dreamOn()) return dmg;   // 席琳夢域鏡以外：物理不吃無屬性抗性（原版行為）；百分比減傷 75% 上限照舊
@@ -130,7 +134,8 @@
     window.magicAttrDefense = function (target, ele) {
       var key = ELE_KEY[ele]; if (!key || !target || !dreamOn()) return oMAD.apply(this, arguments);
       var d = target.d || target, v = Number(d[key]) || 0;
-      var f = v >= IMMUNE ? nonePctMult(d.resNone) : eleFactor(v);
+      var fr = target === player || (player && (player.allies || []).indexOf(target) >= 0), rk = riftOn() && fr;
+      var f = v >= (rk ? 2000 : IMMUNE) ? nonePctMult(d.resNone) : eleFactor(rk ? v / (window.__afkRiftResK || RIFT_K) : v);
       return 1 - f;
     };
   }
@@ -167,7 +172,7 @@
   window.__afkResCap = TOTAL_CAP;
   var clampRes = function () {
     try {
-      var c4 = fullOn() ? CAP4_NEW : CAP4_OLD; ELE4.forEach(function (k) { TOTAL_CAP[k] = c4; }); TOTAL_CAP.resNone = c4;
+      var c4 = fullOn() ? CAP4_NEW : CAP4_OLD; ELE4.forEach(function (k) { TOTAL_CAP[k] = riftOn() ? 2000 : c4; }); TOTAL_CAP.resNone = c4;
       var d = typeof player !== 'undefined' && player && player.d; if (!d) return;
       for (var k in TOTAL_CAP) if ((Number(d[k]) || 0) > TOTAL_CAP[k]) { d['_raw_' + k] = d[k]; d[k] = TOTAL_CAP[k]; } else d['_raw_' + k] = d[k];
     } catch (e) {}

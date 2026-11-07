@@ -195,7 +195,7 @@
     var lost = Math.min(h0, p.mhp || h0) - (p.hp || 0); if (!(lost > 0)) return;   // 2026-10-29：最大 HP 下降造成的「夾回上限」不算受傷（不讓禁衛軍白白代扣）
     // 2026-10-31 12:53：夢域鏡「副本侵蝕」只擋一半——這一拍侵蝕扣你的量有 50% 直接扣在你身上，其餘才由融合體承擔
     var dr = Number(window.__afkDrainHit) || 0, through = 0; window.__afkDrainHit = 0;
-    if (dr > 0) { through = Math.min(lost, Math.ceil(dr * DRAIN_THROUGH)); lost -= through; }
+    if (dr > 0) { var dt = (typeof window.__afkCrossThrough === 'function' && window.__afkCrossThrough()); through = Math.min(lost, Math.ceil(dr * (dt != null && dt !== false ? dt : DRAIN_THROUGH))); lost -= through; }
     if (!(lost > 0)) { p.hp = h0 - through; return; }
     var take = lost * 2, left = 0;
     try { if (typeof window.__afkGuardCoverMult === 'function') take = Math.max(1, Math.round(take * window.__afkGuardCoverMult(g))); } catch (e) {}   // 佐姆格守衛強化：鐵壁＋魔法護符

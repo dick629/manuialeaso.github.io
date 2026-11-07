@@ -1647,6 +1647,7 @@
 
     var ms = Math.min(gap, CAP_MS);
     var ticks = Math.floor(ms / TICK_MS);
+    try { if (window.__afkDimRiftOn && window.__afkDimRiftOn()) ticks = Math.floor(ticks * 0.5); } catch (e) {}   // 次元裂縫：離線不算侵蝕、收益 ×0.5（Ping 11-07）
     if (ticks <= 0 && !isClimb && !isObl) return;   // 一般圖 gap≈0 直接 no-op;攀登/遺忘之島 gap≈0 仍要回到原地(ticks=0 補跑空轉,落點會 enterPrideFloor/enterOblivionMap)
     runCatchup(Math.max(0, ticks), ticks > OVERLAY_MIN_TICK, savedMap, prePride, preObl, { closeTs: last, loginTs: now });   // timing → 供寫離線歷史紀錄(done>0 才會真的記)
   }
