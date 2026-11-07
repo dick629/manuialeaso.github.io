@@ -28,6 +28,7 @@
   var clog = function (h, c) { try { if (typeof logCombat === 'function' && !S().ff) logCombat(h, c || 'enemy'); } catch (e) {} };
 
   // ── 數值 ──
+  var CARRY = { from: 3000, per: 0.5 };   // 負重前行：裂縫裡剩下的負重上限超過 3,000，每 1,000 造成的傷害 +0.5%
   var R = {
     hpPct: 5, acMax: 500, resMax: 500, floorMax: 325,
     lightEvery: 300, lightMax: 20, lightHp: 1, lightHeal: 2, execPct: 10,
@@ -206,6 +207,14 @@
       try {
         var p = P(); if (!on() || !p || !p.d) return r;
         var d = p.d, f = 0.5 + recoverPct(p) / 100;
+        // 負重上限跟面板一起打折（Ping 11-07 17:33）；剩下的上限超過 3,000，每多 1,000 造成的傷害 +0.5%（負重前行）
+        if (typeof d.weightCapacity === 'number' && d.weightCapacity > 0) {
+          var lim = Math.max(1, Math.floor(d.weightCapacity * f)), pct = Math.floor((Number(d.equippedWeight) || 0) / lim * 100);
+          var tier = pct <= 49 ? 0 : pct <= 81 ? 1 : pct <= 99 ? 2 : 3, old = d.loadTier || 0, sp = [1, 1, 2, 3];
+          if (typeof d.aspd === 'number' && sp[old] !== sp[tier]) d.aspd = d.aspd / sp[old] * sp[tier];
+          d.weightCapacity = lim; d.weightPct = pct; d.loadTier = tier;
+          rec(p).carry = Math.max(0, Math.floor((lim - CARRY.from) / 1000)) * CARRY.per;
+        }
         HALF.forEach(function (k) { if (typeof d[k] === 'number' && d[k] > 0) d[k] = Math.floor(d[k] * f); });
         if (typeof d.ac === 'number' && d.ac < 0) d.ac = Math.ceil(d.ac * f);
         // 侵蝕：AC 往上加（越高越差），魔防、抗性往下扣到最低保留
@@ -224,7 +233,7 @@
   var RC = W.AFK_RELIC_COMPANIONS;
   if (RC && typeof RC.equipmentCapacity === 'function') {
     var oCap = RC.equipmentCapacity;
-    RC.equipmentCapacity = function (p, cap) { var c = oCap.apply(this, arguments); try { if (on() && p === P()) c = c - R.weight - Math.floor(recoverPct(p) / 5) * R.weightStep; } catch (e) {} return c; };
+    RC.equipmentCapacity = function (p, cap) { return oCap.apply(this, arguments); };   // 11-07 17:33 改成跟面板一起打折（見重算後的「負重前行」）
   }
 
   // ── 怪物 ──
@@ -254,7 +263,7 @@
     C.damage = function (actor, target, amount, opt) { try { if (on() && actor && !actor.mobId && target && target.mobId && amount > 0) amount = Math.max(1, Math.floor(amount * outMult())); } catch (e) {} return o.call(this, actor, target, amount, opt); };
     return true;
   };
-  var outMult = function () { var p = P(), r = rec(p), k = R.dmgOut; if (r.clothEx) k += 0.15; if (r.athena) k += 0.15; if (r.dimWpn) k *= 1.3; else if (r.supWpn) k *= 0.9; var st = sealTier(p); if (st) k *= 1 + [0, 0.01, 0.03, 0.05][st]; return k; };
+  var outMult = function () { var p = P(), r = rec(p), k = R.dmgOut; if (r.clothEx) k += 0.15; if (r.athena) k += 0.15; if (r.dimWpn) k *= 1.3; else if (r.supWpn) k *= 0.9; var st = sealTier(p); if (st) k *= 1 + [0, 0.01, 0.03, 0.05][st]; if (r.carry) k *= 1 + r.carry / 100; return k; };
   if (!hookDamage()) { try { document.addEventListener('DOMContentLoaded', hookDamage); } catch (e) {} }
 
   // ── 掉落 ──
@@ -350,6 +359,6 @@
 
   // 聖十字之盾在裂縫擋的比例：30%；阿納金的號角 1／2／3 級 40／45／50%
   W.__afkCrossThrough = function () { if (!on()) return null; var p0 = P(), hl = p0 && p0.eq && p0.eq.horn ? (rec(p0).hornLv || 0) : 0; return 1 - [0.3, 0.4, 0.45, 0.5][Math.max(0, Math.min(3, hl))]; };
-  W.__afkDimRift = { R: R, RANKS: DR_RANKS, rankUp: rankUp, rankWhy: rankWhy, sealTier: sealTier, allyPanel: allyPanel, REDUCE: REDUCE, FLOOR: FLOOR, RECOVER: RECOVER, on: on, open: on, canOpen: canOpen, toggle: toggle, rec: rec, reduceSum: reduceSum, floorSum: floorSum, recoverPct: recoverPct, weightCut: weightCut, erodeSecond: erodeSecond, lightSecond: lightSecond, drops: drops, outMult: outMult };
+  W.__afkDimRift = { CARRY: CARRY, R: R, RANKS: DR_RANKS, rankUp: rankUp, rankWhy: rankWhy, sealTier: sealTier, allyPanel: allyPanel, REDUCE: REDUCE, FLOOR: FLOOR, RECOVER: RECOVER, on: on, open: on, canOpen: canOpen, toggle: toggle, rec: rec, reduceSum: reduceSum, floorSum: floorSum, recoverPct: recoverPct, weightCut: weightCut, erodeSecond: erodeSecond, lightSecond: lightSecond, drops: drops, outMult: outMult };
   try { console.log('[AFK-dimrift] 已載入：次元裂縫（世界規則）'); } catch (e) {}
 })();
