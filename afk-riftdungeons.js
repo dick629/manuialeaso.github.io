@@ -25,7 +25,7 @@
   var mobs = function () { return (typeof mapState !== 'undefined' && mapState.mobs) || []; };
   var MAP = 'afk_riftdg', TOWN = 'town_sherine', NPC_ID = 'npc_afk_riftgate', NPC_N = '裂縫之門';
   var IMG = 'assets/icons/items/', BLOOD = 'afk_blood_dia', REF = 65;
-  var R = { allyHp: 0.25, pts: 10, ptsDay: 60, mobHpK: 40, riftHp: 1.5 };
+  var R = { allyHp: 0.25, pts: 10, ptsDay: 60, mobHpK: 0.3, riftHp: 1.5, mobRef: 125000, bossRef: 30000 };   // 11-07：HP 改用固定基準（不吃借來外觀的怪物原本 HP）
 
   // ── 材料 ──
   var MAT = {
@@ -325,9 +325,11 @@
   }
   var place = function (idx, baseId, Lv, hpMult, extra, absHp) {
     var b = DB.mobs[baseId] || DB.mobs.afk_rd_base, m = scale(b, Lv, hpMult);
+    m.hp = Math.max(1, Math.round((extra && extra._rdBoss || extra && extra._rdAdd ? R.bossRef : R.mobRef) * Math.pow(Lv / REF, 2.5) * (hpMult || 1)));
     if (absHp) m.hp = Math.round(absHp);
     var mob = L.boss.place(idx, m, Object.assign({ mobId: baseId, _rd: true, _dimRift: !(run && run.D.noRift), noAutoTeleport: true, noCharm: true }, extra || {}));
     if (extra && extra.n) mob.n = extra.n;
+    if (mob) { mob.hp = mob.curHp = m.hp; }   // HP 用這裡算好的（不再乘夢域鏡的怪物倍率；攻擊、命中等其他倍率照舊）
     return mob;
   };
   var endlessK = function () { return run.D.endless ? 1 + 0.15 * run.floor : 1; };

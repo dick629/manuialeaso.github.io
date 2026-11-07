@@ -23,7 +23,7 @@
   var dayKey = function () { return Math.floor((Date.now() + 8 * 3600000) / 86400000); };
   var mobs = function () { return (typeof mapState !== 'undefined' && mapState.mobs) || []; };
   var MAP = 'afk_zodiac', TOWN = 'town_sherine', NPC_ID = 'npc_afk_elena', NPC_N = '星鑄師 艾琳娜';
-  var ZT = { timeMs: 15 * 60 * 1000, layers: 3, waves: 5, mobLv: 0, mobHp: 1.0, bossHp: 6, guardHp: 18, dmg: 1.0, REF: 65 };
+  var ZT = { timeMs: 15 * 60 * 1000, layers: 3, waves: 5, mobLv: 0, mobHp: 0.3, mobRef: 125000, bossHp: 10, guardHp: 35, dmg: 1.0, REF: 65 };   // 11-07 用 11/04 存檔（曲線約 90）校準：一般怪約 23 萬、星衛約 180 萬、守宮者約 700 萬；那份存檔約 8 分鐘打完
   var SAND = 'afk_zd_sand', SHARD = 'afk_cloth_shard', STAR_CARD = 'afk_zd_card';
   var IMG = 'assets/icons/items/';
 
@@ -105,22 +105,23 @@
     setTimeout(function () { try { if (mapState.current === MAP && run === null) { setMapSelectors(TOWN); changeMap(true); try { saveGame(); } catch (e) {} } } catch (e) {} }, 1500);
   };
   var isBossWave = function () { return run.wave === ZT.waves; };
+  var placeZ = function (idx, m, extra) { var mob = L.boss.place(idx, m, extra); if (mob) mob.hp = mob.curHp = m.hp; return mob; };   // HP 不再乘夢域鏡的倍率
   var spawnWave = function () {
     var h = BYK[run.k], lv = run.lv, hpk = 1 + 0.15 * allyN();
     run.pending = false; run.alive = 0;
     if (isBossWave()) {
       var final = run.layer === ZT.layers, base = DB.mobs[guardBase[h.k]];
-      var m = L.boss.place(2, scale(base, lv + (final ? 5 : 0), (final ? ZT.guardHp : ZT.bossHp) * hpk), { mobId: guardBase[h.k], _zd: true, _zdBoss: true, _zdFinal: final, noAutoTeleport: true, noCharm: true });
+      var m = placeZ(2, scale(base, lv + (final ? 5 : 0), (final ? ZT.guardHp : ZT.bossHp) * hpk), { mobId: guardBase[h.k], _zd: true, _zdBoss: true, _zdFinal: final, noAutoTeleport: true, noCharm: true });
       if (!final) m.n = h.n + '的星衛';
       run.alive++; run.mech = final ? { t0: tk(), at: tk() + 200, layers: 0, ice: 0, judged: {}, rage: 0 } : null;
       if (final && (h.mech === 'twin' || h.mech === 'fins')) {
         var cnt = h.mech === 'twin' ? 1 : 2;
-        for (var j = 0; j < cnt; j++) { var c = L.boss.place(j === 0 ? 1 : 3, scale(base, lv, (h.mech === 'twin' ? ZT.guardHp * 0.6 : ZT.bossHp) * hpk), { mobId: guardBase[h.k], _zd: true, _zdAdd: true, noAutoTeleport: true, noCharm: true }); c.n = h.mech === 'twin' ? '鏡雙子 莉歐' : '魚形分身'; c.boss = false; run.alive++; }
+        for (var j = 0; j < cnt; j++) { var c = placeZ(j === 0 ? 1 : 3, scale(base, lv, (h.mech === 'twin' ? ZT.guardHp * 0.6 : ZT.bossHp) * hpk), { mobId: guardBase[h.k], _zd: true, _zdAdd: true, noAutoTeleport: true, noCharm: true }); c.n = h.mech === 'twin' ? '鏡雙子 莉歐' : '魚形分身'; c.boss = false; run.alive++; }
       }
       clog('<span class="font-bold" style="color:#fde047">【' + esc(h.n) + ' 第 ' + run.layer + ' 層】</span>' + esc(m.n) + ' 現身了。' + (final ? '<span class="text-slate-300">（' + esc(h.d) + '）</span>' : ''), 'enemy');
       try { if (typeof vfxBossEntrance === 'function' && !S().ff) vfxBossEntrance(m); } catch (e) {}
     } else {
-      var pool = POOL(); for (var i = 0; i < 4 && pool.length; i++) { var id = pool[Math.floor(Math.random() * pool.length)]; L.boss.place(i, scale(DB.mobs[id], lv, ZT.mobHp * 40 * hpk), { mobId: id, _zd: true, noAutoTeleport: true }); run.alive++; }
+      var pool = POOL(); for (var i = 0; i < 4 && pool.length; i++) { var id = pool[Math.floor(Math.random() * pool.length)]; var mm = scale(DB.mobs[id], lv, 1); mm.hp = Math.round(ZT.mobRef * Math.pow(lv / ZT.REF, 2.5) * ZT.mobHp * hpk); placeZ(i, mm, { mobId: id, _zd: true, noAutoTeleport: true }); run.alive++; }
     }
     try { if (!S().ff) renderMobs(); } catch (e) {}
   };
