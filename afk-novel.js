@@ -7,7 +7,7 @@
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'novel', name: '小說《次元裂縫》', desc: '設定分頁「🔌 外掛」列多一個「📖 小說」：線上閱讀連載小說，記住讀到哪一章', group: '查詢與資訊', seal: true });
   if (T && !T.enabled('novel')) return;
-  var SRC = 'assets/novel/novel.md?v=1107b', LS = 'afk_novel_pos';
+  var SRC = 'assets/novel/novel.md?v=1107c', LS = 'afk_novel_pos';
   var el = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var inl = function (s) { return esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>'); };
@@ -21,10 +21,10 @@
       var lines = t.split(/\r?\n/), out = [], cur = null;
       lines.forEach(function (ln, i) {
         if (/^# /.test(ln)) {
-          if (i === 0) { cur = { t: '簡介與目錄', l: [] }; out.push(cur); return; }
+          if (i === 0) { cur = { t: '簡介', l: [] }; out.push(cur); return; }
           cur = { t: ln.slice(2).trim(), l: [] }; out.push(cur); return;
         }
-        if (!cur) { cur = { t: '簡介與目錄', l: [] }; out.push(cur); }
+        if (!cur) { cur = { t: '簡介', l: [] }; out.push(cur); }
         cur.l.push(ln);
       });
       chapters = out; return out;
