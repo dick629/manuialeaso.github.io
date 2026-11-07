@@ -36,14 +36,14 @@
     afk_rd_echo: ['號角的殘音', '阿納金第 3～5 形態留下的聲音。用途之後開放。'],
     afk_rd_thread: ['天空的縫線', '封印戰與無盡的裂縫留下的線。守護者之戒完整 ★3 用得到。'],
     afk_rd_remnant: ['殷海薩的殘光', '封印戰、無盡的裂縫深處留下的光。用途之後開放。'],
-    afk_rd_pick: ['自選至高昇華支配強化石', '可以換成任一種至高昇華支配強化石（之後開放兌換）。'],
+    afk_rd_pick: ['自選至高昇華支配強化石', '在席琳神殿「次元的鍛造師」換成任一種昇華支配強化石（武器／防具／飾品）。'],
     afk_rd_mirror: ['倒影之鏡', '倒影迴廊的鏡子。之後用來替裝備重新抽一條附加能力。'],
     afk_rd_ember: ['熾燼原石', '燃燼礦坑的鑽機挖出來的原石。用途之後開放。'],
     afk_rd_ink: ['深淵墨晶', '深淵的大王烏賊的墨凝成的晶體。用途之後開放。'],
     afk_rd_neptune: ['海神的鱗片', '漂流的墓船深處撿到的鱗片。之後給龍之護甲類強化用。'],
     afk_rd_eclipse: ['星蝕之核', '星墜的祭壇的星蝕者留下的核。創世密奧卡、黃道星卡之後的強化材料。'],
     afk_rd_hmark: ['哈汀的魔法印記', '哈汀的時空・裂縫留下的印記。用途之後開放。'],
-    afk_anakin_horn: ['阿納金的號角', '墮光天使 阿納金第一次被擊倒第五形態時留下的號角。之後放進裝備第二頁的專屬欄位。']
+    afk_anakin_horn: ['阿納金的號角', '墮光天使 阿納金第一次被擊倒第五形態時留下的號角。持有就生效：在「次元的鍛造師」強化，提高次元裂縫裡聖十字之盾擋下的侵蝕。']
   };
   Object.keys(MAT).forEach(function (id) { var x = MAT[id]; if (!DB.items[id]) DB.items[id] = { n: x[0], type: 'etc', p: 0, gachaWeight: 0, weight: 0, noUse: true, noSell: true, c: 'text-cyan-300', img: IMG + '原石碎片.png', d: x[1] + '（次元裂縫限定）' }; });
   var cnt = function (id) { return typeof questCountId === 'function' ? questCountId(id) : 0; };

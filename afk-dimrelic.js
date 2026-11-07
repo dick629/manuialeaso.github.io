@@ -192,7 +192,7 @@
     W.recomputeStats = function () {
       var r = oRe.apply(this, arguments);
       try {
-        var p = P(); FX = build(p); if (!p || !p.d) return r;
+        var p = P(); FX = build(p); if (!p || !p.d) return r; if (!p._allyName) syncFlags();
         FX.sum('stat').forEach(function (e) { if (e[1] === 'mhpPct') return; (STATK[e[1]] || [e[1]]).forEach(function (k) { p.d[k] = (Number(p.d[k]) || 0) + e[2]; }); });
         if (eDR) eDR[1] = Math.min(2, FX.v('erode')); if (eFL) eFL[1] = FX.v('floor');
       } catch (e) { console.warn('[AFK-dimrelic] stats', e); }
@@ -344,7 +344,7 @@
     var oKill = W.killMob;
     W.killMob = function (idx) {
       var m = mobs()[idx], was = !!(m && m._dead), r = oKill.apply(this, arguments);
-      try { var p = P(); if (p && m && !was && m._dead && !p.dead) { var kh = fx().v('killHeal'); if (kh) p.hp = Math.min(p.mhp, p.hp + Math.floor(p.mhp * kh)); dropDragon(m); } } catch (e) {}
+      try { var p = P(); if (p && m && !was && m._dead && !p.dead) { var kh = fx().v('killHeal'); if (kh) p.hp = Math.min(p.mhp, p.hp + Math.floor(p.mhp * kh)); dropDragon(m); var dr0 = drec(); if (dr0 && dr0.libEn && dr0.ero) { dr0.resBack = Math.min(dr0.ero, (dr0.resBack || 0) + 5 * dr0.libEn); } } } catch (e) {}
       return r;
     };
   }
@@ -443,6 +443,45 @@
     } catch (e) {}
   }
 
+  // ── 次元支配（至高支配・封 武器解放）、縫天★、阿納金的號角 ──
+  var LIB = { en: [10, 15, 20, 25, 50], rate: [100, 80, 60, 40, 100] };
+  var WTYPES = WT.map(function (w) { return w[0]; });
+  var wpnOf = function (p) { var w = p && p.eq && p.eq.wpn; return w && DB.items[w.id] ? w : null; };
+  var isSup = function (it) { var d = it && DB.items[it.id]; return !!(d && d.type === 'wpn' && d.relicEvo != null); };
+  var libMats = function () {
+    var used = {}, out = {};
+    WTYPES.forEach(function (t) { out[t] = inv().filter(function (x) { return x && !x.lock && !used[x.uid] && catalogSlot(x.id) === t; })[0] || null; if (out[t]) used[out[t].uid] = 1; });
+    return out;
+  };
+  function liberate() {
+    var p = P(), w = wpnOf(p); if (!w || !isSup(w)) { sys('<span class="text-amber-300">要先裝備「至高支配・封」的武器。</span>'); return; }
+    if (w.dimLib) { sys('<span class="text-amber-300">已經是次元支配了。</span>'); return; }
+    var m = libMats(), miss = WTYPES.filter(function (t) { return !m[t]; }); if (miss.length) { sys('<span class="text-amber-300">還缺 +0、未昇華的遺物：' + esc(miss.join('、')) + '。</span>'); return; }
+    WTYPES.forEach(function (t) { var x = m[t], i = p.inv.indexOf(x); if (i >= 0) { if ((x.cnt || 1) > 1) x.cnt--; else p.inv.splice(i, 1); } });
+    w.dimLib = 1; w.dimLibEn = 0;
+    sys('<span class="font-bold" style="color:#67e8f9">✦ ' + esc(DB.items[w.id].n) + ' 掙開了封印——它成了「次元支配」。</span>'); syncFlags(); try { calcStats(); saveGame(); } catch (e) {}
+  }
+  function libEnhance() {
+    var p = P(), w = wpnOf(p); if (!w || !w.dimLib) return; var n = w.dimLibEn || 0; if (n >= 5) return;
+    var need = LIB.en[n]; if (cnt(DUST) < need) { sys('<span class="text-amber-300">異化星塵不夠（要 ' + need + '）。</span>'); return; }
+    if (Math.random() * 100 >= LIB.rate[n]) { sys('<span class="text-amber-300">強化失敗了。（不降級、材料沒有被扣）</span>'); return; }
+    take(DUST, need); w.dimLibEn = n + 1;
+    sys('<span class="font-bold" style="color:#67e8f9">✦ 次元支配。縫天' + '★'.repeat(w.dimLibEn) + '</span>'); syncFlags(); try { calcStats(); saveGame(); } catch (e) {}
+  }
+  var HORN = { stone: 10, blood: 500, max: 3, block: [30, 40, 45, 50] };
+  var STONES = ['afk_asc_stone_wpn', 'afk_asc_stone_arm', 'afk_asc_stone_acc'];
+  var stoneCnt = function () { return STONES.reduce(function (s, id) { return s + cnt(id); }, 0); };
+  var takeStones = function (n) { STONES.forEach(function (id) { var c = Math.min(n, cnt(id)); if (c > 0) { take(id, c); n -= c; } }); };
+  function hornUp() {
+    var p = P(), r = drec(); if (!p || !r) return; if (cnt('afk_anakin_horn') < 1) { sys('<span class="text-amber-300">你還沒有阿納金的號角。</span>'); return; }
+    var lvh = r.hornLv || 0; if (lvh >= HORN.max) return;
+    if (stoneCnt() < HORN.stone || cnt(BLOOD) < HORN.blood) { sys('<span class="text-amber-300">要昇華支配強化石 ×' + HORN.stone + '＋血龍鑽 ' + HORN.blood + '。</span>'); return; }
+    takeStones(HORN.stone); take(BLOOD, HORN.blood); r.hornLv = lvh + 1;
+    sys('<span class="font-bold" style="color:#fde047">✦ 阿納金的號角 ' + r.hornLv + ' 級：次元裂縫裡聖十字之盾擋 ' + HORN.block[r.hornLv] + '%。</span>'); try { saveGame(); } catch (e) {}
+  }
+  function pickStone(k) { if (cnt('afk_rd_pick') < 1 || STONES.indexOf(k) < 0) return; take('afk_rd_pick', 1); gainItem(k, 1, true, true); sys('<span style="color:#67e8f9">換到了 ' + esc(DB.items[k].n) + '。</span>'); }
+  function syncFlags() { var p = P(), r = drec(); if (!p || !r) return; var w = wpnOf(p); r.dimWpn = !!(w && w.dimLib); r.athena = r.dimWpn; r.dimWpn5 = !!(w && w.dimLib && (w.dimLibEn || 0) >= 5); r.supWpn = !!(w && isSup(w) && !w.dimLib); r.libEn = w && w.dimLib ? (w.dimLibEn || 0) : 0; }
+
   // ── 鍛造師 ──
   var inv = function () { var p = P(); return (p && p.inv) || []; };
   var findUid = function (uid) { var p = P(); if (!p) return null; var a = inv().filter(function (x) { return x && x.uid === uid; })[0]; if (a) return a; var e = p.eq || {}; return Object.keys(e).map(function (k) { return e[k]; }).filter(function (x) { return x && x.uid === uid; })[0] || null; };
@@ -504,7 +543,7 @@
   var VIEW = { tab: 'mine', slot: '' };
   var paint = function (div) {
     var box = div.querySelector('#afk-dimr'); if (!box) return; var p = P(); if (!p) return;
-    var tabs = [['mine', '我的次元遺物'], ['craft', '製作'], ['sets', '套裝與大絕招'], ['dragon', '次元時空'], ['synth', '異化星塵']];
+    var tabs = [['mine', '我的次元遺物'], ['craft', '製作'], ['sets', '套裝與大絕招'], ['lib', '次元支配'], ['horn', '號角'], ['dragon', '次元時空'], ['synth', '異化星塵']];
     var h = '<div class="ax-note">次元結晶 ' + cnt(CRYSTAL).toLocaleString() + '　異化星塵 ' + cnt(DUST) + '　倒影之鏡 ' + cnt(MIRROR) + '　破碎星光塵埃 ' + cnt(STARDUST) + '　四龍的時空碎片 ' + cnt(FRAG) + '</div>';
     h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">' + tabs.map(function (t) { return '<button type="button" data-dr="tab:' + t[0] + '"' + (VIEW.tab === t[0] ? ' style="outline:1px solid #67e8f9"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>';
     if (VIEW.tab === 'mine') {
@@ -532,6 +571,19 @@
       h += '<div class="ax-h">套裝（+3 隨機）</div>';
       SETS.forEach(function (s) { h += '<div class="ax-note"><b style="color:#67e8f9">' + esc(s.n) + '</b>　每件：' + esc(s.piece[0]) + '<br>3 件　核心「' + esc(s.core.n) + '」：' + esc(s.core.d) + '<br>6 件　' + esc(s.six[0]) + '<br>9 件（+5）　' + esc(s.nine[0]) + '</div>'; });
       [['w', '武器'], ['a', '防具'], ['c', '飾品']].forEach(function (c) { h += '<div class="ax-h" style="margin-top:8px">大絕招・' + c[1] + '（+5 隨機）</div><div class="ax-note">' + ULT[c[0]].map(function (u) { return '<b>' + esc(u.n) + '</b>：' + esc(u.d); }).join('<br>') + '</div>'; });
+    } else if (VIEW.tab === 'lib') {
+      var w = wpnOf(p), mt = libMats();
+      h += '<div class="ax-note">把裝備中的「至高支配・封」武器解放成「次元支配」：材料是 14 種武器遺物各 1 件（+0、未昇華，背包裡沒上鎖的），不用龍鑽、金幣，100% 成功；保留強化值、星數、雅典娜的祝福。<br>次元裂縫裡：次元支配武器效果完整、對裂縫敵人傷害 +30%，並得到雅典娜的祝福（抵銷裂縫傷害懲罰 15%）；沒解放的至高支配・封武器效果打折（造成的傷害 −10%）。<br>縫天★：異化星塵 ' + LIB.en.join('／') + '，成功率 ' + LIB.rate.join('／') + '%（失敗不降級、不扣材料）；每一顆星打倒怪物恢復 5 點五屬性抗性，★5 侵蝕最低保留 +100。</div>';
+      if (!w) h += '<div class="ax-note">沒有裝備武器。</div>';
+      else if (!isSup(w)) h += '<div class="ax-note">裝備中的「' + esc(DB.items[w.id].n) + '」不是至高支配・封。</div>';
+      else if (!w.dimLib) { h += '<div class="ax-note">' + WTYPES.map(function (t) { return (mt[t] ? '<span style="color:#86efac">✓</span>' : '<span class="no">✗</span>') + esc(t); }).join('　') + '</div>'; h += K.rowHtml({ key: 'lib', name: esc(DB.items[w.id].n), color: '#fde047', desc: '至高支配・封', why: '', btns: [['lib:', '解放', WTYPES.every(function (t) { return mt[t]; })]] }, 'data-dr'); }
+      else { var ln = w.dimLibEn || 0; h += K.rowHtml({ key: 'lib', name: esc(DB.items[w.id].n) + '　次元支配。縫天' + ('★'.repeat(ln) || '（無星）'), color: '#67e8f9', desc: '', why: '', btns: ln < 5 ? [['len:', '縫天 ★' + (ln + 1) + '（星塵 ' + LIB.en[ln] + '・' + LIB.rate[ln] + '%）', cnt(DUST) >= LIB.en[ln]]] : [] }, 'data-dr'); }
+    } else if (VIEW.tab === 'horn') {
+      var hr = drec(), hl = (hr && hr.hornLv) || 0;
+      h += '<div class="ax-note">阿納金的號角（持有就生效）：次元裂縫裡聖十字之盾（聖十字禁衛軍）擋侵蝕 ' + HORN.block.map(function (x, i) { return i ? i + ' 級 ' + x + '%' : '平常 ' + x + '%'; }).join('、') + '。每級：昇華支配強化石 ×' + HORN.stone + '（三種都算）＋血龍鑽 ' + HORN.blood + '。</div>';
+      h += K.rowHtml({ key: 'horn', name: '阿納金的號角　' + hl + '／' + HORN.max + ' 級', color: '#fde047', desc: cnt('afk_anakin_horn') ? '持有中' : '還沒有（墮光天使 阿納金第 5 形態第一次打倒時給）', why: '', btns: hl < HORN.max ? [['horn:', '強化', cnt('afk_anakin_horn') > 0 && stoneCnt() >= HORN.stone && cnt(BLOOD) >= HORN.blood]] : [] }, 'data-dr');
+      h += '<div class="ax-h" style="margin-top:8px">自選至高昇華支配強化石（持有 ' + cnt('afk_rd_pick') + '）</div>';
+      h += K.rowHtml({ key: 'pick', name: '換成一顆昇華支配強化石', color: '#67e8f9', desc: '', why: '', btns: STONES.map(function (id) { return ['pk:' + id, (DB.items[id] || {}).n || id, cnt('afk_rd_pick') > 0]; }) }, 'data-dr');
     } else if (VIEW.tab === 'dragon') {
       h += '<div class="ax-note">四龍副本・裂縫的龍會掉「次元時空・破」（10%）與四龍的時空碎片。只在四龍副本裡有效果。</div>';
       DRG.forEach(function (x, i) { h += '<div class="ax-note"><b style="color:#f0abfc">次元時空・' + x + '</b>：' + esc(DRG_FX[i]) + (i ? '　（進化：倒影之鏡 ×' + DRG_EVO[i].mirror + '、時空碎片 ×' + DRG_EVO[i].frag + '）' : '') + '</div>'; });
@@ -551,13 +603,13 @@
     if (!div.__afkDimrBound) { div.__afkDimrBound = true; div.addEventListener('click', function (ev) {
       var b = ev.target.closest('button[data-dr]'); if (!b || b.disabled || !div.querySelector('#afk-dimr')) return; var k = (b.getAttribute('data-dr') || '').split(':');
       if (k[0] === 'tab') VIEW.tab = k[1]; else if (k[0] === 'src') VIEW.src = k[1]; else if (k[0] === 'mk') craft(k[1], k[2]); else if (k[0] === 'en') enhance(k[1]);
-      else if (k[0] === 'rs') reroll(k[1], 'set'); else if (k[0] === 'ru') reroll(k[1], 'ult'); else if (k[0] === 'dv') evolveDragon(k[1]); else if (k[0] === 'sy') synth(+k[1]);
+      else if (k[0] === 'rs') reroll(k[1], 'set'); else if (k[0] === 'ru') reroll(k[1], 'ult'); else if (k[0] === 'dv') evolveDragon(k[1]); else if (k[0] === 'sy') synth(+k[1]); else if (k[0] === 'lib') liberate(); else if (k[0] === 'len') libEnhance(); else if (k[0] === 'horn') hornUp(); else if (k[0] === 'pk') pickStone(k[1]);
       paint(div);
     }); }
   };
   K.addNpc('town_sherine', { id: 'npc_afk_dimsmith', n: '次元的鍛造師', title: '次元遺物', type: 'quest', classicHide: true, d: '把遺物丟進裂縫裡重新鍛造的鍛造師。次元遺物的製作、強化、重抽都在這裡。' });
   K.hookNpc('npc_afk_dimsmith', '次元的鍛造師', '次元遺物', render);
 
-  W.__afkDimRelic.craft = craft; W.__afkDimRelic.enhance = enhance; W.__afkDimRelic.reroll = reroll; W.__afkDimRelic.synth = synth; W.__afkDimRelic.evolveDragon = evolveDragon; W.__afkDimRelic.B = B; W.__afkDimRelic.build = build; W.__afkDimRelic.COST = COST;
+  W.__afkDimRelic.craft = craft; W.__afkDimRelic.enhance = enhance; W.__afkDimRelic.reroll = reroll; W.__afkDimRelic.synth = synth; W.__afkDimRelic.evolveDragon = evolveDragon; W.__afkDimRelic.B = B; W.__afkDimRelic.build = build; W.__afkDimRelic.COST = COST; W.__afkDimRelic.liberate = liberate; W.__afkDimRelic.libEnhance = libEnhance; W.__afkDimRelic.hornUp = hornUp; W.__afkDimRelic.libMats = libMats;
   try { console.log('[AFK-dimrelic] 已載入：次元遺物 ' + LIST.length + ' 件'); } catch (e) {}
 })();

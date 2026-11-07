@@ -130,7 +130,7 @@
   var bossOnField = function () { return (mapState.mobs || []).some(function (m) { return m && m.boss && !m._dead && m.curHp > 0; }); };
   function erodeSecond() {
     var p = P(), r = rec(p); if (!p) return;
-    if (inTown()) { if (r.ero) { r.ero = 0; try { calcStats(); } catch (e) {} } return; }
+    if (inTown()) { if (r.ero) { r.ero = 0; r.resBack = 0; try { calcStats(); } catch (e) {} } return; }
     if (p.dead) return;
     // 扣血
     var net = R.hpPct - reduceSum(p);
@@ -138,7 +138,7 @@
       var mx = x === p ? (p.mhp || 1) : (x.mhp || 1);
       if (net <= 0) { var heal = Math.floor(mx * (-net) / 100); if (heal > 0) { if (x === p) p.hp = Math.min(p.mhp, p.hp + heal); else x.curHp = Math.min(x.mhp || x.curHp, x.curHp + heal); } return; }
       var dmg = mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p));
-      if (x !== p && x.statuses && x._crossShield) dmg *= 0.7;
+      if (x === p) W.__afkDrainHit = (Number(W.__afkDrainHit) || 0) + dmg;   // 聖十字之盾（禁衛軍）在裂縫只擋一部分：見 afk-castle-guards
       if (L && L.boss) L.boss.hurt(x, dmg);
     });
     // AC、魔防、抗性
@@ -214,7 +214,7 @@
           var keep = floorSum(p), wc = weightCut(p);
           d.ac = (d.ac || 0) + ero;
           var cut = function (k) { var v = Number(d[k]) || 0; if (v <= 0) return; var floor = Math.max(keep, Math.floor(v * wc)); var low = Math.min(v, floor); d[k] = Math.max(low, v - ero); };
-          cut('mr'); RES4.forEach(cut);
+          cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; if (v <= 0) return; var e2 = ero - rb, floor = Math.max(keep, Math.floor(v * wc)); d[k] = Math.max(Math.min(v, floor), v - e2); });
         }
       } catch (e) { console.warn('[AFK-dimrift] stats', e); }
       return r;
@@ -254,7 +254,7 @@
     C.damage = function (actor, target, amount, opt) { try { if (on() && actor && !actor.mobId && target && target.mobId && amount > 0) amount = Math.max(1, Math.floor(amount * outMult())); } catch (e) {} return o.call(this, actor, target, amount, opt); };
     return true;
   };
-  var outMult = function () { var p = P(), r = rec(p), k = R.dmgOut; if (r.clothEx) k += 0.15; if (r.athena) k += 0.15; if (r.dimWpn) k *= 1.3; var st = sealTier(p); if (st) k *= 1 + [0, 0.01, 0.03, 0.05][st]; return k; };
+  var outMult = function () { var p = P(), r = rec(p), k = R.dmgOut; if (r.clothEx) k += 0.15; if (r.athena) k += 0.15; if (r.dimWpn) k *= 1.3; else if (r.supWpn) k *= 0.9; var st = sealTier(p); if (st) k *= 1 + [0, 0.01, 0.03, 0.05][st]; return k; };
   if (!hookDamage()) { try { document.addEventListener('DOMContentLoaded', hookDamage); } catch (e) {} }
 
   // ── 掉落 ──
@@ -348,6 +348,8 @@
   }
   (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) { try { var p = P(), t = sealTier(p), R2 = W.__afkRiftDg && W.__afkRiftDg.run(); if (t && ent === p && R2 && R2.id === 'seal') return 1 - SEAL.seal[t] / 100; } catch (e) {} return 1; });
 
+  // 聖十字之盾在裂縫擋的比例：30%；阿納金的號角 1／2／3 級 40／45／50%
+  W.__afkCrossThrough = function () { if (!on()) return null; var hl = rec(P()).hornLv || 0; return 1 - [0.3, 0.4, 0.45, 0.5][Math.max(0, Math.min(3, hl))]; };
   W.__afkDimRift = { R: R, RANKS: DR_RANKS, rankUp: rankUp, rankWhy: rankWhy, sealTier: sealTier, allyPanel: allyPanel, REDUCE: REDUCE, FLOOR: FLOOR, RECOVER: RECOVER, on: on, open: on, canOpen: canOpen, toggle: toggle, rec: rec, reduceSum: reduceSum, floorSum: floorSum, recoverPct: recoverPct, weightCut: weightCut, erodeSecond: erodeSecond, lightSecond: lightSecond, drops: drops, outMult: outMult };
   try { console.log('[AFK-dimrift] 已載入：次元裂縫（世界規則）'); } catch (e) {}
 })();
