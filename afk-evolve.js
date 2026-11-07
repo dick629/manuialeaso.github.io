@@ -35,63 +35,76 @@
   var S = {
     mage_minion: { cls: 'mage', n: '眷屬之主', type: '召喚・本職（召喚精通）', st: [
       { comp: [{ k: ['summon'], hp: 20, dmg: 20 }], t: '召喚術、造屍術的眷屬 HP、傷害 +20%' },
-      { comp: [{ k: ['summon'], hp: 10, dmg: 10 }], t: '眷屬 HP、傷害再 +10%（召喚隻數 +1：第二輪）' },
-      { comp: [{ k: ['summon'], hp: 30, dmg: 30 }], t: '眷屬繼承你的力量：HP、傷害再 +30%（替你施法：第二輪）' }], aura: AURA_SUMMON },
+      { comp: [{ k: ['summon'], hp: 10, dmg: 10 }], t: '眷屬 HP、傷害再 +10%；召喚術多召 1 隻' },
+      { comp: [{ k: ['summon'], hp: 30, dmg: 30 }], t: '眷屬繼承你的力量：HP、傷害再 +30%；眷屬每一下 20% 機率替你施法（再打一次同樣的傷害）' }], aura: AURA_SUMMON },
     mage_spirit: { cls: 'mage', n: '精靈使', type: '召喚・混合（借妖精，強化召喚效果）', st: [
       { comp: [{ k: ['summon'], dmg: 48 }], t: '眷屬傷害 +48%（含屬性附加 24%）' },
-      { comp: [{ k: ['summon'], dmg: 18 }], t: '眷屬傷害再 +18%（同屬性全體法術：第二輪）' },
+      { comp: [{ k: ['summon'], dmg: 18 }], t: '眷屬傷害再 +18%；眷屬每一下 15% 機率放出同屬性的全體法術（其他敵人各受 50%）' },
       { comp: [{ k: ['summon'], hp: 36, dmg: 36 }], t: '眷屬繼承你的力量：HP、傷害再 +36%' }], aura: AURA_SUMMON_X },
     elf_king: { cls: 'elf', n: '精靈王的契約', type: '召喚・本職（精靈精通）', st: [
       { comp: [{ k: ['spirit'], hp: 20, dmg: 20 }], t: '精靈王 HP、傷害 +20%' },
-      { comp: [{ k: ['spirit'], dmg: 15 }], t: '精靈王傷害再 +15%（多召一隻精靈：第二輪）' },
+      { comp: [{ k: ['spirit'], dmg: 15 }], t: '精靈王傷害再 +15%；召喚屬性精靈時多召一隻' },
       { comp: [{ k: ['spirit'], hp: 30, dmg: 30 }], t: '精靈王繼承你的力量：HP、傷害再 +30%' }], aura: AURA_SUMMON },
     illu_legion: { cls: 'illusion', n: '幻象軍團', type: '召喚・本職（幻術精通）', st: [
       { comp: [{ k: ['summon'], dmg: 20 }], t: '幻象傷害 +20%' },
-      { comp: [{ k: ['summon'], hp: 20, dmg: 15 }], t: '幻象 HP +20%、傷害再 +15%（各多一隻：第二輪）' },
+      { comp: [{ k: ['summon'], hp: 20, dmg: 15 }], t: '幻象 HP +20%、傷害再 +15%；召喚時多召 1 隻' },
       { comp: [{ k: ['summon'], hp: 30, dmg: 30 }], t: '幻象繼承你的智力：HP、傷害再 +30%' }], aura: AURA_SUMMON },
     dragon_brood: { cls: 'dragon', n: '龍之眷屬', type: '召喚・混合（借法師召喚）', st: [
-      { comp: [{ k: ['summon', 'pet'], hp: 12, dmg: 24 }], t: '你的召喚物、寵物傷害 +24%、HP +12%（幼龍：第二輪）' },
+      { comp: [{ k: ['summon', 'pet'], hp: 12, dmg: 24 }], t: '你的召喚物、寵物傷害 +24%、HP +12%；幼龍跟著你，每 15 秒吐息一次（全體敵人各受你最近一擊的 100%）' },
       { comp: [{ k: ['summon', 'pet'], dmg: 18 }], t: '傷害再 +18%' },
       { comp: [{ k: ['summon', 'pet'], hp: 36, dmg: 36 }], t: '繼承你的力量：HP、傷害再 +36%' }], aura: AURA_SUMMON_X },
     warrior_cry: { cls: 'warrior', n: '戰吼統帥', type: '召喚・混合（借王族號令，作用在傭兵與城堡護衛）', st: [
       { team: 12, t: '傭兵、城堡護衛造成的傷害 +12%' },
       { team: 12, t: '戰吼：傭兵、護衛造成的傷害再 +12%' },
-      { team: 12, t: '傭兵、護衛造成的傷害再 +12%（吃斬殺撐住：第二輪）' }], aura: AURA_SUMMON_X },
+      { team: 12, t: '傭兵、護衛造成的傷害再 +12%；傭兵不吃次元裂縫的斬殺線，受到致命傷害時撐住 1 HP（每人 60 秒一次）' }], aura: AURA_SUMMON_X },
     royal_pet: { cls: 'royal', n: '王者的夥伴', type: '寵物・本職（夥伴精通）', st: [
       { comp: [{ k: ['pet'], hp: 20, dmg: 20 }], t: '出戰寵物 HP、傷害 +20%' },
-      { comp: [{ k: ['pet'], hp: 10, dmg: 15 }], t: '寵物 HP +10%、傷害再 +15%（出戰上限 +1：第二輪）' },
+      { comp: [{ k: ['pet'], hp: 10, dmg: 15 }], t: '寵物 HP +10%、傷害再 +15%；寵物出戰上限 +1' },
       { comp: [{ k: ['pet'], hp: 30, dmg: 30 }], t: '寵物繼承你的力量：HP、傷害再 +30%' }], aura: AURA_SUMMON },
     illu_beast: { cls: 'illusion', n: '幻獸使', type: '寵物・混合（借王族夥伴）', st: [
       { comp: [{ k: ['pet'], hp: 24, dmg: 24 }], t: '出戰寵物傷害、HP +24%' },
-      { comp: [{ k: ['pet'], dmg: 12 }], t: '寵物傷害再 +12%（幻惑：第二輪）' },
+      { comp: [{ k: ['pet'], dmg: 12 }], t: '寵物傷害再 +12%；寵物每一下 10% 機率讓目標混亂 3 秒（頭目無效）' },
       { comp: [{ k: ['pet'], hp: 36, dmg: 36 }], t: '寵物繼承你的智力：HP、傷害再 +36%' }], aura: AURA_SUMMON_X },
     royal_morale: { cls: 'royal', n: '士氣爆發', type: '爆發・本職（血盟精通）——只給隊伍，你本人吃不到', st: [
       { team: 5, comp: [{ k: ['pet', 'summon', 'spirit'], dmg: 5 }], t: '隊伍（不含你）爆擊傷害 +15%（換算傷害 +5%）' },
       { team: 6, comp: [{ k: ['pet', 'summon', 'spirit'], dmg: 6 }], t: '士氣高昂：隊伍攻擊速度、爆擊率提升（換算傷害 +6%）' },
       { teamLow: 10, t: '頭目 HP 低於 30% 時，隊伍爆擊傷害再 +30%（換算傷害 +10%）' }], aura: [{ dmg: 5, exSelf: true }, { crit: 10, exSelf: true }] },
     royal_shadow: { cls: 'royal', n: '影之君主', type: '爆發・混合（借黑暗妖精）——自己爆發，給隊伍的變少', st: [
-      { crit: 18, selfCut: 50, t: '你的爆擊傷害 +18%；代價：呼喚盟友讓傭兵補的那一下 −50%（精準目標的部分：第二輪）' },
-      { crit: 12, t: '你的爆擊傷害再 +12%（勇猛意志後必爆：第二輪）' },
+      { crit: 18, selfCut: 50, t: '你的爆擊傷害 +18%；代價：呼喚盟友讓傭兵補的那一下 −50%' },
+      { crit: 12, t: '你的爆擊傷害再 +12%；施放勇猛意志後接下來 3 次一般攻擊必定爆擊' },
       { lowBoss: 36, t: '頭目 HP 低於 30% 時，你的爆擊傷害再 +36%' }], aura: AURA_BURST_X },
     royal_will: { cls: 'royal', n: '意志', type: '混合・只有隊長能用（減傷、爆發、治療的單人短時間型）', st: [
-      { taken: 6, t: '受到的傷害 −6%（增益持續時間 +24%、學會全職業增益技能：第二輪）' },
+      { taken: 6, t: '受到的傷害 −6%；自身增益持續時間 +24%；學會全職業的增益技能（含幻覺、覺醒）' },
       { buffMult: 50, taken: 6, t: '自身增益的數值 ×1.5；受到的傷害再 −6%' },
       { buffMult: 50, crit: 36, t: '自身增益的數值 ×2；爆擊傷害 +36%' }], aura: [{ dmg: 6, selfOnly: true }, { crit: 12, selfOnly: true }] },
     dark_fatal: { cls: 'dark', n: '致命一擊', type: '爆發・本職（爆擊精通）', st: [
       { crit: 15, t: '爆擊傷害 +15%' },
-      { crit: 15, t: '爆擊傷害再 +15%（會心一擊冷卻 −30%：第二輪）' },
+      { crit: 15, t: '爆擊傷害再 +15%；會心一擊之後的攻擊技冷卻 −30%' },
+      { lowBoss: 30, t: '頭目 HP 低於 30% 時，爆擊傷害再 +30%' }], aura: AURA_BURST },
+    knight_wall: { cls: 'knight', n: '不動的城壁', type: '防禦・本職（防禦精通）', st: [
+      { taken: 8, t: '受到的傷害 −8%' },
+      { taken: 6, allyTaken: 6, t: '受到的傷害再 −6%；傭兵受到的傷害 −6%' },
+      { bossTaken: 10, t: '受到頭目的傷害再 −10%' }], aura: [{ compTaken: 10 }, { dmg: 4 }] },
+    knight_holy: { cls: 'knight', n: '聖騎士', type: '隊伍・混合（借王族號令）', st: [
+      { team: 8, t: '傭兵造成的傷害 +8%' },
+      { team: 8, taken: 4, t: '傭兵造成的傷害再 +8%；你受到的傷害 −4%' },
+      { lowBoss: 30, t: '頭目 HP 低於 30% 時，你的爆擊傷害再 +30%' }], aura: AURA_BURST },
+    warrior_berserk: { cls: 'warrior', n: '狂戰', type: '爆發・本職（狂怒精通）', st: [
+      { crit: 15, t: '爆擊傷害 +15%' },
+      { crit: 15, lowSelf: 10, t: '爆擊傷害再 +15%；HP 低於 50% 時造成的傷害 +10%' },
       { lowBoss: 30, t: '頭目 HP 低於 30% 時，爆擊傷害再 +30%' }], aura: AURA_BURST },
     mage_dragon: { cls: 'mage', n: '龍語者', type: '爆發・混合（借龍騎士）', st: [
       { mcrit: 18, t: '攻擊魔法爆擊傷害 +18%' },
-      { mcrit: 18, t: '攻擊魔法爆擊傷害再 +18%（龍語：第二輪）' },
+      { mcrit: 18, t: '攻擊魔法爆擊傷害再 +18%；龍語：攻擊魔法 15% 機率再唱一次（50% 傷害）' },
       { mcrit: 36, t: '攻擊魔法爆擊傷害再 +36%' }], aura: AURA_BURST_X },
     illu_blade: { cls: 'illusion', n: '幻刃', type: '爆發・混合（借黑暗妖精）', st: [
       { crit: 18, critRate: 6, t: '爆擊率 +6%、爆擊傷害 +18%' },
-      { crit: 12, t: '爆擊傷害再 +12%（疼痛的歡愉後必爆：第二輪）' },
+      { crit: 12, t: '爆擊傷害再 +12%；施放疼痛的歡愉後接下來 3 次一般攻擊必定爆擊' },
       { lowBoss: 36, t: '頭目 HP 低於 30% 時，爆擊傷害再 +36%' }], aura: AURA_BURST_X }
   };
-  var TODO = '第二輪：召喚隻數 +1、寵物出戰上限 +1、多召一隻精靈、召喚物替你施法、幼龍、幻惑、戰吼撐住斬殺、會心一擊冷卻、龍語、勇猛意志後必爆、疼痛的歡愉後必爆、意志學會全職業增益技能。騎士、戰士本職等其他流派也在第二輪。';
+  var TODO_OLD = '第二輪：召喚隻數 +1、寵物出戰上限 +1、多召一隻精靈、召喚物替你施法、幼龍、幻惑、戰吼撐住斬殺、會心一擊冷卻、龍語、勇猛意志後必爆、疼痛的歡愉後必爆、意志學會全職業增益技能。騎士、戰士本職等其他流派也在第二輪。';
 
+  var TODO = '數值都是暫定，之後用存檔實測再調。';
   var rec = function (p) { p = p || P(); if (!p) return null; if (!p.afkEvo || typeof p.afkEvo !== 'object') p.afkEvo = { school: '', stage: 0 }; return p.afkEvo; };
   var stageOf = function (p) { var r = p && p.afkEvo; return r && S[r.school] ? Math.max(0, Math.min(3, r.stage | 0)) : 0; };
   var schoolOf = function (p) { var r = p && p.afkEvo; return r && S[r.school] ? S[r.school] : null; };
@@ -159,6 +172,9 @@
     var mine = actor === p, ally = isAlly(p, actor), pk = opt && opt.packet, crit = !!(pk && pk.crit), kind = opt && opt.kind;
     if (mine) {
       var lb = sum(p, 'lowBoss'); if (lb && crit && lowBoss(target)) amount *= critRatio(p, kind, lb);
+      var ls = sum(p, 'lowSelf'); if (ls && p.hp < p.mhp * 0.5) amount *= 1 + ls / 100;
+      if (pk && !crit && (p._evoForceCrit || 0) > 0) { p._evoForceCrit--; amount *= 1 + (Number((p.d || {})[kind === 'ranged' ? 'rangedCritDmg' : 'meleeCritDmg']) || 50) / 100; }
+      EV.last = amount; EV.lastT = target;
     }
     if (ally) {
       var tm = sum(p, 'team'); if (tm) amount *= 1 + tm / 100;
@@ -202,13 +218,103 @@
       var out = RI.apply(this, arguments);
       try {
         var p = leader(); if (p && stageOf(p) && typeof out === 'number') {
-          if (target === p) { var tk = sum(p, 'taken'); if (tk) out = out * (1 - tk / 100); }
+          if (target === p) { var tk = sum(p, 'taken'); if (tk) out = out * (1 - tk / 100); var bt = sum(p, 'bossTaken'); if (bt && attacker && attacker.boss) out = out * (1 - bt / 100); }
+          else if (isAlly(p, target)) { var at = sum(p, 'allyTaken'); if (at) out = out * (1 - at / 100); if (has(p, 'warrior_cry', 3) && out >= (target.curHp || 0) && tkNow() >= (target._evoHold || 0)) { target._evoHold = tkNow() + 600; out = Math.max(0, (target.curHp || 1) - 1); } }
           else if (target && !isAlly(p, target) && target !== p) { auraOf(p).forEach(function (a) { if (a.compTaken) out = out * (1 - a.compTaken / 100); }); }
         }
       } catch (e) {}
       return out;
     };
   }
+
+  // ── 第二輪：召喚、寵物、施法、必爆、增益 ──
+  var EV = { last: 0 };
+  var tkNow = function () { return (typeof state !== 'undefined' && state && state.ticks) || 0; };
+  var has = function (p, school, st) { return !!(p && p.afkEvo && p.afkEvo.school === school && stageOf(p) >= st); };
+  if (typeof W._sumCountFor === 'function') {
+    var oCnt = W._sumCountFor;
+    W._sumCountFor = function (name, owner) { var n = oCnt.apply(this, arguments); try { var p = leader(), o = owner || P(); if (n > 0 && o === p && (has(p, 'mage_minion', 2) || has(p, 'illu_legion', 2))) n += 1; } catch (e) {} return n; };
+    try { (0, eval)('_sumCountFor = window._sumCountFor'); } catch (e) {}
+  }
+  if (typeof W.summonV2CastFor === 'function') {
+    var oSum = W.summonV2CastFor;
+    W.summonV2CastFor = function (skId) {
+      var r = oSum.apply(this, arguments);
+      try { var p = leader(); if (r && p && /^sk_elf_summon/.test(skId) && has(p, 'elf_king', 2) && p.summonsV2 && p.summonsV2.length === 1) { var c = JSON.parse(JSON.stringify(p.summonsV2[0])); c.uid = (typeof uid === 'function' ? uid() : 'evo' + Date.now()); c._atkCd = 8; p.summonsV2.push(c); } } catch (e) {}
+      return r;
+    };
+    try { (0, eval)('summonV2CastFor = window.summonV2CastFor'); } catch (e) {}
+  }
+  var RCo = W.AFK_RELIC_COMPANIONS;
+  if (RCo && typeof RCo.petSlots === 'function') { var oSlots = RCo.petSlots; RCo.petSlots = function (base) { var v = oSlots.apply(this, arguments); try { if (has(leader(), 'royal_pet', 2)) v += 1; } catch (e) {} return v; }; }
+  var liveMobs = function () { return ((typeof mapState !== 'undefined' && mapState.mobs) || []).filter(function (m) { return m && !m._dead && m.curHp > 0; }); };
+  var hurtMob = function (m, v) { if (!m || m._dead || !(v > 0)) return; m.curHp -= Math.floor(v); if (m.curHp <= 0) { var i = mapState.mobs.indexOf(m); if (i >= 0) { m.curHp = 0; try { killMob(i); } catch (e) {} } } };
+  var isSummon = function (p, a) { return !!(p && a && (p.summonsV2 || []).indexOf(a) >= 0); };
+  var isPet = function (p, a) { try { return !!(p && a && typeof petsOutList === 'function' && petsOutList().indexOf(a) >= 0); } catch (e) { return false; } };
+  var hook2 = false;
+  var hookDamage2 = function () {
+    var C = W.AFK_CARD_COMBAT; if (hook2 || !C || typeof C.damage !== 'function') return hook2;
+    var o = C.damage; hook2 = true;
+    C.damage = function (actor, target, amount, opt) {
+      var v = o.apply(this, arguments);
+      try {
+        var p = leader(); if (p && target && v > 0 && !(opt && opt._evoNested)) {
+          var summ = isSummon(p, actor), pet = !summ && isPet(p, actor), mine = actor === p;
+          if (summ && has(p, 'mage_minion', 3) && Math.random() < 0.2) setTimeout(function () { hurtMob(target, v); }, 0);
+          if (summ && has(p, 'mage_spirit', 2) && Math.random() < 0.15) setTimeout(function () { liveMobs().filter(function (m) { return m !== target; }).forEach(function (m) { hurtMob(m, v * 0.5); }); }, 0);
+          if (pet && has(p, 'illu_beast', 2) && !target.boss && Math.random() < 0.1) { var st = target.st || (target.st = {}); st.confuse = Math.max(st.confuse || 0, 30); }
+          if (mine && opt && opt.kind === 'magic' && !opt.packet && has(p, 'mage_dragon', 2) && Math.random() < 0.15) setTimeout(function () { hurtMob(target, v * 0.5); }, 0);
+        }
+      } catch (e) {}
+      return v;
+    };
+    return true;
+  };
+  if (!hookDamage2()) { try { document.addEventListener('DOMContentLoaded', hookDamage2); } catch (e) {} }
+  // 必爆、會心一擊冷卻、增益持續時間
+  if (typeof W.castSkill === 'function') {
+    var oCast2 = W.castSkill;
+    W.castSkill = function (skId) {
+      var p = leader(), sk = DB.skills[skId], before = p && p.buffs ? (p.buffs[skId] || 0) : 0;
+      var r = oCast2.apply(this, arguments);
+      try {
+        if (p && sk) {
+          if (skId === 'sk_royal_bravewill' && has(p, 'royal_shadow', 2) && (p.buffs[skId] || 0) > before) p._evoForceCrit = 3;
+          if (skId === 'sk_illu_pain' && has(p, 'illu_blade', 2) && (p.buffs[skId] || 0) > before) p._evoForceCrit = 3;
+          if (skId === 'sk_dark_crit' && has(p, 'dark_fatal', 2) && p.cds && p.cds.atkSk > 0) p.cds.atkSk = Math.floor(p.cds.atkSk * 0.7);
+          if (sk.type === 'buff' && !sk.summon && has(p, 'royal_will', 1)) { var now = p.buffs[skId] || 0; if (now > before) p.buffs[skId] = before + Math.round((now - before) * 1.24); }
+        }
+      } catch (e) {}
+      return r;
+    };
+    try { (0, eval)('castSkill = window.castSkill'); } catch (e) {}
+  }
+  // 意志：學會全職業的增益技能（裝備給的技能每次重算都會重建，這裡跟著加回去）
+  var WILL_SKIP = /^sk_helm_/;
+  var willSkills = null;
+  var willList = function () { if (willSkills) return willSkills; willSkills = Object.keys(DB.skills).filter(function (k) { var s = DB.skills[k]; return s && s.type === 'buff' && !s.summon && !WILL_SKIP.test(k); }); return willSkills; };
+  if (typeof W.recomputeStats === 'function') {
+    var oRe2 = W.recomputeStats;
+    W.recomputeStats = function () {
+      var p0 = P(), isLeader = p0 && !p0._allyName && !(typeof _recomputingAlly !== 'undefined' && _recomputingAlly);
+      if (isLeader && has(p0, 'royal_will', 1)) { p0.grantedSkills = p0.grantedSkills || []; }
+      var r = oRe2.apply(this, arguments);
+      try {
+        var p = P(); if (p && isLeader && has(p, 'royal_will', 1)) { p.grantedSkills = p.grantedSkills || []; willList().forEach(function (k) { if ((p.skills || []).indexOf(k) < 0) { p.grantedSkills.push(k); p.skills.push(k); } }); }
+      } catch (e) {}
+      return r;
+    };
+  }
+  // 幼龍：每 15 秒吐息
+  if (typeof W.tick === 'function') {
+    var oTick = W.tick;
+    W.tick = function () {
+      var t0 = tkNow(), r = oTick.apply(this, arguments);
+      try { var p = leader(), t = tkNow(); if (p && t !== t0 && t % 150 === 0 && has(p, 'dragon_brood', 1) && !p.dead && EV.last > 0) { var ms = liveMobs().filter(function (m) { return !m.isAlly; }); if (ms.length) { ms.forEach(function (m) { hurtMob(m, EV.last); }); try { logCombat('<span class="text-orange-300">【幼龍的吐息】</span>火焰掃過了全場。', 'magic', 'summon'); } catch (e) {} } } } catch (e) {}
+      return r;
+    };
+  }
+  W.__afkExecImmune = function (x) { var p = leader(); return !!(p && x && x !== p && has(p, 'warrior_cry', 3) && isAlly(p, x)); };
 
   // ── 交出存檔 ──
   var usedList = function () { try { return JSON.parse(localStorage.getItem(USED_KEY) || '[]') || []; } catch (e) { return []; } };

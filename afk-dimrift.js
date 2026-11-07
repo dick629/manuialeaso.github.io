@@ -154,7 +154,7 @@
         r.lightAt = t + R.lightEvery;
       }
       if (!r.execAt || t >= r.execAt) {
-        if (r.execAt) members().forEach(function (x) { var mx = x === p ? p.mhp : x.mhp, hp = x === p ? p.hp : x.curHp; if (mx > 0 && hp > 0 && hp < mx * R.execPct / 100) { if (x === p) { p.hp = 0; try { killPlayer(); } catch (e) {} } else { x.curHp = 0; x._downed = true; x._reviveCd = 150; } clog('<span class="font-bold" style="color:#f87171">【斬殺線】</span>' + esc(x === p ? '你' : (x._allyName || '傭兵')) + ' 的 HP 低於 10%，被頭目斬殺了！'); } });
+        if (r.execAt) members().forEach(function (x) { if (W.__afkExecImmune && W.__afkExecImmune(x)) return; var mx = x === p ? p.mhp : x.mhp, hp = x === p ? p.hp : x.curHp; if (mx > 0 && hp > 0 && hp < mx * R.execPct / 100) { if (x === p) { p.hp = 0; try { killPlayer(); } catch (e) {} } else { x.curHp = 0; x._downed = true; x._reviveCd = 150; } clog('<span class="font-bold" style="color:#f87171">【斬殺線】</span>' + esc(x === p ? '你' : (x._allyName || '傭兵')) + ' 的 HP 低於 10%，被頭目斬殺了！'); } });
         r.execAt = t + R.lightEvery;
       }
     } else {
