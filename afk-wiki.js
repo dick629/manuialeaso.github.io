@@ -1148,7 +1148,6 @@
     { k: 'engrave', n: '刻印與印記' },
     { k: 'soulstone', n: '靈魂石' },
     { k: 'miosigil', n: '密奧與聖紋' },
-    { k: 'miodim', n: '密奧・次元升級' },
     { k: 'guardring', n: '守護者之戒' },
     { k: 'dimrift', n: '次元裂縫' },
     { k: 'combat', n: '戰鬥機制' },
@@ -1378,7 +1377,7 @@
     if (key === 'runes') return renderRunes();
     if (key === 'engrave') return renderEngrave();
     if (key === 'soulstone') return renderSoulStone();
-    if (key === 'miosigil') return renderMioSigil();
+    if (key === 'miosigil') return renderMioSigil() + '<div style="height:10px"></div><div class="m-wiki-note" style="font-weight:bold;color:#c4b5fd">密奧・次元升級</div>' + renderMioDim();   // 玩家 11-07 23:37：兩頁合併
     if (key === 'miodim') return renderMioDim();
     if (key === 'guardring') return renderGuardRing();
     if (key === 'dimrift') return renderDimRift();
