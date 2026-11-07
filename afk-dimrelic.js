@@ -496,7 +496,7 @@
   var stoneCnt = function () { return STONES.reduce(function (s, id) { return s + cnt(id); }, 0); };
   var takeStones = function (n) { STONES.forEach(function (id) { var c = Math.min(n, cnt(id)); if (c > 0) { take(id, c); n -= c; } }); };
   function hornUp() {
-    var p = P(), r = drec(); if (!p || !r) return; if (cnt('afk_anakin_horn') < 1) { sys('<span class="text-amber-300">你還沒有阿納金的號角。</span>'); return; }
+    var p = P(), r = drec(); if (!p || !r) return; if (cnt('afk_anakin_horn') < 1 && !(p.eq && p.eq.horn)) { sys('<span class="text-amber-300">你還沒有阿納金的號角。</span>'); return; }
     var lvh = r.hornLv || 0; if (lvh >= HORN.max) return;
     if (stoneCnt() < HORN.stone || cnt(BLOOD) < HORN.blood) { sys('<span class="text-amber-300">要昇華支配強化石 ×' + HORN.stone + '＋血龍鑽 ' + HORN.blood + '。</span>'); return; }
     takeStones(HORN.stone); take(BLOOD, HORN.blood); r.hornLv = lvh + 1;
@@ -524,6 +524,36 @@
     sys('<span class="font-bold" style="color:#f87171">✦ 之魂想起來了。</span>'); syncSoul(); try { calcStats(); saveGame(); } catch (e2) {}
   }
   function syncSoul() { var r = drec(); if (!r) return; var e = soulItem(); r.soulMem = !!(e && e.soulMem); }
+
+  // ── 阿納金的號角：裝備視窗第二頁「聖紋下面、之鱗上面」那一格（底圖本來就有框，核心沒有欄位；這裡在畫完裝備格後補一顆） ──
+  (function () {
+    var HID = 'afk_anakin_horn', d = DB.items[HID]; if (!d) return;
+    d.type = 'acc'; d.slot = 'horn'; d.req = 'all'; d.ac = 0; d.noEnhance = true; d.noSell = true; d.noTrade = true; d.safe = 0;
+    d.d = '墮光天使 阿納金第一次被擊倒第五形態時留下的號角。裝在裝備視窗第二頁「聖紋下面、之鱗上面」那一格。在「次元的鍛造師」強化（最多 3 級）：次元裂縫裡聖十字之盾擋下的侵蝕 30% → 40／45／50%。';
+    try { if (typeof ITEM_WEIGHTS !== 'undefined' && ITEM_WEIGHTS[d.n] == null) ITEM_WEIGHTS[d.n] = 0; } catch (e) {}
+    var owns = function (p) { return !!(p && ((p.eq && p.eq.horn) || (p.inv || []).some(function (x) { return x && x.id === HID; }))); };
+    var paint = function (host) {
+      var p = P(); if (!p || p.classicMode || !host || host.querySelector('.afk-horn-slot')) return;
+      var page2 = Array.prototype.some.call(host.children, function (c) { return /left:\s*80\.1%/.test(c.style.cssText) && /top:\s*15\.81%/.test(c.style.cssText); });
+      if (!page2 || !owns(p)) return;
+      var item = p.eq.horn, data = item && DB.items[item.id], b = document.createElement('button');
+      b.type = 'button'; b.className = 'equipment-visual-slot afk-horn-slot ' + (item ? 'is-filled' : 'is-empty');
+      b.style.cssText = 'left:50%;top:42.77%;width:19.67%;height:8.82%;';
+      if (item && data) {
+        var img = document.createElement('img'); img.src = typeof getIconUrl === 'function' ? getIconUrl(data) : data.img; img.alt = data.n; img.draggable = false; b.appendChild(img);
+        var e = document.createElement('span'); e.className = 'equipment-slot-equipped'; e.textContent = 'E'; e.setAttribute('aria-hidden', 'true'); b.appendChild(e);
+        var lv0 = (drec() || {}).hornLv || 0; if (lv0) { var bg = document.createElement('span'); bg.className = 'equipment-slot-enhance'; bg.textContent = '+' + lv0; b.appendChild(bg); }
+        b.classList.add('tip-host'); b.setAttribute('data-tip-uid', item.uid); b.setAttribute('data-tip-src', 'eq');
+        b.onclick = function () { try { openModal(item, true, 'horn'); } catch (er) {} };
+      } else { var lb = document.createElement('span'); lb.className = 'equipment-slot-lbl'; lb.textContent = '號角'; b.appendChild(lb); b.title = '阿納金的號角'; }
+      host.appendChild(b);
+    };
+    var watch = function () {
+      var host = document.getElementById('equipment-window-slots'); if (!host || host.__afkHorn) return !!host;
+      host.__afkHorn = true; new MutationObserver(function () { paint(host); }).observe(host, { childList: true }); paint(host); return true;
+    };
+    if (!watch()) { var iv = setInterval(function () { if (watch()) clearInterval(iv); }, 1000); }
+  })();
 
   // ── 鍛造師 ──
   var inv = function () { var p = P(); return (p && p.inv) || []; };
@@ -635,8 +665,8 @@
       h += '<div class="ax-note">' + Object.keys(PH).map(function (L) { return '<b>' + L + '</b> ' + PH[L][0] + '：' + esc(PH[L][1]); }).join('<br>') + '</div>';
     } else if (VIEW.tab === 'horn') {
       var hr = drec(), hl = (hr && hr.hornLv) || 0;
-      h += '<div class="ax-note">阿納金的號角（持有就生效）：次元裂縫裡聖十字之盾（聖十字禁衛軍）擋侵蝕 ' + HORN.block.map(function (x, i) { return i ? i + ' 級 ' + x + '%' : '平常 ' + x + '%'; }).join('、') + '。每級：昇華支配強化石 ×' + HORN.stone + '（三種都算）＋血龍鑽 ' + HORN.blood + '。</div>';
-      h += K.rowHtml({ key: 'horn', name: '阿納金的號角　' + hl + '／' + HORN.max + ' 級', color: '#fde047', desc: cnt('afk_anakin_horn') ? '持有中' : '還沒有（墮光天使 阿納金第 5 形態第一次打倒時給）', why: '', btns: hl < HORN.max ? [['horn:', '強化', cnt('afk_anakin_horn') > 0 && stoneCnt() >= HORN.stone && cnt(BLOOD) >= HORN.blood]] : [] }, 'data-dr');
+      h += '<div class="ax-note">阿納金的號角（裝在裝備視窗第二頁「聖紋下面、之鱗上面」那一格才生效）：次元裂縫裡聖十字之盾（聖十字禁衛軍）擋侵蝕 ' + HORN.block.map(function (x, i) { return i ? i + ' 級 ' + x + '%' : '平常 ' + x + '%'; }).join('、') + '。每級：昇華支配強化石 ×' + HORN.stone + '（三種都算）＋血龍鑽 ' + HORN.blood + '。</div>';
+      h += K.rowHtml({ key: 'horn', name: '阿納金的號角　' + hl + '／' + HORN.max + ' 級', color: '#fde047', desc: (p.eq && p.eq.horn) ? '裝備中' : cnt('afk_anakin_horn') ? '在背包裡（要裝上才生效）' : '還沒有（墮光天使 阿納金第 5 形態第一次打倒時給）', why: '', btns: hl < HORN.max ? [['horn:', '強化', (cnt('afk_anakin_horn') > 0 || !!(p.eq && p.eq.horn)) && stoneCnt() >= HORN.stone && cnt(BLOOD) >= HORN.blood]] : [] }, 'data-dr');
       h += '<div class="ax-h" style="margin-top:8px">自選至高昇華支配強化石（持有 ' + cnt('afk_rd_pick') + '）</div>';
       h += K.rowHtml({ key: 'pick', name: '換成一顆昇華支配強化石', color: '#67e8f9', desc: '', why: '', btns: STONES.map(function (id) { return ['pk:' + id, (DB.items[id] || {}).n || id, cnt('afk_rd_pick') > 0]; }) }, 'data-dr');
     } else if (VIEW.tab === 'dragon') {

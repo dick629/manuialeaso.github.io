@@ -43,7 +43,7 @@
     afk_rd_neptune: ['海神的鱗片', '漂流的墓船深處撿到的鱗片。之後給龍之護甲類強化用。'],
     afk_rd_eclipse: ['星蝕之核', '星墜的祭壇的星蝕者留下的核。創世密奧卡、黃道星卡之後的強化材料。'],
     afk_rd_hmark: ['哈汀的魔法印記', '哈汀的時空・裂縫留下的印記。用途之後開放。'],
-    afk_anakin_horn: ['阿納金的號角', '墮光天使 阿納金第一次被擊倒第五形態時留下的號角。持有就生效：在「次元的鍛造師」強化，提高次元裂縫裡聖十字之盾擋下的侵蝕。']
+    afk_anakin_horn: ['阿納金的號角', '墮光天使 阿納金第一次被擊倒第五形態時留下的號角。裝在裝備視窗第二頁「聖紋下面、之鱗上面」那一格；在「次元的鍛造師」強化，提高次元裂縫裡聖十字之盾擋下的侵蝕。']
   };
   Object.keys(MAT).forEach(function (id) { var x = MAT[id]; if (!DB.items[id]) DB.items[id] = { n: x[0], type: 'etc', p: 0, gachaWeight: 0, weight: 0, noUse: true, noSell: true, c: 'text-cyan-300', img: IMG + '原石碎片.png', d: x[1] + '（次元裂縫限定）' }; });
   var cnt = function (id) { return typeof questCountId === 'function' ? questCountId(id) : 0; };

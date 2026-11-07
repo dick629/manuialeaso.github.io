@@ -349,7 +349,7 @@
   (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) { try { var p = P(), t = sealTier(p), R2 = W.__afkRiftDg && W.__afkRiftDg.run(); if (t && ent === p && R2 && R2.id === 'seal') return 1 - SEAL.seal[t] / 100; } catch (e) {} return 1; });
 
   // 聖十字之盾在裂縫擋的比例：30%；阿納金的號角 1／2／3 級 40／45／50%
-  W.__afkCrossThrough = function () { if (!on()) return null; var hl = rec(P()).hornLv || 0; return 1 - [0.3, 0.4, 0.45, 0.5][Math.max(0, Math.min(3, hl))]; };
+  W.__afkCrossThrough = function () { if (!on()) return null; var p0 = P(), hl = p0 && p0.eq && p0.eq.horn ? (rec(p0).hornLv || 0) : 0; return 1 - [0.3, 0.4, 0.45, 0.5][Math.max(0, Math.min(3, hl))]; };
   W.__afkDimRift = { R: R, RANKS: DR_RANKS, rankUp: rankUp, rankWhy: rankWhy, sealTier: sealTier, allyPanel: allyPanel, REDUCE: REDUCE, FLOOR: FLOOR, RECOVER: RECOVER, on: on, open: on, canOpen: canOpen, toggle: toggle, rec: rec, reduceSum: reduceSum, floorSum: floorSum, recoverPct: recoverPct, weightCut: weightCut, erodeSecond: erodeSecond, lightSecond: lightSecond, drops: drops, outMult: outMult };
   try { console.log('[AFK-dimrift] 已載入：次元裂縫（世界規則）'); } catch (e) {}
 })();
