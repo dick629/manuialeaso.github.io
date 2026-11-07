@@ -4,7 +4,7 @@
  * 條件：已轉生一次、集齊八職業「不屈的命運」，並挑戰過「二轉決戰：死亡女神 席琳」（每個角色一次）。
  *   二轉決戰：規則同第一次最終決戰（席琳夢域鏡中、席琳神殿祈禱視窗進入、20 分鐘、中途離開＝失敗），但席琳方所有傷害 +5%。
  * 結果：
- *   ‧打贏 → 光環「次元突破者」：得到 GM 道具（萬象支配者・GM 武器／神甲）、取得天堂XXX 的資格（建設中）。
+ *   ‧打贏 → 光環「次元突破者」（11-07 起不再給 GM 道具）、取得天堂XXX 的資格（建設中）。
  *       代價：不能當別人的傭兵，也不能招募傭兵——只能自己一個人。
  *       單人試煉（2026-10-26 改成只有一次）：席琳方傷害 −100%、席琳的 AC／減傷／魔防／抗性 −50%。
  *         打贏：可以再當別人的傭兵，也可以招募傭兵；打輸：永遠不能當傭兵，但可以開始招募別人（次元突破者以外的角色）。
@@ -27,7 +27,7 @@
   var sealedR = function (p) { var r = rec2(p); return !!(r && r.result === 'lose' && !r.pending); };
   var fates = function () { try { return DS.fateHave(); } catch (e) { return 0; } };
   var firstDone = function (p) { var r = p && p.afkFinal; return !!(r && !r.pending); };
-  var GM = ['99999', '99998'];
+  // （GM 道具 99999／99998 在 11-07 起不再發放）
 
   // ── 挑戰前公告：最低需求（2026-10-26 實測：二轉決戰模擬）──
   var NEED = '席琳的血量依進場時的隊伍人數調整（人數 ÷ 16），不需要湊滿 16 人。建議配備：全員時空變身（或聖衣）、全身昇華支配 +1 以上；16 人大約要打：+1 約 19 分鐘、+3 約 16 分鐘、+5 約 13 分鐘。'
@@ -54,7 +54,7 @@
       FB.startMode('second', '<span class="font-bold" style="color:#f0abfc;">八顆不屈的命運在胸口發燙。死亡之海比上一次更冷——席琳記得你。</span><span class="text-amber-200">二轉決戰：席琳方所有傷害 +5%；區內無法傳送，20 分鐘內打倒她。</span>');
     };
     var rd = readiness(p);
-    var msg = '⚠ 二轉決戰：死亡女神 席琳\n\n' + NEED + '\n' + rd.text + '\n\n每個角色只有一次——進場就算用掉，倒下、回村或中途重新整理都算失敗。席琳方所有傷害 +5%。\n打倒：光環「次元突破者」——得到 GM 道具；但不能當傭兵、也不能招募傭兵，要自己單人再打倒一次席琳才能再當別人的傭兵。\n失敗：光環「封印輪迴」——失去進入席琳夢域鏡的資格（仍可當傭兵）。\n兩種結果都會開放冥王域的第二次轉生。\n\n確定要進入嗎？';
+    var msg = '⚠ 二轉決戰：死亡女神 席琳\n\n' + NEED + '\n' + rd.text + '\n\n每個角色只有一次——進場就算用掉，倒下、回村或中途重新整理都算失敗。席琳方所有傷害 +5%。\n打倒：光環「次元突破者」——不能當傭兵、也不能招募傭兵，要自己單人再打倒一次席琳才能再當別人的傭兵。\n失敗：光環「封印輪迴」——失去進入席琳夢域鏡的資格（仍可當傭兵）。\n兩種結果都會開放冥王域的第二次轉生。\n\n確定要進入嗎？';
     if (window.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '二轉決戰', message: msg, okText: '沉入死亡之海', cancelText: '再準備一下', danger: true, onOk: go });
     else if (confirm(msg)) go();
   };
@@ -84,11 +84,10 @@
     var r2 = p.afkFinal2 = p.afkFinal2 || {};
     r2.result = result; r2.pending = false; r2.at = Date.now(); r2.why = why || '';
     if (result === 'win') {
-      var got = [];
-      GM.forEach(function (id) { var hasIt = (p.inv || []).some(function (x) { return x && String(x.id) === id; }) || Object.keys(p.eq || {}).some(function (k) { return p.eq[k] && String(p.eq[k].id) === id; }); if (DB.items[id] && !hasIt) { p.inv.push({ id: id, uid: uid(), cnt: 1, en: 0 }); got.push(DB.items[id].n); } });
+      // 玩家 11-07：次元突破者不再給 GM 道具
       (p.allies || []).length && (p.allies = []);
       sys('<span class="font-bold" style="color:#f0abfc;">🌌 席琳的身影碎成無數次元的裂縫。</span><span class="afk-lore">「你已經不屬於這個世界了。走吧——去另一個天堂。」</span>'
-        + '<span class="text-fuchsia-200">得到光環「次元突破者」' + (got.length ? '與 GM 道具（' + got.join('、') + '）' : '') + '。從現在起不能當傭兵、也不能招募傭兵；自己單人再打倒一次席琳，才能再當別人的傭兵。冥王域的第二次轉生已開放。</span>');
+        + '<span class="text-fuchsia-200">得到光環「次元突破者」。從現在起不能當傭兵、也不能招募傭兵；自己單人再打倒一次席琳，才能再當別人的傭兵。冥王域的第二次轉生已開放。</span>');
     } else {
       p.sherineDream = false; try { applySherineTheme(); } catch (e) {}
       sys('<span class="font-bold text-slate-200">你再一次倒在沉沒神殿（' + (why || '挑戰失敗') + '）。</span><span class="afk-lore">「輪迴不是給你一次次重來的。這一次，我把門關上了。」</span>'
@@ -106,7 +105,7 @@
       + '<div class="font-bold mb-1 text-fuchsia-300">🌌 二轉決戰：死亡女神 席琳（' + st + '）</div>'
       + '<div class="afk-lore">「又是你。輪迴一次還不夠嗎？」</div>'
       + (!r ? '<div class="text-amber-300 text-xs font-bold">⚠ ' + NEED + '</div><div class="text-xs ' + (readiness(p).ok ? 'text-emerald-300' : 'text-red-300') + '">' + readiness(p).text + '</div>' : '')
-      + '<div class="text-slate-200 text-xs">已轉生、第一次決戰已挑戰過、集齊八職業不屈的命運才能進入；席琳方所有傷害 +5%，每個角色一次。打倒＝「次元突破者」（GM 道具；不能當傭兵也不能招募，直到單人試煉：打贏＝恢復傭兵身分、打輸＝永遠不能當傭兵但可以招募）；失敗＝「封印輪迴」（失去席琳夢域鏡資格）。兩種結果都開放冥王域的第二次轉生。</div></div>' + btn;
+      + '<div class="text-slate-200 text-xs">已轉生、第一次決戰已挑戰過、集齊八職業不屈的命運才能進入；席琳方所有傷害 +5%，每個角色一次。打倒＝「次元突破者」（不能當傭兵也不能招募，直到單人試煉：打贏＝恢復傭兵身分、打輸＝永遠不能當傭兵但可以招募）；失敗＝「封印輪迴」（失去席琳夢域鏡資格）。兩種結果都開放冥王域的第二次轉生。</div></div>' + btn;
   };
   window.afkLineageW = function () { sys('<span class="text-fuchsia-200">次元的裂縫另一頭隱約傳來別的世界的聲音……天堂XXX 還在建設中，敬請期待。</span>'); };
 

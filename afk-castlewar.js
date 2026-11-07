@@ -477,6 +477,20 @@
   var forcedTick = function () {
     var p = P(); if (!p) return;
     var d = data(), now = Date.now(), changed = false;
+    // 玩家 11-07：沒有血盟不會被宣戰；之前因為這個漏洞被宣戰的，直接解除、回到和平
+    if (!(typeof clanGetModeInfo === 'function' && clanGetModeInfo(p))) {
+      var ids = (d.warIds || []).slice();
+      if (d.forced || ids.length) {
+        if (ids.length && typeof _clanWithLock === 'function') {
+          try { _clanWithLock(function (st) { var w = st.npcWorlds && st.npcWorlds[modeKey()]; var ch = false; (w && w.clans || []).forEach(function (c) { if (c && c.hostile && ids.indexOf(c.id) >= 0) { c.hostile = false; ch = true; } }); return ch ? {} : { commit: false }; }); } catch (e) {}
+        }
+        sys('<span class="text-emerald-300 font-bold">🕊 你沒有加入血盟，敵對血盟的宣戰已經解除，回到和平。</span>');
+        d.forced = null; d.warIds = []; changed = true;
+      }
+      if (!d.fwNext || now >= d.fwNext) { d.fwNext = now + FW_EVERY; changed = true; }
+      if (changed) save(d);
+      return;
+    }
     if (d.forced && d.forced.until <= now) { sys('<span class="text-slate-300">「' + (d.forced.name || '敵對血盟') + '」的宣戰期限已過，他們收兵回城了。</span>'); d.forced = null; changed = true; }
     if (!d.fwNext) { d.fwNext = now + FW_EVERY; changed = true; }
     else if (now >= d.fwNext) {
