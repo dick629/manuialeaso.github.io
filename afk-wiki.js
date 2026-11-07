@@ -1150,6 +1150,7 @@
     { k: 'miosigil', n: '密奧與聖紋' },
     { k: 'miodim', n: '密奧・次元升級' },
     { k: 'guardring', n: '守護者之戒' },
+    { k: 'dimrift', n: '次元裂縫' },
     { k: 'combat', n: '戰鬥機制' },
     { k: 'stats', n: '能力值' },
     { k: 'load', n: '負重' },
@@ -1380,6 +1381,7 @@
     if (key === 'miosigil') return renderMioSigil();
     if (key === 'miodim') return renderMioDim();
     if (key === 'guardring') return renderGuardRing();
+    if (key === 'dimrift') return renderDimRift();
     if (key === 'story') return renderStory();
     if (key === 'tower') return renderTower();
     if (key === 'oblivion') return renderOblivion();
@@ -1462,6 +1464,7 @@
     { key: 'adventurer', cls: false, label: '冒險者' },
     { key: 'starroad', cls: false, label: '星途遠征' },
     { key: 'guardring', cls: false, label: '守護者之戒' },
+    { key: 'dimrift', cls: false, label: '次元裂縫' },
     { key: 'pledge', cls: false, label: '血盟' },
     { key: 'relicmarket', cls: false, label: '遺物市場' },
     { key: 'pvp', cls: false, label: 'PVP／性向值' },
@@ -4087,13 +4090,58 @@
     return out;
   }
 
+  // 2026-11-07：次元裂縫（afk-dimrift／afk-riftdungeons／afk-dimrelic／afk-zodiac）——資格不夠的玩家先在這裡看內容
+  function renderDimRift() {
+    var DR = window.__afkDimRift;
+    if (!DR) return '<div class="m-wiki-note">次元裂縫在設定裡被關掉了。經典模式沒有這個系統。</div>';
+    var fm = function (n) { return Number(n || 0).toLocaleString(); };
+    var nm = function (id) { return esc((DB.items[id] || {}).n || id); };
+    var G = window.__afkRiftDg, Z = window.__afkZodiac, p = (typeof player !== 'undefined') ? player : null, why = '';
+    try { why = p ? (DR.canOpen(p) || '') : ''; } catch (e) {}
+    var out = '<div class="m-wiki-note">比席琳夢域鏡更深的一層。在<b>席琳神殿</b>向席琳祈禱，就能踏進次元裂縫；回到夢域也是在那裡。<br><b>開放條件：完成二次轉生，並打贏終焉第三階層。</b>'
+      + (p ? '<br>你目前：' + (why ? '<span style="color:#fca5a5">' + esc(why) + '</span>' : '<span style="color:#86efac">已達到開放條件</span>') : '')
+      + '<br>沒達到條件前，席琳神殿的「裂縫之門」「次元的鍛造師」「星鑄師 艾琳娜」都是灰色的，點了只會看到開放條件。</div>';
+    out += wCard('🌀 裂縫裡會變成什麼樣子', wTbl(['項目', '說明'], [
+      ['面板', '你和隊友的能力值、HP、MP 都會被壓到一半，要靠下面「取回力量」慢慢拿回來'],
+      ['侵蝕', '待在裂縫裡，AC、魔防、屬性抗性會隨時間被侵蝕，HP 也會持續流失；回村就會清除'],
+      ['光蝕', '頭目會在你身上留下光蝕，一層一層疊上去；同樣回村清除'],
+      ['怪物', '怪物比夢域鏡更硬、打得更痛；地圖頭目會多帶一種隨機的機制，名字後面標「（裂縫）」'],
+      ['負重', '負重上限跟著面板一起打折。打折後剩下的上限超過 3,000 的部分，<b>每 1,000 造成的傷害 +1.5%</b>（負重前行）'],
+      ['離線', '離線時不會被侵蝕、也不會疊光蝕，但離線收益減半']
+    ]));
+    out += wCard('💪 取回力量（面板回升）', wDesc('以下每一項都能讓裂縫裡的面板回升：' + (DR.RECOVER || []).filter(function (x) { return x[0] !== 'test'; }).map(function (x) { return '<b>' + esc(x[0]) + '</b>'; }).join('、') + '。') +
+      wDesc('以下能讓每秒流失的 HP 變少：' + (DR.REDUCE || []).filter(function (x) { return x[0] !== 'test'; }).map(function (x) { return '<b>' + esc(x[0]) + '</b>'; }).join('、') + '。'));
+    if (DR.RANKS) out += wCard('🎖️ 裂縫階級', wTbl(['階級', '升階', '效果'], DR.RANKS.slice(1).map(function (r) {
+      return ['<b style="color:#67e8f9">' + esc(r.n) + '</b>', (r.cur === 'exped' ? '遠征點數 ' : '裂縫點數 ') + fm(r.cost) + (r.stone ? '＋上位者的遠征徽記' : ''), esc(r.d)];
+    })) + wDesc('裂縫點數：通關裂縫副本每次 +' + ((G && G.R && G.R.pts) || 10) + '，一天最多 ' + ((G && G.R && G.R.ptsDay) || 60) + ' 點。'));
+    if (G && G.D) out += wCard('🚪 裂縫之門（裂縫副本）', wDesc('席琳神殿「裂縫之門」。入場費用血龍鑽（在潘朵拉黑市用龍之鑽石換）；要在次元裂縫裡才能進入。倒下、時間到或離開都算失敗。') +
+      wTbl(['副本', '入場', '次數', '時限', '內容'], G.D.filter(function (d) { return !d.noRift; }).map(function (d) {
+        var fee = []; if (d.fee.blood) fee.push('血龍鑽 ' + fm(d.fee.blood)); (d.fee.items || []).forEach(function (x) { fee.push(nm(x[0]) + ' ×' + x[1]); });
+        return ['<b style="color:#67e8f9">' + esc(d.n) + '</b>' + (d.needClear ? '<br><span style="font-size:11px;color:#94a3b8">先通關「' + esc(d.needClear === 'anakin5' ? '阿納金第 5 形態' : (G.BYID[d.needClear] || {}).n || '') + '」</span>' : ''),
+          fee.join('＋'), (d.per === 'week' ? '每週 ' : '每天 ') + d.limit + ' 次', d.min ? d.min + ' 分鐘' : '—', esc(d.lore || '')];
+      })));
+    out += wCard('⚒️ 次元的鍛造師（次元遺物）', wTbl(['項目', '說明'], [
+      ['製作', '同部位的 +0 遺物＋' + nm('afk_dim_crystal') + ' 500，鍛成次元遺物。名字取自裂縫裡出現的人物與怪物'],
+      ['強化', '+1、+2、+4 的效果是固定的；<b>+3</b> 時才會揭曉它屬於哪一套（得到套裝名稱效果與該套的核心技能）；<b>+5</b> 會抽出一個獨立的大招（有冷卻）'],
+      ['套裝', '+3 以上的同套件數湊到 6 件得到六件效果；9 件效果要 +5 的件數'],
+      ['重抽', '用' + nm('afk_rd_mirror') + '重抽'],
+      ['混穿', '可以跟一般遺物混著穿'],
+      ['次元時空・破', '四龍副本・裂縫專屬掉落的武器，只在四龍副本裡有效；再用' + nm('afk_rd_mirror') + '與四龍掉落物進化成「斬」「解」「序」']
+    ]));
+    if (Z && Z.H) out += wCard('♈ 星鑄師 艾琳娜（黃道十二宮）', wDesc('每天 00:00（台灣時間）挑出 3 宮，選其中一宮打（一天一次）。3 層 × 5 波，第 5 波是那一宮的小頭目、第 3 層第 5 波是守宮者；時限 15 分鐘；倒下、時間到或離開＝失敗。這裡沒有侵蝕、也沒有面板減半。') +
+      wDesc('掉落：每次通關' + nm(Z.SAND) + ' ×1；每一宮第一次通關該宮的宮之印 ×1；30% 聖衣光輝碎片 ×1。') +
+      wDesc('<b>聖衣 EX</b>：碎裂的聖衣用' + nm(Z.SAND) + ' ×3；其他聖衣用 ×3＋該宮的宮之印 ×1。EX 聖衣在原本的「解除封印」之上再加六項能力 +25、五屬性抗性 +50、爆擊傷害 +20%，永遠不會失去光輝，在次元裂縫裡也不會碎。EX 才能升 ★4（光輝碎片 ×4＋砂 ×1）。') +
+      wTbl(['宮', '守宮者', '機制'], Z.H.map(function (h) { return ['<b style="color:#fde047">' + esc(h.n) + '</b>', esc(h.g), esc(h.d)]; })));
+    return out;
+  }
+
   // 2026-11-05：守護者之戒（afk-guardring）
   function renderGuardRing() {
     var G = window.__afkGuardRing;
     if (!G) return '<div class="m-wiki-note">守護者之戒在設定裡被關掉了。經典模式沒有這個系統。</div>';
     var fm = function (n) { return Number(n || 0).toLocaleString(); };
     var nm = function (id) { return esc((DB.items[id] || {}).n || id); };
-    var full = !!(window.__afkDimRiftOn && window.__afkDimRiftOn()), STG = full ? [1, 2, 3, 4, 5, 6] : [1, 2, 3];   // 次元裂縫開放前只寫上半部（還沒開放的內容不放進小百科）
+    var full = !!window.__afkDimRift, STG = full ? [1, 2, 3, 4, 5, 6] : [1, 2, 3];   // 次元裂縫開放前只寫上半部（還沒開放的內容不放進小百科）
     var out = '<div style="display:flex;justify-content:center;margin:4px 0 8px"><img src="' + esc(G.ART.finalBig) + '" alt="" style="width:120px;height:120px;object-fit:contain"></div><div class="m-wiki-note">紅獅王的五名誓約騎士，把誓約按在一塊石頭上——守護者之石。<b>轉生後</b>才能使用，經典模式沒有。戒指裝在裝備視窗<b>第二頁、密奧上面</b>那一格，點它可以查看；角色資訊的能力分頁也有「守護者之誓」可以打開。</div>';
     out += wCard('💍 流程', wTbl(['步驟', '說明'], [
       ['1. 劇情', '每名騎士一條劇情：找 NPC 說話 → 打倒指定的怪 → 回去說話。要先完成劇情「紅獅之誓」。'],
