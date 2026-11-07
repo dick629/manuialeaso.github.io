@@ -28,7 +28,7 @@
   var clog = function (h, c) { try { if (typeof logCombat === 'function' && !S().ff) logCombat(h, c || 'enemy'); } catch (e) {} };
 
   // ── 數值 ──
-  var CARRY = { from: 3000, per: 0.5 };   // 負重前行：裂縫裡剩下的負重上限超過 3,000，每 1,000 造成的傷害 +0.5%
+  var CARRY = { from: 3000, per: 1.5 };   // 負重前行：裂縫裡剩下的負重上限超過 3,000，每 1,000 造成的傷害 +1.5%
   var R = {
     hpPct: 5, acMax: 300, resMax: 500,   // 11-07 18:28：AC、魔防侵蝕上限 −500 → −300（火水風地抗性維持 −500）
     floorMax: 325,
@@ -209,7 +209,7 @@
       try {
         var p = P(); if (!on() || !p || !p.d) return r;
         var d = p.d, f = 0.5 + recoverPct(p) / 100;
-        // 負重上限跟面板一起打折（Ping 11-07 17:33）；剩下的上限超過 3,000，每多 1,000 造成的傷害 +0.5%（負重前行）
+        // 負重上限跟面板一起打折（Ping 11-07 17:33）；剩下的上限超過 3,000，每多 1,000 造成的傷害 +1.5%（負重前行）
         if (typeof d.weightCapacity === 'number' && d.weightCapacity > 0) {
           var lim = Math.max(1, Math.floor(d.weightCapacity * f)), pct = Math.floor((Number(d.equippedWeight) || 0) / lim * 100);
           var tier = pct <= 49 ? 0 : pct <= 81 ? 1 : pct <= 99 ? 2 : 3, old = d.loadTier || 0, sp = [1, 1, 2, 3];
