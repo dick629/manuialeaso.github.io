@@ -11,7 +11,7 @@
          DESIGN_W/isMobileDevice/window.__mobileScaling 全專案零呼叫；唯一實際效果 viewport-fit=cover 直接併入上方 meta。
          （width=1180 手機縮放已於桌機專注決策時移除·本作 desktop-only） -->
 
-    <title>放置天堂 - 次元封印</title>
+    <title>放置天堂 - 次元裂縫</title>
     <link rel="icon" type="image/png" href="assets/favicon.png">   <!-- 🖼️ 瀏覽器分頁圖示(favicon)：把你的圖放到 assets/favicon.png 即生效；可改 href 路徑或副檔名(.ico/.svg) -->
 
     <link rel="stylesheet" href="css/style.css?v=bc48fa5577.8.6-npc-private-chat">
@@ -29,7 +29,7 @@
         <img id="login-bg-image" src="public/assets/login/310.webp" alt="登入畫面背景">
         <img id="login-anim-image" src="public/assets/login/273.webp" alt="登入畫面動畫">
         <div id="login-title-layer" class="text-center">
-            <h1 class="text-4xl font-bold text-yellow-400 mb-2">放置天堂 - 次元封印</h1>
+            <h1 class="text-4xl font-bold text-yellow-400 mb-2">放置天堂 - 次元裂縫</h1>
             <p class="text-base text-slate-400">創造您的角色並開始冒險</p>
         </div>
 
@@ -590,7 +590,7 @@
          無開關：這是顯示正確性，不是功能。實測 forceDarkModeEnabled+darkModeImagePolicy=smart 可重現、加這行即解。 -->
     <style>:root{color-scheme:dark}</style>
     <!-- afk-toggles 必須最先載入：外掛開關中樞（逃生門，自己不可被關；某支外掛壞掉時玩家關掉它就能用原版繼續玩） -->
-    <script src="afk-toggles.js?v=bce60303f5"></script>
+    <script src="afk-toggles.js?v=737047e61a"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=178fe715ed"></script>
@@ -688,7 +688,7 @@
     <script src="afk-dex.js?v=af5556a4bd"></script>
     <!-- afk-illufix：幻術士修補（疼痛的歡愉 −50%、反彈、蝕刻印記；立方：燃燒 每 2 秒 5～50 火傷、灼熱印記、吸血回魔；立方：和諧回 MP 5 → 15，原 afk-classtweak）；排在 afk-wiki 之前（小百科說明跟著改）；需核心補丁 69 -->
     <script src="afk-illufix.js?v=7149276189"></script>
-    <script src="afk-wiki.js?v=1718f10e97"></script>
+    <script src="afk-wiki.js?v=edf028e5e4"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=302890a0df"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
@@ -1001,7 +1001,7 @@
     <!-- afk-runefx：符文石與符文之語的效果（減傷、藥水、寵物、套裝、攻擊、補助）；排在 afk-runes、afk-rift2、afk-caps、afk-sherine-dream 之後 -->
     <script src="afk-runefx.js?v=9481a37a60"></script>
     <!-- afk-finaltiers：終焉三階層（席琳夢境／席琳幻影 ×1.25／席琳伴身 ×1.5625 只能一次）；需 afk-finalboss -->
-    <script src="afk-finaltiers.js?v=5bc79c7ec0"></script>
+    <script src="afk-finaltiers.js?v=4f2ea6d810"></script>
     <!-- afk-caps：轉生雙持的副手武器固定加成計入能力；爆擊率上限 80%（包 recomputeStats 最外層，必須最後載入）；迴避上限見核心補丁 patchEvadeCap -->
     <script src="afk-caps.js?v=ba8e334ab7"></script>
     <!-- afk-overflow：命中／迴避溢出（命中超過上限每 50 點多 5 點真實傷害、迴避超過 200 每 50 點最終減傷 +5）；包 AFK_CARD_COMBAT.damage／finalDR 最外層，排在 afk-caps 之後 -->
@@ -1141,6 +1141,7 @@
     <!-- afk-breakskills：粉碎能量魔防 −150、污濁之水 AC +150 -->
     <script src="afk-breakskills.js?v=2962c87a57"></script>
     <script src="afk-riftlock.js?v=ec037b2615"></script>
+    <script src="afk-novel.js?v=6dc6a80c8e"></script>
     <!-- afk-intdmg：傷害與 HP 一律整數（卡冊結算、每一刻結束、能力重算、傷害飄字的最後一道保險）；要在所有包 AFK_CARD_COMBAT.damage、tick、recomputeStats 的外掛之後，放最後 -->
     <script src="afk-intdmg.js?v=1c92a3b8d5"></script>
     <!-- ═══════════ 加掛版外掛層 END ═══════════ -->

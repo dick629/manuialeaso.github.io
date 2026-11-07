@@ -31,6 +31,11 @@
     MERGED.mech1031 = 'hiddenbonus';
     MERGED.starweaver = 'hiddenbonus';   // 織星者稱號：隱藏條件，跟著隱藏規則開關（玩家 2026-11-04 18:01）   // 深蝕、幻影箭、騎士單體衝暈、王暈眩破綻：隱藏規則（玩家 2026-10-31 02:50）
     var force = {};
+    // ── 次元裂縫（玩家 2026-11-07 23:37）：「把我做的所有外掛融合成一份、很多東西不能獨立開關」──
+    //    遊戲內容、遊戲玩法、遊戲平衡、隱藏規則、劇情、成長這幾類（預設開、沒暫停的）全部跟著「次元裂縫」一個開關；
+    //    關掉它＝回到原版遊戲。介面、查詢、效能、自動化、存檔工具、系統類仍各自可關（壞掉時的逃生門）。
+    //    預設關的項目（def:false）不併入，照舊自己開關，避免被總開關強制打開。
+    var RIFT = 'riftpack', RIFT_GROUPS = { '遊戲內容': 1, '遊戲玩法': 1, '遊戲平衡': 1, '隱藏規則': 1, '劇情': 1, '成長': 1 };
 
     function find(id) { return byId[id] || null; }
     var memo = Object.create(null), memoOk = true;
@@ -48,7 +53,7 @@
     // ── 次元封印（玩家 2026-10-30 18:45）：玩家自己改的外掛全部集中在面板最下面的「次元封印」分類 ──
     //   判準：開關第一次出現在 Ping 的提交（2026-10-20 起）。原本的分類（遊戲玩法、遊戲介面…）在次元封印底下當小標題保留。
     //   ⚠ 之後新增的外掛開關要加進這張表（或 register 時帶 seal:true），才會排進次元封印。
-    var SEAL_NAME = '次元封印';
+    var SEAL_NAME = '次元裂縫';
     var SEAL_ORDER = ['遊戲內容', '遊戲玩法', '隱藏規則', '遊戲介面', '查詢與資訊', '自動化', '效能', '存檔工具', '系統與其他', '其他'];
     var SEAL = {};
     [
@@ -79,6 +84,7 @@
                 seal: !!(spec.seal || SEAL[spec.id]),   // 次元封印：玩家自己改的外掛
                 merged: MERGED[spec.id] || ''           // 已併入夢域鏡模式開關：面板不列
             };
+            if (!entry.merged && entry.id !== RIFT && entry.def && !entry.locked && RIFT_GROUPS[entry.group]) { MERGED[entry.id] = RIFT; entry.merged = RIFT; }
             registry.push(entry); memo = Object.create(null);
             byId[entry.id] = entry;
         },
@@ -111,6 +117,7 @@
     //      判準：外掛裡的 `AFK_TOGGLES.register` 若排在早退之後，它的 id 就必須出現在這張表。
     //      有 scripts/check-toggle-deadend.mjs 靜態擋。
     [
+        { id: 'riftpack', name: '次元裂縫', desc: '這個版本所有的遊戲內容、玩法、平衡、隱藏規則、劇情與職業進化（合成一個開關；關掉＝回到原版遊戲）', group: '遊戲內容', seal: true },
         { id: 'mobile', name: '手機版面', desc: '手機專用版面：底部分頁切換、浮動日誌、避開頂端橫幅', group: '遊戲介面' },
         { id: 'npclabel', name: '村莊名牌不出界', desc: '村莊裡站得靠邊的 NPC，名字不會被畫面邊緣切掉', group: '遊戲介面' },
         { id: 'mobname', name: '怪物名稱顯示', desc: '怪物名字要一直顯示、只在鎖定時顯示，還是滑過才顯示', group: '遊戲介面' },

@@ -25,7 +25,7 @@
   // 強度說明：第二階層的席琳 HP 另外 ×0.70（2026-11-04），HP 與傷害倍率不同時分開寫
   var powTxt = function (md) { var t = FB.TIER[md], hp = Math.round(t.k * (t.hpK || 1) * 1000) / 1000; return hp === t.k ? 'HP 與傷害 ×' + t.k : 'HP ×' + hp + '、傷害 ×' + t.k; };
   // 玩家 2026-10-29：先做好、先不開放（獎勵留到做旅人時一起討論）。開放時把 API.OPEN 改成 true。
-  var API = { OPEN: false };
+  var API = { OPEN: true };   // 玩家 2026-11-07 23:37：開放第二、三階層
   var can = function (t) {
     var p = P(); if (!p) return '請先進入遊戲。';
     if (!API.OPEN) return '尚未開放';
