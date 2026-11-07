@@ -31,7 +31,7 @@
   var R = {
     hpPct: 5, acMax: 500, resMax: 500, floorMax: 325,
     lightEvery: 300, lightMax: 20, lightHp: 1, lightHeal: 2, execPct: 10,
-    mobHp: 1.5, mobDmg: 1.3, mobHit: 4 / 3, bossRegen: 0.001, exp: 1.2, dmgOut: 0.7,
+    mobHp: 1.5, mobDmg: 1.3, mobHit: 4 / 3, bossDmg: 1.3, bossHit: 4 / 3, bossRegen: 0.001, exp: 1.2, dmgOut: 0.7,
     weight: 5000, weightStep: 500
   };
   var REDUCE = [   // 扣血減免（每秒少扣的 %）
@@ -238,14 +238,14 @@
         if (on() && !inTown() && mobIsOurs(m)) {
           m._dimRift = true;
           m.hp = Math.max(1, Math.round((m.hp || 1) * R.mobHp)); m.curHp = m.hp;
-          if (m.hit) m.hit = Math.round(m.hit * R.mobHit);
+          if (m.hit) m.hit = Math.round(m.hit * (m.boss ? R.bossHit : R.mobHit));
           if (m.exp) m.exp = Math.round(m.exp * R.exp);
         }
       } catch (e) { console.warn('[AFK-dimrift] spawn', e); }
       return r;
     };
   }
-  (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) { return mob && mob._dimRift && on() ? R.mobDmg : 1; });
+  (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) { return mob && mob._dimRift && on() ? (mob.boss ? R.bossDmg : R.mobDmg) : 1; });
   // 造成的傷害 −30%
   var hooked = false;
   var hookDamage = function () {
