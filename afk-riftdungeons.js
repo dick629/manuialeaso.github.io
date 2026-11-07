@@ -99,7 +99,7 @@
       var d = x.d || x, ph = Math.max(0, ROOM.phys - (Number(d.dr) || 0));
       var mg = ROOM.mag * (typeof mrMult === 'function' ? mrMult(Math.max(0, Number(d.mr) || 0)) : 1);
       var el = ROOM.ele * (1 - (typeof magicAttrDefense === 'function' ? magicAttrDefense(x, ele) : 0));
-      L.boss.hurt(x, ph + mg + el, false); L.boss.hurt(x, ROOM.tru + mhp(x) * ROOM.pct);
+      var cut = 1 - ((W.__afkDimRelic && W.__afkDimRelic.roomCut()) || 0); L.boss.hurt(x, (ph + mg + el) * cut, false); L.boss.hurt(x, (ROOM.tru + mhp(x) * ROOM.pct) * cut);
     });
   };
   // 封印戰：四龍守四角（第一段會被墜落物打，不能治療，倒下就失去那一項）
@@ -180,8 +180,8 @@
     stages: [
       { n: '巢穴前段', waves: 3, onTick: function (run, t) { if (t % 10 === 0) roomDmg(run); } },
       { n: '巢穴深處', waves: 2, onTick: function (run, t) { if (t % 10 === 0 && !bossOf()) roomDmg(run); }, boss: { n: '', re: '', hpX: 30, final: true, dragon: true,
-        mech: function (run, b, t, M) { if (t % 10 === 0) roomDmg(run); if (every(M, 'armor', 40, t)) { M.armor = t + 100; clog(tag('#fb923c', '龍之護甲') + '10 秒內每一下先扣 5,000。'); } if (every(M, 'fury', 240, t)) { M.fury = (M.fury || 0) + 1; clog(tag('#f87171', '龍怒') + '傷害 +' + (M.fury * 20) + '%'); } },
-        dmgIn: function (run, b, amt, kind, M) { return (M.armor || 0) > tk() ? Math.max(0, amt - 5000) : amt; }, dmgOut: function (run, b, M) { return 1 + 0.2 * (M.fury || 0); } } }
+        mech: function (run, b, t, M) { if (t % 10 === 0) roomDmg(run); if (every(M, 'armor', 40, t)) { M.armor = t + 100; clog(tag('#fb923c', '龍之護甲') + '10 秒內每一下先扣 5,000。'); } if (every(M, 'fury', 240, t) && !(W.__afkDimRelic && W.__afkDimRelic.noFury())) { M.fury = (M.fury || 0) + 1; clog(tag('#f87171', '龍怒') + '傷害 +' + (M.fury * 20) + '%'); } },
+        dmgIn: function (run, b, amt, kind, M) { return (M.armor || 0) > tk() && !(W.__afkDimRelic && W.__afkDimRelic.ignoreArmor()) ? Math.max(0, amt - 5000) : amt; }, dmgOut: function (run, b, M) { return 1 + 0.2 * (M.fury || 0); } } }
     ],
     reward: function () { return [give('afk_rd_scale', rr(3, 5)), Math.random() < 0.02 ? give('afk_abyss_key', 1) : '', give('afk_rift_shard', 50)]; } });
 
