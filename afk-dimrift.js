@@ -136,7 +136,7 @@
     // 扣血
     var net = R.hpPct - reduceSum(p);
     members().forEach(function (x) {
-      var mx = x === p ? (p.mhp || 1) : (x.mhp || 1);
+      var mx = x === p ? (rec(p).hp50 || Math.floor((p.mhp || 1) / (0.5 + recoverPct(p) / 100) * 0.5)) : (x._dimBase ? Math.floor(x._dimBase.mhp * 0.5) : (x.mhp || 1));
       if (net <= 0) { var heal = Math.floor(mx * (-net) / 100); if (heal > 0) { if (x === p) p.hp = Math.min(p.mhp, p.hp + heal); else x.curHp = Math.min(x.mhp || x.curHp, x.curHp + heal); } return; }
       var dmg = mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p));
       if (x === p) W.__afkDrainHit = (Number(W.__afkDrainHit) || 0) + dmg;   // 聖十字之盾（禁衛軍）在裂縫只擋一部分：見 afk-castle-guards
@@ -197,6 +197,7 @@
   if (W.__afkMaxAdd && W.__afkMaxAdd.add) W.__afkMaxAdd.add(function (p) {
     if (!on() || p !== P()) return;
     var f = 0.5 + recoverPct(p) / 100, light = (rec(p).light || 0) * R.lightHp / 100 * (1 - lightCut(p));
+    rec(p).hp50 = Math.max(1, Math.floor((Number(p.mhp) || 1) * 0.5));   // 侵蝕照「面板 50% 時的最大 HP」算（Ping 11-07 18:13）
     p.mhp = Math.max(1, Math.floor((Number(p.mhp) || 1) * f * (1 - light)));
     p.mmp = Math.max(0, Math.floor((Number(p.mmp) || 0) * f));
   });
