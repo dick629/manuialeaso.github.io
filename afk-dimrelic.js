@@ -277,6 +277,7 @@
           setTimeout(function () { try { onHit(p, target, after, opt, f); } catch (e) {} }, 0);
         }
       } catch (e) { console.warn('[AFK-dimrelic] out', e); }
+      try { if (p && actor !== p && amount > 0 && buffOn('horn') && (p.allies || []).indexOf(actor) >= 0) amount *= 1.3; } catch (e) {}
       return o.call(this, actor, target, amount, opt);
     };
     return true;
