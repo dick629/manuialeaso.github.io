@@ -30,7 +30,8 @@
   // ── 數值 ──
   var CARRY = { from: 3000, per: 0.5 };   // 負重前行：裂縫裡剩下的負重上限超過 3,000，每 1,000 造成的傷害 +0.5%
   var R = {
-    hpPct: 5, acMax: 500, resMax: 500, floorMax: 325,
+    hpPct: 5, acMax: 300, resMax: 500,   // 11-07 18:28：AC、魔防侵蝕上限 −500 → −300（火水風地抗性維持 −500）
+    floorMax: 325,
     lightEvery: 300, lightMax: 20, lightHp: 1, lightHeal: 2, execPct: 10,
     mobHp: 1.5, mobDmg: 1.3, mobHit: 4 / 3, bossDmg: 1.3, bossHit: 4 / 3, bossRegen: 0.001, exp: 1.2, dmgOut: 0.7,
     weight: 5000, weightStep: 500
@@ -143,7 +144,7 @@
       if (L && L.boss) L.boss.hurt(x, dmg);
     });
     // AC、魔防、抗性
-    if ((r.ero || 0) < R.acMax) { r.ero = (r.ero || 0) + 1; try { calcStats(); } catch (e) {} }
+    if ((r.ero || 0) < R.resMax) { r.ero = (r.ero || 0) + 1; try { calcStats(); } catch (e) {} }
   }
   var L = W.__afkLore;
   function lightSecond() {
@@ -222,8 +223,9 @@
         var ero = rec(p).ero || 0;
         if (ero) {
           var keep = floorSum(p), wc = weightCut(p);
-          d.ac = (d.ac || 0) + ero;
-          var cut = function (k) { var v = Number(d[k]) || 0; if (v <= 0) return; var floor = Math.max(keep, Math.floor(v * wc)); var low = Math.min(v, floor); d[k] = Math.max(low, v - ero); };
+          var eAc = Math.min(ero, R.acMax);
+          d.ac = (d.ac || 0) + eAc;
+          var cut = function (k) { var v = Number(d[k]) || 0; if (v <= 0) return; var floor = Math.max(keep, Math.floor(v * wc)); var low = Math.min(v, floor); d[k] = Math.max(low, v - eAc); };
           cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; if (v <= 0) return; var e2 = ero - rb, floor = Math.max(keep, Math.floor(v * wc)); d[k] = Math.max(Math.min(v, floor), v - e2); });
         }
       } catch (e) { console.warn('[AFK-dimrift] stats', e); }
@@ -303,8 +305,8 @@
       var b = a._dimBase, light = (rec(p).light || 0) * R.lightHp / 100 * (1 - lightCut(p));
       a.mhp = Math.max(1, Math.floor(b.mhp * f * (1 - light))); a.mmp = Math.floor((b.mmp || 0) * f);
       if (a.curHp > a.mhp) a.curHp = a.mhp; if (a.mp > a.mmp) a.mp = a.mmp;
-      Object.keys(b.d).forEach(function (k) { var v = b.d[k]; if (k === 'ac') a.d.ac = (v < 0 ? Math.ceil(v * f) : v) + ero; else a.d[k] = v > 0 ? Math.floor(v * f) : v; });
-      if (ero) ['mr'].concat(RES4).forEach(function (k) { var v = Number(a.d[k]) || 0; if (v <= 0) return; a.d[k] = Math.max(Math.min(v, keep), v - ero); });
+      Object.keys(b.d).forEach(function (k) { var v = b.d[k]; if (k === 'ac') a.d.ac = (v < 0 ? Math.ceil(v * f) : v) + Math.min(ero, R.acMax); else a.d[k] = v > 0 ? Math.floor(v * f) : v; });
+      if (ero) ['mr'].concat(RES4).forEach(function (k) { var v = Number(a.d[k]) || 0; if (v <= 0) return; a.d[k] = Math.max(Math.min(v, keep), v - (k === 'mr' ? Math.min(ero, R.acMax) : ero)); });
     });
   }
 
