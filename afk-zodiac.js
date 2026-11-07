@@ -269,6 +269,37 @@
     };
   }
 
+  // ── 碎衣：終焉第三階層 席琳 HP 30% 時穿著的聖衣碎裂（剩下的時間失去解除封印的效果），打完變成「碎裂的聖衣」（不能變身、沒有效果）；EX 不會碎 ──
+  var FBk = function () { return W.__afkFinalBoss; };
+  var inT3 = function () { var st = S(), F = FBk(); return !!(st._afkFinal && F && F.mode && F.mode() === 'tier3'); };
+  if (typeof W.tick === 'function') {
+    var oTick3 = W.tick;
+    W.tick = function () {
+      var r = oTick3.apply(this, arguments);
+      try {
+        var st = S(); if (!inT3() || st._afkShatter != null || tk() % 10) return r;
+        var boss = mobs().filter(function (m) { return m && m._afkFinal && m.boss && !m._dead && m.curHp > 0; })[0];
+        if (boss && boss.curHp <= boss.hp * 0.3) {
+          var p = P(), s0 = data(p), id = s0 && s0.clothOn;
+          st._afkShatter = id && !isEx(p, id) ? id : '';
+          clog('<span class="font-bold" style="color:#f87171">【碎衣】</span>席琳的手指劃過——' + (st._afkShatter ? '你的聖衣碎裂了，剩下的時間失去解除封印的力量。' : '光從裂縫裡漏了出來。'), 'enemy');
+          try { calcStats(); } catch (e) {}
+        }
+      } catch (e) {}
+      return r;
+    };
+    try { (0, eval)('tick = window.tick'); } catch (e) {}
+  }
+  if (A && typeof A.sealed === 'function') { var oSealed2 = A.sealed; A.sealed = function (id, actor) { try { var st = S(); if (st._afkShatter && st._afkShatter === id && (actor || P()) === P()) return true; } catch (e) {} return oSealed2.apply(this, arguments); }; }
+  if (A && typeof A.active === 'function') { var oActive = A.active; A.active = function (actor) { var r = oActive.apply(this, arguments); try { var a = actor || P(); if (r && r.tier === 'samsara') { var s1 = data(a), c = s1 && s1.cloth && s1.cloth[r.id]; if (c && c.broken && !c.ex) return null; } } catch (e) {} return r; }; }
+  var hookFinish = function () {
+    var FT = W.__afkFinalTiers; if (!FT || typeof FT.finish !== 'function' || FT.finish.__afkZd) return;
+    var o = FT.finish;
+    FT.finish = function (md, result) { var r = o.apply(this, arguments); try { var st = S(), id = st._afkShatter; st._afkShatter = null; if (md === 'tier3' && id) { var p = P(), c = cl(p, id); c.broken = true; sys('<span class="text-red-300">「' + esc((rows().filter(function (x) { return x.id === id; })[0] || {}).n || '聖衣') + '」碎了。帶著黃金修復之砂 ×3 去找席琳神殿的星鑄師 艾琳娜，能把它鑄成聖衣 EX。</span>'); try { calcStats(); saveGame(); } catch (e) {} } } catch (e) {} return r; };
+    FT.finish.__afkZd = true;
+  };
+  hookFinish(); try { W.addEventListener('load', hookFinish); } catch (e) {}
+
   // ── 艾琳娜 ──
   var paint = function (div) {
     var box = div.querySelector('#afk-zd-elena'); if (!box) return;

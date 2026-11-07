@@ -163,6 +163,28 @@
   });
   if (!DB.items[FRAG]) DB.items[FRAG] = { n: '四龍的時空碎片', type: 'etc', p: 0, gachaWeight: 0, weight: 0, noUse: true, noSell: true, c: 'text-fuchsia-300', img: IMG + '原石碎片.png', d: '四龍副本・裂縫的龍留下的時空碎片。用來把「次元時空」武器進化。（次元裂縫限定）' };
 
+  // ── 幻聖紋（decisions-1107 1.8）：裝備中的聖紋在裂縫裡升成幻聖紋；原本的特效保留，再加一條新效果 ──
+  var PHANTOM = { split: 1000, blood: 100 };
+  var PH = {
+    A: ['Ascend', '遠距離傷害 +6%', ['out', 0.06, 'ranged']], B: ['Bloom', '每 10 秒回復 2% HP', ['regen', 0.02, 10]], C: ['Crown', '對頭目傷害 +5%', ['out', 0.05, 'boss']],
+    D: ['Doom', '對 HP 低於 30% 的目標傷害 +10%', ['out', 0.10, 'low30']], E: ['Eclipse', '爆擊傷害 +10%', ['stat', 'critDmg', 10]], F: ['Flame', '命中時 5% 機率點燃（每秒該次 20%，5 秒）', ['burn', 0.05, 0.2, 5]],
+    G: ['Gate', '侵蝕扣血每秒少 0.1%', ['erode', 0.1]], H: ['Halo', '受到的治療 +8%', ['healIn', 0.08]], I: ['Ink', '命中時 4% 機率墨汁（目標傷害 −30%、5 秒）', ['ink', 0.04, 5]],
+    J: ['Jade', '侵蝕最低保留 +15', ['floor', 15]], K: ['Keep', '受到的傷害 −3%', ['taken', 0.03, '']], L: ['Lumen', '對裂縫敵人傷害 +5%', ['out', 0.05, 'rift']],
+    M: ['Mirage', '命中時 3% 機率複製該次傷害', ['copy', 0.03]], N: ['Night', '迴避 +3', ['stat', 'er', 3]], O: ['Oath', '全隊受到的傷害 −3%', ['partyTaken', 0.03]],
+    P: ['Pierce', '命中時追加 40 真實傷害', ['flat', 40]], Q: ['Quake', '命中時 4% 機率對其他敵人造成該次 50%', ['aoe', 0.04, 0.5]], R: ['Rift', '對裂縫敵人傷害 +6%', ['out', 0.06, 'rift']],
+    S: ['Star', '爆擊率 +1%', ['stat', 'crit', 1]], T: ['Tide', '吸血 1.5%', ['leech', 0.015]], U: ['Umbra', '受到頭目的傷害 −4%', ['taken', 0.04, 'boss']],
+    V: ['Vow', '打倒怪物回復 2% HP', ['killHeal', 0.02]], W: ['Wing', '每第 6 次攻擊傷害 ×2', ['everyN', 6, 2]], X: ['Xeno', '每次攻擊追加目標最大 HP 0.2% 真實傷害（頭目 0.02%）', ['pctTrue', 0.002, 0.0002]],
+    Y: ['Yield', '每 30 秒回復 8% MP', ['mp', 0.08, 30]], Z: ['Zenith', '每 20 秒下一擊傷害 ×2', ['cdHit', 20, 2]]
+  };
+  var sigilOf = function (p) { var e = p && p.eq && p.eq.sigil, m = e && /^afk_sigil_([A-Z])$/.exec(e.id); return m ? { it: e, L: m[1] } : null; };
+  function phantomUp() {
+    var p = P(), sg = sigilOf(p); if (!sg) { sys('<span class="text-amber-300">要先裝備聖紋。</span>'); return; } if (sg.it.phantom) return;
+    if (!(W.__afkDimRiftOn && W.__afkDimRiftOn())) { sys('<span class="text-amber-300">要在次元裂縫裡才能升成幻聖紋。</span>'); return; }
+    if (cnt('afk_split_dust') < PHANTOM.split || cnt(BLOOD) < PHANTOM.blood) { sys('<span class="text-amber-300">要分裂的蔑視塵埃 ' + PHANTOM.split + '＋血龍鑽 ' + PHANTOM.blood + '。</span>'); return; }
+    take('afk_split_dust', PHANTOM.split); take(BLOOD, PHANTOM.blood); sg.it.phantom = 1;
+    sys('<span class="font-bold" style="color:#c4b5fd">✦ 聖紋「' + sg.L + '」成了幻聖紋：多了「' + PH[sg.L][0] + '」——' + esc(PH[sg.L][1]) + '。</span>'); try { calcStats(); saveGame(); } catch (e) {}
+  }
+
   // ── 身上的次元遺物 → 效果 ──
   var equipped = function (p) { var e = p && p.eq; if (!e) return []; return Object.keys(e).map(function (k) { return e[k]; }).filter(function (it) { return it && BY[it.id]; }); };
   var lv = function (it) { return Math.max(0, Math.min(5, Number(it.dimEn) || 0)); };
@@ -175,6 +197,7 @@
       if (n >= 3 && it.dimSet && SETK[it.dimSet]) { var s = SETK[it.dimSet]; s.piece.slice(1).forEach(add); f.setN[s.k] = (f.setN[s.k] || 0) + 1; if (n >= 5) f.set9[s.k] = (f.set9[s.k] || 0) + 1; }
       if (n >= 5 && it.dimUlt && ULTK[it.dimUlt]) f.ults.push(ULTK[it.dimUlt]);
     });
+    var sg0 = sigilOf(p); if (sg0 && sg0.it.phantom && PH[sg0.L]) add(PH[sg0.L][2]);
     Object.keys(f.setN).forEach(function (k) { var s = SETK[k], c = f.setN[k]; if (c >= 3) f.cores.push(s.core); if (c >= 6) s.six.slice(1).forEach(add); if ((f.set9[k] || 0) >= 9) s.nine.slice(1).forEach(add); });
     var seenU = {}; f.ults = f.ults.filter(function (u) { if (seenU[u.k]) return false; seenU[u.k] = 1; return true; });
     var seenC = {}; f.cores = f.cores.filter(function (c) { if (seenC[c.n]) return false; seenC[c.n] = 1; return true; });
@@ -192,7 +215,7 @@
     W.recomputeStats = function () {
       var r = oRe.apply(this, arguments);
       try {
-        var p = P(); FX = build(p); if (!p || !p.d) return r; if (!p._allyName) syncFlags();
+        var p = P(); FX = build(p); if (!p || !p.d) return r; if (!p._allyName) { syncFlags(); syncSoul(); }
         FX.sum('stat').forEach(function (e) { if (e[1] === 'mhpPct') return; (STATK[e[1]] || [e[1]]).forEach(function (k) { p.d[k] = (Number(p.d[k]) || 0) + e[2]; }); });
         if (eDR) eDR[1] = Math.min(2, FX.v('erode')); if (eFL) eFL[1] = FX.v('floor');
       } catch (e) { console.warn('[AFK-dimrelic] stats', e); }
@@ -482,6 +505,26 @@
   function pickStone(k) { if (cnt('afk_rd_pick') < 1 || STONES.indexOf(k) < 0) return; take('afk_rd_pick', 1); gainItem(k, 1, true, true); sys('<span style="color:#67e8f9">換到了 ' + esc(DB.items[k].n) + '。</span>'); }
   function syncFlags() { var p = P(), r = drec(); if (!p || !r) return; var w = wpnOf(p); r.dimWpn = !!(w && w.dimLib); r.athena = r.dimWpn; r.dimWpn5 = !!(w && w.dimLib && (w.dimLibEn || 0) >= 5); r.supWpn = !!(w && isSup(w) && !w.dimLib); r.libEn = w && w.dimLib ? (w.dimLibEn || 0) : 0; }
 
+  // ── 裂縫淬鍊：席琳遺骸（夢域效果 ×1.2）、之魂憶起（decisions-1107 1.8） ──
+  var SAND = 'afk_rd_sand', WATER = 'afk_rd_water';
+  var REF = { remain: { water: 20, sand: 10, crystal: 50 }, soul: { sand: 30, water: 30 } };
+  var SD = function () { return W.__afkSherineDream; };
+  var remainsList = function () { var p = P(), sd = SD(); if (!p || !sd) return []; var out = []; Object.keys(p.eq || {}).forEach(function (k) { var e = p.eq[k], d = e && DB.items[e.id]; if (d && d.remains && e.id !== sd.SOUL && sd.isDream(e)) out.push({ it: e, eq: true }); }); (p.inv || []).forEach(function (e) { var d = e && DB.items[e.id]; if (d && d.remains && e.id !== sd.SOUL && sd.isDream(e) && !e.lock) out.push({ it: e, eq: false }); }); return out; };
+  function riftRefine(uid) {
+    var x = remainsList().filter(function (r) { return r.it.uid === uid; })[0], c = REF.remain; if (!x || x.it.riftRef) return;
+    if (cnt(WATER) < c.water || cnt(SAND) < c.sand || cnt(CRYSTAL) < c.crystal) { sys('<span class="text-amber-300">要席琳的水之記憶 ' + c.water + '、凝結的時之沙 ' + c.sand + '、次元結晶 ' + c.crystal + '。</span>'); return; }
+    take(WATER, c.water); take(SAND, c.sand); take(CRYSTAL, c.crystal); x.it.riftRef = 1;
+    sys('<span class="font-bold" style="color:#f87171">✦ ' + esc(DB.items[x.it.id].n) + ' 在裂縫裡被重新淬鍊了。</span>'); try { calcStats(); saveGame(); } catch (e) {}
+  }
+  var soulItem = function () { var p = P(), sd = SD(); var e = p && sd && p.eq && p.eq[sd.SOUL]; return e && sd.soulRefined && sd.soulRefined(p) ? e : null; };
+  function soulMem() {
+    var e = soulItem(), c = REF.soul; if (!e) { sys('<span class="text-amber-300">要裝著粹煉過的之魂。</span>'); return; } if (e.soulMem) return;
+    if (cnt(SAND) < c.sand || cnt(WATER) < c.water) { sys('<span class="text-amber-300">要凝結的時之沙 ' + c.sand + '、席琳的水之記憶 ' + c.water + '。</span>'); return; }
+    take(SAND, c.sand); take(WATER, c.water); e.soulMem = 1;
+    sys('<span class="font-bold" style="color:#f87171">✦ 之魂想起來了。</span>'); syncSoul(); try { calcStats(); saveGame(); } catch (e2) {}
+  }
+  function syncSoul() { var r = drec(); if (!r) return; var e = soulItem(); r.soulMem = !!(e && e.soulMem); }
+
   // ── 鍛造師 ──
   var inv = function () { var p = P(); return (p && p.inv) || []; };
   var findUid = function (uid) { var p = P(); if (!p) return null; var a = inv().filter(function (x) { return x && x.uid === uid; })[0]; if (a) return a; var e = p.eq || {}; return Object.keys(e).map(function (k) { return e[k]; }).filter(function (x) { return x && x.uid === uid; })[0] || null; };
@@ -543,7 +586,7 @@
   var VIEW = { tab: 'mine', slot: '' };
   var paint = function (div) {
     var box = div.querySelector('#afk-dimr'); if (!box) return; var p = P(); if (!p) return;
-    var tabs = [['mine', '我的次元遺物'], ['craft', '製作'], ['sets', '套裝與大絕招'], ['lib', '次元支配'], ['horn', '號角'], ['dragon', '次元時空'], ['synth', '異化星塵']];
+    var tabs = [['mine', '我的次元遺物'], ['craft', '製作'], ['sets', '套裝與大絕招'], ['lib', '次元支配'], ['ref', '裂縫淬鍊'], ['phantom', '幻聖紋'], ['horn', '號角'], ['dragon', '次元時空'], ['synth', '異化星塵']];
     var h = '<div class="ax-note">次元結晶 ' + cnt(CRYSTAL).toLocaleString() + '　異化星塵 ' + cnt(DUST) + '　倒影之鏡 ' + cnt(MIRROR) + '　破碎星光塵埃 ' + cnt(STARDUST) + '　四龍的時空碎片 ' + cnt(FRAG) + '</div>';
     h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">' + tabs.map(function (t) { return '<button type="button" data-dr="tab:' + t[0] + '"' + (VIEW.tab === t[0] ? ' style="outline:1px solid #67e8f9"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>';
     if (VIEW.tab === 'mine') {
@@ -578,6 +621,18 @@
       else if (!isSup(w)) h += '<div class="ax-note">裝備中的「' + esc(DB.items[w.id].n) + '」不是至高支配・封。</div>';
       else if (!w.dimLib) { h += '<div class="ax-note">' + WTYPES.map(function (t) { return (mt[t] ? '<span style="color:#86efac">✓</span>' : '<span class="no">✗</span>') + esc(t); }).join('　') + '</div>'; h += K.rowHtml({ key: 'lib', name: esc(DB.items[w.id].n), color: '#fde047', desc: '至高支配・封', why: '', btns: [['lib:', '解放', WTYPES.every(function (t) { return mt[t]; })]] }, 'data-dr'); }
       else { var ln = w.dimLibEn || 0; h += K.rowHtml({ key: 'lib', name: esc(DB.items[w.id].n) + '　次元支配。縫天' + ('★'.repeat(ln) || '（無星）'), color: '#67e8f9', desc: '', why: '', btns: ln < 5 ? [['len:', '縫天 ★' + (ln + 1) + '（星塵 ' + LIB.en[ln] + '・' + LIB.rate[ln] + '%）', cnt(DUST) >= LIB.en[ln]]] : [] }, 'data-dr'); }
+    } else if (VIEW.tab === 'ref') {
+      var c1 = REF.remain, c2 = REF.soul, se = soulItem();
+      h += '<div class="ax-note">持有：凝結的時之沙 ' + cnt(SAND) + '、席琳的水之記憶 ' + cnt(WATER) + '、次元結晶 ' + cnt(CRYSTAL) + '</div>';
+      h += '<div class="ax-h">之魂憶起</div>' + K.rowHtml({ key: 'soul', name: se ? esc(DB.items[se.id].n) + (se.soulMem ? '　<span style="color:#86efac">已憶起</span>' : '') : '（要裝著粹煉過的之魂）', color: '#f87171', desc: '時之沙 ' + c2.sand + '、水之記憶 ' + c2.water + '。次元裂縫裡：裁決之光的門檻 −5%（HP 低於 45% 才會被打到剩 1）、侵蝕扣血每秒少 0.5%；跟太陽神凱布利一起有時，取回力量 +5%。', why: '', btns: se && !se.soulMem ? [['soul:', '憶起', cnt(SAND) >= c2.sand && cnt(WATER) >= c2.water]] : [] }, 'data-dr');
+      h += '<div class="ax-h" style="margin-top:8px">席琳遺骸的裂縫淬鍊</div><div class="ax-note">夢域淬鍊過的遺骸才能做。每件：水之記憶 ' + c1.water + '、時之沙 ' + c1.sand + '、次元結晶 ' + c1.crystal + '。同一組某一段的件數都裂縫淬鍊過，那一段的夢域效果 ×1.2。</div>';
+      var rl = remainsList(); if (!rl.length) h += '<div class="ax-note">沒有夢域淬鍊過的遺骸。</div>';
+      rl.forEach(function (x) { h += K.rowHtml({ key: x.it.uid, name: esc(DB.items[x.it.id].n) + (x.eq ? '（裝備中）' : '') + (x.it.riftRef ? '　<span style="color:#86efac">已裂縫淬鍊</span>' : ''), color: '#f87171', desc: '', why: '', btns: x.it.riftRef ? [] : [['rr:' + x.it.uid, '裂縫淬鍊', cnt(WATER) >= c1.water && cnt(SAND) >= c1.sand && cnt(CRYSTAL) >= c1.crystal]] }, 'data-dr'); });
+    } else if (VIEW.tab === 'phantom') {
+      var sg = sigilOf(p);
+      h += '<div class="ax-note">在次元裂縫裡，把裝備中的聖紋升成幻聖紋：原本的特效保留，再多一條新效果。材料：分裂的蔑視塵埃 ' + PHANTOM.split + '＋血龍鑽 ' + PHANTOM.blood + '（持有 ' + cnt('afk_split_dust') + '／' + cnt(BLOOD) + '）。</div>';
+      h += K.rowHtml({ key: 'ph', name: sg ? '裝備中：聖紋「' + sg.L + '」' + (sg.it.phantom ? '　<span style="color:#86efac">幻聖紋</span>' : '') : '沒有裝備聖紋', color: '#c4b5fd', desc: sg ? '幻聖紋「' + PH[sg.L][0] + '」：' + esc(PH[sg.L][1]) : '', why: '', btns: sg && !sg.it.phantom ? [['ph:', '升成幻聖紋', cnt('afk_split_dust') >= PHANTOM.split && cnt(BLOOD) >= PHANTOM.blood]] : [] }, 'data-dr');
+      h += '<div class="ax-note">' + Object.keys(PH).map(function (L) { return '<b>' + L + '</b> ' + PH[L][0] + '：' + esc(PH[L][1]); }).join('<br>') + '</div>';
     } else if (VIEW.tab === 'horn') {
       var hr = drec(), hl = (hr && hr.hornLv) || 0;
       h += '<div class="ax-note">阿納金的號角（持有就生效）：次元裂縫裡聖十字之盾（聖十字禁衛軍）擋侵蝕 ' + HORN.block.map(function (x, i) { return i ? i + ' 級 ' + x + '%' : '平常 ' + x + '%'; }).join('、') + '。每級：昇華支配強化石 ×' + HORN.stone + '（三種都算）＋血龍鑽 ' + HORN.blood + '。</div>';
@@ -603,7 +658,7 @@
     if (!div.__afkDimrBound) { div.__afkDimrBound = true; div.addEventListener('click', function (ev) {
       var b = ev.target.closest('button[data-dr]'); if (!b || b.disabled || !div.querySelector('#afk-dimr')) return; var k = (b.getAttribute('data-dr') || '').split(':');
       if (k[0] === 'tab') VIEW.tab = k[1]; else if (k[0] === 'src') VIEW.src = k[1]; else if (k[0] === 'mk') craft(k[1], k[2]); else if (k[0] === 'en') enhance(k[1]);
-      else if (k[0] === 'rs') reroll(k[1], 'set'); else if (k[0] === 'ru') reroll(k[1], 'ult'); else if (k[0] === 'dv') evolveDragon(k[1]); else if (k[0] === 'sy') synth(+k[1]); else if (k[0] === 'lib') liberate(); else if (k[0] === 'len') libEnhance(); else if (k[0] === 'horn') hornUp(); else if (k[0] === 'pk') pickStone(k[1]);
+      else if (k[0] === 'rs') reroll(k[1], 'set'); else if (k[0] === 'ru') reroll(k[1], 'ult'); else if (k[0] === 'dv') evolveDragon(k[1]); else if (k[0] === 'sy') synth(+k[1]); else if (k[0] === 'lib') liberate(); else if (k[0] === 'len') libEnhance(); else if (k[0] === 'horn') hornUp(); else if (k[0] === 'pk') pickStone(k[1]); else if (k[0] === 'rr') riftRefine(k[1]); else if (k[0] === 'soul') soulMem(); else if (k[0] === 'ph') phantomUp();
       paint(div);
     }); }
   };

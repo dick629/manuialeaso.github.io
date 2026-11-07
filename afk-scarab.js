@@ -40,6 +40,9 @@
     if (s.form >= 3) o.abn = Math.round(Math.max(0, lv - 69) * 0.5 * 10) / 10;
     return o;
   };
+  // 太陽神凱布利（decisions-1107）：滿等的日輪聖甲蟲裝著進入次元裂縫後自動進化，數值 ×1.2；之魂憶起＋凱布利一起取回力量 5%
+  var khepri = function (p, s) { try { return !!(p && s && s.lv >= 100 && s.form >= 3 && equipped(p) && ((W.__afkDimRiftOn && W.__afkDimRiftOn()) || (p.afkDimRift && p.afkDimRift.khepriEver))); } catch (e) { return false; } };
+  var fxK = function (p, s) { var o = fx(s); if (!khepri(p, s)) return o; ['stat', 'res', 'mhp', 'pet', 'petDr', 'abn'].forEach(function (k) { o[k] = Math.round(o[k] * 1.2 * 10) / 10; }); o.stat = Math.floor(o.stat); o.mhp = Math.round(o.mhp); o.petDr = Math.floor(o.petDr); return o; };
   var fxText = function (o) {
     var t = ['力量、敏捷、體質、智力、精神、魅力各 +' + o.stat, '火水風地抗性各 +' + o.res, '最大 HP +' + o.mhp];
     if (o.pet) t.push('寵物與召喚物的傷害、命中各 +' + o.pet); if (o.petDr) t.push('寵物傷害減免 +' + o.petDr);
@@ -63,14 +66,15 @@
     var p = P(), d = DB.items[ID]; if (!d) return;
     STATS.concat(RES4, ['mhp', 'petDmgAll', 'petHitAll', 'summonDmg', 'summonHit', 'abnormalResist']).forEach(function (k) { delete d[k]; });
     if (!p || !on(p)) return;
-    var s = store(p), o = fx(s);
+    var s = store(p), o = fxK(p, s), kp = khepri(p, s);
+    try { if (p.afkDimRift || kp) { (p.afkDimRift = p.afkDimRift || {}).khepri = kp; if (kp) p.afkDimRift.khepriEver = 1; } } catch (e) {}
     STATS.forEach(function (k) { if (o.stat) d[k] = o.stat; });
     RES4.forEach(function (k) { if (o.res) d[k] = Math.floor(o.res); });
     if (o.mhp) d.mhp = o.mhp;
     if (o.pet) { d.petDmgAll = Math.floor(o.pet); d.petHitAll = Math.floor(o.pet); d.summonDmg = Math.floor(o.pet); d.summonHit = Math.floor(o.pet); }
     if (o.abn) d.abnormalResist = o.abn;
     d.img = 'assets/icons/items/afk_scarab_' + s.form + '.png';
-    d.n = FORM[s.form].n + ' Lv' + s.lv;
+    d.n = (kp ? '太陽神凱布利' : FORM[s.form].n) + ' Lv' + s.lv;
     d.d = '成長型遺物。裝在聖物格（裝備視窗第二頁左下）才會成長、才有效果。目前：' + fxText(o) + '。' + (s.form < 3 ? 'Lv' + FORM[s.form].max + ' 時在說話之島莉娜那裡免費進化。' : '');
   };
   if (typeof W.recomputeStats === 'function') {
@@ -80,7 +84,7 @@
   }
   if (typeof W.petDerive === 'function') {
     var oPD = W.petDerive;
-    W.petDerive = function () { var r = oPD.apply(this, arguments); try { var p = P(); if (r && equipped(p)) { var o = fx(store(p)); if (o.petDr) r.dr = (r.dr || 0) + o.petDr; } } catch (e) {} return r; };
+    W.petDerive = function () { var r = oPD.apply(this, arguments); try { var p = P(); if (r && equipped(p)) { var o = fxK(p, store(p)); if (o.petDr) r.dr = (r.dr || 0) + o.petDr; } } catch (e) {} return r; };
     try { (0, eval)('petDerive = window.petDerive'); } catch (e) {}
   }
 

@@ -105,7 +105,7 @@
   // 封印戰：四龍守四角（第一段會被墜落物打，不能治療，倒下就失去那一項）
   var DRAGONS = [['ant', '安塔瑞斯', '全隊受到的傷害 −10%'], ['fa', '法利昂', '受到的治療 +20%'], ['val', '巴拉卡斯', '造成的傷害 +10%'], ['lin', '林德拜爾', '裁決之光的傷害 −50%']];
   var dragonOn = function (k) { return !!(run && run.dragons && run.dragons[k] > 0); };
-  var judge = function (x, back) { var cur = hpOf(x); if (cur >= mhp(x) * 0.5) return; var to = dragonOn('lin') ? Math.max(1, Math.floor(cur - (cur - 1) / 2)) : 1; setHp(x, to); setTimeout(function () { try { if (run) setHp(x, Math.max(hpOf(x), Math.floor(mhp(x) * back))); } catch (e) {} }, 1000); };
+  var judge = function (x, back) { var cur = hpOf(x), th = 0.5 - (P() && P().afkDimRift && P().afkDimRift.soulMem ? 0.05 : 0); if (cur >= mhp(x) * th) return; var to = dragonOn('lin') ? Math.max(1, Math.floor(cur - (cur - 1) / 2)) : 1; setHp(x, to); setTimeout(function () { try { if (run) setHp(x, Math.max(hpOf(x), Math.floor(mhp(x) * back))); } catch (e) {} }, 1000); };
 
   // ── 副本表 ──
   // stage：{ n 名稱, waves 一般波數, pool 怪物地圖, per 每波隻數, dur 秒（時間到就叫頭目／timed 撐滿就過）, boss:{ n, re, hp 絕對值或 hpX 倍率, lv, adds, mech(run,b,t,M), dmgIn(run,b,amt,kind,M) } }

@@ -887,7 +887,7 @@
     <!-- afk-debuff-rules：負面效果一律計算抵抗、頭目不再免疫；污濁之水全體 15 秒、冷卻 30 秒（冷卻中改三重矢） -->
     <script src="afk-debuff-rules.js?v=3e11f02193"></script>
     <!-- afk-finalboss：世界最終頭目「死亡女神 席琳」（死亡之海・席琳的沉沒神殿；瘋狂席琳＋席琳夢域鏡、每角色一次；挑戰後才能冥王域轉生；需 afk-dreamhell、afk-dreamstar、afk-rebirth） -->
-    <script src="afk-finalboss.js?v=58863aca57"></script>
+    <script src="afk-finalboss.js?v=f536cf4973"></script>
     <!-- afk-rebirth2：二轉決戰（席琳方傷害 +5%）、次元突破者／封印輪迴光環、第二次轉生（需 afk-finalboss、afk-dreamstar） -->
     <script src="afk-rebirth2.js?v=a9d85e9ec9"></script>
     <!-- afk-affix-plus：詞綴擴充（祝福／遠古三階只能打怪取得；燃柳村龍紋師艾格尼絲「龍紋賦予」：不屈者意志、龍的印記／傷痕、神樹者的讚禮、闇龍的抵抗者） -->
@@ -944,7 +944,7 @@
     <!-- afk-killlog：同一隻怪的掉落合併成一行「擊敗 X：物品 ×數量、…」（包 killMob 最外層，必須放在所有包 killMob 的外掛之後） -->
     <script src="afk-killlog.js?v=9c2bea76c9"></script>
     <!-- afk-sherine-dream：夢域席琳遺骸（伊奧夢域淬鍊，紅字、效果強化）與第 9 格遺骸「之魂」（謀叛者的低語頭目 5%；套裝件數 −1）；須在 afk-caps 之前 -->
-    <script src="afk-sherine-dream.js?v=8bfc61c2cb"></script>
+    <script src="afk-sherine-dream.js?v=83db98f346"></script>
     <!-- afk-runes：說話之島符文師佐爾頓——武器的星蝕·解三個符文孔（墜蝕·解、刻解·骸、瘴骸·破）；需 afk-sherine-dream -->
     <script src="afk-runes.js?v=bebf71b782"></script>
     <!-- afk-redguard：避免紅人持續追殺（席琳神殿「女神嘆息信徒 京」：10 龍鑽或 100 萬金幣，正義值歸 0、追殺散去、追殺永久解除）；需 afk-npc-kit -->
@@ -1001,7 +1001,7 @@
     <!-- afk-runefx：符文石與符文之語的效果（減傷、藥水、寵物、套裝、攻擊、補助）；排在 afk-runes、afk-rift2、afk-caps、afk-sherine-dream 之後 -->
     <script src="afk-runefx.js?v=9481a37a60"></script>
     <!-- afk-finaltiers：終焉三階層（席琳夢境／席琳幻影 ×1.25／席琳伴身 ×1.5625 只能一次）；需 afk-finalboss -->
-    <script src="afk-finaltiers.js?v=26edf6d507"></script>
+    <script src="afk-finaltiers.js?v=5bc79c7ec0"></script>
     <!-- afk-caps：轉生雙持的副手武器固定加成計入能力；爆擊率上限 80%（包 recomputeStats 最外層，必須最後載入）；迴避上限見核心補丁 patchEvadeCap -->
     <script src="afk-caps.js?v=ba8e334ab7"></script>
     <!-- afk-overflow：命中／迴避溢出（命中超過上限每 50 點多 5 點真實傷害、迴避超過 200 每 50 點最終減傷 +5）；包 AFK_CARD_COMBAT.damage／finalDR 最外層，排在 afk-caps 之後 -->
@@ -1048,7 +1048,7 @@
     <!-- afk-sigil：聖紋（25 個字母，Lv40～70 頭目與怪物掉；裝備視窗第二頁項鍊的位置，只能裝一個） -->
     <script src="afk-sigil.js?v=5030a3781a"></script>
     <!-- afk-scarab：成長型遺物「日輪聖甲蟲」（說話之島莉娜給；聖物格；Lv1～100、三型態）；要在 afk-questweapon、afk-expedition、afk-procfx 之後 -->
-    <script src="afk-scarab.js?v=6e9f223355"></script>
+    <script src="afk-scarab.js?v=207eae215b"></script>
     <!-- afk-balance1102：11/02 戰鬥平衡（夢域鏡三重矢遞減、幻影箭連發遞減、新手保障 Lv1～49、9 人以上怪物 HP 與傷害 +7%/人）；要在 afk-mech1031、afk-procfx 之後 -->
     <script src="afk-balance1102.js?v=5594ad6ce3"></script>
     <!-- afk-goddess3：女神與夢域鏡四龍的新機制（永久雙免疫＋汙濁之水／粉碎能量解除 30 秒、女神斬殺、二轉女神幽影與狂暴、次元裂縫龍之護甲）；要在 afk-finalboss、afk-finaltiers、afk-corrupt、afk-debuff-rules、afk-illufix、afk-hidden 之後 -->
@@ -1129,15 +1129,15 @@
     <!-- afk-evolve：職業進化（席琳神殿 技藝導師 薇爾娜；第一批召喚、寵物、爆發流派＋意志）；要在 afk-skillup、afk-relic-runtime、afk-card-combat 之後 -->
     <script src="afk-evolve.js?v=baf1d02245"></script>
     <!-- afk-mapboss：地圖王（野外打倒 300 隻）、副本王（地監待滿 10 分鐘）、王之徽章；要在 afk-lore-kit、afk-region-boss 之後 -->
-    <script src="afk-mapboss.js?v=ccc36c8b54"></script>
+    <script src="afk-mapboss.js?v=3a16c4ac73"></script>
     <!-- afk-dimrift：次元裂縫（世界規則：侵蝕、光蝕、面板減半、怪物倍率、掉落）；要在 afk-rebirth、afk-relic-companions、afk-lore-kit、afk-mio、afk-bracelet 之後 -->
     <script src="afk-dimrift.js?v=5e27bfe83e"></script>
     <!-- afk-zodiac：副本「黃道十二宮」（席琳神殿 星鑄師 艾琳娜）與聖衣 EX；要在 afk-saint-cloth、afk-dimrift、afk-npc-kit 之後 -->
-    <script src="afk-zodiac.js?v=570de33924"></script>
+    <script src="afk-zodiac.js?v=b35c9c6e01"></script>
     <!-- afk-riftdungeons：次元裂縫的副本（席琳神殿 裂縫之門）；要在 afk-dimrift、afk-lore-kit、afk-npc-kit 之後 -->
-    <script src="afk-riftdungeons.js?v=84794f18d3"></script>
+    <script src="afk-riftdungeons.js?v=dc34986f76"></script>
     <!-- afk-dimrelic：次元遺物 180 件與四龍專屬的次元時空武器（席琳神殿 次元的鍛造師）；要在 afk-relic-*、afk-dimrift、afk-riftdungeons 之後 -->
-    <script src="afk-dimrelic.js?v=25020f7d03"></script>
+    <script src="afk-dimrelic.js?v=4f4cae5c20"></script>
     <!-- afk-intdmg：傷害與 HP 一律整數（卡冊結算、每一刻結束、能力重算、傷害飄字的最後一道保險）；要在所有包 AFK_CARD_COMBAT.damage、tick、recomputeStats 的外掛之後，放最後 -->
     <script src="afk-intdmg.js?v=1c92a3b8d5"></script>
     <!-- ═══════════ 加掛版外掛層 END ═══════════ -->

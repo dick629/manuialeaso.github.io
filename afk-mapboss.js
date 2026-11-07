@@ -103,20 +103,24 @@
     var s = S(); return !!(s.riftRun || s._afkFinal || s.antharas || s.prideClimb);
   };
   var onField = function (role) { return (mapState.mobs || []).map(function (m, i) { return [m, i]; }).filter(function (x) { var m = x[0]; return m && act && m._afkMb === act.id && !m._dead && m.curHp > 0 && (role === 'boss' ? m._mbBoss : role === 'minion' ? m._mbMinion : true); }); };
-  var has = function (k) { return act && BY[act.id].mech.indexOf(k) >= 0; };
+  var has = function (k) { return act && (BY[act.id].mech.indexOf(k) >= 0 || act.extra === k); };
+  var ALL_MECH = ['summon', 'enrage', 'quake', 'regen', 'shieldM', 'shieldP', 'root', 'block', 'ambush', 'adds', 'poison', 'invuln', 'curse'];
+  var riftOn = function () { try { return !!(W.__afkDimRiftOn && W.__afkDimRiftOn()); } catch (e) { return false; } };
   var slotFor = function () { var ms = mapState.mobs || [], i; for (i = 0; i < ms.length; i++) if (!ms[i] || ms[i]._dead) return i; for (i = 0; i < ms.length; i++) if (ms[i] && !ms[i].boss) return i; return -1; };
   var start = function (b) {
     var idx = slotFor(); if (idx < 0) return false;
     var Lv = Math.max(10, Math.min(130, mapMaxLv(mapState.current) + 5));
     var m = scale(DB.mobs[b.mobId], Lv, 1.5 * (1 + 0.15 * allyCount()));
-    var mob = L.boss.place(idx, m, { mobId: b.mobId, _afkMb: b.id, _mbBoss: true, _mbL: Lv });
+    var rf = riftOn(); if (rf) { m.hp = Math.round(m.hp * 1.5); if (m.hit) m.hit = Math.round(m.hit * 4 / 3); }
+    var mob = L.boss.place(idx, m, { mobId: b.mobId, _afkMb: b.id, _mbBoss: true, _mbL: Lv, _dimRift: rf });
     if (!mob) return false;
     var t = tk();
     act = { id: b.id, map: mapState.current, born: t, summonAt: t + 150, quakeAt: t + 300, regenAt: t + 100, shieldAt: t + 200, shieldKind: 0, rootAt: t + 250, ambushAt: t + 250, stealAt: t + 600, poisonAt: t + 100, invulnAt: t + 300, curseAt: t + 200, layers: 0, stolen: 0, revived: false, enraged: false };
+    if (rf) { var pool = ALL_MECH.filter(function (k) { return b.mech.indexOf(k) < 0; }); act.extra = pool[Math.floor(Math.random() * pool.length)]; mob.n = mob.n + '（裂縫）'; }
     stat(b.id).met++;
     try { if (typeof vfxBossEntrance === 'function' && !S().ff) vfxBossEntrance(mob); } catch (e) {}
     try { if (!S().ff) renderMobs(); } catch (e) {}
-    sys('<span class="font-bold" style="color:#fcd34d;text-shadow:0 0 8px #000">👑 ' + (b.type === 'field' ? '地圖王' : '副本王') + '「' + esc(b.n) + '」出現了！</span><span class="text-slate-300">（Lv' + Lv + '，' + b.mech.map(function (k) { return MECH_N[k]; }).join('、') + '）</span>');
+    sys('<span class="font-bold" style="color:#fcd34d;text-shadow:0 0 8px #000">👑 ' + (b.type === 'field' ? '地圖王' : '副本王') + '「' + esc(b.n) + '」出現了！</span><span class="text-slate-300">（Lv' + Lv + '，' + b.mech.concat(act.extra ? [act.extra] : []).map(function (k) { return MECH_N[k]; }).join('、') + (act.extra ? '；次元裂縫：多了一種機制' : '') + '）</span>');
     return true;
   };
   var giveBack = function () { var p = P(); if (p && act && act.stolen > 0) { p.gold = (Number(p.gold) || 0) + act.stolen; sys('<span class="text-amber-200">拿回被偷走的金幣 ' + act.stolen.toLocaleString() + '。</span>'); act.stolen = 0; } };

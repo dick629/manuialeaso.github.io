@@ -88,20 +88,23 @@
     return out;
   };
   var add = function (d, k, v) { d[k] = (Number(d[k]) || 0) + v; };
+  var RIFT_X = 1.2;
+  var riftCnt = function (p) { var rc = {}; SHERINE_REMAINS.forEach(function (r) { if (r.id === SOUL) return; var e = p.eq && p.eq[r.id]; if (e && isDream(e) && e.riftRef) { var g = grp(e); rc[g] = (rc[g] || 0) + 1; } }); return rc; };
   if (typeof W.recomputeStats === 'function') {
     var oRe = W.recomputeStats;
     W.recomputeStats = function () {
       var r = oRe.apply(this, arguments);
       try {
         var p = (typeof player !== 'undefined') ? player : null; if (!p || !p.d) return r;
-        var tiers = dreamTiers(p), d = p.d, fx = { out: { all: 1, melee: 1, ranged: 1, magic: 1 }, taken: 1, leech: 0 }, any = false;
+        var tiers = dreamTiers(p), d = p.d, fx = { out: { all: 1, melee: 1, ranged: 1, magic: 1 }, taken: 1, leech: 0 }, any = false, rc = riftCnt(p);
         Object.keys(tiers).forEach(function (g) {
           (tiers[g] || []).forEach(function (t) {
             var e = DREAM[g] && DREAM[g][t]; if (!e) return; any = true;
-            if (e.s) Object.keys(e.s).forEach(function (k) { add(d, k, e.s[k]); });
-            if (e.out) Object.keys(e.out).forEach(function (k) { fx.out[k] *= e.out[k]; });
-            if (e.taken) fx.taken *= e.taken;
-            if (e.leech) fx.leech += e.leech;
+            var rk = (rc[g] || 0) + setCut(p) >= t ? RIFT_X : 1;   // 裂縫淬鍊（decisions-1107 1.8）：這一段的件數都裂縫淬鍊過 → 夢域效果 ×1.2
+            if (e.s) Object.keys(e.s).forEach(function (k) { add(d, k, Math.round(e.s[k] * rk)); });
+            if (e.out) Object.keys(e.out).forEach(function (k) { fx.out[k] *= 1 + (e.out[k] - 1) * rk; });
+            if (e.taken) fx.taken *= 1 - (1 - e.taken) * rk;
+            if (e.leech) fx.leech += e.leech * rk;
             // 最大 HP（癲狂）改在核心「夾 HP 之前」的掛點加（見下方 __afkMaxAdd）：
             //   原本在重算之後才加，核心已經先把 HP 夾到沒有夢域加成的上限 → 每重算一次 HP 就被砍掉（玩家 2026-10-29 22:19：穿癲狂＋冥鐵在村莊異常掉血）
           });
@@ -407,6 +410,6 @@
     try { (0, eval)('tick = window.tick'); } catch (e) {}
   }
 
-  W.__afkSherineDream = { SOUL: SOUL, SOUL_CUT: SOUL_CUT, soulRefined: soulRefined, soulTick: soulTick, SOUL_COST: SOUL_COST, soulOn: soulOn, ETCH_PER: ETCH_PER, SOCKET_NAMES: SOCKET_NAMES, SOCKET_MAX_OPEN: SOCKET_MAX_OPEN, PARTS: PARTS, etchReady: etchReady, etchTake: etchTake, etchName: etchName, migrate: migrate, mainEtch: mainEtch, DREAM: DREAM, DN: DN, isDream: isDream, dreamTiers: dreamTiers, soulOn: soulOn, setCut: setCut, COST: COST, SOUL: SOUL, SOUL_RATE: SOUL_RATE };
+  W.__afkSherineDream = { isDream: isDream, grp: grp, RIFT_X: RIFT_X, SOUL: SOUL, SOUL_CUT: SOUL_CUT, soulRefined: soulRefined, soulTick: soulTick, SOUL_COST: SOUL_COST, soulOn: soulOn, ETCH_PER: ETCH_PER, SOCKET_NAMES: SOCKET_NAMES, SOCKET_MAX_OPEN: SOCKET_MAX_OPEN, PARTS: PARTS, etchReady: etchReady, etchTake: etchTake, etchName: etchName, migrate: migrate, mainEtch: mainEtch, DREAM: DREAM, DN: DN, isDream: isDream, dreamTiers: dreamTiers, soulOn: soulOn, setCut: setCut, COST: COST, SOUL: SOUL, SOUL_RATE: SOUL_RATE };
   console.log('[AFK-sherine-dream] 已載入：夢域席琳遺骸與之魂');
 })();
