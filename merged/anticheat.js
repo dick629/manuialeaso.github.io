@@ -212,5 +212,16 @@
     W.loadGame = function () { var r = oLoad.apply(this, arguments); try { scan(true); } catch (e) {} return r; };
     try { (0, eval)('loadGame = window.loadGame'); } catch (e) {}
   }
+  // ── 效能（11-11）：補跑期間 updateUI 外面包的一層層外掛（PVP 傳送鈕、頭像…）也先不跑，
+  //    跟核心一樣只記「待重畫」，補跑結束由 flushTickRender 畫一次 ──
+  if (typeof W.updateUI === 'function') {
+    var oUI = W.updateUI, setDirty = null;
+    try { setDirty = (0, eval)('(function () { if (typeof _uiDirty !== "undefined") _uiDirty = true; })'); } catch (e) {}
+    W.updateUI = function () {
+      try { if (typeof catchupActive === 'function' && catchupActive()) { if (setDirty) setDirty(); return; } } catch (e) {}
+      return oUI.apply(this, arguments);
+    };
+    try { (0, eval)('updateUI = window.updateUI'); } catch (e) {}
+  }
   W.__afkAntiCheat = { scan: scan, costOf: costOf, isOwner: isOwner, hours: hours, external: external, store: store };
 })(window);

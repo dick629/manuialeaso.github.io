@@ -12,8 +12,8 @@
   var ok = function (s) { return typeof s === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(s) && s.length < 200000; };
   var apply = function () {
     var p = P(), el = document.getElementById('status-panel'); if (!p || !el) return;
-    if (ok(p.afkFace)) { var u = 'url("' + p.afkFace + '")'; if (el.style.backgroundImage !== u) el.style.backgroundImage = u; el.classList.add('afk-face'); }
-    else el.classList.remove('afk-face');
+    if (ok(p.afkFace)) { var u = 'url("' + p.afkFace + '")'; if (el.style.backgroundImage !== u) el.style.backgroundImage = u; if (!el.classList.contains('afk-face')) el.classList.add('afk-face'); }
+    else if (el.classList.contains('afk-face')) el.classList.remove('afk-face');
   };
   var save = function () { try { if (typeof saveGame === 'function') saveGame(); } catch (e) {} };
   var pick = function () {

@@ -1310,7 +1310,7 @@ function renderStatusIconBar() {
         bar.dataset.statusSig=sig;
         bar.innerHTML=rows.map((x,i)=>{let title=x.label+(x.ticks>0?'｜剩餘 '+x.sec+' 秒':'');return `<button type="button" aria-label="${title}" class="status-icon${x.ally?' status-icon--ally':''}" data-status-index="${i}" title="${title}"><img src="assets/state-icons/${encodeURIComponent(x.icon||x.name)}.jpg" alt="${x.label}"></button>`;}).join('');
     } else {
-        rows.forEach((x,i)=>{let icon=bar.querySelector(`[data-status-index="${i}"]`);if(!icon)return;icon.title=x.label+(x.ticks>0?'｜剩餘 '+x.sec+' 秒':'');icon.setAttribute('aria-label',icon.title);});
+        rows.forEach((x,i)=>{let icon=bar.querySelector(`[data-status-index="${i}"]`);if(!icon)return;let _t=x.label+(x.ticks>0?'｜剩餘 '+x.sec+' 秒':'');if(icon.title!==_t){icon.title=_t;icon.setAttribute('aria-label',_t);}});
     }
 }
 

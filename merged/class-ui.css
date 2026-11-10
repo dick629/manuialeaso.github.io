@@ -9,4 +9,4 @@
 #class-overlay.class-embedded{position:static;inset:auto;z-index:auto;display:block;padding:0;background:none;min-width:0}#class-overlay.class-embedded>section{width:100%;height:auto;min-height:0;border:0;box-shadow:none}#class-overlay.class-embedded>section>header{display:none}#class-overlay.class-embedded main{overflow:visible}#class-overlay.class-embedded nav{position:sticky;top:0;z-index:1;background:#17231d}#class-overlay.class-embedded footer{min-height:40px}
 
 /* Keep confirmation above a standalone soul panel opened from a mobile NPC. */
-body.m-unified:has(#class-overlay:not(.class-embedded)) #lm-detail:has(#afk-confirm-modal.open),body.m-unified:has(#class-overlay:not(.class-embedded)) #lm-detail:has(#afk-alert-modal.open){z-index:100120}
+body.m-unified.afk-f-classov #lm-detail:has(#afk-confirm-modal.open),body.m-unified.afk-f-classov #lm-detail:has(#afk-alert-modal.open){z-index:100120}

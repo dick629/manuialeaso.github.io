@@ -27,7 +27,7 @@ body #attribute-help .attribute-help-body p{font-size:13px}
 body #attribute-help :is(button,.attribute-help-body){scrollbar-color:#8c8168 #121915}
 
 /* Transient combat/system toasts stay behind focused dialogs; dedicated error/confirm dialogs remain above. */
-body:has(#attribute-help,#growth-overlay,#class-overlay) #m-toast-wrap{z-index:8000!important}
+body.afk-f-ovl #m-toast-wrap{z-index:8000!important}
 
 /* Secondary reading/settings windows share the same materials, retaining their own scroll containers. */
 body.m-unified :is(#m-wiki-wrap,#afk-stg-menu,#afk-toggles-box,#afk-ms-box,#afk-ps-box,#m-fsv-box,#m-hist-box,#m-rid-box,#m-diag-box,#m-mobname-box,#m-stg-box){background:var(--li-panel)!important;border-color:var(--li-edge)!important;border-radius:2px!important}

@@ -8,7 +8,7 @@
  *   ‧遊戲照常 100% 戰鬥（gameLoop 不動），但畫面不重畫：
  *       主畫面隱藏（瀏覽器不繪製）、戰鬥特效與傷害數字關閉、角色逐幀動畫暫停、
  *       畫面更新（_updateUIImpl／_renderMobsImpl）改成每 5 秒一次（保留畫面更新裡的任何附帶邏輯）
- *   ‧點兩下螢幕（或「結束掛機」）回到正常畫面，立刻完整重畫一次
+ *   ‧按「結束掛機」回到正常畫面，立刻完整重畫一次（11-11 起拿掉點兩下結束，避免誤觸）
  * 入口：熱鍵列左上角的 🌙；也可以 AFK_SCREEN.start()／stop()。同一個分頁自動重新整理後會回到掛機模式。
  * 不改存檔、不改任何戰鬥數值；只是暫停「畫」。
  * ========================================================================== */
@@ -107,14 +107,14 @@
     ov.innerHTML = '<div class="as-box"></div><div class="as-exit">結束掛機</div>';
     ov.addEventListener('click', function (e) {
       if (e.target.closest('.as-exit')) { stopMode(); return; }
-      var t = Date.now(); if (t - lastTap < 400) { stopMode(); return; } lastTap = t;
+      // 玩家 11-11：常常不小心解除掛機 → 拿掉「點兩下結束」，只能按「結束掛機」
       if (!lock) acquire();
     });
     document.body.appendChild(ov);
     move(); paint(); acquire();
     try { sessionStorage.setItem('afk_screen_on', '1'); } catch (e) {}
     timer = setInterval(paint, THROTTLE); moveTimer = setInterval(move, 60000);
-    try { if (typeof logSys === 'function') logSys('<span class="text-slate-400">🌙 進入掛機模式：螢幕常亮、畫面全黑省電，戰鬥照常進行。點兩下螢幕回來。</span>'); } catch (e) {}
+    try { if (typeof logSys === 'function') logSys('<span class="text-slate-400">🌙 進入掛機模式：螢幕常亮、畫面全黑省電，戰鬥照常進行。按「結束掛機」回來。</span>'); } catch (e) {}
   }
   function stopMode() {
     if (!on) return;
@@ -130,7 +130,7 @@
   }
 
   // 自動重新整理（更新版本、定時釋放記憶體）後回到掛機模式：同一個分頁內記住狀態
-  try { if (sessionStorage.getItem('afk_screen_on') === '1') { var tries = 0, iv = setInterval(function () { tries++; var p = P(); if (p && document.getElementById('game-screen') && !document.getElementById('game-screen').classList.contains('hidden')) { clearInterval(iv); startMode(); } else if (tries > 120) { clearInterval(iv); try { sessionStorage.removeItem('afk_screen_on'); } catch (e) {} } }, 1000); } } catch (e) {}
+  try { if (sessionStorage.getItem('afk_screen_on') === '1') { var tries = 0, iv = setInterval(function () { tries++; var p = P(); if (p && document.getElementById('game-screen') && !document.getElementById('game-screen').classList.contains('hidden')) { clearInterval(iv); startMode(); } else if (tries > 600) { clearInterval(iv); try { sessionStorage.removeItem('afk_screen_on'); } catch (e) {} } }, 1000); } } catch (e) {}
   W.AFK_SCREEN = { start: startMode, stop: stopMode, on: function () { return on; }, wakeLock: function () { return !!lock; }, supported: wakeOk };
   console.log('[AFK-screen] 已啟用：掛機模式（熱鍵列 🌙）');
 })();

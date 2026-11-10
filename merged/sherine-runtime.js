@@ -2,7 +2,9 @@
  const C=W.LineageSherineCore,R=W.AFK_RELIC_RUNTIME,B=W.LineageClassCombat,SD=W.__afkSherineDream,states=new WeakMap(),seen=new WeakMap(),CRYSTAL='afk_dim_crystal';
  const N=x=>Number(x)||0,now=()=>N(state.ticks)/10,live=p=>p&&!p.dead&&!p._downed&&R.api.hp(p)>0;
  const mem=p=>{if(!states.has(p))states.set(p,{cd:{},next:{},casts:new Set(),hits:0,arrows:0,owned:new WeakMap(),dots:[]});return states.get(p);};
- function view(p){const c=C.counts(p,DB.items,SD.setCut(p));return{c,tiers:C.tiers(c),mix:C.active(p,c)};}
+ // 效能（11-11）：同一個 tick 內同一個角色只算一次（補跑時每次命中都會問，原本每次重掃裝備）
+ const viewMemo=new WeakMap();
+ function view(p){const live2=!!(typeof state!=='undefined'&&state&&(state.inTick||state.ff)),k=live2?N(state.ticks):-1,m=p&&typeof p==='object'?viewMemo.get(p):null;if(live2&&m&&m.k===k&&m.eq===p.eq)return m.v;const c=C.counts(p,DB.items,SD.setCut(p)),v={c,tiers:C.tiers(c),mix:C.active(p,c)};if(p&&typeof p==='object')viewMemo.set(p,{k,eq:p.eq,v});return v;}
  const has=(v,g,n)=>v.tiers[g]?.includes(n),oldActive=(p,g)=>{const a=mem(p),m=view(p).mix;return m?.old===g&&a.mixUntil>now();};
  const ready=(p,key,sec)=>{const a=mem(p);if(N(a.cd[key])>now())return false;a.cd[key]=now()+sec;return true;};
  const next=(p,key,mult,sec=6)=>mem(p).next[key]={mult,until:now()+sec};

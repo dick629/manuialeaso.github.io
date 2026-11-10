@@ -38,10 +38,10 @@
 
   function clearDollCursor() {
     try {
-      document.body.style.cursor = '';
-      document.body.classList.remove('has-doll-cursor');   // 少了這行,CSS 的全頁 cursor:inherit 會留著
+      if (document.body.style.cursor) document.body.style.cursor = '';
+      if (document.body.classList.contains('has-doll-cursor')) document.body.classList.remove('has-doll-cursor');   // 少了這行,CSS 的全頁 cursor:inherit 會留著
       var g = document.getElementById('doll-cursor-glow');
-      if (g) g.classList.remove('active');                 // 手機上「點一下留一顆光點」的就是它
+      if (g && g.classList.contains('active')) g.classList.remove('active');                 // 手機上「點一下留一顆光點」的就是它
     } catch (e) {}
   }
 

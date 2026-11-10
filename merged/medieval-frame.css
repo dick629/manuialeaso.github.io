@@ -1,11 +1,12 @@
-/* Original raster relief: decoration only; no palette or portrait overrides. */
+/* Original raster relief: decoration only; no palette or portrait overrides.
+   11-11 效能：框圖縮成 502px WebP（原 1254px PNG 1MB），框層獨立合成，戰鬥畫面重畫時不跟著重新柵格化。 */
 body:not(.m-unified) #game-screen .panel{position:relative}
 /* Keep the experience bar clear of the lower relief. */
 body:not(.m-unified) #status-panel{padding-bottom:10px}
 body:not(.m-unified) #game-screen .panel::after,
 #growth-overlay>section::after,#class-overlay>section::after,#attribute-help>section::after{
  content:'';position:absolute;inset:-2px;z-index:5;pointer-events:none;
- border:0 solid transparent;border-image:url('../assets/ui/interface-v7/dragon-carved-frame.png') 240 / 36px / 0 stretch;
+ border:0 solid transparent;border-image:url('../assets/ui/interface-v7/dragon-carved-frame-s.webp') 96 / 36px / 0 stretch;will-change:transform;
  width:auto;height:auto;top:-2px;right:-2px;left:-2px;bottom:-2px;
 }
 body:not(.m-unified) #game-screen .panel>.panel-header{padding-left:30px;padding-right:30px}

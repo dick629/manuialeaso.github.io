@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-3550307ea061",
+  "build": "merge-0.4-97afa5e86714",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -93,8 +93,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-avatar.js?v=e0fb93a8d816",
-      "sha256": "e0fb93a8d816ffbacc9aa0eeec2934061b42059241ceb3ff2b0b771d4b6eab33",
+      "url": "afk-avatar.js?v=645fd5dff69f",
+      "sha256": "645fd5dff69fc53a7e9acc3aaa76029c843a69360315d1615586c61882a33ccf",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -150,6 +150,11 @@
     {
       "url": "afk-bmprice.js?v=e9aaaa067777",
       "sha256": "e9aaaa06777776dee37dcbbac4127b2cebedf77319c2160f20f34461c144674a",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-bodyflags.js?v=5aec880878c0",
+      "sha256": "5aec880878c0f9b0237fcaed1f6cb1bb20c62a2a7bd3a362f65014e12e4f365a",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -398,8 +403,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dollcursor.js?v=367f97be5a5c",
-      "sha256": "367f97be5a5cbc13ed4e99cd0946aba3b969647c60989e48b56dd4458d77aadc",
+      "url": "afk-dollcursor.js?v=19e56e26e96e",
+      "sha256": "19e56e26e96e308530bdb04df4178c5441519f2d10470de8f22dfbd247a8a317",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1248,8 +1253,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-screen.js?v=d540891705de",
-      "sha256": "d540891705de6df7a0d32ae0915938e381cc718679708221cda65633b35025fd",
+      "url": "afk-screen.js?v=1905b14a2eb1",
+      "sha256": "1905b14a2eb1bf123f01f2b6956b3d0ee0ece4654bdbb289e481e51e67ec0c70",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1518,6 +1523,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-worldchat-data4.js?v=5030b9f517a4",
+      "sha256": "5030b9f517a43e67901abed9e45d4f8905dbc0bb5870d8aabc6e871fa72f8ac9",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-worldchat.js?v=a0b471aab991",
       "sha256": "a0b471aab9912d35a1dac780efeac34d777ba0638aad10e86747be9a4775a9eb",
       "type": "text/javascript; charset=utf-8"
@@ -1554,7 +1564,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "96f382bfac1cf1500602448c81e037f13379c5484d9f8c506c9f24a955ec8e98",
+      "sha256": "309d7667cbf16b117c4da39f1b31d75f2c0af037461ffcb284ab30af4b61a8e2",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1573,8 +1583,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/03-combat-core.js?v=cc4373627ef4",
-      "sha256": "cc4373627ef48b3cd15cc29a31beb4aca85b0c956f1c95d9e38c4ffe3019c8fa",
+      "url": "js/03-combat-core.js?v=e572352287c5",
+      "sha256": "e572352287c51dbcface76e1eda997596f7ce62a5334777b49218f01273d5e83",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1598,8 +1608,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/08-items-equip.js?v=0c370cddfd6b",
-      "sha256": "0c370cddfd6bef182e8c7e1865d8b879710a4d411cc494288c5cdcca662381d7",
+      "url": "js/08-items-equip.js?v=338875548b2e",
+      "sha256": "338875548b2eecbf3d5820b671e66e44b042ef8c231cbd487eeca971ef2d8b41",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1668,8 +1678,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/22-pets.js?v=a3d9a180a56d",
-      "sha256": "a3d9a180a56d5535854d00645e705eabe22750515bfe397f4de1982e18c40ddf",
+      "url": "js/22-pets.js?v=f9735c9e1ba5",
+      "sha256": "f9735c9e1ba5136b20f6e3bef7e0c9cffc350bad7885624b5b7292186087f243",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1728,13 +1738,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/admin-guard.js?v=4498bdc6addc",
-      "sha256": "4498bdc6addcf8d2b5ecb2d1c88e9b7a49eb287625323e20475885745432094f",
+      "url": "merged/admin-guard.js?v=af0321ad96e9",
+      "sha256": "af0321ad96e91088524bf8b13dfcb06a51f1b552902aa91fc7ed1559103a6596",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/anticheat.js?v=d0099653a17b",
-      "sha256": "d0099653a17bb87453e7f3e8bd895534ccbd450955499b5f528b667e2172bf87",
+      "url": "merged/anticheat.js?v=ff84ecba4c37",
+      "sha256": "ff84ecba4c379fb60d2f59cc22dd429798d3a24be0560503d4d8f4fe455a1db3",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1803,8 +1813,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/class-ui.css?v=18a94ced096e",
-      "sha256": "18a94ced096e592bcd975d2ad47d55fd88955ea2ccd0da1a77856e7769a99c55",
+      "url": "merged/class-ui.css?v=d46344a39f00",
+      "sha256": "d46344a39f000166da0b6a52a4fa23f62425cc41d6949250de5977e713c460f4",
       "type": "text/css; charset=utf-8"
     },
     {
@@ -1903,8 +1913,8 @@
       "type": "text/css; charset=utf-8"
     },
     {
-      "url": "merged/interface-materials.css?v=b34c28d708d9",
-      "sha256": "b34c28d708d992c6a08e701fd42a92fc3c94f26146e71eca1614515f069e97d6",
+      "url": "merged/interface-materials.css?v=df4d36674acd",
+      "sha256": "df4d36674acd49ad6b2f7363169d49596ed5e36f58ee740dfefc8d1966befcc2",
       "type": "text/css; charset=utf-8"
     },
     {
@@ -1918,8 +1928,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/medieval-frame.css?v=14ab4b1badb5",
-      "sha256": "14ab4b1badb5fcd385641b551f354c93ebbecc36a5e3d42e1d7688c7b436c3e2",
+      "url": "merged/medieval-frame.css?v=3153c149b11a",
+      "sha256": "3153c149b11a597825b601b72c5bdb0a3acfc3e69a6cc21379427da411f9cc97",
       "type": "text/css; charset=utf-8"
     },
     {
@@ -1933,8 +1943,8 @@
       "type": "text/css; charset=utf-8"
     },
     {
-      "url": "merged/mobile-shell.css?v=2e9e8c223bde",
-      "sha256": "2e9e8c223bde20d68eeff8cb577b60696d5ed290790630f1b78430022b725153",
+      "url": "merged/mobile-shell.css?v=e6b3ffd8d492",
+      "sha256": "e6b3ffd8d492caaf0c0b9532a595f4964fa4b6481f25454fdf0ad95a2a84c3d2",
       "type": "text/css; charset=utf-8"
     },
     {
@@ -2038,8 +2048,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/sherine-runtime.js?v=66985d5626f5",
-      "sha256": "66985d5626f5daf7697342888db0ddfa89af8e1d9e3c10134d190a2a49a7fe42",
+      "url": "merged/sherine-runtime.js?v=b8773428751c",
+      "sha256": "b8773428751cb5bb09190345d3e6f6b1e274f760875463b2a7d0bb8420a4f1c9",
       "type": "text/javascript; charset=utf-8"
     },
     {

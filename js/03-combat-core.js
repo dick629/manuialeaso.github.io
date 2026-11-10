@@ -221,6 +221,8 @@ function gameLoop() {
         return;
     }
 
+    // 🔌 加掛版補丁（玩家 11-11）：待在村莊裡沒有戰鬥，背景／凍結回來的時間不逐 tick 補跑（村莊裡補跑只是空轉、還會卡畫面）
+    if (_tickDebt >= TICK_MS * 2 && typeof mapState !== 'undefined' && mapState && /^town_/.test(mapState.current || '') && !_ffAcc) _tickDebt = TICK_MS;
     let owed = Math.floor(_tickDebt / TICK_MS);
     let _fg = owed > 1 && !_hidden && (!_ffAcc || _ffAcc.fg) && typeof window.__afkFgLag === 'function' && !!window.__afkFgLag(owed);   /* 🔌 加掛版補丁:前景跟不上時照常重畫 */
     if (owed <= 1 && !_hidden && !_ffAcc) {   // 即時路徑：背景／既有補跑摘要一律走下方靜音路徑

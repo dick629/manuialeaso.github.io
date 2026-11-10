@@ -1,8 +1,8 @@
 #tab-audit .font-bold{min-width:0;overflow-wrap:anywhere}
 /* Keep the desktop repair action in the menu flow during play. */
-body:has(#game-screen:not(.hidden)) #merge-recovery-entry{display:none!important}
+body.afk-f-ingame #merge-recovery-entry{display:none!important}
 /* Floating login shortcuts yield to every open settings dialog. */
-body:has(:is(#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#afk-pwa-notice,#afk-radio-menu,#afk-stg-menu.open,#m-fsv-modal.open,#m-stg-modal.open,#m-hist-modal.open,#m-diag-modal.open,#m-rid-modal.open,#m-mobname-modal.open,#afk-alert-modal.open,#afk-confirm-modal.open)) :is(#merge-recovery-entry,#afk-toggles-entry,#afk-radio-btn){display:none!important}
+body.afk-f-modal :is(#merge-recovery-entry,#afk-toggles-entry,#afk-radio-btn){display:none!important}
 /* One phone viewport, one active page. Scoped to the merged mobile shell. */
 #lm-equipment-back,#lm-header,#lm-subnav,#lm-nav,#lm-detail,#lm-more,#lm-logs,#lm-log-options,#lm-log-empty{display:none}
 .lm-location{display:none}

@@ -1513,7 +1513,7 @@ function _petAnimApply() {
         }
     } catch (e) {}
 }
-setInterval(() => { _petAnimApply(); }, 1000 / PET_ANIM_FPS);   // 🔌 加掛版補丁:間接呼叫讓外掛(省電模式)wrapper 攔得住;直接傳參照會被捕死原函式
+setInterval(() => { if (typeof state !== 'undefined' && state && state.ff) return; _petAnimApply(); }, 1000 / PET_ANIM_FPS);   // 🔌 加掛版補丁（11-11）：補跑中不換寵物動畫幀   // 🔌 加掛版補丁:間接呼叫讓外掛(省電模式)wrapper 攔得住;直接傳參照會被捕死原函式
 
 // ---------- 十一、舊項圈系統存檔遷移（loadGame 掛點：js/13 呼叫 petMigrateLegacy）----------
 const _PET_LEGACY_COLLARS = { 'new_item_184': '杜賓狗', 'new_item_185': '狼', 'new_item_collar_husky': '哈士奇', 'new_item_238': '牧羊犬', 'new_collar_rabbit': '暴走兔', 'new_collar_fox': '狐狸', 'new_collar_beagle': '小獵犬', 'new_collar_stbernard': '聖伯納犬' };

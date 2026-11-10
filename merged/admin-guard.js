@@ -9,7 +9,7 @@
  function allowed(p,e){if(!p?.cls||!e||!GM.has(String(e.id)))return false;const id=role(p),ik=String(e.id)+'|'+e.uid;if(!cache.has(id))cache.set(id,roles.has(W.LineageIdentityDigest(id)));if(!itemCache.has(ik))itemCache.set(ik,items.has(W.LineageIdentityDigest(ik)));return cache.get(id)===true&&itemCache.get(ik)===true;}
  const gain=W.gainItem;W.gainItem=function(id){if(GM.has(String(id))||DB.items[id]?.gmOnly)throw Error('GM 裝備不開放發放；只保留已綁定帳號的原有裝備');return gain.apply(this,arguments);};
  const toggle=W.toggleLock;W.toggleLock=function(id){const e=[...(player.inv||[]),...Object.values(player.eq||{})].find(x=>x?.uid===id);if(e&&GM.has(String(e.id))){e.lock=true;return;}return toggle.apply(this,arguments);};
- const re=W.recomputeStats;W.recomputeStats=function(){if(player?.cls){for(const e of [...Object.values(player.eq||{}),...(player.inv||[])])if(e&&GM.has(String(e.id)))e.lock=true;}return re.apply(this,arguments);};
+ const re=W.recomputeStats;let lastInv=null,lastLen=-1,lastEq=null;W.recomputeStats=function(){if(player?.cls){const inv=player.inv||[];if(inv!==lastInv||inv.length!==lastLen||player.eq!==lastEq){lastInv=inv;lastLen=inv.length;lastEq=player.eq;for(const e of Object.values(player.eq||{}))if(e&&GM.has(String(e.id)))e.lock=true;for(const e of inv)if(e&&GM.has(String(e.id)))e.lock=true;}}return re.apply(this,arguments);};
  const decode=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
  let busy=false;
  async function apply(code){if(busy)throw Error('授權操作進行中');busy=true;try{
