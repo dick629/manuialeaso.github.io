@@ -1,7 +1,7 @@
 /* ============================================================================
  * afk-avatar.js — 自訂角色頭像（玩家 2026-11-11 03:29）
  *
- *   角色名稱旁多一顆「頭像」：選一張自己的圖片當角色頭像（電腦版左上角的角色圖、手機版上方的頭像都換）。
+ *   電腦版點左上角的「職業」名稱、手機版點頭像圖片：選一張自己的圖片當角色頭像（電腦版左上角的角色圖、手機版上方的頭像都換）。
  *   圖片在本機裁成正方形、縮成 192×192 的 JPEG 存在角色存檔裡（約 10～20 KB），換裝置匯入存檔也會跟著走。
  *   可以隨時換掉或恢復預設。只換畫面上的頭像，跟職業動畫、戰鬥無關。
  * ========================================================================== */
@@ -39,10 +39,10 @@
   };
   var menu = function () {
     var p = P(); if (!p) return;
-    if (!ok(p.afkFace)) { pick(); return; }
+    var cur = ok(p.afkFace) ? p.afkFace : ((document.getElementById('lm-portrait') || {}).src || ('assets/character/' + (p.avatar || '') + '.webp'));
     var old = document.getElementById('afk-face-menu'); if (old) old.remove();
     var m = document.createElement('div'); m.id = 'afk-face-menu';
-    m.innerHTML = '<div class="afk-face-box"><b>角色頭像</b><img src="' + p.afkFace + '" alt=""><button type="button" data-f="pick">換一張圖片</button><button type="button" data-f="reset">恢復預設頭像</button><button type="button" data-f="close">關閉</button></div>';
+    m.innerHTML = '<div class="afk-face-box"><b>角色頭像</b><img src="' + cur + '" alt=""><button type="button" data-f="pick">' + (ok(p.afkFace) ? '換一張圖片' : '選一張圖片當頭像') + '</button>' + (ok(p.afkFace) ? '<button type="button" data-f="reset">恢復預設頭像</button>' : '') + '<button type="button" data-f="close">關閉</button></div>';
     m.addEventListener('click', function (e) {
       var k = e.target.getAttribute && e.target.getAttribute('data-f');
       if (e.target === m || k === 'close') { m.remove(); return; }
@@ -60,11 +60,13 @@
     + '#afk-face-menu img{width:120px;height:120px;border-radius:50%;object-fit:cover;border:2px solid #a16207}'
     + '#afk-face-menu button{width:100%;padding:8px 12px;border-radius:6px;border:1px solid #a16207;background:#422006;color:#fde68a;font-weight:700}';
   document.head.appendChild(css);
+  // 玩家 11-11：電腦版點「職業」名稱、手機版點頭像圖片 → 換頭像
+  var bound = false;
   var addBtns = function () {
-    var a = document.getElementById('st-class');
-    if (a && !document.getElementById('afk-face-btn')) { var b = document.createElement('button'); b.type = 'button'; b.id = 'afk-face-btn'; b.className = 'afk-face-btn'; b.textContent = '頭像'; b.onclick = function (e) { e.stopPropagation(); menu(); }; a.insertAdjacentElement('afterend', b); }
-    var r = document.getElementById('lm-rename');
-    if (r && !document.getElementById('afk-face-btn-m')) { var c = document.createElement('button'); c.type = 'button'; c.id = 'afk-face-btn-m'; c.className = 'afk-face-btn'; c.textContent = '頭像'; c.onclick = function (e) { e.stopPropagation(); menu(); }; r.insertAdjacentElement('afterend', c); }
+    var c = document.getElementById('st-classname');
+    if (c && !c.__afkFace) { c.__afkFace = true; c.style.cursor = 'pointer'; c.title = '點這裡更換角色頭像'; c.addEventListener('click', function (e) { e.stopPropagation(); menu(); }); }
+    var m = document.getElementById('lm-player');
+    if (m && !m.__afkFace) { m.__afkFace = true; m.setAttribute('aria-label', '更換角色頭像'); m.addEventListener('click', function (e) { e.stopImmediatePropagation(); e.preventDefault(); menu(); }, true); }
   };
   // updateUI 會延後呼叫 _updateUIImpl 才畫頭像，所以兩個都包
   if (typeof W._updateUIImpl === 'function') {

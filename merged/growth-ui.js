@@ -1,5 +1,5 @@
 (function(W){
-  'use strict';
+  'use strict';const N0=n=>Number(n)||0;
   const G=W.LineageGrowth,C=W.LineageGrowthCore,T=W.LineageTalentCatalog,A=W.LineageActivities,V=W.LineageGrowthViews;
   let panel=null,tab='talent',draft=null,pg=null,direction='melee',selected='melee.A.1',jobGroup='dream',inspected=null;
   const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -31,8 +31,9 @@
   function click(e){const b=e.target.closest('[data-growth]');if(!b||b.disabled)return;const [cmd,arg]=b.dataset.growth.split(':');try{
     if(cmd==='backup'){G.downloadBackup();return;}if(cmd==='close'){close();return;}if(cmd==='tab'){tab=arg;panel.querySelector('.growth-body').scrollTop=0;}if(cmd==='direction'){direction=arg;selected=arg+'.A.1';}if(cmd==='jobGroup')jobGroup=arg;
     if(cmd==='node'){selected=arg;if(V.state(G.read(player),draft,arg,player.rebirth||0)==='available')draft=C.add(draft,arg);}if(cmd==='j'&&G.read(player).unlocked&&!draft.j&&draft.order.length===3&&draft.order.every(d=>C.complete(draft,d,'K'))&&C.spent(draft)+3<=C.earned(G.read(player),player.rebirth||0))draft.j=true;
-    if(cmd==='clearTalent')draft={order:[],nodes:[],j:false};if(cmd==='clearParagon')pg={};
-    if(cmd==='pg+'||cmd==='pg-'){const g=G.read(player),d=C.paragon[arg];if(!g||!d)return;const used=Object.values(pg).reduce((a,b)=>a+b,0),n=pg[arg]||0;if(cmd==='pg+'&&g.unlocked&&used<g.paragon.level&&n<Math.min(700,Math.ceil(d.cap/d.step)))pg[arg]=n+1;else if(cmd==='pg-')pg[arg]=Math.max(0,n-1);V.updateParagon(panel,g,pg);return;}
+    if(cmd==='clearTalent')draft=C.copy(G.read(player).talent);if(cmd==='clearParagon')pg=C.copy(G.read(player).paragon.points);
+    if(cmd==='wash'){const nm=arg==='talent'?'天賦':'巔峰';if(!confirm('花 50,000 血龍鑽洗掉'+nm+'目前的全部點數？\n點數會全部退還，讓你重新配一次。'))return;G.respec(arg);draft=C.copy(G.read(player).talent);pg=C.copy(G.read(player).paragon.points);render();error(nm+'已洗點，點數全部退還');return;}
+    if(cmd==='pg+'||cmd==='pg-'){const g=G.read(player),d=C.paragon[arg];if(!g||!d)return;const used=Object.values(pg).reduce((a,b)=>a+b,0),n=pg[arg]||0;if(cmd==='pg+'&&g.unlocked&&used<g.paragon.level&&n<Math.min(700,Math.ceil(d.cap/d.step)))pg[arg]=n+1;else if(cmd==='pg-')pg[arg]=Math.max(N0(g.paragon.points[arg]),n-1);V.updateParagon(panel,g,pg);return;}
     if(cmd==='saveTalent'){G.commitTalent(draft);draft=C.copy(G.read(player).talent);}if(cmd==='saveParagon'){G.commitParagon(pg);pg=C.copy(G.read(player).paragon.points);}
     if(cmd==='mushroom'){A.enterMushroom();close();W.LineageMobile?.go('adventure');return;}
     if(cmd==='start'){A.start([...panel.querySelectorAll('input[name="growth-job"]:checked')].map(x=>x.value),panel.querySelector('#growth-hardin').value);close();W.LineageMobile?.go('adventure');return;}

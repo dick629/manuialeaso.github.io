@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-bd45f113821a",
+  "build": "merge-0.4-4e8f47fd544d",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -93,8 +93,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-avatar.js?v=bd1b5b7e5d60",
-      "sha256": "bd1b5b7e5d60eab2c0d484c1384d08ecb760a49cf80a878da5984537a4aec2f2",
+      "url": "afk-avatar.js?v=e0fb93a8d816",
+      "sha256": "e0fb93a8d816ffbacc9aa0eeec2934061b42059241ceb3ff2b0b771d4b6eab33",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -563,8 +563,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-game-guide.js?v=76c740bf508a",
-      "sha256": "76c740bf508ac32e963555c370e7d9c6e50c6e640b4c3bb29015853948e28f80",
+      "url": "afk-game-guide.js?v=16e69c151195",
+      "sha256": "16e69c15119528af9ef35d1d2151c8d102ee3218dbe10cdc6c928c84dc310fb2",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1554,7 +1554,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "b3b6c8749b2d14acb5ebf9cf49dd0fddd2643ca108df0028304411991e5ea482",
+      "sha256": "5d37d23f72dc913077574fb5680abb7312f2568dadb4f8f69ca0560f4f9bc634",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1853,18 +1853,18 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-runtime.js?v=60c3c25490d1",
-      "sha256": "60c3c25490d1292ca2d1ebd721b9aba53062bbf48cc50f90d94bfa5652e9abb2",
+      "url": "merged/growth-runtime.js?v=10f5429daf3a",
+      "sha256": "10f5429daf3a5a6a63cabd93e2f068689438ed9e620fcbe13219beeb3f2f514c",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-ui.js?v=9476b193b41d",
-      "sha256": "9476b193b41d15ce1182ca9f50d6c6cbe997fd7dcc662030415d5d2e8c45dc88",
+      "url": "merged/growth-ui.js?v=aaa6af19c3f8",
+      "sha256": "aaa6af19c3f8e600f6947c737613511f0bafa2f6f0beea008c25fc6633e1cd61",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-views.js?v=4c6ea632cf36",
-      "sha256": "4c6ea632cf362009a2ce13a227fa90f2f452d5dc32ec8fa02fb502e08766dbcc",
+      "url": "merged/growth-views.js?v=00a970904cab",
+      "sha256": "00a970904cab07565b8d8c0316d2ba4057866c1f44ee93c258ffc133fdc5ab12",
       "type": "text/javascript; charset=utf-8"
     },
     {

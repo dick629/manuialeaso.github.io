@@ -63,13 +63,20 @@
   function spendBlood(n){if(!busy||!Number.isSafeInteger(n)||n<=0)throw Error('血龍鑽扣款必須在已備份的存檔交易內執行');if(blood()<n)throw Error('血龍鑽不足，需要 '+n);for(const it of P().inv){if(it.id!=='afk_blood_dia')continue;const have=it.cnt==null?1:N(it.cnt),take=Math.min(have,n);it.cnt=have-take;n-=take;if(!n)break;}P().inv=P().inv.filter(i=>i.id!=='afk_blood_dia'||i.cnt>0);}
   function commitTalent(next){const g=read(P());if(!g||!g.unlocked)throw Error('一轉 Lv100 開放');if(!C.validTalent(next)||C.spent(next)>C.earned(g,N(P().rebirth)))throw Error('天賦點數或前置不符');
     const changed=g.talent.nodes.some(id=>!next.nodes.includes(id))||g.talent.j&&!next.j;
-    return transaction('天賦配點',()=>{if(changed)spendBlood(5000);g.talent=C.copy(next);g.supportBuffs={};W.LineageTalents?.reset(P());});
+    if(changed)throw Error('已保存的天賦不能拿掉；要重新配點請按「洗點」（50,000 血龍鑽，全部點數退還）');
+    return transaction('天賦配點',()=>{g.talent=C.copy(next);g.supportBuffs={};W.LineageTalents?.reset(P());});
   }
   function commitParagon(points){const g=read(P());if(!g||!g.unlocked||N(P().rebirth)<1||N(P().lv)<100)throw Error('一轉 Lv100 開放');const candidate=C.copy(g);candidate.paragon.points=C.copy(points);if(!C.valid(candidate,N(P().rebirth)))throw Error('巔峰點數或上限不符');
     const changed=Object.keys(g.paragon.points).some(k=>N(points[k])<g.paragon.points[k]);
-    return transaction('巔峰配點',()=>{if(changed)spendBlood(5000);g.paragon.points=C.copy(points);});
+    if(changed)throw Error('已保存的巔峰點數不能減少；要重新配點請按「洗點」（50,000 血龍鑽，全部點數退還）');
+    return transaction('巔峰配點',()=>{g.paragon.points=C.copy(points);});
   }
-  function respec(kind){const g=read(P());if(!g)throw Error('成長資料異常');if(kind==='talent')return commitTalent({order:[],nodes:[],j:false});if(kind==='paragon')return commitParagon({});throw Error('未知分類');}
+  // 玩家 11-11：保存後就鎖定；洗點＝花 50,000 血龍鑽把這一邊目前的點數全部退還
+  const WASH=50000;
+  function respec(kind){const g=read(P());if(!g)throw Error('成長資料異常');if(!g.unlocked)throw Error('一轉 Lv100 開放');
+    if(kind==='talent'){if(!g.talent.nodes.length&&!g.talent.j)throw Error('天賦還沒有配點');return transaction('天賦洗點',()=>{spendBlood(WASH);g.talent={order:[],nodes:[],j:false};g.supportBuffs={};W.LineageTalents?.reset(P());});}
+    if(kind==='paragon'){if(!Object.values(g.paragon.points).some(v=>N(v)>0))throw Error('巔峰還沒有配點');return transaction('巔峰洗點',()=>{spendBlood(WASH);g.paragon.points={};});}
+    throw Error('未知分類');}
   function statBase(p){const g=read(p);if(!g)return;const m=C.movement(g);p.d.moveSpeedPct=N(p.d.moveSpeedPct)+m.speed;}
   function weight(p,n){const g=read(p);return g?Math.floor(n*(1+C.movement(g).weight/100)):n;}
   function statFinal(p){const g=read(p);if(!g)return;p.mhp=Math.floor(p.mhp*(1+C.value(g,'hp')/100));p.mmp=Math.floor(p.mmp*(1+C.value(g,'mp')/100));if(W.LineageTalents)W.LineageTalents.passive(p);}
@@ -105,7 +112,7 @@
     if(t.curHp<=0&&!t._dead){const ix=mapState.mobs.indexOf(t);if(ix>=0)killMob(ix);}return amount;
   }
   function event(name,c){if(W.LineageTalents)W.LineageTalents.event(name,c);}
-  W.LineageGrowth={read,pct,sync,gainXP,gainOfflineXP,transaction,transactionAsync,blood,spendBlood,commitTalent,commitParagon,respec,statBase,statFinal,weight,finalDefense,trueBase,trueHit,event,absolute,secondaryHit,backupKey};
+  W.LineageGrowth={read,pct,sync,gainXP,gainOfflineXP,transaction,transactionAsync,blood,spendBlood,commitTalent,commitParagon,respec,WASH,statBase,statFinal,weight,finalDefense,trueBase,trueHit,event,absolute,secondaryHit,backupKey};
   function wrap(name,fn){const old=W[name];if(typeof old==='function')W[name]=function(){return fn.call(this,old,arguments);};}
   for(const name of ['playerAttack','castSkill'])wrap(name,function(old,args){const parent=action;action=parent||{actor:P(),used:false};if(name==='playerAttack'&&W.LineageTalents)W.LineageTalents.beforeAttack(P());try{return old.apply(this,args);}finally{action=parent;}});
   wrap('loadGame',function(old,args){const r=old.apply(this,args);sync();return r;});
