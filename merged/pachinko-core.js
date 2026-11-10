@@ -47,10 +47,12 @@
   const s=copy(before);if(s.v!==2||!MACHINES[s.machine])throw Error('機台存檔版本不符');
   power=Math.max(0,Math.min(100,Number(power)||0));const frames=[];
   const steps=continuous?60:96;
-  for(let i=0;i<steps;i++){if(shoot&&i%12===0&&i<60)launch(s,power);tick(s,50);if(trace&&i%2===0)frames.push(copy(s));}
+  const gap=continuous===2?4:12;   // 玩家 11-11：盤面球太少 → 新的一批每 0.2 秒發一顆（舊紀錄照原本 0.6 秒重播）
+  for(let i=0;i<steps;i++){if(shoot&&i%gap===0&&i<60)launch(s,power);tick(s,50);if(trace&&i%2===0)frames.push(copy(s));}
   return{state:s,frames,duration:steps*50};
  }
  function streamBatch(before,power,shoot=true,trace=false){return batch(before,power,shoot,trace,true);}
+ function fastBatch(before,power,shoot=true,trace=false){return batch(before,power,shoot,trace,2);}
  function position(b,clock){const t=Math.max(0,Math.min(1,(clock-b.start)/(b.end-b.start))),side=b.right?345:55;
   if(t<.35){const u=t/.35;return{x:375+(side-375)*u,y:485-435*Math.sin(u*Math.PI/2)};}
   const u=(t-.35)/.65,edge=b.right?335:65,endY={start:450,electric:370,attacker:452,side:438,out:510}[b.target]||510,y=50+(endY-50)*u;
@@ -58,5 +60,5 @@
   return{x:spread+Math.sin(u*35+b.wiggle)*9*Math.sin(Math.PI*u),y};
  }
  function busy(s){return !!(s.spin||s.queue.length||s.flight.length||s.bonus);}
- return{MACHINES,PINS,create,add,batch,streamBatch,position,busy,copy};
+ return{MACHINES,PINS,create,add,batch,streamBatch,fastBatch,position,busy,copy};
 });

@@ -49,7 +49,7 @@
     else if(action==='batch'){
       if(r.g.batch)throw Error('上一批演出尚未完成');
       const before=C.copy(r.g.s),power=Math.max(0,Math.min(100,Number(extra?.power)||0)),shoot=!!extra?.shoot;
-      r.g.s=W.LineagePachinkoCore.streamBatch(before,power,shoot).state;r.g.batch={before,power,shoot,flow:1};
+      r.g.s=W.LineagePachinkoCore.fastBatch(before,power,shoot).state;r.g.batch={before,power,shoot,flow:2};
     }else if(action==='ack-batch'){if(!r.g.batch)throw Error('這批已完成');r.g.batch=null;}
     else if(action==='lend'){if(r.g.batch)throw Error('請先停止發射');if(r.stake!==STAKES.pin[r.cur]?.[0])throw Error('這局沿用舊球價，請先結束兌回持球，再以新球價入座');debit=STAKES.pin[r.cur][0];if(!H.curReady(r.cur)||H.balance(r.cur)<debit)throw Error('借球餘額不足');W.LineagePachinkoCore.add(r.g.s,100);r.reserve+=debit;}
     else if(action==='finish'){if(r.g.batch)throw Error('請等這批球完成');if((W.LineagePachinkoCore.busy(r.g.s)||r.g.s.mode!=='normal')&&!extra?.forfeit)throw Error('尚有抽選或連莊機會，請確認結束');r.g.phase='done';}

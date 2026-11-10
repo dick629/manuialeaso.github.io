@@ -54,7 +54,7 @@
   draw(canvas,b?b.before:s,(b?b.before:s).clock);
   if(!valid()||!active)return;
   if(!b&&running&&!s.balls&&!C.busy(s)){running=false;document.getElementById('pachi-state').textContent='持球已用完，已停止發射。可借球繼續或結束離席。';const fire=document.querySelector('[data-pachi="fire"]');if(fire){fire.textContent='持球已用完';fire.disabled=true;}const lend=document.querySelector('[data-pachi="lend"]');if(lend)lend.disabled=r.stake!==R.STAKES.pin[r.cur][0];}
-  if(b){const replay=(b.flow===1?C.streamBatch:C.batch)(b.before,b.power,b.shoot,true),start=performance.now(),epoch=token,id=r.id;let last=0;
+  if(b){const replay=(b.flow===2?C.fastBatch:b.flow===1?C.streamBatch:C.batch)(b.before,b.power,b.shoot,true),start=performance.now(),epoch=token,id=r.id;let last=0;
     const animate=now=>{if(!valid()||epoch!==token)return;const elapsed=Math.max(0,now-start),view=replay.frames[Math.min(replay.frames.length-1,Math.floor(elapsed/100))];
       if(now-last>=30){draw(canvas,view,view.clock+elapsed%100);last=now;for(const [key,value] of [['balls',view.balls],['hits',view.hits],['spins',view.rotations]])document.getElementById('pachi-'+key).textContent=fmt(value);document.getElementById('pachi-state').textContent=view.last;}
       if(elapsed<replay.duration)frame=requestAnimationFrame(animate);else{frame=0;try{if(round()?.id!==id)return;invoke('ack-batch');if(wantExit){ctx.render();clearTimeout(timer);exit();}else ctx.render();}catch(e){fail(e);}}

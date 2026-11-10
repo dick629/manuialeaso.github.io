@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-e15da8284e90",
+  "build": "merge-0.4-3550307ea061",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -1554,7 +1554,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "48ab2888aeab346a610fb7f87c9a38f075710da037057909e33b0e4c4fd1bb7c",
+      "sha256": "96f382bfac1cf1500602448c81e037f13379c5484d9f8c506c9f24a955ec8e98",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1748,8 +1748,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/arcade-runtime.js?v=94aebfd23e0b",
-      "sha256": "94aebfd23e0b743b23f5979b07187dbb50143b95bd75332bd3dac63b84dee3d1",
+      "url": "merged/arcade-runtime.js?v=cea2c0ceda2e",
+      "sha256": "cea2c0ceda2e6e1c1b412306f445212fa6b008e1a2ee5b12fb624e0373138728",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1953,13 +1953,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/pachinko-core.js?v=c8b2d13cc55b",
-      "sha256": "c8b2d13cc55bb7a8f79d8de4fc9a1471a2eb3eaeeb9b68ac688b62bb87c195d3",
+      "url": "merged/pachinko-core.js?v=b8f5b0f4bcce",
+      "sha256": "b8f5b0f4bcceaf43a7ab8036d18a4d24b8d65254ca74ffcf70e400fa79d7d7de",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/pachinko-ui.js?v=150a14ad8c1a",
-      "sha256": "150a14ad8c1a7c1f9085829037b709da6b48315d01e02ea7e6820e5eacaa4580",
+      "url": "merged/pachinko-ui.js?v=7e6f94eba522",
+      "sha256": "7e6f94eba52202114d6dc1785cc03070b2c44d33b68b8262cc0f1f2e7d74639f",
       "type": "text/javascript; charset=utf-8"
     },
     {
