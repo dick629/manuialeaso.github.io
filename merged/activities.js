@@ -37,7 +37,7 @@
   function rows(){
     const base=Object.keys(bosses).map(id=>({id,name:names[id],points:true,kind:'dream',fee:'原生入場條件'})).concat((W.__afkRiftDg?W.__afkRiftDg.D:[]).filter(d=>!d.endless&&!d.pick&&!d.pickChain).map(d=>({id:'rd:'+d.id,name:d.n,points:false,kind:d.noRift?'dream':'rift',fee:(d.fee.blood||0)+' 血龍鑽'+(d.fee.items||[]).map(x=>'、'+(DB.items[x[0]]||{}).n+' ×'+x[1]).join('')})));
     const g=W.__afkGuardRing,z=W.__afkZodiac;
-    if(g)for(const kind of ['dream','rift'])for(const key of g.KEYS)base.push({id:'gr:'+kind+':'+key,name:'守護者之戒・'+g.DGK[key].map,points:false,kind,fee:'完成騎士劇情；每日 '+g.DG.daily[kind]+' 次，每輪挑戰一次'});
+    if(g)for(const kind of ['dream','rift'])for(const key of g.KEYS)base.push({id:'gr:'+kind+':'+key,name:'守護者之戒・'+g.DGK[key].map,points:false,kind,fee:'完成騎士劇情；每日 '+g.DG.daily[kind]+' 次，付一次費用打完今天剩下的次數'});
     if(z)for(const h of z.H)base.push({id:'zd:'+h.k,name:'黃道十二宮・'+h.n,points:false,kind:'dream',fee:'二轉後；每日開放三宮，選一宮挑戰一次'});
     return base;
   }
@@ -79,7 +79,10 @@
   function start(ids,choice){
     if(round()&&!['done','cancelled'].includes(round().status))throw Error('請繼續或結束已付款的這輪遠征');
     const allowed=new Set(rows().map(x=>x.id));ids=[...new Set(ids)].filter(id=>allowed.has(id));if(!ids.length)throw Error('請選擇副本');
-    const payment=quote(ids);ids.sort((a,b)=>Number(!bosses[a])-Number(!bosses[b]));const err=why(ids[0]);if(err)throw Error(err);
+    const payment=quote(ids);ids.sort((a,b)=>Number(!bosses[a])-Number(!bosses[b]));
+    // 玩家 11-11：守護者之戒付一次錢，打滿當天的次數（用完的會自動跳過）
+    ids=ids.flatMap(id=>{const m=/^gr:(dream|rift):/.exec(id),g=W.__afkGuardRing;return m&&g?Array(Math.max(1,N(g.DG.daily[m[1]]))).fill(id):[id];});
+    const err=why(ids[0]);if(err)throw Error(err);
     if(!/^town_/.test(mapState.current||''))throw Error('請先回村再開始遠征');
     if((payment.currency==='blood'?G.blood():pandoraGetSharedDiamonds())<payment.amount)throw Error('餘額不足，需要 '+payment.label+'（副本門票另計）');
     return activityTransaction('啟動自動遠征',()=>{
@@ -113,7 +116,9 @@
     if(r.index>=r.queue.length){r.status='done';r.reason='本輪完成';saveGame();return;}
     r.status='between';if(saveGame()!==true){r.status='paused';r.reason='通關紀錄尚未保存，已停止自動切換；請先保存再繼續';state.running=false;return;}scheduleNext(r.id);
   }
-  function scheduleNext(id){setTimeout(()=>{const r=round();if(!r||r.id!==id||r.status!=='between')return;try{state.antharas=0;state._afkDragon=null;activityTransaction('進入遠征下一項',()=>enter(r.queue[r.index]));}catch(e){const current=round();current.status='paused';current.reason=e.message;saveGame();}},1800);}
+  // 守護者之戒今天的次數已經用完的那幾項：直接跳過
+  function skipUsed(r){while(r.index<r.queue.length){const q=r.queue[r.index],n=special(q);if(!n||!/^gr:/.test(q))break;let w='';try{w=n.check();}catch(e){w='';}if(!/用完/.test(w))break;(r.skipped=r.skipped||[]).push(r.index);r.completed.push(q);r.index++;}if(r.index>=r.queue.length){r.status='done';r.reason='本輪完成';saveGame();return true;}return false;}
+  function scheduleNext(id){setTimeout(()=>{const r=round();if(!r||r.id!==id||r.status!=='between')return;if(skipUsed(r))return;try{state.antharas=0;state._afkDragon=null;activityTransaction('進入遠征下一項',()=>enter(r.queue[r.index]));}catch(e){const current=round();current.status='paused';current.reason=e.message;saveGame();}},1800);}
   function checkRound(){const r=round();if(!r)return;if(r.status==='running'){
     const native=special(r.queue[r.index]);if(native&&native.clears()>r.clearBefore){finishJob();return;}
     if(player.dead||player.hp<=0){pause('隊伍戰敗，復活後重新進場仍受每日次數限制',!!native);return;}

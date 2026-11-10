@@ -17,7 +17,9 @@
   if (T && !T.enabled('batchopen')) return;
   if (typeof W.openModal !== 'function' || typeof W.useItem !== 'function') { console.warn('[AFK-batchopen] 找不到物品視窗，略過'); return; }
 
-  var EFFS = { doll_bag: 1, doll_box_high: 1, osiris_box: 1, afk_runebox: 1, afk_matgift: 1 };   // afk_matgift：嘯龍材料禮包（afk-ttmi-items）   // afk_runebox：失去光芒的符文石（afk-runedata）
+  var EFFS = { doll_bag: 1, doll_box_high: 1, osiris_box: 1, afk_runebox: 1, afk_matgift: 1,
+    // 玩家 11-11：大部分道具都能一次用完（經驗兌換、萬能藥、補給包、戰利品袋、霸主寶箱、怪物卡、變身卡、星辰藥水、傲慢之塔傳送符解封）
+    expsoul: 1, panacea: 1, afk_pack: 1, afk_we_bag: 1, afk_rb_box: 1, card: 1, afk_pcard: 1, afk_star_elixir: 1, pride_unseal: 1 };   // afk_matgift：嘯龍材料禮包（afk-ttmi-items）   // afk_runebox：失去光芒的符文石（afk-runedata）
   var eligible = function (d) { return !!d && !d.noUse && ((d.ttmiAction === 'box' && !d.ttmiBoxCooldown) || d.ttmiAction === 'exchange' || !!EFFS[d.eff]); };
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
@@ -102,10 +104,10 @@
       if (!isEq && eligible(d) && !item.lock && (item.cnt || 1) > 1) {
         var box = document.getElementById('modal-actions'), use = box && box.querySelector('button[onclick^="useItem("]');
         if (use && !box.querySelector('[data-afk-bo]')) {
-          var n = item.cnt || 1, cls = 'btn border-sky-700 bg-sky-900 hover:bg-sky-800 text-sky-100 py-2 text-base font-bold';
+          var n = item.cnt || 1, vb = (d.ttmiAction === 'box' || /bag|box|gift|pack/.test(d.eff || '')) ? '開' : '使用', cls = 'btn border-sky-700 bg-sky-900 hover:bg-sky-800 text-sky-100 py-2 text-base font-bold';
           use.insertAdjacentHTML('afterend',
-            '<button type="button" data-afk-bo="10" class="' + cls + '" onclick="afkBatchOpen(\'' + item.uid + '\',10)">開 ' + Math.min(10, n) + ' 個</button>'
-            + '<button type="button" data-afk-bo="all" class="' + cls + '" onclick="afkBatchOpen(\'' + item.uid + '\',' + n + ')">全部開啟（' + n.toLocaleString() + '）</button>');
+            '<button type="button" data-afk-bo="10" class="' + cls + '" onclick="afkBatchOpen(\'' + item.uid + '\',10)">' + vb + ' ' + Math.min(10, n) + ' 個</button>'
+            + '<button type="button" data-afk-bo="all" class="' + cls + '" onclick="afkBatchOpen(\'' + item.uid + '\',' + n + ')">' + (vb === '開' ? '全部開啟' : '全部使用') + '（' + n.toLocaleString() + '）</button>');
         }
       }
     } catch (e) {}

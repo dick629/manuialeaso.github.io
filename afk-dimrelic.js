@@ -675,35 +675,45 @@
       [['w', '武器'], ['a', '防具'], ['c', '飾品']].forEach(function (c) { h += '<div class="ax-h">大絕招・' + c[1] + '（+5 隨機一招）</div>' + ULT[c[0]].map(function (u) { return K.rowHtml({ key: u.k, name: esc(u.n), color: '#f0abfc', desc: esc(u.d), btns: [] }, 'data-dr'); }).join(''); });
     } else if (VIEW.tab === 'lib') {
       var w = wpnOf(p), mt = libMats();
-      h += '<ul class="ax-note" style="margin:0 0 8px;padding-left:18px"><li>解放材料：14 種武器遺物各 1 件（+0、未昇華、背包裡沒上鎖的）；不用龍鑽、金幣，100% 成功；保留強化值、星數、雅典娜的祝福。</li><li>次元裂縫裡：次元支配武器效果完整、對裂縫敵人傷害 +30%，並得到雅典娜的祝福（抵銷裂縫傷害懲罰 15%）；沒解放的至高支配・封武器效果打折（造成的傷害 −10%）。</li><li>縫天★：異化星塵 ' + LIB.en.join('／') + '，成功率 ' + LIB.rate.join('／') + '%（失敗不降級、不扣材料）；每一顆星打倒怪物恢復 5 點五屬性抗性，★5 侵蝕最低保留 +100。</li></ul>';
-      if (!w) h += '<div class="ax-note">沒有裝備武器。</div>';
-      else if (!isSup(w)) h += '<div class="ax-note">裝備中的「' + esc(DB.items[w.id].n) + '」不是至高支配・封。</div>';
-      else if (!w.dimLib) { h += '<div class="ax-note">' + WTYPES.map(function (t) { return (mt[t] ? '<span style="color:#86efac">✓</span>' : '<span class="no">✗</span>') + esc(t); }).join('　') + '</div>'; h += K.rowHtml({ key: 'lib', name: esc(DB.items[w.id].n), color: '#fde047', desc: '至高支配・封', why: '', btns: [['lib:', '解放', WTYPES.every(function (t) { return mt[t]; })]] }, 'data-dr'); }
-      else { var ln = w.dimLibEn || 0; h += K.rowHtml({ key: 'lib', name: esc(DB.items[w.id].n) + '　次元支配。縫天' + ('★'.repeat(ln) || '（無星）'), color: '#67e8f9', desc: '', why: '', btns: ln < 5 ? [['len:', '縫天 ★' + (ln + 1) + '（星塵 ' + LIB.en[ln] + '・' + LIB.rate[ln] + '%）', cnt(DUST) >= LIB.en[ln]]] : [] }, 'data-dr'); }
+      h += '<ul class="ax-note dr-ul"><li><b>解放材料</b>：14 種武器遺物各 1 件（+0、未昇華、背包裡沒上鎖的）；不用龍鑽、金幣，100% 成功；保留強化值、星數、雅典娜的祝福。</li><li><b>次元裂縫裡</b>：次元支配武器效果完整、對裂縫敵人傷害 +30%，並得到雅典娜的祝福（抵銷裂縫傷害懲罰 15%）；沒解放的至高支配・封武器效果打折（造成的傷害 −10%）。</li><li><b>縫天★</b>：異化星塵 ' + LIB.en.join('／') + '，成功率 ' + LIB.rate.join('／') + '%（失敗不降級、不扣材料）；每一顆星打倒怪物恢復 5 點五屬性抗性，★5 侵蝕最低保留 +100。</li></ul>';
+      if (!w) h += K.rowHtml({ key: 'lib', name: '沒有裝備武器', color: '#94a3b8', desc: '先裝上「至高支配・封」武器再來。', off: true, btns: [] }, 'data-dr');
+      else if (!isSup(w)) h += K.rowHtml({ key: 'lib', ico: K.invIco(w, 'eq'), name: K.fullName(w), desc: '裝備中的這把不是「至高支配・封」，不能解放。', off: true, btns: [] }, 'data-dr');
+      else if (!w.dimLib) {
+        h += '<div class="ax-h">解放材料（14 種武器遺物）</div><div class="ax-socks" style="margin-bottom:10px">' + WTYPES.map(function (t) { return '<span class="ax-sock ' + (mt[t] ? 'filled' : '') + '">' + (mt[t] ? '✓ ' : '✗ ') + esc(t) + '</span>'; }).join('') + '</div>';
+        var nOk = WTYPES.filter(function (t) { return mt[t]; }).length;
+        h += K.rowHtml({ key: 'lib', ico: K.invIco(w, 'eq'), name: K.fullName(w), color: '#fde047', desc: '至高支配・封 → 次元支配', req: K.reqTxt(nOk, WTYPES.length, '種武器遺物'), btns: [['lib:', '解放', nOk === WTYPES.length]] }, 'data-dr');
+      } else {
+        var ln = w.dimLibEn || 0;
+        h += K.rowHtml({ key: 'lib', ico: K.invIco(w, 'eq'), name: K.fullName(w), color: '#67e8f9', desc: '次元支配　縫天 ' + ('★'.repeat(ln) || '（無星）') + ('☆'.repeat(5 - ln)), req: ln < 5 ? K.reqTxt(cnt(DUST), LIB.en[ln], '異化星塵') : '', note: ln < 5 ? '下一顆星成功率 ' + LIB.rate[ln] + '%' : '已經是 ★5', btns: ln < 5 ? [['len:', '縫天 ★' + (ln + 1), cnt(DUST) >= LIB.en[ln]]] : [] }, 'data-dr');
+      }
     } else if (VIEW.tab === 'ref') {
       var c1 = REF.remain, c2 = REF.soul, se = soulItem();
-      h += '<div class="ax-h" style="margin-top:4px">之魂憶起</div>' + K.rowHtml({ key: 'soul', name: se ? esc(DB.items[se.id].n) + (se.soulMem ? '　<span style="color:#86efac">已憶起</span>' : '') : '（要裝著粹煉過的之魂）', color: '#f87171', desc: '時之沙 ' + c2.sand + '、水之記憶 ' + c2.water + '。次元裂縫裡：裁決之光的門檻 −5%（HP 低於 45% 才會被打到剩 1）、侵蝕扣血每秒少 0.5%；跟太陽神凱布利一起有時，取回力量 +5%。', why: '', btns: se && !se.soulMem ? [['soul:', '憶起', cnt(SAND) >= c2.sand && cnt(WATER) >= c2.water]] : [] }, 'data-dr');
-      h += '<div class="ax-h" style="margin-top:8px">席琳遺骸的裂縫淬鍊</div><div class="ax-note">夢域淬鍊過的遺骸才能做。每件：次元結晶 ' + c1.crystal + '。同一組某一段的件數都裂縫淬鍊過，那一段的夢域效果 ×1.2。</div>';
-      var rl = remainsList(); if (!rl.length) h += '<div class="ax-note">沒有夢域淬鍊過的遺骸。</div>';
-      rl.forEach(function (x) { h += K.rowHtml({ key: x.it.uid, name: esc(DB.items[x.it.id].n) + (x.eq ? '（裝備中）' : '') + (x.it.riftRef ? '　<span style="color:#86efac">已裂縫淬鍊</span>' : ''), color: '#f87171', desc: '', why: '', btns: x.it.riftRef ? [] : [['rr:' + x.it.uid, '裂縫淬鍊', cnt(WATER) >= c1.water && cnt(SAND) >= c1.sand && cnt(CRYSTAL) >= c1.crystal]] }, 'data-dr'); });
+      h += '<div class="ax-h" style="margin-top:4px">之魂憶起</div>' + K.rowHtml({ key: 'soul', ico: se ? K.invIco(se, 'eq') : '', name: se ? esc(DB.items[se.id].n) + (se.soulMem ? '　<span style="color:#86efac;font-size:13px">已憶起</span>' : '') : '要裝著粹煉過的之魂', color: '#f87171', desc: '次元裂縫裡：裁決之光的門檻 −5%（HP 低於 45% 才會被打到剩 1）、侵蝕扣血每秒少 0.5%；跟太陽神凱布利一起有時，取回力量 +5%。', req: se && !se.soulMem ? K.reqTxt(cnt(SAND), c2.sand, '時之沙') + '　' + K.reqTxt(cnt(WATER), c2.water, '水之記憶') : '', off: !se, btns: se && !se.soulMem ? [['soul:', '憶起', cnt(SAND) >= c2.sand && cnt(WATER) >= c2.water]] : [] }, 'data-dr');
+      h += '<div class="ax-h">席琳遺骸的裂縫淬鍊</div><div class="ax-note" style="margin-bottom:8px">夢域淬鍊過的遺骸才能做。同一組某一段的件數都裂縫淬鍊過，那一段的夢域效果 ×1.2。</div>';
+      var rl = remainsList(); if (!rl.length) h += K.rowHtml({ key: 'nr', name: '沒有夢域淬鍊過的遺骸', color: '#94a3b8', off: true, btns: [] }, 'data-dr');
+      var refReq = K.reqTxt(cnt(CRYSTAL), c1.crystal, '次元結晶') + (c1.water ? '　' + K.reqTxt(cnt(WATER), c1.water, '水之記憶') : '') + (c1.sand ? '　' + K.reqTxt(cnt(SAND), c1.sand, '時之沙') : '');
+      rl.forEach(function (x) { h += K.rowHtml({ key: x.it.uid, ico: K.invIco(x.it, x.eq ? 'eq' : 'inv'), name: K.fullName(x.it), color: '#f87171', desc: (x.eq ? '裝備中' : '背包') + (x.it.riftRef ? '・<span style="color:#86efac">已裂縫淬鍊</span>' : ''), req: x.it.riftRef ? '' : refReq, btns: x.it.riftRef ? [] : [['rr:' + x.it.uid, '裂縫淬鍊', cnt(WATER) >= c1.water && cnt(SAND) >= c1.sand && cnt(CRYSTAL) >= c1.crystal]] }, 'data-dr'); });
     } else if (VIEW.tab === 'phantom') {
       var sg = sigilOf(p);
-      h += '<div class="ax-note">在次元裂縫裡，把裝備中的聖紋升成幻聖紋：原本的特效保留，再多一條新效果。材料：分裂的蔑視塵埃 ' + PHANTOM.split + '＋血龍鑽 ' + PHANTOM.blood + '（持有 ' + cnt('afk_split_dust') + '／' + cnt(BLOOD) + '）。</div>';
-      h += K.rowHtml({ key: 'ph', name: sg ? '裝備中：聖紋「' + sg.L + '」' + (sg.it.phantom ? '　<span style="color:#86efac">幻聖紋</span>' : '') : '沒有裝備聖紋', color: '#c4b5fd', desc: sg ? '幻聖紋「' + PH[sg.L][0] + '」：' + esc(PH[sg.L][1]) : '', why: '', btns: sg && !sg.it.phantom ? [['ph:', '升成幻聖紋', cnt('afk_split_dust') >= PHANTOM.split && cnt(BLOOD) >= PHANTOM.blood]] : [] }, 'data-dr');
-      h += '<div class="ax-note">' + Object.keys(PH).map(function (L) { return '<b>' + L + '</b> ' + PH[L][0] + '：' + esc(PH[L][1]); }).join('<br>') + '</div>';
+      h += K.rowHtml({ key: 'ph', ico: sg ? K.invIco(sg.it, 'eq') : '', name: sg ? '聖紋「' + sg.L + '」' + (sg.it.phantom ? '　<span style="color:#86efac;font-size:13px">已是幻聖紋</span>' : '') : '沒有裝備聖紋', color: '#c4b5fd', desc: sg ? '升成幻聖紋「' + PH[sg.L][0] + '」：' + esc(PH[sg.L][1]) : '先在裝備視窗第二頁裝上聖紋。', note: '原本的特效保留，再多一條新效果；只在次元裂縫裡生效。', req: sg && !sg.it.phantom ? K.reqTxt(cnt('afk_split_dust'), PHANTOM.split, '分裂的蔑視塵埃') + '　' + K.reqTxt(cnt(BLOOD), PHANTOM.blood, '血龍鑽') : '', off: !sg, btns: sg && !sg.it.phantom ? [['ph:', '升成幻聖紋', cnt('afk_split_dust') >= PHANTOM.split && cnt(BLOOD) >= PHANTOM.blood]] : [] }, 'data-dr');
+      h += '<div class="ax-h">各聖紋的幻聖紋效果</div><div class="dr-grid">' + Object.keys(PH).map(function (L) { return '<div class="dr-cell' + (sg && sg.L === L ? ' on' : '') + '"><b>' + L + '</b><span><i>' + esc(PH[L][0]) + '</i>' + esc(PH[L][1]) + '</span></div>'; }).join('') + '</div>';
     } else if (VIEW.tab === 'horn') {
-      var hr = drec(), hl = (hr && hr.hornLv) || 0;
-      h += '<div class="ax-note">阿納金的號角（裝在裝備視窗第二頁「聖紋下面、之鱗上面」那一格才生效）：次元裂縫裡聖十字之盾（聖十字禁衛軍）擋侵蝕 ' + HORN.block.map(function (x, i) { return i ? i + ' 級 ' + x + '%' : '平常 ' + x + '%'; }).join('、') + '。每級：昇華支配強化石 ×' + HORN.stone + '（三種都算）＋血龍鑽 ' + HORN.blood + '。</div>';
-      h += K.rowHtml({ key: 'horn', name: '阿納金的號角　' + hl + '／' + HORN.max + ' 級', color: '#fde047', desc: (p.eq && p.eq.horn) ? '裝備中' : cnt('afk_anakin_horn') ? '在背包裡（要裝上才生效）' : '還沒有（墮光天使 阿納金第 5 形態第一次打倒時給）', why: '', btns: hl < HORN.max ? [['horn:', '強化', (cnt('afk_anakin_horn') > 0 || !!(p.eq && p.eq.horn)) && stoneCnt() >= HORN.stone && cnt(BLOOD) >= HORN.blood]] : [] }, 'data-dr');
-      h += '<div class="ax-h" style="margin-top:8px">自選至高昇華支配強化石（持有 ' + cnt('afk_rd_pick') + '）</div>';
-      h += K.rowHtml({ key: 'pick', name: '換成一顆昇華支配強化石', color: '#67e8f9', desc: '', why: '', btns: STONES.map(function (id) { return ['pk:' + id, (DB.items[id] || {}).n || id, cnt('afk_rd_pick') > 0]; }) }, 'data-dr');
+      var hr = drec(), hl = (hr && hr.hornLv) || 0, hornHave = cnt('afk_anakin_horn') > 0 || !!(p.eq && p.eq.horn);
+      h += '<ul class="ax-note dr-ul"><li>裝在裝備視窗第二頁「聖紋下面、之鱗上面」那一格才生效。</li><li>次元裂縫裡，聖十字之盾（聖十字禁衛軍）擋侵蝕：' + HORN.block.map(function (x, i) { return i ? i + ' 級 ' + x + '%' : '平常 ' + x + '%'; }).join('、') + '。</li><li>還沒有的話：墮光天使 阿納金第 5 形態第一次打倒時給。</li></ul>';
+      h += K.rowHtml({ key: 'horn', ico: K.itemIco('afk_anakin_horn'), name: '阿納金的號角　' + hl + '／' + HORN.max + ' 級', color: '#fde047', desc: (p.eq && p.eq.horn) ? '裝備中' : cnt('afk_anakin_horn') ? '在背包裡（要裝上才生效）' : '還沒有', req: hl < HORN.max ? K.reqTxt(stoneCnt(), HORN.stone, '昇華支配強化石（三種都算）') + '　' + K.reqTxt(cnt(BLOOD), HORN.blood, '血龍鑽') : '', off: !hornHave, btns: hl < HORN.max ? [['horn:', '強化', hornHave && stoneCnt() >= HORN.stone && cnt(BLOOD) >= HORN.blood]] : [] }, 'data-dr');
+      h += '<div class="ax-h">自選至高昇華支配強化石</div>';
+      h += K.rowHtml({ key: 'pick', ico: K.itemIco('afk_rd_pick'), name: '換成一顆昇華支配強化石', color: '#67e8f9', desc: '持有 ' + cnt('afk_rd_pick') + ' 顆，選要換成哪一種。', btns: STONES.map(function (id) { return ['pk:' + id, ((DB.items[id] || {}).n || id).replace(/^.*強化石/, '強化石'), cnt('afk_rd_pick') > 0, (DB.items[id] || {}).n]; }) }, 'data-dr');
     } else if (VIEW.tab === 'dragon') {
-      h += '<div class="ax-note">四龍副本・裂縫的龍會掉「' + esc(DB.items.dimr_dragon_0.n) + '」（10%）與四龍的時空碎片。只在四龍副本裡有效果。</div>';
-      DRG.forEach(function (x, i) { h += '<div class="ax-note"><b style="color:#f0abfc">' + esc(DB.items['dimr_dragon_' + i].n) + '</b>：' + esc(DRG_FX[i]) + (i ? '　（進化：倒影之鏡 ×' + DRG_EVO[i].mirror + '、時空碎片 ×' + DRG_EVO[i].frag + '）' : '') + '</div>'; });
-      inv().concat(equipped(p)).filter(function (x) { return x && DB.items[x.id] && DB.items[x.id].dimDragon != null; }).forEach(function (it) {
+      h += '<div class="ax-note" style="margin-bottom:8px">四龍副本・裂縫的龍會掉「' + esc(DB.items.dimr_dragon_0.n) + '」（10%）與四龍的時空碎片。只在四龍副本裡有效果。</div>';
+      var mineD = inv().concat(equipped(p)).filter(function (x) { return x && DB.items[x.id] && DB.items[x.id].dimDragon != null; });
+      h += '<div class="ax-h">我的四龍盟約</div>';
+      if (!mineD.length) h += K.rowHtml({ key: 'nd', name: '還沒有', color: '#94a3b8', desc: '去四龍副本・裂縫打龍。', off: true, btns: [] }, 'data-dr');
+      mineD.forEach(function (it) {
         var d = DB.items[it.id], nx = d.dimDragon < 3 ? DRG_EVO[d.dimDragon + 1] : null;
-        h += K.rowHtml({ key: it.uid, ico: K.invIco(it, equipped(p).indexOf(it) >= 0 ? 'eq' : 'inv'), name: esc(d.n), color: '#f0abfc', desc: '', why: '', btns: nx ? [['dv:' + it.uid, '進化（鏡 ' + nx.mirror + '・碎片 ' + nx.frag + '）', cnt(MIRROR) >= nx.mirror && cnt(FRAG) >= nx.frag]] : [] }, 'data-dr');
+        h += K.rowHtml({ key: it.uid, ico: K.invIco(it, equipped(p).indexOf(it) >= 0 ? 'eq' : 'inv'), name: esc(d.n), color: '#f0abfc', desc: esc(DRG_FX[d.dimDragon]), req: nx ? K.reqTxt(cnt(MIRROR), nx.mirror, '倒影之鏡') + '　' + K.reqTxt(cnt(FRAG), nx.frag, '時空碎片') : '', note: nx ? '進化成「' + esc(DB.items['dimr_dragon_' + (d.dimDragon + 1)].n) + '」' : '已經是最高階', btns: nx ? [['dv:' + it.uid, '進化', cnt(MIRROR) >= nx.mirror && cnt(FRAG) >= nx.frag]] : [] }, 'data-dr');
       });
+      h += '<div class="ax-h">四階一覽</div>';
+      DRG.forEach(function (x, i) { h += K.rowHtml({ key: 'dg' + i, ico: K.itemIco('dimr_dragon_' + i, true), name: esc(DB.items['dimr_dragon_' + i].n), color: '#f0abfc', desc: esc(DRG_FX[i]), note: i ? '進化材料：倒影之鏡 ×' + DRG_EVO[i].mirror + '、四龍的時空碎片 ×' + DRG_EVO[i].frag : '四龍副本・裂縫的龍 10% 掉落', btns: [] }, 'data-dr'); });
     } else {
       var sy = COST.synth;
       h += K.rowHtml({ key: 'syn', ico: K.itemIco(DUST), name: '異化星塵', color: '#67e8f9', desc: '破碎星光塵埃 ' + sy.star + '＋血龍鑽 ' + sy.blood + ' → 異化星塵 1', req: reqBtn(cnt(STARDUST), sy.star, '破碎星光塵埃') + '　' + reqBtn(cnt(BLOOD), sy.blood, '血龍鑽'), btns: [['sy:1', '合成 1', cnt(STARDUST) >= sy.star && cnt(BLOOD) >= sy.blood], ['sy:10', '合成 10', cnt(STARDUST) >= sy.star * 10 && cnt(BLOOD) >= sy.blood * 10]] }, 'data-dr');
@@ -712,7 +722,7 @@
   };
   var render = function (div) {
     if (!div) return; K.css();
-    if (!document.getElementById('afk-dimr-css')) { var st = document.createElement('style'); st.id = 'afk-dimr-css'; st.textContent = '#afk-dimr .ax-filter button{cursor:pointer}#afk-dimr .ax-filter button.on{background:#854d0e!important;border-color:#f59e0b!important;color:#fef3c7!important;font-weight:700}#afk-dimr .ax-filter button:not(.on):hover{background:#334155}'; document.head.appendChild(st); }
+    if (!document.getElementById('afk-dimr-css')) { var st = document.createElement('style'); st.id = 'afk-dimr-css'; st.textContent = '#afk-dimr .ax-filter button{cursor:pointer}#afk-dimr .ax-filter button.on{background:#854d0e!important;border-color:#f59e0b!important;color:#fef3c7!important;font-weight:700}#afk-dimr .ax-filter button:not(.on):hover{background:#334155}#afk-dimr .dr-ul{margin:0 0 10px;padding-left:18px}#afk-dimr .dr-ul li{margin:3px 0}#afk-dimr .dr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}#afk-dimr .dr-cell{display:flex;gap:8px;align-items:flex-start;background:#1e293b;border:1px solid #334155;border-radius:6px;padding:6px 8px;font-size:12.5px;color:#cbd5e1}#afk-dimr .dr-cell.on{border-color:#a78bfa;background:#2e1065}#afk-dimr .dr-cell b{flex:0 0 1.4em;height:1.4em;border-radius:4px;background:#4c1d95;color:#ede9fe;text-align:center;line-height:1.4em}#afk-dimr .dr-cell i{font-style:normal;color:#c4b5fd;font-weight:700;margin-right:4px}'; document.head.appendChild(st); }
     div.innerHTML = '';
     var box = document.createElement('div'); box.className = 'afk-ax'; box.id = 'afk-dimr'; div.appendChild(box); paint(div);
     if (!div.__afkDimrBound) { div.__afkDimrBound = true; div.addEventListener('click', async function (ev) {

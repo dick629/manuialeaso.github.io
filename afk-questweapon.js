@@ -2,7 +2,7 @@
  * afk-questweapon.js — 新手任務與任務武器（玩家 2026-11-02 01:02；外掛開關 questweapon，預設開；經典模式不開放）
  *
  *   說話之島的「新手指導員 莉娜」：
- *   一、新手任務（Lv15 以下才能接、Lv10 以內就做得完）：接下後打倒 30 隻怪物（哪裡的都可以）→ 交回給
+ *   一、新手任務（Lv50 以下才能接；身上沒有見習武器時可以再接）：接下後打倒 30 隻怪物（哪裡的都可以）→ 交回給
  *       「見習的○○」（照職業，可以用到 Lv40）＋7，不能強化，每個角色只能拿一把。
  *   二、任務武器（每個角色只能拿一把）：「試煉的○○」（照職業，可以用到 Lv60）＋7，不能強化。
  *       完成 30 級職業試煉後在莉娜這裡領，或用 5 枚狩獵徽章（冒險者公會）在這裡換。
@@ -12,14 +12,14 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'questweapon', name: '新手任務與任務武器（說話之島 莉娜）', group: '遊戲內容', seal: true,
-    desc: '說話之島的新手指導員：Lv15 以下接新手任務，交回 Lv40 以下用的 +7 職業武器；完成 30 級職業試煉或用 5 枚狩獵徽章換 Lv60 以下用的 +7 職業武器；都不能強化、每個角色各一把' });
+    desc: '說話之島的新手指導員：Lv50 以下接新手任務，交回 Lv40 以下用的 +7 職業武器；完成 30 級職業試煉或用 5 枚狩獵徽章換 Lv60 以下用的 +7 職業武器；都不能強化、每個角色各一把' });
   if (T && !T.enabled('questweapon')) return;
   if (typeof DB === 'undefined' || !DB.items) return;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var esc = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
   var NPC_ID = 'npc_afk_novice', NPC_N = '新手指導員 莉娜', TOWN = 'town_talking';
-  var KILLS = 30, ACCEPT_MAX = 15, EN = 7, BADGE_COST = 5;
+  var KILLS = 30, ACCEPT_MAX = 50, EN = 7, BADGE_COST = 5;
   var CLS_N = { royal: '王族', knight: '騎士', mage: '法師', elf: '妖精', dark: '黑暗妖精', illusion: '幻術士', warrior: '戰士', dragon: '龍騎士' };
   // [來源武器, 名稱後綴, Lv40 加成, Lv60 加成]
   var BASE = {
@@ -54,8 +54,12 @@
     if (got) got.en = EN;
     return !!(it || got);
   };
+  // 玩家 11-11：Lv50 以下、身上（背包或裝備）沒有這把見習武器，就能再接一次
+  var has40 = function (p) { var id = idOf(40, p.cls), eq = p.eq || {}; return (p.inv || []).some(function (x) { return x && x.id === id; }) || Object.keys(eq).some(function (k) { return eq[k] && eq[k].id === id; }); };
+  var again = function (p, q) { return q.st === 2 && (p.lv || 1) <= ACCEPT_MAX && !has40(p); };
   var accept = function () {
     var p = P(), q = store(p); if (!p || p.classicMode) return false;
+    if (again(p, q)) q.st = 0;
     if (q.st) return false;
     if ((p.lv || 1) > ACCEPT_MAX) { sys('<span class="text-amber-300">' + NPC_N + '：這是給剛出發的冒險者的任務，Lv' + ACCEPT_MAX + ' 以下才能接。</span>'); return false; }
     q.st = 1; q.kills = 0; sys('<span class="text-amber-300 font-bold">' + NPC_N + '：</span>去外面打倒 ' + KILLS + ' 隻怪物，再回來找我。'); try { saveGame(); } catch (e) {} return true;
@@ -139,7 +143,8 @@
     if (p.classicMode) { div.innerHTML = '<div class="p-4 text-slate-300">' + NPC_N + '：經典模式不開放。</div>'; return; }
     var h = '<div class="p-4 text-slate-300 leading-relaxed" id="afk-novq">';
     var s1 = '獎勵：<b class="text-emerald-300">' + esc(w40 ? w40.n : '') + ' +' + EN + '</b>（Lv40 以下用、不能強化）。';
-    if (q.st === 2) s1 += '<div class="text-emerald-400 mt-1">✅ 已完成。</div>';
+    if (q.st === 2 && again(p, q)) s1 += '<div class="mt-1">你身上已經沒有見習武器了，Lv' + ACCEPT_MAX + ' 以下可以再接一次。</div><div class="mt-2">' + btn('accept', '再接一次新手任務', true) + '</div>';
+    else if (q.st === 2) s1 += '<div class="text-emerald-400 mt-1">✅ 已完成。</div>';
     else if (q.st === 1) s1 += '<div class="mt-1">打倒怪物：<b class="' + (q.kills >= KILLS ? 'text-emerald-300' : 'text-amber-200') + '">' + q.kills + '／' + KILLS + '</b></div><div class="mt-2">' + btn('done', '交回任務', q.kills >= KILLS) + '</div>';
     else s1 += '<div class="mt-1">打倒 ' + KILLS + ' 隻怪物（哪裡的都可以）。Lv' + ACCEPT_MAX + ' 以下才能接。</div><div class="mt-2">' + btn('accept', '接下新手任務', (p.lv || 1) <= ACCEPT_MAX) + '</div>';
     h += box('🌱 新手任務', s1);

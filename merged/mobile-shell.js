@@ -220,7 +220,7 @@
       if($('lm-'+kind+'-fill').style.width!==width)$('lm-'+kind+'-fill').style.width=width;
     }
     const source=$('status-panel')?.style.backgroundImage||'';
-    const portrait=source.match(/url\(["']?(assets\/character\/[^/\\"'()]+\.(?:webp|png))["']?\)/)?.[1]||'';
+    const portrait=source.match(/url\(["']?(assets\/character\/[^/\\"'()]+\.(?:webp|png))["']?\)/)?.[1]||source.match(/url\("?(data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+\/=]+)"?\)/)?.[1]||'';
     const image=$('lm-portrait');
     if((image.getAttribute('src')||'')!==portrait){
       image.parentElement.classList.remove('has-portrait');
