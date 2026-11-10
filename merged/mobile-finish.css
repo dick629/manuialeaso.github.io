@@ -771,3 +771,11 @@ body.m-unified #tab-stats :is(.ability-primary-control,.ability-detail-column,.a
 body.m-unified #tab-stats .ability-primary-control::before{font-size:var(--lm-ability-size)}
 body.m-unified #tab-stats .ability-detail-column>div{gap:8px;white-space:normal;min-height:29px}
 body.m-unified #tab-stats .ability-detail-column>div>span{min-width:0;overflow-wrap:anywhere}
+
+/* 11-11 玩家：快速廢品的條件列在手機上超出畫面（工具列按鈕 flex:1 把這列撐到 880px） */
+body.m-unified #tab-content-panel .classic-list-toolbar .afk-qj-row{flex:1 1 100%;width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+body.m-unified #tab-content-panel .classic-list-toolbar .afk-qj-row>*{min-width:0;max-width:100%}
+body.m-unified #tab-content-panel .classic-list-toolbar .afk-qj-row button{flex:1 1 40%;min-width:0}
+body.m-unified #tab-content-panel .classic-list-toolbar .afk-qj-row details{flex:1 1 100%}
+body.m-unified #tab-content-panel .classic-list-toolbar .afk-qj-row summary{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.m-unified #tab-content-panel .classic-list-toolbar .afk-qj-row [id^="qjf-count-"]{flex:1 1 100%;margin-left:0}

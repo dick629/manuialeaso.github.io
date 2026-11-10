@@ -95,7 +95,7 @@
       for (var k = 0; k <= 15; k++) enOpts += '<option value="' + k + '"' + (f.en === k ? ' selected' : '') + '>+' + k + ' 以下</option>';
       var sel = 'class="bg-slate-900 border border-slate-600 rounded px-1 py-1 text-xs text-slate-100"';
       var row = document.createElement('div');
-      row.className = 'mt-1 flex flex-wrap items-center gap-1 bg-slate-900/70 border border-amber-900/60 rounded p-1 text-xs text-slate-200';
+      row.className = 'afk-qj-row mt-1 flex flex-wrap items-center gap-1 bg-slate-900/70 border border-amber-900/60 rounded p-1 text-xs text-slate-200';
       var partSel = '<select ' + sel + ' onchange="qjFilterSet(\'' + type + '\',\'part\',this.value)">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (f.part === o[0] ? ' selected' : '') + '>' + o[1] + (type === 'item' && o[0] !== 'all' ? '（' + _qjEligibleItems(type).filter(function (i) { return 'ic:' + itemCat(DB.items[i.id], i.id) === o[0]; }).length + '）' : '') + '</option>'; }).join('') + '</select>';
       var btns = '<span id="qjf-count-' + type + '" class="text-amber-300 ml-auto whitespace-nowrap">符合 ' + n + ' 件</span>'
         + '<button onclick="qjFilterApply(\'' + type + '\',false)" class="btn border-amber-600 bg-amber-800 hover:bg-amber-700 px-2 py-1 text-xs font-bold text-amber-100 rounded">勾選符合</button>'
