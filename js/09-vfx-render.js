@@ -1313,7 +1313,7 @@ function _renderMobsImpl() {
             if (typeof MOB_SHADOW_TINT !== 'undefined' && MOB_SHADOW_TINT.has(m.n)) _innerAnimCls += ' mob-shadow-tint';   // 🌑 灰白剪影怪→半透明黑影
             if (typeof MOB_ANIM_BIG !== 'undefined' && MOB_ANIM_BIG.has(m.n)) _innerAnimCls += ' mob-anim-big';   // 🐉 大畫布非頭目怪→頭目級 185px 高度上限（v3.0.37）
             if (typeof MOB_ANIM_SMALL !== 'undefined' && MOB_ANIM_SMALL.has(m.n)) _innerAnimCls += ' mob-anim-small';   // 🔻 v3.1.65 過大/攻擊死亡溢框怪→整體等比縮小（max-height 降至 85%·本體+_s+_w+技能特效同縮同步）
-            let _shadowLayer = _spriteShadow ? `<img class="mob-anim-shadow w-24 h-24 p-1 object-contain pointer-events-none" src="assets/anim/${_animDir(m.n)}/idle_s_0.png" alt="" aria-hidden="true" onload="this.style.display='';this.style.visibility=''" onerror="this.style.visibility='hidden'">` : '';
+            let _shadowLayer = _spriteShadow ? `<img class="mob-anim-shadow w-24 h-24 p-1 object-contain pointer-events-none" src="${mobShadowStillImg(m.n)}" alt="" aria-hidden="true" onload="this.style.display='';this.style.visibility=''" onerror="this.style.visibility='hidden'">` : '';
             // ⚔️ v2.7.22 武器揮動特效層(疊本體「前」·screen)：同影子機制·排在本體 img 之後
             let _weaponFx = MOB_ANIM_NAMES.has(m.n) && (typeof MOB_ANIM_WEAPON_FX !== 'undefined') && MOB_ANIM_WEAPON_FX.has(m.n);
             let _weaponLayer = _weaponFx ? `<img class="mob-anim-weapon w-24 h-24 p-1 object-contain pointer-events-none" src="assets/anim/${_animDir(m.n)}/idle_w_0.png" alt="" aria-hidden="true" onload="this.style.display='';this.style.visibility=''" onerror="this.style.visibility='hidden'">` : '';
@@ -1353,6 +1353,8 @@ function _renderMobsImpl() {
         let _structKey = _order.join(',') + '|' + mapState.current + '|' + (BOSS_BIG_MAPS.includes(mapState.current) ? 'B' : '');
         let _c = _mobRenderCache;
         let _wrote = false;
+        // 11-11 效能：原本 CSS 用 #mob-list:has(.mob-back)／:has(.boss-slot) 判斷版位，每次怪格變動都讓瀏覽器重算大量元素樣式；改成這裡直接標 class（狀態沒變時 classList.toggle 不會動 DOM）
+        { let _hb = _back, _hs = _slotHtmls.some(h => h.indexOf(' boss-slot') >= 0); _ml.classList.toggle('afk-has-back', _hb); _ml.classList.toggle('afk-has-boss', _hs); let _bv = document.getElementById('battle-view'); if (_bv) _bv.classList.toggle('afk-has-boss', _hs); }
         if (!_c || _c.ml !== _ml || _c.structKey !== _structKey || _c.slots.length !== _slotHtmls.length || _ml.children.length !== _slotHtmls.length) {
             _ml.innerHTML = _slotHtmls.join('');   // 首次/結構改變/節點被換→整列重建
             _mobRenderCache = { ml: _ml, structKey: _structKey, slots: _slotHtmls };   // _slotHtmls 是每幀新建的暫存陣列→直接存、免 slice 複製
@@ -1563,6 +1565,11 @@ const MOB_ANIM_SKILL_FX = {
     '底比斯 斯芬克斯(黑)': { startPfx: 'skill_effect', anchored: { ox: 23, oy: 48, bw: 133, bh: 117 } },  // 彩虹波動(黑)：7幀藍色爆發(前5幀原始即空幀·尾段才顯)·eff 55x52
 };
 // 怪物「靜態顯示圖」候選：有動畫→戰鬥優先 spawn_0、圖鑑優先 idle_0，退回舊靜態 PNG；無動畫→直接舊靜態。回傳 {src, fb:[後備...]}（fb 走 onerror 逐張退·各呼叫點自行在末端補佔位符）。
+// Match the initial body direction before the animation controller takes over.
+function mobShadowStillImg(name) {
+    const directional = typeof MOB_ANIM_8DIR !== 'undefined' && MOB_ANIM_8DIR.has(name);
+    return `assets/anim/${_animDir(name)}/${directional ? 'd6/' : ''}idle_s_0.png`;
+}
 function mobStillImg(name, staticUrl, preferSpawn) {
     let base = staticUrl || `assets/icons/monsters/${name}.png`;
     if (!MOB_ANIM_NAMES.has(name)) return { src: base, fb: [] };
@@ -2425,7 +2432,7 @@ function _allySpritesApply() {   // 8fps ticker 驅動
         } else if (st.el.parentElement !== bv) bv.appendChild(st.el);
         let w = (a.idle && a.idle[0]) ? a.idle[0].naturalWidth : 100;
         st.el.style.width = w + 'px';
-        { let _ps = _partySpritePos().A, _pp = _ps[Math.min(i, _ps.length - 1)]; st.el.style.left = 'calc(' + _pp.x + ' - ' + Math.round(w / 2) + 'px)'; st.el.style.bottom = _pp.b + 'px'; st.el.style.zIndex = String(30 - _pp.b); }   // 每輪更新（隊員順位/地圖版面 5格↔3格 可能變）；🤝 v3.6.89 固定站位＝依招募順序（前排 0~2·後排 3~6）
+        { let _ps = _partySpritePos().A, _pp = _ps[Math.min(i, _ps.length - 1)]; st.el.style.left = 'calc(' + _pp.x + ' - ' + Math.round(w / 2) + 'px)'; st.el.style.bottom = _pp.b + 'px'; st.el.style.zIndex = String(30 - _pp.b); }
         if (CLASS_ANIM_8DIR.has(ally.avatar) || MORPH_ANIM_3DIR.has(_actorMorphName(ally) || '')) _classFacing8(ally, st.el);   // 🧭 職業／變身皆依攻擊目標更新朝向（傭兵固定站位不走位→恆為目標朝向）
         // 動作＋幀（同主玩家邏輯·wskill 武器專屬 skill 優先·咆哮通用）
         let act = null, f = 0, _useW = false;

@@ -168,10 +168,10 @@ function petMigrateExpReqV3(p) {   // Lv70+ 玩家需求改版時，寵物同樣
     p.expReqV = PET_EXP_REQ_VERSION;
     return true;
 }
-function petCharmCombatBonus() {
+function petCharmCombatBonus(owner = player) {
     // 🐾 v3.2.24 每一隻獨立計算：移除 /sqrt(出戰隻數) 稀釋——每隻寵物都拿完整魅力加成（隻數多寡不影響個體）
     // 👑 v3.4.28 魅力係數固定 0.10（原「夥伴精通→0.12」已移除·精通效果見下）
-    let cha = Math.max(0, (player && player.d && player.d.cha) || 0);
+    let cha = Math.max(0, (owner && owner.d && owner.d.cha) || 0);
     let v = Math.floor(cha * 0.10);
     return { dmg: v, hit: v };
 }
@@ -863,6 +863,7 @@ function petsTick() {
         // 倒地：非野外（安全區）免費復活；野外等 5 秒復活卷軸
         if (p._downed) {
             if (!wild) { _petReviveDone(p, '安全區'); return; }
+            if (window.__afkDreamCost && window.__afkDreamCost.onCd()) return; // 死亡上限同樣約束自動復卷；存活寵物仍照常行動。
             p._reviveCd = (p._reviveCd || 0) - 1;
             if (p._reviveCd <= 0 || (typeof playerHasAutoReviveEarring === 'function' && playerHasAutoReviveEarring())) {   // 🏺 巨靈的承諾耳環：跳過冷卻立即復活（仍消耗卷軸）
                 let sc = player.inv.find(i => i.id === 'scroll_revive' && (i.cnt || 0) > 0);

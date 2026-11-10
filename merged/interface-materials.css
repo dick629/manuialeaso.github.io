@@ -1,0 +1,53 @@
+/* Interface v6: original vector engraving, shared materials only.
+   Layout rules live in separate desktop/mobile files. Never recolor rarity text or battle art. */
+:root{--li-frame:url('../assets/ui/interface-v6/carved-frame.svg')}
+body.m-unified #game-screen .log-bg{background:var(--li-panel)!important;border-color:#6d6754}
+body.m-unified :is(#game-screen,#lm-detail,#collection-panel,#card-book,#equip-book,#misc-book,#relic-book,#warehouse-window,#item-modal,#npc-interaction-modal,#shop-window,#growth-overlay,#class-overlay,#attribute-help,#afk-novel,#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#m-fsv-modal,#m-hist-modal,#m-rid-modal,#m-diag-modal,#m-mobname-modal,#m-stg-modal,#afk-confirm-modal,#afk-alert-modal,#afk-gh-win) :is(.panel,.modal-content){border-color:var(--li-edge);border-radius:1px}
+body.m-unified :is(#game-screen,#lm-detail,#collection-panel,#card-book,#equip-book,#misc-book,#relic-book,#warehouse-window,#item-modal,#npc-interaction-modal,#shop-window,#growth-overlay,#class-overlay,#attribute-help,#afk-novel,#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#m-fsv-modal,#m-hist-modal,#m-rid-modal,#m-diag-modal,#m-mobname-modal,#m-stg-modal,#afk-confirm-modal,#afk-alert-modal,#afk-gh-win) :is(.panel-header,.nv-head){color:var(--li-heading);border-color:var(--li-edge);background:var(--li-header)!important;font-family:"Noto Serif TC","PMingLiU",serif;letter-spacing:.04em}
+body.m-unified :is(#game-screen,#lm-detail,#collection-panel,#card-book,#equip-book,#misc-book,#relic-book,#warehouse-window,#item-modal,#npc-interaction-modal,#shop-window,#growth-overlay,#class-overlay,#attribute-help,#afk-novel,#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#m-fsv-modal,#m-hist-modal,#m-rid-modal,#m-diag-modal,#m-mobname-modal,#m-stg-modal,#afk-confirm-modal,#afk-alert-modal,#afk-gh-win) :is(input:not([type=checkbox]):not([type=range]):not([type=radio]),select,textarea){border-color:#746c56;background-color:var(--li-well);color:#ded9c8;border-radius:2px}
+body.m-unified :is(#game-screen,#lm-detail,#collection-panel,#card-book,#equip-book,#misc-book,#relic-book,#warehouse-window,#item-modal,#npc-interaction-modal,#shop-window,#growth-overlay,#class-overlay,#attribute-help,#afk-novel,#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#m-fsv-modal,#m-hist-modal,#m-rid-modal,#m-diag-modal,#m-mobname-modal,#m-stg-modal,#afk-confirm-modal,#afk-alert-modal,#afk-gh-win) :is(.btn,.zs-tab){border-radius:2px;box-shadow:inset 0 1px #d9c8a626,0 1px 2px #0008}
+body.m-unified :is(#game-screen,#lm-detail,#collection-panel,#card-book,#equip-book,#misc-book,#relic-book,#warehouse-window,#item-modal,#npc-interaction-modal,#shop-window,#growth-overlay,#class-overlay,#attribute-help,#afk-novel,#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#m-fsv-modal,#m-hist-modal,#m-rid-modal,#m-diag-modal,#m-mobname-modal,#m-stg-modal,#afk-confirm-modal,#afk-alert-modal,#afk-gh-win) :is(.bg-slate-900,.bg-slate-800,.bg-slate-950,.bg-slate-900\/80,.bg-slate-800\/80){background:var(--li-card)!important;border-color:#55564c}
+body.m-unified :is(#card-book,#equip-book,#misc-book,#relic-book,#collection-panel,#warehouse-window)>:first-child,
+body.m-unified :is(#item-modal)>.panel{background:var(--li-panel)!important;border-image:var(--li-frame) 16 / 7px / 0 stretch!important;border-radius:0}
+body.m-unified :is(#afk-confirm-card,#afk-alert-card,#afk-toggles-panel,#afk-ms-panel,#afk-ps-panel){background:var(--li-panel)!important;border:1px solid var(--li-edge)!important;border-image:var(--li-frame) 16 / 6px / 0 stretch!important;border-radius:1px!important}
+body.m-unified :is(#afk-confirm-title,#afk-alert-title){color:var(--li-heading);font-family:"PMingLiU",serif;letter-spacing:.06em}
+body.m-unified :is(#afk-confirm-cancel,#afk-alert-ok){background:var(--li-header);border-color:var(--li-edge);border-radius:2px}
+body.m-unified #afk-novel{background:var(--li-panel);color:#d4d1c4}
+body.m-unified #afk-novel :is(button,select){background:var(--li-header);border-color:var(--li-edge);border-radius:2px}
+body #attribute-help section{background:var(--li-panel);border-image:var(--li-frame) 16 / 7px / 0 stretch}
+body #attribute-help header{background:var(--li-header)}
+body #attribute-help article{background:var(--li-card);border-color:#596050}
+body #attribute-help .attribute-portrait{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 14px;background:var(--li-well);border-bottom:1px solid #6c624c}
+body #attribute-help .attribute-portrait img{width:72px;height:72px;image-rendering:auto;margin-bottom:12px}
+body #attribute-help .attribute-portrait b{color:var(--li-heading);font:22px/1.5 "PMingLiU",serif}
+body #attribute-help .attribute-portrait small{margin-top:8px;font-size:12px}
+body #attribute-help .attribute-layout{min-height:0;overflow:hidden}
+body #attribute-help .attribute-help-body{min-height:0}
+body #attribute-help .attribute-help-body p{font-size:13px}
+body #attribute-help :is(button,.attribute-help-body){scrollbar-color:#8c8168 #121915}
+
+/* Transient combat/system toasts stay behind focused dialogs; dedicated error/confirm dialogs remain above. */
+body:has(#attribute-help,#growth-overlay,#class-overlay) #m-toast-wrap{z-index:8000!important}
+
+/* Secondary reading/settings windows share the same materials, retaining their own scroll containers. */
+body.m-unified :is(#m-wiki-wrap,#afk-stg-menu,#afk-toggles-box,#afk-ms-box,#afk-ps-box,#m-fsv-box,#m-hist-box,#m-rid-box,#m-diag-box,#m-mobname-box,#m-stg-box){background:var(--li-panel)!important;border-color:var(--li-edge)!important;border-radius:2px!important}
+body.m-unified :is(#m-wiki-searchrow,#m-wiki-tabs,#m-wiki-cls){background:var(--li-header)!important;border-color:var(--li-edge)!important}
+body.m-unified #m-wiki-body{background:var(--li-panel)!important;color:#d6d2c4}
+body.m-unified #m-wiki-body :is(table,blockquote){border-color:#6f6e58!important;background:var(--li-card)!important}
+body.m-unified #m-wiki-wrap :is(button,input){border-radius:2px!important}
+body.m-unified #m-toast-wrap .m-toast{background:var(--li-panel);border-radius:2px;border-color:var(--li-edge)}
+
+body.m-unified :is(#afk-toggles-overlay)>div,body :is(#afk-ms-card,#afk-ps-card,#m-fsv-card,#m-hist-card,#m-rid-card,#m-diag-card,#m-mobname-card,#m-stg-card){background:var(--li-panel)!important;border-color:var(--li-edge)!important;border-radius:1px!important;border-image:var(--li-frame) 16 / 6px / 0 stretch!important}
+body.m-unified :is(#afk-ms-card,#afk-ps-card) :is(label,button){background:var(--li-card)!important;border-radius:2px!important;border-color:#72765b!important;color:#d8d5bd}
+body.m-unified :is(#afk-ms-card,#afk-ps-card) button.on{background:linear-gradient(#806c40,#4c4028)!important;color:#fff0bd!important}
+body.m-unified :is(#m-wiki-wrap,#town-interaction-container,#lm-detail-body) :is([style*="background:#0f172a"],[style*="background: #0f172a"],[style*="background:#1e293b"],[style*="background: #1e293b"]){background:var(--li-card)!important}
+
+@media(max-width:820px){:root{--li-panel:linear-gradient(120deg,#283b31,#101d18);--li-card:linear-gradient(115deg,#293f35,#14251f);--li-header:linear-gradient(#405043,#15241d);--li-well:#102019}}
+
+body.m-unified #game-screen :is(.ally-compact-card,.afk-npcl-row,#world-input-row,#dt-buffs,#afk-stpts-block){background:var(--li-card)!important;border-color:#646a56;border-radius:2px}
+body.m-unified #m-wiki-modal{background:#050906d9}
+body.m-unified #m-wiki-wrap :is(.m-wiki-card,.m-wiki-note,.m-wiki-mfbtn,#m-wiki-input,.m-wiki-tab){background:var(--li-card)!important;border-color:#73694e!important}
+body.m-unified #m-wiki-wrap .m-wiki-tab.active{background:linear-gradient(#7c6940,#493d24)!important;color:#f1ddae!important}
+body.m-unified #afk-gh-win:not(.bac):not(.slot){background:var(--li-panel)!important;border-image:var(--li-frame) 16 / 6px / 0 stretch!important;border-radius:1px}
+body.m-unified #afk-gh-win :is(.gh-card,.gh-hb){background:var(--li-card)!important;border-color:var(--li-edge);border-radius:2px}
+body.m-unified #afk-gh-win .gh-head{background:var(--li-header);font-family:"PMingLiU",serif}

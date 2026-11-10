@@ -1625,6 +1625,14 @@ function clanOnRoleDeleted(oldPlayer) {
 
 function clanCreateFromInput() {
     if (!player || player.cls !== 'royal') { alert('只有王族可以創立血盟。'); return; }
+    // Another royal is a member, never a replacement founder. Keep the locked
+    // check below as well: another tab may create a clan after this read.
+    let existing = clanGetModeInfo(player);
+    if (existing) {
+        clanSyncCurrentPlayer();
+        alert('此模式已有主要血盟「' + existing.name + '」，其他王族共用此血盟；原盟主、城堡與貢獻維持不變。');
+        return;
+    }
     let input = document.getElementById('clan-name-input');
     let name = String(input ? input.value : '').trim();
     if (!name || name.length > 20) { alert('血盟名稱需為 1 至 20 個字。'); return; }
@@ -1776,6 +1784,7 @@ function clanToggleBuff(on) {
     let result = _clanWithLock(st => {
         if (!st.modes[mode]) return { commit:false, error:'你尚未加入血盟。' };
         let member = st.members[id] || (st.members[id] = { mode:mode, contribution:0, buffOn:false, buffAt:0 });
+        if (member.buffOn === !!on) return { commit:false, unchanged:true };
         if (on && member.contribution < CLAN_BUFF_HOUR_COST) return { commit:false, error:'至少需要 5 點貢獻才能開啟血盟 Buff。' };
         let partialCharged = false;
         if (!on && member.buffOn && member.buffAt > 0) {
@@ -1796,6 +1805,7 @@ function clanToggleBuff(on) {
         member.buffAt = on ? Date.now() : 0;
         return { partialCharged:partialCharged, contribution:member.contribution };
     });
+    if (result.unchanged) { renderClanTab(); return; }
     if (!result.ok) { alert(result.error || '血盟 Buff 設定失敗。'); renderClanTab(); return; }
     delete _clanLastSettleByRole[id];
     if (typeof calcStats === 'function') calcStats();
@@ -1942,7 +1952,7 @@ function renderClanTab() {
             <div class="flex flex-col gap-4 p-2">
                 <div class="border-b border-slate-600 pb-3">
                     <div class="text-amber-200 font-bold text-lg">你尚未加入血盟</div>
-                    <div class="text-sm text-slate-400 mt-1">此模式需由王族角色創立血盟。</div>
+                    <div class="text-sm text-slate-400 mt-1">此模式由一名王族創立主要血盟，其他角色（包含王族）共用同一血盟。</div>
                 </div>
                 ${player.cls === 'royal' ? `
                 <div class="flex flex-col gap-2">
@@ -2000,6 +2010,7 @@ function renderClanTab() {
                     <div class="text-xs text-slate-400">經驗 ${xpText}</div>
                 </div>
             </div>
+            <div class="text-sm text-slate-400 clan-primary-policy">同模式共用一個主要血盟；其他王族為成員，不會另立血盟或取代盟主。</div>
             <div>
                 <div class="flex items-center justify-between gap-3 mb-2">
                     <div>

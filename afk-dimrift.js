@@ -70,12 +70,12 @@
   // ── 物品 ──
   var IMG = 'assets/icons/items/';
   var ITEMS = {
-    afk_rift_shard: { n: '裂縫碎光', img: IMG + '原石碎片.png', d: '次元裂縫的光凝成的碎片。用在無盡的裂縫，或在席琳那裡換成其他裂縫材料（之後開放）。' },
+    afk_rift_shard: { n: '裂縫碎光', img: IMG + '原石碎片.png', d: '次元裂縫的光凝成的碎片。進入無盡的裂縫需要 50 個，另需星辰之核 15 個與血龍鑽 500。' },
     afk_dim_crystal: { n: '次元結晶', img: IMG + '原石碎片.png', d: '次元裂縫每一隻怪都會留下的結晶。守護者之戒、席琳遺骸淬鍊、次元遺物都用得到。' },
-    afk_star_dust: { n: '破碎星光塵埃', img: IMG + '原石碎片.png', d: '裂縫裡的星光碎屑。100 個加上血龍鑽 10 可以合成「異化星塵」（之後開放）。' },
+    afk_star_dust: { n: '破碎星光塵埃', img: IMG + '原石碎片.png', d: '裂縫裡的星光碎屑。100 個加上血龍鑽 10，可在次元工匠合成「異化星塵」。' },
     afk_alien_dust: { n: '異化星塵', img: IMG + '原石碎片.png', d: '用來強化次元支配（縫天★）的星塵。' },
-    afk_split_dust: { n: '分裂的蔑視塵埃', img: IMG + '原石碎片.png', d: '用來開啟幻聖紋的塵埃（1,000 個＋血龍鑽 100；之後開放）。' },
-    afk_star_core: { n: '星辰之核', img: IMG + '原石碎片.png', d: '無盡的裂縫的門票（15 個；之後開放）。' }
+    afk_split_dust: { n: '分裂的蔑視塵埃', img: IMG + '原石碎片.png', d: '用來開啟幻聖紋的塵埃；在次元工匠支付 1,000 個與血龍鑽 100。' },
+    afk_star_core: { n: '星辰之核', img: IMG + '原石碎片.png', d: '無盡的裂縫入場材料：15 個，另需裂縫碎光 50 個與血龍鑽 500，並先完成封印副本。' }
   };
   Object.keys(ITEMS).forEach(function (id) { var x = ITEMS[id]; if (!DB.items[id]) DB.items[id] = { n: x.n, type: 'etc', p: 0, gachaWeight: 0, weight: 0, noUse: true, noSell: true, c: 'text-cyan-300', img: x.img, d: x.d + '（次元裂縫限定掉落）' }; });
   var MIO_DIM = 'afk_mio_dim', CANCEL = 'afk_cancel_scroll';
@@ -223,10 +223,10 @@
         var ero = rec(p).ero || 0;
         if (ero) {
           var keep = floorSum(p), wc = weightCut(p);
-          var eAc = Math.min(ero, R.acMax);
+          var eAc = Math.max(0,Math.min(ero, R.acMax)-(W.LineageSherine?.erosionBack(p)||0));
           d.ac = (d.ac || 0) + eAc;
           var cut = function (k) { var v = Number(d[k]) || 0; if (v <= 0) return; var floor = Math.max(keep, Math.floor(v * wc)); var low = Math.min(v, floor); d[k] = Math.max(low, v - eAc); };
-          cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; if (v <= 0) return; var e2 = ero - rb, floor = Math.max(keep, Math.floor(v * wc)); d[k] = Math.max(Math.min(v, floor), v - e2); });
+          cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; var e2 = ero - rb, floor = Math.max(keep, Math.floor(v * wc)); var growthFloor = W.LineageGrowth ? W.LineageGrowth.pct(p, 'curse') : 0; d[k] = Math.max(Math.min(v,floor+growthFloor),v-e2); });
         }
       } catch (e) { console.warn('[AFK-dimrift] stats', e); }
       return r;
@@ -305,8 +305,8 @@
       var b = a._dimBase, light = (rec(p).light || 0) * R.lightHp / 100 * (1 - lightCut(p));
       a.mhp = Math.max(1, Math.floor(b.mhp * f * (1 - light))); a.mmp = Math.floor((b.mmp || 0) * f);
       if (a.curHp > a.mhp) a.curHp = a.mhp; if (a.mp > a.mmp) a.mp = a.mmp;
-      Object.keys(b.d).forEach(function (k) { var v = b.d[k]; if (k === 'ac') a.d.ac = (v < 0 ? Math.ceil(v * f) : v) + Math.min(ero, R.acMax); else a.d[k] = v > 0 ? Math.floor(v * f) : v; });
-      if (ero) ['mr'].concat(RES4).forEach(function (k) { var v = Number(a.d[k]) || 0; if (v <= 0) return; a.d[k] = Math.max(Math.min(v, keep), v - (k === 'mr' ? Math.min(ero, R.acMax) : ero)); });
+      Object.keys(b.d).forEach(function (k) { var v = b.d[k]; if (k === 'ac') a.d.ac = (v < 0 ? Math.ceil(v * f) : v) + Math.max(0,Math.min(ero, R.acMax)-(W.LineageSherine?.erosionBack(a)||0)); else a.d[k] = v > 0 ? Math.floor(v * f) : v; });
+      if (ero) ['mr'].concat(RES4).forEach(function (k) { var v = Number(a.d[k]) || 0; if (v <= 0) return; a.d[k] = Math.max(Math.min(v, keep), v - (k === 'mr' ? Math.max(0,Math.min(ero, R.acMax)-(W.LineageSherine?.erosionBack(a)||0)) : ero)); });
     });
   }
 

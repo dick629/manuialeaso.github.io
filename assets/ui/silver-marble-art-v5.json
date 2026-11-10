@@ -1,0 +1,14 @@
+{
+  "version": 5,
+  "date": "2026-11-09",
+  "generator": "Built-in image_gen",
+  "intent": "generate",
+  "assets": [
+    {
+      "file": "silver-marble-v5.png",
+      "runtime": "silver-marble-v5.webp",
+      "prompt": "Use case: stylized-concept. Production asset: seamless square SILVER GREY MARBLE material tile for a classical medieval RPG interface panel. Orthographic flat material only. Base is unmistakably neutral medium silver grey stone (#596066 with some #777c80 areas), no green tint. Elegant naturally irregular thin muted champagne-gold mineral veins with occasional fine white quartz hairlines. Calm broad silver grey areas, sparse delicate branched veins, understated brushed satin stone sheen and realistic mineral depth. Restrained artisanal antique material, elegant rather than flashy. Even diffuse light, perfectly flat exposure, edge to edge, seamless on all four edges. Intended to appear behind cream and gold UI text, so no large bright white patches, no deep black patches, no heavy cracks. No frame, border, corner, vignette, object, icon, glyph, lettering, branding or UI mockup. This is a silver marble panel texture, NOT a black marble texture and NOT green slate.",
+      "source": "C:/Users/JOHON-A/.codex/generated_images/01a1ba02-321a-76d3-b22e-97fb577b6415/exec-6f572df5-1dc3-4f14-b0a1-3ce1b3c6a894.png"
+    }
+  ]
+}

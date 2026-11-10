@@ -1084,7 +1084,13 @@
   }
   setInterval(function () { try { if (!S().ff) paintMoon(); } catch (e) {} }, 5000);
 
+  function growthRestore(q){
+    if(!q){run=null;lastMap=mapState.current;return;}
+    if(!KN[q.k]||!['dream','rift'].includes(q.mode)||q.done||!(q.until>api.now())||!Number.isInteger(q.wave)||q.wave<1||q.wave>DG.waves+1||mapState.current!==mapOf(q.k))throw Error('守護者試煉已逾時或進度不相容，請結束本輪');
+    run=JSON.parse(JSON.stringify(q));store(P()).run=run;lastMap=mapOf(q.k);leaving=false;
+  }
   var api = W.__afkGuardRing = {
+    growthCheckpoint:function(){return run&&!run.done?JSON.parse(JSON.stringify(run)):null;},growthRestore:growthRestore,
     KEYS: KEYS, KN: KN, VAL: VAL, CD: CD, OWEN: OWEN, ZEUS: ZEUS, COMMON: COMMON, RESO: RESO, GUARD: GUARD, CAPS: CAPS, COST: COST, M: M, RIFT: RIFT, TOKENS: TOKENS, BOSS_LINES: BOSS_LINES, QUESTS: QUESTS, DG: DG, DGK: DGK, DROP: DROP,
     MOON: MOON, ART: ART, stepVal: stepVal, stepCd: stepCd, DREAM_SET: DREAM_SET, REFINE_PART: REFINE_PART,
     store: store, stageOf: stageOf, mainOf: mainOf, sysOn: sysOn, slotOn: slotOn, legacy: legacy, shelter: shelter, marks: marks, valOf: valOf, txtOf: txtOf, compute: compute, cur: cur, refresh: refresh,

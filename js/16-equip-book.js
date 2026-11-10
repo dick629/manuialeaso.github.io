@@ -85,7 +85,7 @@ function equipCatKey(id, d) {
         if (d.qigu) return 'qigu';
         if (d.chainsword) return 'chainsword';
         if (typeof isWandWeapon === 'function' && isWandWeapon(d)) return 'wand';
-        if (typeof WAND_LIGHTARROW_IDS !== 'undefined' && WAND_LIGHTARROW_IDS.indexOf(id) >= 0) return 'wand';   // 🔮 共鳴法器（惡魔鐮刀＝單手魔杖／漆黑水晶球等）歸魔杖
+        if (typeof WAND_LIGHTARROW_IDS !== 'undefined' && isResonanceWeapon(id)) return 'wand';   // 🔮 共鳴法器（惡魔鐮刀＝單手魔杖／漆黑水晶球等）歸魔杖
         let tags = (typeof getWeaponTags === 'function') ? getWeaponTags(id) : [];
         if (tags.indexOf('武士刀') >= 0) return 'katana';
         if (tags.indexOf('雙刀') >= 0) return 'dual';
@@ -149,7 +149,7 @@ const EQUIP_ITEM_CAT = {};    // itemId -> catKey
 
 // ---- dex 助手（player.equipDex: itemId -> true，永久·只增不減）----
 function equipDexHas(id) { return !!(player.equipDex && player.equipDex[id]); }
-function equipCatCount(ck) { let arr = EQUIP_CAT_ITEMS[ck] || []; return { got: arr.filter(equipDexHas).length, total: arr.length }; }
+function equipCatCount(ck) { let arr = (EQUIP_CAT_ITEMS[ck] || []).filter(id => !DB.items[id]?.lmDropOptional); return { got: arr.filter(equipDexHas).length, total: arr.length }; }
 function equipCatComplete(ck) { let cc = equipCatCount(ck); return cc.total > 0 && cc.got >= cc.total; }   // 該部位全部裝備皆已收集
 
 // ---- recomputeStats 鉤子：各部位「全收集」加成（mhp/mmp→p；dr/mr/hpR/mpR/er→d；ac→d.ac-=val；weight→d._equipWeightBonus 供負重段；petHit→p._equipPetHit 供 petGearBonus）----
@@ -236,7 +236,7 @@ function renderEquipBook() {
     let _bonusHtml = _b
         ? `<div class="text-sm font-bold ${_done ? 'text-emerald-300' : 'text-slate-500'}">🏆 全收集加成：${_b.label}<span class="ml-1 text-xs font-normal">${_done ? '（已啟用）' : '（未完成）'}</span></div>`
         : `<div class="text-sm text-slate-600">此部位無全收集加成</div>`;
-    let head = `<div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+    let head = `<div class="lm-book-heading flex flex-wrap items-baseline justify-between gap-2 mb-3">
         <div class="text-xl font-bold text-sky-200">${cat.group}・${cat.name}<span class="text-sm text-slate-400 font-normal ml-2">已收集 ${cc.got} / ${cc.total}</span></div>
         ${_bonusHtml}
     </div>`;
@@ -251,7 +251,8 @@ function renderEquipBook() {
             ${got && d.legend ? '<span class="absolute top-1 right-1 text-[9px] px-1 rounded text-amber-300 bg-black/50 font-bold">傳說</span>' : ''}
             <img src="${imgUrl}" alt="${d.n}" class="w-14 h-14 object-contain${silh}" onerror="this.onerror=null;this.src='https://placehold.co/56x56/1e293b/334155?text=%3F';">
             <div class="text-center w-full">${nameHtml}</div>
+            ${d.lmDropOptional ? '<small class="text-amber-300 text-[10px]">不計入完成條件</small>' : ''}
         </div>`;
     }).join('');
-    host.innerHTML = head + `<div class="flex flex-wrap gap-2 justify-center">${cells || '<div class="text-slate-500 p-8">此部位暫無可收集的裝備。</div>'}</div>`;
+    host.innerHTML = head + `<div class="lm-book-grid flex flex-wrap gap-2 justify-center">${cells || '<div class="text-slate-500 p-8">此部位暫無可收集的裝備。</div>'}</div>`;
 }

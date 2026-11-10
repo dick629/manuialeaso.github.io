@@ -659,10 +659,22 @@
     }
     return html;
   }
+  function progressionGuide(key,cls){
+    var C=W.LineageClassCore;
+    if(key==='growthguide')return note('從角色的「天賦・巔峰」進入。天賦與巔峰各自配點，各自洗點。')+card('天賦',desc('Lv100 開放，之後每升 1 級獲得 1 點；一轉另給 15 點、二轉另給 20 點。二轉 Lv200 合計 135 點，舊角色登入會補足應得額度。')+desc('近戰、遠攻、法術、守禦、協律、馭靈、移動，最多選三個方向。A／B 每顆 1 點，N1／N2 每顆 2 點，N3 每顆 3 點，核心 K 需要 5 點；三核心完成後可花 3 點點亮 J。')+desc('A／B 第五顆為強化節點；N1／N2 第一顆為強化節點。第三方向與 J 的組合決定混合玩法。'))+card('巔峰',desc('一轉 Lv100 起開放，從 P0 累積，最高 P700。與角色等級分開；一轉每級需要 Lv100 升級經驗的 2 倍，完成二轉後為 3 倍。')+desc('移速每點 +1.5%，上限 +150%；真實傷害與真實減傷每點 0.2%，各上限 15%。抑咒每點提高次元四抗保底 0.5，沒有單項上限，但總額仍受 700 點限制。')+desc('天賦、巔峰可永久重複洗點，每次各花費 5,000 血龍鑽。'));
+    if(key==='skillupgrade')return note('在席琳神殿找「技藝導師 薇爾娜」，選擇「技能強化」分頁。')+card('技能強化與職業流派分開',desc('使用結晶依序強化目前職業的原有技能；材料、加成與目前階段以導師頁面顯示為準。')+desc('不需要消耗其他角色。職業進化與融合轉職改在同一視窗的另外兩個分頁選擇，兩者的路線與各段大絕皆永久固定。'));
+    if(key==='charactersouls')return note('找扎爾製作角色魂魄，魂魄簿共三格、由同模式角色共用。')+card('封魂與使用',desc('封存會消耗另一格角色，保留其職業、轉生與等級作為進化材料，裝備不會複製給現役角色。僱用中或尚有待領傭兵經驗的角色不能封魂。')+desc('進化／轉職消耗一顆符合條件的魂魄，同時永久選定路線與本段大絕。換裝置請匯出完整備份；單角色匯出不包含共用魂魄簿。'));
+    if(key!=='classevolution'&&key!=='classtransfer')return null;
+    if(!C)return note('職業資料載入中，請稍後重開。');
+    var fusion=key==='classtransfer';
+    var out=note('席琳神殿・薇爾娜 → '+(fusion?'職業轉職':'職業進化')+'。路線與每段大絕選擇永久固定。')+card('進階條件',desc(fusion?'三段均需所選外職二轉 Lv200 的魂魄，每次消耗一顆。':'三段都需要本職業 Lv100 魂魄，轉生依序為零轉、一轉、二轉。')+desc('本人第一段需一轉，第二段需二轉；第三段另需通過終焉第三階層。每段新增五種法術及三選一大絕；第二、三段各新增一個隊伍光環。'+(fusion?'融合流派每段另開放三種龍魔法。':''))+desc('大絕第一段冷卻 30 秒、第二段 60 秒、第三段 180 秒，使用時共用大絕冷卻。被動只影響自己，光環影響隊伍。'));
+    C.trees.forEach(function(t){if(!!t.requiresFusionTransfer!==fusion||cls&&cls!=='all'&&t.base!==cls)return;out+='<details class="m-wiki-card"><summary>'+esc(C.CLS[t.base]+'・'+t.name)+'</summary>'+desc(esc(t.theme))+t.skills.map(function(s){return factCard(esc(s.name),'第 '+s.stage+' 段・'+esc(s.type),esc(C.description(s)),[s.type==='被動'?'個人被動':s.type==='光環'?'啟用消耗 3% MP，每 5 秒消耗 1% MP'+(s.plan.blood?'、1% HP':''):'冷卻 '+s.plan.cd+' 秒']);}).join('')+'</details>';});return out;
+  }
   var guide=W.AFK_GAME_GUIDE={
-    render:function(key,cls){return key==='relicstages'?relics():key==='cardforms'?formRules():key==='versionrules'?rules():key==='rebirtharts'?arts(cls):key==='reborn'?reborn():key==='lore'?lore():null;},
+    render:function(key,cls){var progression=progressionGuide(key,cls);if(progression!==null)return progression;return key==='relicstages'?relics():key==='cardforms'?formRules():key==='versionrules'?rules():key==='rebirtharts'?arts(cls):key==='reborn'?reborn():key==='lore'?lore():null;},
     augment:augment,newbieCard:newbieCard,expeditionCard:expeditionCard,villageCard:villageCard,starroadCard:starroadCard,
     searchRelics:function(terms,max){return relicRows().filter(function(r){return terms.every(function(t){return r.search.indexOf(t.toLowerCase())>=0;});}).slice(0,max||60).map(function(r){return {title:r.n,html:relicCard(r,true)};});},
+    searchClasses:function(fusion,terms,max){var C=W.LineageClassCore;if(!C)return [];var out=[];C.trees.forEach(function(t){if(!!t.requiresFusionTransfer!==fusion)return;t.skills.forEach(function(s){if(out.length>=(max||60))return;var title=C.CLS[t.base]+'・'+t.name+'・'+s.name,text=C.description(s),q=(title+' '+text).toLowerCase();if(terms.every(function(term){return q.indexOf(term.toLowerCase())>=0;}))out.push({title:title,html:factCard(esc(title),'第 '+s.stage+' 段・'+esc(s.type),esc(text),[])});});});return out;},
     relicRows:relicRows,
     invalidate:function(){relicCache=null;}
   };
@@ -672,3 +684,4 @@
   document.addEventListener('click',function(e){var b=e.target&&e.target.closest('[data-guide-page]');if(!b||b.disabled)return;relicPage=Math.max(0,relicPage+Number(b.dataset.guidePage));repaintRelics();});
   var style=document.createElement('style');style.id='afk-game-guide-style';style.textContent='.afk-guide-search{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}.afk-guide-search input{flex:1;min-width:0;width:100%;background:#080e1b;color:#e2e8f0;border:1px solid #475569;border-radius:8px;padding:10px}.afk-guide-page{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 0;font-size:13px}.afk-guide-page button{min-height:36px;padding:6px 12px}.afk-guide-page button:disabled{opacity:.4}.afk-guide-relic summary{cursor:pointer;line-height:1.6;list-style:revert}.afk-guide-relic summary small{font-size:12px;color:#a5b4c8}.afk-guide-relic[open] summary{padding-bottom:8px;border-bottom:1px solid #334155;margin-bottom:10px}.afk-guide-missing summary{padding:8px;cursor:pointer;color:#cbd5e1}.afk-guide-missing small{color:#94a3b8;font-size:12px}.afk-guide-missing .m-wiki-desc{overflow-wrap:anywhere}';document.head.appendChild(style);
 })();
+

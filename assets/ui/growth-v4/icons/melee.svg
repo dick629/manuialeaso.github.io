@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>鋒刃・鍛金長劍</title><defs><linearGradient id="steel" x1="0" y1="0" x2=".8" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#ffefc9"/><stop offset=".24" stop-color="#cbd5ca"/><stop offset=".46" stop-color="#77918a"/><stop offset=".5" stop-color="#dbe0c9"/><stop offset=".76" stop-color="#6e827a"/><stop offset="1" stop-color="#293e34"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8e8b4"/><stop offset=".27" stop-color="#c5a565"/><stop offset=".52" stop-color="#f0d79e"/><stop offset=".7" stop-color="#8a672c"/><stop offset="1" stop-color="#cfb17c"/></linearGradient><radialGradient id="gem" cx=".32" cy=".22" r=".85"><stop stop-color="#f6f3dd"/><stop offset=".25" stop-color="#c7734e"/><stop offset=".72" stop-color="#c7734e"/><stop offset="1" stop-color="#243c35"/></radialGradient></defs><g stroke-linejoin="round" stroke-linecap="round">
+ <path d="M9 51 44 6l10-3-1 11L20 58Z" fill="url(#steel)" stroke="#131c19" stroke-width="2.4"/>
+ <path d="M46 8 20 47l-6 6 5-10Z" fill="#f3edce"/><path d="m49 10-5 17-20 24" fill="none" stroke="#748780" stroke-width="1.4"/>
+ <path d="m13 37 16 12 5-3-2 7-5 2-18-14-2-5Z" fill="url(#gold)" stroke="#241a0b" stroke-width="1.7"/>
+ <path d="m18 46 6 5-9 10-7-5Z" fill="#5b3023" stroke="#20130f" stroke-width="1.5"/>
+ <path d="m16 49 5 3m-8 0 5 3m-8 0 5 3" stroke="#d9ac68" stroke-width="1.6"/>
+ <path d="m8 54 8 6-6 3-5-4Z" fill="url(#gold)" stroke="#3a2b16"/>
+ <path d="m20 39 6 4-5 5-5-4Z" fill="url(#gem)" stroke="#f1c17b" stroke-width="1.2"/></g></svg>

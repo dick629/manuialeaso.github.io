@@ -1,9 +1,8 @@
 /**
  * afk-toggles.js — 外掛開關中樞（所有 afk-* 外掛的地基，必須「最先」載入）
  *
- * 目的：核心永遠是原作者原版；我們的功能全是外掛疊上去。外掛靠「包核心函式」運作，
- *   上游一改名就可能斷。此開關讓「某支外掛壞掉時，玩家自己在首頁關掉它 → 遊戲回到原版
- *   行為照常能玩」，作者再慢慢修。
+ * 融合版：正式功能、版型與操作修正統一啟用；玩家面板只保留介面微調及效能偏好。
+ *   舊功能開關不再拆開融合版；預設關閉的特殊選項保留原設定，不改寫存檔。
  *
  * 契約：
  *   - 每支外掛在檔案最前面先 `if (window.AFK_TOGGLES && !AFK_TOGGLES.enabled('<id>')) return;`（純新增型），
@@ -23,27 +22,41 @@
     var lsCache = {};
     // ── 併入「瘋狂席琳＋席琳夢域鏡模式」（玩家 2026-10-31 01:56）：改技能、改戰鬥機制的外掛不再各自有開關，
     //    一律跟著夢域鏡模式開關（關掉它就全部關掉）；效果範圍不變（一般、席琳、夢域鏡照原本，經典模式照原本不套用）。
-    //    面板不再列出這些項目；舊的個別設定忽略（不會留下關掉卻開不回來的死結）。測試可以用 set() 暫時覆寫（只在記憶體）。
+    //    面板不再列出這些項目；舊的個別設定忽略（不會留下關掉卻開不回來的死結）。融合版不再提供個別玩法開關。
     var MERGED_TO = 'dreamhell';
     var MERGED = {};
     ['illufix', 'magefix', 'knightshock', 'stunfix', 'hitstun', 'debuffresist', 'bossfoul', 'resonancenerf', 'callallycd',
      'relicfx', 'resist', 'statcap', 'offhandstats', 'petinherit'].forEach(function (id) { MERGED[id] = MERGED_TO; });
     MERGED.mech1031 = 'hiddenbonus';
     MERGED.starweaver = 'hiddenbonus';   // 織星者稱號：隱藏條件，跟著隱藏規則開關（玩家 2026-11-04 18:01）   // 深蝕、幻影箭、騎士單體衝暈、王暈眩破綻：隱藏規則（玩家 2026-10-31 02:50）
-    var force = {};
-    // ── 次元裂縫（玩家 2026-11-07 23:37）：「把我做的所有外掛融合成一份、很多東西不能獨立開關」──
-    //    遊戲內容、遊戲玩法、遊戲平衡、隱藏規則、劇情、成長這幾類（預設開、沒暫停的）全部跟著「次元裂縫」一個開關；
-    //    關掉它＝回到原版遊戲。介面、查詢、效能、自動化、存檔工具、系統類仍各自可關（壞掉時的逃生門）。
-    //    預設關的項目（def:false）不併入，照舊自己開關，避免被總開關強制打開。
+    // Explicit presentation preferences. A functional fix is not a user-facing switch.
+    var UI_GROUPS = {};
+    // Full-page layouts and touch fixes are part of the merged UI. The separate
+    // monster-name and mobile-size panels stay available without a module-off switch.
+    var UI_SECTIONS = {
+        '版面微調': ['uiscale'],
+        '畫面': ['artfix'],   // 玩家 11-10：圖檔修復版保留開關（預設關）
+        '資訊顯示': ['statpts','notip','killlog','nobanner'],
+        '效能與省電': ['fpscap','lowend','autoreload']
+    };
+    Object.keys(UI_SECTIONS).forEach(function (group) { UI_SECTIONS[group].forEach(function (id) { UI_GROUPS[id] = group; }); });
+    // These legacy strips have been replaced by the unified HUD, status icon and hotbar.
+    var RETIRED = { battlebuffs: 1, battlehud: 1, skillbar: 1, mapbar: 1, statusicon: 1 };
+    function adjustable(r) { return !!r && !!UI_GROUPS[r.id] && !r.locked; }
+    // Preserve dependency aliases for integrated gameplay. There is no player-facing master off switch.
+    // Default-off special rules retain their previous value; they are not silently enabled.
     var RIFT = 'riftpack', RIFT_GROUPS = { '遊戲內容': 1, '遊戲玩法': 1, '遊戲平衡': 1, '隱藏規則': 1, '劇情': 1, '成長': 1 };
 
     function find(id) { return byId[id] || null; }
     var memo = Object.create(null), memoOk = true;
     function enabledRaw(id) {
-        if (MERGED[id]) return (id in force) ? force[id] : api.enabled(MERGED[id]);
         var r = find(id), def = r ? r.def : true;
-        if (r && r.locked) return false;   // 暫時停用中：不管 localStorage 存過什麼都當關閉
-        if (r && r.parent && !api.enabled(r.parent)) return false;   // 父項關掉 → 子選項一律失效（子選項自己不必再問一次父項）
+        if (r && r.locked || RETIRED[id]) return false;
+        if (MERGED[id]) return api.enabled(MERGED[id]);
+        if (r && r.parent && !api.enabled(r.parent)) return false;
+        // Ignore stale module-off flags, without deleting or rewriting any saved key.
+        // Opt-in defaults remain opt-in and retain their existing stored value.
+        if (r && !adjustable(r) && def) return true;
         var v;
         if (id in lsCache) v = lsCache[id];
         else { try { v = lsCache[id] = localStorage.getItem(LS + id); } catch (e) { memoOk = false; return def; } }
@@ -82,6 +95,7 @@
                 locked: spec.locked || '', // 非空＝暫時停用：一律當關閉、面板上不可勾，字串是給玩家看的原因
                 parent: spec.parent || '',  // 非空＝這是某支外掛的子選項：面板上縮排排在該支底下（父項關掉時子項一律當關閉）
                 seal: !!(spec.seal || SEAL[spec.id]),   // 次元封印：玩家自己改的外掛
+                adjustable: !!UI_GROUPS[spec.id],
                 merged: MERGED[spec.id] || ''           // 已併入夢域鏡模式開關：面板不列
             };
             if (!entry.merged && entry.id !== RIFT && entry.def && !entry.locked && RIFT_GROUPS[entry.group]) { MERGED[entry.id] = RIFT; entry.merged = RIFT; }
@@ -89,7 +103,7 @@
             byId[entry.id] = entry;
         },
         // 這支外掛現在是否啟用（讀 localStorage，未設過→用預設；讀不到 localStorage→啟用）
-        // 結果只取決於 registry／force／lsCache，三者變動的地方（register、set、恢復預設）都會清掉 memo；
+        // 結果只取決於 registry／lsCache，三者變動的地方（register、set、恢復預設）都會清掉 memo；
         // 讀 localStorage 失敗的那次不記（下次照舊再讀）。戰鬥中每 tick 會被問上千次。
         enabled: function (id) {
             var m = memo[id];
@@ -99,9 +113,10 @@
             if (memoOk) memo[id] = r;
             return r;
         },
-        set: function (id, on) { memo = Object.create(null); if (MERGED[id]) { force[id] = !!on; return; } try { localStorage.setItem(LS + id, on ? '1' : '0'); lsCache[id] = on ? '1' : '0'; } catch (e) {} },
+        set: function (id, on) { if (!adjustable(find(id))) return false; memo = Object.create(null); try { localStorage.setItem(LS + id, on ? '1' : '0'); lsCache[id] = on ? '1' : '0'; return true; } catch (e) { return false; } },
 
         list: function () { return registry.slice(); },
+        options: function () { return registry.filter(adjustable); },
         merged: function () { return Object.keys(MERGED); },
         openPanel: openPanel
     };
@@ -117,7 +132,21 @@
     //      判準：外掛裡的 `AFK_TOGGLES.register` 若排在早退之後，它的 id 就必須出現在這張表。
     //      有 scripts/check-toggle-deadend.mjs 靜態擋。
     [
-        { id: 'riftpack', name: '次元裂縫', desc: '這個版本所有的遊戲內容、玩法、平衡、隱藏規則、劇情與職業進化（合成一個開關；關掉＝回到原版遊戲）', group: '遊戲內容', seal: true },
+        { id: 'statlist', name: '能力面板條列式', desc: '以條列方式顯示詳細能力。', group: '遊戲介面', def: true },
+        { id: 'uiscale', name: '電腦畫面縮放', desc: '開啟電腦版縮放與框格大小調整。', group: '遊戲介面', def: false },
+        { id: 'mobile-scale', name: '手機字體與輕量顯示', desc: '開啟手機字體大小及輕量模式設定。', group: '遊戲介面', def: true },
+        { id: 'noptr', name: '避免下拉重新整理', desc: '避免手機操作清單時誤觸整頁重新整理。', group: '遊戲介面', def: true },
+        { id: 'touchtip', name: '長按查看資料', desc: '手機長按物品或技能時顯示詳細資料。', group: '遊戲介面', def: true },
+        { id: 'notip', name: '關閉物品滑過提示', desc: '滑鼠移到物品上不彈出資料框；技能與手機長按說明保留。', group: '遊戲介面', def: false },
+        { id: 'clickaway', name: '點窗外關閉資訊', desc: '點擊物品資訊框外側即可關閉。', group: '遊戲介面', def: true },
+        { id: 'staticglow', name: '特殊物品固定淡光', desc: '使用穩定的淡光標示特殊物品。', group: '遊戲介面', def: true },
+        { id: 'art-v3-wings', name: '聖衣星座翅膀', desc: '顯示聖衣星座翅膀外觀。', group: '遊戲介面', def: true },
+        // 固定勾選「關閉魔法娃娃游標」；與頭目台詞及三種外觀一樣併入融合版。
+        { id: 'dollcursor', name: '關閉魔法娃娃游標', desc: '隱藏跟隨游標的魔法娃娃。', group: '遊戲介面', def: true },
+        { id: 'killlog', name: '合併擊殺與掉落紀錄', desc: '將同次擊殺和掉落合併成一行。', group: '遊戲介面', def: true },
+        { id: 'fpscap', name: '畫面幀率上限', desc: '套用「省電模式」內的幀率上限，降低畫面耗電；戰鬥計算照常。', group: '遊戲介面', def: true },
+        { id: 'lowend', name: '自動省電顯示', desc: '首次偵測低階裝置時自動套用省電顯示，之後可在「省電模式」調整。', group: '遊戲介面', def: true },
+        { id: 'riftpack', name: '次元裂縫', desc: '融合版的遊戲內容、玩法、平衡、劇情與職業進化，統一啟用。', group: '遊戲內容', seal: true },
         { id: 'mobile', name: '手機版面', desc: '手機專用版面：底部分頁切換、浮動日誌、避開頂端橫幅', group: '遊戲介面' },
         { id: 'npclabel', name: '村莊名牌不出界', desc: '村莊裡站得靠邊的 NPC，名字不會被畫面邊緣切掉', group: '遊戲介面' },
         { id: 'mobname', name: '怪物名稱顯示', desc: '怪物名字要一直顯示、只在鎖定時顯示，還是滑過才顯示', group: '遊戲介面' },
@@ -228,16 +257,16 @@
         applyBannerPad(ov);   // 開啟當下實測橫幅高度直接設 padding-top（不靠 afk-mobile 的非同步 --orig-bar-h，避免量測未就緒時被橫幅蓋住）
         var card = document.createElement('div');
         // 直向 flex:頭與尾(重新整理鈕)固定,只有中間清單區捲動 → 項目再多,底部按鈕永遠在畫面上
-        card.style.cssText = 'background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:14px;max-width:560px;width:100%;max-height:calc(100vh - var(--orig-bar-h,0px) - 30px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6);';
+        card.style.cssText = 'background:#162624;color:#e2ddc9;border:1px solid #71826b;border-radius:2px;max-width:560px;width:100%;max-height:calc(100vh - var(--orig-bar-h,0px) - 30px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6);';
         // iOS Safari 的 vh 含工具列高度,卡片底(重新整理鈕)會被切出可視範圍 → 覆寫成 dvh+safe-area(舊瀏覽器不認 dvh 就留上面 vh 版)。
         // 頂端扣「開啟當下實測」的橫幅 pad(與 applyBannerPad 同源),不用 --orig-bar-h(非同步、可能還是 0)。
         card.style.maxHeight = 'calc(100dvh - ' + (bannerPadPx() + 16) + 'px - env(safe-area-inset-bottom, 0px))';
 
-        var groups = {};
+        var groups = {}, options = api.options();
         // 次元封印的分組鍵＝「次元封印｜原分類」，排在所有一般分類後面（面板最下面）
-        var gkey = function (r) { return r.seal ? SEAL_NAME + '｜' + r.group : r.group; };
-        registry.forEach(function (r) { if (!r.parent && !r.merged) (groups[gkey(r)] = groups[gkey(r)] || []).push(r); });
-        registry.forEach(function (r) {   // 子選項緊接排在自己的父項後面（同一組內）
+        var gkey = function (r) { return UI_GROUPS[r.id]; };
+        options.forEach(function (r) { if (!r.parent && !r.merged) (groups[gkey(r)] = groups[gkey(r)] || []).push(r); });
+        options.forEach(function (r) {   // 子選項緊接排在自己的父項後面（同一組內）
             if (!r.parent || r.merged) return;
             var pr = find(r.parent), g = groups[pr ? gkey(pr) : gkey(r)];
             if (!g) { (groups[gkey(r)] = groups[gkey(r)] || []).push(r); return; }
@@ -246,58 +275,62 @@
             if (at < 0) g.push(r); else g.splice(at + 1, 0, r);
         });
 
-        var html = '<div style="padding:16px 18px;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto;">'
-            + '<div><div style="font-size:17px;font-weight:700;">🎚️ 外掛開關</div>'
-            + '<div style="font-size:12px;color:#94a3b8;margin-top:3px;">某個外掛出問題時，先關掉它就能用原版繼續玩，作者修好再打開。改完按「重新整理」生效。</div></div>'
-            + '<button id="afk-tg-close" style="flex:none;background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:6px 12px;cursor:pointer;">關閉</button></div>'
+        var html = '<div style="padding:16px 18px;border-bottom:1px solid #293c35;display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto;">'
+            + '<div><div style="font-size:17px;font-weight:700;">🎚️ 介面設定</div>'
+            + '<div style="font-size:12px;color:#b2bdad;margin-top:3px;">版型與基本操作已整合，這裡只調整介面與效能偏好。改完按「重新整理」套用。</div></div>'
+            + '<button id="afk-tg-close" style="flex:none;background:#293c35;border:1px solid #71826b;color:#e2ddc9;border-radius:2px;padding:6px 12px;cursor:pointer;">關閉</button></div>'
             // 工具列：搜尋 ＋「只看我改過的」（玩家關掉某項之後往往忘了自己關過什麼（回報過），要他從幾十項裡捲著找出來不合理）
             //   ⚠ 搜尋框 font-size 一定要 ≥16px：iOS Safari 對小於 16px 的輸入框會在 focus 時自動放大整頁，之後縮不回去。
             + '<div style="padding:9px 14px 0;flex:0 0 auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
-            + '<input id="afk-tg-search" type="search" placeholder="搜尋外掛名稱或說明"'
-            + ' style="flex:1 1 150px;min-width:0;background:#0b1222;border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:6px 10px;font-size:16px;font-family:inherit;">'
+            + '<input id="afk-tg-search" type="search" placeholder="搜尋介面設定"'
+            + ' style="flex:1 1 150px;min-width:0;background:#10201f;border:1px solid #71826b;color:#e2ddc9;border-radius:2px;padding:6px 10px;font-size:16px;font-family:inherit;">'
             + '<button id="afk-tg-onlychanged"'
-            + ' style="flex:none;background:#1e293b;border:1px solid #334155;color:#cbd5e1;border-radius:8px;padding:6px 11px;font-size:12px;cursor:pointer;font-family:inherit;">'
+            + ' style="flex:none;background:#293c35;border:1px solid #71826b;color:#cbd5e1;border-radius:2px;padding:6px 11px;font-size:12px;cursor:pointer;font-family:inherit;">'
             + '只看我改過的（' + changedCount() + '）</button></div>'
             + '<div id="afk-tg-list" style="padding:10px 14px;flex:1 1 auto;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;">'
-            + '<div id="afk-tg-empty" style="display:none;color:#94a3b8;padding:14px;text-align:center;">目前全部都是預設值。</div>';
+            + '<div id="afk-tg-empty" style="display:none;color:#b2bdad;padding:14px;text-align:center;">目前全部都是預設值。</div>';
 
-        if (!registry.length) {
-            html += '<div style="color:#94a3b8;padding:14px;text-align:center;">目前沒有任何外掛登錄開關。</div>';
+        if (!options.length) {
+            html += '<div style="color:#b2bdad;padding:14px;text-align:center;">目前沒有可調整的介面選項。</div>';
         } else {
             var sealRank = function (g) { var i = SEAL_ORDER.indexOf(g.slice(SEAL_NAME.length + 1)); return i < 0 ? SEAL_ORDER.length : i; };
             var gks = Object.keys(groups), plain = gks.filter(function (g) { return g.indexOf(SEAL_NAME + '｜') !== 0; }),
                 sealed = gks.filter(function (g) { return g.indexOf(SEAL_NAME + '｜') === 0; }).sort(function (a, b) { return sealRank(a) - sealRank(b); });
             plain.concat(sealed).forEach(function (g) {
                 var isSeal = g.indexOf(SEAL_NAME + '｜') === 0;
-                if (isSeal && g === sealed[0]) html += '<div data-tgseal="1" style="margin:22px 2px 4px;padding:9px 12px;border-radius:10px;background:linear-gradient(90deg,#3b0764,#1e1b4b);border:1px solid #7c3aed;color:#e9d5ff;font-weight:800;font-size:15px;letter-spacing:2px;">🔮 ' + esc(SEAL_NAME) + '</div>';
+                if (isSeal && g === sealed[0]) html += '<div data-tgseal="1" style="margin:22px 2px 4px;padding:9px 12px;border-radius:2px;background:linear-gradient(90deg,#3b0764,#1e1b4b);border:1px solid #7c3aed;color:#e9d5ff;font-weight:800;font-size:15px;letter-spacing:2px;">🔮 ' + esc(SEAL_NAME) + '</div>';
                 html += isSeal ? '<div data-tggroup="' + esc(g) + '" style="font-size:11px;color:#c4b5fd;font-weight:700;margin:10px 4px 5px 8px;">・' + esc(g.slice(SEAL_NAME.length + 1)) + '</div>'
-                    : '<div data-tggroup="' + esc(g) + '" style="font-size:12px;color:#7dd3fc;font-weight:700;margin:12px 4px 6px;">' + esc(g) + '</div>';
+                    : '<div data-tggroup="' + esc(g) + '" style="font-size:12px;color:#d9c68e;font-weight:700;margin:12px 4px 6px;">' + esc(g) + '</div>';
                 groups[g].forEach(function (r) {
                     var on = api.enabled(r.id);
                     html += '<label data-tgrow="' + esc(r.id) + '" data-tggrp="' + esc(g) + '" data-tgchanged="' + (isChanged(r) ? '1' : '0') + '"'
-                        + ' style="display:flex;align-items:center;gap:12px;padding:9px 10px;border:1px solid #1e293b;border-radius:10px;margin-bottom:6px;background:#0b1222;' + (r.parent ? 'margin-left:22px;' : '')
+                        + ' style="display:flex;align-items:center;gap:12px;padding:9px 10px;border:1px solid #293c35;border-radius:2px;margin-bottom:6px;background:#10201f;' + (r.parent ? 'margin-left:22px;' : '')
                         + (r.locked ? 'cursor:not-allowed;opacity:.6;' : 'cursor:pointer;') + '">'
                         + '<input type="checkbox" data-tgid="' + esc(r.id) + '" ' + (on ? 'checked' : '') + (r.locked ? ' disabled' : '')
-                        + ' style="width:18px;height:18px;flex:none;accent-color:#38bdf8;">'
+                        + ' style="width:18px;height:18px;flex:none;accent-color:#b99a58;">'
                         + '<span style="flex:1;min-width:0;"><span style="font-weight:600;">' + esc(r.name) + '</span>'
                         + (r.locked ? '<span style="font-size:11px;color:#fbbf24;margin-left:6px;">暫停使用</span>' : '')
-                        + (r.desc ? '<span style="display:block;font-size:11px;color:#94a3b8;margin-top:2px;">' + esc(r.desc) + '</span>' : '')
+                        + (r.desc ? '<span style="display:block;font-size:11px;color:#b2bdad;margin-top:2px;">' + esc(r.desc) + '</span>' : '')
                         + (r.locked ? '<span style="display:block;font-size:11px;color:#fbbf24;margin-top:2px;">' + esc(r.locked) + '</span>' : '')
                         + '</span></label>';
                 });
             });
         }
         html += '</div>'
-            + '<div id="afk-tg-note" style="display:none;padding:10px 16px;color:#fbbf24;font-size:13px;border-top:1px solid #1e293b;flex:0 0 auto;">已變更，按下方「重新整理」套用。</div>'
-            + '<div style="padding:12px 16px;border-top:1px solid #1e293b;display:flex;gap:10px;justify-content:flex-end;flex:0 0 auto;">'
-            + '<button id="afk-tg-reset" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:8px 14px;cursor:pointer;">全部恢復預設</button>'
-            + '<button id="afk-tg-reload" style="background:#0ea5e9;border:none;color:#04263a;font-weight:700;border-radius:8px;padding:8px 16px;cursor:pointer;">重新整理</button></div>';
+            + '<div id="afk-tg-note" style="display:none;padding:10px 16px;color:#fbbf24;font-size:13px;border-top:1px solid #293c35;flex:0 0 auto;">已變更，按下方「重新整理」套用。</div>'
+            + '<div style="padding:12px 16px;border-top:1px solid #293c35;display:flex;gap:10px;justify-content:flex-end;flex:0 0 auto;">'
+            + '<button id="afk-tg-reset" style="background:#293c35;border:1px solid #71826b;color:#e2ddc9;border-radius:2px;padding:8px 14px;cursor:pointer;">介面恢復預設</button>'
+            + '<button id="afk-tg-reload" style="background:#816633;border:none;color:#fff0bb;font-weight:700;border-radius:2px;padding:8px 16px;cursor:pointer;">重新整理</button></div>';
 
         card.innerHTML = html;
         ov.appendChild(card);
         document.body.appendChild(ov);
 
-        function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+        var layer = null, previousFocus = document.activeElement;
+        function dismiss() { layer = null; if (ov.parentNode) ov.parentNode.removeChild(ov); if (previousFocus && previousFocus.isConnected && previousFocus.focus) previousFocus.focus(); }
+        function close() { if (layer && window.AFK_UI) AFK_UI.closeLayer(layer); else dismiss(); }
+        // The in-game phone shell owns its own Back layer; the login dialog uses native navigation.
+        if (!document.body.classList.contains('m-unified') && window.AFK_UI && AFK_UI.openLayer) layer = AFK_UI.openLayer(dismiss);
         ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
         card.querySelector('#afk-tg-close').addEventListener('click', close);
         var note = card.querySelector('#afk-tg-note');
@@ -305,7 +338,7 @@
             cb.addEventListener('change', function () { api.set(cb.getAttribute('data-tgid'), cb.checked); note.style.display = 'block'; });
         });
         card.querySelector('#afk-tg-reset').addEventListener('click', function () {
-            registry.forEach(function (r) { try { localStorage.removeItem(LS + r.id); } catch (e) {} });
+            options.forEach(function (r) { try { localStorage.removeItem(LS + r.id); } catch (e) {} });
             lsCache = {}; memo = Object.create(null);
             card.querySelectorAll('input[data-tgid]').forEach(function (cb) { cb.checked = api.enabled(cb.getAttribute('data-tgid')); });
             note.style.display = 'block';
@@ -326,10 +359,10 @@
         }
         function applyFilter() {
             var vis = {};
-            registry.forEach(function (r) { vis[r.id] = (!onlyChanged || isChanged(r)) && matchQuery(r); });
+            options.forEach(function (r) { vis[r.id] = (!onlyChanged || isChanged(r)) && matchQuery(r); });
             // 子選項被搜到 → 父項一起顯示：縮排那列孤零零掛著看不出是誰的子項，也看不出「父項關掉它就失效」。
             //   只在搜尋時做——「只看我改過的」原本就刻意只列改過的，不能被這條拉回沒改過的父項。
-            if (query && !onlyChanged) registry.forEach(function (r) { if (r.parent && vis[r.id]) vis[r.parent] = true; });
+            if (query && !onlyChanged) options.forEach(function (r) { if (r.parent && vis[r.id]) vis[r.parent] = true; });
             var n = 0;
             card.querySelectorAll('label[data-tgrow]').forEach(function (row) {
                 var show = !!vis[row.getAttribute('data-tgrow')];
@@ -345,15 +378,15 @@
             var sealHead = card.querySelector('[data-tgseal]');   // 次元封印底下全被濾掉 → 大標題一起收
             if (sealHead) sealHead.style.display = [].slice.call(card.querySelectorAll('[data-tggroup^="' + SEAL_NAME + '｜"]')).some(function (h) { return h.style.display !== 'none'; }) ? '' : 'none';
             if (emptyEl) {
-                emptyEl.textContent = query ? '找不到符合的外掛。' : '目前全部都是預設值。';
-                emptyEl.style.display = (registry.length && n === 0) ? '' : 'none';
+                emptyEl.textContent = query ? '找不到符合的介面設定。' : '目前全部都是預設值。';
+                emptyEl.style.display = (options.length && n === 0) ? '' : 'none';
             }
         }
 
         ocBtn.addEventListener('click', function () {
             onlyChanged = !onlyChanged;
             ocBtn.textContent = onlyChanged ? '看全部（改過 ' + changedCount() + ' 項）' : '只看我改過的（' + changedCount() + '）';
-            ocBtn.style.background = onlyChanged ? '#0e7490' : '#1e293b';
+            ocBtn.style.background = onlyChanged ? '#0e7490' : '#293c35';
             ocBtn.style.color = onlyChanged ? '#e0f2fe' : '#cbd5e1';
             applyFilter();
         });
@@ -366,7 +399,7 @@
     // 「改過」＝存過設定而且跟預設不同。用存進去的值判斷、不是用 enabled()：
     //   子選項在父項關掉時 enabled() 一律是 false，拿它比就會把玩家沒碰過的東西也算成改過。
     function isChanged(r) {
-        if (r.merged) return false;
+        if (!adjustable(r)) return false;
         var v = null;
         try { v = localStorage.getItem(LS + r.id); } catch (e) { return false; }
         if (v === null) return false;
@@ -402,9 +435,10 @@
         if (!document.body) return false;
         var btn = document.createElement('button');
         btn.id = 'afk-toggles-entry';
-        btn.textContent = '🎚️ 外掛';   // 只放 emoji 時玩家認不出是按鈕（回報過「左上角找不到」），補上文字
+        btn.textContent = '🎚️ 介面';
+        btn.title = '介面設定';   // 只放 emoji 時玩家認不出是按鈕（回報過「左上角找不到」），補上文字
         btn.title = '外掛開關';
-        btn.style.cssText = 'position:fixed;left:6px;top:calc(var(--orig-bar-h,0px) + 6px);z-index:100001;background:rgba(15,23,42,.92);border:1px solid #64748b;color:#e2e8f0;border-radius:8px;padding:4px 9px;font-size:14px;font-weight:700;line-height:1.35;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.5);';
+        btn.style.cssText = 'position:fixed;left:6px;top:calc(var(--orig-bar-h,0px) + 6px);z-index:100001;background:rgba(15,23,42,.92);border:1px solid #64748b;color:#e2ddc9;border-radius:2px;padding:4px 9px;font-size:14px;font-weight:700;line-height:1.35;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.5);';
         // 再點一次=關閉(toggle):面板開著就收掉,沒開才開。
         btn.addEventListener('click', function () {
             var ov = document.getElementById('afk-toggles-overlay');
@@ -426,8 +460,9 @@
         // 以「遊戲畫面是否顯示」為準（最可靠）：game-screen 沒隱藏＝在遊戲中→藏開關鈕；否則(首頁/選角/創角)顯示。
         var gs = document.getElementById('game-screen');
         var inGame = gs && !gs.classList.contains('hidden');
-        btn.style.display = (inGame || inStandaloneView()) ? 'none' : '';
-        syncEntryTop();   // 橫幅由遊戲 loop 晚注入、高度也會變（換行）→ 每秒跟著校正一次
+        var hide = inGame || inStandaloneView();
+        btn.style.display = hide ? 'none' : '';
+        if (!hide) syncEntryTop();   // 藏起來時不必量（11-11 效能：遊戲中每秒一次 getComputedStyle 會強制重算樣式）   // 橫幅由遊戲 loop 晚注入、高度也會變（換行）→ 每秒跟著校正一次
     }
     syncEntryVisibility();
     setInterval(function () { if (!document.hidden) syncEntryVisibility(); }, 1000);   // 背景分頁看不到畫面，量測/校正純浪費

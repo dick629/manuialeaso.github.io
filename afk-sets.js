@@ -277,7 +277,7 @@
       var m = (typeof mapState !== 'undefined' && mapState.mobs) ? mapState.mobs[idx] : null;
       var boss = !!(m && m.boss && !m._dead && !m.siegeEnemy && !m._dreamStar && m.race !== '建築');   // 暗夢星迴只給固定掉落
       var r = oKill.apply(this, arguments);
-      try { if (boss && m._dead && !m._afkEventDrop) { m._afkEventDrop = true; if (Math.random() < 0.0005) { var id = EVENT[Math.floor(Math.random() * EVENT.length)]; gainItem(id, 1); } } } catch (e) {}
+      try { if (boss && m._dead && !m._afkEventDrop) { m._afkEventDrop = true; if (Math.random() < 0.0005) { var id = EVENT[Math.floor(Math.random() * EVENT.length)]; if (!window.LineageDropPolicy || window.LineageDropPolicy.allowEvent(m, id)) gainItem(id, 1); } } } catch (e) {}
       return r;
     };
   }

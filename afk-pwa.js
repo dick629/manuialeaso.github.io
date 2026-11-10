@@ -78,11 +78,15 @@
   }
   function installNoticeBox(onOk) {
     var m = document.createElement('div');
+    m.id = 'afk-pwa-notice';
+    m.setAttribute('role', 'dialog');
+    m.setAttribute('aria-modal', 'true');
+    m.setAttribute('aria-label', '安裝成 APP');
     m.setAttribute('style', 'position:fixed;inset:0;top:var(--orig-bar-h,0px);z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px;');
     m.innerHTML =
       '<div style="background:#1e293b;border:1px solid #334155;border-radius:12px;max-width:380px;width:100%;padding:20px;color:#e2e8f0;text-align:left;">' +
       '<div style="font-weight:bold;font-size:15px;margin-bottom:12px;text-align:center;">📥 安裝成 APP</div>' +
-      '<div style="line-height:1.8;font-size:13px;color:#cbd5e1;margin-bottom:16px;">' +
+      '<div class="lm-install-body" style="line-height:1.8;font-size:13px;color:#cbd5e1;margin-bottom:16px;">' +
       '安裝後可從桌面／主畫面像 App 一樣開啟，存檔保存在這個瀏覽器／裝置上。圖片會在你玩到時自動下載並快取，玩過的內容離線也能看。<br><br>' +
       '<b style="color:#fbbf24;">提醒：</b>日後若要「移除安裝」，<b>部分瀏覽器或系統會連同存檔一起清掉，部分則會保留</b>——各家行為不一定相同。為了保險，移除前建議先到遊戲內<b>匯出存檔</b>備份，日後重裝或換裝置都能再匯入回來。' +
       '</div>' +

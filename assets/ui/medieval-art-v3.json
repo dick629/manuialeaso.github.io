@@ -1,0 +1,28 @@
+{
+  "version": 3,
+  "date": "2026-11-09",
+  "generator": "Built-in image_gen",
+  "assets": [
+    {
+      "file": "medieval-slate-v3.png",
+      "runtime": "medieval-slate-v3.webp",
+      "prompt": "Use case: stylized-concept. Asset type: seamless reusable material tile for a premium medieval Korean fantasy RPG user interface. Create a square flat orthographic texture of very dark charcoal-blue slate and forged blackened steel, understated oxidized pewter scratches with a faint warm umber patina, soft fine-grained weathered stone. The entire image is material only, edge to edge, nearly uniform exposure with fine tactile texture readable at 360px. Overall dark #171d1d to #303735, restrained desaturated cold silver flecks and faint aged bronze pores. Sophisticated hand-painted late-1990s/early-2000s PC RPG interface craftsmanship, grounded antique surfaces, no modern dashboard feel. It will sit behind cream text and classic item icons, so use restrained local contrast, but sufficiently visible material relief. NO frame, NO border, NO corners, NO symbols, NO text, NO letters, NO icon, NO object, NO UI mockup, NO logo, NO watermark. Neutral even diffuse lighting, no perspective, no directional gradients or center spotlight, seamless all four edges. Original production-ready seamless texture."
+    },
+    {
+      "file": "medieval-pewter-frame-v3.png",
+      "runtime": "medieval-pewter-frame-v3.webp",
+      "prompt": "Use case: stylized-concept. Production asset: ONE square nine-slice border frame for a medieval fantasy RPG interface, drawn in realistic hand-painted early PC RPG style. Entire CENTER is genuinely transparent, no fill, no checkerboard. Outer square silhouette with straight parallel sides and compact squared corners. Restrained antique pewter / weathered silver metal bevels, subtle dark bronze inlays, black engraved hairlines and worn catches, sophisticated sculpted metallic thickness. Frame occupies only the outer 6 percent of the square on each side. The four corner joints have small restrained embossed interlaced metal leaf details, no protrusions outside the square. Top, bottom, left and right edge MIDPOINTS are completely straight simple repeating rail profiles, so CSS nine-slice stretching works, with no medallion, no central ornaments, no button, no gold gem. Strong crisp bevel relief to remain recognizable when scaled to 6-10 pixels wide around a 390-pixel mobile panel. Consistent soft top-left light. Symmetric design, front orthographic flat view, not in perspective. All outside/background and inside transparent. NO text, labels, icons, numbers, logos, watermark, scene, UI screenshot or drop shadow outside the frame. No giant baroque flourishes, no red, no colorful gems."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://gnn.gamer.com.tw/detail.php?sn=204652",
+      "use": "Lineage M HUD and equipment panel reference; no image files copied into game."
+    },
+    {
+      "url": "https://www.inven.co.kr/board/lineageclassic/6482/2611",
+      "use": "Classic Lineage inventory and status composition reference; no image files copied into game."
+    }
+  ],
+  "conversion": "Runtime and preview WebP derivatives resize/compress the generated originals without redrawing. The border keeps alpha. CSS handles nine-slice geometry."
+}

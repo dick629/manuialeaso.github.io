@@ -55,7 +55,7 @@
   wrap('_supHeal',function(old){return function(target,amount){
     if(!enabled()||!target)return old.apply(this,arguments);
     var c=R.context();if(c&&c.sourceId&&R.byKey[c.sourceId])return api.heal(target,amount,{owner:c.actor,source:c.sourceId});
-    var n=R.foreignHeal(target,amount,'spell');
+    var n=R.foreignHeal(target,amount,'spell',{healer:(R.action()&&R.action().actor)||player});
     if(W.AFK_RELIC_DEFENSE&&W.AFK_RELIC_DEFENSE.healingReduction)n*=1-Math.min(.75,W.AFK_RELIC_DEFENSE.healingReduction(target,api.now())||0);
     var result=old.call(this,target,n);R.foreignHealDone(target,n);return result;
   };});

@@ -457,7 +457,7 @@
   W.addEventListener('resize', function () {
     ['afk-gh-win', 'afk-gh-ball'].forEach(function (id) { var n = el(id); if (!n || n.style.display === 'none' || n.style.transform !== 'none') return; var c = clampPos(n, parseInt(n.style.left, 10) || 0, parseInt(n.style.top, 10) || 0); setPos(n, c.x, c.y); });
   });
-  function isMobileHidden() { var b = document.body; if (!b.classList.contains('m-mobile')) return false; return !b.classList.contains('mview-center') || b.classList.contains('mlog-open'); }
+  function isMobileHidden() { var b = document.body; if (b.classList.contains('m-unified') || !b.classList.contains('m-mobile')) return false; return !b.classList.contains('mview-center') || b.classList.contains('mlog-open'); }
   var visObs = null;
   function updateVis() { var h = isMobileHidden(); ['afk-gh-win', 'afk-gh-ball'].forEach(function (id) { var n = el(id); if (n) n.style.visibility = h ? 'hidden' : ''; }); }
   function toCenter() { try { if (document.body.classList.contains('m-mobile') && W.__afkm && typeof W.__afkm.setView === 'function') W.__afkm.setView('center'); } catch (e) {} }
@@ -492,6 +492,8 @@
     return true;
   }
   function close() {
+    if(W.LineageArcadeEntry)W.LineageArcadeEntry.cancel();
+    if(W.LineageArcade)W.LineageArcade.suspend();
     stopAuto(); stopAnims(); finishShow(); ui.busy = false; maryCollect(true);
     var w = el('afk-gh-win'), b = el('afk-gh-ball'); if (w) w.style.display = 'none'; if (b) b.style.display = 'none'; ui.min = false;
   }
@@ -504,9 +506,10 @@
   }
   function go(view) {
     if (ui.busy) return;
+    if(W.LineageArcade)W.LineageArcade.suspend();
     if (ui.view === 'mary' && view !== 'mary') maryCollect(true);
     stopAuto(); ui.view = view; ui.msg = '';
-    var w = win(); w.className = 'gh-win' + (view === 'bac' ? ' bac' : view === 'slot' ? ' slot' : view === 'mary' ? ' mary' : '');
+    var w = win(); w.className = 'gh-win' + (view === 'bac' ? ' bac' : view === 'slot' ? ' slot' : view === 'mary' ? ' mary' : '') + (w.classList.contains('lm-surface') ? ' lm-surface' : '');
     render();
   }
   function classic() { var p = P(); return !!(p && p.classicMode); }
@@ -544,6 +547,7 @@
     if (!cl && W.__afkFish && W.__afkFish.on()) h += '<button type="button" class="gh-card" data-gh="fish"><span class="ico">🐟</span><b>' + W.__afkFish.NAME + '</b><span>捕魚機：法利昂、幽靈船長、特殊武器、JP 轉盤</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:mary"><span class="ico">🍒</span><b>' + MARY_NAME + '</b><span>水果盤跑燈、ONCE MORE 送燈、比倍、JP</span></button>';
     if (typeof W.openRaceWindow === 'function') h += '<button type="button" class="gh-card" data-gh="dog"><span class="ico">🐕</span><b>賽狗場</b><span>奇岩賽狗，押冠軍</span></button>';
+    if (!cl && W.LineageArcadeEntry) h += '<button type="button" class="gh-card" data-gh="arcade:tian"><span class="ico">🀄</span><b>四人打天九</b><span>傳統文武牌組・一般／超強 AI 桌</span></button><button type="button" class="gh-card" data-gh="arcade:bj"><span class="ico">♠</span><b>21 點</b><span>要牌、停牌、加倍・超強 AI 擂台</span></button><button type="button" class="gh-card" data-gh="arcade:pin"><span class="ico">●</span><b>柏青哥</b><span>三台機器・入賞抽選・大當與 ST</span></button>';
     h += '</div>';
     if (!cl) h += '<div class="gh-btns"><button type="button" data-gh="go:stats">📊 戰績</button></div>';
     else h += '<div class="gh-msg">經典模式只開放賽狗場。</div>';
@@ -973,6 +977,7 @@
     if (a === 'poker') { close(); try { W.__afkPoker.openLobby(); } catch (e) {} return; }
     if (a === 'fish') { close(); try { W.__afkFish.open(); } catch (e) { console.warn(e); } return; }
     if (a === 'dog') { close(); toCenter(); try { W.openRaceWindow(); } catch (e) {} return; }
+    if (p[0] === 'arcade' && W.LineageArcadeEntry) return W.LineageArcadeEntry.open(p[1]);
     if (p[0] === 'go') return go(p[1]);
     if (ui.busy && a !== 'stop') return;
     if (p[0] === 'cur') { if (ui.auto) return; maryCollect(true); ui.cur = p[1]; LS('afk_gh_cur', ui.cur); bac.bets = {}; ui.msg = ''; return render(); }

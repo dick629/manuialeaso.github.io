@@ -5,8 +5,8 @@
   var originals=new WeakMap(),CORE=['leather','bone','dk','silver','oasis','gnome','mage','kurt','steel','mr','guard','kinglord','demon','darkelf','orin','icequeen_charm','frost','bluepirate','emperor','priest'];
   var SHERINE=['紅獅','白鳥','鐵衛','麗人','疾風','月光','學徒','魔女','暗影','幻覺','龍血','狂怒'];
   function eqOf(p){var a=R.action();return originals.get(p)||a&&a.gm&&a.actor===p&&a.gmOriginalEquipment||p&&p.eq||{};}
-  function armor(p){return R.enabled()&&Object.values(eqOf(p)).some(function(e){return e&&String(e.id)==='99998';});}
-  function gm(p){return R.enabled()&&Object.values(eqOf(p)).some(function(e){return e&&['99999','99998'].indexOf(String(e.id))>=0;});}
+  function armor(p){return R.enabled()&&Object.values(eqOf(p)).some(function(e){return e&&String(e.id)==='99998'&&!!W.LineageOwnerGuard?.allowed(p,e);});}
+  function gm(p){return R.enabled()&&Object.values(eqOf(p)).some(function(e){return e&&['99999','99998'].indexOf(String(e.id))>=0&&!!W.LineageOwnerGuard?.allowed(p,e);});}
   function install(id,type,name,slot){
     var d={n:name,type:type,slot:slot,req:'all',gmOnly:true,noEnhance:true,noAscUp:true,noTrade:true,noSell:true,noUse:true,gachaWeight:0,p:0,weight:0,relicAsc:5,relicPlus:0,relicFixed:true,c:'text-fuchsia-200',img:type==='wpn'?'assets/icons/weapons/真．冥皇執行劍.png':'assets/icons/armors/真．冥皇鎧甲.png',d:'【GM 專屬・昇華支配＋5】\n'+(type==='wpn'?'萬兵同鳴，萬象歸一。':'千重甲冑，眾神之契。')+'\n同時具備全部 250 件遺物的終階效果；原有觸發條件與各自冷卻照常生效。'+(type==='arm'?'另啟用全部 57 組套裝效果。':'')+'\n同源效果只生效一次。狀態固定，不可強化、合成或進化。'};
     if(type==='wpn'){d.dmgS=1;d.dmgL=1;d.oneHand=true;}
@@ -49,7 +49,7 @@
     });}finally{try{R.finishAction(a);}finally{R.setAction(before);if(a.gmRecalc)R.recalc(actor);}}
     return {segments:segments,damage:total};
   }
-  function grant(id){id=String(id);if(['99999','99998'].indexOf(id)<0)throw new Error('GM item id must be 99999 or 99998');if(!player||!player.cls)throw new Error('請先進入測試角色。');gainItem(id,1,true,true);if(typeof renderTabs==='function')renderTabs(true);return id;}
+  function grant(){throw new Error('GM 裝備不開放發放，只保留帳號已綁定的原有裝備。');}
   W.AFK_RELIC_GM={active:gm,armorActive:armor,realEquipment:eqOf,setCount:setCount,pluginSets:pluginSets,sherine:sherine,hasMember:hasMember,mergeForms:mergeForms,packet:packet,grant:grant,setConfigurations:57};
   W.__afkGM=W.AFK_RELIC_GM;
 })();

@@ -297,6 +297,19 @@
   var timeUpOff = function (o, why) {
     var c = o.cur; if (!c) return;
     if (c.prog && Math.floor((c.prog.wave | 0) / CFG.def.perRound) + 1 >= CFG.holdRound) {
+      if (W.LineageClanRewards) {
+        var expected = [c.week,c.assembleAt,c.target].join('|');
+        return W.LineageClanRewards.settle('守城逾時獎勵', function () {
+          var live = store(), next = live.cur;
+          if (!next || next.status !== 'defending' || [next.week,next.assembleAt,next.target].join('|') !== expected) return null;
+          return function () {
+            next.status='resolved';next.result='defended';delete next.prog;live.level=Math.min(lvMax(),(next.lvl||0)+1);
+            next.rewardClaim={role:clanRoleId(P()),at:now()};write(live);
+            if (store().cur.status !== 'resolved' || !store().cur.rewardClaim) throw Error('守城結算保存失敗');
+            rewardActive=true;try{grantDefense();}finally{rewardActive=false;}
+          };
+        });
+      }
       var nl = Math.min(lvMax(), (c.lvl || 0) + 1);
       c.status = 'resolved'; c.result = 'defended'; c.why = '第 ' + CFG.holdRound + ' 輪撐到時間到'; delete c.prog; o.level = nl; write(o);
       sys('<span class="text-yellow-300 font-bold">🏆 守城成功！' + esc(cityName(c.target)) + '撐到了最後（第 ' + CFG.holdRound + ' 輪時間到）。</span><span class="text-orange-300 font-bold">　' + ((c.lvl || 0) >= lvMax() ? '守城難度維持 Lv ' + lvMax() + '（最高）' : '下次守城難度提升到 Lv ' + nl) + '</span>');
@@ -449,6 +462,7 @@
   W.__afkNoOfflineMaps = (W.__afkNoOfflineMaps || []).concat([DEF_MAP, RET_MAP]);
   try { if (typeof SANCTUARY_MAP_NAMES !== 'undefined') { SANCTUARY_MAP_NAMES[DEF_MAP] = '守城戰'; SANCTUARY_MAP_NAMES[RET_MAP] = '奪回戰'; } } catch (e) {}
   try { if (typeof MAP_DESC !== 'undefined') { MAP_DESC[DEF_MAP] = '敵對血盟的軍隊正在攻城。30 分鐘內擋下 25 波敵軍就守住了；全隊合計只能倒下 5 次，你倒下會轉為攻城，把那一波奪回來。'; MAP_DESC[RET_MAP] = '奪回被攻下的城堡：擊退 5 波守軍。'; } } catch (e) {}
+  var rewardActive = false;
   var run = null;   // { kind:'def'|'ret', city, t0, wave, waves, queue, pauseUntil, snap, mode:'def'|'atk', flips, flipNext }
   var onMap = function () { return !!(typeof mapState !== 'undefined' && mapState && MY_MAPS[mapState.current]); };
   var busy = function () {
@@ -789,6 +803,9 @@
     if (prog) {   // 接續上次的進度：從那一波重打，計時照算（離開的時間也算）
       run.t0 = tk() - Math.round(prog.used || 0); run.wave = Math.max(-1, (prog.wave | 0) - 1); run.waiting = run.wave >= 0; run.flips = prog.flips || 0; run.flipNext = prog.mode === 'atk'; run.downs = prog.downs || 0;
     }
+    run.owner = P();
+    var event = store(); run.eventKey = event.cur ? [event.cur.week,event.cur.assembleAt,event.cur.target].join('|') : '';
+    run.lossAt = event.lost[city] && event.lost[city].at;
     enterMap(kind === 'ret' ? RET_MAP : DEF_MAP, city);   // 先進戰場再複製面板（城陷之恥只在狩獵區）
     run.snap = snapPanel();
     guardParty();
@@ -886,6 +903,7 @@
     try { if (!S().ff) { renderMobs(); updateUI(); } } catch (e) {}
   };
   var timeline = function () {
+    if (run && run.finishing) return;
     if (!run) return;
     var t = tk();
     if (player.dead) { onDeath(); return; }
@@ -943,8 +961,37 @@
     });
   };
   // result：'win'、'lose'（守城戰＝失守；奪回戰＝攻城戰敗）、'leave'（離開戰場：守城戰保留進度、奪回戰算輸）
-  var finish = function (result, why, quiet) {
-    var r = run; if (!r) return;
+  var finish = function (result, why, quiet, claimed) {
+    var r = run; if (!r || r.owner && r.owner !== P()) return;
+    if (result === 'win' && W.LineageClanRewards && !claimed) {
+      if (r.finishing) return r.settlement;
+      r.finishing = true;
+      r.settlement = W.LineageClanRewards.settle('城戰獎勵', function () {
+        var o = store(), c = o.cur;
+        if (r.kind === 'def') {
+          if (!c || c.status !== 'defending' || [c.week,c.assembleAt,c.target].join('|') !== r.eventKey) return null;
+        } else if (!o.lost[r.city] || o.lost[r.city].at !== r.lossAt || held().indexOf(r.city) >= 0) return null;
+        return function () {
+          rewardActive = true;
+          try {
+            if (r.kind === 'def') {
+              c.status = 'resolved'; c.result = 'defended'; delete c.prog; o.level = Math.min(lvMax(), (r.lvl || 0) + 1);
+              c.rewardClaim = {role:clanRoleId(P()),at:now()}; write(o);
+              var verify = store().cur;
+              if (!verify || verify.status !== 'resolved' || !verify.rewardClaim || verify.rewardClaim.role !== clanRoleId(P())) throw Error('守城結算保存失敗');
+              grantDefense();
+            } else retakeWin(r.city);
+          } finally { rewardActive = false; }
+        };
+      }).then(function (v) {
+        if (run !== r || P() !== r.owner) return v;
+        r.finishing = false;
+        if (v.ok) finish(result, why, quiet, true);
+        else sys('<span class="text-red-300">城戰獎勵尚未保存，請保持此角色並重試結算。</span>');
+        return v;
+      });
+      return r.settlement;
+    }
     if (result === 'leave' && r.kind === 'def') saveProg(r);
     run = null; unguardAll();
     try { (mapState.mobs || []).forEach(function (m, i) { if (m && m._s2Mirror) mapState.mobs[i] = null; }); } catch (e) {}
@@ -957,7 +1004,7 @@
         if (c && c.status === 'defending') { c.status = 'resolved'; c.result = 'defended'; delete c.prog; o.level = nl; write(o); }
         sys('<span class="text-yellow-300 font-bold">🏆 守城成功！' + esc(cityName(r.city)) + '的城牆上，你的旗幟依然飄揚。</span>' + (why ? '<span class="text-amber-200">（' + esc(why) + '）</span>' : '') + (r.flips ? '<span class="text-slate-300">（途中轉為攻城 ' + r.flips + ' 次）</span>' : '')
           + '<span class="text-orange-300 font-bold">　' + ((r.lvl || 0) >= lvMax() ? '守城難度維持 Lv ' + lvMax() + '（最高）' : '下次守城難度提升到 Lv ' + nl) + '</span>');
-        grantDefense();
+        if (!claimed) grantDefense();
       } else if (result === 'leave') {
         if (c && c.status === 'defending') sys('<span class="text-amber-300 font-bold">你離開了守城戰場（' + esc(why || '') + '）。</span><span class="text-slate-300">進度保留在第 ' + (W.__afkSiege2Last.cleared + 1) + ' 波，但 30 分鐘的計時不會停；回到戰場就能接著打。</span>');
       } else if (c && c.status === 'defending' && !quiet) {
@@ -965,7 +1012,7 @@
         defenseFail(o, why);
       }
     } else {
-      if (result === 'win') retakeWin(r.city);
+      if (result === 'win') { if (!claimed) retakeWin(r.city); }
       else {
         try { localStorage.setItem('afk_siege_lose_until', String(Date.now() + 30 * 60000)); } catch (e) {}
         sys('<span class="text-red-300 font-bold">奪回戰失敗（' + esc(why || '') + '，擊退 ' + Math.max(0, r.wave) + '／' + r.waves + ' 波）。</span><span class="text-slate-300">30 分鐘內，帳號裡所有角色都不能宣戰。</span>');
@@ -978,9 +1025,10 @@
   };
 
   // ── 獎勵 ──
-  var give = function (id, n) { if (!DB.items[id] || !(n > 0)) return null; try { gainItem(id, n, true, true); return DB.items[id].n + ' ×' + n; } catch (e) { return null; } };
-  var addDia = function (n) { try { if (typeof W.pandoraAdjustSharedDiamonds === 'function') { W.pandoraAdjustSharedDiamonds(n); return '龍之鑽石 ' + n.toLocaleString(); } } catch (e) {} return null; };
+  var give = function (id, n) { if (rewardActive && W.LineageClanRewards) { W.LineageClanRewards.give(id,n); return DB.items[id].n + ' ×' + n; } if (!DB.items[id] || !(n > 0)) return null; try { gainItem(id, n, true, true); return DB.items[id].n + ' ×' + n; } catch (e) { return null; } };
+  var addDia = function (n) { if (rewardActive && W.LineageClanRewards) { W.LineageClanRewards.diamonds(n); return '龍之鑽石 ' + n.toLocaleString(); } try { if (typeof W.pandoraAdjustSharedDiamonds === 'function') { W.pandoraAdjustSharedDiamonds(n); return '龍之鑽石 ' + n.toLocaleString(); } } catch (e) {} return null; };
   var grantDefense = function () {
+    if (W.LineageClanRewards && !rewardActive) return []; 
     var R = CFG.reward, got = [];
     got.push(addDia(R.dia));
     ['earth', 'water', 'wind', 'fire'].forEach(function (e) { got.push(give('afk_contempt_' + e, R.contempt)); });
@@ -994,7 +1042,9 @@
   };
   var retakeWin = function (city) {
     var r = null; try { r = W.clanSetCastle(city); } catch (e) {}
+    if (rewardActive && (!r || !r.ok)) throw Error('城堡佔領保存失敗');
     var o = store(); delete o.lost[city]; write(o);
+    if (rewardActive && store().lost[city]) throw Error('奪回結算保存失敗');
     if (r && r.ok) { try { rememberCastleOwnerCity(city); } catch (e) {} }
     try { var d = CW.data(); if (d.castles.indexOf(city) < 0 && d.castles.length < 7) { d.castles.push(city); CW.save(d); } r = r || {}; r.ok = true; } catch (e) {}
     var dia = addDia(CFG.retake.dia);
@@ -1105,6 +1155,8 @@
   var startRetake = function (city, skipConfirm) {
     var why = busy(); if (why) { sys('<span class="text-amber-300">' + esc(why) + '</span>'); return false; }
     var go = function () {
+      var loss = lostInfo(city);
+      if (!loss || loss.lockUntil > now() || held().indexOf(city) >= 0) return false;
       var r = startRun('ret', city, 0);
       sys('<span class="text-red-300 font-bold">⚔ 奪回戰：' + esc(cityName(city)) + '</span><span class="text-slate-300">　守軍是照著你的樣子造出來的影子（八個職業），5 波、強度 ×0.7 → ×1.5，第 2 波起會放職業技能，受到攻擊會反彈 10% 傷害。限時 30 分鐘；你倒下、或全隊合計倒下第 ' + (CFG.downs + 1) + ' 次就失敗。</span>');
       try { saveGame(); } catch (e) {}

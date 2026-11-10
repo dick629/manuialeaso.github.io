@@ -95,7 +95,7 @@ const MISC_ITEM_CAT = {};    // itemId -> catKey
 
 // ---- dex 助手（player.miscDex: itemId -> true）----
 function miscDexHas(id) { return !!(player && player.miscDex && player.miscDex[id]); }
-function miscCatCount(ck) { var arr = MISC_CAT_ITEMS[ck] || []; return { got: arr.filter(miscDexHas).length, total: arr.length }; }
+function miscCatCount(ck) { var arr = (MISC_CAT_ITEMS[ck] || []).filter(function(id) { return !DB.items[id]?.lmDropOptional; }); return { got: arr.filter(miscDexHas).length, total: arr.length }; }
 function miscCatComplete(ck) { var cc = miscCatCount(ck); return cc.total > 0 && cc.got >= cc.total; }
 
 // ---- 全收集加成（道具收藏完成能力）：藥水/卷軸→負重+10·技能書→MP自然恢復+3·材料→藥水恢復+3%·其他→藥水恢復+2% ----
@@ -199,7 +199,7 @@ function renderMiscBook() {
     var _b = MISC_CAT_BONUS[cat.key];
     var _done = cc.total > 0 && cc.got >= cc.total;
     var _bonusHtml = _b ? '<div class="text-sm font-bold ' + (_done ? 'text-emerald-300' : 'text-slate-500') + '">🏆 全收集加成：' + _b.label + '<span class="ml-1 text-xs font-normal">' + (_done ? '（已啟用）' : '（未完成）') + '</span></div>' : '';
-    var head = '<div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">' +
+    var head = '<div class="lm-book-heading flex flex-wrap items-baseline justify-between gap-2 mb-3">' +
         '<div class="text-xl font-bold text-amber-200">' + cat.name + '<span class="text-sm text-slate-400 font-normal ml-2">已收集 ' + cc.got + ' / ' + cc.total + '</span></div>' +
         _bonusHtml +
         '</div>';
@@ -215,15 +215,18 @@ function renderMiscBook() {
         return '<div class="relative bg-slate-800/70 border ' + (got ? 'border-slate-600' : 'border-slate-700/60') + ' rounded-lg p-2 flex flex-col items-center gap-1 w-[112px]' + (got ? ' tip-host cursor-help' : '') + '"' + (got ? ' data-tip-id="' + id + '"' : '') + '>' +
             '<img src="' + imgUrl + '" alt="' + (d.n || '') + '" class="w-14 h-14 object-contain' + silh + (glow ? ' ' + glow : '') + '" onerror="this.onerror=null;this.src=\'https://placehold.co/56x56/1e293b/334155?text=%3F\';">' +
             '<div class="text-center w-full">' + nameHtml + '</div>' +
+            (d.lmDropOptional ? '<small class="text-amber-300 text-[10px]">不計入完成條件</small>' : '') +
             '</div>';
     }).join('');
-    host.innerHTML = head + '<div class="flex flex-wrap gap-2 justify-center">' + (cells || '<div class="text-slate-500 p-8">此類別暫無可收集的道具。</div>') + '</div>';
+    host.innerHTML = head + '<div class="lm-book-grid flex flex-wrap gap-2 justify-center">' + (cells || '<div class="text-slate-500 p-8">此類別暫無可收集的道具。</div>') + '</div>';
 }
 
 // ===== 📦 收藏面板（裝備 / 道具 / 怪物 三大入口）=====
 function openCollectionPanel() { var el = document.getElementById('collection-panel'); if (el) el.classList.remove('hidden'); }
 function closeCollectionPanel() { var el = document.getElementById('collection-panel'); if (el) el.classList.add('hidden'); }
 function collectionPanelBackdrop(ev) { if (ev && ev.target && ev.target.id === 'collection-panel') closeCollectionPanel(); }
-function collectionOpenEquip() { closeCollectionPanel(); if (typeof openEquipBook === 'function') openEquipBook(); }
-function collectionOpenMisc() { closeCollectionPanel(); openMiscBook(); }
-function collectionOpenCard() { closeCollectionPanel(); if (typeof openCardBook === 'function') openCardBook(); }
+// Keep the parent surface in the phone history so Back returns to the collection hub.
+function leaveCollectionPanelForBook() { if (!document.body.classList.contains('m-unified')) closeCollectionPanel(); }
+function collectionOpenEquip() { leaveCollectionPanelForBook(); if (typeof openEquipBook === 'function') openEquipBook(); }
+function collectionOpenMisc() { leaveCollectionPanelForBook(); openMiscBook(); }
+function collectionOpenCard() { leaveCollectionPanelForBook(); if (typeof openCardBook === 'function') openCardBook(); }

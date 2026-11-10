@@ -209,7 +209,7 @@ function necroSkeletonList() {
     return _necroSkeletonsV2;
 }
 function necroBookEquipped(owner) {
-    return !!(owner && owner.eq && owner.eq.shield && owner.eq.shield.id === 'relic_necro_book');
+    return !!(owner && owner.eq && owner.eq.shield && equipmentBaseId(owner.eq.shield) === 'relic_necro_book');
 }
 function _necroOwnerKey(owner) {
     if (!owner || typeof player === 'undefined') return '';
@@ -524,9 +524,9 @@ function summonV2Tick() {
     // 玩家死亡：召喚物全數消散（比照舊制 killPlayer 清 player.summon）
     if (player.dead) { if (list.length) { player.summonsV2 = []; renderSummonPanel(true); } return; }
     // 到期：全滅處理交由下方自動重施
-    if ((player.buffs[skId] || 0) <= 0 && list.length) {
+    if ((player.buffs[skId] || 0) <= 0 && list.some(s => !s._classSpirit)) {
         logCombat(`<span class="text-purple-300">${SUMMON_V2_TITLES[skId] || '召喚物'}</span> 的契約到期消失了。`, 'magic', 'summon');
-        player.summonsV2 = [];
+        player.summonsV2 = list.filter(s => s._classSpirit && s._classExpires > state.ticks / 10);
         renderSummonPanel(true);
     }
     const alive = (player.summonsV2 || []).filter(s => !s._downed);

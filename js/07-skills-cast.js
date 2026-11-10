@@ -420,7 +420,7 @@ function castSkillInner(skId) {
         return false;
     }
 
-    if(player.statuses.silence > 0) {   // 🔧 沉默：所有魔法皆無法施放（含魔法相消術——只有沉默/魔法封印能擋下相消術）
+    if(player.statuses.silence > 0 && !window.LineageSherine?.ignoreSilence(player)) {   // 🔧 沉默：所有魔法皆無法施放（含魔法相消術——只有沉默/魔法封印能擋下相消術）
         _logSilenceOnce(`沉默狀態中，無法施展魔法。`);   // ⏱️ 節流：最多每秒 1 次，避免自動施法洗頻
         return false;
     }
@@ -615,13 +615,13 @@ function castSkillInner(skId) {
                 if (sk.hpCost && player._setDragonblood5) dmg = Math.max(1, Math.floor(dmg * 1.2));   // 🐉 龍血5/5：HP消耗技傷害+20%（屠宰者＝物理HP消耗技·與魔法路徑 js/07 一致）
                 if (window.AFK_RELIC_RUNTIME) dmg=window.AFK_RELIC_RUNTIME.spellDamage(player,ht,dmg,sk,{skillId:skId}); ht.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(player,ht,dmg,{nativeRefund:'full',kind:window.AFK_CARD_COMBAT.physicalKind(player)}):dmg)); ht.justHit = getWpnEle(player.eq.wpn, wpn); if (typeof moonShatterOnDamage === 'function') moonShatterOnDamage(player, ht, dmg); total += dmg; mobWake(ht);
                 if (typeof reflectWallOnDamage === 'function') reflectWallOnDamage(ht, dmg, 'melee', null);   // 🌑 v3.4.14 血壁空間：屠宰者每擊＝近距離技能直擊反射（玩家傭兵一致）
-                if (player.dead) { if (consume && applied) t.weakExpose = 0; if (_slRand) _slHitSet.forEach(m => { if (!hasMastery('k_weakness') && !(window.AFK_RELIC_WEAPON_BRIDGE && window.AFK_RELIC_WEAPON_BRIDGE.keepExpose(wpn))) m.weakExpose = 0; /* relic-weapon-bridge:slaughter-random-preserve */ }); return true; }   // ☠️ v3.5.87 反射反殺：死後中止後續斬擊與擊殺結算　⚡ 早退前補做弱點曝光消耗
+                if (player.dead) { if (consume && applied) t.weakExpose = 0; if (_slRand) _slHitSet.forEach(m => { if (!hasMastery('k_weakness') && !(window.AFK_RELIC_WEAPON_BRIDGE && window.AFK_RELIC_WEAPON_BRIDGE.keepExpose(wpn))) {if(m.weakExpose>=3)window.LineageSherine?.signal(player,'resource',m);m.weakExpose = 0;} /* relic-weapon-bridge:slaughter-random-preserve */ }); return true; }   // ☠️ v3.5.87 反射反殺：死後中止後續斬擊與擊殺結算　⚡ 早退前補做弱點曝光消耗
                 log.push(dmg + (res.heavy ? '(重)' : '') + (_slRand ? `→${ht.n}` : ''));
                 if (ht.curHp > 0) wearHardSkin(ht, player.eq.wpn ? player.eq.wpn.id : null, res.heavy, false, true, player.classicMode);
                 if (_slRand && ht.curHp <= 0) { let _ki = mapState.mobs.findIndex(x => x && x.uid === ht.uid); if (_ki !== -1) killMob(_ki); }   // random 模式：逐擊結算擊殺（下一擊重抽活目標）
             }
-            if (consume && applied && !_slRand) t.weakExpose = 0;
-            if (_slRand) _slHitSet.forEach(m => { if (!hasMastery('k_weakness') && !(window.AFK_RELIC_WEAPON_BRIDGE && window.AFK_RELIC_WEAPON_BRIDGE.keepExpose(wpn))) m.weakExpose = 0; /* relic-weapon-bridge:slaughter-random-preserve */ });   // 🏅 弱點精通不消耗
+            if (consume && applied && !_slRand){if(t.weakExpose>=3)window.LineageSherine?.signal(player,'resource',t);t.weakExpose = 0;}
+            if (_slRand) _slHitSet.forEach(m => { if (!hasMastery('k_weakness') && !(window.AFK_RELIC_WEAPON_BRIDGE && window.AFK_RELIC_WEAPON_BRIDGE.keepExpose(wpn))) {if(m.weakExpose>=3)window.LineageSherine?.signal(player,'resource',m);m.weakExpose = 0;} /* relic-weapon-bridge:slaughter-random-preserve */ });   // 🏅 弱點精通不消耗
             if (total > 0) { logCombat(`施放 <span style="font-weight:700;color:#7dd3fc">${sk.n}</span>，${_slRand ? `亂舞斬擊造成 [${log.join(', ')}] 共 ${total} 點傷害` : `連續斬擊 <span class="${getMobColor(t.lv)}">${t.n}</span> 造成 [${log.join(', ')}] 共 ${total} 點傷害${bonus > 0 ? `（弱點曝光 每擊+${bonus}）` : ''}`}。`, 'skill'); if (!_slRand && t.curHp <= 0) killMob(mapState.targetIdx); else renderMobs(); }
             else logCombat(`施放 ${sk.n} 未命中。`, 'miss');
             return true;

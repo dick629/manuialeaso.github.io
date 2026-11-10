@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>鷹眼・翡翠獵弓</title><defs><linearGradient id="steel" x1="0" y1="0" x2=".8" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#ffefc9"/><stop offset=".24" stop-color="#cbd5ca"/><stop offset=".46" stop-color="#77918a"/><stop offset=".5" stop-color="#dbe0c9"/><stop offset=".76" stop-color="#6e827a"/><stop offset="1" stop-color="#293e34"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8e8b4"/><stop offset=".27" stop-color="#c5a565"/><stop offset=".52" stop-color="#f0d79e"/><stop offset=".7" stop-color="#8a672c"/><stop offset="1" stop-color="#cfb17c"/></linearGradient><radialGradient id="gem" cx=".32" cy=".22" r=".85"><stop stop-color="#f6f3dd"/><stop offset=".25" stop-color="#82b975"/><stop offset=".72" stop-color="#82b975"/><stop offset="1" stop-color="#243c35"/></radialGradient></defs><g stroke-linejoin="round" stroke-linecap="round">
+ <path d="M16 5c36 3 44 26 4 51l2-7c26-16 24-32-4-37Z" fill="url(#gold)" stroke="#172018" stroke-width="2"/>
+ <path d="M18 7c24 6 33 23 5 44" fill="none" stroke="#f6e7af" stroke-width="1.4"/>
+ <path d="m17 7 10 23-6 23" fill="none" stroke="#d0d0ae" stroke-width="1.5"/>
+ <path d="m39 23 6-1 2 8-6 7-5-4Z" fill="#31482b" stroke="#d4bb7c" stroke-width="1.4"/>
+ <path d="m42 25 3 4-4 5-3-4Z" fill="url(#gem)"/>
+ <path d="M7 37 54 20" stroke="#111b15" stroke-width="4"/><path d="M7 37 53 21" stroke="#d6c38e" stroke-width="2"/>
+ <path d="m47 21 12-5-7 11-1-5Z" fill="url(#steel)" stroke="#35433b"/>
+ <path d="m9 34-6-3 1 6 9 3 6-2-10-1Z" fill="#80a978" stroke="#293e29"/>
+ <path d="M9 51 5 55m13-39-7-4" stroke="#c6a769" stroke-width="2"/></g></svg>

@@ -1,6 +1,7 @@
 /* afk-riftlock.js — 次元裂縫相關 NPC 的資格鎖（Ping 11-07 21:08）
  *   還沒達到開放條件（完成二次轉生、打贏終焉第三階層）時：
- *   席琳神殿的「裂縫之門」「次元的鍛造師」「星鑄師 艾琳娜」顯示成灰色，點了只會看到開放條件，看不到裡面的內容。
+ *   席琳神殿的「裂縫之門」「次元的鍛造師」顯示成灰色，點了只會看到開放條件。
+ *   聖衣修練改版：星鑄師只要求二轉，避免終焉失敗後無法回收碎衣。
  *   條件跟席琳的祈禱介面「踏進次元裂縫」按鈕共用 __afkDimRift.canOpen（afk-dimrift.js）。
  *   載入順序：放在 afk-zodiac / afk-riftdungeons / afk-dimrelic 之後，才能最先攔到 interactNPC。
  */
@@ -9,8 +10,10 @@
   var W = window;
   var LOCK = { npc_afk_riftgate: 1, npc_afk_dimsmith: 1, npc_afk_elena: 1 };
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
-  var why = function () {
+  var why = function (id) {
     var p = P(), DR = W.__afkDimRift;
+    // 回收破碎聖衣不能被「第三階層必須獲勝」封死；黃道副本本身仍檢查二轉。
+    if(id==='npc_afk_elena')return !p||p.classicMode?'經典模式沒有聖衣修練。':Math.floor(p.rebirth||0)<2?'要完成二次轉生。':'';
     if (!p || !DR || typeof DR.canOpen !== 'function') return '';
     try { return DR.canOpen(p) || ''; } catch (e) { return ''; }
   };
@@ -25,13 +28,13 @@
   if (typeof W.interactNPC === 'function') {
     var oI = W.interactNPC;
     W.interactNPC = function (id) {
-      var w = LOCK[id] ? why() : '';
+      var w = LOCK[id] ? why(id) : '';
       if (w) {
         var n = npcDef(id) || { n: '', title: '' };
         var html = '<div class="p-3 text-sm leading-relaxed text-slate-300">'
           + '<div class="font-bold text-slate-400 mb-2">🔒 尚未開放</div>'
-          + '<div>這裡和次元裂縫有關，達到開放條件後才能使用。</div>'
-          + '<div class="mt-2 text-amber-300">開放條件：完成二次轉生，並打贏終焉第三階層。</div>'
+          + '<div>達到開放條件後才能使用。</div>'
+          + '<div class="mt-2 text-amber-300">開放條件：'+(id==='npc_afk_elena'?'完成二次轉生。':'完成二次轉生，並打贏終焉第三階層。')+'</div>'
           + '<div class="mt-1 text-slate-400">目前：' + esc(w) + '</div>'
           + '<div class="mt-2 text-slate-500 text-xs">詳細內容可以先在小百科查看。</div></div>';
         if (typeof W.openTownFloatWindow === 'function') { try { W.openTownFloatWindow(n.n, '尚未開放', function (div) { if (div) div.innerHTML = html; }); return; } catch (e) {} }
@@ -49,12 +52,12 @@
     W.renderTownNPCMap = function (townId) {
       var r = oT.apply(this, arguments);
       try {
-        if (why()) {
+        {
           var names = {};
-          ((DB.towns[townId] && DB.towns[townId].npcs) || []).forEach(function (n) { if (LOCK[n.id]) names[n.n + '|' + n.title] = 1; });
+          ((DB.towns[townId] && DB.towns[townId].npcs) || []).forEach(function (n) { if (LOCK[n.id]&&why(n.id)) names[n.n + '|' + n.title] = why(n.id); });
           document.querySelectorAll('#town-npc-map .town-npc').forEach(function (el) {
             var nm = el.querySelector('.tn-name'), tt = el.querySelector('.tn-title');
-            if (nm && names[nm.textContent + '|' + (tt ? tt.textContent : '')]) { el.style.filter = 'grayscale(1)'; el.style.opacity = '.45'; el.title = '尚未開放：完成二次轉生，並打贏終焉第三階層'; if (tt) tt.textContent = '尚未開放'; }
+            if (nm && names[nm.textContent + '|' + (tt ? tt.textContent : '')]) { el.style.filter = 'grayscale(1)'; el.style.opacity = '.45'; el.title = '尚未開放：'+names[nm.textContent + '|' + (tt ? tt.textContent : '')]; if (tt) tt.textContent = '尚未開放'; }
           });
         }
       } catch (e) {}

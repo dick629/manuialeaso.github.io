@@ -184,7 +184,38 @@
   };
 
   // ── 沉眠之海：每道門檻有最早時間；還沒到時間，HP 停在門檻（window.__afkFbNoGate 可關，給平衡測試用）──
-  var ageOf = function (m) { var t = S().ticks || 0; return t - ((m && m._fbBorn) || t); };
+  var ageOf = function (m) { var t = S().ticks || 0; return Math.max(0, t - (m && Number.isFinite(m._fbBorn) ? m._fbBorn : t)); };
+  // 倒數與逾時判定使用同一組戰鬥 ticks，不額外啟動計時器、不寫入存檔。
+  var clockState = function () {
+    if (!on() || !player || player.dead) return null;
+    var m = bossOf(), limit = Math.max(0, Number(FB.limit) || 0);
+    var left = Math.max(0, Math.ceil(limit - (m ? ageOf(m) / SEC : 0)));
+    var labels = { first: '女神夢境', tier2: '女神幻影', tier3: '女神伴身', second: '二轉決戰', solo: '單人試煉' };
+    return { seconds: left, text: String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0'),
+      label: labels[mode()] || '女神決戰', waiting: !m, tone: left <= 60 ? 'danger' : left <= 180 ? 'warning' : 'normal' };
+  };
+  var renderClock = function () {
+    var clock = document.getElementById('afk-final-clock'), data = clockState();
+    if (!data) { if (clock && !clock.hidden) clock.hidden = true; return; }
+    if (S().ff || document.hidden) return;
+    var host = document.getElementById('map-adventure-heading'); if (!host) return;
+    if (!clock) {
+      clock = document.createElement('span'); clock.id = 'afk-final-clock'; clock.className = 'afk-final-clock';
+      clock.setAttribute('role', 'timer'); clock.setAttribute('aria-live', 'off');
+      clock.innerHTML = '<span class="afk-final-clock-label"></span><strong></strong><small></small>';
+      host.appendChild(clock);
+    }
+    if (clock.parentElement !== host) host.appendChild(clock);
+    if (clock.hidden) clock.hidden = false;
+    var key = data.label + ':' + data.text + ':' + data.waiting;
+    if (clock.dataset.value === key) return;
+    clock.dataset.value = key; clock.dataset.tone = data.tone;
+    clock.querySelector('.afk-final-clock-label').textContent = data.label;
+    clock.querySelector('strong').textContent = data.text;
+    clock.querySelector('small').textContent = data.waiting ? '待開戰' : '剩餘';
+    clock.setAttribute('aria-label', data.label + '，剩餘 ' + data.text + (data.waiting ? '，等待女神登場' : ''));
+  };
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) renderClock(); });
   var gateOf = function (m) {
     if (window.__afkFbNoGate || mode() === 'solo') return null;
     var age = ageOf(m);
@@ -197,6 +228,9 @@
     var left = Math.max(0, Math.ceil((g[1] * SEC - ageOf(m)) / SEC));
     log(tag('沉眠之海', '#0ea5e9') + BOSS_NAME + '沉入海底，傷害無法觸及她（' + left + ' 秒後浮上來）。海底傳來沉沒的歌聲……');
   };
+  (window.LineageAbsoluteDamageGates = window.LineageAbsoluteDamageGates || []).push(function(actor,target,amount){
+    if(target&&target._afkFinal){var g=gateOf(target);if(g){var floorHp=Math.max(1,Math.ceil(target.hp*g[0]));amount=Math.min(amount,Math.max(0,target.curHp-floorHp));if(!amount)seal(target,g);}}return amount;
+  });
   // ── 傷害：存活的使徒讓席琳受到的傷害 −20%／名 ──
   var hooked = false;
   var hookDamage = function () {
@@ -254,7 +288,7 @@
     if (!on() || player.dead) return;
     hookDamage();
     var m = bossOf(); if (!m) return;
-    var t = S().ticks || 0, age = t - (m._fbBorn || t);
+    var t = S().ticks || 0, age = ageOf(m);
     var gt = gateOf(m);
     if (gt) { var fh = Math.max(1, Math.ceil(m.hp * gt[0])); if (m.curHp < fh) { m.curHp = fh; seal(m, gt); } }
     var sealed = gt && m._fbSealGate === gt[1] && m.curHp <= Math.max(1, Math.ceil(m.hp * gt[0]));
@@ -334,6 +368,7 @@
     var md = mode();
     if (md === 'tier2' || md === 'tier3') {
       s._afkFinal = false; s._afkFinalSpawned = false; s._afkFinalNovice = false; s.antharas = 0; s._antAdvance = false; s._afkFinalMode = null;
+      renderClock();
       try { if (window.__afkFinalTiers) window.__afkFinalTiers.finish(md, result, why); } catch (e) { console.warn('[AFK-finalboss] 終焉階層結算', e); }
       try { if (!player.dead) { setMapSelectors(typeof getLastTown === 'function' ? getLastTown() : 'town_aden'); changeMap(true); } } catch (e) {}
       try { calcStats(); updateUI(); saveGame(); } catch (e) {}
@@ -341,6 +376,7 @@
     }
     if (md !== 'first') {
       s._afkFinal = false; s._afkFinalSpawned = false; s._afkFinalNovice = false; s.antharas = 0; s._antAdvance = false; s._afkFinalMode = null;
+      renderClock();
       try { if (window.__afkRebirth2) window.__afkRebirth2.finish(md, result, why); } catch (e) { console.warn('[AFK-finalboss] 二轉結算', e); }
       try { if (!player.dead) { setMapSelectors(typeof getLastTown === 'function' ? getLastTown() : 'town_aden'); changeMap(true); } } catch (e) {}
       try { calcStats(); updateUI(); saveGame(); } catch (e) {}
@@ -351,6 +387,7 @@
     if (result === 'win') { r.panel = {}; PANEL.forEach(function (k) { r.panel[k] = Math.floor((player.d && player.d[k]) || 0); }); }
     player.afkFinal = r;
     s._afkFinal = false; s._afkFinalSpawned = false; s._afkFinalNovice = false; s.antharas = 0; s._antAdvance = false;
+    renderClock();
     var gift = null;
     // 2026-10-25 玩家指定：勝者的榮耀＝當場點亮神話＋天上全部卡冊；聖衣只給絕望轉生者（轉生時送，已轉生者當場送）
     var lit = -1;
@@ -397,6 +434,7 @@
         var r2 = player && player.afkFinal2; if (r2 && r2.pending && !s._afkFinal && window.__afkRebirth2) { window.__afkRebirth2.finish('second', 'lose', '中途離開'); try { calcStats(); saveGame(); } catch (e) {} }
         var r = rec(); if (r && r.pending && !s._afkFinal) { player.afkFinal.pending = false; player.afkFinal.result = 'lose'; player.afkFinal.why = '中途離開'; sys('<span class="text-slate-300">與席琳的決戰中途中斷，視為挑戰失敗：得到光環「絕望轉生者」。</span>'); try { calcStats(); saveGame(); } catch (e) {} }
       } catch (e) { console.warn('[AFK-finalboss] tick', e); }
+      try { renderClock(); } catch (e) { console.warn('[AFK-finalboss] countdown', e); }
     }
   };
 
@@ -413,6 +451,7 @@
       try { saveGame(); } catch (e) {}
       sys('<span class="font-bold" style="color:#7dd3fc;">你沉入死亡之海。水壓碾過胸口，四周是無數睜著眼睛的亡者——' + MAP_NAME + '到了。</span><span class="text-amber-200">區內無法傳送；20 分鐘內打倒死亡女神，否則萬物歸於死。</span>');
       enterOblivionMap(MAP);
+      renderClock();
       try { if (!document.getElementById('item-modal').classList.contains('hidden')) closeModal(); } catch (e) {}
       try { updateUI(); } catch (e) {}
     };
@@ -427,6 +466,7 @@
     try { saveGame(); } catch (e) {}
     sys(line);
     enterOblivionMap(MAP);
+    renderClock();
     try { if (!document.getElementById('item-modal').classList.contains('hidden')) closeModal(); } catch (e) {}
     try { updateUI(); } catch (e) {}
   };
@@ -538,6 +578,6 @@
     };
   }
 
-  window.__afkFinalBoss = { TIER: TIER, tierK: tierK, tierHpK: tierHpK, mode: mode, startMode: startMode, dreamOn: dreamOn, MAP: MAP, BOSS_NAME: BOSS_NAME, ADD_NAME: ADD_NAME, cfg: FB, hpScale: hpScale, partyN: partyN, rec: rec, won: won, lost: lost, on: on, finish: finish, timeline: timeline, summon: summon, applyRebirthGift: applyRebirthGift };
+  window.__afkFinalBoss = { TIER: TIER, tierK: tierK, tierHpK: tierHpK, mode: mode, startMode: startMode, dreamOn: dreamOn, MAP: MAP, BOSS_NAME: BOSS_NAME, ADD_NAME: ADD_NAME, cfg: FB, hpScale: hpScale, partyN: partyN, rec: rec, won: won, lost: lost, on: on, finish: finish, timeline: timeline, summon: summon, applyRebirthGift: applyRebirthGift, clockState: clockState, renderClock: renderClock };
   console.log('[AFK-finalboss] 已啟用：最終頭目 死亡女神 席琳（死亡之海・席琳的沉沒神殿）');
 })();

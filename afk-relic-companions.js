@@ -15,7 +15,8 @@
   var uniq=function(a){return a.filter(function(e,i){return e&&a.indexOf(e)===i;});};
   var context=function(){return contexts[contexts.length-1]||null;};
   var active=function(){return R.api.activeContext?R.api.activeContext():R.context?R.context():null;};
-  function source(owner,id){return R.sources(owner).find(function(x){return x.catalogId===id;})||null;}
+  var inheritedFields={189:'summonCtrl',196:'necroBook',212:'polyAtkSpdPct',232:'autoReviveScroll',245:'petReviveBuff'};
+  function source(owner,id){return R.sources(owner).find(function(x){return x.catalogId===id;})||(inheritedFields[id]&&R.inheritedSource?R.inheritedSource(owner,id,inheritedFields[id]):null)||null;}
   function teamSource(id){var best=null;characters().forEach(function(owner){var s=source(owner,id);if(s&&(!best||s.stage>best.source.stage||s.stage===best.source.stage&&num(s.n)>num(best.source.n)))best={owner:owner,source:s};});return best;}
   // Loop forms of [p].concat(allies).filter(...) and uniq(characters().concat(guards)): same members, same order.
   function characters(includeDown){var p=playerNow();if(!p)return [];var out=[],keep=includeDown?Boolean:live;if(keep(p))out.push(p);var al=p.allies||[];for(var i=0;i<al.length;i++){if(!(i in al))continue;var a=al[i];if(keep(a))out.push(a);}return out;}
@@ -56,7 +57,7 @@
     // Training whip protects and strengthens the entire team, including allies' summons.
     c.maxHpAdd=k==='pet'?0:teamSummonHp();
     var B=W.AFK_RELIC_WEAPON_BRIDGE;if(B&&B.companionDamageMult)c.directDamageMult*=B.companionDamageMult(owner,e);
-    var speed=k==='pet'?0:R.sources(owner).reduce(function(n,s){return Math.max(n,num(s.def.relicCompanionAttackSpeed));},0);c.attackSpeedPct=speed;
+    var speed=k==='pet'?0:R.sources(owner).reduce(function(n,s){return Math.max(n,num(s.def.relicCompanionAttackSpeed));},0);c.attackSpeedPct=speed+num(c.attackSpeedPct);
     var buffs=R.state(e,'_buffs');Object.keys(buffs).forEach(function(k){var b=buffs[k];if(b.until>now()&&b.values&&b.values.directDamageMult)c.directDamageMult*=b.values.directDamageMult;});
     return c;
   }
@@ -65,6 +66,9 @@
     if(kindOf(e)==='pet'&&native.petMhpEff){var c=companionStats(playerNow(),e,{});return Math.max(1,Math.floor(native.petMhpEff(e)*(c.maxHpMult||1)));}
     var meta=summonHp.get(e);return Math.max(1,num(meta?meta.effective:e.mhp!=null?e.mhp:e.hp));
   }
+  // Pet bonuses installed after this adapter are included by the current
+  // public HP query. Do not use this inside maxHp (petMhpEff wraps maxHp).
+  function reviveMaxHp(e){return kindOf(e)==='pet'&&typeof W.petMhpEff==='function'?W.petMhpEff(e):maxHp(e);}
   function syncSummonHp(e,owner,fill){
     if(!e||!(num(e.mhp)>0))return;
     var meta=summonHp.get(e);
@@ -147,9 +151,11 @@
   function hasReviveScroll(){var p=playerNow();return !!(p&&(p.inv||[]).some(function(x){return x.id==='scroll_revive'&&num(x.cnt)>0;}));}
   function revive(e,opt){
     opt=opt||{};if(!e||!e._downed)return false;var p=playerNow();if(!p)return false;
+    var DC=W.__afkDreamCost;if(DC&&DC.onCd&&DC.onCd())return false;
+    if(e._afkCharmDoom&&typeof mapState!=='undefined'&&!/^town_/.test(mapState.current||''))return false;
     if(opt.consumeScroll&&!opt.free){var scroll=(p.inv||[]).find(function(x){return x.id==='scroll_revive'&&num(x.cnt)>0;});if(!scroll)return false;scroll.cnt--;if(scroll.cnt<=0)p.inv=p.inv.filter(function(x){return x!==scroll;});}
     var isPet=kindOf(e)==='pet';e._downed=false;e._reviveCd=0;e._animAct=null;
-    if(isPet){e._statuses=typeof W.newMobStatus==='function'?W.newMobStatus():{};e.hp=Math.max(1,Math.floor(maxHp(e)*(opt.hpPct||.5)));e.mp=num(e.mmp)+(W.petDerive(e).mmpBonus||0);W.petDevotionGrant(e);e.hp=Math.max(1,Math.floor(maxHp(e)*(opt.hpPct||.5)));if(typeof W.petMarkDirty==='function')W.petMarkDirty();}
+    if(isPet){e._statuses=typeof W.newMobStatus==='function'?W.newMobStatus():{};e.hp=Math.max(1,Math.floor(reviveMaxHp(e)*(opt.hpPct||.5)));e.mp=num(e.mmp)+(W.petDerive(e).mmpBonus||0);W.petDevotionGrant(e);e.hp=Math.max(1,Math.floor(reviveMaxHp(e)*(opt.hpPct||.5)));if(typeof W.petMarkDirty==='function')W.petMarkDirty();}
     else {e.statuses={};e.curHp=Math.max(1,Math.floor(maxHp(e)*(opt.hpPct||.5)));e.mp=num(e.mmp);}
     if(opt.invulnerable)R.api.buff(e,(opt.source||'relic')+':reviveGuard',{invulnerable:true},opt.invulnerable);
     if(typeof W.renderSquadPanel==='function')W.renderSquadPanel();return true;
@@ -213,6 +219,9 @@
   };});
   wrap('_necroSkeletonDerive',function(old){return function(e,owner){var d=old.apply(this,arguments);if(enabled()&&e._relicNecroDamage)d.dmgMult*=e._relicNecroDamage;return d;};});
   wrap('hasSummonCtrlRing',function(old){return function(owner){owner=owner||playerNow();return old.apply(this,arguments)||(enabled()&&!!source(owner,189));};});
+  // Native ID equality misses enhanced and inherited transformation leaves.
+  // Resolve equipped provenance only; carrying a leaf is still insufficient.
+  wrap('hasPolyRing',function(old){return function(){return old.apply(this,arguments)||(enabled()&&!!source(playerNow(),212));};});
   wrap('_sumCountFor',function(old){return function(name,owner){owner=owner||playerNow();if(!enabled())return old.apply(this,arguments);var e=W._sumTierOf(name);if(!e)return 0;var original=old.apply(this,arguments),src=source(owner,189);if(!src||!src.stage)return original;var cap=W.hasSummonCtrlRing(owner)?e.tier.ringCap:e.tier.cap,c=R.dispatch('summonLimit',{actor:owner,value:cap,main:false},src);if(e.tier.fixedCount)return Math.max(1,Math.floor(c.value));return Math.max(0,Math.min(Math.floor(c.value),Math.floor((num(owner.d&&owner.d.cha)+6)/e.tier.div)));};});
   wrap('_sumDeriveAny',function(old){return function(e,owner){owner=owner||ownerOf(e);if(enabled())syncSummonHp(e,owner,false);var d=old.call(this,e,owner);if(enabled()){var c=companionStats(owner,e,{});d=Object.assign({},d);if(c.attackSpeedPct)d.aspd/=1+c.attackSpeedPct/100;}return d;};});
   wrap('petDerive',function(old){return function(e){var d=old.apply(this,arguments);if(!enabled()||!d)return d;var c=companionStats(playerNow(),e,d);d._relicCritChance=c.stats.critChance||0;if(c.attackSpeedPct)d.atkItv/=1+c.attackSpeedPct/100;return d;};});
@@ -233,14 +242,14 @@
   function djinnSource(){var p=playerNow();return enabled()&&p?source(p,232):null;}
   function djinnBonus(e,s){
     if(!e||e._downed||!s)return;var pct=s.stage>=2?1:s.stage>=1?.8:0;
-    if(pct){var m=maxHp(e),want=Math.max(1,Math.floor(m*pct));if(e.curHp!=null&&kindOf(e)!=='pet')e.curHp=Math.max(num(e.curHp),want);else e.hp=Math.max(num(e.hp),want);}
+    if(pct){var m=reviveMaxHp(e),want=Math.max(1,Math.floor(m*pct));if(e.curHp!=null&&kindOf(e)!=='pet')e.curHp=Math.max(num(e.curHp),want);else e.hp=Math.max(num(e.hp),want);}
     if(s.stage>=2)R.api.buff(e,s.key+':reviveGuard',{invulnerable:true},5);
     if(s.stage>=4)R.api.buff(e,s.key+':renewed',{directDamageMult:2},10);
   }
   function djinnFree(){
     var s=djinnSource();if(!s||s.stage<3)return;var p=playerNow(),DC=W.__afkDreamCost,mercCd=!!(DC&&DC.onCd&&DC.onCd());
     var wild=typeof W._petInWild!=='function'||W._petInWild();
-    var fallen=downedCompanions(p).filter(function(e){var pet=kindOf(e)==='pet';return pet?wild:(!p.dead&&!mercCd);});
+    var fallen=downedCompanions(p).filter(function(e){var pet=kindOf(e)==='pet';return !mercCd&&!e._afkCharmDoom&&(pet?wild:!p.dead);});
     if(!fallen.length||!R.api.cooldown(p,s.key,'heal',10,true))return;
     (s.stage>=4?fallen:fallen.slice(0,1)).forEach(function(e){if(revive(e,{owner:p,source:s.key,hpPct:1,free:true})){djinnBonus(e,s);try{W.logSys('<span class="text-emerald-300 font-bold">【巨靈的承諾】免費救回 '+(e._allyName||e.form||'同伴')+'。</span>');}catch(_){}}});
   }
