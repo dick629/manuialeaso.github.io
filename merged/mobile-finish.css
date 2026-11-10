@@ -88,7 +88,7 @@ body.m-unified #game-screen #lm-map-controls #map-category{background:#16130e;gr
 body.m-unified #game-screen #lm-map-controls #map-select{background:#16130e;grid-column:span 2!important;color:#dfc996;font-size:16px!important}
 body.m-unified #game-screen #map-view-panel #lm-map-controls :is(#btn-pandora-shortcut,#btn-teleport,#btn-return-town){grid-column:auto!important;width:68px!important;height:32px!important;min-height:32px!important;padding:3px 8px!important;font-size:calc(12px * var(--lm-ui-scale))!important}
 body.m-unified #game-screen #lm-map-controls #btn-return-town{background:#373126;border-color:#7d725e;color:#e1d4a6}
-body.m-unified #game-screen #map-view-panel[data-safe-area="true"] #btn-return-town{display:none!important}
+/* 11-11 玩家：手機村莊裡也要有「出發」（同一顆按鈕在野外是「回村」） */
 /* Native field scene: only fit the viewport; positioning and sprite sizes stay native. */
 body.m-unified[data-mobile-page] #game-screen #map-view-panel #battle-view.area-fit:not(.hidden):not([hidden]){position:relative!important;display:flex!important;align-items:flex-end;justify-content:center;width:100%!important;max-width:100%!important;height:auto!important;min-height:0!important;aspect-ratio:auto!important;flex:1 1 0!important;padding:0!important;border-radius:0;background-position:center;box-shadow:inset 0 16px 40px #0002,inset 0 -20px 28px #0f0e0c80}
 body.m-unified #status-icon-bar{top:50px!important;right:8px!important;left:8px!important;z-index:75}
