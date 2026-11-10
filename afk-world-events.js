@@ -257,7 +257,7 @@
         var m = mapState.mobs && mapState.mobs[idx];
         if (m && !m.boss && !m._afkWe && !m._afkKurt && !act) {
           var ok = IDS.filter(canTrigger);
-          if (ok.length && Math.random() < RATE) start(ok[Math.floor(Math.random() * ok.length)], idx);
+          if (ok.length && Math.random() < RATE * (typeof W.__afkEventRateMult === 'function' ? (Number(W.__afkEventRateMult(mapState.current)) || 1) : 1))   /* 時光屋 ×2 */ start(ok[Math.floor(Math.random() * ok.length)], idx);
         }
       } catch (e) { console.warn('[AFK-world-events] spawn', e); }
       return r;

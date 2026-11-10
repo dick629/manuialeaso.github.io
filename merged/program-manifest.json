@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-4b444ff06d48",
+  "build": "merge-0.4-01bb8ae3e0c0",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -788,8 +788,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-mapboss.js?v=1454e7892489",
-      "sha256": "1454e7892489d896bf648bb5c0072e39137af9c10c5ffc243d403f10b9621938",
+      "url": "afk-mapboss.js?v=64e7fbfc339e",
+      "sha256": "64e7fbfc339e568f65b531140ff5cb668083eb6f1d4f3c5676e5afc870ffc2ce",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1058,8 +1058,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-region-boss.js?v=98d38ad9bb16",
-      "sha256": "98d38ad9bb1692398d159828d1e35b49bc6b2309fac575c9c2f58f8d6057fec5",
+      "url": "afk-region-boss.js?v=1e1965ffdf0a",
+      "sha256": "1e1965ffdf0afdc19952bbf46aec07b6b16f0072272872e178c8d71525106a74",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1363,6 +1363,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-timeroom.js?v=12a55832392b",
+      "sha256": "12a55832392b1e673c4fbcbaa5b74c99fe726fdeabf1f591d9de09bb172455f3",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-toast.js?v=bab84264fb99",
       "sha256": "bab84264fb9935d7b1970af183763450b59f976b67f57603d135b3a05c25ef9a",
       "type": "text/javascript; charset=utf-8"
@@ -1488,8 +1493,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-world-events.js?v=50698714a3d1",
-      "sha256": "50698714a3d18f31b6d3b7eab437706a18dd41af15166f6f9ea702794662b154",
+      "url": "afk-world-events.js?v=718456288371",
+      "sha256": "718456288371c5e576a5bb3037ecc6fe5ba8e291b5ba5d2387968b5adcff24c0",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1544,7 +1549,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "1060dce9a871e7321dcaa62ca279807aef7c8436e70dd1597872e4570afc37db",
+      "sha256": "be2ff9ea8645ad9603f3e326d845391d19d2d16dec9b6453e74ca8ed330a0953",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1713,8 +1718,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/activities.js?v=46d720f0efcf",
-      "sha256": "46d720f0efcf631b8a70db6f7ba84771328977bf59807270f61a6b3f0978c3c4",
+      "url": "merged/activities.js?v=04175aa4f8f2",
+      "sha256": "04175aa4f8f26503141d7f2f5f73d29250ffa51b806881e9bb35e7a83665e826",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1843,8 +1848,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-ui.js?v=77a1012ce82c",
-      "sha256": "77a1012ce82ca11f570becd5da1cade58baec0a6cee36b516264034e107c3e4a",
+      "url": "merged/growth-ui.js?v=89d8603ee104",
+      "sha256": "89d8603ee104749642ad5c5fe6024c4d1ffe201c0614cfc08201c4bda504daab",
       "type": "text/javascript; charset=utf-8"
     },
     {

@@ -3,7 +3,9 @@
   const G=W.LineageGrowth,C=W.LineageGrowthCore,MAP='growth_mushroom',MOB='growth_mushroom_1000';
   const N=n=>Number(n)||0;
   let lease=0,leaseOwner=null,leaseDay=null,advancing=false,lastCheckpoint=0,seen=new WeakSet();
-  DB.mobs[MOB]={...DB.mobs.nm_002,exp:17000};DB.maps[MAP]=[MOB];
+  // 玩家 11-11：經驗 1.7 萬 → 17 萬；能進次元裂縫的角色 170 萬（出生時依當下角色決定）
+  const riftOK=()=>{try{const p=(typeof player!=='undefined'?player:null),R=W.__afkDimRift;return !!(p&&R&&typeof R.canOpen==='function'&&!R.canOpen(p));}catch(e){return false;}};
+  DB.mobs[MOB]={...DB.mobs.nm_002};Object.defineProperty(DB.mobs[MOB],'exp',{enumerable:true,configurable:true,get:()=>riftOK()?1700000:170000,set:()=>{}});DB.maps[MAP]=[MOB];
   W.__afkNoOfflineMaps=(W.__afkNoOfflineMaps||[]).concat(MAP);
   if(typeof SANCTUARY_MAP_NAMES!=='undefined')SANCTUARY_MAP_NAMES[MAP]='限時蘑菇秘境';
   if(typeof SPECIAL_AREA_BG!=='undefined')SPECIAL_AREA_BG[MAP]='assets/area/1920x1080/新兵修練場.jpg';

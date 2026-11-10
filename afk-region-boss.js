@@ -134,7 +134,7 @@
     try { if (typeof isSiegeArea === 'function' && isSiegeArea(id)) return false; } catch (e) {}
     return !!(DB.maps[id] && DB.maps[id].length);
   };
-  var regionOf = function (id) { try { var k = typeof mapRegionOf === 'function' ? mapRegionOf(id) : null; return k && BY[k] ? k : null; } catch (e) { return null; } };
+  var regionOf = function (id) { try { var al = typeof W.__afkRbRegionOf === 'function' ? W.__afkRbRegionOf(id, Object.keys(BY)) : null; if (al && BY[al]) return al; var k = typeof mapRegionOf === 'function' ? mapRegionOf(id) : null; return k && BY[k] ? k : null; } catch (e) { return null; } };   // 時光屋（afk-timeroom）：隨機挑一個地區的霸主
   var mapLv = function (id) { var ls = (DB.maps[id] || []).map(function (k) { return DB.mobs[k]; }).filter(function (m) { return m && !m.boss; }).map(function (m) { return Number(m.lv) || 1; }); return ls.length ? Math.round(ls.reduce(function (a, b) { return a + b; }, 0) / ls.length) : 1; };
   var levelFor = function (id) { return Math.max(18, Math.min(120, mapLv(id) + 5)); };
   var scale = function (base, Lv, hpMult) {
@@ -220,7 +220,7 @@
       var r = oSpawn.apply(this, arguments);
       try {
         var m = mapState.mobs && mapState.mobs[idx];
-        if (m && !m.boss && !m._afkWe && !m._afkKurt && !m._afkRb && !act) { var rg = canTrigger(mapState.current); if (rg && Math.random() < RATE + (typeof W.__afkRbRateAdd === 'function' ? (Number(W.__afkRbRateAdd(rg)) || 0) : 0)) start(rg, idx); }   /* 村長系統：聲望懸殊加出現率（afk-village） */   // 先看條件再擲骰（不在可出現的地圖就不消耗亂數）
+        if (m && !m.boss && !m._afkWe && !m._afkKurt && !m._afkRb && !act) { var rg = canTrigger(mapState.current); if (rg && Math.random() < (typeof W.__afkEventRateMult === 'function' ? (Number(W.__afkEventRateMult(mapState.current)) || 1) : 1) * RATE + (typeof W.__afkRbRateAdd === 'function' ? (Number(W.__afkRbRateAdd(rg)) || 0) : 0)) start(rg, idx); }   /* 村長系統：聲望懸殊加出現率（afk-village） */   // 先看條件再擲骰（不在可出現的地圖就不消耗亂數）
       } catch (e) { console.warn('[AFK-region-boss] spawn', e); }
       return r;
     };
