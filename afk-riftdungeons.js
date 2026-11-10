@@ -342,7 +342,7 @@
     if (absHp) m.hp = Math.round(absHp);
     var tk2 = run && !(extra && extra._rdMirror) && hpTOf(run); if (tk2) m.hp = Math.round(m.hp * tk2);
     var mob = L.boss.place(idx, m, Object.assign({ mobId: baseId, _rd: true, _dimRift: !(run && run.D.noRift), noAutoTeleport: true, noCharm: true }, extra || {}));
-    if (extra && extra.n) mob.n = extra.n;
+    if (extra && extra.n) { mob.n = extra.n; try { if (b.n && b.n !== extra.n) { L.aliasAnim(extra.n, b.n); if (b.img && !mob.img) mob.img = b.img; } } catch (e) {} }   // 11-11：改名的頭目沿用原型的動畫（原本找不到圖，顯示成深色方塊）
     if (mob) { mob.hp = mob.curHp = m.hp; }   // HP 用這裡算好的（不再乘夢域鏡的怪物倍率；攻擊、命中等其他倍率照舊）
     return mob;
   };

@@ -35,7 +35,9 @@
     // monster-name and mobile-size panels stay available without a module-off switch.
     var UI_SECTIONS = {
         '版面微調': ['uiscale'],
-        '畫面': ['artfix'],   // 玩家 11-10：圖檔修復版保留開關（預設關）
+        '畫面': ['artfix', 'card-aura'],   // 玩家 11-10：圖檔修復版保留開關（預設關）；變身光環只影響外觀
+        '玩法選項': ['rebirth-quest', 'offlinechase'],   // 11-11：預設關、要玩家自己選擇的玩法（融合版原本面板沒列，打不開）
+        '介面便利': ['whbatch', 'autoupdate', 'synccompress'],
         '資訊顯示': ['statpts','notip','killlog','nobanner'],
         '效能與省電': ['fpscap','lowend','autoreload']
     };

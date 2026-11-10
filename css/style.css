@@ -3414,3 +3414,7 @@ button.classic-skill-cell { cursor:pointer; }
 
 /* HD item paintings retain smooth edges at every display size. */
 img[src*='assets/icons/hd/']{image-rendering:auto!important}
+
+/* 11-11：已裝備清單的名稱太長時換行顯示，不再被截掉 */
+body.afk-invlist .classic-inventory-viewport .classic-name-box > span:not(.classic-slot-name){white-space:normal;overflow:visible;text-overflow:clip}
+.classic-slot-name{font-size:12px}

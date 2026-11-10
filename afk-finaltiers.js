@@ -38,7 +38,25 @@
     return tier3Gate(p);
   };
   // 第三階層入場資格（玩家 2026-10-30 19:09）：統一伺服器（七座城都是你的）＋隊伍裡每個角色的特殊收藏全滿
+  // 玩家 11-11：終焉第三階層強制以聖衣變身；沒有能穿的聖衣不能進入
+  var clothRows = function (p) {
+    var A = W.AFK_CARD_ASCENSION; if (!A || typeof A.listOwned !== 'function') return [];
+    var st = (p && p.cardAscension && p.cardAscension.clothStars) || {};
+    return (A.listOwned(p) || []).filter(function (r) { return r && r.tier === 'samsara' && (!A.canUseForm || A.canUseForm(r.form, p)); })
+      .sort(function (a, b) { return (Number(st[b.id]) || 0) - (Number(st[a.id]) || 0); });
+  };
+  var forceCloth = function (p) {
+    var A = W.AFK_CARD_ASCENSION; if (!A) return false;
+    var cur = A.active && A.active(p); if (cur && cur.tier === 'samsara') return true;
+    var r = clothRows(p)[0]; if (!r) return false;
+    var f = A.resolve ? A.resolve(r.form, p) : r.form; if (!f) return false;
+    p.poly = f; p.buffs = p.buffs || {}; p.buffs.poly = Math.max(Number(p.buffs.poly) || 0, 360000);
+    sys('<span class="font-bold" style="color:#fde68a">聖衣回應了死亡之海的呼喚——你換上了「' + r.n + '」。</span>');
+    try { calcStats(); } catch (e) {}
+    return true;
+  };
   var tier3Gate = function (p) {
+    if (!clothRows(p).length) return '終焉第三階層要穿上聖衣才能進入（你沒有可以穿的聖衣）';
     var CG = W.__afkCastleGuards;
     var held = 0; try { held = CG && CG.held ? CG.held().length : 0; } catch (e) {}
     if (!(CG && CG.unified && CG.unified())) return '要先統一伺服器（七座城都是你的，目前 ' + held + ' 座）';
@@ -57,11 +75,11 @@
     var md = t === 2 ? 'tier2' : 'tier3', nm = FB.TIER[md].n;
     var go = function () {
       var r = rec(); r.pending = md;
-      if (md === 'tier3') r.t3 = 'lose';   // 進場就算用掉
+      if (md === 'tier3') { if (!forceCloth(P())) { r.pending = null; sys('<span class="text-amber-300">沒有可以穿的聖衣，無法進入終焉第三階層。</span>'); return; } r.t3 = 'lose'; }   // 進場就算用掉；強制聖衣變身
       FB.startMode(md, '<span class="afk-lore">殷海薩的神諭：「這次她只剩……不，她變強了。」</span><span class="font-bold" style="color:#c084fc;">你再次沉入死亡之海——這一次，迎接你的是「' + nm + '」。</span>' + (md === 'tier3' ? '<span class="afk-lore">夢的底層好像少了一半。</span>' : '') + '<span class="text-amber-200">' + powTxt(md) + '；時間封印照舊。</span>');
     };
     var msg = '⚠ 終焉第' + (t === 2 ? '二' : '三') + '階層：' + nm + '\n\n席琳的' + powTxt(md) + '（使徒的 HP 與傷害 ×' + FB.TIER[md].k + '），時間封印、凝視、死亡之潮照舊。\n'
-      + (t === 3 ? '只能挑戰一次——進場就算用掉，倒下、回村或中途重新整理都算失敗。\n' : '可以重複挑戰，直到打贏為止；打贏後不能再回頭打這一層。\n')
+      + (t === 3 ? '只能挑戰一次——進場就算用掉，倒下、回村或中途重新整理都算失敗。\n進場時強制以聖衣變身（沒有變身就自動穿上星數最高的那件）。\n' : '可以重複挑戰，直到打贏為止；打贏後不能再回頭打這一層。\n')
       + '第一次打贏：' + DB.items[REWARD[md][0]].n + ' ×' + REWARD[md][1] + '。\n\n確定要進入嗎？';
     if (W.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '終焉階層', message: msg, okText: '沉入死亡之海', cancelText: '再準備一下', danger: t === 3, onOk: go });
     else if (confirm(msg)) go();
@@ -100,6 +118,6 @@
       return r;
     };
   }
-  W.__afkFinalTiers = Object.assign(API, { can: can, finish: finish, rec: rec, REWARD: REWARD, tier3Gate: tier3Gate });
+  W.__afkFinalTiers = Object.assign(API, { can: can, finish: finish, rec: rec, REWARD: REWARD, tier3Gate: tier3Gate, clothRows: clothRows, forceCloth: forceCloth });
   console.log('[AFK-finaltiers] 已啟用：終焉三階層');
 })();
