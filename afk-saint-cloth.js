@@ -161,12 +161,10 @@
     },
     bless: function (id) {
       var p = P(), s = data(p); if (!s) return fail('請先進入遊戲。');
-      var cp=W.LineageClothProgression;
-      if(id&&cp&&!cp.canWear(id,p))return fail('碎裂或待確認的聖衣，請先找星鑄師處理。');
-      var dims = rows().filter(function (r) { return dim(r.id, p)&&(!cp||cp.canWear(r.id,p)); }); if (!dims.length) return fail('目前沒有可恢復光輝的聖衣；碎裂聖衣請找星鑄師回收。');
+      var dims = rows().filter(function (r) { return dim(r.id, p); }); if (!dims.length) return fail('目前沒有失去光輝的聖衣。');
       var w = wornRow(p), r = (id && rowById(id) && dim(id, p)) ? rowById(id) : (w && dim(w.id, p) ? w : dims[0]);
       if (invCount(BLESS) < 1) return fail('需要雅典娜祝福。');
-      take(BLESS, 1); Object.assign(s.cloth[r.id],{ uses: 0, dim: false });
+      take(BLESS, 1); s.cloth[r.id] = { uses: 0, dim: false };
       if (w && w.id === r.id) s.clothOn = null;   // 正在穿的那件：下一次檢查會重新算成解除封印的第 1 次
       return done('<span class="text-amber-200 font-bold">雅典娜的祝福降臨，' + esc(r.n) + ' 恢復了光輝（可以再解除封印 ' + USES + ' 次）。</span>');
     }

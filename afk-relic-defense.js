@@ -174,7 +174,7 @@
     226:{set:{petDmgAll:[25,50],summonDmg:[25,50]},add:{petHitAll:[10,25],summonHit:[10,25]}},
     227:{clear:['statusHealHp']},228:{add:{meleeDmg:[30,60],meleeHit:[15,30]}},
     229:{add:{potionBonus:[20,50,50,100]}},230:{add:{petDmgAll:[10,25,30,60],petHitAll:[10,25,30,60]}},
-    231:{},232:{},233:{add:{meleeDmg:[20,50],rangedDmg:[20,50]}},
+    231:{},232:{clear:['autoReviveScroll']},233:{add:{meleeDmg:[20,50],rangedDmg:[20,50]}},
     234:{clear:['auraDmg']},235:{add:{weightCap:[500,1000]}},236:{add:{weightCap:[500,1000]}},
     237:{clear:['thorns']},238:{add:{weightCap:[1000,2000]}},239:{add:{weightCap:[500,1000],hpR:[30,60],mpR:[30,60]}},
     240:{add:{weightCap:[500,1000]}},241:{set:{petDmgAll:[15,30],petHitAll:[15,30],weightCap:[600,1000]}},

@@ -16,7 +16,7 @@
   }
   var TIERS = ['mythic','celestial','spacetime','samsara'];
   var RULES = {
-    mythic:{n:'神話',rate:.5,color:'#fb923c',mat:'變身鐵卡',fail:'材料：5 張變身鐵卡。失敗什麼都沒有。'},
+    mythic:{n:'神話',rate:.5,color:'#fb923c',mat:'變身金卡',fail:'材料：5 張變身金卡。失敗什麼都沒有。'},
     celestial:{n:'天上',rate:.3,color:'#fde68a',mat:'怪物白金卡',fail:'材料：5 張怪物白金卡。失敗得到 1 枚鑽石卡碎片（5 枚換 1 張尚未收藏的鑽石卡）。'},
     spacetime:{n:'時空',rate:.1,color:'#c4b5fd',mat:'怪物鑽石卡',fail:'材料：5 張怪物鑽石卡。失敗：下次時空合成成功率 +5%（可累加，最高 50%），再得到 1 枚時空變身碎片。'},
     samsara:{n:'聖衣',rate:.05,color:'#fcd34d',mat:'怪物鑽石卡',fail:'材料：5 張怪物鑽石卡。失敗得到 1 枚時空變身碎片。第一次取得是封印聖衣，再取得同一件解除封印。沒回安全區連續戰鬥 30 分鐘會解除變身，冷卻 30 分鐘。'}
@@ -129,7 +129,7 @@
   function platinumRegion(actor) {
     try { return CARD_REGIONS.some(function (r) { return (CARD_REGION_MOBS[r.key]||[]).length>0 && typeof cardRegionTier==='function' && cardRegionTier(r.key)>=4; }); } catch (e) { return false; }
   }
-  // 各階材料：神話＝變身鐵卡（afk-poly-codex）；天上＝已登錄白金的怪物白金卡；時空＝已登錄鑽石的怪物鑽石卡
+  // 各階材料：神話＝變身金卡（afk-poly-codex）；天上＝已登錄白金的怪物白金卡；時空＝已登錄鑽石的怪物鑽石卡
   function matCards(tier, actor) {
     actor=actor||player;
     if (tier==='spacetime'||tier==='samsara') return excessCards(actor);
@@ -385,11 +385,11 @@
   function relevant(form) { return !!(form && (rowFor(form)||form.cardMonster||isMonster(form.n))); }
   function canUseForm(form,actor) {
     actor=actor||player;if(typeof form==='string')form={n:form};if(!form)return false;
-    var WCloth;var row=rowFor(form);if(row){
+    var row=rowFor(form);if(row){
       if(form.n&&form.n!==row.form.n)return false;
       // 神話擴到 32 種後不再限 Lv70 以上（玩家 2026-10-23）；等級資料被改過的變身仍不承認
       if(form.cardNativeLevel!=null&&Number(form.cardNativeLevel)!==Number(row.form.cardNativeLevel))return false;
-      if(row.tier==='samsara'&&((WCloth=window.LineageClothProgression)&&!WCloth.canWear(row.id,actor)||samsaraCd(actor)>0))return false;   // 輪迴冷卻中只能用其他變身
+      if(row.tier==='samsara'&&samsaraCd(actor)>0)return false;   // 輪迴冷卻中只能用其他變身
       return owned(row.id,actor);
     }
     var nm=form.cardMonster||form.n;if(isMonster(nm))return formOk(nm,actor);
@@ -490,7 +490,7 @@
   // 玩家 2026-10-26：選單分區——一般變身（怪物型態、控制戒指專用）、等級變身（變形卷軸等級表），兩者屬變身卡冊；神話、天上、時空、聖衣各一區
   var PICK_GROUPS=[['normal','一般變身'],['level','等級變身'],['mythic','神話'],['celestial','天上'],['spacetime','時空'],['samsara','聖衣']];
   // 玩家 2026-10-26（二）：沒點亮的變身也列出來但顯示灰色、不能選；點亮＝
-  //   等級變身／控制戒指變身：變身收集冊登錄過（青銅卡以上）
+  //   等級變身／控制戒指變身：變身收集冊登錄過（普通卡以上）
   //   怪物型態：卡片收集冊登錄過該怪物（任一階）；鑽石卡登錄過的不看等級
   //   神話／天上／時空／聖衣：變身卡冊點亮（取得過該卡）
   function polyLit(name,actor){

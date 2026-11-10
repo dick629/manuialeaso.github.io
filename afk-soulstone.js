@@ -377,7 +377,7 @@
     if (document.getElementById(CSS_ID)) return;
     var st = document.createElement('style'); st.id = CSS_ID;
     st.textContent = '#afk-zal .zs-say{color:#e9d5ff;font-size:14px;line-height:1.6;margin-bottom:10px}'
-      + '#afk-zal .zs-tabs{display:flex;flex-wrap:nowrap;gap:6px;margin-bottom:10px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}#afk-zal .zs-tabs>button{flex:0 0 auto;white-space:nowrap}'
+      + '#afk-zal .zs-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}'
       + '#interaction-content #afk-zal button.zs-tab{padding:6px 12px;font-size:14px;font-weight:700;border-radius:6px;border:1px solid #6b21a8 !important;background:#1e1b2e !important;color:#d8b4fe !important}'
       + '#interaction-content #afk-zal button.zs-tab.on{background:linear-gradient(180deg,#7e22ce,#4c1d95) !important;border-color:#e879f9 !important;color:#fdf4ff !important}'
       + '#afk-zal .zs-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #3b2a4f;border-radius:6px;background:#15121c;margin-bottom:5px;font-size:13px;color:#e5e7eb}'
@@ -404,8 +404,7 @@
     var h = '<div id="afk-zal"><div class="zs-say">「頭目死了，魂魄還會在世上徘徊。我把它們封進石頭裡——想再打一次，拿石頭來。訓練所只容得下一個人，你的傭兵就在外面等著吧。」</div>'
       + '<div class="zs-tabs"><button type="button" class="btn zs-tab' + (ui.tab === 'mine' ? ' on' : '') + '" data-zs="tab:mine">我的靈魂石</button>'
       + '<button type="button" class="btn zs-tab' + (ui.tab === 'craft' ? ' on' : '') + '" data-zs="tab:craft">製作</button>'
-      + '<button type="button" class="btn zs-tab' + (ui.tab === 'info' ? ' on' : '') + '" data-zs="tab:info">說明</button>'
-      + (W.LineageClassUI ? '<button type="button" class="btn zs-tab" data-zs="souls:open" aria-haspopup="dialog">角色封魂・三格魂魄</button>' : '') + '</div>';
+      + '<button type="button" class="btn zs-tab' + (ui.tab === 'info' ? ' on' : '') + '" data-zs="tab:info">說明</button></div>';
     var why = busy();
     if (ui.tab === 'mine') h += '<div class="zs-say" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>連續挑戰：打倒後自動用下一顆同一個王的靈魂石，直到用完。</span>'
       + '<button type="button" class="btn zs-tab' + (chainOn() ? ' on' : '') + '" data-zs="chain:1">' + (chainOn() ? '開' : '關') + '</button></div>';
@@ -438,7 +437,6 @@
     div.onclick = function (ev) {
       var b = ev.target.closest('[data-zs]'); if (!b || b.disabled) return;
       var v = b.getAttribute('data-zs'), k = v.slice(0, v.indexOf(':')), a = v.slice(v.indexOf(':') + 1);
-      if (k === 'souls') { if (W.LineageClassUI) W.LineageClassUI.open('souls'); return; }
       if (k === 'tab') { ui.tab = a; render(div); return; }
       if (k === 'chain') { var pc = P(); pc.afkSoulChain = !chainOn(); try { saveGame(); } catch (e) {} render(div); return; }
       if (k === 'use') { var it = (P().inv || []).find(function (i) { return i && i.uid === a; }); if (it) ask(it); return; }

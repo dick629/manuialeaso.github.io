@@ -281,22 +281,14 @@
         list.appendChild(b);
       });
     }
-    var menuLayer = null;
-    function dismissMenu() { menuLayer = null; list.classList.remove('open'); gear.classList.remove('on'); wrap.appendChild(list); }
-    function closeMenu() { if (menuLayer && window.AFK_UI) AFK_UI.closeLayer(menuLayer); else dismissMenu(); }
-    function openMenu() {
-      renderMenu();
-      var closeButton = document.createElement('button'); closeButton.id = 'afk-stg-close'; closeButton.type = 'button'; closeButton.textContent = '關閉選單'; closeButton.addEventListener('click', closeMenu); list.appendChild(closeButton);
-      // Escape the login artwork's clipping and transformed containing block.
-      document.body.appendChild(list); list.classList.add('open'); gear.classList.add('on');
-      if (window.AFK_UI && AFK_UI.openLayer) menuLayer = AFK_UI.openLayer(dismissMenu);
-    }
+    function openMenu() { renderMenu(); list.classList.add('open'); gear.classList.add('on'); }
+    function closeMenu() { list.classList.remove('open'); gear.classList.remove('on'); }
     gear.addEventListener('click', function (e) {
       e.stopPropagation();
       if (list.classList.contains('open')) closeMenu(); else openMenu();
     });
     // 點選單外面就收起來
-    document.addEventListener('click', function (e) { if (!wrap.contains(e.target) && !list.contains(e.target)) closeMenu(); });
+    document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) closeMenu(); });
 
     console.log('[AFK-storage] hooks OK — 首頁設定鈕(檢查存檔大小)已啟用。');
   }

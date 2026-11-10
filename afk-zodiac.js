@@ -1,10 +1,10 @@
 /* ============================================================================
- * afk-zodiac.js — 黃道十二宮（副本）與神聖衣（設計稿 rift-zodiac-plan 第二、三節；decisions-1107：碎衣在 HP 30%、每天 3 宮選一宮打、EX 數值照稿）
+ * afk-zodiac.js — 黃道十二宮（副本）與聖衣 EX（設計稿 rift-zodiac-plan 第二、三節；decisions-1107：碎衣在 HP 30%、每天 3 宮選一宮打、EX 數值照稿）
  *
  *   入口：席琳神殿「星鑄師 艾琳娜」。二轉後開放；每天 00:00（台灣時間）用日期挑出 3 宮，選其中一宮打（一天一次）。
  *   副本：3 層 × 5 波，第 5 波是那一宮的小頭目，第 3 層第 5 波是守宮者；時限 15 分鐘；倒下、時間到或離開＝失敗。沒有侵蝕、沒有面板減半。
  *   掉落：每次通關 黃金修復之砂 ×1；每一宮第一次通關 該宮的宮之印 ×1；30% 聖衣光輝碎片 ×1；守宮者 0.5% 黃道星卡（之後設計用途）。
- *   聖衣修練：碎衣免費回收青銅；青銅→白銀→黃金各需砂 ×3；黃金→神聖衣需砂 ×3＋該宮之印 ×1。
+ *   聖衣 EX（艾琳娜鑄造）：碎裂的聖衣＝黃金修復之砂 ×3；其他聖衣＝砂 ×3＋該宮的宮之印 ×1。
  *     穿著 EX 聖衣：在原本「解除封印」之上再加 六項能力 +25、五屬性抗性 +50、爆擊傷害 +20%；永遠不會失去光輝；次元裂縫裡不會碎，抵銷裂縫的傷害懲罰 15%。
  *     ★4：EX 才能升，光輝碎片 ×4＋砂 ×1。
  *   聖衣碎裂（終焉第三階層 HP 30% 碎衣）跟第三階層一起開；這裡先認 actor.cardAscension.cloth[id].broken。
@@ -13,7 +13,7 @@
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES, L = W.__afkLore, K = W.__afkNpcKit, A = W.AFK_CARD_ASCENSION;
-  if (T && T.register) T.register({ id: 'zodiac', name: '黃道十二宮、神聖衣', group: '遊戲內容', desc: '席琳神殿 星鑄師 艾琳娜：每天 3 宮選一宮打（二轉後）；鑄造神聖衣' });
+  if (T && T.register) T.register({ id: 'zodiac', name: '黃道十二宮、聖衣 EX', group: '遊戲內容', desc: '席琳神殿 星鑄師 艾琳娜：每天 3 宮選一宮打（二轉後）；鑄造聖衣 EX' });
   if (T && !T.enabled('zodiac')) return;
   if (!L || !K || typeof DB === 'undefined' || !DB.maps) return;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
@@ -44,9 +44,9 @@
   var BYK = {}; H.forEach(function (h, i) { h.i = i; h.seal = 'afk_zd_seal_' + h.k; BYK[h.k] = h; });
 
   // ── 道具 ──
-  L.addItem(SAND, { n: '黃金修復之砂', type: 'misc', c: 'text-yellow-300', img: IMG + '原石碎片.png', p: 0, noSell: true, d: '黃道十二宮的星光凝成的砂。可用於聖衣逐階修練；每階需 3 個，升神聖衣另需對應宮之印。' });
+  L.addItem(SAND, { n: '黃金修復之砂', type: 'misc', c: 'text-yellow-300', img: IMG + '原石碎片.png', p: 0, noSell: true, d: '黃道十二宮的星光凝成的砂。3 個可以在星鑄師 艾琳娜那裡把聖衣鑄造成聖衣 EX。' });
   L.addItem(STAR_CARD, { n: '黃道星卡', type: 'misc', c: 'text-yellow-200', img: IMG + '原石碎片.png', p: 0, noSell: true, d: '守宮者身上留下的星卡。用途之後開放。' });
-  H.forEach(function (h) { L.addItem(h.seal, { n: h.n + '之印', type: 'misc', c: 'text-yellow-200', img: IMG + '原石碎片.png', p: 0, noSell: true, d: h.n + '第一次通關得到的印。加上黃金修復之砂 ×3，可以把黃金聖衣鑄造成神聖衣。' }); });
+  H.forEach(function (h) { L.addItem(h.seal, { n: h.n + '之印', type: 'misc', c: 'text-yellow-200', img: IMG + '原石碎片.png', p: 0, noSell: true, d: h.n + '第一次通關得到的印。加上黃金修復之砂 ×3，可以把一件聖衣鑄造成聖衣 EX。' }); });
 
   // ── 記錄 ──
   var store = function (p) { p = p || P(); if (!p) return {}; var s = p.afkZodiac && typeof p.afkZodiac === 'object' ? p.afkZodiac : (p.afkZodiac = {}); s.first = s.first || {}; return s; };
@@ -137,7 +137,6 @@
     gainItem(SAND, 1, true, true); got.push('黃金修復之砂');
     if (!s.first[h.k]) { s.first[h.k] = Date.now(); gainItem(h.seal, 1, true, true); got.push(h.n + '之印'); }
     if (Math.random() < 0.3 && DB.items[SHARD]) { gainItem(SHARD, 1, true, true); got.push(DB.items[SHARD].n); }
-    s.clears=s.clears||{};s.clears[h.k]=(Number(s.clears[h.k])||0)+1;
     leave('<span class="text-yellow-300 font-bold">🏆 ' + esc(h.n) + ' 的星光安靜了下來。</span><span class="text-amber-200">得到：' + got.map(esc).join('、') + '</span>');
   };
   if (typeof W.killMob === 'function') {
@@ -224,7 +223,7 @@
     try { (0, eval)('tick = window.tick'); } catch (e) {}
   }
 
-  // ── 神聖衣 ──
+  // ── 聖衣 EX ──
   var rows = function () { return A && A.catalog && A.catalog.samsara ? A.catalog.samsara.filter(function (r) { return !r.unique; }) : []; };
   var data = function (p) { return p && p.cardAscension; };
   var cl = function (p, id) { var s = data(p); if (!s) return null; s.cloth = s.cloth || {}; return s.cloth[id] || (s.cloth[id] = { uses: 0, dim: false }); };
@@ -233,13 +232,19 @@
   var cnt = function (id) { return typeof questCountId === 'function' ? questCountId(id) : 0; };
   var take = function (id, n) { try { questConsumeId(id, n); return true; } catch (e) { return false; } };
   function forge(id) {
-    if(W.LineageClothProgression){try{return W.LineageClothProgression.upgrade(id);}catch(e){sys('<span class="text-amber-300">'+esc(e.message)+'</span>');return;}}
-
-    sys('<span class="text-amber-300">聖衣修練模組尚未載入，請重新整理後再試；未扣除材料。</span>');
+    var p = P(), rs = rows(), i = rs.findIndex(function (r) { return r.id === id; }), r = rs[i]; if (!p || !r) return;
+    if (!A.owned(id, p)) { sys('<span class="text-amber-300">你還沒有這件聖衣。</span>'); return; }
+    var c = cl(p, id); if (c.ex) { sys('<span class="text-amber-300">已經是聖衣 EX。</span>'); return; }
+    var h = houseOf(r, i), needSeal = !c.broken;
+    if (cnt(SAND) < 3 || (needSeal && cnt(h.seal) < 1)) { sys('<span class="text-amber-300">材料不夠：黃金修復之砂 ×3' + (needSeal ? '＋' + h.n + '之印 ×1' : '') + '。</span>'); return; }
+    take(SAND, 3); if (needSeal) take(h.seal, 1);
+    c.ex = true; c.broken = false; c.dim = false; c.uses = 0;
+    sys('<span class="font-bold" style="color:#fde047">✦ 艾琳娜把星光鍛進了' + esc(r.n) + '——它成了聖衣 EX。</span>');
+    try { calcStats(); saveGame(); } catch (e) {}
   }
   function starUp(id) {
     var p = P(), s = data(p), r = rows().filter(function (x) { return x.id === id; })[0]; if (!p || !s || !r) return;
-    if (!isEx(p, id)) { sys('<span class="text-amber-300">只有神聖衣 能升 ★4。</span>'); return; }
+    if (!isEx(p, id)) { sys('<span class="text-amber-300">只有聖衣 EX 能升 ★4。</span>'); return; }
     s.clothStars = s.clothStars || {}; if ((s.clothStars[id] || 0) < 3) { sys('<span class="text-amber-300">要先升到 ★3。</span>'); return; }
     if ((s.clothStars[id] || 0) >= 4) { sys('<span class="text-amber-300">已經是 ★4。</span>'); return; }
     if (cnt(SHARD) < 4 || cnt(SAND) < 1) { sys('<span class="text-amber-300">材料不夠：聖衣光輝碎片 ×4＋黃金修復之砂 ×1。</span>'); return; }
@@ -278,7 +283,6 @@
         if (boss && boss.curHp <= boss.hp * 0.3) {
           var p = P(), s0 = data(p), id = s0 && s0.clothOn;
           st._afkShatter = id && !isEx(p, id) ? id : '';
-          if(st._afkShatter){cl(p,id).recoveryPending=true;try{if(saveGame()===false){st.running=false;sys('聖衣碎裂進度保存失敗，已暫停戰鬥；請先備份存檔。');}}catch(e){st.running=false;}} 
           clog('<span class="font-bold" style="color:#f87171">【碎衣】</span>席琳的手指劃過——' + (st._afkShatter ? '你的聖衣碎裂了，剩下的時間失去解除封印的力量。' : '光從裂縫裡漏了出來。'), 'enemy');
           try { calcStats(); } catch (e) {}
         }
@@ -292,7 +296,7 @@
   var hookFinish = function () {
     var FT = W.__afkFinalTiers; if (!FT || typeof FT.finish !== 'function' || FT.finish.__afkZd) return;
     var o = FT.finish;
-    FT.finish = function (md, result) { var r = o.apply(this, arguments); try { var st = S(), id = st._afkShatter; st._afkShatter = null; if (md === 'tier3' && id) { var p = P(), c = cl(p, id); c.broken = true; c.recoveryPending = false; sys('<span class="text-red-300">「' + esc((rows().filter(function (x) { return x.id === id; })[0] || {}).n || '聖衣') + '」碎了。請到席琳神殿找星鑄師 艾琳娜，免費回收成青銅聖衣，重新修練至白銀、黃金、神聖衣。</span>'); try { calcStats(); saveGame(); } catch (e) {} } } catch (e) {} return r; };
+    FT.finish = function (md, result) { var r = o.apply(this, arguments); try { var st = S(), id = st._afkShatter; st._afkShatter = null; if (md === 'tier3' && id) { var p = P(), c = cl(p, id); c.broken = true; sys('<span class="text-red-300">「' + esc((rows().filter(function (x) { return x.id === id; })[0] || {}).n || '聖衣') + '」碎了。帶著黃金修復之砂 ×3 去找席琳神殿的星鑄師 艾琳娜，能把它鑄成聖衣 EX。</span>'); try { calcStats(); saveGame(); } catch (e) {} } } catch (e) {} return r; };
     FT.finish.__afkZd = true;
   };
   hookFinish(); try { W.addEventListener('load', hookFinish); } catch (e) {}
@@ -304,8 +308,11 @@
     var why = canEnter(p), s = store(p), h = '<div class="ax-h">黃道十二宮</div><div class="ax-note">' + '三層星階、每層五波，第五波是那一宮的星衛，最上層是守宮者。時限 15 分鐘；倒下、時間到或離開就失敗。每天從十二宮挑出三宮，選一宮打。</div>';
     h += '<div class="ax-note">每次通關：黃金修復之砂 ×1；每一宮第一次通關：該宮之印 ×1；30% 聖衣光輝碎片；守宮者偶爾留下黃道星卡。</div>';
     today().forEach(function (x) { h += K.rowHtml({ key: x.k, name: x.n + '・' + x.g + (s.first[x.k] ? '（已拿過宮之印）' : ''), color: '#fde047', desc: x.d, why: why || '', btns: [['zd:' + x.k, '進入', !why]] }, 'data-zd'); });
-    if(W.LineageClothProgression)h+=W.LineageClothProgression.renderNpc(p);
-    else h+='<div class="ax-note">聖衣修練模組尚未載入，請重新整理後再試。</div>';
+    h += '<div class="ax-h" style="margin-top:10px">聖衣 EX</div><div class="ax-note">碎裂的聖衣：黃金修復之砂 ×3；其他聖衣：砂 ×3＋該宮的宮之印 ×1。EX 在解除封印之上再加六項能力 +25、五屬性抗性 +50、爆擊傷害 +20%，永遠不會失去光輝，次元裂縫裡也不會碎。★4：EX 才能升（光輝碎片 ×4＋砂 ×1）。持有：砂 ' + cnt(SAND) + '、光輝碎片 ' + cnt(SHARD) + '</div>';
+    rows().forEach(function (r, i) {
+      if (!A.owned(r.id, p)) return; var c = cl(p, r.id), hs = houseOf(r, i), st = ((data(p).clothStars || {})[r.id]) || 0;
+      h += K.rowHtml({ key: r.id, name: r.n + (c.ex ? '　EX' : c.broken ? '　（碎裂）' : '') + '　★' + st, color: c.ex ? '#fde047' : '#e2e8f0', desc: c.ex ? '已是聖衣 EX。' : ('鑄造：砂 ×3' + (c.broken ? '' : '＋' + hs.n + '之印 ×1（持有 ' + cnt(hs.seal) + '）')), why: '', btns: c.ex ? [['star:' + r.id, '升 ★4', st === 3]] : [['ex:' + r.id, '鑄造 EX', true]] }, 'data-zd');
+    });
     K.repaint(box, h);
   };
   var render = function (div) {
@@ -314,14 +321,9 @@
     var box = document.createElement('div'); box.className = 'afk-ax'; box.id = 'afk-zd-elena'; div.appendChild(box); paint(div);
     if (!div.__afkZdBound) { div.__afkZdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-star],button[data-zd]'); if (!b || b.disabled || !div.querySelector('#afk-zd-elena')) return; var k = b.getAttribute('data-star') || b.getAttribute('data-zd') || ''; if (/^zd:/.test(k)) enter(k.slice(3)); else if (/^ex:/.test(k)) forge(k.slice(3)); else if (/^star:/.test(k)) starUp(k.slice(5)); paint(div); }); }
   };
-  K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: '星鑄師', type: 'quest', classicHide: true, d: '替聖衣鍛進星光的鑄匠。黃道十二宮的入口，也是神聖衣 的鑄造處。' });
+  K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: '星鑄師', type: 'quest', classicHide: true, d: '替聖衣鍛進星光的鑄匠。黃道十二宮的入口，也是聖衣 EX 的鑄造處。' });
   K.hookNpc(NPC_ID, NPC_N, '星鑄師', render);
 
-  function growthRestore(q){
-    if(!q){run=null;lastMap=mapState.current;return;}
-    if(!BYK[q.k]||!(q.until>Date.now())||!Number.isInteger(q.layer)||q.layer<1||q.layer>ZT.layers||!Number.isInteger(q.wave)||q.wave<1||q.wave>ZT.waves||mapState.current!==MAP)throw Error('十二宮挑戰已逾時或進度不相容，請結束本輪');
-    run=JSON.parse(JSON.stringify(q));lastMap=MAP;
-  }
-  W.__afkZodiac = { H: H, ZT: ZT, today: today, canEnter: canEnter, enter: enter, run: function () { return run; }, growthCheckpoint:function(){return run?JSON.parse(JSON.stringify(run)):null;},growthRestore:growthRestore, forge: forge, starUp: starUp, isEx: isEx, store: store, MAP: MAP, SAND: SAND };
-  try { console.log('[AFK-zodiac] 已載入：黃道十二宮、神聖衣'); } catch (e) {}
+  W.__afkZodiac = { H: H, ZT: ZT, today: today, canEnter: canEnter, enter: enter, run: function () { return run; }, forge: forge, starUp: starUp, isEx: isEx, store: store, MAP: MAP, SAND: SAND };
+  try { console.log('[AFK-zodiac] 已載入：黃道十二宮、聖衣 EX'); } catch (e) {}
 })();

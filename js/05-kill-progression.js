@@ -378,12 +378,6 @@ function killMob(idx) {
     let _petExpGain = Math.floor(_expEach * (1 + dollFieldVal('expBonus') / 100));   // 🐾 每隻存活寵物各得完整玩家份額；玩家滿等不影響養寵
     let _playerExpGain = Math.floor(_petExpGain * getExpGainMult(player.lv) * (typeof window.__afkTtmiExpMult === 'function' ? window.__afkTtmiExpMult(player) : 1)) /* relic-runtime:ttmi-player-exp */;   // ⚠️v3.0.82 經典×0.5 已移除；Lv100 玩家自身仍不獲得經驗
     if (typeof window.__afkExpShare === 'function') _playerExpGain = (typeof window.__afkExpCarry === 'function') ? window.__afkExpCarry(player, _playerExpGain * window.__afkExpShare(player)) : Math.floor(_playerExpGain * window.__afkExpShare(player));   /* 🔌 加掛版補丁:經典組隊經驗小數累積 */   /* 🔌 加掛版補丁:經典原版經驗死亡掉落 */
-    if (window.LineageGrowth) {
-        // Independent P experience: the normal level cap must not erase this award.
-        let _pg = Math.floor(_petExpGain * (typeof window.__afkTtmiExpMult === 'function' ? window.__afkTtmiExpMult(player) : 1));
-        if (typeof window.__afkExpShare === 'function') _pg *= window.__afkExpShare(player);
-        window.LineageGrowth.gainXP(_pg);
-    }
     player.exp += _playerExpGain;
     checkLvUp();
     // 🐾 寵物經驗：每隻未倒地出戰寵物各得完整份額；不受玩家 Lv100 經驗封頂影響（升級需求＝玩家表 1/10）

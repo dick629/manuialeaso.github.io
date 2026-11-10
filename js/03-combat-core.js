@@ -2310,8 +2310,6 @@ function consumeWetMult(target, ele) {
 function getPhysicalDmg(diceStr, target, wpn, arrowData, forceHeavy, forceHit, forceLand, forceCrit, wpnInst, forceGraze, probe) {
     let isRanged = !!(wpn && wpn.ranged);
     let hitBonus = (isRanged ? player.d.rangedHit : player.d.meleeHit) + player.d.extraHit + (player._skillHitBonus || 0);   // 🗼 范德之劍：施展衝擊之暈時本次技能近距離命中+1
-    if(window.LineageTalents)hitBonus+=window.LineageTalents.hitBonus(player,isRanged?'ranged':'melee',probe);
-    if(window.LineageClassCombat)hitBonus+=window.LineageClassCombat.hitBonus(player,target,probe);
     let dmgBonus = (isRanged ? player.d.rangedDmg : player.d.meleeDmg);
     // 🌅 日出之國異常（玩家承受）：弱化＝傷害−5/命中−2；疾病＝命中−4（AC+8 在敵方命中端）；目盲＝命中−6
     if (player.statuses) {
@@ -2473,18 +2471,10 @@ function consumeArrow() {
 
 // ===== 法杖共鳴：裝備指定魔法杖時，一般攻擊(不論命中與否)有 智力/60 機率免費施展光箭 =====
 const WAND_LIGHTARROW_IDS = ['wpn_oakwand', 'wpn_38', 'wpn_witchwand', 'wpn_manawand', 'wpn_crystalwand', 'wpn_baless', 'wpn_wand_rasta', 'wpn_red_crystalwand', 'wpn_laia_wand', 'wpn_icequeen_wand', 'wpn_demon_scythe', 'wpn_darkmage_wand', 'wpn_baphomet_wand', 'wpn_illu_wand', 'wpn_demon_wand_hidden', 'wpn_dark_crystalball', 'wpn_steel_manawand_blue', 'relic_amp_staff', 'relic_elder_thunder', 'relic_cerberus_wand', 'relic_evillizard_eye', 'relic_lightbeam_wand', 'relic_warlock_grimoire', 'relic_windking_roar', 'relic_rockmage_secret', 'wpn_onmyoji_fan', 'relic_sr_kyuubi_wand', 'relic_water_orb', 'relic_unsealed_baphomet_wand', 'wpn_angel_wand'];   // 😇 v3.7.74 天使魔杖亦共鳴   // 🏺 v3.7.20 解除封印的巴風特魔杖亦共鳴   // 🏺 v3.5.27 水靈的魔力珠亦共鳴（一般限定＝wandLightArrowProc 開頭 classicMode 早退）   // 🌅 日出之國：陰陽師的扇子（傳說）＋九尾妖狐的怒火（遺物）亦共鳴   // 🏺 遺物 安普長老的拐杖／長老的雷電能量／三頭犬魔杖／邪惡蜥蜴的眼瞳／光束強化魔杖／風精靈王的狂嘯／破岩法師的秘術亦共鳴 // 🔮 幻術士魔杖：共鳴（👹 隱藏的魔族魔杖亦共鳴；🏴‍☠️ 漆黑水晶球亦共鳴）   // 🏅 共鳴：含蕾雅魔杖／冰之女王魔杖／惡魔鐮刀／黑法師之杖／🔧巴風特魔杖（👑惡魔王魔杖已改為魔爆 eff:magicburst）
-// Upgraded relics keep their native weapon family; affix donors are not the host.
-function equipmentBaseId(item) {
-    const id = typeof item === 'string' ? item : item && item.id;
-    const def = id && DB.items[id];
-    return def && def.relicBase && DB.items[def.relicBase] ? def.relicBase : id;
-}
-const RESONANCE_WEAPON_BASES = new Set(WAND_LIGHTARROW_IDS);
-function isResonanceWeapon(item) { return RESONANCE_WEAPON_BASES.has(equipmentBaseId(item)); }
 function wandLightArrowProc(target) {
     if (player.classicMode) return;   // 🎮 經典模式：停用共鳴
     let wpn = player.eq.wpn;
-    if (!wpn || !isResonanceWeapon(wpn.id)) return;
+    if (!wpn || !WAND_LIGHTARROW_IDS.includes(wpn.id)) return;
     let _ms = hasMastery('m_strike');   // 🏅 v2.6.70 魔擊精通：持共鳴武器時共鳴改發魔擊；v2.6.71 觸發機率比照原生魔擊＝力量/60（不再吃智力）
     if (Math.random() >= (((_ms ? player.d.str : player.d.int) || 0) / 60)) return;   // 觸發機率 = 智力/60（共鳴）；魔擊精通改 力量/60
     // 選定光箭目標：主目標仍存活則優先；若主目標已被普攻擊殺，改打場上隨機一隻存活的怪；全部清空則作罷

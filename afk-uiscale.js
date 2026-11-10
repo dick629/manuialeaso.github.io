@@ -49,10 +49,6 @@
     // 2026-10-29（玩家：縮放版破圖）：拖過日誌高度後地圖面板變矮，村莊畫面（800×450、16:9）還是原本大小 → 整塊溢出蓋到日誌列。
     //   地圖面板不准溢出；村莊畫面改成「吃滿地圖面板剩下的高度、維持 16:9 置中」，NPC 條列式在裡面自己捲。
     + 'body.afk-ui-on #game-screen #map-view-panel{overflow:hidden}'
-    // 縮放舞台不再整片旋轉／位移；保留原時長和 animationend，避免清理事件累積。
-    // 個別角色的受傷、施法、攻擊特效仍正常播放。
-    + '@keyframes afkFixedBattleStage{from{transform:none}to{transform:none}}'
-    + 'body.afk-ui-on #game-screen #battle-view.vfx-shake,body.afk-ui-on #game-screen #battle-view.vfx-bossshake{animation-name:afkFixedBattleStage!important}'
     + 'body.afk-ui-on #game-screen #map-view-panel.afk-ui-maph #town-view:not(.hidden){flex:1 1 0 !important;min-height:0 !important;height:auto !important;width:auto !important;max-width:100% !important;aspect-ratio:16/9;align-self:center}'
     + 'body.afk-ui-on #game-screen #map-view-panel.afk-ui-maph #battle-view:not(.hidden){flex:1 1 0 !important;min-height:0 !important;height:auto !important;width:auto !important;max-width:100% !important;align-self:center}'
     + 'body.afk-ui-on.afk-npclist #game-screen #map-view-panel.afk-ui-maph #town-view:not(.hidden){width:100% !important;aspect-ratio:auto}'   // NPC 條列式：沒有地圖圖片，寬度吃滿

@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>逐風・銀羽翼靴</title><defs><linearGradient id="steel" x1="0" y1="0" x2=".8" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#ffefc9"/><stop offset=".24" stop-color="#cbd5ca"/><stop offset=".46" stop-color="#77918a"/><stop offset=".5" stop-color="#dbe0c9"/><stop offset=".76" stop-color="#6e827a"/><stop offset="1" stop-color="#293e34"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8e8b4"/><stop offset=".27" stop-color="#c5a565"/><stop offset=".52" stop-color="#f0d79e"/><stop offset=".7" stop-color="#8a672c"/><stop offset="1" stop-color="#cfb17c"/></linearGradient><radialGradient id="gem" cx=".32" cy=".22" r=".85"><stop stop-color="#f6f3dd"/><stop offset=".25" stop-color="#8dc8cf"/><stop offset=".72" stop-color="#8dc8cf"/><stop offset="1" stop-color="#243c35"/></radialGradient></defs><g stroke-linejoin="round" stroke-linecap="round">
- <path d="m24 6 17 3-6 24 12 13 9 4-2 8-25 1-17-8 3-10 8-10Z" fill="url(#steel)" stroke="#1c2821" stroke-width="2.2"/>
- <path d="m25 9 12 2-4 10-11-3Z" fill="url(#gold)" stroke="#4a3b24"/>
- <path d="m23 22 11 2-2 11 10 11-10 4-12-8Z" fill="#354e47"/>
- <path d="m14 43 17 10 22-1-1 5-22 1-17-8Z" fill="url(#gold)" stroke="#493923"/>
- <path d="M28 35C13 32 5 22 4 9c6 7 13 7 19 10 10 6 12 13 5 22Z" fill="url(#steel)" stroke="#24382f" stroke-width="1.5"/>
- <path d="M6 13q4 11 21 22M10 20l17 15M15 27l11 9" fill="none" stroke="#f3eccc" stroke-width="1.4"/>
- <path d="m25 30 7 4-3 7-7-4Z" fill="url(#gem)" stroke="#dfc88d" stroke-width="1.2"/>
- <path d="M7 48h6M4 53h14M9 58h12" stroke="#7cafa7" stroke-width="1.5" stroke-linecap="round"/></g></svg>

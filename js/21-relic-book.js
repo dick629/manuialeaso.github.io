@@ -45,7 +45,7 @@ function ensureRelicDex(warehouse) {
 // ===== 全螢幕書頁 UI =====
 let _relicBookOpen = false;
 let _relicBookCat = (typeof EQUIP_CATEGORIES !== 'undefined' && EQUIP_CATEGORIES[0]) ? EQUIP_CATEGORIES[0].key : 'dagger';
-function collectionOpenRelic() { if (typeof leaveCollectionPanelForBook === 'function') leaveCollectionPanelForBook(); else if (typeof closeCollectionPanel === 'function') closeCollectionPanel(); openRelicBook(); }
+function collectionOpenRelic() { if (typeof closeCollectionPanel === 'function') closeCollectionPanel(); openRelicBook(); }
 function openRelicBook() {
     if (!player.relicDex) player.relicDex = {};
     if (typeof mergeSharedIntoPlayer === 'function') mergeSharedIntoPlayer('relic');   // 🔄 多開兜底：開書前先併入其他分頁的遺物進度
@@ -82,7 +82,7 @@ function renderRelicBook() {
     // 全部遺物進度（總覽）
     let totGot = 0, totAll = 0;
     for (let k in RELIC_CAT_ITEMS) { totGot += RELIC_CAT_ITEMS[k].filter(relicDexHas).length; totAll += RELIC_CAT_ITEMS[k].length; }
-    let head = `<div class="lm-book-heading flex flex-wrap items-baseline justify-between gap-2 mb-3">
+    let head = `<div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
         <div class="text-xl font-bold c-relic">${cat.group}・${cat.name}<span class="text-sm text-slate-400 font-normal ml-2">已收集 ${cc.got} / ${cc.total}</span></div>
         <div class="text-sm text-slate-400">🏺 遺物總收集 <span class="c-relic font-bold">${totGot} / ${totAll}</span></div>
     </div>`;
@@ -99,5 +99,5 @@ function renderRelicBook() {
             <div class="text-center w-full">${nameHtml}</div>
         </div>`;
     }).join('');
-    host.innerHTML = head + `<div class="lm-book-grid flex flex-wrap gap-2 justify-center">${cells || '<div class="text-slate-500 p-8">此部位暫無可收集的遺物。</div>'}</div>`;
+    host.innerHTML = head + `<div class="flex flex-wrap gap-2 justify-center">${cells || '<div class="text-slate-500 p-8">此部位暫無可收集的遺物。</div>'}</div>`;
 }

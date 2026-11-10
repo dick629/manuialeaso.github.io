@@ -175,9 +175,6 @@
   var busy = 0;
   var shadowOn = function (m) { return !!(m && m._afkFinal && F.sh && F.sh.on && on('g3shadow') && stage() === 'r2a'); };
   var armorOn = function (m) { return !!(m && m._afkDragonStage && (!!W.__afkG3Rift && on('goddess3')) && dragonDungeon() && tk() < (A.until || 0)); };
-  (W.LineageAbsoluteDamageGates=W.LineageAbsoluteDamageGates||[]).push(function(actor,target,amount,kind){
-    var k=KIND[kind];return shadowOn(target)||(k&&immTarget(target)&&immOn(k)&&!(W.LineageClassCombat&&W.LineageClassCombat.broken(target,k)))?0:amount;
-  });
   var hookDamage = function () {
     var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function' || C.damage.__g3) return;
     var o = C.damage;
@@ -188,7 +185,7 @@
         if (target && !(target === player || target.eq)) {
           if (shadowOn(target)) { ST.blocked.shadow += Number(amount) || 0; return 0; }
           var k = KIND[opt && opt.kind];
-          if (k && immTarget(target) && immOn(k) && !(W.LineageClassCombat&&W.LineageClassCombat.broken(target,k))) { ST.blocked[k] += Number(amount) || 0; return 0; }
+          if (k && immTarget(target) && immOn(k)) { ST.blocked[k] += Number(amount) || 0; return 0; }
         }
         var r = o.apply(this, arguments);
         if (r > 0 && armorOn(target)) { var cut = Math.min(r, CFG.armor.val); ST.armorAbsorbed += cut; r -= cut; }

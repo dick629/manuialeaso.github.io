@@ -1,10 +1,10 @@
 /* ============================================================================
- * afk-hotbar.js — 道具熱鍵列 F5～F12（玩家 2026-10-27 指定）
+ * afk-hotbar.js — 道具熱鍵列 F5～F8（玩家 2026-10-27 指定）
  *
- * ‧左欄最底下一塊天堂風格的熱鍵面板：兩組四格，左右滑動，F5～F12
+ * ‧左欄最底下一塊天堂風格的熱鍵面板：四格，F5～F8
  * ‧任何背包裡的東西都能放：藥水、勇水、綠水、變形卷軸、卷軸、裝備……（每格記物品 id，疊放的數量會跟著顯示）
  * ‧點空格＝選要放什麼；點已放的格子＝使用（裝備類＝穿上／卸下切換）；右鍵或長按＝重新選擇；🔒 鎖住時不能改
- * ‧鍵盤 F5～F12 同樣觸發（打字中、按住 Ctrl／Alt 時不攔，瀏覽器的 Ctrl+F5 照常）
+ * ‧鍵盤 F5～F8 同樣觸發（打字中、按住 Ctrl／Alt 時不攔，瀏覽器的 Ctrl+F5 照常）
  * ‧每個角色各自記住（player._afkHotbar）
  * ‧魔法也能放（玩家 2026-10-30 22:21）：格子記 'sk:<技能 id>'，按下去＝施放（手動技能走 manualCast，其他走 castSkill，MP、冷卻照原本）
  * ‧自動施法（玩家 2026-11-01 15:18 定案；外掛開關 hotcast，預設開）：
@@ -24,11 +24,10 @@
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
-  if (T && T.register) T.register({ id: 'hotbar', name: '道具熱鍵列 F5～F12', desc: '兩組四格熱鍵，任何道具、裝備、魔法都能放，鍵盤 F5～F12 可用', group: '遊戲介面' });
+  if (T && T.register) T.register({ id: 'hotbar', name: '道具熱鍵列 F5～F8', desc: '左欄最底下四格熱鍵，任何道具、裝備、魔法都能放，鍵盤 F5～F8 可用', group: '遊戲介面' });
   var on = function () { return !T || T.enabled('hotbar'); };
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
-  var KEYS = ['F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'], N = 8;
-  var pageIndex=0,pageOwner=null,dragging=false,touchBusy=false,suppressClickUntil=0;
+  var KEYS = ['F5', 'F6', 'F7', 'F8'], N = 4;
   var esc = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
 
@@ -48,9 +47,6 @@
       '#afk-hotbar .hb-moon{width:22px;height:22px;border-radius:4px;border:1px solid #5b4632;background:linear-gradient(180deg,#3a3238,#1d1a1f);font-size:12px;line-height:20px;text-align:center;cursor:pointer}',
       '#afk-hotbar .hb-lock.on{color:#f87171;border-color:#7f1d1d;box-shadow:0 0 6px #7f1d1d inset}',
       '#afk-hotbar .hb-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}',
-      '#afk-hotbar .hb-pages{display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;touch-action:pan-x;overscroll-behavior-x:contain;min-width:0;width:100%}',
-      '#afk-hotbar .hb-pages::-webkit-scrollbar{display:none}#afk-hotbar .hb-page{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always}',
-      '#afk-hotbar .hb-pager{display:flex;justify-content:center;gap:2px;flex:1}#afk-hotbar .hb-pager button{display:grid;place-items:center;width:28px;height:28px;min-width:28px;padding:0;border:0;background:transparent;box-shadow:none;cursor:pointer}#afk-hotbar .hb-pager button::before{content:"";width:6px;height:6px;border-radius:50%;background:#5b6b60;box-shadow:0 0 0 1px #17221b}#afk-hotbar .hb-pager button[aria-selected=true]::before{background:#e4cf91;box-shadow:0 0 5px #d6bd6955}#afk-hotbar .hb-pager button:focus-visible{outline:1px solid #d0b56b;outline-offset:-3px}',
       '#afk-hotbar .hb-names{display:none}#afk-hotbar.hb-mobile{flex:0 0 auto;margin:0 2px}#afk-hotbar.hb-mobile .hb-row,#afk-hotbar.hb-mobile .hb-names{grid-template-columns:repeat(4,minmax(0,68px));justify-content:center;gap:10px 14px}',
       // 手機：熱鍵固定在下方導覽列上面、不被蓋住（玩家 2026-10-27：有非官方橫幅時名字被導覽列遮住）——戰鬥畫面讓出高度（最少 130px），熱鍵本身不縮
       '#col-center.hb-host{flex:1 1 0!important;min-height:0!important}#col-center.hb-host>#map-view-panel{flex:1 1 0!important;min-height:0!important}#col-center.hb-host #battle-view{flex:0 1 auto!important;min-height:130px!important}#afk-hotbar.hb-mobile .hb-top{height:18px;margin-bottom:3px}',
@@ -90,14 +86,11 @@
   };
 
   // ── 資料 ──
-  var slots=function(key,empty){var p=P();if(!p)return Array(N).fill(empty);if(!Array.isArray(p[key]))p[key]=[];while(p[key].length<N)p[key].push(empty);return p[key];};
-  var bar = function () { return P()?slots('_afkHotbar',null):null; };
+  var bar = function () { var p = P(); if (!p) return null; if (!Array.isArray(p._afkHotbar) || p._afkHotbar.length !== N) p._afkHotbar = [null, null, null, null]; return p._afkHotbar; };
   var locked = function () { var p = P(); return !!(p && p._afkHotbarLock); };
   // 自動施法設定（每格）：auto＝是否自動；cond＝'all'｜'multi'｜'boss'
-  var autoArr = function () { return slots('_afkHotbarAuto',false); };
-  var condArr = function () { return slots('_afkHotbarCond','all'); };
-  var itemAuto=function(id){return W.AFK_HOTBAR_ITEMS&&W.AFK_HOTBAR_ITEMS.describe(id);};
-  var autoLabels=function(id){var info=itemAuto(id);return info?W.AFK_HOTBAR_ITEMS.conditions(info):COND_N;};
+  var autoArr = function () { var p = P(); if (!p) return [false, false, false, false]; if (!Array.isArray(p._afkHotbarAuto) || p._afkHotbarAuto.length !== N) p._afkHotbarAuto = [false, false, false, false]; return p._afkHotbarAuto; };
+  var condArr = function () { var p = P(); if (!p) return ['all', 'all', 'all', 'all']; if (!Array.isArray(p._afkHotbarCond) || p._afkHotbarCond.length !== N) p._afkHotbarCond = ['all', 'all', 'all', 'all']; return p._afkHotbarCond; };
   var findInv = function (id) { var p = P(); if (!p) return null; var list = (p.inv || []).filter(function (i) { return i && i.id === id; }); if (!list.length) return null; list.sort(function (a, b) { return (b.cnt || 1) - (a.cnt || 1); }); return list[0]; };
   var countOf = function (id) { var p = P(); return p ? (p.inv || []).reduce(function (s, i) { return s + ((i && i.id === id) ? (i.cnt || 1) : 0); }, 0) : 0; };
   var wornSlot = function (id) { var p = P(); if (!p || !p.eq) return null; for (var k in p.eq) if (p.eq[k] && p.eq[k].id === id) return k; return null; };
@@ -109,7 +102,7 @@
 
   // ── 觸發 ──
   var fire = function (i) {
-    if (!on()||!Number.isInteger(i)||i<0||i>=N) return;
+    if (!on()) return;
     var p = P(), b = bar(); if (!p || !b) return;
     var id = b[i]; if (!id) { pick(i); return; }
     var sk = skOf(id);
@@ -142,22 +135,20 @@
   var groupOf = function (d) { if (d.type === 'wpn') return '武器'; if (d.type === 'arm') return '防具'; if (d.type === 'acc') return '飾品'; if (d.type === 'pot') return '藥水'; if (d.type === 'scroll') return '卷軸'; if (d.type === 'skillbk') return '技能書'; return '道具'; };
   var ORDER = ['魔法', '藥水', '卷軸', '道具', '武器', '防具', '飾品', '技能書'];
   var pick = function (i) {
-    if(!Number.isInteger(i)||i<0||i>=N)return;
     if (locked()) { sys('<span class="text-amber-300">熱鍵列已鎖住，先解鎖再改。</span>'); return; }
     var p = P(); if (!p) return; css(); closePick();
     var m = document.createElement('div'); m.id = 'afk-hotbar-pick';
     m.innerHTML = '<div class="box"><div class="hd">F' + (5 + i) + ' 要放什麼？<input type="text" placeholder="輸入名稱篩選"></div><div class="ls"></div><div class="ft"><button type="button" data-clear="1">清空這格</button><button type="button" data-close="1">取消</button></div></div>';
     document.body.appendChild(m);
-    var curSk = skOf(bar()[i]), curLane = !!(curSk && HC.lane(curSk)), curItem=itemAuto(bar()[i]), hc = null;
+    var curSk = skOf(bar()[i]), curLane = !!(curSk && HC.lane(curSk)), hc = null;
     if (HC.on()) {   // 自動施法設定：放攻擊類魔法時一起決定「自動」還是「手點」
       hc = document.createElement('div'); hc.className = 'hc';
-      var labels=autoLabels(bar()[i]);
-      hc.innerHTML = '<label><input type="checkbox" data-auto="1"' + ((curLane||curItem) && autoArr()[i] ? ' checked' : '') + '> 自動使用／施放</label>'
-        + '<span>條件</span><select data-cond="1">' + Object.keys(labels).map(function (k) { return '<option value="' + k + '"' + (condArr()[i] === k ? ' selected' : '') + '>' + labels[k] + '</option>'; }).join('') + '</select>'
-        + '<small>補血／補魔依比例，增益藥水、料理及輔助卷軸在效果結束後補用。勾選後再選道具即可；長按已配置格可調整。只使用背包未鎖定物品、不自動購買；沒有 AUTO 的道具保持手動。攻擊魔法沿用原本施法間隔與 MP 門檻。</small>';
+      hc.innerHTML = '<label><input type="checkbox" data-auto="1"' + (curLane && autoArr()[i] ? ' checked' : '') + '> 自動施放' + (curLane ? '「' + esc(curSk.n) + '」' : '（選攻擊類魔法時）') + '</label>'
+        + '<span>條件</span><select data-cond="1">' + Object.keys(COND_N).map(function (k) { return '<option value="' + k + '"' + ((curLane ? condArr()[i] : 'all') === k ? ' selected' : '') + '>' + COND_N[k] + '</option>'; }).join('') + '</select>'
+        + '<small>勾了＝自動施放（格子標 AUTO），不勾＝放著手點。只對攻擊類魔法有效；跟技能設定的「攻擊技能」共用施法間隔，每分鐘施法次數不變；法系輸出從熱鍵放出後自己有 1.5 秒冷卻（範圍魔法、粉碎能量 3 秒）。MP 門檻跟「攻擊技能」相同。</small>';
       m.querySelector('.box').insertBefore(hc, m.querySelector('.ls'));
       hc.addEventListener('change', function (ev) {
-        var cs = skOf(bar()[i]); if (!(cs && HC.lane(cs))&&!itemAuto(bar()[i])) return;
+        var cs = skOf(bar()[i]); if (!(cs && HC.lane(cs))) return;   // 這格現在就是攻擊類魔法：直接改
         if (ev.target.matches('[data-auto]')) autoArr()[i] = !!ev.target.checked;
         if (ev.target.matches('[data-cond]')) condArr()[i] = ev.target.value;
         render(); save();
@@ -182,16 +173,15 @@
     inp.addEventListener('input', function () { build(inp.value); });
     m.addEventListener('click', function (ev) {
       if (ev.target === m || ev.target.closest('[data-close]')) { closePick(); return; }
-      if (ev.target.closest('[data-clear]')) { bar()[i] = null;autoArr()[i]=false;condArr()[i]='all'; closePick(); render(); save(); return; }
+      if (ev.target.closest('[data-clear]')) { bar()[i] = null; closePick(); render(); save(); return; }
       var it = ev.target.closest('.it'); if (!it) return;
       var id = it.getAttribute('data-id'); var b = bar();
-      for (var k = 0; k < N; k++) if (k !== i && b[k] === id) {b[k] = null;autoArr()[k]=false;condArr()[k]='all';}   // 同一樣東西只放一格
+      for (var k = 0; k < N; k++) if (k !== i && b[k] === id) b[k] = null;   // 同一樣東西只放一格
       var nsk = skOf(id), nLane = !!(nsk && HC.on() && HC.lane(nsk)), wantAuto = false, wantCond = 'all';
-      var nItem=itemAuto(id),names=autoLabels(id);
-      if ((nLane||nItem) && hc) { var cb = hc.querySelector('[data-auto]'), sl = hc.querySelector('[data-cond]'); wantAuto = !!(cb && cb.checked); wantCond = (sl && sl.value) || 'all'; }
-      autoArr()[i] = !!((nLane||nItem) && wantAuto); condArr()[i] = Object.hasOwn(names,wantCond)?wantCond:(nItem?'smart':'all');
+      if (nLane && hc) { var cb = hc.querySelector('[data-auto]'), sl = hc.querySelector('[data-cond]'); wantAuto = !!(cb && cb.checked); wantCond = (sl && sl.value) || 'all'; }
+      autoArr()[i] = nLane && wantAuto; condArr()[i] = nLane ? wantCond : 'all';
       b[i] = id; closePick(); render(); save();
-      sys('<span class="text-emerald-300">F' + (5 + i) + ' 設為 ' + esc((nsk || DB.items[id] || {}).n || id) + (autoArr()[i] ? '（自動：'+esc(names[condArr()[i]])+'）':'（手動）') + '。</span>');
+      sys('<span class="text-emerald-300">F' + (5 + i) + ' 設為 ' + esc((nsk || DB.items[id] || {}).n || id) + (nLane ? (autoArr()[i] ? '（自動施放：' + COND_N[condArr()[i]] + '）' : '（手點施放）') : '') + '。</span>');
     });
     layer = (W.AFK_UI && AFK_UI.openLayer) ? AFK_UI.openLayer(closePick) : null;
     try { inp.focus(); } catch (e) {}
@@ -200,40 +190,22 @@
 
   // ── 畫面 ──
   var MQ = '(max-width: 768px), (max-height: 520px) and (pointer: coarse)';
-  var mobileGeom = function () { try { return document.body.classList.contains('m-unified') || (document.body.classList.contains('m-mobile') && W.matchMedia(MQ).matches); } catch (e) { return false; } };
+  var mobileGeom = function () { try { return document.body.classList.contains('m-mobile') && W.matchMedia(MQ).matches; } catch (e) { return false; } };
   var lastHtml = '';
-  var pageTo=function(index){
-    pageIndex=Math.max(0,Math.min(1,index));
-    var host=document.getElementById('afk-hotbar'),pages=host&&host.querySelector('.hb-pages');
-    if(pages)pages.scrollLeft=pageIndex*pages.clientWidth;
-    if(host)host.querySelectorAll('[data-hb-page]').forEach(function(b){b.setAttribute('aria-selected',String(Number(b.dataset.hbPage)===pageIndex));});
-  };
   var render = function () {
     var host = document.getElementById('afk-hotbar'); var p = P();
     if (!on() || !p) { if (host) host.style.display = 'none'; return; }
-    if(p!==pageOwner){pageOwner=p;pageIndex=0;lastHtml='';}
-    if(dragging||touchBusy)return;
     if (!host) {
       var col = document.getElementById('col-left'); if (!col) return; css();
       host = document.createElement('div'); host.id = 'afk-hotbar'; col.appendChild(host);
       host.addEventListener('click', function (ev) {
-        if(Date.now()<suppressClickUntil){ev.preventDefault();return;}
-        var pg=ev.target.closest('[data-hb-page]');if(pg){pageTo(Number(pg.dataset.hbPage));return;}
-        if (ev.target.closest('.hb-moon')) { if (W.AFK_SCREEN) W.AFK_SCREEN.start(); return; }
         if (ev.target.closest('.hb-lock')) { var cp = P(); if (!cp) return; cp._afkHotbarLock = !cp._afkHotbarLock; render(); save(); return; }   // 用「現在」的角色（玩家 2026-10-27：換角色後鎖頭按了沒反應＝改到上一個角色身上）
         var s = ev.target.closest('.hb-slot'); if (!s) return; fire(Number(s.getAttribute('data-i')));
       });
       host.addEventListener('contextmenu', function (ev) { var s = ev.target.closest('.hb-slot'); if (!s) return; ev.preventDefault(); pick(Number(s.getAttribute('data-i'))); });
       var pressT = null, pressI = -1;
-      host.addEventListener('touchstart', function (ev) { var s = ev.target.closest('.hb-slot'); if (!s) return;touchBusy=true; pressI = Number(s.getAttribute('data-i')); pressT = setTimeout(function () { pressT = null;suppressClickUntil=Date.now()+700; pick(pressI); }, 550); }, { passive: true });
+      host.addEventListener('touchstart', function (ev) { var s = ev.target.closest('.hb-slot'); if (!s) return; pressI = Number(s.getAttribute('data-i')); pressT = setTimeout(function () { pressT = null; pick(pressI); }, 550); }, { passive: true });
       ['touchend', 'touchmove', 'touchcancel'].forEach(function (t) { host.addEventListener(t, function () { if (pressT) { clearTimeout(pressT); pressT = null; } }, { passive: true }); });
-      ['touchend','touchcancel'].forEach(function(t){host.addEventListener(t,function(){touchBusy=false;schedule();},{passive:true});});
-      var pointer=null;
-      host.addEventListener('pointerdown',function(ev){var pages=ev.target.closest('.hb-pages');if(!pages||ev.button!==0)return;pointer={x:ev.clientX,left:pages.scrollLeft,pages:pages,type:ev.pointerType};});
-      W.addEventListener('pointermove',function(ev){if(!pointer)return;var dx=ev.clientX-pointer.x;if(Math.abs(dx)>10){dragging=true;suppressClickUntil=Date.now()+700;if(pressT){clearTimeout(pressT);pressT=null;}}if(dragging&&pointer.type==='mouse'){pointer.pages.scrollLeft=pointer.left-dx;ev.preventDefault();}},{passive:false});
-      var endDrag=function(){if(!pointer)return;var was=dragging,type=pointer.type,left=pointer.pages.scrollLeft,width=pointer.pages.clientWidth;pointer=null;dragging=false;if(was){suppressClickUntil=Date.now()+400;if(type==='mouse')pageTo(Math.round(left/Math.max(1,width)));}schedule();};
-      W.addEventListener('pointerup',endDrag);W.addEventListener('pointercancel',endDrag);
-      host.addEventListener('wheel',function(ev){if(!ev.target.closest('.hb-pages')||ev.ctrlKey)return;var delta=Math.abs(ev.deltaX)>Math.abs(ev.deltaY)?ev.deltaX:ev.deltaY;if(Math.abs(delta)<8)return;var next=Math.max(0,Math.min(1,pageIndex+(delta>0?1:-1)));if(next!==pageIndex){ev.preventDefault();pageTo(next);}},{passive:false});
     }
     host.style.display = '';
     // 手機（玩家 2026-10-27）：放到戰鬥畫面正下方那塊空白，戰鬥時一眼看到藥水等道具還剩多少；桌機照舊在左欄最底下
@@ -241,9 +213,8 @@
     if (want && host.parentElement !== want) { want.appendChild(host); host.classList.toggle('hb-mobile', want.id === 'col-center'); }
     try { var cc = document.getElementById('col-center'); if (cc) cc.classList.toggle('hb-host', host.parentElement === cc); } catch (e) {}
     var b = bar(), lk = locked();
-    var h = '<div class="hb-top">' + (W.AFK_SCREEN ? '<button type="button" class="hb-moon" aria-label="休眠掛網" title="休眠掛網">☾</button>' : '<div style="width:22px"></div>') + '<div class="hb-pager" role="tablist" aria-label="左右滑動切換熱鍵"><button type="button" role="tab" data-hb-page="0" aria-label="第一組熱鍵 F5 至 F8" title="第一組 F5–F8" aria-selected="'+(pageIndex===0)+'"></button><button type="button" role="tab" data-hb-page="1" aria-label="第二組熱鍵 F9 至 F12" title="第二組 F9–F12" aria-selected="'+(pageIndex===1)+'"></button></div><button type="button" aria-label="鎖定熱鍵配置" aria-pressed="' + lk + '" class="hb-lock' + (lk ? ' on' : '') + '" title="' + (lk ? '已鎖住：F5～F12 交還瀏覽器；仍可點格子使用及滑動，但不能換內容。' : '右鍵或長按格子可配置；點鎖頭避免誤改。') + '">' + (lk ? '🔒' : '🔓') + '</button></div><div class="hb-pages"><div class="hb-page" aria-label="第一組 F5 至 F8"><div class="hb-row">';
+    var h = '<div class="hb-top">' + (W.AFK_SCREEN ? '<div class="hb-moon" title="掛機模式：螢幕常亮＋全黑省電畫面，遊戲照常 100% 戰鬥（點兩下螢幕回來）" onclick="window.AFK_SCREEN&&AFK_SCREEN.start()">🌙</div>' : '<div style="width:22px"></div>') + '<div class="hb-title">熱 鍵</div><div class="hb-lock' + (lk ? ' on' : '') + '" title="' + (lk ? '已鎖住（F5～F8 不會觸發熱鍵，F5 可重新整理網頁）：熱鍵照常可以按，但不能換內容（右鍵／長按無效）。點一下解鎖，沒有其他條件。' : '未鎖：右鍵或長按格子可以換內容。點一下鎖住，避免誤改。') + '">' + (lk ? '🔒' : '🔓') + '</div></div><div class="hb-row">';
     for (var i = 0; i < N; i++) {
-      if(i===4)h+='</div><div class="hb-names">'+b.slice(0,4).map(function(id){var d=id&&(skOf(id)||DB.items[id]);return '<span>'+(d?esc(d.n):'')+'</span>';}).join('')+'</div></div><div class="hb-page" aria-label="第二組 F9 至 F12"><div class="hb-row">';
       var id = b[i], skd = skOf(id);
       if (skd) {
         var lr = learned(id.slice(3)), mpc = 0; try { mpc = P().d && P().d.getMpCost ? P().d.getMpCost(skd.mp || 0, skd.tier) : (skd.mp || 0); } catch (e) { mpc = skd.mp || 0; }
@@ -254,14 +225,10 @@
       var d = id ? DB.items[id] : null;
       if (!d) { h += '<div class="hb-slot empty" data-i="' + i + '" title="點一下放東西"><span class="hb-key">F' + (5 + i) + '</span></div>'; continue; }
       var cnt = countOf(id), ws = wornSlot(id), none = !cnt && !ws;
-      var ia=autoArr()[i]&&itemAuto(id);
-      h += '<div class="hb-slot' + (none ? ' none' : '') + (ws ? ' worn' : '') + '" data-i="' + i + '" title="' + esc(d.n) + (ia?'（自動使用）':ws ? '（裝備中，按一下卸下）' : (isEquip(d) ? '（按一下裝備）' : '')) + '"><span class="hb-key">F' + (5 + i) + '</span>'+(ia?'<span class="hb-auto">AUTO</span>':'')+'<img src="' + esc(getIconUrl(d)) + '" alt="" onerror="this.style.visibility=\'hidden\'">' + (isEquip(d) ? '' : '<span class="hb-cnt">' + cnt + '</span>') + '</div>';
+      h += '<div class="hb-slot' + (none ? ' none' : '') + (ws ? ' worn' : '') + '" data-i="' + i + '" title="' + esc(d.n) + (ws ? '（裝備中，按一下卸下）' : (isEquip(d) ? '（按一下裝備）' : '')) + '"><span class="hb-key">F' + (5 + i) + '</span><img src="' + esc(getIconUrl(d)) + '" alt="" onerror="this.style.visibility=\'hidden\'">' + (isEquip(d) ? '' : '<span class="hb-cnt">' + cnt + '</span>') + '</div>';
     }
-    h += '</div><div class="hb-names">' + b.slice(4,8).map(function (id) { var dd = id && (skOf(id) || DB.items[id]); return '<span>' + (dd ? esc(dd.n) : '') + '</span>'; }).join('') + '</div></div></div>';
-    if (h !== lastHtml) { host.innerHTML = h; lastHtml = h;
-      host.querySelector('.hb-pages').addEventListener('scroll',function(){if(!this.clientWidth)return;pageIndex=Math.round(this.scrollLeft/this.clientWidth);host.querySelectorAll('[data-hb-page]').forEach(function(b){b.setAttribute('aria-selected',String(Number(b.dataset.hbPage)===pageIndex));});},{passive:true});
-      pageTo(pageIndex);
-    }
+    h += '</div><div class="hb-names">' + b.map(function (id) { var dd = id && (skOf(id) || DB.items[id]); return '<span>' + (dd ? esc(dd.n) : '') + '</span>'; }).join('') + '</div>';
+    if (h !== lastHtml) { host.innerHTML = h; lastHtml = h; }
   };
   var pending = false;
   var schedule = function () { if (pending) return; pending = true; requestAnimationFrame(function () { pending = false; try { render(); } catch (e) {} }); };
@@ -364,15 +331,15 @@
   document.addEventListener('keydown', function (e) {
     if (!on()) return;
     var i = KEYS.indexOf(e.key); if (i < 0) return;
-    if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     var gs = document.getElementById('game-screen'); if (!gs || gs.classList.contains('hidden') || !P()) return;
     var t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
-    if (locked()) return;   // 熱鍵列鎖住時 F5～F12 交還給瀏覽器（F5 可以重新整理網頁；玩家 2026-11-04 11:53）
-    e.preventDefault(); if(!e.repeat)fire(i);
+    if (locked()) return;   // 熱鍵列鎖住時 F5～F8 交還給瀏覽器（F5 可以重新整理網頁；玩家 2026-11-04 11:53）
+    e.preventDefault(); fire(i);
   }, true);
 
   W.addEventListener('resize', schedule);
-  W.AFK_HOTBAR = { fire: fire, pick: pick, render: render, bar: bar, page:pageTo };
+  W.AFK_HOTBAR = { fire: fire, pick: pick, render: render, bar: bar };
   schedule();
-  console.log('[AFK-hotbar] 已啟用：道具熱鍵列 F5～F12');
+  console.log('[AFK-hotbar] 已啟用：道具熱鍵列 F5～F8');
 })();

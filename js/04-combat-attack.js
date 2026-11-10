@@ -589,6 +589,7 @@ function weaponSpellProc(target, attackHit, instOverride) {
     let wpn = inst ? DB.items[inst.id] : null;
     if (!wpn) return;
     playerAttrMagicProc(target, inst, wpn);   // ★ 屬性卷軸附加魔法：攻擊時判定，命中與否皆可觸發
+    if (wpn.procOnHit && !attackHit) return;   // 🏺 長老的雷電能量：僅一般攻擊實際命中才觸發極道落雷
     if (wpn.procPoison) applyWeaponProcPoison(target, wpn.procPoison, wpnEnFinalMult(inst));   // 🔧 死亡之指：攻擊時毒咒（吃武器強化最終倍率）
     if (wpn.procBurstPoison) applyWeaponBurstPoison(target, wpn.procBurstPoison, capWpnEn(inst.en), wpnEnFinalMult(inst));   // 💥 破壞雙刀/鋼爪：攻擊時猛爆劇毒（吃武器強化最終倍率）
     if (wpn.procStatusSkill) applyWeaponProcStatusSkill(target, wpn.procStatusSkill);   // 🌑 惡魔王武器：攻擊時 10% 施放疾病術
@@ -675,9 +676,6 @@ function weaponSpellProc(target, attackHit, instOverride) {
         if (_t2) procFreeMagicSkill(_t2, wpn.procSkill2.skId, capWpnEn(inst.en), false, wpn);
     }
     if (!wpn.spellProc && !wpn.procSkill) return;
-    // procOnHit gates the primary spell only; independent inherited poison,
-    // healing and secondary spell effects retain their own trigger rules.
-    if (wpn.procOnHit && !attackHit) return;
     let en = capWpnEn(inst.en);
     if (Math.random() * 100 >= ((wpn.procRateBase || 1) + (wpn.procRatePerEn != null ? wpn.procRatePerEn : 1) * en)) return;   // 預設 1% + 每強化 +1%；🔧 巴風特魔杖 procRateBase:2/procRatePerEn:2
     let t = (target && target.curHp > 0) ? target : null;
@@ -788,7 +786,7 @@ function playerStatusResisted(kind) {
     // 🛡️ v3.7.77 抵抗率改「相加」（用戶指定·原為 Math.max 取最高者→多件抗性裝只有最高的那件有用）：
     //    同類抵抗%全身相加、通用 abnormalResist 一併加總、王者加護 +20 也加，最後夾在 100（100%＝必定抵抗）。
     //    免疫旗標（immStun/immFreeze…）維持「直接 100%」語意，不受加總順序影響。
-    let pct = window.LineageTalents && window.LineageTalents.has(player,'defense','N3',2) ? 2 : 0, imm = false;
+    let pct = 0, imm = false;
     WEIGHT_COUNT_SLOTS.forEach(k => {
         let e = player.eq[k]; if (!e) return; let dd = DB.items[e.id]; if (!dd) return;
         if (immF && dd[immF]) imm = true;
@@ -1267,7 +1265,7 @@ function _enemyPhysicalAttackInner(mob, idx, stunChance = 0, atkDmg = null, atkD
         // 盾牌格檔：受到傷害減少50%。發動率＝受重擊時為盾牌格檔值（如100%盾→100%）；受非重擊一般攻擊時為其 30%（如100%盾→30%）
         let blocked = false;
         let blockReduced = 0;
-        let _lancePair = player.eq.shield && equipmentBaseId(player.eq.shield) === 'relic_guard_towershield' && player.eq.wpn && equipmentBaseId(player.eq.wpn) === 'relic_bk_lance';   // 🏺 v3.5.27 黑騎士的精銳長槍＋漆黑塔盾：格檔100%（重擊/非重擊皆同）·經典模式亦可觸發
+        let _lancePair = player.eq.shield && player.eq.shield.id === 'relic_guard_towershield' && player.eq.wpn && player.eq.wpn.id === 'relic_bk_lance';   // 🏺 v3.5.27 黑騎士的精銳長槍＋漆黑塔盾：格檔100%（重擊/非重擊皆同）·經典模式亦可觸發
         if(player.eq.shield && (!player.classicMode || _lancePair)) {   // 🎮 經典模式：盾牌無格檔（長槍＋塔盾成對＝例外放行）
             let _sh = DB.items[player.eq.shield.id];
             let _blockChance = _lancePair ? 100 : ((_sh && _sh.block) ? (heavy ? _sh.block : _sh.block * 0.3) : 0);   // 🛡️ 非重擊：格檔發動率為重擊的 30%
@@ -1591,7 +1589,7 @@ function _enemyAttackAllyInner(mob, ally, isBasicAttack = false) {
     if ((d.physDrGated || 0) > 0 && state.ticks >= (ally._physDrCd || 0)) { totalDmg = (totalDmg * (1 - Math.min(90, d.physDrGated) / 100)); ally._physDrCd = state.ticks + 30; }
     if (window.__afkNoneRes && __afkDr0 > 0) totalDmg = Math.max(totalDmg, Math.floor(__afkDr0 * 0.25));   /* 🔌 加掛版補丁:傭兵減傷上限 */   // 🐍 v3.1.76 祭祀儀式陶罐（傭兵）：受一般攻擊傷害 -%·每 3 秒 1 次（每傭兵獨立節流·鏡像玩家 js/04:812）
     // 盾牌/臂甲格檔（同玩家公式；經典模式停用·🏺 v3.5.27 長槍＋塔盾成對＝100%且經典亦可·鏡像玩家）
-    { let _alp = ally.eq && ally.eq.shield && equipmentBaseId(ally.eq.shield) === 'relic_guard_towershield' && ally.eq.wpn && equipmentBaseId(ally.eq.wpn) === 'relic_bk_lance';
+    { let _alp = ally.eq && ally.eq.shield && ally.eq.shield.id === 'relic_guard_towershield' && ally.eq.wpn && ally.eq.wpn.id === 'relic_bk_lance';
       if (ally.eq && ally.eq.shield && (!player.classicMode || _alp)) { let _sh = DB.items[ally.eq.shield.id]; let _bc = _alp ? 100 : ((_sh && _sh.block) ? (heavy ? _sh.block : _sh.block * 0.3) : 0); if (_bc > 0 && Math.random() * 100 < _bc) totalDmg = (totalDmg * 0.5); } }
     totalDmg = (totalDmg * mobRageDmgMult(mob));   // 🔥 HP<門檻：攻擊傭兵也套用狂暴傷害
     if (isBasicAttack && typeof ironGuardTauntWeakensAttack === 'function' && ironGuardTauntWeakensAttack(mob)) totalDmg = (totalDmg * 0.9);   // 🔮 鐵衛 5/5：受嘲諷目標的一般攻擊傷害 -10%
@@ -1811,7 +1809,6 @@ function reflectWallOnDamage(mob, dmg, kind, ally) {
     if (rw.kind !== kind && !(rw.kind === 'phys' && (kind === 'melee' || kind === 'ranged'))) return;   /* 🔌 加掛版補丁:phys＝近距離＋遠距離 */
     // 🌅 恐怖的面貌（block:true·巨大骷髏）：攔截該類傷害——把剛扣的血補回（含致死打擊：所有掛點的 killMob 判定都在本呼叫之後，故補血先於死亡判定）；訊息每秒節流
     if (rw.block) {
-        if(window.LineageClassCombat&&window.LineageClassCombat.broken(mob,kind==='magic'?'magic':'phys'))return;
         if (mob._dead) return;
         mob.curHp = Math.min(mob.hp, mob.curHp + dmg);
         let _now = Date.now();

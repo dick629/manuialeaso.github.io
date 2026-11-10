@@ -383,6 +383,6 @@
   var rr = 'afkLoreRender_halpas', oRR = W[rr];
   if (typeof oRR === 'function') W[rr] = function (div) { oRR(div); try { renderPanel(div); } catch (e) {} };
 
-  W.__afkHalpas = { growthRestore:function(q){run=JSON.parse(JSON.stringify(q));lastMap=ARENA[q.k].map;}, line: line, ARENA: ARENA, SET: SET, SCALE: SCALE, HEART: HEART, SEED: SEED, EXCH: EXCH, enter: enter, canEnter: canEnter, exchange: exchange,
+  W.__afkHalpas = { line: line, ARENA: ARENA, SET: SET, SCALE: SCALE, HEART: HEART, SEED: SEED, EXCH: EXCH, enter: enter, canEnter: canEnter, exchange: exchange,
     run: function () { return run; }, tick: hpTick, hpScale: hpScale, partyN: partyN, renderPanel: renderPanel, LIMIT: HALPAS_LIMIT };
 })();

@@ -238,7 +238,6 @@
     };
   }
 
-  (W.LineageAbsoluteDamageGates=W.LineageAbsoluteDamageGates||[]).push(function(a,t,n){return t&&t._mbBoss&&act&&t._afkMb===act.id&&((act.invulnUntil||0)>tk()||(act.hideUntil||0)>tk())?0:n;});
   W.__afkMapBoss = { LIST: K, BY: BY, BYMAP: BYMAP, MECH_N: MECH_N, MECH_D: MECH_D, KILLS: KILLS, active: function () { return act; }, store: store, stats: stat, start: function (id) { var b = BY[id]; return b ? start(b) : false; }, end: end, step: step };
   try { console.log('[AFK-mapboss] 已載入：地圖王 ' + K.filter(function (x) { return x.type === 'field'; }).length + ' 隻、副本王 ' + K.filter(function (x) { return x.type === 'dungeon'; }).length + ' 隻'); } catch (e) {}
 })();

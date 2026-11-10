@@ -66,7 +66,7 @@ function recomputeStats() {
     d.critDmgLowHp = null;   // 🏺 遺物 第十七批：鬥士的決戰服裝（HP<N 時近爆傷+add）
     d.thornsDmg = 0; d.instakillFull = 0; d.onDmgHeal = null; d.onDmgHealCd = 0; d.onDmgHealName = '';   // 🏺 遺物 第三批：受擊反傷固定值 / 命中滿血怪即死率 / 受擊自癒技能id（onDmgHealCd=冷卻秒數、onDmgHealName=來源名稱）
     d.hurtExplode = 0;   // 🏺 遺物 第四批 爆彈花蕊：受擊時對自己與全體敵人的火魔傷固定值
-    d.fireNullify = false; d.fireNullifyTicks = 100;   // 🏺 遺物 火熱愛意：免疫受到的火屬性傷害（每10秒最多1次·js/04 火魔傷攔截·player._fireNullCd 節流）
+    d.fireNullify = false;   // 🏺 遺物 火熱愛意：免疫受到的火屬性傷害（每10秒最多1次·js/04 火魔傷攔截·player._fireNullCd 節流）
     d.wearerEle = '';        // 🏺 遺物 火焰/寒冷化身：裝備者化為某屬性→受剋屬性傷害增加、剋制屬性傷害減少（js/04 受擊路徑 elementCounterMult(mob.e, wearerEle)）
     d.physDrGated = 0;       // 🐍 遺物 祭祀儀式陶罐：受一般攻擊傷害減少%（每3秒最多1次·js/04 enemyPhysicalAttack·player._physDrCd 節流）
     d.lowMpRegenBonus = 0;   // 🐍 遺物 蛇神的凝視：MP<15% 時 MP自然恢復量額外+N（js/03 _regenMP）
@@ -422,8 +422,7 @@ d.mr += (baseMr + bonusMr);
             let _agEn = capEn(e.en, ed);
             p.mhp += _agEn * 10;
             let _ag = ed.armguard;
-            let _agTh = Array.isArray(_ag.th) ? _ag.th : [0, 0, 0];
-            let _agV = (_ag.base || 0) + (_agEn >= 9 ? _agTh[2] : _agEn >= 7 ? _agTh[1] : _agEn >= 5 ? _agTh[0] : 0);
+            let _agV = (_ag.base || 0) + (_agEn >= 9 ? _ag.th[2] : _agEn >= 7 ? _ag.th[1] : _agEn >= 5 ? _ag.th[0] : 0);
             if(_agV) { if(_ag.stat === 'dr') d.dr += _agV; else if(_ag.stat === 'magicDmg') d.magicDmg += _agV; else if(_ag.stat === 'mhp') p.mhp += _agV; else if(_ag.stat === 'rangedDmg') d.rangedDmg += _agV; else if(_ag.stat === 'meleeDmg') d.meleeDmg += _agV; }
         }
         if((ed.eff && ed.eff === 'haste') || ed.equipHaste) p._equipHaste = true;   // 不再借用 buffs.haste 計時通道，避免卸裝後永久加速殘留；🔧 equipHaste：eff 已被 combo/連射等佔用時仍可賦予加速
@@ -622,7 +621,7 @@ d.mr += (baseMr + bonusMr);
     }
 
     // 🏺 v3.5.27 黑騎士的精銳長槍＋鎧衛隊的漆黑塔盾 同時裝備：近距離傷害 +15（格檔100%／經典模式亦可格檔＝js/04 受擊路徑）
-    if (p.eq && p.eq.wpn && equipmentBaseId(p.eq.wpn) === 'relic_bk_lance' && p.eq.shield && equipmentBaseId(p.eq.shield) === 'relic_guard_towershield') d.meleeDmg += 15;
+    if (p.eq && p.eq.wpn && p.eq.wpn.id === 'relic_bk_lance' && p.eq.shield && p.eq.shield.id === 'relic_guard_towershield') d.meleeDmg += 15;
     // 🏺 v3.7.20 盔甲內襯鎖鏈衣（T恤 liningChain）：裝備「防禦 6 以下」盔甲（def ac 0~6·ac 欄正值=AC−X）→ 額外 AC-10、MR+10（p 參數化→傭兵換身自動鏡像）
     if (p.eq && p.eq.tshirt && p.eq.armor) {
         let _lct = DB.items[p.eq.tshirt.id], _lca = DB.items[p.eq.armor.id];
@@ -772,8 +771,7 @@ d.mr += (baseMr + bonusMr);
         if (d._equipWeightBonus) _cap += d._equipWeightBonus;   // 🗡️ 裝備收集冊：單手/雙手鈍器/臂甲/腰帶部位全收集 → 負重上限加成
         if (d._miscWeightBonus) _cap += d._miscWeightBonus;   // 🧰 道具收集冊：藥水/卷軸類全收集 → 負重上限加成
         if (_shN('狂怒') >= 2) _cap += 500;   // 😡 狂怒 2/5：負重上限 +500
-        if (window.LineageGrowth) window.LineageGrowth.statBase(p);
-        let _limit = window.LineageGrowth ? window.LineageGrowth.weight(p, _wbase + _cap) : _wbase + _cap;
+        let _limit = _wbase + _cap;
         let _pct = _limit > 0 ? Math.floor(_cur / _limit * 100) : 999;
         let _tier = _pct <= 49 ? 0 : (_pct <= 81 ? 1 : (_pct <= 99 ? 2 : 3));
         d.weightPct = _pct; d.loadTier = _tier; d.equippedWeight = _cur; d.weightCapacity = _limit; /* relic-companion:weight-values */
@@ -794,11 +792,6 @@ d.mr += (baseMr + bonusMr);
     }
     if (typeof window.__afkMaxAdd === 'function') { try { window.__afkMaxAdd(p); } catch (e) {} }   /* 🔌 加掛版補丁:上限加成在夾 HP 之前 */
     if (window.AFK_RELIC_RUNTIME) window.AFK_RELIC_RUNTIME.stats(p,d);
-    if (window.LineageGrowth) window.LineageGrowth.statFinal(p);
-    // Late relic, class and Sherine bonuses must also reach the spell formula.
-    _rawIntSp = Math.max(0, getIntExtraMp(d.int));
-    d.intSp = Math.min(33, _rawIntSp);
-    d.itemSp = Math.max(0, (d.extraMp || 0) - _rawIntSp);
     p.hp = Math.min(p.hp, p.mhp); /* relic-runtime:relic-stats-final */
     p.mp = Math.min(p.mp, p.mmp);
 }
@@ -831,30 +824,12 @@ function _ensureDollGlow() {   // 單例：建立光點 div＋掛 mousemove/mous
     return _dollGlow;
 }
 // 🪆 魔法娃娃：裝備 slot:doll 時把滑鼠游標換成 assets/doll/<物品名稱>.png（可用 d.dollImg 自訂圖名）；未裝則回預設。游標圖需 ≤32×32 否則瀏覽器忽略→fallback auto
-// Known aliases use the same creature artwork; absent unique cursor art keeps the system pointer.
-const DOLL_CURSOR_ALIASES = Object.freeze({
-  "鐵門公會 魔法娃娃：雪怪": "魔法娃娃：雪怪",
-  "魔法娃娃：稻草人(商城)": "魔法娃娃：稻草人",
-  "魔法娃娃：雪人(A)": "魔法娃娃：雪人",
-  "魔法娃娃：雪人(B)": "魔法娃娃：雪人",
-  "魔法娃娃：雪人(C)": "魔法娃娃：雪人",
-  "魔法娃娃：雪人(商城)": "魔法娃娃：雪人",
-  "獨眼巨人魔法娃娃": "魔法娃娃：獨眼巨人",
-  "魔法娃娃：丹狄": null,
-  "魔法娃娃：賽利": null,
-  "少女 帕歐 魔法娃娃": null,
-  "少年 帕克 魔法娃娃": null,
-  "魔法師 帕歐 魔法娃娃": null,
-  "騎士 帕克 魔法娃娃": null,
-  "魔法娃娃：勝利的丹狄": null
-});
 function applyDollCursor() {
     if (typeof document === 'undefined' || !document.body) return;
     let e = player && player.eq && player.eq.doll;
     let ed = e ? DB.items[e.id] : null;
-    let img = ed && (ed.dollImg || ed.n);
-    if (Object.prototype.hasOwnProperty.call(DOLL_CURSOR_ALIASES, img)) img = DOLL_CURSOR_ALIASES[img];
-    if (ed && img) {
+    if (ed) {
+        let img = ed.dollImg || ed.n;
         document.body.style.cursor = "url('assets/doll/" + img + ".png') 4 4, auto";
         document.body.classList.add('has-doll-cursor');     // 🪆 連可點擊處也套娃娃游標（見 css：body.has-doll-cursor *）
         let glow = _ensureDollGlow();                        // 🪆 點擊熱點光點：顏色＝娃娃名稱顏色（currentColor）
@@ -1104,7 +1079,7 @@ const DANTES_POLY_FORM = { n: "真死亡騎士 冥皇丹特斯", lv: 99, apm: { 
 // 🔧 改為「背包攜帶即可觸發」：裝備中或背包內任一處有戒指都算持有，不需佔用戒指欄位
 function hasPolyRing() {
     // 🐾 v3.2.17 浣熊的變身葉（relic_raccoon_leaf·頭盔遺物）：「需裝備」才可選擇變身（不同於戒指的攜帶即可）
-    let _leaf = false; try { for (let k in player.eq) { let e = player.eq[k]; if (e && equipmentBaseId(e) === 'relic_raccoon_leaf') { _leaf = true; break; } } } catch (e) {}
+    let _leaf = false; try { for (let k in player.eq) { let e = player.eq[k]; if (e && e.id === 'relic_raccoon_leaf') { _leaf = true; break; } } } catch (e) {}
     return _leaf
         || [player.eq.ring1, player.eq.ring2, player.eq.ring3, player.eq.ring4].some(e => e && e.id === 'acc_117')
         || (player.inv && player.inv.some(i => i && i.id === 'acc_117' && (i.cnt || 0) > 0));

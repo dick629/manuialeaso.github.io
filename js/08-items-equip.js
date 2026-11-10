@@ -1308,9 +1308,9 @@ function renderStatusIconBar() {
     let sig=rows.map(x=>x.name+'|'+x.label).join('||');
     if(bar.dataset.statusSig!==sig){
         bar.dataset.statusSig=sig;
-        bar.innerHTML=rows.map((x,i)=>{let title=x.label+(x.ticks>0?'｜剩餘 '+x.sec+' 秒':'');return `<button type="button" aria-label="${title}" class="status-icon${x.ally?' status-icon--ally':''}" data-status-index="${i}" title="${title}"><img src="assets/state-icons/${encodeURIComponent(x.icon||x.name)}.jpg" alt="${x.label}"></button>`;}).join('');
+        bar.innerHTML=rows.map((x,i)=>{let title=x.label+(x.ticks>0?'｜剩餘 '+x.sec+' 秒':'');return `<div class="status-icon${x.ally?' status-icon--ally':''}" data-status-index="${i}" title="${title}"><img src="assets/state-icons/${encodeURIComponent(x.icon||x.name)}.jpg" alt="${x.label}"></div>`;}).join('');
     } else {
-        rows.forEach((x,i)=>{let icon=bar.querySelector(`[data-status-index="${i}"]`);if(!icon)return;icon.title=x.label+(x.ticks>0?'｜剩餘 '+x.sec+' 秒':'');icon.setAttribute('aria-label',icon.title);});
+        rows.forEach((x,i)=>{let icon=bar.querySelector(`[data-status-index="${i}"]`);if(!icon)return;icon.title=x.label+(x.ticks>0?'｜剩餘 '+x.sec+' 秒':'');});
     }
 }
 
@@ -1498,19 +1498,19 @@ function _updateUIImpl() {
         if(document.getElementById('dt-cha')) document.getElementById('dt-cha').innerText = player.d.cha;
     }
     
-    const sign = formatBonus;
+    const sign = v => (v >= 0 ? '+' : '') + v;
     // 額外傷害/命中：折入近距離與遠距離的顯示（兩者都 +）
     let _ed = player.d.extraDmg || 0, _eh = player.d.extraHit || 0;
     // 近距離
     document.getElementById('dt-mdmg').innerText = sign(player.d.meleeDmg + _ed);
     document.getElementById('dt-mhit').innerText = sign(player.d.meleeHit + _eh);
-    document.getElementById('dt-mcrit-p').innerText = `${formatStatNumber(player.d.meleeCrit)}%`;
-    { let _el = document.getElementById('dt-mcritdmg'); if (_el) _el.innerText = `${formatStatNumber(player.d.meleeCritDmg || 0)}%`; }
+    document.getElementById('dt-mcrit-p').innerText = `${player.d.meleeCrit}%`;
+    { let _el = document.getElementById('dt-mcritdmg'); if (_el) _el.innerText = `${player.d.meleeCritDmg || 0}%`; }
     // 遠距離
     document.getElementById('dt-rdmg').innerText = sign(player.d.rangedDmg + _ed);
     document.getElementById('dt-rhit').innerText = sign(player.d.rangedHit + _eh);
-    document.getElementById('dt-rcrit').innerText = `${formatStatNumber(player.d.rangedCrit)}%`;
-    { let _el = document.getElementById('dt-rcritdmg'); if (_el) _el.innerText = `${formatStatNumber(player.d.rangedCritDmg || 0)}%`; }
+    document.getElementById('dt-rcrit').innerText = `${player.d.rangedCrit}%`;
+    { let _el = document.getElementById('dt-rcritdmg'); if (_el) _el.innerText = `${player.d.rangedCritDmg || 0}%`; }
     // 額外（已折入近/遠距離，列固定隱藏）
     document.getElementById('dt-edmg').innerText = sign(_ed);
     document.getElementById('dt-ehit').innerText = sign(_eh);
@@ -1523,23 +1523,23 @@ function _updateUIImpl() {
     document.getElementById('dt-mgdmg').innerText = sign(player.d.magicDmg);
     document.getElementById('dt-sp').innerText = sign(player.d.extraMp);
     document.getElementById('dt-mhit-mag').innerText = sign(player.d.magicHit);
-    document.getElementById('dt-mcrit').innerText = `${formatStatNumber(player.d.magicCrit)}%`;
-    { let _el = document.getElementById('dt-mgcritdmg'); if (_el) _el.innerText = `${formatStatNumber(player.d.magicCritDmg || 0)}%`; }
-    document.getElementById('dt-mpreduce').innerText = `${formatStatNumber(player.d.mpReduce)}%`;
+    document.getElementById('dt-mcrit').innerText = `${player.d.magicCrit}%`;
+    { let _el = document.getElementById('dt-mgcritdmg'); if (_el) _el.innerText = `${player.d.magicCritDmg || 0}%`; }
+    document.getElementById('dt-mpreduce').innerText = `${player.d.mpReduce}%`;
 	if(document.getElementById('dt-mpr')) document.getElementById('dt-mpr').innerText = formatBonus(player.d.mpR);
 	if(document.getElementById('dt-hpr')) document.getElementById('dt-hpr').innerText = formatBonus(player.d.hpR || 0);
-    document.getElementById('dt-er').innerText = `${formatStatNumber(Math.min(window.__afkEvadeCap || 100, effResistPct(player.d.er)))}%`; /* 🔌 加掛版補丁:迴避上限 */   // 🔧 顯示有效迴避率（>50 每+5才+1%）
-    document.getElementById('dt-dr').innerText = formatStatNumber(player.d.dr);
+    document.getElementById('dt-er').innerText = `${Math.min(window.__afkEvadeCap || 100, effResistPct(player.d.er))}%`; /* 🔌 加掛版補丁:迴避上限 */   // 🔧 顯示有效迴避率（>50 每+5才+1%）
+    document.getElementById('dt-dr').innerText = player.d.dr;
     { let _attackSec = (typeof playerAttackIntervalTicks === 'function')
             ? playerAttackIntervalTicks(false) / 10
             : Math.max(0.1, Number(player.d.aspd) || 0.1);
       document.getElementById('dt-spd').innerText = `${_attackSec.toFixed(2)}s`; }
     { let _potionPct = (typeof getConPotionPct === 'function' ? getConPotionPct(player.d.con || 0) : 0);
       try { _potionPct += (typeof dollFieldVal === 'function' ? dollFieldVal('potionBonus') : 0) + (typeof playerEquipPotionBonusPct === 'function' ? playerEquipPotionBonusPct() : 0) + (player._miscPotionBonus || 0); } catch (e) {}
-      let _el = document.getElementById('dt-potion'); if (_el) _el.innerText = `${formatStatNumber(_potionPct)}%`;
+      let _el = document.getElementById('dt-potion'); if (_el) _el.innerText = `${_potionPct}%`;
       _el = document.getElementById('dt-movespeed'); if (_el) _el.innerText = `${typeof playerEffectiveMoveSpeedPct === 'function' ? playerEffectiveMoveSpeedPct() : 100 + (player.d.moveSpeedPct || 0)}%`;
       _el = document.getElementById('dt-mpkill'); if (_el) { let _mpIv = (typeof wisMpRegenIntervalTicks === 'function' ? wisMpRegenIntervalTicks(player.d.wis || 0) : 160); _el.innerText = `${_mpIv / 10}秒`; }
-      _el = document.getElementById('dt-mr'); if (_el) _el.innerText = formatStatNumber(player.d.mr || 0);
+      _el = document.getElementById('dt-mr'); if (_el) _el.innerText = player.d.mr || 0;
       _el = document.getElementById('dt-resnone'); if (_el) _el.innerText = Math.round(player.d.resNone || 0); }
     if(document.getElementById('dt-resfire')) {
         document.getElementById('dt-resfire').innerText  = Math.round(player.d.resFire  || 0);

@@ -1684,21 +1684,16 @@ function pandoraRenderMarket(div) {
         <h3 class="pandora-market-title text-center font-bold text-purple-400 drop-shadow-md leading-none shrink-0">潘朵拉黑市
             <span class="text-slate-400 font-normal">每 10 分鐘輪換 1 件·單件持續 240 分鐘·約 ${nextMin} 分鐘後輪換｜金幣 <span class="text-yellow-300 font-bold">${(player.gold || 0).toLocaleString()}</span>${relicBalance}</span>
         </h3>
-        <nav class="pandora-mobile-nav" aria-label="黑市分區">
-            <button type="button" data-market-section="pandora-market-grid">商品</button>
-            <button type="button" data-market-section="pandora-buy-box">收購單</button>
-            <button type="button" data-market-section="pandora-relic-board">遺物</button>
-        </nav>
         <div class="pandora-buy-box shrink-0">
             <div class="pandora-buybar">
                 <span class="pandora-buy-word">收</span>
                 <div class="pandora-buy-name-wrap">
-                    <input id="pandora-buy-name" aria-label="收購物品名稱" type="text" value="${_pandoraEsc(orderName)}" placeholder="完整物品名稱" autocomplete="off"
+                    <input id="pandora-buy-name" type="text" value="${_pandoraEsc(orderName)}" placeholder="完整物品名稱" autocomplete="off"
                         oninput="pandoraSuggestBuyItems(this.value)" onkeydown="if(event.key==='Enter'){pandoraSetBuyOrder()}">
                     <div id="pandora-buy-suggestions" class="pandora-buy-suggestions hidden"></div>
                 </div>
                 <span class="pandora-buy-comma">，</span>
-                <input id="pandora-buy-price" aria-label="收購金幣價格" type="text" inputmode="numeric" value="${_pandoraEsc(orderPrice)}" placeholder="收購價錢" autocomplete="off"
+                <input id="pandora-buy-price" type="text" inputmode="numeric" value="${_pandoraEsc(orderPrice)}" placeholder="收購價錢" autocomplete="off"
                     onkeydown="if(event.key==='Enter'){pandoraSetBuyOrder()}">
                 <span class="pandora-buy-word">收</span>
                 <button class="btn pandora-buy-submit font-bold" onclick="pandoraSetBuyOrder()">確認收購</button>
@@ -1959,7 +1954,7 @@ window.onload = () => {
             if(d.poisonedBonusDmg) _eff.push(`中毒專攻（攻擊中毒目標額外傷害+${d.poisonedBonusDmg}）`);
             if(d.slowedBonusDmg) _eff.push(`緩速專攻（攻擊緩速目標額外傷害+${d.slowedBonusDmg}）`);
             if(d.immParalyzeBonusDmg) _eff.push(`強韌專攻（攻擊免疫麻痺目標額外傷害+${d.immParalyzeBonusDmg}）`);
-            if(typeof WAND_LIGHTARROW_IDS !== 'undefined' && isResonanceWeapon(id)) _eff.push('共鳴（依智力觸發光箭並回魔；魔擊精通改為依力量觸發魔擊，不再光箭回魔）');
+            if(typeof WAND_LIGHTARROW_IDS !== 'undefined' && WAND_LIGHTARROW_IDS.includes(id)) _eff.push('共鳴（攻擊時依智力免費施放光箭）');
             // 🔧 武器標籤特效（反擊/居合/鈍擊/出血）：來自 WEAPON_TAGS（非 eff 欄位），與背包資訊欄一致顯示
             if(d.type === 'wpn' && typeof getWeaponTags === 'function'){
                 if(typeof weaponHasBleed === 'function' && weaponHasBleed(id)) _eff.push('出血（命中疊加8秒流血，每秒造成該次傷害' + (20 + ((DB.items[id] || {}).relicBleedBonus || 0)) + '%）');

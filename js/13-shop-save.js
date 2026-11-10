@@ -258,11 +258,8 @@ function renderShopItems() {
     ids.forEach(id => {
         let d = DB.items[id];
         let el = document.createElement('div');
-        el.className = 'lm-shop-row list-item bg-slate-800 rounded mb-2 border border-slate-700 p-3 gap-3 hover:bg-slate-750 transition-colors';
-        el.dataset.shopItem = id;
-        // Desktop keeps its row layout; the mobile stylesheet can reflow the
-        // product and quantity controls onto separate rows on narrow screens.
-        el.style.cssText = 'display:flex; justify-content:space-between !important; align-items:center !important; width:100% !important; box-sizing:border-box !important;';
+        el.className = 'list-item bg-slate-800 rounded mb-2 border border-slate-700 p-3 hover:bg-slate-750 transition-colors';
+        el.style.cssText = 'display:flex !important; justify-content:space-between !important; align-items:center !important; width:100% !important; box-sizing:border-box !important;';
         let imgUrl = getIconUrl(d);
         let glowClass = getGlowClass(null, d);
         let learned = d.type === 'skillbk' && player.skills.includes(d.sk);
@@ -274,12 +271,12 @@ function renderShopItems() {
         let priceDisp = id === 'wpn_5' ? shopPrice(100).toLocaleString() : (id === 'wpn_22' ? shopPrice(200).toLocaleString() : shopPrice(d.p || 0).toLocaleString());
 
         el.innerHTML = `
-            <div class="lm-shop-product flex items-center gap-4 min-w-0 flex-1 ${dim ? 'opacity-50' : ''}">
-                <div class="lm-shop-icon w-12 h-12 bg-slate-900 rounded border border-slate-600 flex items-center justify-center shrink-0 tip-host">
+            <div class="flex items-center gap-4 min-w-0 flex-1 ${dim ? 'opacity-50' : ''}">
+                <div class="w-12 h-12 bg-slate-900 rounded border border-slate-600 flex items-center justify-center shrink-0 tip-host">
                     <img src="${imgUrl}" onerror="this.style.display='none';" class="w-10 h-10 object-contain pointer-events-none ${glowClass}">
                 </div>
-                <div class="flex flex-col items-start gap-1.5 min-w-0 flex-1">
-                    <span class="${getItemColor({ id })} font-bold text-lg leading-normal whitespace-normal break-words">
+                <div class="flex flex-col items-start gap-1.5">
+                    <span class="${getItemColor({ id })} font-bold text-lg leading-none truncate">
                         ${nameDisp}${learned ? ' <span class="text-slate-500 text-xs font-normal">已習得</span>' : (cantLearn ? ' <span class="text-red-500 text-xs font-normal">無法學習</span>' : '')}
                     </span>
                     <div class="flex items-center gap-2">
@@ -293,7 +290,7 @@ function renderShopItems() {
                     ? `<button class="btn bg-slate-700 border-slate-600 text-slate-500 py-2 px-6 font-bold shrink-0 cursor-not-allowed opacity-60" disabled>無法學習</button>`
                     : `<button class="btn bg-blue-700 hover:bg-blue-600 border-blue-500 py-2 px-6 font-bold shrink-0 shadow" onclick="buyItem('${id}')">${learned ? '再買' : '購買'}</button>`)
                 : `<div class="flex items-center gap-2 shrink-0">
-                       <input type="number" id="shop-qty-${id}" aria-label="${nameDisp}購買數量" value="1" min="1" class="w-16 bg-slate-900 border border-slate-600 text-center text-white rounded py-1 outline-none">
+                       <input type="number" id="shop-qty-${id}" value="1" min="1" class="w-16 bg-slate-900 border border-slate-600 text-center text-white rounded py-1 outline-none">
                        <button class="btn bg-blue-700 hover:bg-blue-600 border-blue-500 py-2 px-5 font-bold shadow" onclick="buyItem('${id}', document.getElementById('shop-qty-${id}').value)">購買</button>
                    </div>` }
         `;
@@ -595,13 +592,8 @@ function importSave(n){
         let file = input.files && input.files[0];
         if(!file) return;
         let reader = new FileReader();
-        reader.onload = async function(){
+        reader.onload = function(){
             let _raw = String(reader.result || '');
-            if (!_FS) {
-                if (!window.LineageSaveGate) { alert('存檔保護工具尚未載入，請重新開啟合併版後再匯入。'); return; }
-                await window.LineageSaveGate.importRole(_raw, n);
-                return;
-            }
             const desktopImport = !!_FS;
             if(!desktopImport && _raw.startsWith('SIG2:')){
                 alert('匯入失敗：這是 Idle Lineage 安裝版匯出檔，網頁版資料與安裝版資料彼此獨立。');
@@ -979,7 +971,7 @@ function loadEnterSelected(){
 }
 function loadImportSelected(){ importSave(_loadSelectedSlot); }
 function loadExportSelected(){ exportSave(_loadSelectedSlot); }
-async function loadDeleteSelected(){
+function loadDeleteSelected(){
     const slot = _loadSelectedSlot, sum = slotSummary(slot);
     if(!sum){ renderLoadSelect(); return; }
     const active = _roleOtherActiveSessions();
@@ -998,14 +990,6 @@ async function loadDeleteSelected(){
     let _clanWarn = '';
     try { if(typeof clanIsLeaderRole === 'function' && clanIsLeaderRole(oldPlayer)) _clanWarn = '\n\n⚠ 此角色是血盟盟主：刪除後將解散該模式的血盟，並清空同模式所有角色的血盟貢獻（血盟等級經驗保留）！'; } catch(e){}
     if(!confirm(`確定永久刪除「${expected}」嗎？\n角色存檔與角色專屬傭兵資料將刪除；共享倉庫、圖鑑與寵物名冊會保留。${_clanWarn}`)) return;
-    if (!_FS) {
-        const beforeDelete = localStorage.getItem('lineage_idle_save_' + slot);
-        try {
-            if (!window.LineageIntegrity) throw Error('保護帳本尚未載入');
-            await window.LineageIntegrity.observe();
-            if (_roleOtherActiveSessions().length || localStorage.getItem('lineage_idle_save_' + slot) !== beforeDelete) throw Error('刪除期間資料已變更，請重新操作');
-        } catch(e) { alert('刪除已停止：' + e.message); return; }
-    }
     // 🛡️ 簽章不符／內容毀損的存檔位讀不出 player（fp 為空）→ 無法建立刪除保護。
     //    但這種存檔任何分頁都載入不了，也就不可能被舊分頁寫回，故直接放行刪除；
     //    否則玩家會落入「載不了也刪不掉、該欄位永久報廢」的死局。

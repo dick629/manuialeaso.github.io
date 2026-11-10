@@ -388,9 +388,9 @@ function summonElementDamage(dice, ele, t, flatBonus, mult, mrPen) {
 function allySlotList() { return (function(){ let a=[]; for(let n=1;n<=SAVE_SLOT_MAX;n++){ if(String(n)!==String(currentSlot)) a.push(String(n)); } return a; })(); }   // 8 格存檔：可招募自身以外全部 7 個角色。
 const ALLY_ACTIVE_MAX = 3;         // 非王族協力傭兵上限。
 const ROYAL_ALLY_ACTIVE_MAX = 7;   // 王族最多帶滿帳號其餘 7 個角色。
-function allyActiveCap(owner = player) {
-    if (!owner || owner.cls !== 'royal') return ALLY_ACTIVE_MAX;
-    const cha = Math.max(0, Math.min(60, Math.floor((owner.d && owner.d.cha) || 0)));
+function allyActiveCap() {
+    if (!player || player.cls !== 'royal') return ALLY_ACTIVE_MAX;
+    const cha = Math.max(0, Math.min(60, Math.floor((player.d && player.d.cha) || 0)));
     return Math.min(ROYAL_ALLY_ACTIVE_MAX, ALLY_ACTIVE_MAX + Math.floor(cha / 15));   // 魅力 0~14/15/30/45/60 → 3/4/5/6/7 名
 }
 // 王族魅力只調整可帶傭兵數量，不再影響傭兵傷害、HP 或 MP。
@@ -970,9 +970,7 @@ function allyAttackOnce(ally, _arrowDelay) {   // 🏹 v3.2.14 _arrowDelay(選�
         let dice = wpn ? (isLarge ? wpn.dmgL : wpn.dmgS) : 2;
         let isRanged = !!(wpn && wpn.ranged);
         let _rWeaponFlags=window.AFK_RELIC_WEAPON_BRIDGE?window.AFK_RELIC_WEAPON_BRIDGE.allyFlags(ally,t,wpn):{};
-        let hitB = (isRanged ? (d.rangedHit||0) : (d.meleeHit||0)) + (d.extraHit||0);
-    if(window.LineageClassCombat)hitB+=window.LineageClassCombat.hitBonus(ally,t,false);
-    if(window.LineageTalents)hitB+=window.LineageTalents.hitBonus(ally,isRanged?'ranged':'melee',false); if (window.AFK_RELIC_WEAPON_BRIDGE) hitB+=window.AFK_RELIC_WEAPON_BRIDGE.allyHitBonus(ally,wpn,_rWeaponFlags); /* relic-weapon-bridge:ally-attack-flags */
+        let hitB = (isRanged ? (d.rangedHit||0) : (d.meleeHit||0)) + (d.extraHit||0); if (window.AFK_RELIC_WEAPON_BRIDGE) hitB+=window.AFK_RELIC_WEAPON_BRIDGE.allyHitBonus(ally,wpn,_rWeaponFlags); /* relic-weapon-bridge:ally-attack-flags */
         let dmgB = isRanged ? (d.rangedDmg||0) : (d.meleeDmg||0);
         // 🌅 日出之國異常（傭兵承受）：弱化＝傷害−5/命中−2；疾病＝命中−4；目盲＝命中−6。
         //    ⚠️ 須與 allyStrikeRoll 及玩家樞紐 getPhysicalDmg(js/03) 逐字一致，否則主攻擊獨漏減益。
@@ -1340,7 +1338,7 @@ function allyCastMagic(ally, sk) {
         let _wi = ally.eq && ally.eq.wpn, _w = _wi ? DB.items[_wi.id] : null;
         if (_w) {
             if (_w.eff === 'mp_drain' || _w.mpOnHit) { ally.mp = Math.min(ally.mmp || 0, (ally.mp || 0) + mpOnHitAmount(_w, capWpnEn(_wi.en))); }   // 命中回 MP（同 allyWeaponProcs·單一真相 mpOnHitAmount）
-            if (typeof WAND_LIGHTARROW_IDS !== 'undefined' && isResonanceWeapon(_wi.id) && !ally.classicMode && !allyHasMastery(ally, 'm_strike') && Math.random() < ((d.int || 0) / 60)) { let _rt = _allyProcTarget(getTarget()); if (_rt) allyProcLightArrow(ally, _rt); }   // 共鳴：int/60 免費光箭回魔（同 allyWeaponProcs）；🏅 v2.6.70 魔擊精通傭兵共鳴已改發魔擊→本補償塊(只補回魔·不套傷害proc)不再施放光箭
+            if (typeof WAND_LIGHTARROW_IDS !== 'undefined' && WAND_LIGHTARROW_IDS.includes(_wi.id) && !ally.classicMode && !allyHasMastery(ally, 'm_strike') && Math.random() < ((d.int || 0) / 60)) { let _rt = _allyProcTarget(getTarget()); if (_rt) allyProcLightArrow(ally, _rt); }   // 共鳴：int/60 免費光箭回魔（同 allyWeaponProcs）；🏅 v2.6.70 魔擊精通傭兵共鳴已改發魔擊→本補償塊(只補回魔·不套傷害proc)不再施放光箭
         }
     }
     renderMobs();
@@ -1553,7 +1551,6 @@ function allyStrikeRoll(ally, t, opts) {
     let dice = wpn ? (t.s === 'L' ? wpn.dmgL : wpn.dmgS) : 2;
     let isRanged = !!(wpn && wpn.ranged);
     let hitB = (isRanged ? (d.rangedHit||0) : (d.meleeHit||0)) + (d.extraHit||0);
-    if(window.LineageClassCombat)hitB+=window.LineageClassCombat.hitBonus(ally,t,opts.probe);
     let dmgB = isRanged ? (d.rangedDmg||0) : (d.meleeDmg||0);
     // 🌅 日出之國異常（傭兵承受）：弱化＝傷害−5/命中−2；疾病＝命中−4；目盲＝命中−6。
     if (ally.statuses) {
@@ -1932,7 +1929,7 @@ function allyWeaponProcs(ally, target, hitInfo, instOverride) {
     }
     {
         let _amk = allyHasMastery(ally, 'm_strike') && !ally.classicMode;   // 🏅 v2.6.70 魔擊精通（傭兵）：共鳴改發魔擊；v2.6.71 觸發率比照原生魔擊＝力量/60（鏡像玩家·經典模式維持光箭吃智力）
-        if (typeof WAND_LIGHTARROW_IDS !== 'undefined' && isResonanceWeapon(wpnInst.id) && Math.random() < (((_amk ? d.str : d.int) || 0) / 60)) {
+        if (typeof WAND_LIGHTARROW_IDS !== 'undefined' && WAND_LIGHTARROW_IDS.includes(wpnInst.id) && Math.random() < (((_amk ? d.str : d.int) || 0) / 60)) {
             let t = _allyProcTarget(target);
             if (t) { if (_amk) _allyMagicStrikeHit(ally, t, wpnInst, wpn); else allyProcLightArrow(ally, t); }
         }

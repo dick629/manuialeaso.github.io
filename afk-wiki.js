@@ -79,7 +79,7 @@
       if (state.q && state.q.trim()) u += '&q=' + encodeURIComponent(state.q.trim());   // 搜尋優先
       else {
         u += '&tab=' + state.tab;
-        if (['mastery','quest','rebirtharts','classevolution','classtransfer'].indexOf(state.tab)>=0) u += '&cls=' + state.cls;
+        if (state.tab === 'mastery' || state.tab === 'quest') u += '&cls=' + state.cls;   // 職業相關分頁再帶職業
         if (state.tab === 'equip' && EQ_LF) { var _eqf = EQ_LF.serialize(); if (_eqf) u += '&eqf=' + eqfEnc(_eqf); }   // 裝備分頁帶篩選條件(複製網址就能分享這組結果)
       }
       history.replaceState(null, '', u);
@@ -1127,11 +1127,6 @@
     { k: 'cardforms', n: '變身卡' },
     { k: 'reborn', n: '輪迴轉生' },
     { k: 'rebirtharts', n: '轉生技藝' },
-    { k: 'growthguide', n: '天賦巔峰' },
-    { k: 'skillupgrade', n: '技能強化' },
-    { k: 'classevolution', n: '職業進化' },
-    { k: 'classtransfer', n: '職業轉職' },
-    { k: 'charactersouls', n: '角色魂魄' },
     { k: 'versionrules', n: '冒險規則' },
     { k: 'lore', n: '世界觀' },
     { k: 'magic', n: '職業魔法' },
@@ -1436,11 +1431,6 @@
     { key: 'cardforms', cls: false, label: '變身卡' },
     { key: 'reborn', cls: false, label: '輪迴轉生' },
     { key: 'rebirtharts', cls: true, label: '轉生技藝' },   // 2026-10-28：比照職業專精可選職業
-    { key: 'growthguide', cls: false, label: '天賦巔峰' },
-    { key: 'skillupgrade', cls: false, label: '技能強化' },
-    { key: 'classevolution', cls: false, label: '職業進化', search:function(terms,max){return window.AFK_GAME_GUIDE?AFK_GAME_GUIDE.searchClasses(false,terms,max):[];} },
-    { key: 'classtransfer', cls: false, label: '職業轉職', search:function(terms,max){return window.AFK_GAME_GUIDE?AFK_GAME_GUIDE.searchClasses(true,terms,max):[];} },
-    { key: 'charactersouls', cls: false, label: '角色魂魄' },
     { key: 'versionrules', cls: false, label: '冒險規則' },
     { key: 'lore', cls: false, label: '世界觀' },
     { key: 'magic', cls: false, label: '職業魔法' },
@@ -1926,7 +1916,7 @@
     document.querySelectorAll('#m-wiki-tabs .m-wiki-tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === state.tab); });
     if (state.tab === 'mastery' && state.cls === 'all') state.cls = 'knight';   // 職業專精沒有「全職業」,退回真實職業
     if (state.tab === 'rebirtharts' && state.cls === 'all') state.cls = (typeof player !== 'undefined' && player && player.cls) || 'royal';   // 轉生技藝同上
-    var showCls = (state.tab === 'mastery' || state.tab === 'quest' || state.tab === 'rebirtharts' || state.tab === 'classevolution' || state.tab === 'classtransfer');
+    var showCls = (state.tab === 'mastery' || state.tab === 'quest' || state.tab === 'rebirtharts');
     clsRow.style.display = showCls ? 'flex' : 'none';
     var _allBtn = clsRow.querySelector('.m-wiki-clsbtn-all'); if (_allBtn) _allBtn.style.display = (state.tab === 'quest') ? '' : 'none';   // 全職業鈕只在任務分頁
     document.querySelectorAll('#m-wiki-cls .m-wiki-clsbtn').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-cls') === state.cls); });
@@ -4129,18 +4119,17 @@
         return ['<b style="color:#67e8f9">' + esc(d.n) + '</b>' + (d.needClear ? '<br><span style="font-size:11px;color:#94a3b8">先通關「' + esc(d.needClear === 'anakin5' ? '阿納金第 5 形態' : (G.BYID[d.needClear] || {}).n || '') + '」</span>' : ''),
           fee.join('＋'), (d.per === 'week' ? '每週 ' : '每天 ') + d.limit + ' 次', d.min ? d.min + ' 分鐘' : '—', esc(d.lore || '')];
       })));
-    if(window.LineageSherineForge)out += wCard('席琳新舊界約',LineageSherineForge.description()+wTbl(['新系','2件','3件','5件'],LineageSherineCatalog.fresh.map(x=>[esc(x.name),esc(x.tier2),esc(x.tier3),esc(x.tier5)])));
     out += wCard('⚒️ 次元的鍛造師（次元遺物）', wTbl(['項目', '說明'], [
       ['製作', '同部位的 +0 遺物＋' + nm('afk_dim_crystal') + ' 500，鍛成次元遺物。名字取自裂縫裡出現的人物與怪物'],
       ['強化', '+1、+2、+4 的效果是固定的；<b>+3</b> 時才會揭曉它屬於哪一套（得到套裝名稱效果與該套的核心技能）；<b>+5</b> 會抽出一個獨立的大招（有冷卻）'],
       ['套裝', '+3 以上的同套件數湊到 6 件得到六件效果；9 件效果要 +5 的件數'],
       ['重抽', '用' + nm('afk_rd_mirror') + '重抽'],
-      ['混穿', '可以跟一般遺物混著穿；席琳新系每件淬鍊50次元結晶，裂縫淬鍊每件100，界約解鎖每角色每配方200。'],
-      [(DB.items.dimr_dragon_0||{}).n||'四龍次元武器', '四龍副本・裂縫專屬掉落的武器，只在四龍副本裡有效；再用' + nm('afk_rd_mirror') + '與四龍掉落物依序進化為「' + nm('dimr_dragon_1') + '」「' + nm('dimr_dragon_2') + '」「' + nm('dimr_dragon_3') + '」']
+      ['混穿', '可以跟一般遺物混著穿'],
+      ['次元時空・破', '四龍副本・裂縫專屬掉落的武器，只在四龍副本裡有效；再用' + nm('afk_rd_mirror') + '與四龍掉落物進化成「斬」「解」「序」']
     ]));
     if (Z && Z.H) out += wCard('♈ 星鑄師 艾琳娜（黃道十二宮）', wDesc('每天 00:00（台灣時間）挑出 3 宮，選其中一宮打（一天一次）。3 層 × 5 波，第 5 波是那一宮的小頭目、第 3 層第 5 波是守宮者；時限 15 分鐘；倒下、時間到或離開＝失敗。這裡沒有侵蝕、也沒有面板減半。') +
       wDesc('掉落：每次通關' + nm(Z.SAND) + ' ×1；每一宮第一次通關該宮的宮之印 ×1；30% 聖衣光輝碎片 ×1。') +
-      wDesc('<b>聖衣修練</b>：二轉最終戰鬥碎裂的舊聖衣可免費回收成青銅。青銅→白銀、白銀→黃金，每階各需 ' + nm(Z.SAND) + ' ×3；黃金→神聖衣需砂 ×3＋對應宮之印 ×1。青銅、白銀分別保留黃金能力的50%、75%。神聖衣沿用原 EX 加成，不會在次元裂縫碎裂；只有神聖衣可升 ★4（光輝碎片 ×4＋砂 ×1）。') +
+      wDesc('<b>聖衣 EX</b>：碎裂的聖衣用' + nm(Z.SAND) + ' ×3；其他聖衣用 ×3＋該宮的宮之印 ×1。EX 聖衣在原本的「解除封印」之上再加六項能力 +25、五屬性抗性 +50、爆擊傷害 +20%，永遠不會失去光輝，在次元裂縫裡也不會碎。EX 才能升 ★4（光輝碎片 ×4＋砂 ×1）。') +
       wTbl(['宮', '守宮者', '機制'], Z.H.map(function (h) { return ['<b style="color:#fde047">' + esc(h.n) + '</b>', esc(h.g), esc(h.d)]; })));
     return out;
   }

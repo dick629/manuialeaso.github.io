@@ -518,23 +518,6 @@
   K.addNpc(TOWN, { id: 'npc_afk_doomgrave', n: '劍塚的守墓人', title: '龍騎士', type: 'quest', classicHide: true, d: '在席琳神殿外守著一座劍塚的老龍騎士。' });
   K.hookNpc('npc_afk_doomgrave', '劍塚的守墓人', '龍騎士', renderDoom);
 
-  function growthCanShortcut(before) {
-    if(!run||!before||run.id!==before.id||run.si!==before.si||run.wave!==before.wave||run.D.endless)return false;
-    var stage=curStage();return !!(run.si+1<run.D.stages.length&&!stage.boss&&!stage.timed&&!stage.dur&&!stage.mirror&&!run.bd);
-  }
-  function growthShortcut(before) {
-    if(!growthCanShortcut(before))return false;
-    // Do not use nextStage: that path can grant guardian/floor completion rewards.
-    run.si++;run.wave=0;run.st0=tk();run.SM={};run.M={};run.bd=null;run.pending=true;
-    mapState.mobs=[null,null,null,null,null];mapState.targetIdx=-1;return true;
-  }
-  function growthCheckpoint(){if(!run)return null;var copy=Object.assign({},run);delete copy.D;delete copy.bd;return JSON.parse(JSON.stringify(copy));}
-  function growthRestore(q){if(!q||!BYID[q.id])throw Error('副本進度不相容');run=Object.assign({},q,{D:BYID[q.id]});var stage=curStage();run.bd=mobs().some(function(m){return m&&m._rdBoss&&!m._dead;})?stage.boss:null;lastMap=MAP;}
-  (W.LineageAbsoluteDamageGates=W.LineageAbsoluteDamageGates||[]).push(function(a,b,n,k){
-    if(!run||!b||!b._rd)return n;var M=run.M||{};
-    if(b._rdStar===k||b._rdBoss&&(M.book&&!b._rdForce||M.wit&&!b._rdForce||M.cut!=null&&M.cut<8||M.core||(M.fly||0)>tk()))return 0;
-    return n;
-  });
-  W.__afkRiftDg = { growthCanShortcut:growthCanShortcut,growthShortcut:growthShortcut,growthCheckpoint:growthCheckpoint,growthRestore:growthRestore, D: D, BYID: BYID, R: R, canEnter: canEnter, enter: enter, run: function () { return run; }, store: store, MAP: MAP, findBase: findBase, nextStage: nextStage };
+  W.__afkRiftDg = { D: D, BYID: BYID, R: R, canEnter: canEnter, enter: enter, run: function () { return run; }, store: store, MAP: MAP, findBase: findBase, nextStage: nextStage };
   try { console.log('[AFK-riftdg] 已載入：次元裂縫的副本 ' + D.length + ' 個'); } catch (e) {}
 })();

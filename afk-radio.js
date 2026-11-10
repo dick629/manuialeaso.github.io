@@ -47,9 +47,7 @@
       + '#afk-radio-menu small{display:block;color:#94a3b8;font-size:11px;padding:4px 8px 0}';
     document.head.appendChild(st);
   };
-  var menuLayer = null, outsideListener = null;
-  var dismissMenu = function () { menuLayer = null; var m = document.getElementById('afk-radio-menu'); if (m && m.parentNode) m.parentNode.removeChild(m); if (outsideListener) { document.removeEventListener('click', outsideListener, true); outsideListener = null; } };
-  var closeMenu = function () { if (menuLayer && W.AFK_UI) W.AFK_UI.closeLayer(menuLayer); else dismissMenu(); };
+  var closeMenu = function () { var m = document.getElementById('afk-radio-menu'); if (m && m.parentNode) m.parentNode.removeChild(m); };
   var pick = function (v) { setChoice(v === 'song' ? 'song' : 'orig'); closeMenu(); refresh(); };
   var openMenu = function (btn) {
     css(); if (document.getElementById('afk-radio-menu')) { closeMenu(); return; }
@@ -57,12 +55,10 @@
     var cur = choice(), r = btn.getBoundingClientRect();
     m.style.left = r.left + 'px'; m.style.top = (r.bottom + 4) + 'px';
     m.innerHTML = CH.map(function (c) { return '<button type="button" data-v="' + c.id + '" class="' + (c.id === cur ? 'on' : '') + '">' + c.ic + ' ' + c.n + (c.id === cur ? '　✓' : '') + '</button>'; }).join('')
-      + '<small>只在登入畫面播放；音量跟「背景音樂」設定一樣。' + (cfgOn() ? '' : '<br>（背景音樂目前關著，兩種都不會播）') + '</small><button type="button" data-radio-close>關閉</button>';
+      + '<small>只在登入畫面播放；音量跟「背景音樂」設定一樣。' + (cfgOn() ? '' : '<br>（背景音樂目前關著，兩種都不會播）') + '</small>';
     m.addEventListener('click', function (e) { var b = e.target.closest('[data-v]'); if (b) pick(b.getAttribute('data-v')); });
     document.body.appendChild(m);
-    m.querySelector('[data-radio-close]').addEventListener('click', closeMenu);
-    if (W.AFK_UI && W.AFK_UI.openLayer) menuLayer = W.AFK_UI.openLayer(dismissMenu);
-    setTimeout(function () { if (!m.isConnected) return; outsideListener = function (e) { if (!e.target.closest('#afk-radio-menu,#afk-radio-btn')) closeMenu(); }; document.addEventListener('click', outsideListener, true); }, 0);
+    setTimeout(function () { document.addEventListener('click', function off(e) { if (!e.target.closest('#afk-radio-menu,#afk-radio-btn')) { closeMenu(); document.removeEventListener('click', off, true); } }, true); }, 0);
   };
   var placeBtn = function () {
     var b = document.getElementById('afk-radio-btn');
@@ -72,11 +68,11 @@
     var e = document.getElementById('afk-toggles-entry');
     var hide = inGame() || standalone() || (e && e.style.display === 'none');
     b.style.display = hide ? 'none' : '';
-    if (hide) { if (!document.getElementById('afk-radio-menu')?.classList.contains('lm-surface')) closeMenu(); return; }
+    if (hide) { closeMenu(); return; }
     if (e) { var r = e.getBoundingClientRect(); b.style.left = (r.right + 6) + 'px'; b.style.top = r.top + 'px'; }
     else { b.style.left = '90px'; b.style.top = '6px'; }
   };
   var boot = function () { placeBtn(); setInterval(function () { if (!document.hidden) placeBtn(); }, 1000); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
-  W.__afkRadio = { SCENE: SCENE, FILE: FILE, choice: choice, pick: pick, close: closeMenu, sync: placeBtn };
+  W.__afkRadio = { SCENE: SCENE, FILE: FILE, choice: choice, pick: pick, sync: placeBtn };
 })();

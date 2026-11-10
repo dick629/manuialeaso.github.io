@@ -90,12 +90,9 @@
     return wid;
   };
   var canWear = function (d, p) { var r = String(d.req || 'all'); return r === 'all' || r.split(',').indexOf(p.cls) >= 0; };
-  var availableItem = function (id) { var d = DB.items[id]; return !!(d && !d.afkDeleted && !d.ttmiRetired && !d.ttmiEvent && !d.ttmiDragonOnly); };
-  // 原始清單可供舊存檔辨識，但抽獎時必須看清理後的狀態，不能發出已停用或限定四龍掉落的裝備。
-  var availablePools = function () { return loadPools().map(function (list) { return list && list.filter(availableItem); }); };
   var rollGear = function (t) {
-    var p = P(), pool = availablePools()[t], list = pool.filter(function (id) { return canWear(DB.items[id], p); });
-    if (!list.length) list = pool;
+    var p = P(), list = loadPools()[t].filter(function (id) { return canWear(DB.items[id], p); });
+    if (!list.length) list = loadPools()[t];
     var g = list.length ? list[Math.floor(Math.random() * list.length)] : null;
     return g && t === 3 ? makeWeak(g) : g;
   };
@@ -128,7 +125,7 @@
     return s.story[t - 1] >= 3 && num(p.lv) >= TIER[t].lv;
   };
   var newBounty = function (t) {
-    var skip = window.__afkBountySkip, list = loadTiers()[t].filter(function (id) { if (!availableItem(id)) return false; try { return !(typeof skip === 'function' && skip(id)); } catch (e) { return true; } }), k = Math.min(TIER[t].bounty[0], list.length), pick = [];   // 掉落被改走的素材（守護者之戒：專屬信物的原道具、四龍眼淚）不抽進常駐委託；劇情委託的排序清單不動
+    var skip = window.__afkBountySkip, list = loadTiers()[t].filter(function (id) { try { return !(typeof skip === 'function' && skip(id)); } catch (e) { return true; } }), k = Math.min(TIER[t].bounty[0], list.length), pick = [];   // 掉落被改走的素材（守護者之戒：專屬信物的原道具、四龍眼淚）不抽進常駐委託；劇情委託的排序清單不動
     while (pick.length < k) { var i = Math.floor(Math.random() * list.length); pick.push(list.splice(i, 1)[0]); }
     return { req: pick.map(function (id) { return { id: id, cnt: TIER[t].bounty[1] }; }), at: Date.now() };
   };
@@ -229,5 +226,5 @@
   try { loadTiers(); loadPools()[3].forEach(makeWeak); } catch (e) {}
 
   W.AFK_JUNKQ = { view: function (t) { view = Math.max(1, Math.min(3, Number(t) || 1)); redraw(); }, story: turnStory, bounty: turnBounty, reroll: reroll, open: open,
-    tiers: function () { return loadTiers(); }, pools: availablePools, storyReq: storyReq, state: st };
+    tiers: function () { return loadTiers(); }, pools: function () { return loadPools(); }, storyReq: storyReq, state: st };
 })();

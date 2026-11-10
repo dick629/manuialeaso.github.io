@@ -174,8 +174,7 @@
       var inv = player.inv;
       var only = INV_TABS[vis] ? vis : '';   // 背包三頁之一＝只建該類；裝備/技能頁＝背包三頁都不建
       for (var t in INV_TABS) dirty[t] = (t !== only);
-      dirty.equip = vis !== 'equip';
-      dirty.skill = vis !== 'skill';   // 技能書較大，隱藏時延後到切頁才重建。
+      dirty.equip = dirty.skill = false;   // 裝備/技能兩頁每次都由核心一併重建（節點少、便宜）
       // ⚠️ 不替換 player.inv：快速強化表頭用 player.inv.find 查祝福卷數量（卷軸在道具類）、快速廢品用 filter——
       //    換成「只有該類」的陣列會讓它們讀到 0。改為只在這次呼叫期間，給真正的背包陣列掛一個自己的 forEach，
       //    只走訪該類物品（核心 renderTabs 內「逐列建立」是唯一的 player.inv.forEach）；find/filter/some/map/length 全是完整背包。
@@ -183,8 +182,6 @@
       // ②-b 可視範圍：該頁物品很多時，只建「看得到的列＋上下各約兩個畫面」，其餘用等高的空白撐住捲動高度
       var win = only ? planWindow(only) : null;
       var tabDiv = only ? document.getElementById('tab-' + only) : null;
-      var pageHost = phoneWindow() ? document.getElementById('game-screen') : null;
-      var pageTop = pageHost ? pageHost.scrollTop : 0;
       Object.defineProperty(inv, 'forEach', { configurable: true, enumerable: false, writable: true,
         value: function (fn, thisArg) {
           var idx = 0, topDone = false;
@@ -197,11 +194,10 @@
           if (win && tabDiv && win.totalRows > win.endRow) tabDiv.appendChild(makeSpacer(win.totalRows - win.endRow, win));
         } });
       inCall = true;
-      try { return origTabs.call(this, force, vis); }
+      try { return origTabs.call(this, force); }
       finally {
         delete inv.forEach; inCall = false;
         if (only) { winState[only] = win; try { measureGeom(only); } catch (e) {} }
-        if (pageHost && pageHost.scrollTop !== pageTop) pageHost.scrollTop = pageTop;
       }
     };
 
@@ -213,7 +209,7 @@
     //  （格狀：grid-row 橫跨被省略的列數＝高度分毫不差；條列式：高度＝列數×列距－間距）。
     //  空白是在「核心還原捲動位置之前」就放進去的，所以捲動位置照原樣。捲到接近建好範圍的邊緣時再補建。
     //  以下情況改回完整建立（不冒險）：該頁物品 < 150 件、搜尋框有字、該頁開著快速強化／快速廢品、
-    //  非合併手機版且背包不是自己捲動的版面、還沒量到列高。
+    //  背包不是自己捲動的版面（手機版）、還沒量到列高。
     var winState = {}, geom = {};
     var MIN_ITEMS = 150;
     var countOf = function (tab) { var n = 0, inv = player.inv; for (var i = 0; i < inv.length; i++) if (tabOfItem(inv[i]) === tab) n++; return n; };
@@ -225,24 +221,12 @@
       if (typeof quickJunk !== 'undefined' && quickJunk[ty] && quickJunk[ty].active) return '快速廢品';
       return '';
     };
-    // The merged phone uses #game-screen as its only scroll container.
-    // Its 56px rows plus 2px gaps match merged/mobile-shell.css; details keep the full name.
-    var phoneWindow = function () { return document.body.classList.contains('m-unified') && document.body.classList.contains('afk-invlist'); };
-    var scrollInfo = function (tab) {
-      var vp = vpOf(tab);
-      if (!phoneWindow()) return { top: vp ? vp.scrollTop : 0, height: vp ? vp.clientHeight : 400 };
-      var host = document.getElementById('game-screen');
-      var offset = vp ? vp.getBoundingClientRect().top - host.getBoundingClientRect().top + host.scrollTop : 0;
-      var requested = window.LineageMobile && LineageMobile.pendingScroll ? LineageMobile.pendingScroll() : null;
-      return { top: Math.max(0, (requested == null ? host.scrollTop : requested) - offset), height: host.clientHeight };
-    };
     var planWindow = function (tab) {
       if (window.__afkPerfNoWindow) return null;   // 測試用：強制完整建立（逐列比對內容）
-      var g = phoneWindow() ? { pitch: 58, cols: 1, scrolls: true, gap: 2, grid: false } : geom[tab];
-      if (!g || !g.pitch || !g.cols || !g.scrolls) return null;
+      var g = geom[tab]; if (!g || !g.pitch || !g.cols || !g.scrolls) return null;
       if (fullBuildReason(tab)) return null;
       var total = countOf(tab); if (total < MIN_ITEMS) return null;
-      var position = scrollInfo(tab), top = position.top, viewH = position.height || g.viewH || 400;
+      var vp = vpOf(tab), top = vp ? vp.scrollTop : 0, viewH = (vp && vp.clientHeight) || g.viewH || 400;
       var totalRows = Math.ceil(total / g.cols), visRows = Math.ceil(viewH / g.pitch) + 1, over = Math.max(8, visRows * 2);
       var firstRow = Math.floor(top / g.pitch);
       var startRow = Math.max(0, firstRow - over), endRow = Math.min(totalRows, firstRow + visRows + over);
@@ -257,7 +241,6 @@
     };
     var measureGeom = function (tab) {
       var vp = vpOf(tab); if (!vp) return;
-      if (phoneWindow()) { geom[tab] = { cols: 1, pitch: 58, gap: 2, grid: false, scrolls: true, viewH: document.getElementById('game-screen').clientHeight }; return; }
       var cs = getComputedStyle(vp), scrolls = /auto|scroll/.test(cs.overflowY);
       var rows = vp.querySelectorAll(':scope > .list-item'); if (rows.length < 2) { geom[tab] = null; return; }
       var t0 = rows[0].offsetTop, cols = 1; while (cols < rows.length && rows[cols].offsetTop === t0) cols++;
@@ -273,11 +256,9 @@
       try { window.renderTabs(true); } catch (e) {}
     };
     document.addEventListener('scroll', function (ev) {
-      var vp = ev.target, pageScroll = phoneWindow() && vp && vp.id === 'game-screen';
-      if (!pageScroll && (!vp || !vp.classList || !vp.classList.contains('classic-inventory-viewport'))) return;
-      var tabEl = pageScroll ? null : vp.closest('[id^="tab-"]');
-      var tab = pageScroll ? visibleTab() : tabEl && tabEl.id.slice(4); var w = winState[tab]; if (!w) return;
-      var firstRow = Math.floor(scrollInfo(tab).top / w.pitch), margin = Math.max(3, Math.floor(w.visRows / 2));
+      var vp = ev.target; if (!vp || !vp.classList || !vp.classList.contains('classic-inventory-viewport')) return;
+      var tabEl = vp.closest('[id^="tab-"]'); var tab = tabEl && tabEl.id.slice(4); var w = winState[tab]; if (!w) return;
+      var firstRow = Math.floor(vp.scrollTop / w.pitch), margin = Math.max(3, Math.floor(w.visRows / 2));
       var nearTop = w.startRow > 0 && firstRow < w.startRow + margin;
       var nearBottom = w.endRow < w.totalRows && firstRow + w.visRows > w.endRow - margin;
       if ((nearTop || nearBottom) && !pendingRewin) { pendingRewin = true; requestAnimationFrame(function () { if (pendingRewin) rewin(); }); setTimeout(function () { if (pendingRewin) rewin(); }, 120); }   // rAF 在背景/被遮住的頁面會延遲 → 加計時器保底
@@ -286,12 +267,9 @@
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) return;
       var vis = visibleTab(), w = vis && winState[vis], vp = vis && vpOf(vis); if (!w || !vp) return;
-      var firstRow = Math.floor(scrollInfo(vis).top / w.pitch);
+      var firstRow = Math.floor(vp.scrollTop / w.pitch);
       if (firstRow < w.startRow || firstRow + w.visRows > w.endRow) rewin();
     });
-    window.addEventListener('resize', function () {
-      var vis = visibleTab(); if (vis && winState[vis]) requestAnimationFrame(rewin);
-    }, { passive: true });
     // 搜尋框一有變動：先把目前分頁完整建立，再讓搜尋外掛過濾（document 捕獲階段＝比搜尋外掛自己的 input 事件先跑）
     document.addEventListener('input', function (ev) {
       if (!ev.target || ev.target.id !== 'afk-isearch-input') return;
@@ -504,7 +482,7 @@
       window._classFacing8 = function (who, el) {
         if (!who || typeof who !== 'object') return oFace.apply(this, arguments);
         var now = Date.now(), m = faceMemo.get(who);
-        if (m && who._faceD != null && m.uid === who._faceTgtUid && now - m.at < 1000) return who._faceD;   // 11-11：同一目標 1 秒內沿用（原 0.2 秒；目標不動時朝向不會變）
+        if (m && who._faceD != null && m.uid === who._faceTgtUid && now - m.at < 200) return who._faceD;
         var r = oFace.apply(this, arguments);
         faceMemo.set(who, { uid: who._faceTgtUid, at: now });
         return r;
@@ -557,32 +535,26 @@
       window[fn] = function () { bump(); try { return o.apply(this, arguments); } finally { bump(); } };
       try { (0, eval)(fn + ' = window.' + fn); } catch (e) {}
     });
-    var cached = function (book, kind, ck, items, has) {   // book＝收集冊物件；快取必要收藏的 got / total
+    var cached = function (book, kind, ck, items, has) {   // book＝收集冊物件；回傳 got（數字）
       var b = dexBooks.get(book);
       if (!b || b.ver !== dexVer) { b = { ver: dexVer, equip: Object.create(null), misc: Object.create(null) }; dexBooks.set(book, b); }
       var slot = b[kind], hit = slot[ck];
-      if (hit && hit.items === items && hit.n === items.length) return hit;   // 長度改變或收藏規則 bump 時重數
-      var got = 0, total = 0;
-      for (var i = 0; i < items.length; i++) {
-        if (DB.items[items[i]] && DB.items[items[i]].lmDropOptional) continue;
-        total++; if (has(items[i])) got++;
-      }
-      slot[ck] = { items: items, n: items.length, got: got, total: total }; return slot[ck];
+      if (hit && hit.items === items && hit.n === items.length) return hit.got;   // 類別清單只會 push（外掛補登新道具）：長度變了就重數
+      var got = 0; for (var i = 0; i < items.length; i++) if (has(items[i])) got++;
+      slot[ck] = { items: items, n: items.length, got: got }; return got;
     };
     var oEquipCat = window.equipCatCount, oMiscCat = window.miscCatCount;
     window.equipCatCount = function (ck) {
       var book = typeof player !== 'undefined' && player && player.equipDex;
       if (!book || typeof book !== 'object' || typeof EQUIP_CAT_ITEMS === 'undefined') return oEquipCat.apply(this, arguments);
       var arr = EQUIP_CAT_ITEMS[ck] || [];
-      var count = cached(book, 'equip', ck, arr, equipDexHas);
-      return { got: count.got, total: count.total };
+      return { got: cached(book, 'equip', ck, arr, equipDexHas), total: arr.length };
     };
     window.miscCatCount = function (ck) {
       var book = typeof player !== 'undefined' && player && player.miscDex;
       if (!book || typeof book !== 'object' || typeof MISC_CAT_ITEMS === 'undefined') return oMiscCat.apply(this, arguments);
       var arr = MISC_CAT_ITEMS[ck] || [];
-      var count = cached(book, 'misc', ck, arr, miscDexHas);
-      return { got: count.got, total: count.total };
+      return { got: cached(book, 'misc', ck, arr, miscDexHas), total: arr.length };
     };
     try { (0, eval)('equipCatCount = window.equipCatCount; miscCatCount = window.miscCatCount'); } catch (e) {}
     window.__afkDexCacheBump = bump;

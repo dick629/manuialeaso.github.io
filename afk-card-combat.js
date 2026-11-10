@@ -17,7 +17,7 @@
   // 封印的時空變身（碎片換得）效果減半
   function ruleFor(row,actor){
     var A=W.AFK_CARD_ASCENSION,se=!!(A&&A.sealed&&A.sealed(row.id,actor));
-    if(row.tier==='samsara'){var base=se||inDungeon()?RULES.samsara:RULES.samsaraOpen;return W.LineageClothProgression?W.LineageClothProgression.scale(row.id,actor,base):base;}   // 副本內一律回到封印型態
+    if(row.tier==='samsara')return se||inDungeon()?RULES.samsara:RULES.samsaraOpen;   // 副本內一律回到封印型態
     var r=RULES[row.tier];if(!se)return r;
     var h={};Object.keys(r).forEach(function(k){h[k]=r[k]/2;});h.half=true;return h;
   }
@@ -57,7 +57,6 @@
     // terror hook enters it only when a block wall exists. Older true damage,
     // DOT and pursuit paths have no refund at all. Keep their native behavior.
     if(target._dsHolyUntil&&ticks()<=target._dsHolyUntil&&(opt.nativeRefund==='full'||wall&&wall.block))return true;
-    if(W.LineageClassCombat&&W.LineageClassCombat.broken(target,opt.kind==='magic'?'magic':'phys'))return false;
     return !!(wall&&wall.block&&ticks()<=wall.until&&kind&&(wall.kind===kind||wall.kind==='phys'&&(kind==='melee'||kind==='ranged')));
   }
   function physicalKind(actor){var e=actor&&actor.eq&&actor.eq.wpn,d=e&&DB.items[e.id];return d&&(d.isBow||d.ranged)?'ranged':'melee';}

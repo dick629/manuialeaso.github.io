@@ -36,7 +36,7 @@
   var stack = [];        // LIFO:每層 { seq, close };與「基準點以上的歷史格」一一對應
   var seq = 0;           // 全站共用的遞增序號(寫進 history.state.afkNav)
   var parked = null;     // handoff 暫存的層(等對方 claim)
-  var pendingBack = 0, flushing = false, inFlightBack = 0, reconciling = false;
+  var pendingBack = 0, flushing = false;
 
   function curSeq() { try { return (history.state && history.state.afkNav) || 0; } catch (e) { return 0; } }
 
@@ -44,34 +44,19 @@
   //   history.back() 是非同步的,逐次比對歷史位置會誤判(第二次看到的還是舊位置)。
   function scheduleBack(n) {
     pendingBack += n;
-    if (flushing || inFlightBack) return;
+    if (flushing) return;
     flushing = true;
     setTimeout(function () {
       var k = pendingBack; pendingBack = 0; flushing = false;
-      if (k > 0) {
-        inFlightBack = k;
-        try { history.go(-k); } catch (e) { inFlightBack = 0; flushDeferred(); }
-      } else flushDeferred();
+      if (k > 0) { try { history.go(-k); } catch (e) {} }
     }, 0);
-  }
-
-  // A programmatic traversal is asynchronous. New windows opened while it is
-  // in flight must not be mistaken for windows the old Back event should close.
-  function flushDeferred() {
-    if (inFlightBack || pendingBack || reconciling) return;
-    stack.forEach(function (h) {
-      if (!h.deferred) return;
-      delete h.deferred;
-      try { history.pushState({ afkNav: h.seq }, ''); } catch (e) {}
-    });
   }
 
   N.push = function (closeFn) {
     var h = { seq: ++seq, close: (typeof closeFn === 'function') ? closeFn : function () {} };
     stack.push(h);
     // 有還沒發出的 back → 一退一進互相抵銷,就地換掉那格的擁有者即可(跨頁切換走這條,不會多留歷史)
-    if (inFlightBack || reconciling) h.deferred = true;
-    else if (pendingBack > 0) { pendingBack--; try { history.replaceState({ afkNav: h.seq }, ''); } catch (e) {} }
+    if (pendingBack > 0) { pendingBack--; try { history.replaceState({ afkNav: h.seq }, ''); } catch (e) {} }
     else { try { history.pushState({ afkNav: h.seq }, ''); } catch (e) {} }
     return h;
   };
@@ -80,9 +65,8 @@
     var i = h ? stack.indexOf(h) : -1;
     if (i < 0) return;
     var doomed = stack.splice(i);        // 自己與壓在自己上面的層一起收(歷史格是連續的)
-    var entries = doomed.filter(function (x) { return !x.deferred; }).length;
-    if (entries) scheduleBack(entries);
     for (var k = doomed.length - 1; k >= 0; k--) { try { doomed[k].close(); } catch (e) {} }
+    scheduleBack(doomed.length);
   };
 
   N.top = function () { return stack.length ? stack[stack.length - 1] : null; };
@@ -100,14 +84,9 @@
     var cur = curSeq();
     // ⚠ 先把要關的層全部從 stack 摘下來再逐一 close():close() 裡可能又 push 新層
     //   (如返回鍵從創角退回角色選擇後要重新押一格),邊走邊關會把剛押的那格立刻again關掉。
-    inFlightBack = 0; reconciling = true;
-    var doomed = stack.filter(function (h) { return !h.deferred && h.seq > cur; }).reverse();
-    stack = stack.filter(function (h) { return h.deferred || h.seq <= cur; });
-    try {
-      for (var i = 0; i < doomed.length; i++) { try { doomed[i].close(); } catch (e) {} }
-    } finally { reconciling = false; }
-    if (pendingBack) scheduleBack(0);
-    else flushDeferred();
+    var doomed = [];
+    while (stack.length && stack[stack.length - 1].seq > cur) doomed.push(stack.pop());
+    for (var i = 0; i < doomed.length; i++) { try { doomed[i].close(); } catch (e) {} }
   });
 
   document.addEventListener('keydown', function (e) {

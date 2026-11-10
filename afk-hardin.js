@@ -496,6 +496,6 @@
     d: '哈汀的弟子之一，後來投向特羅斯的占卜師。他想知道當年說話之島地底發生了什麼事——支線「知識與背叛」與隊伍副本「哈汀的時空」。' }, '2767');
   K.hookNpc(NPC_ID, NPC_N, '占卜師', renderJoe);
 
-  W.__afkHardin = { growthRestore:function(q){run=JSON.parse(JSON.stringify(q));lastMap=MAP;}, line: line, MAP: MAP, NPC_ID: NPC_ID, MARK: MARK, SET: SET, EXCH: EXCH, enter: enter, canEnter: canEnter, choose: choose, exchange: exchange,
+  W.__afkHardin = { line: line, MAP: MAP, NPC_ID: NPC_ID, MARK: MARK, SET: SET, EXCH: EXCH, enter: enter, canEnter: canEnter, choose: choose, exchange: exchange,
     run: function () { return run; }, tick: hdTick, mod: mod, startWave: startWave, startBoss: startBoss, partyN: partyN, renderJoe: renderJoe, WAVES: WAVES };
 })();

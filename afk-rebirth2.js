@@ -9,7 +9,7 @@
  *       單人試煉（2026-10-26 改成只有一次）：席琳方傷害 −100%、席琳的 AC／減傷／魔防／抗性 −50%。
  *         打贏：可以再當別人的傭兵，也可以招募傭兵；打輸：永遠不能當傭兵，但可以開始招募別人（次元突破者以外的角色）。
  *   ‧打輸 → 光環「封印輪迴」：失去進入席琳夢域鏡的資格（仍然可以當傭兵）；不屈者意志也無法再賦予。
- *   ‧只有決戰勝利才會開放冥王域的第二次轉生。
+ *   ‧兩種結果都會開放冥王域的第二次轉生。
  * 二轉：消耗八顆不屈的命運（每職業一顆）、需 Lv150（滿等）；等級回 1、經驗歸零，保留目前的等級 HP／MP；
  *   面板能力再 +50（近／遠／魔傷害與命中、額外魔法點數、四屬性抗性、魔防、迴避 +50，AC −50）、等級上限 150 → 200。
  * ========================================================================== */
@@ -54,7 +54,7 @@
       FB.startMode('second', '<span class="font-bold" style="color:#f0abfc;">八顆不屈的命運在胸口發燙。死亡之海比上一次更冷——席琳記得你。</span><span class="text-amber-200">二轉決戰：席琳方所有傷害 +5%；區內無法傳送，20 分鐘內打倒她。</span>');
     };
     var rd = readiness(p);
-    var msg = '⚠ 二轉決戰：死亡女神 席琳\n\n' + NEED + '\n' + rd.text + '\n\n每個角色只有一次——進場就算用掉，倒下、回村或中途重新整理都算失敗。席琳方所有傷害 +5%。\n打倒：光環「次元突破者」——不能當傭兵、也不能招募傭兵，要自己單人再打倒一次席琳才能再當別人的傭兵。\n失敗：光環「封印輪迴」——失去進入席琳夢域鏡的資格（仍可當傭兵）。\n只有決戰勝利才會開放冥王域的第二次轉生。\n\n確定要進入嗎？';
+    var msg = '⚠ 二轉決戰：死亡女神 席琳\n\n' + NEED + '\n' + rd.text + '\n\n每個角色只有一次——進場就算用掉，倒下、回村或中途重新整理都算失敗。席琳方所有傷害 +5%。\n打倒：光環「次元突破者」——不能當傭兵、也不能招募傭兵，要自己單人再打倒一次席琳才能再當別人的傭兵。\n失敗：光環「封印輪迴」——失去進入席琳夢域鏡的資格（仍可當傭兵）。\n兩種結果都會開放冥王域的第二次轉生。\n\n確定要進入嗎？';
     if (window.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '二轉決戰', message: msg, okText: '沉入死亡之海', cancelText: '再準備一下', danger: true, onOk: go });
     else if (confirm(msg)) go();
   };
@@ -91,7 +91,7 @@
     } else {
       p.sherineDream = false; try { applySherineTheme(); } catch (e) {}
       sys('<span class="font-bold text-slate-200">你再一次倒在沉沒神殿（' + (why || '挑戰失敗') + '）。</span><span class="afk-lore">「輪迴不是給你一次次重來的。這一次，我把門關上了。」</span>'
-        + '<span class="text-fuchsia-200">得到光環「封印輪迴」：失去進入席琳夢域鏡的資格（仍然可以當傭兵）。決戰失敗，無法第二次轉生。</span>');
+        + '<span class="text-fuchsia-200">得到光環「封印輪迴」：失去進入席琳夢域鏡的資格（仍然可以當傭兵）。冥王域的第二次轉生已開放。</span>');
     }
   };
   var card = function () {
@@ -105,47 +105,32 @@
       + '<div class="font-bold mb-1 text-fuchsia-300">🌌 二轉決戰：死亡女神 席琳（' + st + '）</div>'
       + '<div class="afk-lore">「又是你。輪迴一次還不夠嗎？」</div>'
       + (!r ? '<div class="text-amber-300 text-xs font-bold">⚠ ' + NEED + '</div><div class="text-xs ' + (readiness(p).ok ? 'text-emerald-300' : 'text-red-300') + '">' + readiness(p).text + '</div>' : '')
-      + '<div class="text-slate-200 text-xs">已轉生、第一次決戰已挑戰過、集齊八職業不屈的命運才能進入；席琳方所有傷害 +5%，每個角色一次。打倒＝「次元突破者」（不能當傭兵也不能招募，直到單人試煉：打贏＝恢復傭兵身分、打輸＝永遠不能當傭兵但可以招募）；失敗＝「封印輪迴」（失去席琳夢域鏡資格）。只有決戰勝利才開放冥王域的第二次轉生。</div></div>' + btn;
+      + '<div class="text-slate-200 text-xs">已轉生、第一次決戰已挑戰過、集齊八職業不屈的命運才能進入；席琳方所有傷害 +5%，每個角色一次。打倒＝「次元突破者」（不能當傭兵也不能招募，直到單人試煉：打贏＝恢復傭兵身分、打輸＝永遠不能當傭兵但可以招募）；失敗＝「封印輪迴」（失去席琳夢域鏡資格）。兩種結果都開放冥王域的第二次轉生。</div></div>' + btn;
   };
   window.afkLineageW = function () { sys('<span class="text-fuchsia-200">次元的裂縫另一頭隱約傳來別的世界的聲音……天堂XXX 還在建設中，敬請期待。</span>'); };
 
   // ── 冥王域：第二次轉生 ──
-  // 入口、確認後與公開 API 共用；不修改已完成二轉的舊角色紀錄。
-  var hasFateCount = function (x, id) { return x && x.id === id && (x.cnt == null || (Number.isInteger(x.cnt) && x.cnt >= 1)); };
-  var rebirthReason = function (p) {
-    if (!p || p.dead || Number(p.rebirth) !== 1) return '需要存活且已完成一次轉生的角色。';
-    if (!breaker(p)) return '必須打贏二轉決戰，失敗或尚未完成不能第二次轉生。';
-    if (!Number.isFinite(p.lv) || p.lv < 150) return '第二次轉生需要 Lv150。';
-    if (typeof state !== 'undefined' && (state.riftRun || state._afkFinal || state.antharas || state.prideClimb)) return '請先離開目前副本，再進入冥王域。';
-    var ids = DS.FATE_IDS;
-    if (!Array.isArray(ids) || ids.length !== 8 || new Set(ids).size !== 8 || !Array.isArray(p.inv) || !ids.every(function (id) {
-      return p.inv.some(function (x) { return hasFateCount(x, id); });
-    })) return '八職業的不屈的命運不齊。';
-    return '';
-  };
   var oHades = window.enterHades;
   window.enterHades = function () {
     var p = P(); if (!p || !(p.rebirth >= 1)) return oHades.apply(this, arguments);
     if (p.rebirth >= 2) { sys('<span class="text-slate-300">你已經走過兩次輪迴，冥王域不再為你開門。</span>'); return; }
-    var why = rebirthReason(p);
-    if (why) { sys('<span class="text-red-400">' + why + '</span>'); return; }
-    var slot = typeof currentSlot !== 'undefined' ? currentSlot : null;
-    var go = function () {
-      if (P() !== p || (typeof currentSlot !== 'undefined' && currentSlot !== slot)) return;
-      doRebirth2();
-    };
+    if (fates() < 8) return oHades.apply(this, arguments);
+    var r = rec2(p);
+    if (!r || r.pending) { sys('<span class="text-red-400">冥王域的門扉後傳來低語：「再來見我一次。」——先到席琳神殿（席琳夢域鏡）完成二轉決戰，才能第二次轉生。</span>'); return; }
+    if ((p.lv || 1) < 150) { sys('<span class="text-red-400">第二次轉生需要 Lv150（滿等；你目前 Lv' + (p.lv || 1) + '）。</span>'); return; }
+    if (typeof state !== 'undefined' && state.riftRun) { sys('<span class="text-amber-300">你仍身在時空裂痕之中，先離開才能走向冥王域。</span>'); return; }
+    var go = function () { doRebirth2(); };
     var msg = '⚰️ 第二次轉生\n\n消耗八顆不屈的命運。等級回到 1、經驗歸零（保留目前的等級 HP／MP，屬性、技能、裝備、背包都保留），傳送回說話之島。\n獲得：面板能力再 +50、等級上限 200。\n確定要進入嗎？';
     if (window.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '⚰️ 第二次轉生', message: msg, okText: '進入冥王域', cancelText: '取消', danger: true, onOk: go });
     else if (confirm(msg)) go();
   };
   window.unlockHades = window.enterHades;
   var doRebirth2 = function () {
-    var p = P(), why = rebirthReason(p);
-    if (why) { sys('<span class="text-red-400">' + why + '</span>'); return { ok: false, reason: why }; }
-    var ids = DS.FATE_IDS;
-    var consumed = new Set();
-    ids.forEach(function (id) { var it = p.inv.find(function (x) { return hasFateCount(x, id); }); consumed.add(it); it.cnt = (it.cnt == null ? 1 : it.cnt) - 1; });
-    p.inv = p.inv.filter(function (x) { return !consumed.has(x) || x.cnt > 0; });
+    var p = P(); if (!p || p.rebirth >= 2) return { ok: false };
+    var ids = DS.FATE_IDS || [];
+    if (!ids.every(function (id) { return p.inv.some(function (x) { return x && x.id === id && (x.cnt == null || x.cnt > 0); }); })) { sys('<span class="text-red-400">八職業的不屈的命運不齊。</span>'); return { ok: false }; }
+    ids.forEach(function (id) { var it = p.inv.find(function (x) { return x && x.id === id && (x.cnt == null || x.cnt > 0); }); if (it) it.cnt = (it.cnt == null ? 1 : it.cnt) - 1; });
+    p.inv = p.inv.filter(function (x) { return !(x && x.cnt != null && x.cnt <= 0); });
     var lvNow = p.lv || 1, hpA = 0, mpA = 0, hp1 = 0, mp1 = 0;
     try { calcStats(); hpA = p.mhp; mpA = p.mmp; p.lv = 1; calcStats(); hp1 = p.mhp; mp1 = p.mmp; } catch (e) {}
     p.rebirthHpKeep = (Number(p.rebirthHpKeep) || 0) + Math.max(0, Math.round(hpA - hp1));
@@ -168,7 +153,7 @@
         if (b && p && p.rebirth >= 1) {
           var r2 = rec2(p);
           b.textContent = p.rebirth >= 2 ? '⚰️ 時空裂痕-冥王域（已完成第二次轉生）'
-            : '⚰️ 時空裂痕-冥王域・第二次轉生（不屈的命運 ' + fates() + '／8、二轉決戰' + (breaker(p) ? '勝利' : sealedR(p) ? '失敗，無法二轉' : '未完成') + '、需 Lv150）';
+            : '⚰️ 時空裂痕-冥王域・第二次轉生（不屈的命運 ' + fates() + '／8、二轉決戰' + (r2 && !r2.pending ? '已完成' : '未完成') + '、需 Lv150）';
         }
       } catch (e) {}
       return r;

@@ -66,7 +66,7 @@
     var a = A(), b = bonusOf(p), all = 0; TIERS.forEach(function (t) { all += (a.catalog[t] || []).length; });
     var box = document.createElement('section'); box.id = 'afk-codex'; box.className = 'afk-ca-panel';
     var PC = window.AFK_POLY_CODEX, gold = PC ? PC.goldCount(p) : 5;
-    if (gold < 5 && !b.lit) { box.innerHTML = '<h3>神話變身卡冊</h3><p class="afk-lore">卡冊的封扣仍緊閉著，似乎在等待冷鐵的鑰匙。</p><p>變身收集冊的鐵卡登錄滿 5 種後開放查看（目前 ' + gold + '/5）。</p>'; host.appendChild(box); return; }
+    if (gold < 5 && !b.lit) { box.innerHTML = '<h3>神話變身卡冊</h3><p class="afk-lore">卡冊的封扣仍緊閉著，似乎在等待金色的鑰匙。</p><p>變身收集冊的金卡登錄滿 5 種後開放查看（目前 ' + gold + '/5）。</p>'; host.appendChild(box); return; }
     var h = '<h3>變身卡冊</h3><p class="afk-lore">每一頁都封著一段傳說。翻開它的人，終將成為傳說的一部分。</p><p>取得高階變身卡會點亮卡冊；同一張再取得可升星（最多 7 星）。每顆星五種屬性抗性 +1，滿 7 星再 +3；整本合計最多 +300。</p>'
       + '<div>點亮 <b>' + b.lit + '</b>/' + all + '　總星數 <b>' + b.stars + '</b>　滿星 ' + b.full + '　目前加成：五種屬性抗性各 <b style="color:#86efac">+' + b.total + '</b>' + (b.raw > b.cap ? '（已達上限 ' + b.cap + '）' : '') + '、最大 HP +' + b.hp + Object.keys(b.stats).map(function (k) { return '、' + ({ extraDmg: '額外傷害', extraHit: '額外命中', extraMp: '額外魔法點數' }[k] || k) + ' +' + b.stats[k]; }).join('') + '</div>'
       + '<p>收集加成：每張神話 HP +20；天上 HP +40、額外傷害 +1；時空 HP +60、額外傷害 +1、額外命中 +1。同一階收集一半、全部收集再各加額外傷害與命中（神話 +2／+3、天上 +3／+5、時空 +5／+8；全收另加同值額外魔法點數）。</p>';
@@ -95,10 +95,9 @@
         h += '<div class="afk-cb-grid">';
         zs.forEach(function (row) {
           var on = a.owned(row.id, p), se = on && a.sealed(row.id, p), nm = row.n.replace(/^[^・]+・/, '');
-          var cp=window.LineageClothProgression,clothLabel=on?(cp?cp.label(p,row.id)+(cp.canWear(row.id,p)?'・'+(se?'封印中':'已解除封印'):''):(se?'封印中':'已解除封印')):'未取得';
           h += '<div class="afk-cb-tile samsara' + (on ? '' : ' off') + '" title="' + esc(row.n + '\n特殊能力：' + (row.special || '') + '（解除封印後生效；副本內回到封印型態、沒有特殊能力）') + '">'
             + (window.__afkFormThumb ? window.__afkFormThumb(row.n, on) : '')
-            + '<b>' + esc(nm) + '</b><small style="color:' + (on ? (se ? '#fca5a5' : '#fde047') : '#7a7168') + '">' + esc(clothLabel) + '</small></div>';
+            + '<b>' + esc(nm) + '</b><small style="color:' + (on ? (se ? '#fca5a5' : '#fde047') : '#7a7168') + '">' + (!on ? '未取得' : se ? '封印聖衣' : '已解除封印') + '</small></div>';
         });
         h += '</div>';
       }

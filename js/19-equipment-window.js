@@ -102,8 +102,6 @@
             const data = item && typeof DB !== 'undefined' && DB.items[item.id];
             const slot = document.createElement('button');
             slot.type = 'button';
-            slot.dataset.slot = actualKey;
-            slot.setAttribute('aria-label', data ? data.n + ((item.en || 0) > 0 ? ' +' + capEn(item.en, data) : '') : (pos.lbl || ({helm:'頭盔',ear1:'耳環',ear2:'耳環',amulet:'項鍊',gloves:'手套',cloak:'斗篷',tshirt:'內衣',wpn:'武器',shield:'盾牌',armor:'盔甲',ring1:'戒指',ring2:'戒指',ring3:'戒指',ring4:'戒指',belt:'腰帶',shin:'脛甲',boots:'長靴',doll:'魔法娃娃',arrow:'箭矢',eye:'魔眼',rem_eye:'席琳之眼',rem_soul:'席琳之魂',rem_blood:'席琳之血',rem_scale:'席琳之鱗',rem_bone:'席琳之骨',rem_fang:'席琳之牙',rem_heart:'席琳之心',rem_flesh:'席琳之肉',rem_claw:'席琳之爪'})[actualKey] || actualKey) + '：尚未裝備');
             slot.className = 'equipment-visual-slot' + (item ? ' is-filled' : ' is-empty');
             slot.style.cssText = `left:${pos.x}%;top:${pos.y}%;width:${pos.w}%;height:${pos.h}%;`;
             if (item && data) {
@@ -168,12 +166,6 @@
         if (!frame || !win || win.classList.contains('hidden')) return;
         const host = el('tab-content-panel');
         if (!host) return;
-        if (document.body.classList.contains('m-unified')) {
-            if (win.parentElement !== host) host.appendChild(win);
-            frame.style.setProperty('width', Math.min(host.clientWidth, 366) + 'px', 'important');
-            return; // Native document flow handles scrolling; no fixed-position tracking on phones.
-        }
-        if (win.parentElement === host) document.body.appendChild(win);
         let hostRect = host.getBoundingClientRect();
         const maxFrameWidth = 366;
         if (innerWidth <= 768) {
@@ -220,7 +212,7 @@
         win.classList.toggle('hidden', !visible);
         win.setAttribute('aria-hidden', visible ? 'false' : 'true');
         if (!visible) return;
-        if (innerWidth <= 768 && !document.body.classList.contains('m-unified')) {
+        if (innerWidth <= 768) {
             const scroller = el('game-screen');
             if (scroller && host) {
                 const scrollerRect = scroller.getBoundingClientRect();

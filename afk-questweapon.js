@@ -34,8 +34,6 @@
   var mk = function (cap, cls) {
     var b = BASE[cls], s = b && DB.items[b[0]], id = idOf(cap, cls); if (!s || DB.items[id]) return;
     var t = TIER[cap], d = JSON.parse(JSON.stringify(s));
-    // Renaming a quest reward must keep its source weapon icon.
-    d.img = typeof getIconUrl === 'function' ? getIconUrl(s) : s.img;
     ['legend', 'relic', 'procSkill', 'procRate', 'procRateBase', 'procRatePerEn', 'spellProc', 'gachaWeight', 'set'].forEach(function (k) { delete d[k]; });
     Object.assign(d, { n: t.pre + b[1], req: cls, safe: 0, p: 1000, gachaWeight: 0, noTrade: true, noEnhance: true, ttmiMaxLevel: cap, afkQuestWpn: cap, c: t.c,
       d: CLS_N[cls] + '專用。' + (cap === 40 ? '說話之島新手任務的獎勵' : '完成 30 級職業試煉（或用狩獵徽章換）的獎勵') + '，拿到時就是 +' + EN + '，不能強化；Lv' + cap + ' 以下才能裝備（等級超過會自動卸下）。每個角色只能拿一把。' });

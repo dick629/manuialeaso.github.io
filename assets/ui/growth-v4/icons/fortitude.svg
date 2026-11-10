@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>堅韌・鎏金胸甲</title><defs><linearGradient id="steel" x1="0" y1="0" x2=".8" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#ffefc9"/><stop offset=".24" stop-color="#cbd5ca"/><stop offset=".46" stop-color="#77918a"/><stop offset=".5" stop-color="#dbe0c9"/><stop offset=".76" stop-color="#6e827a"/><stop offset="1" stop-color="#293e34"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8e8b4"/><stop offset=".27" stop-color="#c5a565"/><stop offset=".52" stop-color="#f0d79e"/><stop offset=".7" stop-color="#8a672c"/><stop offset="1" stop-color="#cfb17c"/></linearGradient><radialGradient id="gem" cx=".32" cy=".22" r=".85"><stop stop-color="#f6f3dd"/><stop offset=".25" stop-color="#e1bc78"/><stop offset=".72" stop-color="#e1bc78"/><stop offset="1" stop-color="#243c35"/></radialGradient></defs><g stroke-linejoin="round" stroke-linecap="round">
- <path d="m22 5 10 5 10-5 13 10-7 14 1 25-17 7-17-7 1-25L9 15Z" fill="url(#steel)" stroke="#18231e" stroke-width="2"/>
- <path d="m22 5 10 5 10-5-2 13-8 7-8-7Z" fill="#243a32" stroke="#d7bf85" stroke-width="2"/>
- <path d="m11 14 9 5-5 11-8-6Zm42 0-9 5 5 11 8-6Z" fill="url(#gold)" stroke="#55472b"/>
- <path d="m17 29 13 3v19l-13-4Zm30 0-13 3v19l13-4Z" fill="#57766b" stroke="#bfc8ac"/>
- <path d="M32 26v30m-16-6 16 7 16-7" fill="none" stroke="url(#gold)" stroke-width="3"/>
- <path d="m32 29 6 8-6 7-6-7Z" fill="url(#gem)" stroke="#eddb9f"/>
- <path d="m21 34 5 2m12 0 5-2m-23 8 7 2m10 0 7-2" stroke="#e5dfbf"/></g></svg>

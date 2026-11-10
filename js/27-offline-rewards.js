@@ -1522,8 +1522,7 @@
             { items: {}, cards: {}, itemCount: 0, cardCount: 0 };
         let safeRoom = Number.MAX_SAFE_INTEGER - Math.max(0, Number(player.gold) || 0);
         gold = Math.min(gold, Math.max(0, safeRoom));
-        if (window.LineageGrowth && petExp > 0) window.LineageGrowth.gainOfflineXP(petExp);
-        if ((player.lv || 1) < (typeof window.__afkLvCap==='function'?window.__afkLvCap(player):100) && exp > 0) {
+        if ((player.lv || 1) < 100 && exp > 0) {
             player.exp = Math.max(0, Number(player.exp) || 0) + exp;
             if (typeof checkLvUp === 'function') checkLvUp();
         } else {
