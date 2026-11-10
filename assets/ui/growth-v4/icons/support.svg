@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>共鳴・三環聖契</title><defs><linearGradient id="steel" x1="0" y1="0" x2=".8" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#ffefc9"/><stop offset=".24" stop-color="#cbd5ca"/><stop offset=".46" stop-color="#77918a"/><stop offset=".5" stop-color="#dbe0c9"/><stop offset=".76" stop-color="#6e827a"/><stop offset="1" stop-color="#293e34"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8e8b4"/><stop offset=".27" stop-color="#c5a565"/><stop offset=".52" stop-color="#f0d79e"/><stop offset=".7" stop-color="#8a672c"/><stop offset="1" stop-color="#cfb17c"/></linearGradient><radialGradient id="gem" cx=".32" cy=".22" r=".85"><stop stop-color="#f6f3dd"/><stop offset=".25" stop-color="#f0cc7d"/><stop offset=".72" stop-color="#f0cc7d"/><stop offset="1" stop-color="#243c35"/></radialGradient></defs><g stroke-linejoin="round" stroke-linecap="round">
+ <path d="M32 4 37 12 32 17 27 12Z" fill="url(#gem)" stroke="#d8c595"/>
+ <path d="M27 12C6 10 3 31 14 40c8 7 18 3 20-5 3-9-4-17-11-12" fill="none" stroke="#211b0f" stroke-width="9"/>
+ <path d="M27 12C6 10 3 31 14 40c8 7 18 3 20-5 3-9-4-17-11-12" fill="none" stroke="url(#gold)" stroke-width="6"/>
+ <path d="M38 14c20 1 23 21 10 28-10 6-20-1-19-10" fill="none" stroke="#211b0f" stroke-width="9"/>
+ <path d="M38 14c20 1 23 21 10 28-10 6-20-1-19-10" fill="none" stroke="url(#steel)" stroke-width="6"/>
+ <path d="M17 39c-2 14 13 22 24 13 7-6 5-14-1-18" fill="none" stroke="#211b0f" stroke-width="9"/>
+ <path d="M17 39c-2 14 13 22 24 13 7-6 5-14-1-18" fill="none" stroke="url(#gold)" stroke-width="6"/>
+ <path d="m32 23 4 7 7 3-7 3-4 7-4-7-7-3 7-3Z" fill="url(#gem)" stroke="#f4e3ad" stroke-width="1.3"/>
+ <path d="m9 8 1 4 4 1-4 1-1 4-1-4-4-1 4-1Z" fill="#eadcae"/></g></svg>

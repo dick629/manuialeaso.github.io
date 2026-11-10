@@ -952,8 +952,16 @@
     Object.keys(dropPools).forEach(function(k){dropPools[k]=dropPools[k].filter(function(x){return !set[x.id];});if(!dropPools[k].length)delete dropPools[k];});
     for(var i=addedDrops.length-1;i>=0;i--)if(set[addedDrops[i].entry[0]])addedDrops.splice(i,1);
   }
+  // Restrict acquisition without retiring definitions or touching owned instances.
+  function dragonOnly(set){
+    stock=stock.filter(function(id){return !set[id];});gachaPool=gachaPool.filter(function(id){return !set[id];});
+    Object.keys(set).forEach(function(id){delete stockSet[id];delete junk[id];delete junkTier[id];});
+    unDrop(set);for(var i=bossAdded.length-1;i>=0;i--)if(set[bossAdded[i]])bossAdded.splice(i,1);
+    for(var i=recipes.length-1;i>=0;i--)if(set[recipes[i].result])recipes.splice(i,1);
+    Object.keys(rows).forEach(function(id){var r=rows[id];if(r.contents)r.contents=r.contents.filter(function(c){return !set[resolve(c.sourceId)];});});
+  }
   window.AFK_TTMI_ITEMS={
-    sourceIds:sourceIds,items:imported,recipes:recipes,source:data,resolve:resolve,bonus:bonus,conditional:conditional,price:price,buy:buy,buyQty:function(id){var el=typeof document!=='undefined'&&document.getElementById('ttmi-qty-'+id),q=Math.max(1,Math.min(100,Math.floor(Number(el&&el.value)||1)));return buy(id,q);},craft:craft,riftBuy:riftBuy,enabled:enabled,
+    dragonOnly:dragonOnly,sourceIds:sourceIds,items:imported,recipes:recipes,source:data,resolve:resolve,bonus:bonus,conditional:conditional,price:price,buy:buy,buyQty:function(id){var el=typeof document!=='undefined'&&document.getElementById('ttmi-qty-'+id),q=Math.max(1,Math.min(100,Math.floor(Number(el&&el.value)||1)));return buy(id,q);},craft:craft,riftBuy:riftBuy,enabled:enabled,
     acquisition:acquisition,polyGone:function(){return Object.keys(polyGone);},priceDia:priceDia,gacha:gacha,gachaPool:function(){return gachaPool.slice();},isEvent:isEvent,whyNot:whyNot,refineCost:function(id){return refineCost[id]||null;},junk:function(){return Object.keys(junkTier).map(function(id){return {id:id,tier:junkTier[id]};});},gearMax:function(){return GEAR_MAX;},shopStock:function(){return stock.slice();},purge:purge,unDrop:unDrop,
     beginRift:beginRift,clearRift:clearRift,inRift:inRift,openRift:openRiftSupplies,closeRift:closeRiftSupplies,
     addRift:function(id){var d=DB.items[id];if(!d||riftIds.indexOf(id)>=0)return false;d.ttmiRiftOnly=true;riftIds.push(id);if(typeof WH_NO_STORE!=='undefined'&&WH_NO_STORE.indexOf(id)<0)WH_NO_STORE.push(id);return true;},   /* afk-riftsupply：外掛自己定義的裂痕補給（暴走抑制劑、骸之護符，2026-11-03） */

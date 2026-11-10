@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>抑咒・四象封印</title><defs><linearGradient id="steel" x1="0" y1="0" x2=".8" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#ffefc9"/><stop offset=".24" stop-color="#cbd5ca"/><stop offset=".46" stop-color="#77918a"/><stop offset=".5" stop-color="#dbe0c9"/><stop offset=".76" stop-color="#6e827a"/><stop offset="1" stop-color="#293e34"/></linearGradient><linearGradient id="gold" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8e8b4"/><stop offset=".27" stop-color="#c5a565"/><stop offset=".52" stop-color="#f0d79e"/><stop offset=".7" stop-color="#8a672c"/><stop offset="1" stop-color="#cfb17c"/></linearGradient><radialGradient id="gem" cx=".32" cy=".22" r=".85"><stop stop-color="#f6f3dd"/><stop offset=".25" stop-color="#b4a4e8"/><stop offset=".72" stop-color="#b4a4e8"/><stop offset="1" stop-color="#243c35"/></radialGradient></defs><g stroke-linejoin="round" stroke-linecap="round">
+ <circle cx="32" cy="32" r="23" fill="#1c2c30" stroke="url(#gold)" stroke-width="3"/>
+ <circle cx="32" cy="32" r="17" fill="#2c4044" stroke="#9da995"/>
+ <path d="m32 8 24 24-24 24L8 32Z" fill="none" stroke="#a08a60" stroke-width="2"/>
+ <path d="m32 2 6 8-6 8-6-8Z" fill="#d87a55" stroke="#ebcf90"/>
+ <path d="m54 24 8 8-8 7-8-7Z" fill="#7db2de" stroke="#e5d6a6"/>
+ <path d="m32 46 7 8-7 8-7-8Z" fill="#9ebd78" stroke="#e9d9a6"/>
+ <path d="m10 24 8 8-8 7-8-7Z" fill="#c9a065" stroke="#edddad"/>
+ <path d="M25 26v-4a7 7 0 0 1 14 0v4" fill="none" stroke="url(#steel)" stroke-width="4"/>
+ <path d="m22 27 20-1v15l-10 6-10-6Z" fill="url(#steel)" stroke="#172422" stroke-width="1.5"/>
+ <path d="m32 30 3 4-2 3 1 5h-4l1-5-2-3Z" fill="#263139"/></g></svg>

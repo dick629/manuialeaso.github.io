@@ -37,7 +37,7 @@
 
   var MAX = 15;
   var REG_KEY = 'afk_relicplus_ids';
-  var ID_RE = /(?:relic_|wpn_)[a-z0-9_]+~r\d{1,2}(?:~(?:relic_|wpn_)[a-z0-9_]+)?(?:~a\d)?(?:~e\d)?/g;
+  var ID_RE = /(?:relic_|wpn_)[a-z0-9_]+~r\d{1,2}(?:~(?:relic_|wpn_)[a-z0-9_]+)?(?:~a\d)?(?:~e\d)?(?:~g(?:relic_|wpn_)[a-z0-9_]+)?/g;
   var WHITE = ['hit', 'dmgBonus', 'bowHit', 'bowDmg', 'magicHit', 'mdmg', 'extraDmg', 'str', 'dex', 'con', 'int', 'wis', 'cha', 'mr', 'dr', 'extraMp'];   // 武器每 +3 各 +1（HP/MP 恢復另有規則）
   var RATE_TOP = /^(comboRate|pierceChance|procRateBase|dblStrikeRate|missGrazeRate|heavyRatePct|windSpellProcRate|procFireSkillRate|procPoisonRate)$/;
   // +10 繼承特效時「不算特效」的欄位（基本數值、武器型態、說明文字…）
@@ -47,10 +47,10 @@
     'maxLv', 'noBleed', 'tag', 'bowHit', 'bowDmg', 'extraDmg', 'relicBase', 'relicPlus', 'relicFx', 'relicBleedBonus', 'safe', 'maxEn',
     'ac', 'er', 'resFire', 'resWater', 'resWind', 'resEarth', 'weight', 'fireNullifyTicks', 'armguard', 'cls',
     'relicCatalogId', 'relicStage', 'relicRuntime', 'relicLore', 'relicAsc', 'relicEvo', 'relicFxRes', 'noAscUp', 'gmOnly',
+    'relicSourceId', 'relicWeaponStage', 'relicHealingCd', 'relicFx3', 'relicInheritedEffects',
     'allLures']);   // allLures（馴獸師的飼料袋）：要裝著那件遺物本身才有效，第二、第三詞綴抽到不繼承（玩家 2026-11-03）
   var RES4 = ['resFire', 'resWater', 'resWind', 'resEarth'];
   var ASC_RES = 2, FX_RES = 3;   // 玩家 2026-10-25 抗性下修：昇華每 +1 四抗 +2；第二、第三詞綴保底四抗 +3（全身昇華 +5 約 500）
-  var hasEffect = function (b) { return Object.keys(b).some(function (f) { return !NOT_FX.has(f); }); };
   var KIND_OK = function (d) { return !!(d && isRelic(d) && !d.gmOnly && (d.type === 'wpn' || d.type === 'arm' || d.type === 'acc') && ['pet', 'petwpn', 'petarm', 'doll'].indexOf(d.slot) < 0); };
   // 戒指／耳環／項鍊／腰帶等強化上限 +5 的飾品：新增 +6～+10 的設計里程碑
   //   判斷依原作者的強化上限（enhanceCap）：上限 +5 的道具都算這一類
@@ -59,6 +59,28 @@
   var maxOf = function (base) { var d = DB.items[base]; if (!d) return 15; var cap = 15; try { cap = enhanceCap(d); } catch (e) { cap = d.type === 'acc' ? 5 : 15; } return cap <= 5 ? 10 : 15; };
 
   var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
+  // A trigger and its conditions form one effect. Copying only procOnHit or
+  // a cooldown can disable the host without granting the donor's skill.
+  var FX_GROUPS = [
+    ['procSkill', 'spellProc', 'procRateBase', 'procRatePerEn', 'procOnHit'],
+    ['onDmgHeal', 'onDmgHealCd']
+  ];
+  function inheritEffects(d, b, donor) {
+    var blocked = new Set(), fields = [];
+    FX_GROUPS.forEach(function (group) {
+      if (group.some(function (f) { return f in b || f in d; })) group.forEach(function (f) { blocked.add(f); });
+    });
+    Object.keys(donor).forEach(function (f) {
+      if (NOT_FX.has(f) || blocked.has(f) || f in b || f in d) return;
+      d[f] = clone(donor[f]); fields.push(f);
+    });
+    // Preserve the established +10 inherited-poison rule, without retiering
+    // the donor or letting the host's tier erase the new effect afterwards.
+    if (d.relicPlus >= 10 && fields.indexOf('procPoison') >= 0 && d.procPoison && typeof d.procPoison.rate === 'number') d.procPoison.rate = 100;
+    if (d.relicPlus >= 10 && fields.indexOf('procPoisonRate') >= 0) d.procPoisonRate = 100;
+    if (fields.indexOf('onDmgHeal') >= 0) d.onDmgHealCd = Math.max(10, Number(d.onDmgHealCd) || 0);
+    return fields;
+  }
   var parseId = function (id) {
     var m = /^((?:relic_|wpn_)[a-z0-9_]+)~r(\d{1,2})(?:~((?:relic_|wpn_)[a-z0-9_]+))?(?:~a(\d))?(?:~e(\d))?(?:~g((?:relic_|wpn_)[a-z0-9_]+))?$/.exec(String(id || ''));
     if (!m) return null;
@@ -119,14 +141,21 @@
       }
       try { if (b.type === 'wpn' && typeof weaponHasBleed === 'function' && weaponHasBleed(base)) d.relicBleedBonus = r; } catch (e) {}
     }
-    var fxName = '';
+    // Finish the host before attaching independent effects. Tier rules own
+    // their fields (including null/zero sentinels), not the donor's fields.
+    if (n >= 10) {
+      if (d.procPoison && typeof d.procPoison.rate === 'number') d.procPoison.rate = 100;
+      if (typeof d.procPoisonRate === 'number') d.procPoisonRate = 100;
+    }
+    if (typeof window.__afkRelicTier === 'function') window.__afkRelicTier(d, b, n, asc);
+    var fxName = '', inherited = [];
     if (fx && DB.items[fx]) {
       // +10 第二詞綴：繼承抽到的遺物特效；抽到「本身沒有特效」的遺物 → 改給四屬性抗性 +3
       // Inheritance uses the original base effect. Runtime metadata and the
       // donor's upgraded stage must never become effects on the recipient.
       var donor = (window.AFK_RELIC_RUNTIME && window.AFK_RELIC_RUNTIME.originalBase(fx)) || DB.items[fx];
-      var copied = 0;
-      if (hasEffect(donor)) Object.keys(donor).forEach(function (f) { if (!NOT_FX.has(f) && !(f in b)) { d[f] = clone(donor[f]); copied++; } });
+      var fields = inheritEffects(d, b, donor), copied = fields.length;
+      if (copied) inherited.push({key:fx,fields:fields});
       // 抽到沒有特效的遺物，或抽到的特效跟本身完全重複（例如兩把都只有出血）→ 改給四屬性抗性 +3，避免「繼承了卻什麼都沒有」
       if (!copied) { RES4.forEach(function (f) { d[f] = (Number(d[f]) || 0) + FX_RES; }); d.relicFxRes = true; }
       fxName = donor.n;
@@ -134,18 +163,15 @@
     // 至高的支配：第三詞綴（玩家 2026-10-25）——同部位再繼承一件遺物的特效；沒有新欄位可繼承 → 四屬性抗性 +3
     var fx3Name = '', fx3Res = false;
     if (fx3 && DB.items[fx3]) {
-      var donor3 = (window.AFK_RELIC_RUNTIME && window.AFK_RELIC_RUNTIME.originalBase(fx3)) || DB.items[fx3], copied3 = 0;
-      if (hasEffect(donor3)) Object.keys(donor3).forEach(function (f) { if (!NOT_FX.has(f) && !(f in b) && !(f in d)) { d[f] = clone(donor3[f]); copied3++; } });
+      var donor3 = (window.AFK_RELIC_RUNTIME && window.AFK_RELIC_RUNTIME.originalBase(fx3)) || DB.items[fx3];
+      var fields3 = inheritEffects(d, b, donor3), copied3 = fields3.length;
+      if (copied3) inherited.push({key:fx3,fields:fields3});
       if (!copied3) { RES4.forEach(function (f) { d[f] = (Number(d[f]) || 0) + FX_RES; }); fx3Res = true; }
       fx3Name = donor3.n; d.relicFx3 = fx3;
     }
-    // +10 以上：中毒必定觸發（出血必中與 50 層上限由遺物戰鬥介面依來源判斷）
-    if (n >= 10) {
-      Object.keys(d).forEach(function (f) { var v = d[f]; if (v && typeof v === 'object' && /^procPoison$/.test(f) && typeof v.rate === 'number') v.rate = 100; });
-      if (typeof d.procPoisonRate === 'number') d.procPoisonRate = 100;
-    }
-    // 專屬階段先定值，再加共通昇華成長，避免白字增量被覆蓋。
-    if (typeof window.__afkRelicTier === 'function') window.__afkRelicTier(d, b, n, asc);
+    // Runtime-only provenance: identity-based companion adapters need to know
+    // which base effects were actually copied. Never grant the donor's tiers.
+    d.relicInheritedEffects = inherited;
     // 昇華支配：每 +1（玩家 2026-10-21 規格）
     if (asc != null && asc > 0) {
       var A = asc;
@@ -159,7 +185,7 @@
         RES4.forEach(function (f) { d[f] = (Number(d[f]) || 0) + ASC_RES * A; });   // 玩家 2026-10-25：每 +1 四抗 +10 → +2
       }
     }
-    d.d = (d.d || b.d || '') + ' 〔遺物合成 +' + n + '〕' + (asc != null ? '〔昇華支配 +' + asc + '〕' : '') + (fxName ? (d.relicFxRes ? '〔第二詞綴：抽到「' + fxName + '」（無特效）→ 四屬性抗性 +3〕' : '〔第二詞綴：繼承「' + fxName + '」的特效〕') : '') + (asc != null && asc >= 5 ? (d.relicEvo != null ? (EVO[d.relicEvo] ? '〔至高的支配：' + EVO[d.relicEvo] + '〕' : '〔至高的支配〕') : '〔可進化：至高的支配〕') : '');
+    d.d = (d.d || b.d || '') + ' 〔遺物合成 +' + n + '〕' + (asc != null ? '〔昇華支配 +' + asc + '〕' : '') + (fxName ? (d.relicFxRes ? '〔第二詞綴：抽到「' + fxName + '」（沒有新特效）→ 四屬性抗性 +3〕' : '〔第二詞綴：繼承「' + fxName + '」的特效〕') : '') + (asc != null && asc >= 5 ? (d.relicEvo != null ? (EVO[d.relicEvo] ? '〔至高的支配：' + EVO[d.relicEvo] + '〕' : '〔至高的支配〕') : '〔可進化：至高的支配〕') : '');
     if (fx3Name) d.d += fx3Res ? '〔第三詞綴：抽到「' + fx3Name + '」（沒有新特效）→ 四屬性抗性 +3〕' : '〔第三詞綴：繼承「' + fx3Name + '」的特效〕';
     return d;
   }

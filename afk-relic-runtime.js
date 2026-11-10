@@ -40,7 +40,7 @@
     return bag[id || (active && active.sourceId) || 'runtime'] || (bag[id || (active && active.sourceId) || 'runtime'] = {});
   }
   function stageOf(d) { return d && d.relicAsc != null ? (d.relicAsc >= 5 ? 4 : 3) : d && d.relicPlus >= 10 ? 2 : d && d.relicPlus >= 5 ? 1 : 0; }
-  function isGM(actor) { return !!(actor && actor.eq && Object.keys(actor.eq).some(function (k) { var e = actor.eq[k]; return e && GM_IDS.indexOf(String(e.id)) >= 0; })); }
+  function isGM(actor) { return !!(actor && actor.eq && Object.keys(actor.eq).some(function (k) { var e = actor.eq[k]; return e && GM_IDS.indexOf(String(e.id)) >= 0 && !!W.LineageOwnerGuard?.allowed(actor,e); })); }
   function sourceInfo(id, def, inst) {
     var key = def && def.relicBase || String(id).split('~')[0], c = byKey[key];
     return c ? { id: key, sourceId: key, catalogId: c.id, key: key, def: def, item: def, inst: inst, stage: stageOf(def), n: finite(def.relicPlus), asc: def.relicAsc == null ? null : def.relicAsc } : null;
@@ -65,7 +65,7 @@
     keys.forEach(function (k) {
       var e = actor.eq[k]; if (!e || e._relicVirtual) return;
       var d = DB.items[e.id], data=W.__afkRelicData||W.__afkRelicPlus; if (!d && data) { data.ensure(e.id); d = DB.items[e.id]; }
-      var s = sourceInfo(e.id, d, e); if (s && (!selected[s.key] || selected[s.key].stage < s.stage || selected[s.key].n < s.n)) selected[s.key] = s;
+      var s = sourceInfo(e.id, d, e); if (s && (!selected[s.key] || selected[s.key].stage < s.stage || selected[s.key].stage === s.stage && selected[s.key].n < s.n)) selected[s.key] = s;
     });
     if (isGM(actor)) catalog.forEach(function (c) {
       var d = ultimate(c.key); if (d) selected[c.key] = sourceInfo(c.key, d, { id: c.key, en: 0, _relicProjection: true });
@@ -73,6 +73,22 @@
     var list = Object.keys(selected).map(function (k) { return selected[k]; }).sort(function (a, b) { return a.catalogId - b.catalogId; });
     var idList=new Array(keys.length);for(var ix=0;ix<keys.length;ix++){var e=actor.eq[keys[ix]];idList[ix]=String(e&&e.id||'');}
     caches.set(actor, { revision:revision,keys:keys,idList:idList,sources:list }); return list;
+  }
+  // Identity-based base effects (e.g. necromancy) also work when inherited.
+  // Keep these out of sources()/dispatch: their copied fields are already on
+  // the host item, so registering a second full donor would double stats/procs.
+  function inheritedSource(actor, id, field) {
+    var list=sourceList(actor),meta=byId[id];if(!meta)return null;
+    for(var i=0;i<list.length;i++){
+      var host=list[i],rows=host.def.relicInheritedEffects||[];
+      for(var j=0;j<rows.length;j++){
+        var row=rows[j];if(row.key!==meta.key||row.fields.indexOf(field)<0||!host.def[field])continue;
+        var def={n:meta.name||meta.key,relicBase:meta.key,relicPlus:0,relicAsc:null};
+        row.fields.forEach(function(k){if(k in host.def)def[k]=host.def[k];});
+        return sourceInfo(meta.key,def,host.inst);
+      }
+    }
+    return null;
   }
   var ultimateCache = {};
   function ultimate(key) {
@@ -149,6 +165,11 @@
       // Skipped sources only had their fields written into ctx; leave ctx exactly as the full loop would.
       if(tail&&(!length||list[length-1]!==tail)){ctx.source = ctx.item = tail.def; ctx.sourceId = tail.key; ctx.catalogId = tail.catalogId; ctx.stage = tail.stage; ctx.n = tail.n; ctx.asc = tail.asc; ctx.api = api;}
     } finally { depth--; active = prior; }
+    if (W.LineageGrowth) W.LineageGrowth.event(event, ctx);
+    // Permanent set bonuses must precede the class combat baseline snapshot.
+    if (event === 'onStats' && W.LineageSherine) W.LineageSherine.event(event, ctx);
+    if (W.LineageClassCombat) W.LineageClassCombat.event(event, ctx);
+    if (event !== 'onStats' && W.LineageSherine) W.LineageSherine.event(event, ctx);
     return ctx;
   }
   function configure(d, b, n, asc) {
@@ -202,16 +223,21 @@
   }
   function shield(actor, amount, opt) {
     opt = opt || {}; if (!actor || amount <= 0) return 0;
+    var owner=opt.owner||active&&active.actor||actor;if(W.LineageGrowth)amount*=1+W.LineageGrowth.pct(owner,'healing')/100+(W.LineageTalents&&W.LineageTalents.has(owner,'support','N3',1)?.04:0);
+    if(W.LineageSherine)amount*=W.LineageSherine.shieldMultiplier(owner);
     var src = opt.source || active && active.sourceId || 'relic', bag = stateOf(actor, '_shields');
     var old = bag[src], prior=old&&old.until>now()?old.amount:0,value = Math.min(finite(opt.cap) || mhp(actor), opt.additive?prior+finite(amount):Math.max(prior, finite(amount)));
-    bag[src] = { amount: value, until: now() + (opt.duration || 10), source: src, owner: opt.owner || active && active.actor || actor, onBreakHeal:opt.onBreakHeal||0,healPrepaid:!!opt.healPrepaid,kind:opt.kind }; return value;
+    bag[src] = { amount: value, until: now() + (opt.duration || 10), source: src, owner: opt.owner || active && active.actor || actor, onBreakHeal:opt.onBreakHeal||0,healPrepaid:!!opt.healPrepaid,kind:opt.kind, classOnlyDirect:!!opt.classOnlyDirect, classSingle:!!opt.classSingle }; return value;
   }
   function absorb(actor, damage, context) {
     var bag = stateOf(actor, '_shields');
     Object.keys(bag).forEach(function (k) {
       var s = bag[k]; if (s.until <= now() || s.amount <= 0) { delete bag[k]; return; }
       if(s.kind&&s.kind!==context.kind)return;
+      if(s.classOnlyDirect&&(context.redirected||context.reflection||context.isDot||context.environment||context.direct===false||['environment','dot','self','redirect','reflection'].includes(context.origin)))return;
+      if(s.classSingle&&(!context.normalAttack||context.aoe))return;
       var v = Math.min(damage, s.amount); s.amount -= v; damage -= v;
+      if(v>0&&W.LineageClassCombat)W.LineageClassCombat.event('shieldAbsorb',Object.assign({},context,{actor:actor,shieldSource:k,absorbed:v}));
       if (s.amount <= 0) { delete bag[k]; dispatch('shieldBreak', Object.assign({}, context, { actor: actor, shieldSource: k, damage: v, main: false })); if(s.onBreakHeal)heal(actor,s.onBreakHeal,{owner:s.owner,source:k,prepaid:s.healPrepaid}); }
     }); return damage;
   }
@@ -281,7 +307,7 @@
     return b;
   }
   var inRecalc = false;
-  function recalc(actor) { if(action&&action.gm&&action.actor===actor){(action.gmRoot||action).gmRecalc=true;return;}if (inRecalc) return; inRecalc = true; try { if (actor === ownerPlayer() && typeof recomputeStats === 'function') recomputeStats();else if(typeof _allyLevelRecompute==='function'&&actor&&actor.eq)_allyLevelRecompute(actor); } finally { inRecalc = false; } }
+  function recalc(actor) { if(action&&action.gm&&action.actor===actor){(action.gmRoot||action).gmRecalc=true;return;}if (inRecalc) return; inRecalc = true; try { var p=ownerPlayer();if (actor === p && typeof recomputeStats === 'function') recomputeStats();else if(typeof _allyLevelRecompute==='function'&&p&&(p.allies||[]).indexOf(actor)>=0)_allyLevelRecompute(actor); } finally { inRecalc = false; } }
   function damage(target, amount, opt) {
     opt = opt || {}; var ctx = active||action&&action.context, actor = opt.actor||opt.owner || ctx && ctx.actor || ownerPlayer();
     if (!target || hp(target) <= 0 || !(amount > 0)||actor&&(actor.dead||actor._downed||hp(actor)<=0)) return 0;
@@ -301,7 +327,7 @@
     var before = hp(target), value = Math.floor(amount); if(window.AFK_CARD_COMBAT)value=window.AFK_CARD_COMBAT.damage(actor,target,value,{nativeRefund:typ==='dot'?null:opt.reflect!==false&&(typ!=='true'||opt.reflect===true)?'full':typ!=='true'?'terror':null,kind:typ==='physical'||typ==='true'&&opt.reflect===true?'melee':typ, /* card-combat:runtime-refund */origin:origin,reflection:reflection,redirected:redirected,ascended:asc,dotCapped:typ==='dot'&&(!opt.budgeted||opt.dotKind==='poison'||opt.dotKind==='bleed'),inherited:!!opt.cardInherited}); /* card-combat:runtime-damage */
     var friendly=target.eq||target===ownerPlayer(), attacker=self?null:(opt.attacker||actor);
     var incomingOpts={kind:typ==='magic'?'magic':typ==='dot'?'dot':typ==='ranged'?'ranged':'melee',element:ele,direct:opt.direct==null?typ!=='dot':!!opt.direct,main:false,origin:origin,dotKind:opt.dotKind,redirected:redirected,noProc:!!opt.noProc,damageSource:src,damageOwner:actor,reflection:reflection};
-    if (friendly) value = incoming(target, value, attacker, incomingOpts);
+    if (friendly) value = W.AFK_RELIC_RUNTIME.incoming(target, value, attacker, incomingOpts);
     target[hpKey(target)] -= value; target.justHit = ele === 'none' ? 'magic' : ele;
     if (typeof mobWake === 'function' && !friendly) mobWake(target);
     transient(target,'_relicLastSource',{actor:actor,source:src,ascended:asc,executed:!!opt.execute,origin:origin});
@@ -343,8 +369,8 @@
     dispatch('beforeHurt', c);
     var bs=stateOf(actor,'_buffs');Object.keys(bs).forEach(function(k){if(bs[k].until<=now())return;var b=bs[k].values;if(b.invulnerable)c.damage=0;if(c.normalAttack&&b.evadeNextNormal){c.damage=0;delete bs[k];}if(c.direct){if(b.directReduction)c.damage*=1-b.directReduction;if(b.physicalReduction&&c.damageType==='physical')c.damage*=1-b.physicalReduction;}});
     if(attacker&&c.direct){var dr=statusValue(attacker,'directDamageDown');if(dr)c.damage*=1-dr;var kr=statusValue(attacker,c.kind==='magic'?'magicDamageDown':'physicalDamageDown');if(kr)c.damage*=1-kr;}
-    c.damage = absorb(actor, Math.max(0, finite(c.damage)), c);
-    if (c.damage >= hp(actor)) dispatch('beforeDeath', c);
+    if(!(W.LineageGrowthDeferred&&W.LineageGrowthDeferred.depth)){c.damage = absorb(actor, Math.max(0, finite(c.damage)), c);
+    if (c.damage >= hp(actor)) dispatch('beforeDeath', c);}
     c.damage = Math.max(0, finite(c.damage));
     var st = stateOf(actor, '_incoming'); st.pending = c;
     return c.damage;
@@ -379,7 +405,7 @@
     st.pending = null; c.actualDamage = Math.max(0,Math.min(amount,(c.targetHpBefore||amount)-hp(target)));transient(target,'_relicLastSource',{actor:actor,source:weapon&&weapon.relicBase,ascended:!!(weapon&&weapon.relicAsc!=null)});
     if(actor.dead||actor._downed||hp(actor)<=0)return c;
     dispatch('afterHit', c);if(c.doubleBlade||c.dualx2)moduleEvent('weapon','doubleBlade',Object.assign({},c));dispatch('directHit',Object.assign({},c));if(c.element!=='none')dispatch('elementHit',Object.assign({},c));addMarkAfter(c);
-    trace('damage',{actor:actor,target:target,source:weapon&&weapon.relicBase,amount:amount,actual:c.actualDamage,snapshot:c.snapshot,kind:c.kind,origin:c.origin});return c;
+    trace('damage',{actor:actor,target:target,source:weapon&&weapon.relicBase,amount:amount,actual:c.actualDamage,snapshot:c.snapshot,kind:c.kind,origin:c.origin});if(W.LineageGrowth)W.LineageGrowth.trueHit(c);return c;
   }
   function spellDamage(actor, target, amount, skill, extra) {
     if(!enabled())return amount;
@@ -402,7 +428,7 @@
   }
   function flushSpellHits(a) {
     if(!a||!a.hits)return;var hs=a.hits.splice(0);
-    hs.forEach(function(c){c.actualDamage=Math.max(0,Math.min(c.damage,c.targetHpBefore-hp(c.target)));if(!c.actor.dead&&!c.actor._downed&&hp(c.actor)>0){moduleEvent('defense','afterHit',c);moduleEvent('weapon',c.main?'afterHit':'skill',c);dispatch('directHit',Object.assign({},c));if(c.element!=='none')dispatch('elementHit',Object.assign({},c));if(c.main)addMarkAfter(c);}trace('damage',{actor:c.actor,target:c.target,amount:c.damage,actual:c.actualDamage,snapshot:c.snapshot,kind:c.kind,origin:c.origin,skillId:c.skillId});});
+    hs.forEach(function(c){c.actualDamage=Math.max(0,Math.min(c.damage,c.targetHpBefore-hp(c.target)));if(!c.actor.dead&&!c.actor._downed&&hp(c.actor)>0){moduleEvent('defense','afterHit',c);moduleEvent('weapon',c.main?'afterHit':'skill',c);dispatch('directHit',Object.assign({},c));if(c.element!=='none')dispatch('elementHit',Object.assign({},c));if(c.main)addMarkAfter(c);}trace('damage',{actor:c.actor,target:c.target,amount:c.damage,actual:c.actualDamage,snapshot:c.snapshot,kind:c.kind,origin:c.origin,skillId:c.skillId});if(W.LineageGrowth)W.LineageGrowth.trueHit(c);});
   }
   function applyVulnerability(c){if(!c.target||c.snapshotCopy)return;var n=statusValue(c.target,c.element+'Vulnerability');if(c.element2)n=Math.max(finite(n),finite(statusValue(c.target,c.element2+'Vulnerability')));if(n)c.damage*=1+n;if(c.kind!=='magic'&&c.kind!=='dot'){var p=statusValue(c.target,'physicalVulnerability');if(p)c.damage*=1+p;}}
   function moduleEvent(mod,event,c){var old=c._module;c._module=mod;try{return dispatch(event,c);}finally{c._module=old;}}
@@ -439,6 +465,7 @@
     });
   }
   function stats(actor, d) {
+    d._relicWeightCapacityMult = 1;
     if(!enabled())return;
     var oldSpeed=d.atkSpdPct||0,oldAspd=d.aspd,aliases={mcrit:'meleeCrit',rcrit:'rangedCrit',evade:'er',moveSpdPct:'moveSpeedPct',immuneStun:'immStun',immuneParalyze:'immParalyze',immuneSlow:'immSlow'},bs = stateOf(actor, '_buffs'); Object.keys(bs).forEach(function (k) { var b = bs[k]; if (b.until <= now()) return; Object.keys(b.values).forEach(function (f) { if(['str','dex','con','int','wis','cha'].indexOf(f)>=0)return;var to=aliases[f]||f;if (typeof b.values[f] === 'number') d[to] = finite(d[to]) + b.values[f]; else d[to] = b.values[f]; }); });
     var c={actor:actor,stats:d,main:false};if(W.AFK_RELIC_COMPANIONS&&W.AFK_RELIC_COMPANIONS.weightInfo)Object.assign(c,W.AFK_RELIC_COMPANIONS.weightInfo(actor,d));dispatch('onStats',c);
@@ -465,7 +492,7 @@
   function foreignHeal(actor,amount,source,extra){var c=Object.assign({actor:actor,recipient:actor,amount:amount,hpBefore:hp(actor),healSource:source,main:false},extra||{});dispatch('beforeHeal',c);stateOf(actor,'_healing').pending=c;return Math.max(0,Math.floor(c.amount));}
   function foreignHealDone(actor,amount,event){var s=stateOf(actor,'_healing'),c=s.pending||{actor:actor,recipient:actor,hpBefore:hp(actor)-amount,healSource:event==='onPotion'?'potion':'spell'};s.pending=null;c.actualHeal=Math.max(0,hp(actor)-c.hpBefore);c.overheal=Math.max(0,amount-c.actualHeal);dispatch('onHeal',c);if(event)dispatch(event,c);return c;}
   function castCost(actor,skill,id,cost){var c={actor:actor,target:typeof getTarget==='function'?getTarget():targets()[0],skill:skill,skillId:id,skillName:skill.n,skillType:skill.type,element:skill.ele||'none',damageType:skill.dmgType||'magic',mpCost:cost,hpCost:0,origin:action&&action.origin||'normal',main:false,damageMult:1,healMult:1};dispatch('beforeCast',c);if(action){action.costContext=c;action.damageMult=c.damageMult;action.healMult=c.healMult;}if(c.blocked)return Number.MAX_SAFE_INTEGER;return Math.max(0,Math.ceil(c.mpCost));}
-  function castPaid(actor,cost){if(!enabled()||!action)return;var c=action.costContext;action.paid=cost>0;action.paidMp=cost;if(c&&!c._paid){if(c.hpCost)api.payHp(actor,c.hpCost);c._paid=true;}}
+  function castPaid(actor,cost){if(!enabled()||!action)return;var c=action.costContext;action.paid=cost>0;action.paidMp=cost;if(c&&!c._paid){if(c.hpCost)api.payHp(actor,c.hpCost);c._paid=true;dispatch('castPaid',c);}}
   function earlyStats(actor,d){if(!enabled())return;var bs=stateOf(actor,'_buffs');Object.keys(bs).forEach(function(k){var b=bs[k];if(b.until<=now())return;['str','dex','con','int','wis','cha'].forEach(function(f){if(b.values[f])d[f]=finite(d[f])+finite(b.values[f]);});});}
   var api = {
     damage: damage, dot: dot, heal: heal, healGroup: healGroup, shield: shield, cast: cast, buff: buff, status: status,
@@ -502,12 +529,13 @@
     statusValue:statusValue,transient:transient,recalc:recalc,
     ignorePotionReduction:function(a){var c=stateOf(a,'_healing').pending;return!!(c&&c.ignoreHealingReduction);},
     procHeal:function(a,n,src){if(!a||a.dead||a._downed||hp(a)<=0)return 0;var c=active||action&&action.context,source=src||action&&action.source||c&&c.sourceId;if(enabled()&&source&&byKey[source])return heal(a,n,{owner:a,source:source});var v=Math.min(n,mhp(a)-hp(a));a[hpKey(a)]+=Math.max(0,v);return Math.max(0,v);},
+    growthFinishIncoming:function(actor,n){var c=stateOf(actor,'_incoming').pending||{actor:actor};c.damage=absorb(actor,Math.max(0,finite(n)),c);if(c.damage>=hp(actor))dispatch('beforeDeath',c);return Math.max(0,finite(c.damage));},
     observe:function(fn){observers.push(fn);return function(){observers=observers.filter(function(x){return x!==fn;});};},
     state: stateOf, invalidate: function () { revision++; ultimateCache = {}; },
     action: function () { return action; }, setAction: function (a) { var old = action; action = a; return old; },
     nextAction: function (actor, origin) { return { id: ++seq, actor: actor, origin: origin || 'normal', marks: [], seen: {},hits:[] }; },
     finishAction: function (a) {flushSpellHits(a);if(a&&(!a.gm||!a.gmRoot||a.gmRoot===a))a.marks.splice(0).forEach(function (m) { mark(m.target, m.kind, 10); });},
-    originalBase: function (key) { return baseDefs[key]; }
+    originalBase: function (key) { return baseDefs[key]; }, inheritedSource: inheritedSource
   };
   W.__afkRelicTier = configure;
   W.__afkRelicDmg = beforeHit; W.__afkRelicHit = afterHit;

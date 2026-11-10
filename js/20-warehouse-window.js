@@ -32,6 +32,7 @@
         close.onclick = closeWarehouseWindow;
 
         handle.addEventListener('pointerdown', function (event) {
+            if (document.body.classList.contains('m-unified')) return;
             if (event.target.closest('button, input, select')) return;
             const rect = frame.getBoundingClientRect();
             drag = { id: event.pointerId, dx: event.clientX - rect.left, dy: event.clientY - rect.top };

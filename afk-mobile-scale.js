@@ -125,7 +125,7 @@
   function setLite(onOff) { lsSet(LS_LITE, onOff ? '1' : '0'); applyScale(); }
   function applyScale() {
     var root = document.documentElement;
-    if (!on()) { root.style.removeProperty('--afk-ui-scale'); if (document.body) document.body.classList.remove('afk-ms-lite'); return; }
+    if (!on() && !document.body?.classList.contains('m-unified')) { root.style.removeProperty('--afk-ui-scale'); if (document.body) document.body.classList.remove('afk-ms-lite'); return; }
     root.style.setProperty('--afk-ui-scale', String(getScale()));
     if (document.body) document.body.classList.toggle('afk-ms-lite', liteOn());
   }
@@ -214,6 +214,10 @@
       /* ⑦ 設定入口：遊戲內那顆只在手機幾何出現（桌機看不到＝這支在桌機什麼都不做） */
       '#m-afk-nav-mscale{display:none;}',
       '@media ' + MOBILE_MQ + '{#m-afk-nav-mscale{display:block;}}',
+      panelCSS()
+    ].join('\n');
+  }
+  function panelCSS() { return [
       /* 面板本體 */
       /* 頂端多讓 44px：首頁左上角的「🎚️ 外掛」逃生門 z-index 比任何面板高，不讓開會壓在標題上 */
       '#afk-ms-overlay{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.66);display:flex;align-items:flex-start;justify-content:center;padding:calc(var(--orig-bar-h,0px) + 58px) 12px calc(12px + env(safe-area-inset-bottom,0px));}',
@@ -230,7 +234,10 @@
       '#afk-ms-card label small{display:block;font-size:13px;line-height:1.5;color:#94a3b8;margin-top:2px;}',
       '#afk-ms-card .afk-ms-ft{padding:12px 16px;border-top:1px solid #1e293b;text-align:right;}',
       '#afk-ms-close{background:#0ea5e9;border:none;color:#04263a;font-weight:700;border-radius:8px;padding:10px 18px;min-height:40px;cursor:pointer;font-family:inherit;}'
-    ].join('\n');
+    ].join('\n'); }
+  function injectPanelCSS() {
+    if(document.getElementById('afk-ms-panel-style'))return;
+    var style=document.createElement('style');style.id='afk-ms-panel-style';style.textContent=panelCSS();document.head.appendChild(style);
   }
   function injectCSS() {
     if (document.getElementById('afk-mobile-scale-style')) return;
@@ -298,6 +305,7 @@
 
   // ── ⑦ 設定面板 ───────────────────────────────────────────────────────────
   function openPanel() {
+    injectPanelCSS();
     if (document.getElementById('afk-ms-overlay')) return;
     var ov = document.createElement('div'); ov.id = 'afk-ms-overlay';
     if (window.AFK_TOGGLES && AFK_TOGGLES.applyBannerPad) AFK_TOGGLES.applyBannerPad(ov);
@@ -354,6 +362,7 @@
 
   // ── init ─────────────────────────────────────────────────────────────────
   function init() {
+    window.AFK_MOBILE_SCALE = { get: getScale, set: setScale, lite: liteOn, setLite: setLite, open: openPanel, measure: measure, refresh: applyScale, version: '1.0.1' };
     if (!on()) { try { console.log('[AFK-mobile-scale] 已由外掛開關停用。'); } catch (e) {} return; }
     injectCSS();
     applyScale();
@@ -364,7 +373,6 @@
     // 首頁入口（AFK_SETTINGS 由 afk-storage 消費；只在手機幾何列出）
     window.AFK_SETTINGS = window.AFK_SETTINGS || { _items: [], add: function (it) { this._items.push(it); } };
     AFK_SETTINGS.add({ label: '📱 介面縮放', onClick: openPanel, visible: inMobileGeom });
-    window.AFK_MOBILE_SCALE = { get: getScale, set: setScale, lite: liteOn, setLite: setLite, open: openPanel, measure: measure, version: '1.0.0' };
     try { console.log('[AFK-mobile-scale] hooks OK — 手機介面縮放 ' + Math.round(getScale() * 100) + '%' + (liteOn() ? '・輕量模式' : '') + '。'); } catch (e) {}
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

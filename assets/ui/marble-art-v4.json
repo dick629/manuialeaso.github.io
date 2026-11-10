@@ -1,0 +1,14 @@
+{
+  "version": 4,
+  "date": "2026-11-09",
+  "generator": "Built-in image_gen",
+  "intent": "generate",
+  "assets": [
+    {
+      "file": "black-marble-v4.png",
+      "runtime": "black-marble-v4.webp",
+      "prompt": "Use case: stylized-concept. Asset type: seamless square background texture for a medieval fantasy mobile game UI. Primary request: elegant BLACK MARBLE, seen perfectly straight-on with no perspective. Deep neutral obsidian black base, a few fine irregular smoky grey and muted ivory mineral veins, layered natural stone depth, restrained satin sheen. Veins should be visible yet sparse, never bright white or thick. Dark quiet areas dominate for legible ivory typography on top. Refined antique stone, not coarse slate, not leather. Even diffuse lighting, no spotlight, no vignette. Seamlessly tileable on all four edges. No objects, no borders, no UI, no lettering, no gold flecks, no logos. Original material texture.",
+      "source": "C:/Users/JOHON-A/.codex/generated_images/01a1ba02-321a-76d3-b22e-97fb577b6415/exec-8adf4a3c-a27c-4203-87e7-0dcacabc212d.png"
+    }
+  ]
+}

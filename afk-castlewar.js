@@ -580,6 +580,7 @@
   // ── 每小時收成 ──
   var INCOME_MAX_H = 168;
   var payIncome = function () {
+    if (window.LineageClanRewards) return window.LineageClanRewards.income();
     var p = P(); if (!p) return;
     var d = data(), n = held().length, now = Date.now();
     if (n < 3) { d.lastPay = now; save(d); return; }
@@ -613,7 +614,20 @@
   // 進遊戲時馬上結算離線期間的收成（不用等第一個 10 秒）
   if (typeof window.loadGame === 'function') {
     var oLoadInc = window.loadGame;
-    window.loadGame = function () { var r = oLoadInc.apply(this, arguments); try { setTimeout(function () { try { repairMain(); } catch (e) {} try { payIncome(); } catch (e) {} }, 1500); } catch (e) {} return r; };
+    window.loadGame = function () {
+      var r = oLoadInc.apply(this, arguments), loaded = P();
+      try {
+        setTimeout(function () {
+          // A fast role switch/new-character flow must not give the previous
+          // role's pending login settlement to the newly active character.
+          var game = document.getElementById('game-screen');
+          if (!loaded || P() !== loaded || !game || game.classList.contains('hidden')) return;
+          try { repairMain(); } catch (e) {}
+          try { payIncome(); } catch (e) {}
+        }, 1500);
+      } catch (e) {}
+      return r;
+    };
     try { loadGame = window.loadGame; } catch (e) {}
   }
 

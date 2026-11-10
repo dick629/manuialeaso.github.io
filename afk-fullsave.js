@@ -246,6 +246,16 @@
   }
 
   function runApply(pack) {
+    // Unified build: file and transfer-code restores share the same verified, reversible transaction.
+    if (window.LineageBoot) {
+      if (!window.LineageSaveGate) { note('存檔保護工具尚未載入，請重新開啟合併版。', true); return; }
+      note('正在備份目前資料並還原…');
+      window.LineageSaveGate.restoreFull(pack).then(function () {
+        note('✅ 已還原，操作前資料已保留，重新載入中…');
+        setTimeout(function () { location.reload(); }, 900);
+      }).catch(function (e) { note('❌ 還原未完成：' + e.message + '。可到「存檔與修復」查看操作前備份。', true); });
+      return;
+    }
     note('還原中…請不要關掉頁面。');
     var r = applyPack(pack);
     if (!r.ok) {

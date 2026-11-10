@@ -129,7 +129,7 @@
   document.head.appendChild(css);
 
   W.collectionOpenSpecial = function () {
-    try { if (typeof closeCollectionPanel === 'function') closeCollectionPanel(); } catch (e) {}
+    try { if (typeof leaveCollectionPanelForBook === 'function') leaveCollectionPanelForBook(); else if (typeof closeCollectionPanel === 'function') closeCollectionPanel(); } catch (e) {}
     var ov = document.getElementById('afk-special-book');
     if (!ov) {
       ov = document.createElement('div'); ov.id = 'afk-special-book';

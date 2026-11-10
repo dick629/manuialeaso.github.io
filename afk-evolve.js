@@ -106,8 +106,8 @@
 
   var TODO = '數值都是暫定，之後用存檔實測再調。';
   var rec = function (p) { p = p || P(); if (!p) return null; if (!p.afkEvo || typeof p.afkEvo !== 'object') p.afkEvo = { school: '', stage: 0 }; return p.afkEvo; };
-  var stageOf = function (p) { var r = p && p.afkEvo; return r && S[r.school] ? Math.max(0, Math.min(3, r.stage | 0)) : 0; };
-  var schoolOf = function (p) { var r = p && p.afkEvo; return r && S[r.school] ? S[r.school] : null; };
+  var stageOf = function (p) { var r = p && !p.classPath && p.afkEvo; return r && S[r.school] ? Math.max(0, Math.min(3, r.stage | 0)) : 0; };
+  var schoolOf = function (p) { var r = p && !p.classPath && p.afkEvo; return r && S[r.school] ? S[r.school] : null; };
   var sum = function (p, key) { var sc = schoolOf(p), n = stageOf(p), v = 0; if (!sc) return 0; for (var i = 0; i < n; i++) v += Number(sc.st[i][key]) || 0; return v; };
   var compBonus = function (p, kind) { var sc = schoolOf(p), n = stageOf(p), hp = 0, dmg = 0; if (!sc) return { hp: 0, dmg: 0 }; for (var i = 0; i < n; i++) (sc.st[i].comp || []).forEach(function (c) { if (c.k.indexOf(kind) >= 0) { hp += c.hp || 0; dmg += c.dmg || 0; } }); return { hp: hp, dmg: dmg }; };
   var auraOf = function (p) { var sc = schoolOf(p), n = stageOf(p), a = []; if (!sc || !sc.aura) return a; if (n >= 2) a.push(sc.aura[0]); if (n >= 3) a.push(sc.aura[1]); return a; };
@@ -328,8 +328,8 @@
       if (n === currentSlot) continue;
       var q = readSlot(n); if (!q || q.cls !== p.cls) continue;
       var why = '';
-      if ((q.lv || 1) < 100) why = '要 Lv100';
-      else if (Math.floor(q.rebirth || 0) !== needRebirth(stage)) why = '要 ' + needRebirth(stage) + ' 轉';
+      if (!Number.isInteger(q.lv) || q.lv < 100) why = '要 Lv100 以上';
+      else if (!Number.isInteger(q.rebirth == null ? 0 : q.rebirth) || (q.rebirth == null ? 0 : q.rebirth) !== needRebirth(stage)) why = '要 ' + needRebirth(stage) + ' 轉';
       else if (!!q.classicMode !== !!p.classicMode) why = '模式不同';
       else if (q.enSeed && used.indexOf(q.enSeed) >= 0) why = '已經交過';
       out.push({ slot: n, q: q, why: why });
@@ -355,6 +355,7 @@
     return !_lsGet('lineage_idle_save_' + n);
   }
   function evolve(slot, schoolId) {
+    if (W.LineageClassUI) { W.LineageClassUI.open('route'); return; }
     var p = P(), r = rec(p); if (!p) return;
     var stage = stageOf(p) + 1; if (stage > 3) return;
     var why = gate(p, stage); if (why) { sys('<span class="text-amber-300">' + esc(why) + '</span>'); return; }

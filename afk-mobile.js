@@ -17,6 +17,7 @@
     if (window.AFK_TOGGLES && !AFK_TOGGLES.enabled('mobile')) return;   // 🎚️ 外掛開關
 
     function detectMobile() {
+        if (document.documentElement.dataset.mobileShell === 'unified') return innerWidth <= 820 || (innerWidth <= 1024 && innerHeight <= 520 && matchMedia('(pointer: coarse)').matches);
         try {
             return (matchMedia && matchMedia('(pointer:coarse)').matches) ||
                 /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') ||
@@ -39,7 +40,7 @@
     var MODAL_BOXES = (window.AFK_BANNER && AFK_BANNER.MODAL_BOXES) || '#afk-no-such-element';
     // 上游 css/style.css「手機版面」那條 media query 的原文條件。凡是要覆寫上游手機規則的，都必須包進同一條——
     //   本檔 detectMobile() 只要 pointer:coarse 就算手機，範圍比它大(觸控平板在我們眼中是手機、在上游眼中是桌機)，
-    //   裸寫 body.m-mobile 會讓平板拿到「我們的手機規則 + 上游的桌機幾何」的混搭版。
+    //   裸寫 body.m-mobile:not(.m-unified) 會讓平板拿到「我們的手機規則 + 上游的桌機幾何」的混搭版。
     var MOBILE_GEOM_MQ = '(max-width: 768px), (max-height: 520px) and (pointer: coarse)';
     var _styleInjected = false;
     function ensureOffsetStyle() {
@@ -51,11 +52,11 @@
             // 🆕 卡片式選角面板 #load-select-panel(手機)本身 position:absolute;inset:0;overflow:auto;min-height:100dvh，
             //   但它在被橫幅讓位縮短的 #creation-screen 內 → min-height:100dvh 比容器高 → creation-screen 也被迫捲，
             //   兩層巢狀捲動打架＝滾一下就卡住(使用者回報)。把它的 min-height 改成剛好=讓位後可視高度 → 只剩它單層捲。
-            'body.m-mobile #load-select-panel:not(.hidden){ min-height: calc(100dvh - var(--orig-bar-h, 0px)) !important; overscroll-behavior: contain !important; }\n'
+            'body.m-mobile:not(.m-unified) #load-select-panel:not(.hidden){ min-height: calc(100dvh - var(--orig-bar-h, 0px)) !important; overscroll-behavior: contain !important; }\n'
             // 選角面板顯示時，讓外層 #creation-screen 完全不捲(它自己會捲)→ 只剩 panel 單層捲，不再兩層打架卡住。
-            + 'body.m-mobile #creation-screen:has(#load-select-panel:not(.hidden)){ overflow: hidden !important; }\n'
+            + 'body.m-mobile:not(.m-unified) #creation-screen:has(#load-select-panel:not(.hidden)){ overflow: hidden !important; }\n'
             //   ① 置中類 Tailwind modal(.fixed.inset-0·flex 置中)：padding 把置中內容夾進安全區(遊戲畫面容器用 id 非這組 class，不受影響)。
-            + 'body.m-mobile .fixed.inset-0{ padding-top: var(--orig-bar-h, 0px); padding-bottom: var(--m-nav-h, 0px); }\n'
+            + 'body.m-mobile:not(.m-unified) .fixed.inset-0{ padding-top: var(--orig-bar-h, 0px); padding-bottom: var(--m-nav-h, 0px); }\n'
             //   ② A 型·頂端錨定的浮動窗(倉庫/道具詳情/黑市·NPC)：核心手機把它們釘 top:8px + 100dvh 高、無視橫幅與導覽
             //      (這幾個 z-index 都低於 #m-nav → 底段整條被導覽蓋住、內層捲到底也看不到)。
             //      ⚠ 核心是 #id !important 規則，:is(.class) 特異度壓不過(倉庫踩過)，必須用「實際 id」選擇器才蓋得掉。
@@ -65,24 +66,24 @@
             //      transform:none，殘留的 translate(-50%,-50%) 把整個視窗往上推半個身高(實測 top 到 -211~-489，
             //      上半截整個跑出畫面)。加上這層 media query，寬螢幕就乖乖走下面的桌機幾何。
             + '@media ' + MOBILE_GEOM_MQ + '{\n'
-            + '  body.m-mobile #warehouse-window-frame, body.m-mobile #item-modal:not(.hidden), body.m-mobile #town-interaction-container:not(.hidden){ top: calc(8px + var(--orig-bar-h, 0px)) !important; height: calc(100dvh - 16px - var(--orig-bar-h, 0px) - var(--m-nav-h, 0px)) !important; }\n'
+            + '  body.m-mobile:not(.m-unified) #warehouse-window-frame, body.m-mobile:not(.m-unified) #item-modal:not(.hidden), body.m-mobile:not(.m-unified) #town-interaction-container:not(.hidden){ top: calc(8px + var(--orig-bar-h, 0px)) !important; height: calc(100dvh - 16px - var(--orig-bar-h, 0px) - var(--m-nav-h, 0px)) !important; }\n'
             + '}\n'
             //   ③ B 型·置中彈窗容器(含內聯 position:fixed 與 .fixed.inset-0 兩種都有的)：padding 夾安全區 + 內卡壓 max-height。
-            + 'body.m-mobile :is(' + MODAL_HOSTS + '){ padding-top: calc(var(--orig-bar-h, 0px) + 8px) !important; padding-bottom: calc(var(--m-nav-h, 0px) + 8px) !important; }\n'
+            + 'body.m-mobile:not(.m-unified) :is(' + MODAL_HOSTS + '){ padding-top: calc(var(--orig-bar-h, 0px) + 8px) !important; padding-bottom: calc(var(--m-nav-h, 0px) + 8px) !important; }\n'
             // 手機橫拿（高度 ≤520px，玩家 2026-10-31 14:11）：「冒險地圖」標題列兩排大按鈕吃掉一半高度、把戰場擠到熱鍵底下 → 縮成一排小按鈕
             + '@media (orientation: landscape) and (max-height: 520px){'
-            + 'body.m-mobile #map-view-panel>.panel-header{display:flex !important;align-items:center !important;padding:3px 8px !important;flex-wrap:nowrap !important;gap:8px !important;min-height:38px !important;height:auto !important;flex:0 0 auto !important;}'
-            + 'body.m-mobile #map-view-panel>.panel-header>span:first-child{font-size:14px !important;white-space:nowrap !important;gap:6px !important;}'
-            + 'body.m-mobile #map-view-panel>.panel-header>div{display:flex !important;flex-wrap:nowrap !important;gap:6px !important;width:auto !important;flex:1 1 auto !important;justify-content:flex-end !important;}'
-            + 'body.m-mobile #map-view-panel>.panel-header>div>:is(button,select,span){padding:2px 8px !important;font-size:13px !important;min-height:0 !important;height:30px !important;width:auto !important;min-width:0 !important;flex:0 1 auto !important;}'
+            + 'body.m-mobile:not(.m-unified) #map-view-panel>.panel-header{display:flex !important;align-items:center !important;padding:3px 8px !important;flex-wrap:nowrap !important;gap:8px !important;min-height:38px !important;height:auto !important;flex:0 0 auto !important;}'
+            + 'body.m-mobile:not(.m-unified) #map-view-panel>.panel-header>span:first-child{font-size:14px !important;white-space:nowrap !important;gap:6px !important;}'
+            + 'body.m-mobile:not(.m-unified) #map-view-panel>.panel-header>div{display:flex !important;flex-wrap:nowrap !important;gap:6px !important;width:auto !important;flex:1 1 auto !important;justify-content:flex-end !important;}'
+            + 'body.m-mobile:not(.m-unified) #map-view-panel>.panel-header>div>:is(button,select,span){padding:2px 8px !important;font-size:13px !important;min-height:0 !important;height:30px !important;width:auto !important;min-width:0 !important;flex:0 1 auto !important;}'
             + '}\n'
-            + 'body.m-mobile :is(' + MODAL_BOXES + '){ max-height: calc(100dvh - var(--orig-bar-h, 0px) - var(--m-nav-h, 0px) - 16px) !important; }\n'
+            + 'body.m-mobile:not(.m-unified) :is(' + MODAL_BOXES + '){ max-height: calc(100dvh - var(--orig-bar-h, 0px) - var(--m-nav-h, 0px) - 16px) !important; }\n'
             //   ④ transform 置中的裝備視窗「獨立模式」：中心對齊安全區中線、封頂高度。
             //      ⚠ 必須排除嵌入模式(.equipment-window-embedded·js/19 init 就掛上、現行永遠嵌入)：嵌入時 frame 由 JS 內聯
             //        top:0 對齊 host，這裡的 top !important 會壓過內聯值把 12 格整個往下推出安全區(踩過)。
-            + 'body.m-mobile #equipment-window:not(.equipment-window-embedded) .equipment-window-frame{ top: calc(50% + var(--orig-bar-h, 0px) / 2 - var(--m-nav-h, 0px) / 2) !important; max-height: calc(100dvh - 16px - var(--orig-bar-h, 0px) - var(--m-nav-h, 0px)) !important; }\n'
+            + 'body.m-mobile:not(.m-unified) #equipment-window:not(.equipment-window-embedded) .equipment-window-frame{ top: calc(50% + var(--orig-bar-h, 0px) / 2 - var(--m-nav-h, 0px) / 2) !important; max-height: calc(100dvh - 16px - var(--orig-bar-h, 0px) - var(--m-nav-h, 0px)) !important; }\n'
             //   ④' 桌機/平板幾何(寬 ≥769 且高 ≥521)的彈窗讓位在 afk-banner.js——那組不可隨本外掛被關掉。
-            //      ③④ 只掛 body.m-mobile，是手機幾何專屬。
+            //      ③④ 只掛 body.m-mobile:not(.m-unified)，是手機幾何專屬。
             //   ⑤ 右欄分頁(統計/道具/收藏…)：核心手機把 #tab-content-panel 設固定高+內層 overflow-auto，與外層 #game-screen 捲動疊成「雙捲軸」。
             //      讓分頁內容順流展開→只由 #game-screen 單層捲動(與 左/中 欄一致)；黏頂的 #mobile-vitals/分頁列照舊固定。
             //      ⚠ 必須排除 .equipment-panel-host：「裝備」分頁是核心的「嵌入式裝備視窗」(js/19)——#equipment-window 以
@@ -93,39 +94,39 @@
             //        detectMobile() 眼中是手機、在上游眼中是桌機 → 內層被這裡關掉捲動、外層又還是不捲的桌機三欄，
             //        兩層都不捲＝道具/防具/設定分頁超出的部分永遠看不到也滑不到(2026-07-25 平板玩家回報)。
             + '@media ' + MOBILE_GEOM_MQ + '{\n'
-            + '  body.m-mobile #tab-content-panel:not(.equipment-panel-host){ height: auto !important; min-height: 0 !important; overflow: visible !important; }\n'
-            + '  body.m-mobile #tab-content-panel:not(.equipment-panel-host) > .ability-window-tab, body.m-mobile #tab-content-panel:not(.equipment-panel-host) > [id^="tab-"]{ height: auto !important; overflow: visible !important; }\n'
+            + '  body.m-mobile:not(.m-unified) #tab-content-panel:not(.equipment-panel-host){ height: auto !important; min-height: 0 !important; overflow: visible !important; }\n'
+            + '  body.m-mobile:not(.m-unified) #tab-content-panel:not(.equipment-panel-host) > .ability-window-tab, body.m-mobile:not(.m-unified) #tab-content-panel:not(.equipment-panel-host) > [id^="tab-"]{ height: auto !important; overflow: visible !important; }\n'
             //      ⚠ 背包條列式(afk-invlist)把 .classic-inventory-viewport 設成自己的捲動容器(overflow:auto+overscroll contain),
             //        分頁流式化後它 height 撐開、沒東西可捲 → 手勢在它身上被 contain 擋死、不鏈給 #game-screen=整頁滑不動。
             //        手機流式下退回普通元素,由 #game-screen 單層捲動(桌機/平板不受影響,invlist 原規則照舊)。
             //        touch-action 用 manipulation 不用 auto:捲動權限跟 auto 一樣,但這裡帶 !important,寫 auto 會把
             //        afk-nozoom 的「不雙擊放大」在背包整片打回來(玩家連點道具時整頁被放大)。
-            + '  body.m-mobile #tab-content-panel:not(.equipment-panel-host) .classic-inventory-shell{ height: auto !important; }\n'
-            + '  body.m-mobile #tab-content-panel:not(.equipment-panel-host) .classic-inventory-viewport{ height: auto !important; overflow: visible !important; overscroll-behavior: auto !important; touch-action: manipulation !important; }\n'
+            + '  body.m-mobile:not(.m-unified) #tab-content-panel:not(.equipment-panel-host) .classic-inventory-shell{ height: auto !important; }\n'
+            + '  body.m-mobile:not(.m-unified) #tab-content-panel:not(.equipment-panel-host) .classic-inventory-viewport{ height: auto !important; overflow: visible !important; overscroll-behavior: auto !important; touch-action: manipulation !important; }\n'
             + '}\n'
             //   ⑥ 內層捲動區的 iOS 觸控三件套：溢出量小時沒有這組會「滑不動」(觸控被外層吃掉·afk-invlist 踩過同一雷)；
             //      overscroll-behavior:contain 同時擋「捲到底把後面的遊戲畫面一起帶著捲」的連鎖(雙層捲軸打架)。
-            + 'body.m-mobile :is(.classic-skill-grid-scroll, #warehouse-window-content, #interaction-content, .as-box, #combat-log, #sys-log, #card-book-body, #equip-book-body, #misc-book-body, #relic-book-body, #modal-compare, #item-modal > div:not(#modal-compare)){ -webkit-overflow-scrolling: touch; touch-action: pan-y pinch-zoom; overscroll-behavior: contain; }\n'
+            + 'body.m-mobile:not(.m-unified) :is(.classic-skill-grid-scroll, #warehouse-window-content, #interaction-content, .as-box, #combat-log, #sys-log, #card-book-body, #equip-book-body, #misc-book-body, #relic-book-body, #modal-compare, #item-modal > div:not(#modal-compare)){ -webkit-overflow-scrolling: touch; touch-action: pan-y pinch-zoom; overscroll-behavior: contain; }\n'
             //      ⚠ 一定要帶 pinch-zoom:只寫 pan-y 會連「兩指捏合縮放」一起關掉(捏合被算在 touch-action 的許可清單裡),
             //        玩家在倉庫/裝備比對裡放大不了(回報過)。要擋的只是單指原生捲動打架,不是縮放。
             //   ⑥b 道具視窗說明文字:卡片是 .panel(flex 直欄),上游手機 CSS 給 #modal-item-desc 設 min-height:0
             //      = 允許縮到比內容矮 → 文字被壓扁溢出畫在按鈕底下(裝備比對開啟時最明顯)。鎖 flex-shrink,
             //      內容撐開改由外層卡片(上游 overflow-y:auto)捲動。寫這裡不動上游 css,同步原版也不會丟。
-            + 'body.m-mobile #modal-item-desc{ flex: 0 0 auto !important; }\n'
+            + 'body.m-mobile:not(.m-unified) #modal-item-desc{ flex: 0 0 auto !important; }\n'
             //   ⑦ 嵌入式裝備視窗:body 層級 fixed 圖層,原生捲動鏈走 DOM 祖先碰不到 #game-screen(手指拖 12 格區=划不動)。
             //      touch-action:none 關掉原生捲動(免 iOS 對 body 橡皮筋),垂直拖曳由 bindEquipTouchScroll 轉發給 #game-screen。
-            + 'body.m-mobile #equipment-window.equipment-window-embedded:not(.hidden){ touch-action: pinch-zoom; }\n'
+            + 'body.m-mobile:not(.m-unified) #equipment-window.equipment-window-embedded:not(.hidden){ touch-action: pinch-zoom; }\n'
             //   ⑦b 上游 floating-ui.css 給裝備框/倉庫框寫死 touch-action:none(桌機用來讓滑鼠拖曳視窗不被瀏覽器搶手勢)。
             //      祖先只要有一層不允許捏合,整個子樹就縮放不了 → 手機在倉庫裡怎麼捏都沒反應。改成 pinch-zoom:
             //      單指原生捲動照舊關著(拖曳視窗邏輯不受影響),只把兩指縮放放行。
-            + 'body.m-mobile :is(.equipment-window-frame, .warehouse-window-frame){ touch-action: pinch-zoom !important; }\n'
+            + 'body.m-mobile:not(.m-unified) :is(.equipment-window-frame, .warehouse-window-frame){ touch-action: pinch-zoom !important; }\n'
             // 登入頁：上游用「絕對定位藝術舞台」——#main-menu(top:31%) 與 #login-meta-layer(版權·pin bottom:4%) 各自絕對定位。
             //   我方往 #main-menu 注入了掉落查詢/小百科/外掛框後它變很高 → 蓋到底部版權層(文字重疊·使用者回報)。
             //   手機改成「流式堆疊」(DOM 序 title→menu→meta 自然由上而下排)，不再重疊；藝術背景圖 absolute inset:0 照樣鋪滿。
-            + 'body.m-mobile #login-art-stage{ height:auto !important; min-height:100dvh; aspect-ratio:auto !important; display:flex !important; flex-direction:column !important; justify-content:flex-start !important; }\n'
-            + 'body.m-mobile #login-title-layer, body.m-mobile #main-menu, body.m-mobile #login-meta-layer{ position:static !important; left:auto !important; right:auto !important; top:auto !important; bottom:auto !important; width:auto !important; transform:none !important; }\n'
-            + 'body.m-mobile #login-title-layer{ margin-top:14px; }\n'
-            + 'body.m-mobile #login-meta-layer{ margin:10px auto 18px !important; text-align:center; }';
+            + 'body.m-mobile:not(.m-unified) #login-art-stage{ height:auto !important; min-height:100dvh; aspect-ratio:auto !important; display:flex !important; flex-direction:column !important; justify-content:flex-start !important; }\n'
+            + 'body.m-mobile:not(.m-unified) #login-title-layer, body.m-mobile:not(.m-unified) #main-menu, body.m-mobile:not(.m-unified) #login-meta-layer{ position:static !important; left:auto !important; right:auto !important; top:auto !important; bottom:auto !important; width:auto !important; transform:none !important; }\n'
+            + 'body.m-mobile:not(.m-unified) #login-title-layer{ margin-top:14px; }\n'
+            + 'body.m-mobile:not(.m-unified) #login-meta-layer{ margin:10px auto 18px !important; text-align:center; }';
         (document.head || document.documentElement).appendChild(st);
     }
 
@@ -152,7 +153,7 @@
         try { _loadRO = new ResizeObserver(fitLoadStage); _loadRO.observe(panel); } catch (e) {}
     }
 
-    // body.m-mobile：只是「現在是手機」的標記（afk-toast/mobname/diag/skin/training/dograce 靠它做各自的
+    // body.m-mobile:not(.m-unified)：只是「現在是手機」的標記（afk-toast/mobname/diag/skin/training/dograce 靠它做各自的
     //   手機 QoL，如 toast 只手機顯示、怪名換行）。本外掛只設這個 class，不再掛任何版面覆寫 CSS。
     function syncMobileClass() {
         if (!document.body) return;
@@ -185,36 +186,36 @@
         if (_navStyled) return; _navStyled = true;
         var css = [
             'body:not(.m-mobile) #m-nav,body:not(.m-mobile) #m-log-sheet{display:none !important;}',
-            'body.m-mobile #m-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9600;background:#0f172a;border-top:1px solid #334155;padding-bottom:env(safe-area-inset-bottom,0px);}',
-            'body.m-mobile #m-nav .m-nav-btn{flex:1;background:transparent;border:none;color:#94a3b8;font-size:12px;font-weight:600;padding:10px 2px;cursor:pointer;}',
-            'body.m-mobile #m-nav .m-nav-btn.on{color:#38bdf8;background:rgba(56,189,248,.08);}',
+            'body.m-mobile:not(.m-unified) #m-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9600;background:#0f172a;border-top:1px solid #334155;padding-bottom:env(safe-area-inset-bottom,0px);}',
+            'body.m-mobile:not(.m-unified) #m-nav .m-nav-btn{flex:1;background:transparent;border:none;color:#94a3b8;font-size:12px;font-weight:600;padding:10px 2px;cursor:pointer;}',
+            'body.m-mobile:not(.m-unified) #m-nav .m-nav-btn.on{color:#38bdf8;background:rgba(56,189,248,.08);}',
             // 一次只顯示一欄，補滿寬（覆寫上游 col 固定寬）
-            'body.m-mobile #col-left,body.m-mobile #col-center,body.m-mobile #col-right{display:none !important;width:100% !important;max-width:none !important;}',
-            'body.m-mobile.mview-left #col-left{display:flex !important;}',
-            'body.m-mobile.mview-center #col-center{display:flex !important;}',
-            'body.m-mobile.mview-right #col-right{display:flex !important;}',
+            'body.m-mobile:not(.m-unified) #col-left,body.m-mobile:not(.m-unified) #col-center,body.m-mobile:not(.m-unified) #col-right{display:none !important;width:100% !important;max-width:none !important;}',
+            'body.m-mobile:not(.m-unified).mview-left #col-left{display:flex !important;}',
+            'body.m-mobile:not(.m-unified).mview-center #col-center{display:flex !important;}',
+            'body.m-mobile:not(.m-unified).mview-right #col-right{display:flex !important;}',
             // 底部讓位：--m-nav-h=導覽實測高度(含 iPhone safe-area 的 env padding；量測見 applyNavH)。
             //   寫死 60px 在實機 iPhone 會不夠(導覽 ~59px + home 條 safe-area ~34px)→ 清單最後一兩列被蓋。
-            'body.m-mobile #game-screen{padding-bottom:calc(8px + var(--m-nav-h,0px)) !important;}',
+            'body.m-mobile:not(.m-unified) #game-screen{padding-bottom:calc(8px + var(--m-nav-h,0px)) !important;}',
             // 核心補跑進度條釘在畫面底部 18px、z-index 只有 90 → 手機會整條躲在導覽列(9600)底下看不到。
-            'body.m-mobile #ff-progress-indicator{bottom:calc(10px + var(--m-nav-h,0px)) !important;}',
+            'body.m-mobile:not(.m-unified) #ff-progress-indicator{bottom:calc(10px + var(--m-nav-h,0px)) !important;}',
             // 浮動日誌面板
-            'body.m-mobile #m-log-sheet{display:none;position:fixed;left:0;right:0;bottom:var(--m-nav-h,0px);height:46vh;z-index:9500;background:#0b1222;border-top:2px solid #475569;box-shadow:0 -10px 30px rgba(0,0,0,.6);flex-direction:column;}',
-            'body.m-mobile.mlog-open #m-log-sheet{display:flex;}',
-            'body.m-mobile #m-log-hd{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #334155;color:#cbd5e1;font-weight:700;flex:0 0 auto;}',
-            'body.m-mobile #m-log-hd button{background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:6px;padding:2px 12px;cursor:pointer;}',
-            'body.m-mobile #m-log-body{flex:1;overflow:auto;padding:6px;min-height:0;}',
-            'body.m-mobile #m-log-body #log-row{flex-direction:column !important;height:100%;gap:0;}',
+            'body.m-mobile:not(.m-unified) #m-log-sheet{display:none;position:fixed;left:0;right:0;bottom:var(--m-nav-h,0px);height:46vh;z-index:9500;background:#0b1222;border-top:2px solid #475569;box-shadow:0 -10px 30px rgba(0,0,0,.6);flex-direction:column;}',
+            'body.m-mobile:not(.m-unified).mlog-open #m-log-sheet{display:flex;}',
+            'body.m-mobile:not(.m-unified) #m-log-hd{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #334155;color:#cbd5e1;font-weight:700;flex:0 0 auto;}',
+            'body.m-mobile:not(.m-unified) #m-log-hd button{background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:6px;padding:2px 12px;cursor:pointer;}',
+            'body.m-mobile:not(.m-unified) #m-log-body{flex:1;overflow:auto;padding:6px;min-height:0;}',
+            'body.m-mobile:not(.m-unified) #m-log-body #log-row{flex-direction:column !important;height:100%;gap:0;}',
             // 像 main：一次只顯示一個日誌（戰鬥/系統），由標題列 ⇆ 切換
-            'body.m-mobile #m-log-body #combat-log-panel,body.m-mobile #m-log-body #syslog-panel{height:100% !important;flex:1 1 100% !important;min-height:0;}',
-            'body.m-mobile.mlog-sys #m-log-body #combat-log-panel{display:none !important;}',
-            'body.m-mobile:not(.mlog-sys) #m-log-body #syslog-panel{display:none !important;}',
-            'body.m-mobile #m-log-hd .m-log-sw{background:#1e293b;border:1px solid #334155;color:#7dd3fc;border-radius:6px;padding:2px 10px;margin-right:6px;cursor:pointer;}',
+            'body.m-mobile:not(.m-unified) #m-log-body #combat-log-panel,body.m-mobile:not(.m-unified) #m-log-body #syslog-panel{height:100% !important;flex:1 1 100% !important;min-height:0;}',
+            'body.m-mobile:not(.m-unified).mlog-sys #m-log-body #combat-log-panel{display:none !important;}',
+            'body.m-mobile:not(.m-unified):not(.mlog-sys) #m-log-body #syslog-panel{display:none !important;}',
+            'body.m-mobile:not(.m-unified) #m-log-hd .m-log-sw{background:#1e293b;border:1px solid #334155;color:#7dd3fc;border-radius:6px;padding:2px 10px;margin-right:6px;cursor:pointer;}',
             // 從系統日誌點 NPC 名字彈出的選單（叫賣/嘲諷、擊殺密語）：核心給的 z-index 只有 260/261，
             //   而日誌在手機被搬進 fixed 的 #m-log-sheet(9500) → 選單掛在 body 上、開了卻整個被面板蓋住，
             //   玩家看到「點名字沒反應」；再點一下想試試看，那一下反而觸發核心的 document 關閉器把它關掉。
             //   拉到面板與導覽列之上（仍低於登出遮罩，不會壓到逃生門）。
-            'body.m-mobile .wandering-shout-menu,body.m-mobile .wandering-taunt-menu,body.m-mobile .pvp-kill-whisper-menu{z-index:9700 !important;max-height:60vh;overflow-y:auto;}',
+            'body.m-mobile:not(.m-unified) .wandering-shout-menu,body.m-mobile:not(.m-unified) .wandering-taunt-menu,body.m-mobile:not(.m-unified) .pvp-kill-whisper-menu{z-index:9700 !important;max-height:60vh;overflow-y:auto;}',
             // 登出確認視窗（自製，取代原生 confirm）
             // 容器頂端讓開橫幅、底部讓開自製導覽列(公式同本檔其他彈窗)；內卡再壓 max-height:100%——
             //   只改容器 padding 不夠：內卡比剩餘空間高時 flex 置中會「上下均分溢出」，頂端照樣鑽進橫幅底下。
@@ -289,7 +290,16 @@
     function toggleLog() { if (document.body.classList.contains('mlog-open')) closeLog(); else openLog(); }
 
     // --- 登出回首頁：自製確認窗（不用原生 confirm，iOS Safari 會抑制）→ 存檔 → 記離線錨點 → reload ---
+    function saveBeforeLeaving() {
+        var previous = window.__fb5CloseFlush, saved = false;
+        try { window.__fb5CloseFlush = true; saved = typeof window.saveGame === 'function' && window.saveGame() === true; }
+        catch (e) { saved = false; }
+        finally { window.__fb5CloseFlush = previous; }
+        if (!saved) alert('進度尚未成功保存，已停止登出或切換角色。請保留目前畫面，先檢查存檔與修復。');
+        return saved;
+    }
     function doLogout() {
+        ensureNavStyle();
         var m = document.getElementById('m-logout-modal') || buildLogoutModal();
         renderLogoutRoster();   // 每次打開都重讀：別的分頁改過名字/刪過角色時不要顯示舊的
         try { var mm = m.querySelector('#m-logout-msg'); if (mm) mm.innerHTML = logoutMsg(); } catch (e) {}   // 2026-10-30 QA：依狀態說明會不會離線掛機
@@ -317,7 +327,7 @@
         m.addEventListener('click', function (e) { if (e.target === m) close(); });
         m.querySelector('#m-logout-cancel').addEventListener('click', close);
         m.querySelector('#m-logout-ok').addEventListener('click', function () {
-            try { if (typeof window.saveGame === 'function') window.saveGame(); } catch (e) {}   // 先存當前進度（漏掉上次自動存檔後的收益）
+            if (!saveBeforeLeaving()) return;   // Verified save is required before leaving the role.
             try { if (window.__afk && window.__afk.stamp) window.__afk.stamp(); } catch (e) {}   // 存完蓋錨點：存檔時間=離線起算時間
             showLogoutOverlay();   // 立刻蓋遮罩：reload 重開機那幾秒別看到殘留戰鬥畫面
             requestAnimationFrame(function () { requestAnimationFrame(function () { try { location.reload(); } catch (e) {} }); });
@@ -404,6 +414,7 @@
         // 🚨 沒載入角色時絕不往下走：下面每一步都會寫存檔，在「未載入/currentSlot 不是預期那格」跑等於蓋掉別人的檔
         if (typeof player === 'undefined' || !player || !player.cls) return;
         if (settling()) { renderLogoutRoster(); return; }   // 離線結算中不給換（原因見 settling()）
+        if (!saveBeforeLeaving()) return;
         var m = document.getElementById('m-logout-modal'); if (m) m.classList.remove('open');
         showLogoutOverlay('已自動存檔，正在切換角色…');   // 下面是同步的、會卡住一下 → 先讓遮罩畫出來
         requestAnimationFrame(function () {
@@ -415,7 +426,7 @@
                 //   ＋清 VFX ＋釋放多分頁角色佔用。自己土法只呼叫 saveGame 的話，上面這些殘留會跟著帶進下一隻。
                 var left = false;
                 try { left = (typeof returnToCharacterSelect === 'function') && returnToCharacterSelect(); } catch (e) {}
-                if (!left) { try { if (typeof window.saveGame === 'function') window.saveGame(); } catch (e) {} }   // 後備：上游拿掉那支時至少要存到檔
+                if (!left) { hideLogoutOverlay(); alert('角色切換尚未完成，已保留目前角色。請先檢查存檔與修復。'); return; }
                 try { currentSlot = n; window.loadGame(); } catch (e) { try { console.warn('[AFK-mobile] 換角載入失敗', e); } catch (e2) {} }
                 hideLogoutOverlay();
             });
@@ -481,6 +492,7 @@
         setLogTitle();
     }
     function navTick() {
+        if (document.documentElement.dataset.mobileShell === 'unified') return;
         var gs = document.getElementById('game-screen');
         var inGame = detectMobile() && gs && !gs.classList.contains('hidden');
         if (inGame) buildNav();
@@ -514,9 +526,9 @@
             if (moved) { moved = false; e.stopPropagation(); e.preventDefault(); }
         }, true);
     }
-    bindEquipTouchScroll();
+    if (document.documentElement.dataset.mobileShell !== 'unified') bindEquipTouchScroll();
 
-    setInterval(function () { if (!document.hidden) navTick(); }, 1500);   // 背景分頁不必維護版面;回前景由下一輪或下方 MutationObserver 補上
+    if (document.documentElement.dataset.mobileShell !== 'unified') setInterval(function () { if (!document.hidden) navTick(); }, 1500);   // 背景分頁不必維護版面;回前景由下一輪或下方 MutationObserver 補上
     navTick();
     // 🚀 遊戲畫面一顯示(#game-screen 移除 .hidden)就「立刻」重建手機殼,不等下一次 1.5s 輪詢。
     //    否則登入後會先看到上游桌機堆疊版面、隔最多 1.5 秒才 reshape 成手機殼(底部導覽/單欄)→ 明顯閃一下。
@@ -529,7 +541,7 @@
 
     // ── 對外介面（afk-offline 沿用 isMobile；setView/openLog 供離線結算後開日誌）──
     //   setLog('sys')＝離線結算後把日誌切到「系統日誌」分頁（摘要印在那）；其餘只開日誌。
-    window.__afkm = { version: '2.0.0', isMobile: detectMobile, setView: setView, openLog: openLog, setLog: function (which) { if (which === 'sys') autoOpenSysLog(); else openLog(); } };
+    window.__afkm = { version: '2.0.0', logout: doLogout, isMobile: detectMobile, setView: setView, openLog: openLog, setLog: function (which) { if (which === 'sys') autoOpenSysLog(); else openLog(); } };
 
     try { console.log('[AFK-mobile] hooks OK — 手機薄殼（橫幅讓位·版面用上游原版）。'); } catch (e) {}
 })();

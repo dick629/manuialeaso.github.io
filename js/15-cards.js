@@ -784,7 +784,7 @@ function renderCardBook() {
         return `<span class="${on ? CARD_TIERS[tt - 1].col + ' font-bold' : 'text-slate-500'}">全${CARD_TIERS[tt - 1].sfx} ${lab}+${reg.vals[tt - 1]}${on ? ' ✓' : ''}</span>`;
     }).join('<span class="text-slate-600 mx-1">/</span>');
 
-    let head = `<div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+    let head = `<div class="lm-book-heading flex flex-wrap items-baseline justify-between gap-2 mb-3">
         <div class="text-xl font-bold text-amber-200">${reg.name}<span class="text-sm text-slate-400 font-normal ml-2">收集 普${cP} / 銀${cS} / 金${cG}${CARD_TIERS.length > 3 ? ' / 白金' + names.filter(n => cardDexTier(n) >= 4).length + ' / 鑽石' + names.filter(n => cardDexTier(n) >= 5).length : ''}　共 ${total} 種</span></div>
         <div class="text-sm">完成加成（取最高）：${bonusLine}</div>
     </div>`;
@@ -817,5 +817,5 @@ function renderCardBook() {
         </div>`;
     }).join('');
 
-    host.innerHTML = head + `<div class="flex flex-wrap gap-2 justify-center">${cards || '<div class="text-slate-500 p-8">此地區暫無可收集的怪物。</div>'}</div>`;
+    host.innerHTML = head + `<div class="lm-book-grid flex flex-wrap gap-2 justify-center">${cards || '<div class="text-slate-500 p-8">此地區暫無可收集的怪物。</div>'}</div>`;
 }
