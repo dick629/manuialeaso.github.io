@@ -60,7 +60,7 @@
     if(player.dead)return '請先復活';
     const native=special(id);if(native)return native.check();
     if(!player.sherineDream||!player.sherineMad)return '需要開啟夢域鏡模式';
-    if(bosses[id]&&W.__afkExpedition?.store(player).got[bosses[id]])return '今天已取得此副本的遠征點數';
+    if(bosses[id]&&W.__afkExpedition?.store(player).got[bosses[id]])return '✓ 今天已打完（遠征點數已拿）';
     if(id==='hardin')return W.__afkHardin.canEnter()||'';
     if(id==='halpas')return W.__afkHalpas.canEnter('halpas')||'';
     if(id.startsWith('rd:')){const d=W.__afkRiftDg.BYID[id.slice(3)];return d?W.__afkRiftDg.canEnter(d)||'':'未知副本';}

@@ -615,48 +615,74 @@
     return lines.join('<br>');
   };
   var VIEW = { tab: 'mine', slot: '' };
+  // 分頁：上排是次元遺物本身，下排是其他裂縫裝備
+  var TABS = [
+    ['次元遺物', [['mine', '我的次元遺物'], ['craft', '製作'], ['sets', '套裝與大絕招'], ['synth', '異化星塵']]],
+    ['裂縫裝備', [['lib', '次元支配'], ['ref', '裂縫淬鍊'], ['phantom', '幻聖紋'], ['horn', '阿納金的號角'], ['dragon', '次元時空'], ['sherine', '席琳界約']]]
+  ];
+  var TAB_INFO = {
+    mine: ['強化、重抽你身上與背包裡的次元遺物。', '強化用異化星塵，失敗不降級、不扣材料。+3 隨機得到一種套裝，+5 隨機得到一招大絕招；不喜歡可以用倒影之鏡重抽。', [DUST, MIRROR]],
+    craft: ['把一件 +0 遺物丟進裂縫，換成同部位的次元遺物。', '① 先在清單裡選一件 +0、沒有昇華、沒上鎖的遺物　② 再選要做成哪一件。每件次元結晶 ' + COST.craft + '。', [CRYSTAL]],
+    sets: ['次元遺物 +3 與 +5 會抽到的效果一覽。', '套裝看同一套的件數生效；大絕招每個部位類別各有一組可以抽。', []],
+    synth: ['用破碎星光塵埃與血龍鑽合成強化用的異化星塵。', '', [STARDUST, BLOOD, DUST]],
+    lib: ['把裝備中的「至高支配・封」武器解放成次元支配，再用縫天★強化。', '', [DUST]],
+    ref: ['讓之魂與夢域淬鍊過的席琳遺骸，在次元裂縫裡更好用。', '', [SAND, WATER, CRYSTAL]],
+    phantom: ['在次元裂縫裡，把裝備中的聖紋升成幻聖紋。', '', ['afk_split_dust', BLOOD]],
+    horn: ['強化阿納金的號角，換自選的昇華支配強化石。', '', ['afk_anakin_horn', 'afk_rd_pick', BLOOD]],
+    dragon: ['四龍副本・裂縫掉落的次元時空，在這裡進化。', '', [MIRROR, FRAG]],
+    sherine: ['把舊系與新系的席琳遺骸混搭，締結新舊界約。', '材料與混搭規則可以展開下面的說明。', [CRYSTAL]]
+  };
+  var tabName = function (k) { var n = ''; TABS.forEach(function (g) { g[1].forEach(function (t) { if (t[0] === k) n = t[1]; }); }); return n; };
+  var reqBtn = function (have, need, label) { return K.reqTxt(have, need, label); };
   var paint = function (div) {
     var box = div.querySelector('#afk-dimr'); if (!box) return; var p = P(); if (!p) return;
-    var tabs = [['mine', '我的次元遺物'], ['craft', '製作'], ['sherine', '席琳界約'], ['sets', '套裝與大絕招'], ['lib', '次元支配'], ['ref', '裂縫淬鍊'], ['phantom', '幻聖紋'], ['horn', '號角'], ['dragon', '次元時空'], ['synth', '異化星塵']];
-    var h = '<div class="ax-note">次元結晶 ' + cnt(CRYSTAL).toLocaleString() + '　異化星塵 ' + cnt(DUST) + '　倒影之鏡 ' + cnt(MIRROR) + '　破碎星光塵埃 ' + cnt(STARDUST) + '　四龍的時空碎片 ' + cnt(FRAG) + '</div>';
-    h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">' + tabs.map(function (t) { return '<button type="button" data-dr="tab:' + t[0] + '"' + (VIEW.tab === t[0] ? ' style="outline:1px solid #67e8f9"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>';
+    var info = TAB_INFO[VIEW.tab] || TAB_INFO.mine;
+    var h = '<p class="ax-lore">「裂縫裡的東西都記得自己是誰。」鍛造師的爐子裡沒有火，只有一道一直在呼吸的縫。</p>';
+    h += TABS.map(function (g) { return '<div class="ax-filter" style="align-items:center"><span class="ax-where" style="min-width:4.5em">' + g[0] + '</span>' + g[1].map(function (t) { return '<button type="button" data-dr="tab:' + t[0] + '"' + (VIEW.tab === t[0] ? ' class="on"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>'; }).join('');
+    h += '<div class="ax-h">' + esc(tabName(VIEW.tab)) + '</div><div class="ax-desc" style="margin-bottom:4px">' + esc(info[0]) + '</div>' + (info[1] ? '<div class="ax-note" style="margin-bottom:8px">' + esc(info[1]) + '</div>' : '');
+    var ml = info[2].filter(function (id) { return DB.items[id]; });
+    if (ml.length) h += '<div style="margin-bottom:10px">' + K.matBar(ml) + '</div>';
     if (VIEW.tab === 'sherine') { K.repaint(box,h);if(W.LineageSherineForge)W.LineageSherineForge.mount(box);return; }
     if (VIEW.tab === 'mine') {
-      var mine = inv().filter(function (x) { return x && BY[x.id]; }).concat(equipped(p));
-      if (!mine.length) h += '<div class="ax-note">你還沒有次元遺物。到「製作」用 +0 遺物＋次元結晶 ' + COST.craft + ' 做一件。</div>';
+      var eqd = equipped(p), mine = eqd.concat(inv().filter(function (x) { return x && BY[x.id]; }));
+      if (!mine.length) h += '<div class="ax-row off"><div class="ax-main"><div class="ax-desc">你還沒有次元遺物。到「製作」分頁，用一件 +0 遺物＋次元結晶 ' + COST.craft + ' 做第一件。</div></div><div class="ax-act"><button type="button" data-dr="tab:craft">去製作</button></div></div>';
       mine.forEach(function (it) {
-        var row = BY[it.id], n = lv(it), on = equipped(p).indexOf(it) >= 0, btns = [];
-        if (n < 5) btns.push(['en:' + it.uid, '強化 +' + (n + 1) + '（星塵 ' + COST.en[n] + '・' + COST.rate[n] + '%）', cnt(DUST) >= COST.en[n]]);
+        var row = BY[it.id], n = lv(it), on = eqd.indexOf(it) >= 0, btns = [], req = '';
+        if (n < 5) { btns.push(['en:' + it.uid, '強化 +' + (n + 1) + '（' + COST.rate[n] + '%）', cnt(DUST) >= COST.en[n]]); req = reqBtn(cnt(DUST), COST.en[n], '異化星塵'); }
         if (n >= 3) btns.push(['rs:' + it.uid, '重抽套裝', cnt(MIRROR) >= 1]);
         if (n >= 5) btns.push(['ru:' + it.uid, '重抽大絕招', cnt(MIRROR) >= 1]);
-        h += K.rowHtml({ key: it.uid, name: esc(DB.items[it.id].n) + '　+' + n + (on ? '　<span style="color:#86efac">裝備中</span>' : ''), color: '#67e8f9', desc: esc(row.ch[2]) + '　' + esc(row.slotName), note: fxText(row, it), why: '', btns: btns }, 'data-dr');
+        h += K.rowHtml({ key: it.uid, ico: K.invIco(it, on ? 'eq' : 'inv'), name: esc(DB.items[it.id].n) + '　<span style="color:#fde68a">+' + n + '</span>' + (on ? '　<span style="color:#86efac;font-size:13px">裝備中</span>' : ''), color: '#67e8f9', desc: esc(row.slotName) + '・' + esc(row.ch[2]), note: fxText(row, it), req: req, btns: btns }, 'data-dr');
       });
       var f = fx(), sets = Object.keys(f.setN);
-      if (sets.length || f.ults.length) h += '<div class="ax-h" style="margin-top:8px">現在生效</div><div class="ax-note">' + sets.map(function (k) { var s = SETK[k], c = f.setN[k], c9 = f.set9[k] || 0; return esc(s.n) + ' ' + c + ' 件' + (c >= 3 ? '（核心「' + esc(s.core.n) + '」）' : '') + (c >= 6 ? '（六件）' : '') + (c9 >= 9 ? '（九件）' : ''); }).join('　') + (f.ults.length ? '<br>大絕招：' + f.ults.map(function (u) { return esc(u.n); }).join('、') : '') + '</div>';
+      if (sets.length || f.ults.length) h += '<div class="ax-h">現在生效</div><div class="ax-sel" style="display:block">' + (sets.length ? '<ul>' + sets.map(function (k) { var s = SETK[k], c = f.setN[k], c9 = f.set9[k] || 0; return '<li><b style="color:#67e8f9">' + esc(s.n) + '</b> ' + c + ' 件' + (c >= 3 ? '・核心「' + esc(s.core.n) + '」' : '') + (c >= 6 ? '・六件' : '') + (c9 >= 9 ? '・九件' : '') + '</li>'; }).join('') + '</ul>' : '') + (f.ults.length ? '<div class="ax-desc" style="margin-top:4px">大絕招：' + f.ults.map(function (u) { return esc(u.n); }).join('、') + '</div>' : '') + '</div>';
     } else if (VIEW.tab === 'craft') {
       var ms = mats();
-      if (!ms.length) h += '<div class="ax-note">背包裡沒有可以用的 +0、未昇華遺物（上鎖的不算）。</div>';
-      else {
-        h += '<div class="ax-note">先選一件 +0 遺物，再選要做成哪一件同部位的次元遺物（次元結晶 ' + COST.craft + '）。</div>';
-        h += '<div style="display:flex;gap:4px;flex-wrap:wrap">' + ms.slice(0, 60).map(function (x) { var sl = catalogSlot(x.id); return '<button type="button" data-dr="src:' + x.uid + '"' + (VIEW.src === x.uid ? ' style="outline:1px solid #67e8f9"' : '') + '>' + esc(DB.items[x.id].n) + '（' + esc(sl) + '）</button>'; }).join('') + '</div>';
-        var s0 = VIEW.src && mats(VIEW.src);
-        if (s0) { var sl0 = catalogSlot(s0.id); LIST.filter(function (r) { return mySlot(r).test(sl0); }).forEach(function (r) { h += K.rowHtml({ key: r.id, name: esc(DB.items[r.id].n), color: '#67e8f9', desc: esc(r.ch[2]), note: fxText(r, null), why: cnt(CRYSTAL) < COST.craft ? '次元結晶不夠' : '', btns: [['mk:' + s0.uid + ':' + r.id, '製作', true]] }, 'data-dr'); }); }
+      h += '<div class="ax-h" style="margin-top:4px">① 選一件 +0 遺物</div><div class="ax-list">';
+      if (!ms.length) h += '<div class="ax-eq ax-where">背包裡沒有可以用的 +0、未昇華遺物（上鎖的不算）。</div>';
+      ms.slice(0, 80).forEach(function (x) { h += '<div class="ax-eq' + (VIEW.src === x.uid ? ' on' : '') + '" data-dr="src:' + esc(x.uid) + '">' + K.invIco(x, 'inv', true) + '<div style="min-width:0"><div>' + K.fullName(x) + '</div><div class="ax-where">' + esc(catalogSlot(x.id)) + '</div></div></div>'; });
+      if (ms.length > 80) h += '<div class="ax-eq ax-where">還有 ' + (ms.length - 80) + ' 件沒列出（先用掉或上鎖不用的）。</div>';
+      h += '</div>';
+      var s0 = VIEW.src && mats(VIEW.src);
+      if (s0) {
+        var sl0 = catalogSlot(s0.id);
+        h += '<div class="ax-h">已選擇</div><div class="ax-sel">' + K.invIco(s0, 'inv') + '<div style="min-width:0"><div>' + K.fullName(s0) + '</div><div class="ax-where">' + esc(sl0) + '・製作後這件會消失</div></div></div>';
+        h += '<div class="ax-h">② 要做成哪一件</div>';
+        LIST.filter(function (r) { return mySlot(r).test(sl0); }).forEach(function (r) { h += K.rowHtml({ key: r.id, ico: K.itemIco(r.id), name: esc(DB.items[r.id].n), color: '#67e8f9', desc: esc(r.slotName) + '・' + esc(r.ch[2]), note: fxText(r, null), req: reqBtn(cnt(CRYSTAL), COST.craft, '次元結晶'), btns: [['mk:' + s0.uid + ':' + r.id, '製作', cnt(CRYSTAL) >= COST.craft]] }, 'data-dr'); });
       }
     } else if (VIEW.tab === 'sets') {
-      h += '<div class="ax-h">套裝（+3 隨機）</div>';
-      SETS.forEach(function (s) { h += '<div class="ax-note"><b style="color:#67e8f9">' + esc(s.n) + '</b>　每件：' + esc(s.piece[0]) + '<br>3 件　核心「' + esc(s.core.n) + '」：' + esc(s.core.d) + '<br>6 件　' + esc(s.six[0]) + '<br>9 件（+5）　' + esc(s.nine[0]) + '</div>'; });
-      [['w', '武器'], ['a', '防具'], ['c', '飾品']].forEach(function (c) { h += '<div class="ax-h" style="margin-top:8px">大絕招・' + c[1] + '（+5 隨機）</div><div class="ax-note">' + ULT[c[0]].map(function (u) { return '<b>' + esc(u.n) + '</b>：' + esc(u.d); }).join('<br>') + '</div>'; });
+      h += '<div class="ax-h" style="margin-top:4px">套裝（+3 隨機一種）</div>';
+      SETS.forEach(function (st) { h += K.rowHtml({ key: st.k, name: esc(st.n), color: '#67e8f9', desc: '每件：' + esc(st.piece[0]), note: '3 件・核心「' + esc(st.core.n) + '」：' + esc(st.core.d) + '<br>6 件：' + esc(st.six[0]) + '<br>9 件（都 +5）：' + esc(st.nine[0]), btns: [] }, 'data-dr'); });
+      [['w', '武器'], ['a', '防具'], ['c', '飾品']].forEach(function (c) { h += '<div class="ax-h">大絕招・' + c[1] + '（+5 隨機一招）</div>' + ULT[c[0]].map(function (u) { return K.rowHtml({ key: u.k, name: esc(u.n), color: '#f0abfc', desc: esc(u.d), btns: [] }, 'data-dr'); }).join(''); });
     } else if (VIEW.tab === 'lib') {
       var w = wpnOf(p), mt = libMats();
-      h += '<div class="ax-note">把裝備中的「至高支配・封」武器解放成「次元支配」：材料是 14 種武器遺物各 1 件（+0、未昇華，背包裡沒上鎖的），不用龍鑽、金幣，100% 成功；保留強化值、星數、雅典娜的祝福。<br>次元裂縫裡：次元支配武器效果完整、對裂縫敵人傷害 +30%，並得到雅典娜的祝福（抵銷裂縫傷害懲罰 15%）；沒解放的至高支配・封武器效果打折（造成的傷害 −10%）。<br>縫天★：異化星塵 ' + LIB.en.join('／') + '，成功率 ' + LIB.rate.join('／') + '%（失敗不降級、不扣材料）；每一顆星打倒怪物恢復 5 點五屬性抗性，★5 侵蝕最低保留 +100。</div>';
+      h += '<ul class="ax-note" style="margin:0 0 8px;padding-left:18px"><li>解放材料：14 種武器遺物各 1 件（+0、未昇華、背包裡沒上鎖的）；不用龍鑽、金幣，100% 成功；保留強化值、星數、雅典娜的祝福。</li><li>次元裂縫裡：次元支配武器效果完整、對裂縫敵人傷害 +30%，並得到雅典娜的祝福（抵銷裂縫傷害懲罰 15%）；沒解放的至高支配・封武器效果打折（造成的傷害 −10%）。</li><li>縫天★：異化星塵 ' + LIB.en.join('／') + '，成功率 ' + LIB.rate.join('／') + '%（失敗不降級、不扣材料）；每一顆星打倒怪物恢復 5 點五屬性抗性，★5 侵蝕最低保留 +100。</li></ul>';
       if (!w) h += '<div class="ax-note">沒有裝備武器。</div>';
       else if (!isSup(w)) h += '<div class="ax-note">裝備中的「' + esc(DB.items[w.id].n) + '」不是至高支配・封。</div>';
       else if (!w.dimLib) { h += '<div class="ax-note">' + WTYPES.map(function (t) { return (mt[t] ? '<span style="color:#86efac">✓</span>' : '<span class="no">✗</span>') + esc(t); }).join('　') + '</div>'; h += K.rowHtml({ key: 'lib', name: esc(DB.items[w.id].n), color: '#fde047', desc: '至高支配・封', why: '', btns: [['lib:', '解放', WTYPES.every(function (t) { return mt[t]; })]] }, 'data-dr'); }
       else { var ln = w.dimLibEn || 0; h += K.rowHtml({ key: 'lib', name: esc(DB.items[w.id].n) + '　次元支配。縫天' + ('★'.repeat(ln) || '（無星）'), color: '#67e8f9', desc: '', why: '', btns: ln < 5 ? [['len:', '縫天 ★' + (ln + 1) + '（星塵 ' + LIB.en[ln] + '・' + LIB.rate[ln] + '%）', cnt(DUST) >= LIB.en[ln]]] : [] }, 'data-dr'); }
     } else if (VIEW.tab === 'ref') {
       var c1 = REF.remain, c2 = REF.soul, se = soulItem();
-      h += '<div class="ax-note">持有：凝結的時之沙 ' + cnt(SAND) + '、席琳的水之記憶 ' + cnt(WATER) + '、次元結晶 ' + cnt(CRYSTAL) + '</div>';
-      h += '<div class="ax-h">之魂憶起</div>' + K.rowHtml({ key: 'soul', name: se ? esc(DB.items[se.id].n) + (se.soulMem ? '　<span style="color:#86efac">已憶起</span>' : '') : '（要裝著粹煉過的之魂）', color: '#f87171', desc: '時之沙 ' + c2.sand + '、水之記憶 ' + c2.water + '。次元裂縫裡：裁決之光的門檻 −5%（HP 低於 45% 才會被打到剩 1）、侵蝕扣血每秒少 0.5%；跟太陽神凱布利一起有時，取回力量 +5%。', why: '', btns: se && !se.soulMem ? [['soul:', '憶起', cnt(SAND) >= c2.sand && cnt(WATER) >= c2.water]] : [] }, 'data-dr');
+      h += '<div class="ax-h" style="margin-top:4px">之魂憶起</div>' + K.rowHtml({ key: 'soul', name: se ? esc(DB.items[se.id].n) + (se.soulMem ? '　<span style="color:#86efac">已憶起</span>' : '') : '（要裝著粹煉過的之魂）', color: '#f87171', desc: '時之沙 ' + c2.sand + '、水之記憶 ' + c2.water + '。次元裂縫裡：裁決之光的門檻 −5%（HP 低於 45% 才會被打到剩 1）、侵蝕扣血每秒少 0.5%；跟太陽神凱布利一起有時，取回力量 +5%。', why: '', btns: se && !se.soulMem ? [['soul:', '憶起', cnt(SAND) >= c2.sand && cnt(WATER) >= c2.water]] : [] }, 'data-dr');
       h += '<div class="ax-h" style="margin-top:8px">席琳遺骸的裂縫淬鍊</div><div class="ax-note">夢域淬鍊過的遺骸才能做。每件：次元結晶 ' + c1.crystal + '。同一組某一段的件數都裂縫淬鍊過，那一段的夢域效果 ×1.2。</div>';
       var rl = remainsList(); if (!rl.length) h += '<div class="ax-note">沒有夢域淬鍊過的遺骸。</div>';
       rl.forEach(function (x) { h += K.rowHtml({ key: x.it.uid, name: esc(DB.items[x.it.id].n) + (x.eq ? '（裝備中）' : '') + (x.it.riftRef ? '　<span style="color:#86efac">已裂縫淬鍊</span>' : ''), color: '#f87171', desc: '', why: '', btns: x.it.riftRef ? [] : [['rr:' + x.it.uid, '裂縫淬鍊', cnt(WATER) >= c1.water && cnt(SAND) >= c1.sand && cnt(CRYSTAL) >= c1.crystal]] }, 'data-dr'); });
@@ -676,19 +702,21 @@
       DRG.forEach(function (x, i) { h += '<div class="ax-note"><b style="color:#f0abfc">' + esc(DB.items['dimr_dragon_' + i].n) + '</b>：' + esc(DRG_FX[i]) + (i ? '　（進化：倒影之鏡 ×' + DRG_EVO[i].mirror + '、時空碎片 ×' + DRG_EVO[i].frag + '）' : '') + '</div>'; });
       inv().concat(equipped(p)).filter(function (x) { return x && DB.items[x.id] && DB.items[x.id].dimDragon != null; }).forEach(function (it) {
         var d = DB.items[it.id], nx = d.dimDragon < 3 ? DRG_EVO[d.dimDragon + 1] : null;
-        h += K.rowHtml({ key: it.uid, name: esc(d.n), color: '#f0abfc', desc: '', why: '', btns: nx ? [['dv:' + it.uid, '進化（鏡 ' + nx.mirror + '・碎片 ' + nx.frag + '）', cnt(MIRROR) >= nx.mirror && cnt(FRAG) >= nx.frag]] : [] }, 'data-dr');
+        h += K.rowHtml({ key: it.uid, ico: K.invIco(it, equipped(p).indexOf(it) >= 0 ? 'eq' : 'inv'), name: esc(d.n), color: '#f0abfc', desc: '', why: '', btns: nx ? [['dv:' + it.uid, '進化（鏡 ' + nx.mirror + '・碎片 ' + nx.frag + '）', cnt(MIRROR) >= nx.mirror && cnt(FRAG) >= nx.frag]] : [] }, 'data-dr');
       });
     } else {
-      h += K.rowHtml({ key: 'syn', name: '異化星塵', color: '#67e8f9', desc: '破碎星光塵埃 ' + COST.synth.star + '＋血龍鑽 ' + COST.synth.blood + ' → 異化星塵 1', why: '', btns: [['sy:1', '合成 1', cnt(STARDUST) >= COST.synth.star && cnt(BLOOD) >= COST.synth.blood], ['sy:10', '合成 10', cnt(STARDUST) >= COST.synth.star * 10 && cnt(BLOOD) >= COST.synth.blood * 10]] }, 'data-dr');
+      var sy = COST.synth;
+      h += K.rowHtml({ key: 'syn', ico: K.itemIco(DUST), name: '異化星塵', color: '#67e8f9', desc: '破碎星光塵埃 ' + sy.star + '＋血龍鑽 ' + sy.blood + ' → 異化星塵 1', req: reqBtn(cnt(STARDUST), sy.star, '破碎星光塵埃') + '　' + reqBtn(cnt(BLOOD), sy.blood, '血龍鑽'), btns: [['sy:1', '合成 1', cnt(STARDUST) >= sy.star && cnt(BLOOD) >= sy.blood], ['sy:10', '合成 10', cnt(STARDUST) >= sy.star * 10 && cnt(BLOOD) >= sy.blood * 10]] }, 'data-dr');
     }
     K.repaint(box, h);
   };
   var render = function (div) {
     if (!div) return; K.css();
-    div.innerHTML = '<div class="afk-ax"><div class="ax-lore">「裂縫裡的東西都記得自己是誰。」鍛造師的爐子裡沒有火，只有一道一直在呼吸的縫。</div></div>';
+    if (!document.getElementById('afk-dimr-css')) { var st = document.createElement('style'); st.id = 'afk-dimr-css'; st.textContent = '#afk-dimr .ax-filter button{cursor:pointer}#afk-dimr .ax-filter button.on{background:#854d0e!important;border-color:#f59e0b!important;color:#fef3c7!important;font-weight:700}#afk-dimr .ax-filter button:not(.on):hover{background:#334155}'; document.head.appendChild(st); }
+    div.innerHTML = '';
     var box = document.createElement('div'); box.className = 'afk-ax'; box.id = 'afk-dimr'; div.appendChild(box); paint(div);
     if (!div.__afkDimrBound) { div.__afkDimrBound = true; div.addEventListener('click', async function (ev) {
-      var b = ev.target.closest('button[data-dr]'); if (!b || b.disabled || !div.querySelector('#afk-dimr')) return; var k = (b.getAttribute('data-dr') || '').split(':');
+      var b = ev.target.closest('[data-dr]'); if (!b || b.disabled || !div.querySelector('#afk-dimr')) return; var k = (b.getAttribute('data-dr') || '').split(':');
       if (k[0] === 'tab') VIEW.tab = k[1]; else if (k[0] === 'src') VIEW.src = k[1]; else if (k[0] === 'mk') craft(k[1], k[2]); else if (k[0] === 'en') enhance(k[1]);
       else if (k[0] === 'rs') reroll(k[1], 'set'); else if (k[0] === 'ru') reroll(k[1], 'ult'); else if (k[0] === 'dv') evolveDragon(k[1]); else if (k[0] === 'sy') synth(+k[1]); else if (k[0] === 'lib') liberate(); else if (k[0] === 'len') libEnhance(); else if (k[0] === 'horn') hornUp(); else if (k[0] === 'pk') pickStone(k[1]); else if (k[0] === 'rr') await riftRefine(k[1]); else if (k[0] === 'soul') soulMem(); else if (k[0] === 'ph') phantomUp();
       paint(div);
