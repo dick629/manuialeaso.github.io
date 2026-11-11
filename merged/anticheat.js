@@ -119,8 +119,21 @@
     if (a.q.length) { a.q = []; changed = true; }
     a.sp = []; delete a.honey;
     allItems(p).forEach(function (r) { if (r.it.id === 'afk_glitch' && r.where === 'inv') { var i = p.inv.indexOf(r.it); if (i >= 0) { p.inv.splice(i, 1); changed = true; } } });
+    // 玩家 11-11 10:31：11/15 前就在身上（背包、裝備、倉庫）的 S 級道具，標成「11/15 前取得」，永遠不檢查
+    if (Date.now() < S_FROM) {
+      allItems(p).forEach(function (r) { if (S_TIER(r.it.id) && !r.it.acPre) { r.it.acPre = 1; changed = true; } });
+      try { if (typeof loadWarehouse === 'function' && typeof saveWarehouse === 'function') { var w = loadWarehouse(), wc = false; (w.items || []).forEach(function (it) { if (it && S_TIER(it.id) && !it.acPre) { it.acPre = 1; wc = true; } }); if (wc) saveWarehouse(w); } } catch (e) {}
+    }
     if (changed) { try { if (typeof calcStats === 'function') calcStats(); if (typeof updateUI === 'function') updateUI(); } catch (e) {} }
   };
+  if (typeof W.buildItemDescHTML === 'function') {
+    var oDesc = W.buildItemDescHTML;
+    W.buildItemDescHTML = function (item) {
+      var h = oDesc.apply(this, arguments);
+      try { if (item && item.acPre) h += '<div style="color:#86efac;font-size:12px;margin-top:4px">🛡 2026/11/15 前取得：不受異常道具檢查</div>'; } catch (e) {}
+      return h;
+    };
+  }
 
   // ── 主控台呼叫判定 ──
   var external = function () {
