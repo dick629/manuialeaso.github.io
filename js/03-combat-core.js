@@ -2123,7 +2123,7 @@ function spawnMob(idx) {
     if (mapState.current === 'hidden_cave' && !mapState.mobs.some(m => m && m.n === '魔族暗殺團')
         && ((player.cls === 'elf' && player.trialStage === 2 && !player.inv.some(i => i.id === 'item_sealed_intel'))
             || (player.cls === 'mage' && player.trialStage === 1 && !player.inv.some(i => i.id === 'item_spy_report')))
-        && Math.random() < 0.01) {
+        && Math.random() < 0.10) {   // 🔌 加掛版補丁（玩家 11-11：法師、妖精 50 級試煉打不到）1% → 10%
         mobId = 'demon_assassin';
     }
     // 🐉 林德拜爾（BOSS）：身上持有任意「幼龍蛋」（頑皮／淘氣）於任一野外地圖時，1% 機率改為刷出林德拜爾

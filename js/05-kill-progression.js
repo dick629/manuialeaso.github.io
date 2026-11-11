@@ -454,7 +454,7 @@ function killMob(idx) {
       if ((main || ally) && Math.random() < partyDropRate(0.01)) { let got = grantPartyStageQuestDrop('item_dantes_letter', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}取得了 丹特斯的召書。</span>`); } }
     { let main = player.cls === 'elf' && player.trialStage === 1 && mob.n === '巨大兵蟻' && !player.inv.some(i => i.id === 'item_ancient_book');
       let ally = mob.n === '巨大兵蟻' && typeof allyStageQuestItemActive === 'function' && allyStageQuestItemActive('item_ancient_book');
-      if ((main || ally) && Math.random() < partyDropRate(0.01)) { let got = grantPartyStageQuestDrop('item_ancient_book', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}取得了 古代黑妖之秘笈。</span>`); } }
+      if ((main || ally) && Math.random() < partyDropRate(0.05))   /* 🔌 加掛版補丁（玩家 11-11）1% → 5% */ { let got = grantPartyStageQuestDrop('item_ancient_book', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}取得了 古代黑妖之秘笈。</span>`); } }
     { let main = player.cls === 'dark' && player.trialStage === 1 && mob.n === '黑暗棲林者' && !player.inv.some(i => i.id === 'item_chaos_key');
       let ally = mob.n === '黑暗棲林者' && typeof allyStageQuestItemActive === 'function' && allyStageQuestItemActive('item_chaos_key');
       if ((main || ally) && Math.random() < partyDropRate(0.01)) { let got = grantPartyStageQuestDrop('item_chaos_key', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}取得了 混沌鑰匙。</span>`); } }

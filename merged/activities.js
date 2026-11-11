@@ -68,8 +68,11 @@
     const used=id==='antharas'?antharasPartyUsedToday():W.__afkCorrupt.withCtx(id,()=>antharasPartyUsedToday());
     return used.length?'隊伍成員今天已通關此龍巢':'';
   }
+  // 玩家 11-11：次元裂縫副本要在席琳神殿才進得去；上一項打完會回到別的村莊 → 下一項進不去、整輪卡在暫停。
+  //   在村莊裡時先移到席琳神殿再進場。
+  function prep(id){if(String(id).startsWith('rd:')&&/^town_/.test(mapState.current||'')&&mapState.current!=='town_sherine'){try{setMapSelectors('town_sherine');changeMap(true);}catch(e){}}}
   function enter(id){
-    const err=why(id);if(err)throw Error(err);const old=mapState.current,native=special(id),r=round();
+    prep(id);const err=why(id);if(err)throw Error(err);const old=mapState.current,native=special(id),r=round();
     if(native){r.clearBefore=native.clears();native.enter();}
     else if(id==='antharas')antharasEnter();else if(id==='hardin')W.__afkHardin.enter();else if(id==='halpas')W.__afkHalpas.enter('halpas');else if(id.startsWith('rd:'))W.__afkRiftDg.enter(id.slice(3));else afkCorruptEnter(id);
     if(mapState.current===old)throw Error('未成功進入 '+(names[id]||id));
@@ -82,8 +85,8 @@
     const payment=quote(ids);ids.sort((a,b)=>Number(!bosses[a])-Number(!bosses[b]));
     // 玩家 11-11：守護者之戒付一次錢，打滿當天的次數（用完的會自動跳過）
     ids=ids.flatMap(id=>{const m=/^gr:(dream|rift):/.exec(id),g=W.__afkGuardRing;return m&&g?Array(Math.max(1,N(g.DG.daily[m[1]]))).fill(id):[id];});
-    const err=why(ids[0]);if(err)throw Error(err);
     if(!/^town_/.test(mapState.current||''))throw Error('請先回村再開始遠征');
+    const here0=mapState.current;prep(ids[0]);const err=why(ids[0]);if(err){if(mapState.current!==here0){try{setMapSelectors(here0);changeMap(true);}catch(e){}}throw Error(err);}
     if((payment.currency==='blood'?G.blood():pandoraGetSharedDiamonds())<payment.amount)throw Error('餘額不足，需要 '+payment.label+'（副本門票另計）');
     return activityTransaction('啟動自動遠征',()=>{
       G.read(player).expedition={v:2,id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),queue:ids,index:0,status:'starting',paid:payment.amount,payment,choice:choice==='stop'?'stop':'ritual',completed:[],created:Date.now()};
@@ -125,7 +128,7 @@
     if(!(r.maps||[r.map]).includes(mapState.current)){pause('已離開副本，繼續時重新進場',!!native);return;}
     if(native&&!native.api.run()){pause('試煉已結束或失敗，重新進場仍受每日次數限制',true);return;}
     if(r.queue[r.index]==='hardin'){const h=W.__afkHardin.run();if(h&&h.stage==='choice')W.__afkHardin.choose(r.choice);}
-    if(state.ticks-lastCheckpoint>=50){checkpoint();if(!saveGame()){pause('存檔失敗，已暫停遠征');state.running=false;}lastCheckpoint=state.ticks;}
+    if(state.ticks-lastCheckpoint>=300){checkpoint();if(!saveGame()){pause('存檔失敗，已暫停遠征');state.running=false;}lastCheckpoint=state.ticks;}
   }}
   function shortcut(before){
     if(advancing||!C.movement(G.read(player)).shortcut||Math.random()>=.05)return;

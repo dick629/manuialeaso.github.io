@@ -20,7 +20,7 @@
     lines.forEach(args=>log.apply(W,args));
     return{ok:true,value};
    });
-  }catch(e){if(/回復失敗/.test(e.message))blocked=true;logSys('<span class="text-red-300">'+clanEsc(label+'未完成：'+e.message)+'。請從天賦巔峰下載最近交易備份。</span>');return{ok:false,error:e.message};}
+  }catch(e){if(/回復失敗/.test(e.message))blocked=true;logSys('<span class="text-red-300">'+clanEsc(label+'未完成：'+e.message)+(/quota/i.test(e.message)?'。瀏覽器的存檔空間滿了，請到「統計／存檔」刪掉不用的存檔格或匯出後清理，再試一次。':'。')+'</span>');return{ok:false,error:e.message};}
   finally{pending--;}
  }
  function income(){return settle('城堡收成',()=>{

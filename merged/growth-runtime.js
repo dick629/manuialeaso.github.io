@@ -1,6 +1,8 @@
 (function(W){
   'use strict';
   const C=W.LineageGrowthCore, backupKey='lineage_growth_transaction_backup_v1';
+  // 玩家 11-11：舊版留下的整份交易備份（可能好幾 MB）一載入就清掉，騰出瀏覽器容量
+  try{localStorage.removeItem(backupKey);}catch(e){}
   let busy=false, action=null, preparing=false, prepared=null;
   const checked=new WeakMap();
   const N=n=>Number(n)||0, P=()=>typeof player==='undefined'?null:player;
