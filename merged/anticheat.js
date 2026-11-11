@@ -122,7 +122,7 @@
     // 玩家 11-11 10:31：11/15 前就在身上（背包、裝備、倉庫）的 S 級道具，標成「11/15 前取得」，永遠不檢查
     if (Date.now() < S_FROM) {
       allItems(p).forEach(function (r) { if (S_TIER(r.it.id) && !r.it.acPre) { r.it.acPre = 1; changed = true; } });
-      try { if (typeof loadWarehouse === 'function' && typeof saveWarehouse === 'function') { var w = loadWarehouse(), wc = false; (w.items || []).forEach(function (it) { if (it && S_TIER(it.id) && !it.acPre) { it.acPre = 1; wc = true; } }); if (wc) saveWarehouse(w); } } catch (e) {}
+      // 11-11 11:53：不再讀寫倉庫——每 10 秒重讀倉庫會蓋掉倉庫視窗的快照，造成倉庫道具異常。倉庫裡的會在領出到背包時標上。
     }
     if (changed) { try { if (typeof calcStats === 'function') calcStats(); if (typeof updateUI === 'function') updateUI(); } catch (e) {} }
   };
