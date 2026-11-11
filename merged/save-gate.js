@@ -8,6 +8,8 @@
  window.LineageSaveGate={
   async importRole(raw,slot){
    try{
+    // 11-11 23:56：完整備份也能「讀回同一個角色自己的舊進度」——從備份裡挑出這個位置那個角色的存檔來用
+    try{const d0=B.inspect(raw);if(d0.kind==='full'){const pick=this.roleFromFull(d0,slot);if(typeof pick==='string')raw=pick;else{alert('匯入已停止：'+pick.why);return false;}}}catch(e){}
     if(!await this.beforeImport(raw,slot))return false;
     const decoded=B.decode(raw),doc=decoded.value;
     if(!decoded.signed&&!confirm('此存檔沒有完整性簽章。仍要匯入舊版角色嗎？'))return false;
@@ -28,6 +30,13 @@
     await (navigator.locks?navigator.locks.request('lineage-merged-save-write',{mode:'exclusive'},apply):apply());
     renderLoadSelect();alert(reload?'已讀回「'+(doc.p.name||'')+'」的舊進度；倉庫等共用資料維持原樣。':'角色已匯入；共用資料維持原進度。');return true;
    }catch(e){alert('匯入已停止：'+e.message);return false;}
+  },
+  roleFromFull(d0,slot){
+   const cur=typeof _roleReadSavePlayer==='function'?_roleReadSavePlayer(slot):null,IC=window.LineageIntegrityCore;
+   if(!cur||!IC)return {why:'這是完整備份。要讀回某個角色的舊進度，請先選那個角色原本的存檔位置再匯入；要整個還原請到「存檔與修復」。'};
+   const want=IC.identity(cur);
+   for(const k of d0.roles||[]){try{const v=d0.keys[k],p=B.decode(v).value.p;if(!p)continue;const q=Object.assign({},p);q.enSeed=IC.seed(p);if(IC.identity(q)===want)return v;}catch(e){}}
+   return {why:'這份完整備份裡沒有「'+(cur.name||'')+'」。只能讀回同一個角色自己的舊進度；要整個還原請到「存檔與修復」。'};
   },
   // 11-11 21:37 同一個角色讀回自己的舊存檔：只限同一個角色；這份存檔之後有把東西存進倉庫就不行（防洗倉庫）
   reloadWhy(p,slot){

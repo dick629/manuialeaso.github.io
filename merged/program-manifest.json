@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-fc28a7017228",
+  "build": "merge-0.4-1cbe5c7df88d",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -528,8 +528,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-finalboss.js?v=b561128044d7",
-      "sha256": "b561128044d76b85f10d9a2ca3b18f0bf3f700134f6a3d388b0c45bfbafae721",
+      "url": "afk-finalboss.js?v=6556be5d5557",
+      "sha256": "6556be5d555721b508c4e03b27fffab64196d7c4935784ac36395c4d8259cf92",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1584,7 +1584,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "fc824a0ca6da56bf109ff527987818d59a02f1eeb9285eeba46b8156257b69e5",
+      "sha256": "c434d78145c69775800f09857a53f3e450dfdfecd9bf1098bca63a33c75cd402",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1748,8 +1748,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/anim-manifest.js?v=aafa84f5a116",
-      "sha256": "aafa84f5a116b3fd9a6b6463882d40e8f3bf66db926732e1fab62b10c40b6ac4",
+      "url": "js/anim-manifest.js?v=2522e7a0f8e9",
+      "sha256": "2522e7a0f8e9ab28b23c5bafd26cc22976c163631120fad569b8442d17ca647f",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2043,8 +2043,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/save-gate.js?v=7f715584a9f2",
-      "sha256": "7f715584a9f2e905ce5127777f1b5eb36961e1544ab84301db73ddf5e117a7cc",
+      "url": "merged/save-gate.js?v=4b4a41b886ca",
+      "sha256": "4b4a41b886ca3effdb7d006375fa671294e2be0c11019091075d2846e93171a7",
       "type": "text/javascript; charset=utf-8"
     },
     {

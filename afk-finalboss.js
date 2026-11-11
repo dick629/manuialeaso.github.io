@@ -94,18 +94,23 @@
   try { if (typeof ANTHARAS_AREA_NAMES !== 'undefined') ANTHARAS_AREA_NAMES[MAP] = MAP_NAME; } catch (e) {}
   try { if (typeof HUNT_BGM !== 'undefined') HUNT_BGM[MAP] = 'music133'; } catch (e) {}
   window.__afkNoOfflineMaps = (window.__afkNoOfflineMaps || []).concat([MAP]);
-  // 動畫：席琳借冰之女王、使徒借死神
+  // 動畫：席琳、使徒用專屬動畫（11-11 23:56 起；之前借冰之女王、死神）
   try {
     var get = function (n) { try { return (0, eval)(n); } catch (e) { return null; } };
     var names = get('MOB_ANIM_NAMES');
     var SETS = ['MOB_ANIM_NAMES', 'MOB_ANIM_BAKED_SHADOW', 'MOB_SHADOW_TINT', 'MOB_ANIM_BIG', 'MOB_ANIM_SMALL', 'MOB_ANIM_SPRITE_SHADOW', 'MOB_ANIM_WEAPON_FX', 'MOB_ANIM_WEAPON_FX2', 'MOB_ANIM_8DIR'].map(get);
     var OBJS = ['MOB_ANIM_SKILL_FX', 'MOB_YLIFT', 'MOB_ANIM_DEATH_FX', 'BOSS_ENTRANCE_FX', 'MOB_HURT_SFX', 'MOB_KILL_SFX', 'MOB_ATTACK_SFX'].map(get);
+    // 11-11 23:56（Ping）：席琳、使徒換成 GPT 重繪的專屬動畫（assets/anim/死亡女神 席琳、assets/anim/冥界的使徒）；
+    //   大小、音效、登場與死亡特效照舊借冰之女王／死神（方向、陰影、武器層這些跟圖有關的不借）
+    var SAFE = { MOB_ANIM_BIG: 1, MOB_ANIM_SMALL: 1 };
     [[BOSS_NAME, '冰之女王'], [ADD_NAME, '死神']].forEach(function (pr) {
-      if (!names || !names.has || !names.has(pr[1]) || typeof MOB_ANIM_ALIAS === 'undefined') return;
-      MOB_ANIM_ALIAS[pr[0]] = MOB_ANIM_ALIAS[pr[1]] || pr[1];
-      SETS.forEach(function (s) { if (s && s.has && s.has(pr[1])) s.add(pr[0]); });
-      OBJS.forEach(function (o) { if (o && o[pr[1]] != null && o[pr[0]] == null) o[pr[0]] = o[pr[1]]; });
+      if (!names || !names.add) return;
+      names.add(pr[0]); if (typeof MOB_ANIM_ALIAS !== 'undefined') delete MOB_ANIM_ALIAS[pr[0]];
+      ['MOB_ANIM_NAMES', 'MOB_ANIM_BAKED_SHADOW', 'MOB_SHADOW_TINT', 'MOB_ANIM_BIG', 'MOB_ANIM_SMALL', 'MOB_ANIM_SPRITE_SHADOW', 'MOB_ANIM_WEAPON_FX', 'MOB_ANIM_WEAPON_FX2', 'MOB_ANIM_8DIR'].forEach(function (k, i) { var st = SETS[i]; if (st && st.has && SAFE[k] && st.has(pr[1])) st.add(pr[0]); });
+      OBJS.forEach(function (o, i) { if (i === 1) return; if (o && o[pr[1]] != null && o[pr[0]] == null) o[pr[0]] = o[pr[1]]; });   // 不借 MOB_YLIFT（是冰之女王的圖用的高度修正）
     });
+    // 各階層的名字（席琳夢境／席琳幻影／席琳伴身＋名字）也用同一套圖
+    try { ['席琳夢境', '席琳幻影', '席琳伴身'].forEach(function (tn) { var nm = tn + ' ' + BOSS_NAME; if (names && names.add) names.add(nm); if (typeof MOB_ANIM_ALIAS !== 'undefined') MOB_ANIM_ALIAS[nm] = BOSS_NAME; SETS.forEach(function (st) { if (st && st.has && st.has(BOSS_NAME)) st.add(nm); }); OBJS.forEach(function (o, i) { if (i === 1) return; if (o && o[BOSS_NAME] != null && o[nm] == null) o[nm] = o[BOSS_NAME]; }); }); } catch (e) {}
   } catch (e) {}
 
   // ── 狀態 ──
