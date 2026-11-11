@@ -135,27 +135,45 @@
   // ── S 級封印（Ping 11-11 16:35／16:46；設計稿十四節）──
   //   S 級＝GM 道具、至高的支配、次元遺物（含次元時空武器）、創世密奧卡。
   //   正當來源＝遊戲正規流程做出來時蓋的印記（acs）。沒有印記、或印記標成「太快」的 S 級＝封印。
-  //   太快：每件 S 級的合理時數（至高支配 200、次元遺物 100、創世 300 小時）；蓋印記時，整個帳號（所有角色合計）
-  //         這版之後做出來的 S 級時數加總 > 帳號遊玩時數 ÷ 2 → 這件標成太快。印記跟著道具走（放倉庫、換角色都不變）。
+  //   太快：每件 S 級的合理時數（至高支配 300、次元遺物 +0～+5 累計 1／20／50／90／140／240、四龍次元時空 1／15／30／50、創世 500 小時）；
+  //         蓋印記或強化時，整個帳號這版之後做出來的 S 級時數加總 > 帳號遊玩時數（離線補跑、月亮省電模式打對折）→ 標成太快。印記跟著道具走（放倉庫、換角色都不變）。
   //   封印（面板、說明都照常顯示；只有實際結算打折）：穿著的每件 −15% 造成傷害、+15% 受到傷害（最多 −80%／+80%）；
   //         封印的武器改成造成傷害 −35%；該件遺物特效的回復量 ×0.5。管理者的角色不封。
-  var SEAL_H = { supreme: 200, dim: 100, genesis: 300 };
+  // 合理時數（Ping 11-11 17:20：低於這個時數就拿到＝異常）。次元遺物照強化等級累計；四龍次元時空武器照進化階段。
+  var SEAL_H = { supreme: 300, genesis: 500 }, DIM_SEAL = [1, 20, 50, 90, 140, 240], DRG_SEAL = [1, 15, 30, 50];
   var sKind = function (id) { var d = DB.items[id]; if (!d) return ''; if (String(id) === '99998' || String(id) === '99999' || d.gmOnly) return 'gm'; if (d.dimRelic || d.dimDragon != null) return 'dim'; if (d.relicEvo != null) return 'supreme'; return ''; };
   var ACCT_KEY = 'lineage_ac_acct_v1', ACCT_SALT = 'lgacct:7d1:';
   var acctSig = function (a) { return fnv(ACCT_SALT + a.ms + '|' + a.sh); };
   var acct = function () { var a = null; try { a = JSON.parse(localStorage.getItem(ACCT_KEY) || 'null'); } catch (e) {} if (!a || a.k !== acctSig(a)) a = { ms: 0, sh: 0 }; return a; };
   var acctSave = function (a) { a.k = acctSig(a); try { localStorage.setItem(ACCT_KEY, JSON.stringify(a)); } catch (e) {} };
   var acctMs = 0;
-  var stSig = function (x) { return fnv(ACCT_SALT + 'st|' + x.t + '|' + x.n + '|' + x.f); };
-  var mkStamp = function (kind, free) {
-    var x = { t: Date.now(), n: Math.floor(Math.random() * 1e9).toString(36), f: 0 };
-    if (!free && SEAL_H[kind]) { var a = acct(), budget = a.ms / 3600000 / 2; if (a.sh + SEAL_H[kind] > budget) x.f = 1; else { a.sh += SEAL_H[kind]; acctSave(a); } }
+  var costNow = function (it) {
+    var k = it && sKind(it.id), d = it && DB.items[it.id]; if (!k || k === 'gm') return 0;
+    if (k === 'dim') return d && d.dimDragon != null ? (DRG_SEAL[d.dimDragon] || 50) : DIM_SEAL[Math.min(5, Number(it.dimEn) || 0)];
+    return SEAL_H[k] || 0;
+  };
+  var stSig = function (x) { return fnv(ACCT_SALT + 'st|' + x.t + '|' + x.n + '|' + x.f + '|' + (x.c || 0)); };
+  // 帳號時數 a.ms 已經是「掛機打對折」後的時數（Ping 11-11 16:46：掛機時間 ÷ 2）
+  var charge = function (x, cost) {
+    var need = cost - (Number(x.c) || 0); if (need <= 0 || x.f) return x;
+    var a = acct(); if (a.sh + need > a.ms / 3600000) x.f = 1; else { a.sh += need; x.c = cost; acctSave(a); }
     x.k = stSig(x); return x;
   };
+  var mkStamp = function (cost, free) {
+    var x = { t: Date.now(), n: Math.floor(Math.random() * 1e9).toString(36), f: 0, c: free ? cost : 0 };
+    x.k = stSig(x); return free ? x : charge(x, cost);
+  };
   var stampOk = function (x) { return !!(x && x.k === stSig(x) && !x.f); };
-  var stamp = function (it, free) { try { var k = it && sKind(it.id); if (!k || k === 'gm' && !free) return; if (it.acs && it.acs.k === stSig(it.acs)) return; it.acs = mkStamp(k, free); sealCache = new WeakMap(); } catch (e) {} };
+  var stamp = function (it, free) {
+    try {
+      var k = it && sKind(it.id); if (!k || k === 'gm' && !free) return;
+      if (it.acs && it.acs.k === stSig(it.acs)) { if (!free) charge(it.acs, costNow(it)); }   // 已有印記（強化、進化）：只補差額
+      else if (!it.acs) it.acs = mkStamp(costNow(it), free);
+      sealCache = new WeakMap();
+    } catch (e) {}
+  };
   W.__afkAcStamp = function (it) { stamp(it, false); };
-  W.__afkAcStampMio = function (p, i) { try { var m = p && p.afkMio; if (!m) return; m.acg = m.acg || {}; m.acg[i] = mkStamp('genesis', false); sealCache = new WeakMap(); } catch (e) {} };
+  W.__afkAcStampMio = function (p, i) { try { var m = p && p.afkMio; if (!m) return; m.acg = m.acg || {}; m.acg[i] = mkStamp(SEAL_H.genesis, false); sealCache = new WeakMap(); } catch (e) {} };
   var sealCache = new WeakMap();
   var exempt = function () { var p = P(); return !p || p.classicMode || isOwner(p); };
   var sealOf = function (actor) {
@@ -245,7 +263,7 @@
     var p = P(); if (!p) return [];
     return allItems(p).filter(function (r) { return sKind(r.it.id) && !stampOk(r.it.acs); }).map(function (r) { var d = DB.items[r.it.id]; return (d ? d.n : r.it.id) + '（' + (r.where === 'eq' ? '穿著' : '背包') + '・' + (r.it.acs ? (r.it.acs.f ? '太快' : '印記不符') : '沒有正當來源') + '）'; });
   };
-  admin.account = function () { if (!unlocked) return null; var a = acct(); return { playHours: Math.round(a.ms / 36000) / 100, budget: Math.round(a.ms / 72000) / 100, usedS: a.sh }; };
+  admin.account = function () { if (!unlocked) return null; var a = acct(); return { hours: Math.round(a.ms / 36000) / 100, usedS: a.sh, left: Math.round(a.ms / 36000) / 100 - a.sh }; };
   W.LineageAdmin = Object.freeze(admin);
 
   // ── 掛上遊戲迴圈 ──
@@ -253,7 +271,7 @@
     var oTick = W.tick, n = 0;
     W.tick = function () {
       var r = oTick.apply(this, arguments);
-      try { var p = P(); if (p && !p.classicMode) { var x = play(p); x.ms += TICK; x.sig = signOf(p, x); acctMs += TICK; if (++n % 100 === 0) { var ac = acct(); ac.ms += acctMs; acctMs = 0; acctSave(ac); scan(); } } } catch (e) {}
+      try { var st0 = (typeof state !== 'undefined' && state) || null, p = P(); if (p && !p.classicMode) { var x = play(p); x.ms += TICK; x.sig = signOf(p, x); acctMs += TICK * ((st0 && st0.ff) || (document.body && document.body.classList.contains('afk-screen-on')) ? 0.5 : 1); if (++n % 100 === 0) { var ac = acct(); ac.ms += acctMs; acctMs = 0; acctSave(ac); scan(); } } } catch (e) {}
       return r;
     };
     try { (0, eval)('tick = window.tick'); } catch (e) {}
@@ -274,5 +292,5 @@
     };
     try { (0, eval)('updateUI = window.updateUI'); } catch (e) {}
   }
-  W.__afkAntiCheat = { scan: scan, costOf: costOf, isOwner: isOwner, hours: hours, external: external, store: store, sKind: sKind, sealOf: sealOf, stampOk: stampOk };
+  W.__afkAntiCheat = { scan: scan, costOf: costOf, isOwner: isOwner, hours: hours, external: external, store: store, sKind: sKind, sealOf: sealOf, stampOk: stampOk, acct: acct, acctSave: acctSave };
 })(window);

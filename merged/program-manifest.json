@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-d264ced4facd",
+  "build": "merge-0.4-4c272846cbf7",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -378,8 +378,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dimrelic.js?v=99c58c71d036",
-      "sha256": "99c58c71d03656b928a3d0043eb124437143bf0c12545e242bed025d7454d4bb",
+      "url": "afk-dimrelic.js?v=fb0b0c492fcf",
+      "sha256": "fb0b0c492fcf91efd773995b7d45092f0121799da9dab5c20303b96820e77f9b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1569,7 +1569,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "1f1c3d0c7b4955765875f1dd527c12056a1bc18aedf0c080d3de5a0d87550330",
+      "sha256": "98d15726970dcfc4c4523e0f4ff65d81374e663efadc0b84f2b8ed7333236c21",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1748,8 +1748,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/anticheat.js?v=5b3cbdf43e7e",
-      "sha256": "5b3cbdf43e7e6a2be7d4460d01ad0d78155bf1a1dc3659b769d79a456c896cd4",
+      "url": "merged/anticheat.js?v=25452836d2fe",
+      "sha256": "25452836d2fe64fa5931650e96cbe0f8f3822148f23bcc5404ba28cdac1758f0",
       "type": "text/javascript; charset=utf-8"
     },
     {

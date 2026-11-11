@@ -578,7 +578,7 @@
     var it = findUid(uid); if (!it || !BY[it.id]) return; var n = lv(it); if (n >= 5) return;
     var need = COST.en[n]; if (cnt(DUST) < need) { sys('<span class="text-amber-300">異化星塵不夠（要 ' + need + '）。</span>'); return; }
     if (Math.random() * 100 >= COST.rate[n]) { sys('<span class="text-amber-300">強化失敗了。（不降級、材料沒有被扣）</span>'); return; }
-    take(DUST, need); it.dimEn = n + 1;
+    take(DUST, need); it.dimEn = n + 1; try { if (W.__afkAcStamp) W.__afkAcStamp(it); } catch (e) {}
     var msg = '「' + esc(DB.items[it.id].n) + '」強化到 +' + it.dimEn + '。';
     if (it.dimEn === 3 && !it.dimSet) { it.dimSet = pick(SETS).k; msg += '套裝：<b>' + esc(SETK[it.dimSet].n) + '</b>。'; }
     if (it.dimEn === 5 && !it.dimUlt) { it.dimUlt = pick(ULT[BY[it.id].cat]).k; msg += '大絕招：<b>' + esc(ULTK[it.dimUlt].n) + '</b>。'; }
@@ -600,7 +600,7 @@
   function evolveDragon(uid) {
     var it = findUid(uid), d = it && DB.items[it.id]; if (!d || d.dimDragon == null || d.dimDragon >= 3) return;
     var need = DRG_EVO[d.dimDragon + 1]; if (cnt(MIRROR) < need.mirror || cnt(FRAG) < need.frag) { sys('<span class="text-amber-300">要倒影之鏡 ×' + need.mirror + '＋四龍的時空碎片 ×' + need.frag + '。</span>'); return; }
-    take(MIRROR, need.mirror); take(FRAG, need.frag); it.id = 'dimr_dragon_' + (d.dimDragon + 1);
+    take(MIRROR, need.mirror); take(FRAG, need.frag); it.id = 'dimr_dragon_' + (d.dimDragon + 1); try { if (W.__afkAcStamp) W.__afkAcStamp(it); } catch (e) {}
     sys('<span class="font-bold" style="color:#f0abfc">✦ 次元時空進化成「' + esc(DB.items[it.id].n) + '」。</span>'); try { calcStats(); saveGame(); } catch (e) {}
   }
   var fxText = function (row, it) {
