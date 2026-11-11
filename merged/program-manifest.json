@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-f96692186777",
+  "build": "merge-0.4-0e717e9e3592",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -848,8 +848,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-mio.js?v=f4c659fd4f3f",
-      "sha256": "f4c659fd4f3fbaf115ace012d2fc545953e194e05b8837f596c152b840631e5c",
+      "url": "afk-mio.js?v=837647cd09da",
+      "sha256": "837647cd09da182febdf9e39ecb5531bb9b89d4619419990f8676a207e76324b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1113,8 +1113,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-relic-runtime.js?v=ce9cce7edca8",
-      "sha256": "ce9cce7edca83d1241e362fbbecdd453bfbe2740a3efc389963e4b2b167f3fa2",
+      "url": "afk-relic-runtime.js?v=bbfa5ec8e833",
+      "sha256": "bbfa5ec8e83392352cd071afb94a7b29b1ad036c3b51b5ec01592eae3dd944bd",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1148,8 +1148,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-relicplus.js?v=bd7de3ac2b6e",
-      "sha256": "bd7de3ac2b6ef15e01f7ce6fd2f621d8fa2415c7cd3dfa94da037a7d3c239575",
+      "url": "afk-relicplus.js?v=d394c3351e90",
+      "sha256": "d394c3351e9048cbb8544e977c7d6620567a92a647e01422b79c8650937531fc",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1569,7 +1569,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "287b84c8b3426d2f7fc6373b533250eae0ea57b83b433fccf49adf9c46b47fe6",
+      "sha256": "2995aa1febcd828b6c893b767bb6f064576004f40602e65e4b3f2cc8d647c712",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1748,8 +1748,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/anticheat.js?v=f529926ae325",
-      "sha256": "f529926ae325ef0ba648eaea5506a2685ea459becce69b3d62d5c8b68d2403ca",
+      "url": "merged/anticheat.js?v=322ec03f4fbc",
+      "sha256": "322ec03f4fbcdf645442ed95be7922769970a74624edc05b078ebb713d03538c",
       "type": "text/javascript; charset=utf-8"
     },
     {

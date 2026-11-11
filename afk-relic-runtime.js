@@ -210,6 +210,7 @@
     if (typeof foulWaterHealMult === 'function' && !opt.ignoreReduction) amount *= foulWaterHealMult(target);
     if (W.AFK_RELIC_DEFENSE && W.AFK_RELIC_DEFENSE.healingReduction) amount *= 1-Math.min(.75,W.AFK_RELIC_DEFENSE.healingReduction(target,now())||0);
     var hr=statusValue(target,'healReduction'); if(hr) amount*=1-Math.min(.75,hr);
+    if (W.__afkAcHealMult) amount *= W.__afkAcHealMult(owner, source);
     var before = hp(target), actual = Math.max(0,Math.min(mhp(target) - before, Math.floor(amount)));
     target[hpKey(target)] = before + actual; hc.actualHeal = actual; hc.overheal = Math.max(0, Math.floor(amount) - actual);
     if (opt.overhealShield && hc.overheal > 0) {var os=Object.assign({source:source},opt.overhealShield);if(os.cap>0&&os.cap<=1)os.cap*=mhp(target);shield(target,hc.overheal*os.ratio,os);}

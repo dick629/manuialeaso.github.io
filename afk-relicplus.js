@@ -464,6 +464,7 @@
     if (it.attrMagic && !it.attrMagicStar) it.attrMagicStar = 1;   // 屬性魔法與星數一起繼承
     it.id = id; it.uid = (typeof uid === 'function' ? uid() : String(Math.random()).slice(2)); it.cnt = 1; it.lock = false; it.junk = false;
     p.inv.push(it);
+    try { if (window.__afkAcStamp) window.__afkAcStamp(it); } catch (e) {}   // 正規合成做出來的 S 級：蓋正當來源印記（本體已經有印記就沿用，重抽、強化不再重算時數）
   }
   var saveOk = function () { try { return typeof saveGame === 'function' && saveGame() === true; } catch (e) { return false; } };
   var adjustDia = function (delta) { try { var r = window.pandoraAdjustSharedDiamonds(delta) || {}; return r.ok ? { ok: true } : { ok: false, error: r.error || '龍之鑽石不足。' }; } catch (e) { return { ok: false, error: '龍之鑽石系統未就緒。' }; } };

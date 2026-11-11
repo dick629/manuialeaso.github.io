@@ -392,6 +392,7 @@
       if (nd.gold) p.gold = (Number(p.gold) || 0) - nd.gold;
     }
     store(p).cards[i] = st + 1;
+    if (st + 1 >= 6) { try { if (W.__afkAcStampMio) W.__afkAcStampMio(p, i); } catch (e) {} }   // 正規升到創世：蓋正當來源印記
     sys('<span class="font-bold" style="color:' + STAGE_C[st + 1] + '">🃏 密奧之卡「' + ROMAN[i] + ' ' + CARDS[i][0] + '」升到' + STAGE[st + 1] + '。</span>');
     refresh(); try { saveGame(); } catch (e) {}
     return true;
