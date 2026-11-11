@@ -1,5 +1,5 @@
 /* ============================================================================
- * afk-dreamhell.js — 瘋狂席琳＋席琳夢域鏡模式（玩家 2026-10-21 指定）
+ * afk-dreamhell.js — 席琳夢域鏡模式（玩家 2026-10-21 指定）
  *
  * 開啟方式：跟席琳世界一樣，到席琳神殿向席琳祈禱（第三個選項）；開啟後套用到所有地圖。
  *   以「瘋狂的席琳世界」為底（開啟時會一併開啟瘋狂席琳），再加上以下規則。
@@ -486,8 +486,8 @@
     if (player.sherineDream) { player.sherineMad = true; player.sherineWorld = false; }
     try { applySherineTheme(); } catch (e) {}
     logSys(player.sherineDream
-      ? '<span class="c-sherine font-bold">席琳睜開了雙眼。</span><span class="text-fuchsia-300">妖豔的夢魘吞沒了世界——經驗 ×10、金幣 ×3，還有昇華支配的材料與無盡的試煉。（瘋狂席琳＋席琳夢域鏡已開啟）</span>'
-      : '<span class="text-slate-300">夢魘退去，你回到瘋狂的席琳世界。（席琳夢域鏡已關閉）</span>');
+      ? '<span class="c-sherine font-bold">席琳睜開了雙眼。</span><span class="text-fuchsia-300">妖豔的夢魘吞沒了世界——經驗 ×10、金幣 ×3，還有昇華支配的材料與無盡的試煉。（席琳夢域鏡已開啟）</span>'
+      : '<span class="text-slate-300">夢魘退去。（席琳夢域鏡已關閉）</span>');
     try { saveGame(); } catch (e) {}
     try { renderMobs(); } catch (e) {}
     var el = document.getElementById('interaction-content'); if (el) { try { renderSherinePray(el); } catch (e) {} }
@@ -506,12 +506,12 @@
         var box = div.querySelector('.flex.flex-col.gap-3') || div;
         box.insertAdjacentHTML('beforeend',
           '<div id="afk-dream-card" class="bg-slate-950/80 border ' + (on ? 'border-fuchsia-500' : 'border-slate-700') + ' rounded p-3 text-sm leading-relaxed">'
-          + '<div class="font-bold mb-1 ' + (on ? 'text-fuchsia-300' : 'text-fuchsia-200') + '">🌙 瘋狂席琳＋席琳夢域鏡：目前 ' + (on ? '<span class="text-fuchsia-300">開啟</span>' : '<span class="text-slate-400">關閉</span>') + '</div>'
-          + '<div class="afk-lore">「再深一點……讓你的夢，也染上我的顏色。」——瘋狂的席琳</div><div class="text-slate-200 text-xs">以瘋狂席琳為底：全部怪物處於恩賜狀態（HP 共 ×50）、隨時狂暴、AC/魔防再提高、命中 ×3、減傷 +15、迴避率 +20%、傷害（一般怪 ×2／頭目 ×5）、持續傷害 ×5、會回血；'
+          + '<div class="font-bold mb-1 ' + (on ? 'text-fuchsia-300' : 'text-fuchsia-200') + '">🌙 席琳夢域鏡：目前 ' + (on ? '<span class="text-fuchsia-300">開啟</span>' : '<span class="text-slate-400">關閉</span>') + '</div>'
+          + '<div class="afk-lore">「再深一點……讓你的夢，也染上我的顏色。」——席琳</div><div class="text-slate-200 text-xs">全部怪物處於恩賜狀態（HP 共 ×50）、隨時狂暴、AC/魔防再提高、命中 ×3、減傷 +15、迴避率 +20%、傷害（一般怪 ×2／頭目 ×5）、持續傷害 ×5、會回血；'
           + '一般怪出生 10 秒隨機免疫物理或魔法。經驗 ×10、金幣 ×3，每殺 0.1% 掉龍之鑽石；掉落 ×7、裝備 50% 祝福、席琳結晶 ×5，'
           + '並掉落<span class="text-fuchsia-300 font-bold">夢艷結晶</span>、<span class="text-red-300 font-bold">地獄精華</span>、<span class="text-amber-300 font-bold">滅魔蔑視水晶</span>與碎片（昇華支配材料）。</div></div>'
           + '<button type="button" class="btn py-3 text-base font-bold ' + (!lvOk ? 'bg-slate-600 border-slate-500 opacity-60 cursor-not-allowed' : (on ? 'bg-slate-700 hover:bg-slate-600 border-slate-500' : 'bg-fuchsia-950 hover:bg-fuchsia-900 border-fuchsia-600'))
-          + '" ' + (!lvOk ? 'disabled' : '') + ' onclick="toggleSherineDream()">' + (!lvOk ? '等級不足（需 Lv80）' : (on ? '🙏 祈禱：關閉席琳夢域鏡' : '🌙 祈禱：開啟瘋狂席琳＋席琳夢域鏡')) + '</button>');
+          + '" ' + (!lvOk ? 'disabled' : '') + ' onclick="toggleSherineDream()">' + (!lvOk ? '等級不足（需 Lv80）' : (on ? '🙏 祈禱：關閉席琳夢域鏡' : '🌙 祈禱：開啟席琳夢域鏡')) + '</button>');
       } catch (e) {}
       return r;
     };
@@ -561,5 +561,5 @@
     };
   }
   window.__afkDreamHell = { on: dreamOn, applyDream: applyDream, items: Object.keys(ITEMS), illuStat: illuStat, illuMp: ILLU_MP };
-  console.log('[AFK-dreamhell] 已啟用：瘋狂席琳＋席琳夢域鏡模式（在席琳神殿開啟）');
+  console.log('[AFK-dreamhell] 已啟用：席琳夢域鏡模式（在席琳神殿開啟）');
 })();

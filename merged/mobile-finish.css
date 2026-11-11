@@ -256,6 +256,22 @@ body.m-unified[data-mobile-page="adventure"] #game-screen #afk-hotbar{order:3;po
 body.m-unified[data-mobile-page="adventure"] #afk-hotbar .hb-top{min-height:28px;height:28px;margin-bottom:4px}
 body.m-unified[data-mobile-page="adventure"] #afk-hotbar :is(.hb-row,.hb-names){grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important}
 body.m-unified[data-mobile-page="adventure"] #game-screen #afk-hotbar .hb-slot{width:100%;height:auto!important;min-height:0!important;aspect-ratio:1}
+/* 11-12 手機巡檢：橫拿手機（高度 ≤520px）時熱鍵格子跟著寬度變成 157px 正方形，戰場高度被擠成 0；橫向改成一排 44px 小格、名字藏起來 */
+@media (orientation:landscape) and (max-height:520px){
+body.m-unified[data-mobile-page="adventure"] #game-screen #afk-hotbar{display:flex!important;align-items:center;justify-content:center;gap:10px;padding:3px 8px!important}
+body.m-unified[data-mobile-page="adventure"] #afk-hotbar .hb-top{height:auto!important;min-height:0!important;margin:0!important;flex-direction:row;gap:4px}
+body.m-unified[data-mobile-page="adventure"] #afk-hotbar :is(.hb-row,.hb-names){grid-template-columns:repeat(4,44px)!important;gap:8px!important}
+body.m-unified[data-mobile-page="adventure"] #afk-hotbar .hb-names{display:none!important}
+body.m-unified[data-mobile-page="adventure"] #game-screen #afk-hotbar .hb-slot{width:44px!important;height:44px!important}
+body.m-unified[data-mobile-page="adventure"] #lm-header :is(.lm-currencies,.lm-worldbar){display:none!important}
+body.m-unified[data-mobile-page="adventure"] #lm-header{padding-top:max(4px,env(safe-area-inset-top))!important;padding-bottom:4px!important}
+body.m-unified #lm-nav{min-height:0!important;height:auto!important}
+body.m-unified #lm-nav button{min-height:36px!important;height:36px!important;padding-top:1px!important;padding-bottom:1px!important}
+body.m-unified[data-mobile-page="adventure"] #game-screen #map-view-panel #lm-map-controls{display:grid!important;grid-template-columns:minmax(0,130px) minmax(0,1fr) 60px 60px 60px!important;gap:4px!important;padding-bottom:3px!important}
+body.m-unified[data-mobile-page="adventure"] #game-screen #map-view-panel #lm-map-controls :is(#map-category,#map-select){grid-column:auto!important;grid-row:1!important}
+body.m-unified[data-mobile-page="adventure"] #game-screen #map-view-panel #lm-map-controls :is(#btn-pandora-shortcut,#btn-teleport,#btn-return-town){grid-row:1!important;width:60px!important}
+body.m-unified[data-mobile-page="adventure"] #game-screen #lm-map-controls :is(select,button){min-height:32px!important;height:32px!important;padding:2px 6px!important}
+}
 body.m-unified[data-mobile-page="adventure"] #town-npc-map{height:100%!important;min-height:0!important;max-height:100%!important;aspect-ratio:auto!important}
 @media(max-height:740px){body.m-unified[data-mobile-page="adventure"] #lm-header{padding-top:7px;padding-bottom:6px}body.m-unified[data-mobile-page="adventure"] .lm-worldbar{margin-top:4px}body.m-unified[data-mobile-page="adventure"] #lm-nav button{min-height:48px}}
 

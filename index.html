@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="css/tailwind-built.css?v=932535789fee"><!-- 🔧 預編譯 Tailwind（取代執行期 JIT tailwind.js）：只含實際用到的 class，省 407KB runtime + 移除持續掃描 DOM 的成本。置於 style.css 之後以保留原 cascade（utility 平手時勝過自訂 class，與舊 JIT 注入順序一致） -->
     <link rel="stylesheet" href="merged/mobile-shell.css?v=e6b3ffd8d492">
     <link rel="stylesheet" href="merged/mobile-theme.css?v=54bf1614a1fd">
-    <link rel="stylesheet" href="merged/mobile-finish.css?v=e78bd342b100">
+    <link rel="stylesheet" href="merged/mobile-finish.css?v=0feb233c1679">
     <link rel="stylesheet" href="merged/interface-materials.css?v=df4d36674acd">
     <link rel="stylesheet" href="merged/interface-desktop.css?v=c44e95eefc59" media="(min-width:821px)">
     <link rel="stylesheet" href="merged/interface-mobile.css?v=ac93b25f27b7" media="(max-width:820px)">
@@ -564,7 +564,7 @@
     })();
     </script>
 
-    <script src="js/anim-manifest.js?v=6fe97cd128d7"></script>
+    <script src="js/anim-manifest.js?v=655fcebc1c3c"></script>
     <script src="js/00-data.js?v=6637104e1fa8"></script>
 <script src="js/01-drops-config.js?v=287d6f0e5cdc"></script>
 <script src="js/02-stats-recompute.js?v=8cefe7e46f92"></script>
@@ -604,7 +604,7 @@
          無開關：這是顯示正確性，不是功能。實測 forceDarkModeEnabled+darkModeImagePolicy=smart 可重現、加這行即解。 -->
     <style>:root{color-scheme:dark}</style>
     <!-- afk-toggles 必須最先載入：外掛開關中樞（逃生門，自己不可被關；某支外掛壞掉時玩家關掉它就能用原版繼續玩） -->
-    <script src="afk-toggles.js?v=f519a527aa3c"></script>
+    <script src="afk-toggles.js?v=44a5a3b515e3"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=fab41eefb426"></script>
@@ -644,7 +644,7 @@
     <!-- afk-update：網站有新版本時提示更新（按一下存檔重整回原角色；閒置時由 afk-autoreload 自動更新） -->
     <script src="afk-update.js?v=850c0917fa5c"></script>
     <!-- afk-dreamhell：瘋狂席琳席琳夢域鏡模式（需核心補丁 18）；排在 afk-droplog／afk-dropcount 之前，讓它們看得到新掉落 -->
-    <script src="afk-dreamhell.js?v=cd837b478420"></script>
+    <script src="afk-dreamhell.js?v=f54f3702e9fb"></script>
     <!-- afk-cardplus：白金／鑽石卡、圖鑑全滿夢域 ×3、鑽白金幻化（需核心補丁 20）；排在 afk-dropcount 之前，讓掉落統計數得到白金／鑽石卡 -->
     <script src="afk-cardplus.js?v=3e33e36d2c4a"></script>
     <!-- afk-droplog：短暫卡頓補跑中的擊殺／掉落照常顯示（原版 <3 秒補跑完全不印） -->
@@ -902,9 +902,9 @@
     <!-- afk-debuff-rules：負面效果一律計算抵抗、頭目不再免疫；污濁之水全體 15 秒、冷卻 30 秒（冷卻中改三重矢） -->
     <script src="afk-debuff-rules.js?v=855fffbc4678"></script>
     <!-- afk-finalboss：世界最終頭目「死亡女神 席琳」（死亡之海・席琳的沉沒神殿；瘋狂席琳＋席琳夢域鏡、每角色一次；挑戰後才能冥王域轉生；需 afk-dreamhell、afk-dreamstar、afk-rebirth） -->
-    <script src="afk-finalboss.js?v=6556be5d5557"></script>
+    <script src="afk-finalboss.js?v=0a7ee84fe7ed"></script>
     <!-- afk-rebirth2：二轉決戰（席琳方傷害 +5%）、次元突破者／封印輪迴光環、第二次轉生（需 afk-finalboss、afk-dreamstar） -->
-    <script src="afk-rebirth2.js?v=bf2104860e9a"></script>
+    <script src="afk-rebirth2.js?v=3e5fea3d0593"></script>
     <!-- afk-affix-plus：詞綴擴充（祝福／遠古三階只能打怪取得；燃柳村龍紋師艾格尼絲「龍紋賦予」：不屈者意志、龍的印記／傷痕、神樹者的讚禮、闇龍的抵抗者） -->
     <script src="afk-affix-plus.js?v=4d3005bcbfc8"></script>
     <!-- afk-lostshard：失去光輝的碎片（席琳夢域鏡掉落；哈瑪大師 100 碎片＋500 龍鑽＋1000 席琳結晶熔鑄成材料） -->
@@ -940,8 +940,8 @@
     <!-- 小百科從目前物品與變身資料生成分階說明。 -->
     <!-- afk-icon-fix：道具圖示對齊天堂透視鏡（由 scripts/gen-icon-fix.mjs 依 data/ttmi-icon-check.json 產生） -->
     <script src="afk-icon-fix.js?v=c5aeec7faab4"></script>
-    <script src="afk-game-guide.js?v=9dfa6115b92c"></script>
-    <script src="afk-readability.js?v=4231f420a66d"></script>
+    <script src="afk-game-guide.js?v=a722f4c0195e"></script>
+    <script src="afk-readability.js?v=2de24dff82d3"></script>
     <!-- afk-craftinfo：製作清單每列多一行「成品能力」（點開看成品資料，手機不用長按）；手機版製作按鈕換到下一行 -->
     <script src="afk-craftinfo.js?v=2f6839046b8f"></script>
     <!-- afk-classic：經典模式補正（256K 撥接：斷線／LAG／怪中BUG、頭目皆不死系＋起死回生、古魯丁地監 1～7 樓攀爬與歐林、黑妖之後職業封印、影子打法、歐林房、無敵狗、開服夜爆機、等級上限、時代地圖、席琳神殿進入黑妖三部曲、原版經驗表／組隊分配／死亡懲罰／掉錢、一般轉經典、能力值上限、四人隊伍、贖回冷卻）；包 tick，放在後面 -->
@@ -1088,7 +1088,7 @@
     <!-- afk-fix1102：滿等不給經驗、掉寶人數上限 ×16、夢域鏡 ×7（核心補丁 82）、多魯嘉給龍鑽、濃縮古代藥水配方、收藏冊清理、村莊 NPC 站位；要在 afk-classic、afk-ancient、afk-ttmi-items、afk-dropcut 之後 -->
     <script src="afk-fix1102.js?v=002143bd9e33"></script>
     <!-- afk-soulstone：靈魂石系統（席琳神殿的扎爾；每隻頭目一種靈魂石，訓練所單挑、掉落相同）；放最後：要等所有頭目都登錄完才建靈魂石 -->
-    <script src="afk-soulstone.js?v=8d4428cd537c"></script>
+    <script src="afk-soulstone.js?v=89052a31d7e6"></script>
     <!-- afk-guardup：亞丁佐姆格用靈魂石強化城堡護衛（六種生存能力各 10 階）；要在 afk-castle-guards、afk-aden-quests、afk-soulstone 之後 -->
     <script src="afk-guardup.js?v=8b018f257d5b"></script>
     <!-- afk-nosell：系統專屬道具（聖紋、手環、密奧之卡、聖物、靈魂石、符文石、席琳遺骸、專屬材料）不能賣、不會被自動賣出；要在 afk-itemguard、afk-sellguard、afk-relicsell、afk-soulstone 之後（包它們包過的販賣函式） -->
@@ -1141,7 +1141,7 @@
     <!-- afk-skillup：技能強化（席琳神殿 技藝導師 薇爾娜）；要在 afk-hidden、afk-callally、afk-card-combat 之後，afk-intdmg 之前 -->
     <script src="afk-skillup.js?v=de06901f57b5"></script>
     <!-- afk-dreamquest：夢域鏡任務線「水面下的證詞」7 章（伊奧、扎爾、喬、迷幻森林之母、奧拉奇里亞、無名的說書人）；要在 afk-lore-kit、afk-hardin、afk-rift2、afk-soulstone 之後 -->
-    <script src="afk-dreamquest.js?v=07e2d7f89f2a"></script>
+    <script src="afk-dreamquest.js?v=4d351737a271"></script>
     <!-- afk-evolve：職業進化（席琳神殿 技藝導師 薇爾娜；第一批召喚、寵物、爆發流派＋意志）；要在 afk-skillup、afk-relic-runtime、afk-card-combat 之後 -->
     <script src="afk-evolve.js?v=208c1393c954"></script>
     <!-- afk-mapboss：地圖王（野外打倒 300 隻）、副本王（地監待滿 10 分鐘）、王之徽章；要在 afk-lore-kit、afk-region-boss 之後 -->
@@ -1173,12 +1173,12 @@
 <script src="merged/doll-policy.js?v=78965e06c4ed"></script>
 <script src="merged/legacy-codec.js?v=fe92258855d8"></script>
 <script src="merged/save-bridge.js?v=0501fc14f4ba"></script>
-<script src="merged/recovery-core.js?v=4597b3202a76"></script>
+<script src="merged/recovery-core.js?v=cf8d96328caf"></script>
 <script src="merged/backup-store.js?v=f40a03e26107"></script>
 <script src="merged/integrity-core.js?v=6bd6ab1223c8"></script>
 <script src="merged/integrity-store.js?v=3bae9d66d9d1"></script>
 <script src="merged/integrity-runtime.js?v=0db7761d06ea"></script>
-<script src="merged/save-gate.js?v=edd467fa7ce2"></script>
+<script src="merged/save-gate.js?v=7b1049c71c53"></script>
 <!-- afk-reloadguard：同一個角色讀回自己舊存檔的帳本（倉庫存入次數、讀回次數）；要在 js/12、merged/integrity-core、merged/save-gate 之後 -->
 <script src="afk-reloadguard.js?v=591fcee39605"></script>
 <script src="merged/mobile-adventure.js?v=d606d4cac5f9"></script>
@@ -1200,7 +1200,7 @@
 <link rel="stylesheet" href="merged/progression-desktop.css?v=80ff2924c507" media="(min-width: 821px)">
 <link rel="stylesheet" href="merged/progression-mobile.css?v=df9be8980291" media="(max-width: 820px)">
 <script src="merged/class-catalog.js?v=2b03afef4a8d"></script>
-<script src="merged/class-core.js?v=0c36e3a425f9"></script>
+<script src="merged/class-core.js?v=be5823f6defe"></script>
 <script src="merged/class-runtime.js?v=cc7d79edd497"></script>
 <script src="merged/class-combat.js?v=f38abe364d22"></script>
 <script src="merged/sherine-catalog.js?v=64255f8b16bd"></script>
@@ -1212,7 +1212,7 @@
 <script src="merged/identity-digest.js?v=680002c20cf7"></script>
 <script src="merged/admin-guard.js?v=af0321ad96e9"></script>
 <script src="merged/class-native.js?v=27305b13d012"></script>
-<script src="merged/class-ui.js?v=d0a273887d36"></script>
+<script src="merged/class-ui.js?v=a04415f90b09"></script>
 <script src="merged/attribute-help.js?v=88730f581c82"></script>
 <!-- 本機測試員（merged/test-npc.js）：玩家 11-10 關閉，正式版不載入 -->
     <script src="merged/save-health.js?v=f6d5844a6394"></script>

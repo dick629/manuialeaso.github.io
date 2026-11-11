@@ -10,7 +10,7 @@
  const shortP=p=>p?((p.name||'?')+'／'+(p.cls||'?')+'／'+(p.rebirth||0)+'轉 Lv'+(p.lv||'?')):'（無）';
  const trace={
   start(raw,slot){let head='';try{head=String(raw||'').replace(/^\uFEFF/,'').trimStart().slice(0,5);}catch(e){}
-   T={at:new Date().toISOString(),slot,size:(raw||'').length,head,ver:(window.__afkCodeVersion||(document.querySelector('script[src*="save-gate.js"]')||{}).src||'').toString().slice(-20),ua:navigator.userAgent.replace(/\s+/g,' ').slice(0,120),steps:[],ok:null,msg:'',failStep:''};},
+   T={at:new Date().toISOString(),slot,size:(raw||'').length,head,ver:(window.__afkCodeVersion||(typeof document!=='undefined'&&document.querySelector?(document.querySelector('script[src*="save-gate.js"]')||{}).src:'')||'').toString().slice(-20),ua:(typeof navigator!=='undefined'&&navigator.userAgent||'').replace(/\s+/g,' ').slice(0,120),steps:[],ok:null,msg:'',failStep:''};},
   step(name,detail){if(T)T.steps.push({n:name,d:String(detail==null?'':detail).slice(0,300),t:Date.now()});},
   end(ok,msg){if(!T)return;T.ok=ok;T.msg=String(msg||'').slice(0,500);if(!ok)T.failStep=(T.steps[T.steps.length-1]||{}).n||'';
    try{const a=JSON.parse(localStorage.getItem(DBG_KEY)||'[]');a.unshift(T);localStorage.setItem(DBG_KEY,JSON.stringify(a.slice(0,20)));}catch(e){}

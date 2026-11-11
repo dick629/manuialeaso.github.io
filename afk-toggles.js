@@ -20,7 +20,7 @@
     // localStorage 原始值快取（'0'/'1'/null=未設過）。同上，熱路徑不能每次同步讀 LS。
     // 唯一寫入者是本檔的 set() 與面板「全部恢復預設」，都會同步更新快取；多分頁同開互改設定不在支援範圍（重新整理即一致）。
     var lsCache = {};
-    // ── 併入「瘋狂席琳＋席琳夢域鏡模式」（玩家 2026-10-31 01:56）：改技能、改戰鬥機制的外掛不再各自有開關，
+    // ── 併入「席琳夢域鏡模式」（玩家 2026-10-31 01:56）：改技能、改戰鬥機制的外掛不再各自有開關，
     //    一律跟著夢域鏡模式開關（關掉它就全部關掉）；效果範圍不變（一般、席琳、夢域鏡照原本，經典模式照原本不套用）。
     //    面板不再列出這些項目；舊的個別設定忽略（不會留下關掉卻開不回來的死結）。融合版不再提供個別玩法開關。
     var MERGED_TO = 'dreamhell';
@@ -53,11 +53,12 @@
     function enabledRaw(id) {
         var r = find(id), def = r ? r.def : true;
         if (r && r.locked || RETIRED[id]) return false;
+        if (window.__afkTestAnyToggle && lsCache[id] != null) return lsCache[id] === '1';   // 測試環境：測試自己 set 過的開關以它為準（含併進夢域鏡、隱藏規則的那些）
         if (MERGED[id]) return api.enabled(MERGED[id]);
         if (r && r.parent && !api.enabled(r.parent)) return false;
         // Ignore stale module-off flags, without deleting or rewriting any saved key.
         // Opt-in defaults remain opt-in and retain their existing stored value.
-        if (r && !adjustable(r) && def) return true;
+        if (r && !adjustable(r) && def && !window.__afkTestAnyToggle) return true;   // 測試環境（scripts/relic-test-browser 設 __afkTestAnyToggle）可以關掉固定開啟的功能，用來測「關掉時的原本行為」
         var v;
         if (id in lsCache) v = lsCache[id];
         else { try { v = lsCache[id] = localStorage.getItem(LS + id); } catch (e) { memoOk = false; return def; } }
@@ -114,7 +115,7 @@
             if (memoOk) memo[id] = r;
             return r;
         },
-        set: function (id, on) { if (!adjustable(find(id))) return false; memo = Object.create(null); try { localStorage.setItem(LS + id, on ? '1' : '0'); lsCache[id] = on ? '1' : '0'; return true; } catch (e) { return false; } },
+        set: function (id, on) { if (!adjustable(find(id)) && !window.__afkTestAnyToggle) return false; memo = Object.create(null); try { localStorage.setItem(LS + id, on ? '1' : '0'); lsCache[id] = on ? '1' : '0'; return true; } catch (e) { return false; } },
 
         list: function () { return registry.slice(); },
         options: function () { return registry.filter(adjustable); },
@@ -192,7 +193,7 @@
         { id: 'relicauto', name: '遺物一鍵合成與自動合成', desc: '哈瑪大師可以把遺物一鍵合到指定強化值，也可以設定撿到遺物時自動合成（自動合成要在哈瑪大師另外打開）。', group: '遊戲玩法', parent: 'relicplus' },
         { id: 'relicfx', name: '遺物強化特效', desc: '啟用各件遺物的分階特效、屬性印記與毒血規則；遺物治療每件至少間隔 5 秒。完整效果可在小百科查閱。', group: '遊戲玩法' },
         { id: 'ttmi-items', name: '亞丁古物與材料工坊', desc: '亞丁古物商人洛依、工匠薩克與時空裂痕補給。', group: '遊戲內容' },
-        { id: 'dreamhell', name: '瘋狂席琳＋席琳夢域鏡模式', desc: '席琳神殿多一個祈禱選項：怪物 HP×50、隨時狂暴、會回血、出生隨機免疫；經驗×10、金幣×3，掉落×50、裝備 50% 祝福，並掉落昇華支配材料。另外統一控制改技能、改戰鬥機制的規則（在各模式照原本生效），關掉就全部回到原作', group: '遊戲玩法' },
+        { id: 'dreamhell', name: '席琳夢域鏡模式', desc: '席琳神殿多一個祈禱選項：怪物 HP×50、隨時狂暴、會回血、出生隨機免疫；經驗×10、金幣×3，掉落×50、裝備 50% 祝福，並掉落昇華支配材料。另外統一控制改技能、改戰鬥機制的規則（在各模式照原本生效），關掉就全部回到原作', group: '遊戲玩法' },
         { id: 'dreamstar', name: '暗夢星迴（單機）', desc: '只在席琳夢域鏡：時空裂痕入口多一個暗夢星迴，只出裂縫夢境者投影頭目，有相消、聖結界、反射、四屬性風暴、15 分自爆等時間軸；掉昇華支配材料、昇華支配遺物、夢域塵', group: '遊戲玩法' },
         { id: 'corrupt', name: '四大龍副本', desc: '威頓村可挑戰四座龍巢；龍王有七階變身，巢穴持續造成屬性傷害，並有反射與治療詛咒。', group: '遊戲玩法' },
         { id: 'guardring', name: '守護者之戒', desc: '轉生後在海音找伊席蘿蒂：五名騎士各自的劇情與副本，收集材料升級守護者之戒，配戴一枚當主誓約', group: '遊戲內容' },

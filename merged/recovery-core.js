@@ -97,7 +97,8 @@
      catch(q){
       const quota=/quota|22/i.test(String(q&&(q.name||q.code||q.message)));
       // 11-11：手機空間不夠時，可再生的紀錄（歷史、診斷、_bak 副本、隔離區紀錄）先略過，角色與倉庫照寫
-      if(OPTIONAL.test(c.key)&&quota){try{store.removeItem(c.key);}catch{}c.skipped=true;c.after=null;}
+      // 但這次計畫是「把異常物品移進隔離區」時，隔離區紀錄寫不進去就不能略過（略過＝物品從角色身上消失、也沒進隔離區）
+      if(OPTIONAL.test(c.key)&&quota&&!(c.key===QUARANTINE&&changes.some(x=>x.reason==='QUARANTINE_ITEMS'))){try{store.removeItem(c.key);}catch{}c.skipped=true;c.after=null;}
       else{
        // 11-11 13:58：重要資料寫不進去 → 把已寫入／原本就在的可再生紀錄全部讓出空間，再試一次
        let freed=false;

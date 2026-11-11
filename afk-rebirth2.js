@@ -45,7 +45,7 @@
   var canSecond = function (p) { return !!p && p.rebirth >= 1 && p.rebirth < 2 && firstDone(p) && !rec2(p) && fates() >= 8; };
   window.afkFinalEnter2 = function () {
     var p = P(); if (!p) return;
-    if (!FB.dreamOn()) { sys('<span class="text-red-400">只有在「瘋狂席琳＋席琳夢域鏡」的世界裡，才能走進死亡之海。</span>'); return; }
+    if (!FB.dreamOn()) { sys('<span class="text-red-400">只有在席琳夢域鏡的世界裡，才能走進死亡之海。</span>'); return; }
     if (rec2(p)) { sys('<span class="text-slate-300">二轉決戰每個角色只有一次。</span>'); return; }
     if (!canSecond(p)) { sys('<span class="text-red-400">二轉決戰需要：已轉生一次、第一次最終決戰已挑戰過、集齊八職業的不屈的命運（目前 ' + fates() + '／8）。</span>'); return; }
     if (typeof state !== 'undefined' && (state.antharas || state.riftRun || state.prideClimb)) { sys('<span class="text-amber-300">你正身在其他副本之中。</span>'); return; }

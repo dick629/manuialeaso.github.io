@@ -405,7 +405,7 @@
       + '<div class="zs-tabs"><button type="button" class="btn zs-tab' + (ui.tab === 'mine' ? ' on' : '') + '" data-zs="tab:mine">我的靈魂石</button>'
       + '<button type="button" class="btn zs-tab' + (ui.tab === 'craft' ? ' on' : '') + '" data-zs="tab:craft">製作</button>'
       + '<button type="button" class="btn zs-tab' + (ui.tab === 'info' ? ' on' : '') + '" data-zs="tab:info">說明</button>'
-      + (W.LineageClassUI ? '<button type="button" class="btn zs-tab" data-zs="souls:open" aria-haspopup="dialog">角色封魂・三格魂魄</button>' : '') + '</div>';
+      + (W.LineageClassUI ? '<button type="button" class="btn zs-tab" data-zs="souls:open" aria-haspopup="dialog">角色封魂・五格魂魄</button>' : '') + '</div>';
     var why = busy();
     if (ui.tab === 'mine') h += '<div class="zs-say" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><span>連續挑戰：打倒後自動用下一顆同一個王的靈魂石，直到用完。</span>'
       + '<button type="button" class="btn zs-tab' + (chainOn() ? ' on' : '') + '" data-zs="chain:1">' + (chainOn() ? '開' : '關') + '</button></div>';

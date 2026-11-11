@@ -9,7 +9,7 @@
  *   最終決戰就在夢的最底層——死亡之海下的沉沒神殿。
  *
  * 挑戰條件
- *   ‧世界必須是「瘋狂席琳＋席琳夢域鏡」；在席琳神殿向席琳祈禱的視窗下方出現入口
+ *   ‧世界必須是席琳夢域鏡；在席琳神殿向席琳祈禱的視窗下方出現入口
  *   ‧Lv100 以上（已轉生的角色不看等級）；每個角色只能挑戰一次（進場就算用掉；中途重新整理、回村、倒下都算輸）
  *   ‧區內不能傳送；20 分鐘內沒打倒，席琳發動「萬物歸於死」，挑戰失敗
  *
@@ -110,7 +110,7 @@
       OBJS.forEach(function (o, i) { if (i === 1) return; if (o && o[pr[1]] != null && o[pr[0]] == null) o[pr[0]] = o[pr[1]]; });   // 不借 MOB_YLIFT（是冰之女王的圖用的高度修正）
     });
     // 各階層的名字（席琳夢境／席琳幻影／席琳伴身＋名字）也用同一套圖
-    try { ['席琳夢境', '席琳幻影', '席琳伴身'].forEach(function (tn) { var nm = tn + ' ' + BOSS_NAME; if (names && names.add) names.add(nm); if (typeof MOB_ANIM_ALIAS !== 'undefined') MOB_ANIM_ALIAS[nm] = BOSS_NAME; SETS.forEach(function (st) { if (st && st.has && st.has(BOSS_NAME)) st.add(nm); }); OBJS.forEach(function (o, i) { if (i === 1) return; if (o && o[BOSS_NAME] != null && o[nm] == null) o[nm] = o[BOSS_NAME]; }); }); } catch (e) {}
+    try { ['席琳夢境', '席琳幻影', '席琳伴身'].forEach(function (tn) { var nm = tn + ' ' + BOSS_NAME; if (names && names.add) names.add(nm); if (typeof MOB_ANIM_ALIAS !== 'undefined') { if (tn === '席琳夢境') MOB_ANIM_ALIAS[nm] = BOSS_NAME; else delete MOB_ANIM_ALIAS[nm]; }   /* 11-12：幻影、伴身有自己的換色版（assets/anim/席琳幻影 死亡女神 席琳、席琳伴身 死亡女神 席琳；施法沿用本體） */ SETS.forEach(function (st) { if (st && st.has && st.has(BOSS_NAME)) st.add(nm); }); OBJS.forEach(function (o, i) { if (i === 1) return; if (o && o[BOSS_NAME] != null && o[nm] == null) o[nm] = o[BOSS_NAME]; }); }); } catch (e) {}
   } catch (e) {}
 
   // ── 狀態 ──
@@ -462,7 +462,7 @@
   // ── 入口 ──
   window.afkFinalEnter = function () {
     if (!player) return;
-    if (!dreamOn()) { sys('<span class="text-red-400">只有在「瘋狂席琳＋席琳夢域鏡」的世界裡，才能走進死亡之海。</span>'); return; }
+    if (!dreamOn()) { sys('<span class="text-red-400">只有在席琳夢域鏡的世界裡，才能走進死亡之海。</span>'); return; }
     if (rec()) { sys('<span class="text-slate-300">你已經面對過死亡女神了。每個靈魂只有一次機會。</span>'); return; }
     if (!(player.rebirth > 0) && (player.lv || 1) < 100) { sys('<span class="text-red-400">需要 Lv100 才能踏進死亡之海（已轉生的角色不受限）。</span>'); return; }
     if (S().antharas || S().riftRun || S().prideClimb) { sys('<span class="text-amber-300">你正身在其他副本之中。</span>'); return; }

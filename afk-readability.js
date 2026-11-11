@@ -94,8 +94,11 @@ body #poly-modal>.panel>button.btn.mt-4{position:sticky;bottom:0;z-index:2}
 }
 /* 2026-11-12 手機巡檢：選角畫面左上「介面」「電台」蓋到第一張角色卡的「擔任傭兵」、右下「存檔與修復」蓋到能力表；上下各留出按鈕的位置 */
 @media (max-width:760px){
-#load-select-panel:not(.hidden){padding-top:44px!important;padding-bottom:64px!important;box-sizing:border-box}
+#load-select-panel:not(.hidden){padding-top:calc(44px + env(safe-area-inset-top))!important;padding-bottom:calc(64px + env(safe-area-inset-bottom))!important;box-sizing:border-box}
 }
+/* iPhone 瀏海、底部橫條：浮動的「介面」「電台」「存檔與修復」避開安全區 */
+#afk-toggles-entry,#afk-radio-btn{margin-top:env(safe-area-inset-top)}
+#merge-recovery-entry{margin-bottom:env(safe-area-inset-bottom)}
 /* Native dialogs must remain above the mobile log sheet (9500) and navigation
    (9600); confirmations keep their own higher layer. Do not close the log or
    change its scroll position merely because the user inspects an item. */
