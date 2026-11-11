@@ -11,7 +11,7 @@
     user-select: none;
 }
 
-/* ===== 經典角色能力資訊欄（assets/ui/能力.png，400×825）===== */
+/* ===== 經典角色能力資訊欄（assets/ui/能力.webp，400×825）===== */
 #tab-stats.ability-window-tab {
     padding:0 !important;
     gap:0 !important;
@@ -30,7 +30,7 @@
     aspect-ratio:400 / 825;
     container-type:inline-size;
     overflow:hidden;
-    background:url('../assets/ui/能力.png') center/100% 100% no-repeat;
+    background:url('../assets/ui/能力.webp') center/100% 100% no-repeat;
     color:#e8e4dc;
     user-select:none;
 }
@@ -1025,7 +1025,7 @@
 .classic-inventory-tab:not(.hidden) { display:flex !important; flex-direction:column; align-items:center; }
 .classic-list-toolbar { flex:0 0 auto; margin:0 !important; padding:6px 8px !important; top:0 !important; background:#111827 !important; border-bottom:1px solid #6b5426; z-index:20; }
 .classic-list-toolbar { width:100%; }
-.classic-inventory-shell { position:relative; flex:0 0 auto; width:100%; max-width:100%; aspect-ratio:193/282; overflow:hidden; background:url('../assets/ui/武器防具道具欄位.png') center/100% 100% no-repeat; }
+.classic-inventory-shell { position:relative; flex:0 0 auto; width:100%; max-width:100%; aspect-ratio:193/282; overflow:hidden; background:url('../assets/ui/武器防具道具欄位.webp') center/100% 100% no-repeat; }
 .classic-inventory-viewport { position:absolute; z-index:2; left:13.99%; top:10.64%; width:72.02%; height:70.21%; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); grid-auto-rows:16.666667%; align-content:start; overflow-y:auto; overflow-x:hidden; box-sizing:border-box; background:#07080a; scrollbar-width:none; overscroll-behavior:contain; }
 .classic-inventory-viewport::-webkit-scrollbar { width:0; height:0; }
 .classic-inventory-viewport > .list-item { position:relative; box-sizing:border-box; display:flex !important; align-items:center; justify-content:center; width:100%; height:100%; min-width:0; min-height:0; margin:0 !important; padding:2px !important; border:1px solid #454b47 !important; border-radius:0 !important; background:#090a0d !important; box-shadow:inset 0 0 6px #000 !important; overflow:hidden; }
@@ -1114,7 +1114,7 @@
 .classic-skill-window {
     position:relative; flex:0 0 auto; width:min(100%,510px); aspect-ratio:193/282;
     margin:0 auto; overflow:hidden; user-select:none;
-    background:url('../assets/ui/技能欄位.png') center/100% 100% no-repeat;
+    background:url('../assets/ui/技能欄位.webp') center/100% 100% no-repeat;
 }
 .classic-skill-heading {
     position:absolute; z-index:4; left:18%; top:1.4%; width:64%; height:5.4%;

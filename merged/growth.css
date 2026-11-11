@@ -114,12 +114,12 @@
 #growth-overlay .growth-emblem--ward{background-image:url('../assets/ui/growth-v4/icons/ward.svg')}
 #growth-overlay .growth-body{background:radial-gradient(ellipse at 50% 0,#1e302b80,transparent 70%),#101513}
 #growth-overlay header,#growth-overlay nav,#growth-overlay footer{background:linear-gradient(#27302b,#121a17);border-color:#665a40;color:#d6c7a4}
-#growth-overlay .growth-tree{background:linear-gradient(#0002,#0002),url('../assets/ui/growth-v3/talent-stone.png') center/100% 100% no-repeat}
+#growth-overlay .growth-tree{background:linear-gradient(#0002,#0002),url('../assets/ui/growth-v3/talent-stone.webp') center/100% 100% no-repeat}
 #growth-overlay .growth-star-panel{border-color:#a08b59;background:#0b1210;box-shadow:0 0 0 2px #080c0a,inset 0 0 0 1px #c2a46e55}
 #growth-overlay .growth-etch{stroke:#b5a06d22}
 #growth-overlay .growth-wire{stroke:#b2a07a;opacity:.5}
 #growth-overlay .growth-wire.lit{stroke:#edcc7f;filter:drop-shadow(0 0 3px #c3974b)}
-#growth-overlay .growth-path,#growth-overlay .growth-inspector,#growth-overlay .growth-stat{background:linear-gradient(135deg,#24322bd9,#101916ed),url('../assets/ui/growth-v3/talent-stone.png') center/cover;border-color:#80704c;color:#dbd4bd}
+#growth-overlay .growth-path,#growth-overlay .growth-inspector,#growth-overlay .growth-stat{background:linear-gradient(135deg,#24322bd9,#101916ed),url('../assets/ui/growth-v3/talent-stone.webp') center/cover;border-color:#80704c;color:#dbd4bd}
 #growth-overlay .growth-path.selected{background:linear-gradient(120deg,#655536db,#252a20);border-color:#d3bb7d}
 #growth-overlay .growth-star-caption{background:linear-gradient(90deg,#343627,#111a16)}
 #growth-overlay .growth-origin{background:radial-gradient(#3d4b36,#131e18);box-shadow:0 0 0 3px #121912,0 0 0 5px #8c7950,inset 0 0 8px #d1b67640}
@@ -127,11 +127,11 @@
 #growth-overlay button.growth-node.locked{background:radial-gradient(#253127,#101612);border-color:#605e46;color:#9b9b88}
 #growth-overlay button.growth-node.available{border-color:#d6c38b;box-shadow:0 0 0 2px #111a12,0 0 0 3px #9d8653,inset 0 0 7px #daca6c35}
 #growth-overlay button.growth-node.lit{background:radial-gradient(circle at 40% 30%,#fff0bd,#b88d36 48%,#34422a 90%);border-color:#f6dc9a;color:#241d10;box-shadow:0 0 0 2px #1a2215,0 0 0 3px #8f7950,0 0 11px #d8b66480}
-#growth-overlay .growth-paragon-rank{display:grid;grid-template-columns:33.333% minmax(0,1fr);gap:0;aspect-ratio:3/1;padding:0;border:0;background:url('../assets/ui/growth-v3/paragon-stone.png') center/100% 100% no-repeat}
+#growth-overlay .growth-paragon-rank{display:grid;grid-template-columns:33.333% minmax(0,1fr);gap:0;aspect-ratio:3/1;padding:0;border:0;background:url('../assets/ui/growth-v3/paragon-stone.webp') center/100% 100% no-repeat}
 #growth-overlay .growth-rank-seal{justify-self:center;width:70%;height:auto;aspect-ratio:1;border:0;box-shadow:none;background:transparent;padding:0;color:#f1dca4;text-shadow:0 2px 3px #000;transform:none}
 #growth-overlay .growth-rank-seal b{font-size:clamp(25px,4vw,54px)}
 #growth-overlay .growth-paragon-rank>div:last-child{padding:10px 9% 10px 3%;min-width:0}
-#growth-overlay .growth-ultimate{background:linear-gradient(110deg,#213126e8,#101914ed),url('../assets/ui/growth-v3/talent-stone.png') center/cover}
+#growth-overlay .growth-ultimate{background:linear-gradient(110deg,#213126e8,#101914ed),url('../assets/ui/growth-v3/talent-stone.webp') center/cover}
 #growth-overlay .growth-stat-meter{background:#080f0a;border-color:#6e6848}
 #growth-overlay .growth-node-emblem{display:block;width:23px;height:23px;pointer-events:none}
 #growth-overlay .notable .growth-node-emblem{width:27px;height:27px}

@@ -17,7 +17,7 @@
     <script src="merged/recovery-boot.js?v=ffe629596dba"></script>
     <link rel="icon" type="image/png" href="assets/favicon.png">   <!-- 🖼️ 瀏覽器分頁圖示(favicon)：把你的圖放到 assets/favicon.png 即生效；可改 href 路徑或副檔名(.ico/.svg) -->
 
-    <link rel="stylesheet" href="css/style.css?v=f24ce06e4cd0">
+    <link rel="stylesheet" href="css/style.css?v=b74c8c865c05">
     <link rel="stylesheet" href="css/floating-ui.css?v=bc8be4ac7f11">
     <link rel="stylesheet" href="css/tailwind-built.css?v=932535789fee"><!-- 🔧 預編譯 Tailwind（取代執行期 JIT tailwind.js）：只含實際用到的 class，省 407KB runtime + 移除持續掃描 DOM 的成本。置於 style.css 之後以保留原 cascade（utility 平手時勝過自訂 class，與舊 JIT 注入順序一致） -->
     <link rel="stylesheet" href="merged/mobile-shell.css?v=e6b3ffd8d492">
@@ -106,7 +106,7 @@
             </section>
 
             <div id="creation-avatar-stage" aria-hidden="true">
-                <img id="class-preview-img" src="assets/start/prince/714.png" alt="職業預覽" draggable="false">
+                <img id="class-preview-img" src="assets/start/prince/714.webp" alt="職業預覽" draggable="false">
             </div>
             <nav id="creation-class-list" aria-label="職業選擇">
                 <button onclick="selectClassBase('royal')" id="btn-class-base-royal" class="creation-class-btn class-left class-pos-1" type="button" title="王族"><img src="assets/logo/王族logo.webp" alt="王族"></button>
@@ -575,10 +575,10 @@
     <script src="js/07-skills-cast.js?v=a2615689a93f"></script>
 <script src="js/08-items-equip.js?v=0e0ff48fde15"></script>
 <script src="js/09-vfx-render.js?v=e13af1b34657"></script>
-    <script src="js/10-ui-tabs.js?v=af7e9ec980d7"></script>
+    <script src="js/10-ui-tabs.js?v=366e94255113"></script>
 <script src="js/11-world-map.js?v=0badabcc29a6"></script>
 <script src="js/12-npc-quests.js?v=317cf201e2f4"></script>
-<script src="js/13-shop-save.js?v=5124d42d13f6"></script>
+<script src="js/13-shop-save.js?v=e7fb203563bf"></script>
 <script src="js/14-craft-pandora.js?v=369c3e83de29"></script>
 <script src="js/15-cards.js?v=1dba66f22dd3"></script>
 <script src="js/16-equip-book.js?v=db30ba2eab50"></script>
@@ -721,7 +721,7 @@
     <!-- 遊戲內小工具 -->
     <script src="afk-statpts.js?v=b3562ef6f762"></script>
     <!-- 能力分頁條列式：拿掉背景圖改大字卡片(純 CSS,DOM/updateUI 不動) -->
-    <script src="afk-statlist.js?v=45479c888b2d"></script>
+    <script src="afk-statlist.js?v=675586c010d2"></script>
     <script src="afk-autobuy.js?v=0b3c6ef1f6b4"></script>
     <script src="afk-training.js?v=d15816874fb0"></script>
     <!-- 廢品標記管理：入口排在木人場鈕下方（自己 insertAdjacentElement，不靠載入順序） -->
@@ -1184,7 +1184,7 @@
 <script src="merged/mobile-adventure.js?v=d606d4cac5f9"></script>
 <script src="merged/mobile-shell.js?v=455e0b01772d"></script>
 <script src="afk-bodyflags.js?v=5aec880878c0"></script>
-<link rel="stylesheet" href="merged/growth.css?v=0a420435e0bb">
+<link rel="stylesheet" href="merged/growth.css?v=df8e4aa7280c">
 <script src="merged/dragon-workshop.js?v=a556ae60cf54"></script>
 <script src="merged/growth-core.js?v=a4a388a97365"></script>
 <script src="merged/growth-runtime.js?v=4f27c025a028"></script>
@@ -1197,8 +1197,8 @@
 <script src="merged/growth-views.js?v=9bf6a872e340"></script>
 <script src="merged/growth-ui.js?v=b8dccc484f39"></script>
 <link rel="stylesheet" href="merged/class-ui.css?v=239ce4ff35c2">
-<link rel="stylesheet" href="merged/progression-desktop.css?v=455465c0e8d1" media="(min-width: 821px)">
-<link rel="stylesheet" href="merged/progression-mobile.css?v=af8aa303cf1c" media="(max-width: 820px)">
+<link rel="stylesheet" href="merged/progression-desktop.css?v=80ff2924c507" media="(min-width: 821px)">
+<link rel="stylesheet" href="merged/progression-mobile.css?v=df9be8980291" media="(max-width: 820px)">
 <script src="merged/class-catalog.js?v=2b03afef4a8d"></script>
 <script src="merged/class-core.js?v=0c36e3a425f9"></script>
 <script src="merged/class-runtime.js?v=cc7d79edd497"></script>

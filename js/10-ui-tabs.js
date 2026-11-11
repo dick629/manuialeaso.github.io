@@ -30,7 +30,7 @@ function _initTabGuard() {
 }
 
 // ===== 🎨 v3.0.55 1.8 原版風格技能魔法視窗（移植參考版 idle-lineage-class）=====
-//   底圖 assets/ui/技能欄位.png（193×282，4 欄 × 6 排）＋左側階級指示 assets/ui/skill-level/539..548.png。
+//   底圖 assets/ui/技能欄位.webp（193×282，4 欄 × 6 排）＋左側階級指示 assets/ui/skill-level/539..548.webp。
 //   模式：一般（reqM 通用魔法·1~10 階 tier strip 導覽）／職業（各職 req 欄位技能）／裝備（頭盔授予）。
 //   底部 S.power=玩家魔法傷害(player.d.magicDmg)、M.resist=玩家魔防(player.d.mr) 填入黑框。⚠️格 class 帶 tip-host 讓 Fable5 data-tip-skill tooltip 生效。
 let classicSkillBookState = { mode: 'general', tier: 1, page: 0 };
@@ -54,7 +54,7 @@ function classicSkillSelectTier(tier) {
     classicSkillBookState.tier = tier;
     let strip = document.querySelector('#tab-skill .classic-skill-tier-strip');
     if (strip) {
-        strip.style.backgroundImage = "url('assets/ui/skill-level/" + (538 + tier) + ".png')";
+        strip.style.backgroundImage = "url('assets/ui/skill-level/" + (538 + tier) + ".webp')";
         strip.querySelectorAll('[data-skill-tier]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.skillTier) === tier)));
     }
     let heading = document.querySelector('#tab-skill .classic-skill-heading');
@@ -150,7 +150,7 @@ function renderClassicSkillBook(sDiv) {
     sDiv.innerHTML = '<div class="classic-skill-window" data-skill-mode="' + stateBook.mode + '">'
         + '<div class="classic-skill-heading">' + heading + '</div>'
         + '<div class="classic-skill-mode">' + modeButtons + '</div>'
-        + '<div class="classic-skill-tier-strip" style="background-image:url(\'assets/ui/skill-level/' + sprite + '.png\')">' + tierButtons + '</div>'
+        + '<div class="classic-skill-tier-strip" style="background-image:url(\'assets/ui/skill-level/' + sprite + '.webp\')">' + tierButtons + '</div>'
         + '<div class="classic-skill-grid-scroll" onscroll="classicSkillSyncTierFromScroll(this)"><div class="classic-skill-grid">' + cells + '</div></div>'
         + '<button type="button" class="classic-skill-scroll classic-skill-scroll-up" aria-label="技能向上捲動" onclick="classicSkillScrollRows(-1)"></button>'
         + '<button type="button" class="classic-skill-scroll classic-skill-scroll-down" aria-label="技能向下捲動" onclick="classicSkillScrollRows(1)"></button>'

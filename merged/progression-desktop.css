@@ -20,7 +20,7 @@
 #growth-overlay .growth-path{min-height:58px;margin:0 0 7px;gap:9px;padding:8px!important;text-align:left;background:linear-gradient(110deg,#2b3038,#1a1d24)!important}
 #growth-overlay .growth-path.selected{border-color:#c2a96b;background:linear-gradient(110deg,#635236,#302a21)!important;box-shadow:inset 3px 0 #d9bf81!important}
 #growth-overlay .growth-path i{width:31px;height:31px}#growth-overlay .growth-path span{font-size:16px}#growth-overlay .growth-path small{font-size:10px}
-#growth-overlay .growth-tree{min-width:0;width:min(100%,590px);background:linear-gradient(#11172277,#10151e88),url('../assets/ui/growth-v3/talent-stone.png') center/100% 100%}
+#growth-overlay .growth-tree{min-width:0;width:min(100%,590px);background:linear-gradient(#11172277,#10151e88),url('../assets/ui/growth-v3/talent-stone.webp') center/100% 100%}
 #growth-overlay .growth-star-panel{border-color:#918269;box-shadow:0 0 0 2px #090b10,inset 0 0 0 1px #a99b7a44}
 #growth-overlay .growth-star-caption,#growth-overlay .growth-tree-hint{background:#20232b;border-color:#665c4c}
 #growth-overlay .growth-inspector{display:block;grid-column:auto;position:sticky;top:0;min-height:410px;padding:18px;background:linear-gradient(#2c3039,#191c24);border-color:#87765b;box-shadow:inset 0 0 0 3px #101218}
