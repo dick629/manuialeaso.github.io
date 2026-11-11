@@ -10,3 +10,4 @@
 
 /* Keep confirmation above a standalone soul panel opened from a mobile NPC. */
 body.m-unified.afk-f-classov #lm-detail:has(#afk-confirm-modal.open),body.m-unified.afk-f-classov #lm-detail:has(#afk-alert-modal.open){z-index:100120}
+.class-skill{position:relative}.class-skill .class-skill-ico{float:left;width:48px;height:48px;margin:0 10px 4px 0;border-radius:6px;background:#111;box-shadow:0 0 0 1px #3a3f35}.class-skill.locked .class-skill-ico{filter:grayscale(.7) brightness(.7)}

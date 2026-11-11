@@ -393,7 +393,7 @@
     } else {
       var mine = Object.keys(S).filter(function (k) { return S[k].cls === p.cls; });
       if (!mine.length) h += '<div class="row muted">' + CLS_N[p.cls] + '的流派在第二輪開放。</div>';
-      mine.forEach(function (k) { var x = S[k]; h += '<label class="sc' + (pick === k ? ' on' : '') + '" data-aev-pick="' + k + '"><b style="color:#f1d9a6">' + esc(x.n) + '</b>　<span class="muted">' + esc(x.type) + '</span><br>' + x.st.map(function (s, i) { return '第 ' + (i + 1) + ' 段：' + esc(s.t); }).join('<br>') + '</label>'; });
+      mine.forEach(function (k) { var x = S[k]; h += '<label class="sc' + (pick === k ? ' on' : '') + '" data-aev-pick="' + k + '"><img src="assets/evolve/evo_' + k + '.webp" alt="" onerror="this.remove()" style="width:36px;height:36px;vertical-align:middle;margin-right:8px;border-radius:5px"><b style="color:#f1d9a6">' + esc(x.n) + '</b>　<span class="muted">' + esc(x.type) + '</span><br>' + x.st.map(function (s, i) { return '第 ' + (i + 1) + ' 段：' + esc(s.t); }).join('<br>') + '</label>'; });
     }
     if (n < 3 && (sc || Object.keys(S).some(function (k) { return S[k].cls === p.cls; }))) {
       var stage = n + 1, why = gate(p, stage);
