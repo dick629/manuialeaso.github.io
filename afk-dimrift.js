@@ -135,12 +135,13 @@
     var p = P(), r = rec(p); if (!p) return;
     if (inTown()) { if (r.ero) { r.ero = 0; r.resBack = 0; try { calcStats(); } catch (e) {} } return; }
     if (p.dead) return;
+    if (typeof W.__afkErodePaused === 'function' && W.__afkErodePaused()) return;   // 九階以上娃娃的「縫光」
     // 扣血
     var net = R.hpPct - reduceSum(p);
     members().forEach(function (x) {
       var mx = x === p ? (rec(p).hp50 || Math.floor((p.mhp || 1) / (BASE + recoverPct(p) / 100) * BASE)) : (x._dimBase ? Math.floor(x._dimBase.mhp * BASE) : (x.mhp || 1));
       if (net <= 0) { var heal = Math.floor(mx * (-net) / 100); if (heal > 0) { if (x === p) p.hp = Math.min(p.mhp, p.hp + heal); else x.curHp = Math.min(x.mhp || x.curHp, x.curHp + heal); } return; }
-      var dmg = mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p)) * (1 - (typeof W.__afkErodeCut === 'function' ? (Number(W.__afkErodeCut(p)) || 0) : 0));   // 黃道星卡・水瓶
+      var dmg = mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p)) * (W.__afkErodeCuts || []).reduce(function (m, f) { try { return m * (1 - Math.max(0, Math.min(0.9, Number(f(p, x)) || 0))); } catch (e) { return m; } }, 1);   // 黃道星卡・水瓶、七階以上娃娃（堅壁、統御）
       if (x === p) W.__afkDrainHit = (Number(W.__afkDrainHit) || 0) + dmg;   // 聖十字之盾（禁衛軍）在裂縫只擋一部分：見 afk-castle-guards
       if (L && L.boss) L.boss.hurt(x, dmg);
     });
@@ -221,7 +222,7 @@
         HALF.forEach(function (k) { if (typeof d[k] === 'number' && d[k] > 0) d[k] = Math.floor(d[k] * f); });
         if (typeof d.ac === 'number' && d.ac < 0) d.ac = Math.ceil(d.ac * f);
         // 侵蝕：AC 往上加（越高越差），魔防、抗性往下扣到最低保留
-        var ero = rec(p).ero || 0;
+        var ero = Math.floor((rec(p).ero || 0) * (typeof W.__afkEroMult === 'function' ? (Number(W.__afkEroMult(p)) || 1) : 1));   // 龍息娃娃：侵蝕的下降打折
         if (ero) {
           var keep = floorSum(p), wc = weightCut(p);
           var eAc = Math.max(0,Math.min(ero, R.acMax)-(W.LineageSherine?.erosionBack(p)||0));

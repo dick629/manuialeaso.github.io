@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-715a377f7284",
+  "build": "merge-0.4-9272004f5227",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -383,8 +383,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dimrift.js?v=e0d5f07966fe",
-      "sha256": "e0d5f07966fe42ca36fc62aa35cc8836cd45ca943f34694adaf6aaa2db883842",
+      "url": "afk-dimrift.js?v=46cbcd68389f",
+      "sha256": "46cbcd68389f2ba85a69b4739661e58d77bcf59d946fc27d7636e2a82054c5ed",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -410,6 +410,11 @@
     {
       "url": "afk-dollcursor.js?v=19e56e26e96e",
       "sha256": "19e56e26e96e308530bdb04df4178c5441519f2d10470de8f22dfbd247a8a317",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-dollrift.js?v=e824e4767bcd",
+      "sha256": "e824e4767bcd5e5bf8e708d6a998fcd8478f2af4aa70855848835f7f010f0bf8",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1328,8 +1333,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-starcard.js?v=a2becb5d690a",
-      "sha256": "a2becb5d690a9960b33425b5c7d5c0fe8ec1ddae5a3b9bb62fc47711ba932b87",
+      "url": "afk-starcard.js?v=e600952390e9",
+      "sha256": "e600952390e9692034c13cf1af2588c0738b1644eb4595db487367fb2f79063c",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1508,8 +1513,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-wiki.js?v=44e8b1969acb",
-      "sha256": "44e8b1969acb627126914240210b7325b7e72fabaeb7ce5a42f69c969f8b807d",
+      "url": "afk-wiki.js?v=586628c101bc",
+      "sha256": "586628c101bc0199f34543817603da6a37c7c5aaa334572e4b9b7c04f45c7c11",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1574,7 +1579,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "609c057db1d2d05dfbe14049f6ecebc304abec454e60b44724fa297039128e0d",
+      "sha256": "c0db9fed30f94efee5b1a2564e2f5c3277cb0f12ca7c72cfb1e6102363c8f193",
       "type": "text/html; charset=utf-8"
     },
     {

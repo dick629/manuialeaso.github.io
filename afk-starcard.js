@@ -96,7 +96,7 @@
     var std = (STD[store(p).st[k]] || {})[p.cls]; if (std) p.mhp = Math.max(p.mhp || 0, std[0]);
   });
   // 水瓶：侵蝕扣血（afk-dimrift 讀 __afkErodeCut）
-  W.__afkErodeCut = function (p) { var a = A('aquarius'); return a ? Math.min(0.9, a.pct / 100) : 0; };
+  (W.__afkErodeCuts = W.__afkErodeCuts || []).push(function (p) { var a = A('aquarius'); return a ? Math.min(0.9, a.pct / 100) : 0; });
 
   // ── 戰鬥 ──
   var DEB = ['stun', 'freeze', 'stone', 'poison', 'burn', 'scald', 'bleed', 'sleep', 'silence', 'paralyze', 'magicseal', 'armorBreak', 'slowAtk', 'bind',
