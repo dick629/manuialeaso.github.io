@@ -167,9 +167,13 @@
       if (!activeFor(id, p)) return;
       var r = RULE[id], st = state(p), hit = false, why = '';
       if (r.maps && r.maps.indexOf(map) >= 0 && !(r.normalOnly && m.boss)) hit = true;
-      if (r.names && r.names.indexOf(n) >= 0) {
-        if (r.uniq) { st.elders = st.elders || {}; if (!st.elders[n]) { st.elders[n] = 1; hit = true; why = n; } }
-        else if (r.uniqCap) { st.altar = st.altar || {}; var c = st.altar[n] || 0; if (c < r.uniqCap) { st.altar[n] = c + 1; hit = true; why = n; } }
+      // 玩家 11-11：夢域鏡裡怪名可能加了前後綴 → 用「包含」比對；供奉帳的雄雌計數若跟手上本數對不起來（掉了、被賣、交過）就重算
+      if (r.uniqCap && st.altar) { var tot = 0; for (var an in st.altar) tot += st.altar[an] || 0; if (tot > have(id)) st.altar = {}; }
+      var nm = r.names ? r.names.filter(function (x) { return n === x || n.indexOf(x) >= 0; })[0] : null;
+      var nn = nm || n;
+      if (r.names && r.names.indexOf(nn) >= 0) {
+        if (r.uniq) { st.elders = st.elders || {}; if (!st.elders[nn]) { st.elders[nn] = 1; hit = true; why = nn; } }
+        else if (r.uniqCap) { st.altar = st.altar || {}; var c = st.altar[nn] || 0; if (c < r.uniqCap) { st.altar[nn] = c + 1; hit = true; why = nn; } }
         else hit = true;
       }
       if (r.dragon && m.boss) { var dg = dragonOf(n); st.dragons = st.dragons || {}; if (dg && !st.dragons[dg]) { st.dragons[dg] = 1; hit = true; why = dg; } }

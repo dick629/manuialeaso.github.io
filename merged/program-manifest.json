@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-2d5f6b6ca190",
+  "build": "merge-0.4-135054447838",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -428,8 +428,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamquest.js?v=ac8ba296cf4e",
-      "sha256": "ac8ba296cf4ea69209c7820c6b8b1e601c087d435e9482c9c8d463a9994d27aa",
+      "url": "afk-dreamquest.js?v=5ee8bf275317",
+      "sha256": "5ee8bf2753173302ca57147a82b0cd6ea9908b68f224da38e8da6850ef39efe6",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1564,7 +1564,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "aec35e391c91098a57e823aadf0e4493709de5179905cdc2263d2fefc26ee7ea",
+      "sha256": "b1da59d608e0d8de8578394d3351060edf0756d304be2da00a24b02f18874daf",
       "type": "text/html; charset=utf-8"
     },
     {
