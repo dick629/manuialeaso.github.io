@@ -159,7 +159,7 @@
       var t = TOKENS[k], b = t.base && DB.items[t.base], id = tokenId(k), d = DB.items[id] || addItem(id, {});
       d.n = t.n || (b ? '夢域鏡 ' + b.n : '夢域鏡 信物');
       d.c = 'text-fuchsia-300'; d.img = (b && b.img) || IMG('光明的鱗片');
-      d.d = KN[k].s + '的副本裡，王必掉的信物。升級' + KN[k].short + '守護者之戒的上半部要用。';
+      d.d = KN[k].s + '的試煉（夢域鏡）裡，王必掉的信物；次元裂縫難度不掉。升級' + KN[k].short + '守護者之戒的上半部要用。';
     });
   };
   syncTokens();
@@ -753,7 +753,7 @@
     var mult = 1; try { mult = typeof partyRewardMult === 'function' ? Math.max(1, Number(partyRewardMult()) || 1) : 1; } catch (e) {}
     var em = 3 + Math.floor(rnd() * 3) % 3 + (mode === 'rift' ? 1 : 0); em = Math.max(1, Math.floor(em * mult));
     gainItem(M.emblem, em, true, true); got.push(DB.items[M.emblem].n + ' ×' + em);
-    gainItem(tokenId(k), 1, true, true); got.push(DB.items[tokenId(k)].n + ' ×1');
+    if (mode !== 'rift') { gainItem(tokenId(k), 1, true, true); got.push(DB.items[tokenId(k)].n + ' ×1'); }   // 玩家 11-11 14:13：次元裂縫不掉「夢域鏡 ○○」信物
     if (mode === 'rift') { gainItem(M.shard, 1, true, true); got.push(DB.items[M.shard].n + ' ×1'); }
     var g = store(p); g.clears = g.clears || {}; g.clears[k] = (Number(g.clears[k]) || 0) + 1;
     run.done = true;

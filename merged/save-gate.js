@@ -63,6 +63,8 @@
     const c=B.analyzeCompatibility(role,profile(role.p));if(!c.ok)throw Error(key+' '+(c.blockers[0].location||'')+'：'+c.blockers[0].message);
    }
    const soulKey=window.LineageClasses?.KEY;if(soulKey&&data.keys[soulKey]&&!LineageClassCore.validVault(JSON.parse(data.keys[soulKey])))throw Error('備份中的魂魄簿無法驗證');
+   // 11-11 14:13：電腦上的角色存檔有時是沒壓縮的明文（一格 180 萬字），手機寫不進去 → 角色與倉庫在寫入前先壓縮（遊戲讀取本來就會自動解壓）
+   if(typeof LZString!=='undefined'){data.keys={...data.keys};for(const k of Object.keys(data.keys)){const v=data.keys[k];if((/^lineage_idle_save(?:_\d+)?$/.test(k)||/^lineage_idle_warehouse(?:_[a-z]+)*$/.test(k))&&typeof v==='string'&&v.length>20000&&v.slice(0,4)!=='LZ1:'){try{const z='LZ1:'+LZString.compressToUTF16(v);if(LZString.decompressFromUTF16(z.slice(4))===v)data.keys[k]=z;}catch{}}}}
    const apply=()=>{if(typeof _lzWorkerRev!=='undefined')for(const k of new Set([...Object.keys(data.keys),...Object.keys(R.capture(localStorage))]))_lzWorkerRev[k]=(_lzWorkerRev[k]||0)+1;return R.transact(localStorage,R.fullRestorePlan(data.keys,R.capture(localStorage)),snapshot=>LineageBackups.save(snapshot,'full-restore'),{canWrite:()=>R.scan(R.capture(localStorage)).canRepair});};
    return navigator.locks?navigator.locks.request('lineage-merged-save-write',{mode:'exclusive'},apply):apply();
   }
