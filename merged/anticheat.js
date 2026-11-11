@@ -124,14 +124,7 @@
     if (Date.now() < S_FROM) allItems(p).forEach(function (r) { if (sKind(r.it.id) && !r.it.acPre) { r.it.acPre = 1; changed = true; } });
     if (changed) { try { if (typeof calcStats === 'function') calcStats(); if (typeof updateUI === 'function') updateUI(); } catch (e) {} }
   };
-  if (typeof W.buildItemDescHTML === 'function') {
-    var oDesc = W.buildItemDescHTML;
-    W.buildItemDescHTML = function (item) {
-      var h = oDesc.apply(this, arguments);
-      try { if (item && item.acPre) h += '<div style="color:#86efac;font-size:12px;margin-top:4px">🛡 2026/11/15 前取得：不受異常道具檢查</div>'; } catch (e) {}
-      return h;
-    };
-  }
+  // 11-11 23:47（Ping）：acPre 是內部標記，不在道具說明顯示（原本加的「不受異常道具檢查」那一行拿掉）
   // ── S 級封印（Ping 11-11 16:35／16:46；設計稿十四節）──
   //   S 級＝GM 道具、至高的支配、次元遺物（含次元時空武器）、創世密奧卡。
   //   正當來源＝遊戲正規流程做出來時蓋的印記（acs）。沒有印記、或印記標成「太快」的 S 級＝封印。
