@@ -409,8 +409,9 @@
     if (!g) return false;
     try { if (typeof closeModal === 'function') closeModal(); } catch (e) {}
     CUR = { uid: g.item.uid, view: 'setup', opt: Object.assign({ n: g.count, bless: false, mode: 'one', target: Math.max(g.safe, g.en + 1) }, opt || {}) };
-    show();
-    renderSetup();
+    // 玩家 11-11 15:29：手機版關物品視窗時，介面會在下一刻收掉它的「返回」層，連帶把剛開的批次強化視窗一起關掉 → 等它收完再開
+    var cur0 = CUR;
+    setTimeout(function () { if (CUR !== cur0) return; show(); renderSetup(); }, 30);
     return true;
   }
 

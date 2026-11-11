@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-465d7540ea09",
+  "build": "merge-0.4-0a6ef44d7162",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -118,8 +118,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-batchenh.js?v=64302a250519",
-      "sha256": "64302a25051970fa9aad7255dd68408dab9a70b92c716b481cdcf911611cb1e5",
+      "url": "afk-batchenh.js?v=b8f349aab60f",
+      "sha256": "b8f349aab60f4e83cc9db22c3253a6c0090b92c4582447cc0c51c3573c6fffd9",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1443,8 +1443,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-ui.js?v=6062cb581c6c",
-      "sha256": "6062cb581c6c0fc1a5d3c70d6bc817adc23124622496d3e3fe7a21e9a42c6c02",
+      "url": "afk-ui.js?v=80171828339b",
+      "sha256": "80171828339baf255f002ab15ca1600f33b2bc0eb618021e1ebd8b2155a9e50e",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1564,7 +1564,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "5ccc164ab1915e330c3825833a6e0bfcff69fac9e463d5b9b266994070192f16",
+      "sha256": "6a841cc2f52a6070b28c19bb821587e1cd969aa9027ef7a21a6129d27f6a5322",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1948,8 +1948,8 @@
       "type": "text/css; charset=utf-8"
     },
     {
-      "url": "merged/mobile-shell.js?v=d4f4428242a3",
-      "sha256": "d4f4428242a33f07d1703a4757cfea3a78388ad85754b212ce7e1f20f771cc9a",
+      "url": "merged/mobile-shell.js?v=455e0b01772d",
+      "sha256": "455e0b01772dc6d32c3c78276ea8f908c879e1f2fea4ca3e6c36a0ebbff42dc2",
       "type": "text/javascript; charset=utf-8"
     },
     {

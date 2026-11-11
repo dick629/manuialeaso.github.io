@@ -85,6 +85,14 @@
     for (var k = doomed.length - 1; k >= 0; k--) { try { doomed[k].close(); } catch (e) {} }
   };
 
+  // 只收自己這一層、不連帶關掉壓在上面的層（手機版外殼收「已經自己關掉的視窗」的返回層用；玩家 11-11 15:29）
+  //   歷史裡那一格留著：之後按返回經過它時沒有層要關，頂多多按一次。
+  N.drop = function (h) {
+    var i = h ? stack.indexOf(h) : -1;
+    if (i < 0) return;
+    if (i === stack.length - 1) return N.pop(h);
+    stack.splice(i, 1);
+  };
   N.top = function () { return stack.length ? stack[stack.length - 1] : null; };
   N.depth = function () { return stack.length; };
   // 跨頁交接:來源不關歷史、把層寄放著,目的地 claim 後改指向自己的關閉函式(整段切換只佔一格歷史)

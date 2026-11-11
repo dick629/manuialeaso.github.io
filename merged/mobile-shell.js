@@ -455,7 +455,7 @@
       const idx=stack.indexOf(r);stack.splice(idx,1);r.active=false;
       lastFocus=r.focus;unmount(r);changed=true;
       // Pop only our own fallback. Native windows retire their own history handle.
-      if(r.owned&&r.layer&&window.AFK_NAV)AFK_NAV.pop(r.layer);
+      if(r.owned&&r.layer&&window.AFK_NAV)(AFK_NAV.drop||AFK_NAV.pop)(r.layer);   // 11-11：上面若已經有新開的視窗，不要連它一起關
       r.layer=null;
     }
     for(const [el,r] of registered){
