@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-f230229b4a5e",
+  "build": "merge-0.4-a646c167d81a",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -383,8 +383,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dimrift.js?v=13745bcd45db",
-      "sha256": "13745bcd45db06024896df97d1136200ad5c64bc092f7a3af9768a6c741a1326",
+      "url": "afk-dimrift.js?v=e0d5f07966fe",
+      "sha256": "e0d5f07966fe42ca36fc62aa35cc8836cd45ca943f34694adaf6aaa2db883842",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1328,6 +1328,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-starcard.js?v=a2becb5d690a",
+      "sha256": "a2becb5d690a9960b33425b5c7d5c0fe8ec1ddae5a3b9bb62fc47711ba932b87",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-starroad.js?v=1a612d8b1010",
       "sha256": "1a612d8b10102818c39815acb63c97fd4377d6e99bca1f060d3bfa2819311e7d",
       "type": "text/javascript; charset=utf-8"
@@ -1503,8 +1508,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-wiki.js?v=f68731d8d3e5",
-      "sha256": "f68731d8d3e5a0ea5aad061d373b5bad881485e152816898ed9336c9f9c62fcd",
+      "url": "afk-wiki.js?v=44e8b1969acb",
+      "sha256": "44e8b1969acb627126914240210b7325b7e72fabaeb7ce5a42f69c969f8b807d",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1543,8 +1548,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-zodiac.js?v=8a803a45e9cf",
-      "sha256": "8a803a45e9cf08364d2ecb5331d9c4c729621f758143d1a296303a47956cada6",
+      "url": "afk-zodiac.js?v=7a2f47f25281",
+      "sha256": "7a2f47f25281c20a3e96a308ad04d124e3b20712cd8fc30f02634778bc930e36",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1569,7 +1574,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "f6633ceeaa457f3f11b545543b35501f253808d2e392ec852b84e5bc083ceffb",
+      "sha256": "27cfa15f2f11a9e3c92b05e62dd39b04dc1b5d83a106c5d7e4beaf94d13f3a77",
       "type": "text/html; charset=utf-8"
     },
     {

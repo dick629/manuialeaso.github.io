@@ -146,7 +146,7 @@
       var m = mobs()[idx], was = !!(m && m._dead), r = oKill.apply(this, arguments);
       try {
         if (m && !was && m._dead && m._zd && run && mapState.current === MAP) {
-          if (m._zdFinal && Math.random() < 0.005) { gainItem(STAR_CARD, 1, true, true); sys('<span class="text-yellow-200 font-bold">' + esc(m.n) + ' 留下了黃道星卡！</span>'); }
+          if (m._zdFinal && Math.random() < 0.005) { var scId = W.__afkStarCard && DB.items[W.__afkStarCard.idOf(run.k)] ? W.__afkStarCard.idOf(run.k) : STAR_CARD; gainItem(scId, 1, true, true); sys('<span class="text-yellow-200 font-bold">' + esc(m.n) + ' 留下了' + esc(DB.items[scId].n) + '！</span>'); }
           run.alive = mobs().filter(function (x) { return x && x._zd && !x._dead && x.curHp > 0; }).length;
           if (run.alive <= 0) {
             if (run.wave < ZT.waves) run.wave++; else if (run.layer < ZT.layers) { run.layer++; run.wave = 1; sys('<span style="color:#fde047">第 ' + run.layer + '／' + ZT.layers + ' 層星階亮了起來。</span>'); } else { victory(); return r; }
@@ -306,6 +306,7 @@
     today().forEach(function (x) { h += K.rowHtml({ key: x.k, name: x.n + '・' + x.g + (s.first[x.k] ? '（已拿過宮之印）' : ''), color: '#fde047', desc: x.d, why: why || '', btns: [['zd:' + x.k, '進入', !why]] }, 'data-zd'); });
     if(W.LineageClothProgression)h+=W.LineageClothProgression.renderNpc(p);
     else h+='<div class="ax-note">聖衣修練模組尚未載入，請重新整理後再試。</div>';
+    if (W.__afkStarCard) { try { h += W.__afkStarCard.npcHtml(p); } catch (e) { console.warn('[AFK-zodiac] starcard', e); } }
     K.repaint(box, h);
   };
   var render = function (div) {
@@ -322,6 +323,6 @@
     if(!BYK[q.k]||!(q.until>Date.now())||!Number.isInteger(q.layer)||q.layer<1||q.layer>ZT.layers||!Number.isInteger(q.wave)||q.wave<1||q.wave>ZT.waves||mapState.current!==MAP)throw Error('十二宮挑戰已逾時或進度不相容，請結束本輪');
     run=JSON.parse(JSON.stringify(q));lastMap=MAP;
   }
-  W.__afkZodiac = { H: H, ZT: ZT, today: today, canEnter: canEnter, enter: enter, run: function () { return run; }, growthCheckpoint:function(){return run?JSON.parse(JSON.stringify(run)):null;},growthRestore:growthRestore, forge: forge, starUp: starUp, isEx: isEx, store: store, MAP: MAP, SAND: SAND };
+  W.__afkZodiac = { H: H, ZT: ZT, today: today, canEnter: canEnter, enter: enter, run: function () { return run; }, growthCheckpoint:function(){return run?JSON.parse(JSON.stringify(run)):null;},growthRestore:growthRestore, forge: forge, starUp: starUp, repaint: paint, isEx: isEx, store: store, MAP: MAP, SAND: SAND };
   try { console.log('[AFK-zodiac] 已載入：黃道十二宮、神聖衣'); } catch (e) {}
 })();

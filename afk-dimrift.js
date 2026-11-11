@@ -140,7 +140,7 @@
     members().forEach(function (x) {
       var mx = x === p ? (rec(p).hp50 || Math.floor((p.mhp || 1) / (BASE + recoverPct(p) / 100) * BASE)) : (x._dimBase ? Math.floor(x._dimBase.mhp * BASE) : (x.mhp || 1));
       if (net <= 0) { var heal = Math.floor(mx * (-net) / 100); if (heal > 0) { if (x === p) p.hp = Math.min(p.mhp, p.hp + heal); else x.curHp = Math.min(x.mhp || x.curHp, x.curHp + heal); } return; }
-      var dmg = mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p));
+      var dmg = mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p)) * (1 - (typeof W.__afkErodeCut === 'function' ? (Number(W.__afkErodeCut(p)) || 0) : 0));   // 黃道星卡・水瓶
       if (x === p) W.__afkDrainHit = (Number(W.__afkDrainHit) || 0) + dmg;   // 聖十字之盾（禁衛軍）在裂縫只擋一部分：見 afk-castle-guards
       if (L && L.boss) L.boss.hurt(x, dmg);
     });

@@ -4151,6 +4151,11 @@
       wDesc('掉落：每次通關' + nm(Z.SAND) + ' ×1；每一宮第一次通關該宮的宮之印 ×1；30% 聖衣光輝碎片 ×1。') +
       wDesc('<b>聖衣修練</b>：二轉最終戰鬥碎裂的舊聖衣可免費回收成青銅。青銅→白銀、白銀→黃金，每階各需 ' + nm(Z.SAND) + ' ×3；黃金→神聖衣需砂 ×3＋對應宮之印 ×1。青銅、白銀分別保留黃金能力的50%、75%。神聖衣沿用原 EX 加成，不會在次元裂縫碎裂；只有神聖衣可升 ★4（光輝碎片 ×4＋砂 ×1）。') +
       wTbl(['宮', '守宮者', '機制'], Z.H.map(function (h) { return ['<b style="color:#fde047">' + esc(h.n) + '</b>', esc(h.g), esc(h.d)]; })));
+    var SC = window.__afkStarCard;
+    if (SC && Z && Z.H) out += wCard('✦ 黃道星卡（星卡格）', wDesc('守宮者有 0.5% 機率留下自己那一宮的黃道星卡。到星鑄師 艾琳娜登錄（用掉 1 張）後，可以把一張放進<b>星卡格</b>：一次只放一張，不算裝備（不佔裝備欄、不算重量、不能強化），隨時免費換。')
+      + wDesc('升級（每張各自升）：<b style="color:#c084fc">裂界</b>＝同宮星卡 ×' + SC.UP[2].card + '＋' + nm('afk_zd_sand') + ' ×' + SC.UP[2].sand + '＋次元密奧卡 ×' + fm(SC.UP[2].dim) + '；<b style="color:#fef3c7">歸一</b>＝同宮星卡 ×' + SC.UP[3].card + '＋砂 ×' + SC.UP[3].sand + '＋星蝕之核 ×' + SC.UP[3].core + '＋次元密奧卡 ×' + fm(SC.UP[3].dim) + '。')
+      + wDesc('放著的那張有保底（取較好的一邊）：星卡 曲線 95、裂界 100、歸一 105。<b>在次元裂縫裡效果 ×1.5</b>。舊版不分宮的黃道星卡可以在艾琳娜那裡換成任一宮。')
+      + wTbl(['宮', '星卡', '裂界', '歸一'], Z.H.map(function (h) { return ['<b style="color:#fde047">' + esc(h.n) + '</b>'].concat([1, 2, 3].map(function (st) { return esc(SC.descOf(h.k, st)); })); })));
     return out;
   }
 
