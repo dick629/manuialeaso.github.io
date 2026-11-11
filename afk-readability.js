@@ -79,6 +79,13 @@ body.afk-readable :is(#card-book,#equip-book,#misc-book,#relic-book,#collection-
 body.afk-readable #poly-modal>.panel{box-sizing:border-box;width:min(560px,calc(100vw - 24px));max-width:calc(100vw - 24px);overflow:hidden}
 body.afk-readable #poly-modal>.panel>:not(#poly-modal-list){flex-shrink:0}
 body.afk-readable #poly-modal-list{min-height:0;overscroll-behavior:contain}
+/* 2026-11-11 19:39 手機：上面的說明、搜尋、分頁佔掉大半，只剩下面一小塊能滑，按在上面滑沒反應；改成整個面板一起捲，變身格子畫面外的先不排版 */
+@media (max-width:760px){
+body #poly-modal>.panel{overflow-y:auto!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+body #poly-modal-list{overflow:visible!important;max-height:none!important;flex:none!important;min-height:auto!important}
+body #poly-modal>.panel>button.btn.mt-4{position:sticky;bottom:0;z-index:2}
+}
+#poly-modal-list .afk-ca-tile{content-visibility:auto;contain-intrinsic-size:auto 110px}
 /* Native dialogs must remain above the mobile log sheet (9500) and navigation
    (9600); confirmations keep their own higher layer. Do not close the log or
    change its scroll position merely because the user inspects an item. */
