@@ -68,6 +68,16 @@
   var holeTxt = function (list) { return list.map(function (q) { return ((DB.items[q[0]] || {}).n || q[0]) + ' ' + q[1].toLocaleString(); }).join('、'); };
   var PARTS = SD.PARTS;
   var have = K.have, take = K.take;
+  // 玩家 11-11 16:11：背包裡有符文卻顯示「沒有能鑲的」→ 列出背包裡其他符文各自能鑲在哪裡
+  var partOf = function (cat) { return Object.keys(KINDS).filter(function (k) { return k !== 'belt' && KINDS[k].cats.indexOf(cat) >= 0; }).map(function (k) { return KINDS[k].n + (k === 'acc' ? '、腰帶' : ''); }).join('、'); };
+  var otherRunes = function () {
+    var o = Object.keys(RD.byId).map(function (k) { return RD.byId[k]; }).filter(function (r) { return have(r.id) > 0; });
+    var pl = P0(), locked = pl ? (pl.inv || []).filter(function (it) { return it && it.lock && RD.byId[it.id]; }) : [];
+    var lockTxt = locked.length ? '。另外有 ' + locked.length + ' 組符文上了鎖（' + locked.slice(0, 4).map(function (it) { return nm(it.id); }).join('、') + (locked.length > 4 ? '…' : '') + '），上鎖的不能鑲，要先解鎖' : '';
+    if (!o.length) return '。背包裡沒有沒上鎖的符文' + lockTxt;
+    return '。背包裡的符文：' + o.slice(0, 6).map(function (r) { return nm(r.id) + '×' + have(r.id) + '（' + RD.CAT_N[r.cat] + '類，鑲在' + partOf(r.cat) + '）'; }).join('、') + (o.length > 6 ? ' 等 ' + o.length + ' 種' : '') + lockTxt;
+  };
+  var P0 = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var nm = function (id) { return (DB.items[id] || {}).n || id; };
   var EQ_N = { wpn: '主手', offwpn: '副手', shield: '盾牌', armor: '盔甲', helm: '頭盔', cloak: '斗篷', tshirt: 'T恤', gloves: '手套', boots: '長靴', shin: '脛甲', amulet: '項鍊', belt: '腰帶', ring1: '戒指1', ring2: '戒指2', ring3: '戒指3', ring4: '戒指4', ear1: '耳環1', ear2: '耳環2' };
 
@@ -420,7 +430,7 @@
       + '<select id="afk-zo-rune" aria-label="選擇符文">' + (owned.length ? owned.map(function (r) { return '<option value="' + r.id + '"' + (r.id === ui.rune ? ' selected' : '') + '>' + esc(nm(r.id)) + '（' + RD.STAGE_N[r.stage] + '・' + RD.CAT_N[r.cat] + '）×' + have(r.id) + '</option>'; }).join('') : '<option value="">沒有可鑲的符文</option>') + '</select>';
     h += K.rowHtml({ key: 'inlay', ico: rr ? K.itemIco(rr.id) : K.icoTag('', '', false), name: '鑲嵌符文', color: '#a78bfa',
       desc: (rr ? '<b>' + esc(nm(rr.id)) + '</b>：' + esc(rr.d) + '<br>' : '') + '費用：階段一 哀石水晶 5、階段二 哀石精華 10、階段三 哀石結晶 20、傳說 哀石結晶 40。同一件裝備不能鑲兩顆同名符文；同名符文全身最多算 2 顆（傳說符文全身只能 1 顆）。',
-      req: rr ? K.reqTxt(have(cur), cost, nm(cur)) : '', why: !x ? noSel : !(it.sockets || []).length ? '這件還沒有開孔' : !empties.length ? '沒有空孔（要先拆下符文）' : !owned.length ? '背包裡沒有能鑲在' + KINDS[x.kind].n + '的符文（' + KINDS[x.kind].n + '只能鑲' + KINDS[x.kind].cats.map(function (k) { return RD.CAT_N[k]; }).join('、') + '類）' : '',
+      req: rr ? K.reqTxt(have(cur), cost, nm(cur)) : '', why: !x ? noSel : !(it.sockets || []).length ? '這件還沒有開孔' : !empties.length ? '沒有空孔（要先拆下符文）' : !owned.length ? '背包裡沒有能鑲在' + KINDS[x.kind].n + '的符文（' + KINDS[x.kind].n + '只能鑲' + KINDS[x.kind].cats.map(function (k) { return RD.CAT_N[k]; }).join('、') + '類）' + otherRunes() : '',
       pick: pick, btns: [['inlay', '鑲嵌', !!rr && have(cur) >= cost]] }, 'data-zo');
     // 拆下
     var filled = it ? (it.sockets || []).map(function (r, i) { return r ? i : -1; }).filter(function (i) { return i >= 0; }) : [];
