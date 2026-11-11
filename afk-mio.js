@@ -80,6 +80,32 @@
   var ABV = [{ red: 100, cd: 25 }, { ch: 18 }, { pct: 3.5, dur: 11, cd: 50 }, { pct: 60 }, { pct: 10 }, { ch: 42, heal: 9 }, { pct: 10 }, { per: 2, max: 12 },
     { pct: 50 }, { per: 1.75 }, { dmg: 14, red: 14, reg: 2 }, { pct: 100 }, { pct: 40 }, { pct: 22 }, { pot: 35, cap: 15 }, { leech: 3.5, cost: 1 },
     { pct: 38 }, { hp: 60, cd: 5 }, { er: 15, crit: 1 }, { pct: 3.5 }, { pct: 21 }, { mult: 1.65 }];
+  // 起源（新的一套卡牌規則；創世＝起源的延續）——玩家 2026-11-11 18:52／19:16 定案；[起源, 創世]
+  var ORIGIN = [
+    [{ sec: [2, 3], cd: [180, 120] }, function (v) { return '受到致命傷時以 1 HP 留下，並無敵 ' + v.sec + ' 秒（冷卻 ' + v.cd + ' 秒）'; }],
+    [{ n: [5, 5], mult: [2, 2.5] }, function (v) { return '每放 ' + v.n + ' 次攻擊魔法，下一次攻擊魔法傷害 ×' + v.mult; }],
+    [{ pct: [15, 20] }, function (v) { return 'MP 消耗 −' + v.pct + '%'; }],
+    [{ hp: [20, 30] }, function (v) { return '你與傭兵每 5 秒回復 HP ' + v.hp + ' 點（HP 自然恢復 +' + v.hp + '）'; }],
+    [{ pct: [8, 12] }, function (v) { return '傭兵造成的傷害 +' + v.pct + '%'; }],
+    [{ cd: [20, 15] }, function (v) { return '每 ' + v.cd + ' 秒替你與傭兵各解除一個異常狀態'; }],
+    [{ cd: [300, 200] }, function (v) { return '你要倒下時，HP 最高的一名傭兵替你倒下，你留下 30% HP（冷卻 ' + v.cd + ' 秒）'; }],
+    [{ pct: [10, 15] }, function (v) { return '移動中造成的傷害 +' + v.pct + '%'; }],
+    [{ pct: [8, 12] }, function (v) { return '一般攻擊傷害 +' + v.pct + '%'; }],
+    [{ pct: [10, 15] }, function (v) { return '隊伍 4 人以下時，造成的傷害 +' + v.pct + '%'; }],
+    [{ ch: [10, 15] }, function (v) { return '爆擊時 ' + v.ch + '% 機率讓所有技能冷卻 −1 秒'; }],
+    [{ pct: [10, 15] }, function (v) { return '受到頭目傷害的 ' + v.pct + '% 反彈給那隻頭目'; }],
+    [{ pct: [40, 60] }, function (v) { return '被暈眩、冰凍、麻痺後，下一次攻擊傷害 +' + v.pct + '%'; }],
+    [{ ch: [3, 5] }, function (v) { return '打倒怪物時 ' + v.ch + '% 機率得到「死神之鐮」：5 秒內造成的傷害 +20%'; }],
+    [{ pot: [20, 30] }, function (v) { return '治癒藥水回復量 +' + v.pot + '%'; }],
+    [{ pct: [12, 18] }, function (v) { return '對 HP 高於 80% 的目標傷害 +' + v.pct + '%'; }],
+    [{ pct: [30, 45] }, function (v) { return '對狂暴中的頭目傷害 +' + v.pct + '%'; }],
+    [{ hp: [30, 40] }, function (v) { return '每 5 分鐘一次：倒下時改成留下 ' + v.hp + '% HP（不算倒下次數）'; }],
+    [{ er: [10, 15], hit: [10, 15] }, function (v) { return '夜晚（台灣時間 18:00～06:00）迴避 +' + v.er + '、命中 +' + v.hit; }],
+    [{ pct: [8, 12] }, function (v) { return '白天（台灣時間 06:00～18:00）造成的傷害 +' + v.pct + '%'; }],
+    [{ pct: [15, 22] }, function (v) { return '頭目 HP 低於 30% 時，對它的傷害 +' + v.pct + '%'; }],
+    [{ mult: [1.3, 1.5] }, function (v) { return '其他點亮的卡給的偉特效果 ×' + v.mult; }]
+  ];
+  var originVal = function (i, st) { var o = {}, V = ORIGIN[i][0]; Object.keys(V).forEach(function (k) { o[k] = V[k][st >= 6 ? 1 : 0]; }); return o; };
   var K = {}; ['fool', 'magician', 'priestess', 'empress', 'emperor', 'hierophant', 'lovers', 'chariot', 'strength', 'hermit', 'wheel', 'justice', 'hanged', 'death', 'temperance', 'devil', 'tower', 'star', 'moon', 'sun', 'judgement', 'world'].forEach(function (k, i) { K[k] = i; });
   var SET = [
     { n: '22 張全部點亮', txt: '最大 HP +5%、五屬性抗性 +10', fx: { mhpPct: 5, res: 10 } },
@@ -90,7 +116,7 @@
     { n: '22 張全部創世', txt: '得到稱號「創世占星者」', fx: {} },
     { n: '22 張全部解放淵源', txt: '造成的傷害 +5%、受到的傷害 −5%', fx: { dmg: 5, taken: 5 } }
   ];
-  var AURA = [null, null, { res: 15, abn: 0 }, { res: 25, abn: 15 }, { res: 35, abn: 20, dur: 15 }, { res: 45, abn: 25, dur: 20, ero: 75 }, { res: 60, abn: 30, dur: 25, ero: 50 }];
+  var AURA = [null, null, { res: 15, abn: 0 }, { res: 25, abn: 15 }, { res: 35, abn: 20, dur: 15 }, { res: 15, abn: 0 }, { res: 25, abn: 15 }];   // 起源＝托特光環、創世＝馬賽光環（玩家 2026-11-11 18:52）
   // 保底（曲線 65／75；最大 HP、傷害減免、魔防、防禦、迴避、額外傷害、額外命中；2026-11-02 量測，新角色未轉生，裝備照曲線對照表）
   var AURA_LIB = { res: 50, abn: 25, dur: 20, weight: 2000 };
   var STD = {"95":{"royal":[3777,147,255,-189,97,70,25],"knight":[6385,130,219,-223,123,50,33],"elf":[3627,122,296,-189,115,50,50],"mage":[4317,132,387,-253,107,50,30],"dark":[3566,122,356,-225,107,50,63],"dragon":[5458,130,309,-218,122,83,33],"illusion":[3407,132,387,-256,124,70,50],"warrior":[6026,124,176,-185,112,75,33]},"80":{"royal":[2451,131,189,-162,67,70,25],"knight":[4235,116,154,-191,89,50,33],"elf":[2321,109,216,-159,86,50,50],"mage":[2658,118,280,-216,73,50,30],"dark":[2316,109,264,-193,78,50,63],"dragon":[3505,116,231,-187,88,83,33],"illusion":[2182,118,323,-219,90,70,50],"warrior":[4099,111,123,-158,81,75,33]},"65":{"royal":[2081,71,124,-107,48,70,25],"knight":[3382,73,80,-130,66,50,33],"elf":[1846,67,141,-101,69,50,50],"mage":[2163,71,182,-150,43,50,30],"dark":[2020,67,189,-135,55,50,63],"dragon":[2615,73,153,-126,65,83,33],"illusion":[1799,71,225,-153,60,70,50],"warrior":[3357,71,70,-103,62,75,33]},
@@ -99,7 +125,7 @@
   var idOf = function (i) { return 'afk_mio_' + (i < 10 ? '0' : '') + i; };
   var idxOf = function (id) { var m = /^afk_mio_(\d\d)$/.exec(id || ''); return m ? Number(m[1]) : -1; };
   var rawVal = function (i, st, lib) { var o = {}, V = CARDS[i][1]; Object.keys(V).forEach(function (k) { o[k] = V[k][Math.max(1, Math.min(3, st)) - 1]; }); if (lib && LIBV[i]) Object.assign(o, LIBV[i]); else if (st >= 4 && ABV[i]) Object.assign(o, ABV[i]); return o; };
-  var descOf = function (i, st, lib) { return CARDS[i][2](rawVal(i, st, lib)); };
+  var descOf = function (i, st, lib) { return st >= 5 ? ORIGIN[i][1](originVal(i, st)) : CARDS[i][2](rawVal(i, st, lib)); };
   var auraTxt = function (st, lib) { var a = lib ? AURA_LIB : AURA[st]; return a ? '五屬性抗性 +' + a.res + (a.abn ? '、異常狀態抵抗 +' + a.abn + '%' : '') + (a.dur ? '、受到的異常狀態持續時間 −' + a.dur + '%' : '') + (a.weight ? '、負重上限 +' + a.weight.toLocaleString() : '') + (a.ero ? '；次元裂縫的地圖侵蝕扣 AC、抗性最多扣到 −' + a.ero : '') : ''; };
   var stdKeyC = function (c) { return c.eqLib ? '95' : stdKey(c.eqSt); };
   var auraC = function (c) { return c.eqLib ? AURA_LIB : AURA[c.eqSt]; };
@@ -142,7 +168,7 @@
     Object.assign(d, { n: '密奧之卡・' + ROMAN[i] + ' ' + c[0], type: 'acc', slot: 'mio', req: 'all', safe: 0, p: 0, gachaWeight: 0, noEnhance: true, noTrade: true, noSell: true, noJunk: true,
       c: 'text-fuchsia-300', img: 'assets/icons/items/' + id + '.png', afkMio: i,
       d: '只能裝一張。偉特：' + descOf(i, 1) + '。托特：' + descOf(i, 2) + '；' + auraTxt(2) + '。馬賽：' + descOf(i, 3) + '；' + auraTxt(3) + '。'
-        + '淵源：' + descOf(i, 4) + '；' + auraTxt(4) + '。沒裝著的點亮卡只給偉特。' });
+        + '淵源：' + descOf(i, 4) + '；' + auraTxt(4) + '。起源：' + descOf(i, 5) + '；' + auraTxt(5) + '。創世：' + descOf(i, 6) + '；' + auraTxt(6) + '。沒裝著的點亮卡只給偉特。' });
     try { if (typeof ITEM_WEIGHTS !== 'undefined' && ITEM_WEIGHTS[d.n] == null) ITEM_WEIGHTS[d.n] = 0; } catch (e) {}
   });
   try { if (typeof WEIGHT_COUNT_SLOTS !== 'undefined' && WEIGHT_COUNT_SLOTS.indexOf('mio') < 0) WEIGHT_COUNT_SLOTS.push('mio'); } catch (e) {}
@@ -164,11 +190,13 @@
     var o = { act: {}, lit: 0, th: 0, ma: 0, ab: 0, og: 0, cr: 0, lb: 0, eq: -1, eqSt: 0, eqLib: false, set: {} };
     if (!on(p)) return o;
     var s = store(p), eq = equippedIdx(p);
-    o.eq = eq; o.eqSt = eq >= 0 ? stageOf(p, eq) : 0; o.eqLib = eq >= 0 && libOf(p, eq);
-    var wSt = stageOf(p, K.world), wMult = wSt > 0 ? rawVal(K.world, eq === K.world ? wSt : 1, eq === K.world && o.eqLib).mult : 1;
+    o.eq = eq; o.eqSt = eq >= 0 ? stageOf(p, eq) : 0; o.eqLib = eq >= 0 && libOf(p, eq) && o.eqSt === 4;   // 起源以後是新的一套，不再用解放淵源
+    o.origin = eq >= 0 && o.eqSt >= 5 ? { i: eq, st: o.eqSt, v: originVal(eq, o.eqSt) } : null;
+    var wSt = stageOf(p, K.world), wMult = wSt > 0 ? (o.origin && eq === K.world ? o.origin.v.mult : rawVal(K.world, eq === K.world ? wSt : 1, eq === K.world && o.eqLib).mult) : 1;
     CARDS.forEach(function (c, i) {
       var st = Number(s.cards[i]) || 0; if (st <= 0) return;
       o.lit++; if (st >= 2) o.th++; if (st >= 3) o.ma++; if (st >= 4) o.ab++; if (st >= 5) o.og++; if (st >= 6) o.cr++; if (libOf(p, i)) o.lb++;
+      if (i === eq && st >= 5) return;   // 裝著的起源／創世卡：舊特效不再生效，改用起源規則（見下方 ORIGIN 區塊）
       var use = i === eq ? st : 1, v = rawVal(i, use, i === eq && o.eqLib);
       if (i !== eq && i !== K.world && wMult !== 1) Object.keys(v).forEach(function (k) { if (k !== 'cd' && k !== 'dur' && k !== 'max' && k !== 'crit') v[k] = Math.round(v[k] * wMult * 100) / 100; });
       o.act[i] = { st: use, lib: i === eq && o.eqLib, v: v };
@@ -489,11 +517,11 @@
       + '<div class="grid">' + CARDS.map(function (c, i) {
           var st = Number(s.cards[i]) || 0;
           return '<button type="button" class="cd' + (st ? '' : ' off') + (i === ui.sel ? ' sel' : '') + '" data-mio="sel:' + i + '"><img src="' + esc(ico(idOf(i))) + '">'
-            + (st ? '<i style="color:' + (libOf(p, i) ? '#fb7185' : STAGE_C[st]) + '">' + (libOf(p, i) ? '解放' : STAGE[st]) + '</i>' : '') + (i === eq ? '<u>裝備中</u>' : '') + '<span>' + ROMAN[i] + ' ' + esc(c[0]) + '</span></button>';
+            + (st ? '<i style="color:' + (libOf(p, i) && st === 4 ? '#fb7185' : STAGE_C[st]) + '">' + (libOf(p, i) && st === 4 ? '解放' : STAGE[st]) + '</i>' : '') + (i === eq ? '<u>裝備中</u>' : '') + '<span>' + ROMAN[i] + ' ' + esc(c[0]) + '</span></button>';
         }).join('') + '</div>';
     var i = ui.sel, c = CARDS[i], st = Number(s.cards[i]) || 0;
     h += '<div class="det"><div class="top"><img src="' + esc(ico(idOf(i))) + '"' + (st ? '' : ' style="filter:grayscale(1) brightness(.4)"') + '><div><div style="font-size:16px;font-weight:bold;color:#f5d0fe">' + ROMAN[i] + ' ' + esc(c[0]) + '</div>'
-      + '<div style="color:' + (st ? STAGE_C[st] : '#78716c') + '">' + (st ? '目前：' + (libOf(p, i) ? '解放淵源' : STAGE[st]) + (i === eq ? '（裝備中，用這個階段）' : '（沒裝著，只給偉特的效果）') : '還沒點亮') + '</div></div></div>'
+      + '<div style="color:' + (st ? STAGE_C[st] : '#78716c') + '">' + (st ? '目前：' + (libOf(p, i) && st === 4 ? '解放淵源' : STAGE[st]) + (i === eq ? '（裝備中，用這個階段）' : '（沒裝著，只給偉特的效果）') : '還沒點亮') + '</div></div></div>'
       + '<table>' + [1, 2, 3, 4, 5, 6].filter(function (k) { return k <= maxStage(); }).map(function (k) {
           var locked = false;   // 次元裂縫開放前只列到淵源（未開放的內容不放進介面說明）
           return '<tr class="' + (k === st && !libOf(p, i) ? 'now' : '') + '"><td class="s" style="color:' + STAGE_C[k] + '">' + STAGE[k] + '</td><td>'
@@ -593,8 +621,89 @@
     var Kn = W.__afkNpcKit; if (Kn && Kn.hookNpc) Kn.hookNpc(NPC_ID, NPC_N, NPC_T, npcPanel);
   } catch (e) { console.warn('[AFK-mio] NPC', e); }
 
+  // ── 起源／創世：裝著的那張卡改用起源規則（玩家 2026-11-11 19:16 確認上線）──
+  var OG = function (k) { var c = cur(); return c.origin && c.origin.i === K[k] ? c.origin.v : null; };
+  var ofire = function (k) { var i = K[k]; if (!X) return; X.pop('mioo' + i, (DB.items[idOf(i)] || {}).img, CARDS[i][0], '#22d3ee'); X.note('mioo' + i, '<span style="color:#22d3ee">🃏【' + CARDS[i][0] + '・起源】</span>' + esc(descOf(i, cur().origin.st))); };
+  var twHour = function () { return new Date(Date.now() + 8 * 3600000).getUTCHours(); };
+  var isNight = function () { var h = twHour(); return h >= 18 || h < 6; };
+  // 數值類：女祭司（MP 消耗）、月亮（夜晚迴避、命中）
+  if (typeof W.recomputeStats === 'function') {
+    var oRe2 = W.recomputeStats;
+    W.recomputeStats = function () {
+      var r = oRe2.apply(this, arguments);
+      try {
+        var p = P(); if (p && p.d && on(p)) {
+          var pr = OG('priestess'); if (pr) p.d.mpReduce = (Number(p.d.mpReduce) || 0) + pr.pct;
+          var mo = OG('moon'); if (mo && isNight()) { p.d.er = (Number(p.d.er) || 0) + mo.er; p.d.extraHit = (Number(p.d.extraHit) || 0) + mo.hit; }
+        }
+      } catch (e) {}
+      return r;
+    };
+    try { (0, eval)('recomputeStats = window.recomputeStats'); } catch (e) {}
+  }
+  if (typeof W.playerEquipPotionBonusPct === 'function') {
+    var oPot2 = W.playerEquipPotionBonusPct;
+    W.playerEquipPotionBonusPct = function () { var v = oPot2.apply(this, arguments); try { var t = OG('temperance'); if (t) v += t.pot; } catch (e) {} return v; };
+    try { (0, eval)('playerEquipPotionBonusPct = window.playerEquipPotionBonusPct'); } catch (e) {}
+  }
+  if (X) {
+    var og = { foolAt: -1e9, inv: 0, mag: 0, lovAt: -1e9, starAt: -1e9, hierAt: 0, regAt: 0, cc: false, reap: 0, wasCC: false };
+    var RR = function () { return W.AFK_RELIC_RUNTIME; };
+    X.on('taken', function (ent, dmg, mob) {
+      var p = P(); if (!p || !on(p) || !(dmg > 0)) return dmg;
+      if (ent === p && tk() < og.inv) return 0;   // 愚者的無敵
+      var ju = OG('justice'); if (ju && ent === p && mob && mob.boss && !mob._dead) X.hitMob(mob, dmg * ju.pct / 100);
+      return dmg;
+    });
+    X.on('dealt', function (actor, target, v, opt) {
+      var p = P(); if (!p || !on(p) || !(v > 0) || !target) return v;
+      var c = cur(); if (!c.origin) return v;
+      var m = 1;
+      if (actor !== p) { var em = OG('emperor'); if (em && (p.allies || []).indexOf(actor) >= 0) m *= 1 + em.pct / 100; return v * m; }
+      var mg = OG('magician'); if (mg && opt.kind === 'magic') { og.mag++; if (og.mag > mg.n) { og.mag = 0; m *= mg.mult; ofire('magician'); } }
+      var ch = OG('chariot'); if (ch) { try { var mv = RR() && RR().state(p, '_movement'); if (mv && mv.moving) m *= 1 + ch.pct / 100; } catch (e) {} }
+      var sg = OG('strength'); if (sg && opt.packet) m *= 1 + sg.pct / 100;
+      var hm = OG('hermit'); if (hm && X.party() <= 4) m *= 1 + hm.pct / 100;
+      var wh = OG('wheel'); if (wh && opt.packet && opt.packet.crit && rnd() < wh.ch / 100) { try { var cd = p.cds || {}; ['atkSk', 'healSk', 'purifySk', 'convertSk'].forEach(function (k) { if (cd[k] > 0) cd[k] = Math.max(0, cd[k] - 10); }); if (cd.healSkillCds) Object.keys(cd.healSkillCds).forEach(function (k) { cd.healSkillCds[k] = Math.max(0, cd.healSkillCds[k] - 10); }); } catch (e) {} ofire('wheel'); }
+      var hg = OG('hanged'); if (hg && og.cc) { og.cc = false; m *= 1 + hg.pct / 100; ofire('hanged'); }
+      if (OG('death') && tk() < og.reap) m *= 1.2;
+      var dv = OG('devil'); if (dv && target.hp > 0 && target.curHp > target.hp * 0.8) m *= 1 + dv.pct / 100;
+      var tw = OG('tower'); if (tw && target.boss) { var rg = 1; try { rg = typeof mobRageDmgMult === 'function' ? mobRageDmgMult(target) : 1; } catch (e) {} if (rg > 1 || target._enraged) m *= 1 + tw.pct / 100; }
+      var su = OG('sun'); if (su && !isNight()) m *= 1 + su.pct / 100;
+      var jg = OG('judgement'); if (jg && target.boss && target.hp > 0 && target.curHp < target.hp * 0.3) m *= 1 + jg.pct / 100;
+      return v * m;
+    });
+    X.on('tick', function () {
+      var p = P(); if (!p || !on(p) || p.dead) return;
+      var c = cur(); if (!c.origin) return;
+      var t = tk();
+      var em = OG('empress'); if (em && t >= og.regAt) { og.regAt = t + 50; p.hp = Math.min(p.mhp, (p.hp || 0) + em.hp); (p.allies || []).forEach(function (a) { if (a && !a._downed && a.curHp > 0) a.curHp = Math.min(a.mhp, a.curHp + em.hp); }); }
+      var hi = OG('hierophant');
+      if (hi && t >= og.hierAt && X.inCombat()) {
+        og.hierAt = t + hi.cd * 10; var any = false;
+        [p].concat(p.allies || []).forEach(function (e) { var stt = e && e.statuses; if (!stt) return; for (var j = 0; j < DEB.length; j++) { if ((Number(stt[DEB[j]]) || 0) > 0) { stt[DEB[j]] = 0; any = true; break; } } });
+        if (any) ofire('hierophant');
+      }
+      var hg = OG('hanged');
+      if (hg) { var stt0 = p.statuses || {}, nowCC = (stt0.stun || 0) > 0 || (stt0.freeze || 0) > 0 || (stt0.paralyze || 0) > 0; if (og.wasCC && !nowCC) og.cc = true; og.wasCC = nowCC; }
+    });
+    X.on('kill', function (m) { var p = P(), d = OG('death'); if (!p || !d || !on(p)) return; if (rnd() < d.ch / 100) { og.reap = tk() + 50; ofire('death'); } });
+    X.on('death', function () {
+      var p = P(); if (!p || !on(p)) return false;
+      var c = cur(); if (!c.origin) return false;
+      var t = tk();
+      var fo = OG('fool'); if (fo && t >= og.foolAt) { og.foolAt = t + fo.cd * 10; og.inv = t + fo.sec * 10; p.hp = 1; ofire('fool'); return true; }
+      var lv = OG('lovers');
+      if (lv && t >= og.lovAt) {
+        var al = (p.allies || []).filter(function (a) { return a && !a._downed && a.curHp > 0; }).sort(function (a, b) { return b.curHp - a.curHp; })[0];
+        if (al) { og.lovAt = t + lv.cd * 10; al.curHp = 0; p.hp = Math.max(1, Math.floor(p.mhp * 0.3)); ofire('lovers'); return true; }
+      }
+      var st = OG('star'); if (st && t - og.starAt >= 3000) { og.starAt = t; p.hp = Math.max(1, Math.floor(p.mhp * st.hp / 100)); ofire('star'); return true; }
+      return false;
+    });
+  }
   var api = W.__afkMio = { SHARD: SHARD, RATE: RATE, COST: COST, CARDS: CARDS, K: K, SET: SET, AURA: AURA, STD: STD, STD_N: STD_N, STAGE: STAGE, ROMAN: ROMAN, idOf: idOf, idxOf: idxOf,
     store: store, compute: compute, UP_COST: UP_COST, DIM: DIM, dimDesc: dimDesc, DIM_CARD: DIM_CARD, DIM_RATE: DIM_RATE, maxStage: maxStage, needOf: needOf, missOf: missOf, summary: summary, rawVal: rawVal, descOf: descOf, auraTxt: auraTxt, openCard: openCard, upgrade: upgrade, equipCard: equipCard, open: open, close: close,
     NPC_ID: NPC_ID, npcPanel: npcPanel, LIB_COST: LIB_COST, LIBV: LIBV, AURA_LIB: AURA_LIB, libOf: libOf, libState: libState, liberate: liberate, libNeed: libNeed,
-    roll: function () { return Math.random(); }, count: count, wheel: wheel, refresh: refresh };
+    roll: function () { return Math.random(); }, count: count, wheel: wheel, refresh: refresh, ORIGIN: ORIGIN, originVal: originVal };
 })();

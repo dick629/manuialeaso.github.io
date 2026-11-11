@@ -4092,7 +4092,8 @@
     })) + (open ? wDesc('次元密奧卡在次元裂縫裡掉：一般怪物 ' + (M.DIM_RATE.mob * 100) + '%、頭目 ' + (M.DIM_RATE.boss * 100) + '%，乘隊伍人數（最多 ×16）。血龍鑽在潘朵拉黑市用龍之鑽石換。') : ''));
     out += wCard('✨ 裝著的卡', wTbl(['階段', '特效', '光環'], ks.map(function (k) {
       return ['<b>' + M.STAGE[k] + '</b>', '見下表', esc(M.auraTxt(k))];
-    })) + wDesc('沒裝著的點亮卡照舊只給偉特的效果。') + wTbl(['卡', '淵源的特效'], M.CARDS.map(function (c, i) { return [M.ROMAN[i] + ' ' + esc(c[0]), esc(M.descOf(i, 4))]; })));
+    })) + wDesc('沒裝著的點亮卡照舊只給偉特的效果。') + wTbl(['卡', '淵源的特效'], M.CARDS.map(function (c, i) { return [M.ROMAN[i] + ' ' + esc(c[0]), esc(M.descOf(i, 4))]; }))
+      + (open && M.ORIGIN ? wDesc('<b style="color:#22d3ee">起源</b>是一套新的卡牌規則，<b style="color:#fef3c7">創世</b>是它的延續（同一個特效、數值更高）：') + wTbl(['卡', '起源', '創世'], M.CARDS.map(function (c, i) { return [M.ROMAN[i] + ' ' + esc(c[0]), esc(M.descOf(i, 5)), esc(M.descOf(i, 6))]; })) : ''));
     if (open) out += wCard('🌌 次元效果（只在次元裂縫裡生效）', wTbl(['卡', '淵源／起源／創世'], M.CARDS.map(function (c, i) {
       return [M.ROMAN[i] + ' ' + esc(c[0]), [4, 5, 6].map(function (k) { return esc(M.dimDesc(i, k)); }).join('<br>')];
     })));
