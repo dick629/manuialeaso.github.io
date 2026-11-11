@@ -492,13 +492,35 @@
     try { updateUI(); } catch (e) {}
   };
 
-  // 席琳祈禱視窗：最終決戰卡
-  if (typeof window.renderSherinePray === 'function') {
-    var oPray = window.renderSherinePray;
-    window.renderSherinePray = function (div) {
-      var r = oPray.apply(this, arguments);
-      try {
-        var box = div.querySelector('.flex.flex-col.gap-3') || div, rr = rec(), ok = dreamOn() && !rr && ((player.rebirth > 0) || (player.lv || 1) >= 100);
+  // ── Ping 11-12 03:45：女神挑戰（最終決戰／一轉女神、二轉決戰、單人試煉、終焉階層）從席琳祈禱視窗搬到席琳神殿的新 NPC「死亡女神 席琳」──
+  //   其他外掛（afk-finaltiers）把自己的卡片推進 window.__afkGoddessCards；面板打開或重畫時依序畫出來。
+  var GODDESS_NPC = 'npc_afk_goddess', GODDESS_T = '女神挑戰';
+  window.__afkGoddessCards = window.__afkGoddessCards || [];
+  var renderGoddess = function (div) {
+    if (!div) return;
+    div.innerHTML = '<div class="p-4 flex flex-col gap-3"><div class="flex gap-3 items-center"><img src="assets/ui/afk_final_shilen_portrait.webp" alt="" style="width:96px;height:96px;object-fit:cover;border-radius:8px;border:1px solid #155e75;flex:none">'
+      + '<div class="afk-lore">「孩子……你終於走到夢的盡頭了。回去吧……別再往下沉了。」</div></div></div>';
+    var box = div.firstChild;
+    window.__afkGoddessCards.forEach(function (fn) { try { fn(box); } catch (e) { console.warn('[AFK-finalboss] goddess card', e); } });
+  };
+  window.renderGoddessPanel = renderGoddess;
+  window.__afkRepaintGoddess = function () { try { var el = document.getElementById('interaction-content'); if (el && el.querySelector('#afk-final-card')) renderGoddess(el); } catch (e) {} };
+  try {
+    var KG = window.__afkNpcKit;
+    if (KG) {
+      KG.addNpc('town_sherine', { id: GODDESS_NPC, n: BOSS_NAME, title: GODDESS_T, type: 'quest', classicHide: true, d: '沉在死亡之海底下的水之女神。一轉女神、二轉決戰、單人試煉、終焉階層都從她這裡進入。' });
+      if (typeof NPC_SPR !== 'undefined' && !NPC_SPR.shilen_goddess) NPC_SPR.shilen_goddess = { g: 'shilen_goddess', f: 12, shadow: false };
+      if (typeof NPC_SPR_FIXED !== 'undefined') NPC_SPR_FIXED[GODDESS_NPC] = 'shilen_goddess';
+      try { if (typeof TOWN_NPC_POS_OVERRIDE !== 'undefined') (TOWN_NPC_POS_OVERRIDE.town_sherine = TOWN_NPC_POS_OVERRIDE.town_sherine || {})[GODDESS_NPC] = [62, 30]; } catch (e) {}
+      KG.hookNpc(GODDESS_NPC, BOSS_NAME, GODDESS_T, renderGoddess);
+    }
+  } catch (e) { console.warn('[AFK-finalboss] goddess npc', e); }
+  // 最終決戰卡
+  {
+    window.__afkGoddessCards.unshift(function (box) {
+      var r;
+      {
+        var rr = rec(), ok = dreamOn() && !rr && ((player.rebirth > 0) || (player.lv || 1) >= 100);
         var st = rr ? (rr.result === 'win' && !rr.pending ? '<span class="text-amber-300">已通關（勝者的榮耀）</span>' : '<span class="text-fuchsia-300">已挑戰（絕望轉生者）</span>') : (dreamOn() ? '<span class="text-sky-300">可挑戰一次</span>' : '<span class="text-slate-400">需在席琳夢域鏡中</span>');
         box.insertAdjacentHTML('beforeend',
           '<div id="afk-final-card" class="bg-slate-950/80 border border-sky-700 rounded p-3 text-sm leading-relaxed">'
@@ -509,9 +531,9 @@
           + '<button type="button" class="btn py-3 text-base font-bold ' + (ok ? 'bg-sky-950 hover:bg-sky-900 border-sky-500' : 'bg-slate-700 border-slate-600 opacity-60 cursor-not-allowed') + '" ' + (ok ? '' : 'disabled') + ' onclick="afkFinalEnter()">'
           + (rr ? '已面對過死亡女神' : (!dreamOn() ? '需在席琳夢域鏡中' : (ok ? '🌊 沉入死亡之海（最終決戰）' : '需要 Lv100'))) + '</button>');
         if (window.__afkRebirth2 && window.__afkRebirth2.card) box.insertAdjacentHTML('beforeend', window.__afkRebirth2.card());
-      } catch (e) {}
+      }
       return r;
-    };
+    });
   }
 
   // ── 冥王域：沒挑戰過不能輪迴；轉生時套用光環 ──

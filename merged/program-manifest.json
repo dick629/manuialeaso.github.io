@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-82eb1f046a23",
+  "build": "merge-0.4-656d022c3e70",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -328,8 +328,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-corrupt.js?v=b1bf98dea67d",
-      "sha256": "b1bf98dea67d85e2bad4569625981ed3fa551dab10642f43ccb994891cedca89",
+      "url": "afk-corrupt.js?v=6f397f4b472a",
+      "sha256": "6f397f4b472a4511a7aa603df2dc158994d6976372776bcd07e68bd2dfc5618a",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -433,8 +433,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamhell.js?v=f54f3702e9fb",
-      "sha256": "f54f3702e9fb067f98b6a253f0612961f5e8ee21705d8231c94d11d10918dd7d",
+      "url": "afk-dreamhell.js?v=3aa9437eab20",
+      "sha256": "3aa9437eab207b5a8382e668b8285b44517227e632edf695de66f01160883780",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -528,13 +528,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-finalboss.js?v=0a7ee84fe7ed",
-      "sha256": "0a7ee84fe7edd06d3ad880bdf60a1adbd5707cd3bca2707927c36e35d51ab269",
+      "url": "afk-finalboss.js?v=988efc99a7be",
+      "sha256": "988efc99a7be16e05375531f819385b5670156a473877ae0e3c620bc8255c853",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-finaltiers.js?v=6eeb21139fef",
-      "sha256": "6eeb21139fefd065aa86032c73c82e9b576f7eedc7587fc87cc07e4ce0f71c24",
+      "url": "afk-finaltiers.js?v=735452a2bce1",
+      "sha256": "735452a2bce12feb5a58355b3623246cd053024870c5c94e904485637b5161a0",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -578,8 +578,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-game-guide.js?v=a722f4c0195e",
-      "sha256": "a722f4c0195ec6e39f4000714170108d34c467595e1ae3741bf2ed0d4c77217f",
+      "url": "afk-game-guide.js?v=4edb8186ffdd",
+      "sha256": "4edb8186ffddd6e4ea8921ebbe1b32969e3695a162f461993aa40f44b0dd3c78",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1393,8 +1393,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-timeroom.js?v=12a55832392b",
-      "sha256": "12a55832392b1e673c4fbcbaa5b74c99fe726fdeabf1f591d9de09bb172455f3",
+      "url": "afk-timeroom.js?v=91d8bf12d683",
+      "sha256": "91d8bf12d6833038f91ee213dfac185045f9a6bc008302e4fa2e92c46d13c614",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1584,7 +1584,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "56266fb6f5cf9fd3424faa6ee13dfaef60fd2df2132e807ae96ae0a084a9977a",
+      "sha256": "dbb113792c3818c7be17b5f1fd8ddb63be949cbe29bb93c0d10f62d63d0e538f",
       "type": "text/html; charset=utf-8"
     },
     {

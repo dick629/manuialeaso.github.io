@@ -320,7 +320,7 @@
     var r = oKill.apply(this, arguments);
     try { if (m && m._dead && !m._afkCrCard && FINAL_ALL.indexOf(m.n) >= 0) { m._afkCrCard = true; finalBonus(m); } } catch (e) {}
     // 滅魔蔑視水晶：各龍最終王必掉對應屬性（侵蝕安塔瑞斯＝地，由 afk-dreamhell 處理）
-    try { if (m && m._dead && !m._afkCrCry) { var fk = Object.keys(finals).find(function (k) { return finals[k] === m.n; }); if (fk) { m._afkCrCry = true; var cid = 'afk_contempt_' + DRAGONS[fk].ele; if (DB.items[cid]) gainItem(cid, 1); } } } catch (e) {}
+    try { if (m && m._dead && !m._afkCrCry) { var fk = Object.keys(finals).find(function (k) { return finals[k] === m.n; }); if (fk) { m._afkCrCry = true; var cid = 'afk_contempt_' + DRAGONS[fk].ele; if (DB.items[cid] && !(typeof window.__afkDimRiftOn === 'function' && window.__afkDimRiftOn())) gainItem(cid, 1); } } } catch (e) {}   /* 11-12：次元裂縫不掉滅魔蔑視水晶 */
     return r;
   };
   // 四大龍副本最終王（含安塔瑞斯）：隨機一隻怪的白金卡 0.001%（×隊伍人數、吃幸運爆走兔腳）、鑽白金幻化 0.01%

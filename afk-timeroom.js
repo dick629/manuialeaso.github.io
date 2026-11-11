@@ -6,6 +6,7 @@
  *     ‧怪物經驗 ×1.5；能進次元裂縫的角色 ×2。
  *     ‧不掉任何東西（包含地區霸主、世界事件、離線結算），只給金幣。
  *     ‧地區霸主、世界事件出現率 ×2（冷卻照舊）。地區霸主從各地區霸主裡隨機挑一隻（日出之國所在的地區沒有霸主）。
+ *     ‧經驗蘑菇（Ping 11-12）：每隻怪 1% 變成經驗蘑菇，經驗 1700 萬（再乘時光屋 ×1.5／×2 與一般的經驗倍率）；打倒牠 1% 下一隻又是經驗蘑菇。
  *   經典模式沒有（席琳神殿地區本來就不開放經典模式）。
  * ========================================================================== */
 (function () {
@@ -29,6 +30,16 @@
   var riftOK = function () { try { var p = P(), R = W.__afkDimRift; return !!(p && R && typeof R.canOpen === 'function' && !R.canOpen(p)); } catch (e) { return false; } };
   var mult = function () { return riftOK() ? 2 : 1.5; };
 
+  // ── 經驗蘑菇 ──
+  var SHROOM = { n: '經驗蘑菇', exp: 17000000, rate: 0.01, again: 0.01, base: 'growth_mushroom_1000' };
+  var shroomNext = false;
+  var toShroom = function (m) {
+    var b = DB.mobs[SHROOM.base];
+    m.n = SHROOM.n; m.exp = SHROOM.exp; m._afkShroom = true;
+    if (b) { if (b.img) m.img = b.img; m.race = b.race || m.race; }
+    try { var al = (0, eval)('MOB_ANIM_ALIAS'), nm = (0, eval)('MOB_ANIM_NAMES'); if (b && b.n && al && nm && !nm.has(SHROOM.n)) { al[SHROOM.n] = al[b.n] || b.n; if (nm.has(b.n) || al[b.n]) nm.add(SHROOM.n); } } catch (e) {}
+    try { if (typeof logSys === 'function' && !(typeof state !== 'undefined' && state.ff)) logSys('<span class="text-amber-300 font-bold">🍄 時光屋裡冒出了一顆經驗蘑菇！</span>'); } catch (e) {}
+  };
   // 經驗：生出來的怪直接乘（地區霸主、世界事件的怪不另外乘）
   if (typeof W.spawnMob === 'function') {
     var oSpawn = W.spawnMob;
@@ -36,7 +47,12 @@
       var r = oSpawn.apply(this, arguments);
       try {
         var m = here() && mapState.mobs && mapState.mobs[idx];
-        if (m && !m._afkTr && !m.boss && !m._afkRb && !m._afkWe) { m._afkTr = true; m.exp = Math.round((Number(m.exp) || 0) * mult()); }
+        if (m && !m._afkTr && !m.boss && !m._afkRb && !m._afkWe) {
+          m._afkTr = true;
+          // Ping 11-12 03:47：1% 碰到經驗蘑菇（經驗 1700 萬，再吃時光屋與其他經驗倍率）；打倒經驗蘑菇 1% 下一隻又是經驗蘑菇
+          if (shroomNext || Math.random() < SHROOM.rate) { shroomNext = false; toShroom(m); }
+          m.exp = Math.round((Number(m.exp) || 0) * mult());
+        }
       } catch (e) {}
       return r;
     };
@@ -52,7 +68,7 @@
   };
   if (typeof W.killMob === 'function') {
     var oKill = W.killMob;
-    W.killMob = function () { killing++; try { return oKill.apply(this, arguments); } finally { killing--; } };
+    W.killMob = function (idx) { var m = here() && mapState.mobs ? mapState.mobs[idx] : null, was = m && !m._dead; killing++; try { return oKill.apply(this, arguments); } finally { killing--; try { if (was && m._dead && m._afkShroom && Math.random() < SHROOM.again) shroomNext = true; } catch (e) {} } };
     try { (0, eval)('killMob = window.killMob'); } catch (e) {}
   }
   if (typeof W.gainItem === 'function') {
@@ -69,5 +85,5 @@
   W.__afkEventRateMult = function (mapId) { return mapId === MAP ? 2 : 1; };
   W.__afkRbRegionOf = function (mapId, keys) { return mapId === MAP && keys && keys.length ? keys[Math.floor(Math.random() * keys.length)] : null; };
 
-  W.__afkTimeRoom = { MAP: MAP, mobs: ids, mult: mult, blocked: blocked };
+  W.__afkTimeRoom = { MAP: MAP, mobs: ids, mult: mult, blocked: blocked, SHROOM: SHROOM, forceShroom: function () { shroomNext = true; } };
 })();

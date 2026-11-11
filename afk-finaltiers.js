@@ -99,13 +99,13 @@
   // 中途重新整理：掛著的挑戰算失敗
   var oTick = W.tick;
   if (typeof oTick === 'function') W.tick = function () { var r = oTick.apply(this, arguments); try { var p = P(), t = p && p.afkFinalTier; if (t && t.pending && !S()._afkFinal) finish(t.pending, 'lose', '中途離開'); } catch (e) {} return r; };
-  if (typeof W.renderSherinePray === 'function') {
-    var oPray = W.renderSherinePray;
-    W.renderSherinePray = function (div) {
-      var r = oPray.apply(this, arguments);
+  // Ping 11-12：終焉階層卡片改放在「死亡女神 席琳」NPC（afk-finalboss 的 __afkGoddessCards）
+  {
+    (W.__afkGoddessCards = W.__afkGoddessCards || []).push(function (box) {
+      var r;
       try {
         var p = P(); if (!p || !FB.won(p) || !API.OPEN) return r;
-        var box = div.querySelector('.flex.flex-col.gap-3') || div, rr = rec(p);
+        var rr = rec(p);
         var row = function (t) {
           var md = t === 2 ? 'tier2' : 'tier3', why = can(t), ok = !why, res = t === 2 ? rr.t2 : rr.t3;
           return '<button type="button" class="btn py-3 text-base font-bold ' + (ok ? 'bg-fuchsia-950 hover:bg-fuchsia-900 border-fuchsia-500' : 'bg-slate-700 border-slate-600 opacity-60 cursor-not-allowed') + '" ' + (ok ? '' : 'disabled') + ' onclick="afkFinalTierEnter(' + t + ')">'
@@ -116,7 +116,7 @@
           + row(2) + row(3));
       } catch (e) {}
       return r;
-    };
+    });
   }
   W.__afkFinalTiers = Object.assign(API, { can: can, finish: finish, rec: rec, REWARD: REWARD, tier3Gate: tier3Gate, clothRows: clothRows, forceCloth: forceCloth });
   console.log('[AFK-finaltiers] 已啟用：終焉三階層');

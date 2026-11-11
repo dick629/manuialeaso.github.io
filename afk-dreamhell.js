@@ -449,7 +449,7 @@
     try {
       if (m && m._dead && !m._afkDreamPaid) {
         m._afkDreamPaid = true;
-        if (m.n === (window.__afkAntFinal || '被侵蝕的瘋狂安塔瑞斯')) gainItem('afk_contempt_earth', 1);
+        if (m.n === (window.__afkAntFinal || '被侵蝕的瘋狂安塔瑞斯') && !(typeof window.__afkDimRiftOn === 'function' && window.__afkDimRiftOn())) gainItem('afk_contempt_earth', 1);
         // 境滅亡域鑰匙：四大龍副本——瘋狂席琳 0.01%、席琳夢域鏡 1%（固定，不吃倍率）
         if (CORRUPT_MAPS.indexOf(mapState.current) >= 0 && m._sherineMad && Math.random() < (dream ? 0.01 : 0.0001)) {
           var keepInfo = (typeof _lootMobInfo !== 'undefined') ? _lootMobInfo : null;
@@ -460,10 +460,14 @@
           var savedInfo = (typeof _lootMobInfo !== 'undefined') ? _lootMobInfo : null;
           try { _lootMobInfo = { n: m.n, lv: m.lv, boss: !!m.boss }; } catch (e) {}
           try {
+            // Ping 11-12：次元裂縫裡不掉夢艷結晶、地獄精華、滅魔蔑視水晶（含碎片）
+            var inRift = typeof window.__afkDimRiftOn === 'function' && window.__afkDimRiftOn();
+            if (!inRift) {
             if (m.boss) { gainItem('afk_dream_crystal', 3); gainItem('afk_hell_essence', 1); }
             else if (Math.random() < 0.10) gainItem('afk_dream_crystal', 1);
             if (m.boss && (m.lv || 0) >= 80) gainItem(CONTEMPT[Math.floor(Math.random() * 4)], 1);
-            if (!m.boss && Math.random() < 0.01) gainItem('afk_contempt_shard', 1);   // 一般怪：固定 1% 碎片（玩家 2026-10-21 改）
+            if (!m.boss && Math.random() < 0.01) gainItem('afk_contempt_shard', 1);
+            }   // 一般怪：固定 1% 碎片（玩家 2026-10-21 改）
             if (window.__afkCardPlus && window.__afkCardPlus.platFull()) {   // 白金卡全滿
               if (Math.random() < 0.0005) gainItem(['afk_asc_stone_wpn', 'afk_asc_stone_arm', 'afk_asc_stone_acc'][Math.floor(Math.random() * 3)], 1);
               if (Math.random() < 0.001) gainItem('afk_asc_shard', 1);
