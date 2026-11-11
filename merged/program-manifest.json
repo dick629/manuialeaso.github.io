@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-97780a9a9872",
+  "build": "merge-0.4-f5288829b3ef",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -1168,6 +1168,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-reloadguard.js?v=591fcee39605",
+      "sha256": "591fcee396055acc55f44e4966ac10995aebf04c52a7102459018ba31a2733db",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-resist.js?v=c1e195961122",
       "sha256": "c1e1959611220fe961aa04ea0c3fbc75f66d4c26fd2e759c69d2dbe7166a533f",
       "type": "text/javascript; charset=utf-8"
@@ -1579,7 +1584,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "77590ed80f530070ae289aa1e30c6b583d1143e24c8133d9b22f4b9bdeb5f431",
+      "sha256": "aa573ee80c8cbcb02a90c1fc56ed5cc577dadc028abc413349a1d99d9d21d468",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1908,8 +1913,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/integrity-core.js?v=f11901099389",
-      "sha256": "f119010993898715168ad670af3e69332ae4e2d27bb9c375c0100c8e92f3c492",
+      "url": "merged/integrity-core.js?v=6bd6ab1223c8",
+      "sha256": "6bd6ab1223c807c55e925fec2e64b1481b7e48ca57f727300db91c7f4994022a",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2038,8 +2043,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/save-gate.js?v=33dfc5dea090",
-      "sha256": "33dfc5dea090fcc9114fcdcba463375dbfb52a1dfe03ac3a24dca8ce7ab4cc54",
+      "url": "merged/save-gate.js?v=7f715584a9f2",
+      "sha256": "7f715584a9f2e905ce5127777f1b5eb36961e1544ab84301db73ddf5e117a7cc",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2079,7 +2084,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "dcf3aa5442219fda01a5dfacaa45430a3a64c6b6738ee17909f370463ee6fecb",
+      "sha256": "bd79a9446bb2f272aa6d37209ea190df04e647d97a2c41f2af4e08ee35a7e6f0",
       "type": "text/html; charset=utf-8"
     }
   ]

@@ -16,21 +16,36 @@
     doc.p.enSeed=LineageIntegrityCore.seed(doc.p);doc.p._roleEpoch=_roleEpoch();doc.p.allies=[];
     for(const k of shared)delete doc[k];
     const key='lineage_idle_save_'+slot;
+    const cur=localStorage.getItem(key),reload=cur!==null;
+    if(reload){const why=this.reloadWhy(doc.p,slot);if(why)throw Error(why);if(!confirm('這份是「'+(doc.p.name||'')+'」自己的舊存檔。\n要讀回這份舊進度嗎？這個位置目前的進度會被蓋掉（會先自動備份一份）。'))return false;
+     const RL=window.__afkReloadLedger;if(RL)doc.p.afkReloadN=RL.count(doc.p)+1;}
     const apply=async()=>{
-     if(localStorage.getItem(key)!==null)throw Error('目的位置已有資料，請重新選擇空位');
-     const change={key,before:null,after:LineageLegacyCodec.wrap(JSON.stringify(doc)),reason:'ROLE_IMPORT'};
-     await R.transact(localStorage,[change],s=>LineageBackups.save({...s,originalImport:raw,slot},'role-import'),{integrity:'import',canWrite:()=>!(typeof state!=='undefined'&&state.running)&&R.scan(R.capture(localStorage)).canRepair});
+     if(localStorage.getItem(key)!==cur)throw Error('目的位置的資料已變更，請重新操作');
+     const change={key,before:cur,after:LineageLegacyCodec.wrap(JSON.stringify(doc)),reason:reload?'ROLE_RELOAD':'ROLE_IMPORT'};
+     await R.transact(localStorage,[change],s=>LineageBackups.save({...s,originalImport:raw,slot},reload?'role-reload':'role-import'),{integrity:reload?'reload':'import',canWrite:()=>!(typeof state!=='undefined'&&state.running)&&R.scan(R.capture(localStorage)).canRepair});
+     if(reload&&window.__afkReloadLedger)window.__afkReloadLedger.bump(doc.p);
     };
     await (navigator.locks?navigator.locks.request('lineage-merged-save-write',{mode:'exclusive'},apply):apply());
-    renderLoadSelect();alert('角色已匯入；共用資料維持原進度。');return true;
+    renderLoadSelect();alert(reload?'已讀回「'+(doc.p.name||'')+'」的舊進度；倉庫等共用資料維持原樣。':'角色已匯入；共用資料維持原進度。');return true;
    }catch(e){alert('匯入已停止：'+e.message);return false;}
+  },
+  // 11-11 21:37 同一個角色讀回自己的舊存檔：只限同一個角色；這份存檔之後有把東西存進倉庫就不行（防洗倉庫）
+  reloadWhy(p,slot){
+   try{
+    const cur=typeof _roleReadSavePlayer==='function'?_roleReadSavePlayer(slot):null;const IC=window.LineageIntegrityCore;
+    if(!cur||!IC)return '此位置已有角色，請選擇空的存檔位置。';
+    const q=Object.assign({},p);q.enSeed=IC.seed(p);
+    if(IC.identity(q)!==IC.identity(cur))return '此位置已有別的角色。只能把同一個角色自己的舊存檔讀回它原本的位置；其他角色請選空的存檔位置。';
+    const RL=window.__afkReloadLedger;if(RL&&(Number(p.afkWhPut)||0)<RL.wh(cur))return '這份舊存檔之後，這個角色有把東西存進倉庫，不能讀回這份存檔（避免倉庫裡的東西變成兩份）。';
+    return '';
+   }catch(e){return '讀不到這個位置的角色：'+e.message;}
   },
   async beforeImport(raw,slot){
    try{
     if(typeof player!=='undefined'&&player&&player.cls&&typeof state!=='undefined'&&state.running)throw Error('請先返回角色選擇畫面，再匯入存檔。');
     const data=B.inspect(raw);if(data.kind==='role'&&window.LineageClassCore&&!LineageClassCore.valid(data.value.p))throw Error('職業傳承資料與目前版本不相容，未修改原始存檔');if(data.kind!=='role')throw Error('這是完整備份，請到「存檔與修復」還原。');
     if(!Number.isInteger(slot)||slot<1||slot>SAVE_SLOT_MAX)throw Error('請先選擇有效的存檔位置。');
-    if(slotSummary(slot))throw Error('此位置已有角色，請選擇空的存檔位置。');
+    if(slotSummary(slot)){const why=this.reloadWhy(data.value.p,slot);if(why)throw Error(why);}
     const keys=R.capture(localStorage),status=R.scan(keys);
     if(!status.canRepair)throw Error('其他遊戲分頁仍在使用資料，請先關閉後再匯入。');
     if(window.LineageSherineCore&&!LineageSherineCore.valid(data.value.p))throw Error('席琳界約資料無法驗證');
@@ -41,7 +56,7 @@
     const after=R.capture(localStorage);
     if(!R.scan(after).canRepair)throw Error('備份期間有其他遊戲分頁啟動，請關閉後重新匯入。');
     // Session registry heartbeats may change harmlessly; every other source key must remain stable.
-    const stable=k=>k!=='fb5_active_role_sessions_v1';
+    const stable=k=>k!=='fb5_active_role_sessions_v1'&&k!=='afk_diag_hb';
     for(const k of new Set([...Object.keys(keys),...Object.keys(after)]))if(stable(k)&&keys[k]!==after[k])throw Error('備份期間資料已變更，請重新匯入。');
     return true;
    }catch(e){alert('匯入已停止：'+e.message);return false;}

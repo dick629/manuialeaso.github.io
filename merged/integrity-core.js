@@ -34,6 +34,8 @@
  function plan(l,before,changes,kind='repair'){
   const base=absorb(l,before,{tolerateInvalid:true}),after={...before};for(const c of changes){if((own(before,c.key)?before[c.key]:null)!==c.before)fail('資料已變更，請重新操作');if(c.after===null)delete after[c.key];else after[c.key]=c.after;}
   if(kind==='import')for(const [id] of Object.entries(roles(after)))if(!own(roles(before,true),id)&&own(base.seen,id))fail('這個角色曾經存在或匯入過；不能刪角後重複匯入舊裝備。請使用完整備份檢查還原');
+  // 11-11 21:37 同一個角色讀回自己的舊存檔（覆蓋原位置）：角色名單必須完全不變；封魂、魂魄消耗、職業路線照樣由 absorb 擋
+  if(kind==='reload'){const b=Object.keys(roles(before,true)).sort().join('\n'),a2=Object.keys(roles(after)).sort().join('\n');if(b!==a2)fail('只能讀回同一個角色自己的舊存檔');}
   const next=absorb(base,after,{advance:kind==='class'});next.revision=l.revision+1;return next;
  }
  return Object.freeze({fresh,valid,seed,identity,roles,vault,absorb,plan,path});
