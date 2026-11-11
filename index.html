@@ -12,6 +12,8 @@
          （width=1180 手機縮放已於桌機專注決策時移除·本作 desktop-only） -->
 
     <title>放置天堂 - 次元裂縫</title>
+    <!-- 11-11 玩家：App 第一次開要等很久、整片白 → 先上深色底與載入畫面，程式全部載完才拿掉 -->
+    <style>html,body{background:#0f141d}#afk-boot{position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0f141d;color:#e8d8b6;font:15px/1.5 system-ui,sans-serif;transition:opacity .3s}#afk-boot img{width:88px;height:88px;border-radius:18px}#afk-boot .bar{width:180px;height:4px;border-radius:2px;background:#2a2f3a;overflow:hidden}#afk-boot .bar i{display:block;height:100%;width:0;background:#c9a55a;transition:width .2s}</style>
     <script src="merged/recovery-boot.js?v=ffe629596dba"></script>
     <link rel="icon" type="image/png" href="assets/favicon.png">   <!-- 🖼️ 瀏覽器分頁圖示(favicon)：把你的圖放到 assets/favicon.png 即生效；可改 href 路徑或副檔名(.ico/.svg) -->
 
@@ -26,6 +28,8 @@
     <link rel="stylesheet" href="merged/interface-mobile.css?v=ac93b25f27b7" media="(max-width:820px)">
 </head>
 <body class="h-screen w-screen overflow-hidden">
+    <div id="afk-boot" aria-live="polite"><img src="pwa-icon-192.png" alt=""><div id="afk-boot-t">載入中…</div><div class="bar"><i id="afk-boot-bar"></i></div></div>
+    <script>(function(){var N=392,t=document.getElementById("afk-boot-t"),b=document.getElementById("afk-boot-bar"),iv=setInterval(function(){var n=document.scripts.length,p=Math.min(100,Math.round(n/N*100));b.style.width=p+"%";t.textContent="載入中… "+p+"%";},150);document.addEventListener("DOMContentLoaded",function(){clearInterval(iv);var e=document.getElementById("afk-boot");if(!e)return;e.style.opacity="0";setTimeout(function(){e.remove();},320);});})();</script>
     <a href="recovery.html" data-merge-recovery id="merge-recovery-entry" style="position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483647;background:#20384a;color:#fff;border:1px solid #b88a49;border-radius:8px;padding:9px 14px;font:600 15px/1.5 system-ui;text-decoration:none;box-shadow:0 3px 12px #0007">存檔與修復</a>
 
     <!-- 🖥️ v2.5.8 流動式版面：#app-stage 由 CSS position:fixed;inset:0 填滿整個視窗，內層三欄 flex 隨視窗大小自然撐開（無固定 1920×1080、無 transform 縮放、無 letterbox）。VFX/提示/游標光點掛在 body（舞台外）→ getBoundingClientRect 取真實視窗座標、天生相容。 -->
@@ -860,7 +864,7 @@
     <!-- 天堂透視鏡已核對物品；套裝與地圖資料就緒後加入配方與裂痕補給。 -->
     <script src="afk-ttmi-items-data.js?v=9773f1d960da"></script>
     <script src="afk-ttmi-icons-data.js?v=a93979b08d9a"></script>
-    <script src="afk-ttmi-items.js?v=5ed3370d1eb1"></script>
+    <script src="afk-ttmi-items.js?v=dd10ed1d7877"></script>
     <!-- afk-exprebirth：轉生後經驗藥水、料理無效（娃娃、符文、聖紋、組隊照算）；要緊接在 afk-ttmi-items 之後、符文／聖紋包經驗倍率之前 -->
     <script src="afk-exprebirth.js?v=9c76549115ff"></script>
     <!-- afk-knightnames：守護騎士譯名（依詩蒂→伊席蘿蒂、朱利安→絲莉安、歐薇→歐文；怪物、NPC、物品、載入畫面）＋變身形態伊詩蒂→伊席蘿蒂（只改顯示，形態名、收集冊與存檔 key 照舊）。素材沿用舊名資料夾；排在 afk-castlewar、afk-ttmi-items 之後，afk-matprice、afk-poly-codex 之前 -->
@@ -1176,7 +1180,7 @@
 <link rel="stylesheet" href="merged/growth.css?v=0a420435e0bb">
 <script src="merged/dragon-workshop.js?v=a556ae60cf54"></script>
 <script src="merged/growth-core.js?v=034cfc1ec7f2"></script>
-<script src="merged/growth-runtime.js?v=10f5429daf3a"></script>
+<script src="merged/growth-runtime.js?v=74ed6c667411"></script>
 <script src="merged/clan-rewards.js?v=9e4ada2cfbc7"></script>
 <link rel="stylesheet" href="merged/medieval-frame.css?v=3153c149b11a">
 <script src="merged/cloth-progression.js?v=d3b47c9995eb"></script>
@@ -1184,7 +1188,7 @@
 <script src="merged/talents.js?v=85c87fc7c5c7"></script>
 <script src="merged/activities.js?v=4b7143ef9290"></script>
 <script src="merged/growth-views.js?v=841f734cbfff"></script>
-<script src="merged/growth-ui.js?v=f200bcb151e7"></script>
+<script src="merged/growth-ui.js?v=d36c8345a44b"></script>
 <link rel="stylesheet" href="merged/class-ui.css?v=d46344a39f00">
 <link rel="stylesheet" href="merged/progression-desktop.css?v=455465c0e8d1" media="(min-width: 821px)">
 <link rel="stylesheet" href="merged/progression-mobile.css?v=af8aa303cf1c" media="(max-width: 820px)">
@@ -1217,6 +1221,6 @@
       <script src="merged/arcade-ui.js?v=7e1500ed5305"></script>
     </template>
     <script src="merged/arcade-entry.js?v=e5a72d16fa25"></script>
-    <script src="merged/anticheat.js?v=ff84ecba4c37"></script>
+    <script src="merged/anticheat.js?v=f893e0393349"></script>
 </body>
 </html>

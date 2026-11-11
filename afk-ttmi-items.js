@@ -793,7 +793,7 @@
   wrap('renderUniversalCraft',function(old,self,args){if(args[1]===WORKSHOP){catalogue.mode='craft';renderCatalogue(args[0]);return;}return old.apply(self,args);});
 
   var riftLayer=null;
-  function hideRiftSupplies(){var box=document.getElementById('ttmi-rift-supplies');if(box)box.remove();riftLayer=null;}
+  function hideRiftSupplies(){var box=document.getElementById('ttmi-rift-supplies');if(box)box.remove();document.querySelectorAll('.ttmi-rift-dialog').forEach(function(x){x.remove();});riftLayer=null;}   /* 玩家 11-11：手機版把對話框搬到詳情頁，只刪外框關不掉 */
   function closeRiftSupplies(){var layer=riftLayer;riftLayer=null;if(layer&&window.AFK_UI)AFK_UI.closeLayer(layer);hideRiftSupplies();}
   function clearRift() {
     if(typeof document!=='undefined')closeRiftSupplies();

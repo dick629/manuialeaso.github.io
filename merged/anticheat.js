@@ -107,39 +107,17 @@
   };
 
   // ── 掃描 ──
+  // 玩家 11-11 10:10：會誤鎖道具 → 只留密碼保護 S 級道具；取得速度、重複編號、蜜罐後隔離都拿掉。
+  //   之前被隔離的真道具全部放回背包；只有亂碼道具會被清掉。
+  var S_TIER = function (id) { var d = DB.items[id]; return !!d && (String(id) === '99998' || String(id) === '99999' || d.gmOnly || d.relicEvo != null || d.dimRelic); };
   var scan = function (force) {
     var p = P(); if (!p || p.classicMode) return;
-    var a = store(p), now = Date.now(), changed = false;
-    // 隔離區到期刪除
-    var keep = a.q.filter(function (x) { return now - x.at < QDAYS * 864e5; }); if (keep.length !== a.q.length) { a.q = keep; changed = true; }
-    if (isOwner(p)) return;
-    checkPlay(p);
-    var legacyRun = a.fresh || now < LAUNCH; delete a.fresh;
-    if (legacyRun && a.credit == null) a.credit = credit(p);   // 舊有的材料：之後拿來強化不算太快
-    var refs = allItems(p), uids = {};
-    refs.forEach(function (r) {
-      var it = r.it;
-      if (it.id === 'afk_glitch') { if (quarantine(p, r, '亂碼道具')) changed = true; return; }
-      if (it.uid != null) { if (uids[it.uid]) { if (costOf(it) > 0 && quarantine(p, r, '重複的道具編號')) changed = true; return; } uids[it.uid] = 1; }
-      var c = costOf(it); if (!(c > 0) || it.uid == null) return;
-      var s = a.seen[it.uid];
-      if (s == null) { a.seen[it.uid] = c; if (!legacyRun) a.sp.push([it.uid, c, play(p).ms, now]); changed = true; }
-      else if (c > s) { a.seen[it.uid] = c; if (!legacyRun) a.sp.push([it.uid, c - s, play(p).ms, now]); changed = true; }
-    });
-    // 蜜罐：被叫過之後 3 天內新取得的 A 級
-    if (a.honey && now - a.honey < HONEY_DAYS * 864e5) {
-      a.sp.forEach(function (x) { if (x[3] >= a.honey) x.h = 1; });
-    }
-    // 速度檢查：超出的從最新的開始隔離
-    var budget = hours(p) * FACTOR + GRACE_H + (Number(a.credit) || 0), total = 0, over = [];
-    a.sp.forEach(function (x) { if (x.h) over.push(x); else { total += x[1]; } });
-    var sorted = a.sp.filter(function (x) { return !x.h; }).sort(function (x, y) { return y[3] - x[3]; });
-    for (var i = 0; i < sorted.length && total > budget; i++) { total -= sorted[i][1]; over.push(sorted[i]); }
-    over.forEach(function (x) {
-      var r = allItems(p).filter(function (q) { return q.it.uid === x[0]; })[0];
-      if (r && quarantine(p, r, x.h ? '呼叫作弊入口後取得' : '取得速度超過遊玩時間')) changed = true;
-      a.sp.splice(a.sp.indexOf(x), 1);
-    });
+    var a = store(p), changed = false;
+    var back = a.q.filter(function (x) { return x && x.it && x.it.id !== 'afk_glitch'; });
+    if (back.length) { back.forEach(function (x) { p.inv.push(x.it); }); sys('<span class="text-emerald-300">先前移到隔離區的 ' + back.length + ' 件道具已放回背包。</span>'); changed = true; }
+    if (a.q.length) { a.q = []; changed = true; }
+    a.sp = []; delete a.honey;
+    allItems(p).forEach(function (r) { if (r.it.id === 'afk_glitch' && r.where === 'inv') { var i = p.inv.indexOf(r.it); if (i >= 0) { p.inv.splice(i, 1); changed = true; } } });
     if (changed) { try { if (typeof calcStats === 'function') calcStats(); if (typeof updateUI === 'function') updateUI(); } catch (e) {} }
   };
 
@@ -162,7 +140,7 @@
       var st = (typeof state !== 'undefined' && state) || {};
       if (!st.ff && !LOCAL() && external()) {
         var p = P();
-        if (!unlocked) { return giveGlitch(p); }
+        if (!unlocked) { if (S_TIER(id)) return giveGlitch(p); return oGain.apply(this, arguments); }
         adminLog.push({ id: id, n: arguments[1], at: Date.now() });
         var r = oGain.apply(this, arguments);
         try { if (p) { var a = store(p); if (r && r.uid != null) a.seen[r.uid] = costOf(r); (a.admin = a.admin || []).push([String(id), Number(arguments[1]) || 1, Date.now()]); if (a.admin.length > 200) a.admin.splice(0, a.admin.length - 200); } } catch (e) {}
@@ -178,7 +156,7 @@
 
   // ── 蜜罐 ──
   var honey = function () {
-    var p = P(); if (p && !unlocked) { store(p).honey = Date.now(); }
+    var p = P();
     return p && !unlocked ? giveGlitch(p) : null;
   };
   var trap = function () { var r = honey(); return r ? { ok: true, item: r } : { ok: true }; };

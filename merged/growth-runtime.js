@@ -22,9 +22,9 @@
   }
   function transaction(label,fn,verifySaved){
     const p=P();if(busy||preparing&&!prepared||!p||p.dead||!currentSlot)throw Error('目前無法保存角色，未扣款');
-    const before=snapshot(),stateBefore={antharas:state.antharas,_antAdvance:state._antAdvance,_afkDragon:state._afkDragon,running:state.running},saved=saveStateJson(),record=JSON.stringify({v:1,label,at:Date.now(),slot:currentSlot,storage:before,role:saved});
-    const backupRecord=prepared?JSON.stringify({schema:1,backupId:prepared.id,label,slot:currentSlot}):record;
-    localStorage.setItem(backupKey,backupRecord);if(localStorage.getItem(backupKey)!==backupRecord)throw Error('備份回讀失敗，未扣款');
+    const before=snapshot(),stateBefore={antharas:state.antharas,_antAdvance:state._antAdvance,_afkDragon:state._afkDragon,running:state.running},saved=saveStateJson();
+    // 玩家 11-11：整份存檔備份寫進瀏覽器會讓容量爆掉（The quota has been exceeded）→ 不再寫；失敗時用記憶體裡的 before 回復
+    try{localStorage.removeItem(backupKey);}catch(e){}
     const writes=new Map(),proto=Storage.prototype,put=proto.setItem,remove=proto.removeItem;
     proto.setItem=function(k,v){const r=put.call(this,k,v);if(this===localStorage&&String(k)!==backupKey)writes.set(String(k),String(v));return r;};
     proto.removeItem=function(k){const r=remove.call(this,k);if(this===localStorage&&String(k)!==backupKey)writes.set(String(k),null);return r;};

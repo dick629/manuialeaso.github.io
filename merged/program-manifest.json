@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-97afa5e86714",
+  "build": "merge-0.4-3c8ad2294b08",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -1433,8 +1433,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-ttmi-items.js?v=5ed3370d1eb1",
-      "sha256": "5ed3370d1eb1f7c976a3b250063cdd8ddd6869314cd23031e1ba18c9ebf6d64a",
+      "url": "afk-ttmi-items.js?v=dd10ed1d7877",
+      "sha256": "dd10ed1d7877e97267db85d23b876f96428ff0b1ad3d68b43c36019e669c2a6a",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1564,7 +1564,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "309d7667cbf16b117c4da39f1b31d75f2c0af037461ffcb284ab30af4b61a8e2",
+      "sha256": "2fa59053fec05fed5d32c26038d493861fc35924fdecb532284766d4e58c3f39",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1743,8 +1743,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/anticheat.js?v=ff84ecba4c37",
-      "sha256": "ff84ecba4c379fb60d2f59cc22dd429798d3a24be0560503d4d8f4fe455a1db3",
+      "url": "merged/anticheat.js?v=f893e0393349",
+      "sha256": "f893e0393349f545489ed92a4c68f04ed2ed0595a1be29da1d8fb1e40e46479c",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1863,13 +1863,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-runtime.js?v=10f5429daf3a",
-      "sha256": "10f5429daf3a5a6a63cabd93e2f068689438ed9e620fcbe13219beeb3f2f514c",
+      "url": "merged/growth-runtime.js?v=74ed6c667411",
+      "sha256": "74ed6c667411e1e94e353dd3f4a89a512a8753ba0f43b750e156a474aa9d6e9a",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-ui.js?v=f200bcb151e7",
-      "sha256": "f200bcb151e7e7961f2d79913198bb6044b38cf03ddb4e95173418397e37c435",
+      "url": "merged/growth-ui.js?v=d36c8345a44b",
+      "sha256": "d36c8345a44bdd1c4354d2be9f6553005b6f4d85e99f25762e0f177fd052d297",
       "type": "text/javascript; charset=utf-8"
     },
     {
