@@ -118,7 +118,7 @@
   var mobIdByName = function (n) { for (var k in DB.mobs) if (DB.mobs[k] && DB.mobs[k].n === n && !DB.mobs[k].boss) return k; return null; };
   var BADGE = 'afk_mb_badge', BYMAP = {}, BY = {};
   L.addItem(BADGE, { n: '王之徽章', type: 'misc', c: 'text-amber-300', img: 'assets/icons/items/法令軍王徽印.png', p: 0, noSell: true,
-    d: '打倒地圖王、副本王得到的徽章。在「收藏 → 王者卡冊」可以換卡片：30 個換普卡、300 個換銀卡（只能換打倒過的王）。' });
+    d: '打倒地圖王、副本王得到的徽章。在「收藏 → 怪物」卡片收集冊的王者分頁可以換卡片：30 個換普卡、300 個換銀卡（只能換打倒過的王）。' });
   // 玩家 11-11 13:58：79 隻都有自己的圖了（assets/anim/<名稱>/idle、attack、hurt、death），不再借原型怪的動畫；裂縫版（名稱加「（裂縫）」）共用同一套
   var GETG = function (n) { try { return (0, eval)(n); } catch (e) { return null; } };
   var ownArt = function (b) {

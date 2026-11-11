@@ -18,7 +18,7 @@
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
-  if (T && T.register) T.register({ id: 'bosscard', name: '王者卡冊', group: '遊戲內容', desc: '地圖王、副本王的專屬卡片收集冊（收藏 → 王者卡冊）。', def: true });
+  if (T && T.register) T.register({ id: 'bosscard', name: '王者卡冊', group: '遊戲內容', desc: '卡片收集冊多兩個分頁「王者・野外」「王者・地監」，收錄地圖王、副本王（收藏 → 怪物）。', def: true });
   if (T && T.enabled && !T.enabled('bosscard')) return;
   var MB = W.__afkMapBoss;
   if (!MB || typeof DB === 'undefined' || !DB.items) return;
@@ -71,33 +71,26 @@
   // ── 卡片道具 ──
   var css = document.createElement('style');
   css.textContent = '.c-card-plat{color:#e2e8f0;text-shadow:0 0 7px #94a3b8}.c-card-diamond{color:#67e8f9;text-shadow:0 0 8px #06b6d4}'
-    + '#afk-boss-book{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;padding:12px}'
-    + '#afk-boss-book.open{display:flex}#afk-boss-book .bc-box{width:100%;max-width:1100px;max-height:92vh;display:flex;flex-direction:column;background:rgba(15,23,42,.96);border:2px solid #7c2d12;border-radius:16px;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.85)}'
-    + '#afk-boss-book .bc-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #334155;background:linear-gradient(#3f1d0e,#22100a)}'
-    + '#afk-boss-book .bc-hd h2{font-size:24px;font-weight:700;color:#fbbf24;margin:0}#afk-boss-book .bc-x{padding:6px 12px;border-radius:6px;background:#334155;border:1px solid #64748b;color:#e2e8f0;font-weight:700}'
-    + '#afk-boss-book .bc-tabs{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid #334155}#afk-boss-book .bc-tab{padding:8px 18px;border-radius:6px;border:1px solid #57534e;background:#1c1917;color:#e7e5e4;font-weight:700;font-size:17px}'
-    + '#afk-boss-book .bc-tab.on{background:#78350f;border-color:#f59e0b;color:#fde68a}#afk-boss-book .bc-body{flex:1;overflow-y:auto;padding:16px}'
-    + '#afk-boss-book .bc-h{font-size:26px;font-weight:700;color:#fbbf24}#afk-boss-book .bc-h small{font-size:15px;color:#94a3b8;font-weight:400;margin-left:10px}'
-    + '#afk-boss-book .bc-line{margin:8px 0;color:#e2e8f0;font-size:15px;line-height:1.7}#afk-boss-book .bc-line b.ok{color:#fde68a}#afk-boss-book .bc-line .dim{color:#64748b}'
-    + '#afk-boss-book .bc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:12px}'
-    + '#afk-boss-book .bc-card{position:relative;border:2px solid #44403c;border-radius:10px;background:linear-gradient(#292524,#1c1917);padding:6px;text-align:center;cursor:pointer}'
-    + '#afk-boss-book .bc-card.t1{border-color:#a8a29e}#afk-boss-book .bc-card.t2{border-color:#cbd5e1}#afk-boss-book .bc-card.t3{border-color:#f59e0b;box-shadow:0 0 8px rgba(245,158,11,.4)}'
-    + '#afk-boss-book .bc-card.t4{border-color:#e2e8f0;box-shadow:0 0 10px rgba(226,232,240,.5)}#afk-boss-book .bc-card.t5{border-color:#67e8f9;box-shadow:0 0 12px rgba(6,182,212,.6)}'
-    + '#afk-boss-book .bc-card.sel{outline:3px solid #fbbf24}#afk-boss-book .bc-card img{width:100%;aspect-ratio:1;object-fit:contain;background:radial-gradient(#3f3f46,#18181b);border-radius:6px}'
-    + '#afk-boss-book .bc-card img.sil{filter:brightness(0) drop-shadow(0 0 1px #d6d3d1) drop-shadow(0 0 3px #78716c)}#afk-boss-book .bc-nm{font-size:13px;font-weight:700;color:#f5f5f4;margin-top:4px;line-height:1.3;min-height:34px}'
-    + '#afk-boss-book .bc-tag{position:absolute;top:8px;left:8px;font-size:11px;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,.7);color:#d6d3d1}'
-    + '#afk-boss-book .bc-tr{font-size:12px;margin-top:2px}#afk-boss-book .bc-bar{height:4px;background:#292524;border-radius:2px;margin-top:3px;overflow:hidden}#afk-boss-book .bc-bar i{display:block;height:100%;background:#f59e0b}'
-    + '#afk-boss-book .bc-det{margin-top:12px;padding:12px;border:1px solid #57534e;border-radius:10px;background:#1c1917;color:#e7e5e4;font-size:14px;line-height:1.7}'
-    + '#afk-boss-book .bc-det button{margin:6px 8px 0 0;padding:8px 14px;border-radius:6px;border:1px solid #b45309;background:#78350f;color:#fde68a;font-weight:700}#afk-boss-book .bc-det button:disabled{opacity:.4}'
-    + '#afk-bc-entry{background:linear-gradient(135deg,#3f1d0e,#b45309);color:#fde68a;border-color:#f59e0b}'
-    + '@media (max-width:640px){#afk-boss-book{padding:0}#afk-boss-book .bc-box{max-height:100vh;height:100%;border-radius:0}#afk-boss-book .bc-grid{grid-template-columns:repeat(3,1fr);gap:6px}#afk-boss-book .bc-nm{font-size:11px;min-height:28px}#afk-boss-book .bc-h{font-size:20px}}';
+    + '.afk-bcw .bc-h{font-size:26px;font-weight:700;color:#fbbf24}.afk-bcw .bc-h small{font-size:15px;color:#94a3b8;font-weight:400;margin-left:10px}'
+    + '.afk-bcw .bc-line{margin:8px 0;color:#e2e8f0;font-size:15px;line-height:1.7}.afk-bcw .bc-line b.ok{color:#fde68a}.afk-bcw .bc-line .dim{color:#64748b}'
+    + '.afk-bcw .bc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:12px}'
+    + '.afk-bcw .bc-card{position:relative;border:2px solid #44403c;border-radius:10px;background:linear-gradient(#292524,#1c1917);padding:6px;text-align:center;cursor:pointer}'
+    + '.afk-bcw .bc-card.t1{border-color:#a8a29e}.afk-bcw .bc-card.t2{border-color:#cbd5e1}.afk-bcw .bc-card.t3{border-color:#f59e0b;box-shadow:0 0 8px rgba(245,158,11,.4)}'
+    + '.afk-bcw .bc-card.t4{border-color:#e2e8f0;box-shadow:0 0 10px rgba(226,232,240,.5)}.afk-bcw .bc-card.t5{border-color:#67e8f9;box-shadow:0 0 12px rgba(6,182,212,.6)}'
+    + '.afk-bcw .bc-card.sel{outline:3px solid #fbbf24}.afk-bcw .bc-pic{background:radial-gradient(#57534e,#1c1917);border-radius:6px}.afk-bcw .bc-card img{display:block;width:100%;aspect-ratio:1;object-fit:contain}'
+    + '.afk-bcw .bc-card img.sil{filter:brightness(0) opacity(.75)}.afk-bcw .bc-nm{font-size:13px;font-weight:700;color:#f5f5f4;margin-top:4px;line-height:1.3;min-height:34px}'
+    + '.afk-bcw .bc-tag{position:absolute;top:8px;left:8px;font-size:11px;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,.7);color:#d6d3d1}'
+    + '.afk-bcw .bc-tr{font-size:12px;margin-top:2px}.afk-bcw .bc-bar{height:4px;background:#292524;border-radius:2px;margin-top:3px;overflow:hidden}.afk-bcw .bc-bar i{display:block;height:100%;background:#f59e0b}'
+    + '.afk-bcw .bc-det{margin-top:12px;padding:12px;border:1px solid #57534e;border-radius:10px;background:#1c1917;color:#e7e5e4;font-size:14px;line-height:1.7}'
+    + '.afk-bcw .bc-det button{margin:6px 8px 0 0;padding:8px 14px;border-radius:6px;border:1px solid #b45309;background:#78350f;color:#fde68a;font-weight:700}.afk-bcw .bc-det button:disabled{opacity:.4}'
+  css.textContent += '@media (max-width:640px){.afk-bcw .bc-grid{grid-template-columns:repeat(3,1fr);gap:6px}.afk-bcw .bc-nm{font-size:11px;min-height:28px}.afk-bcw .bc-h{font-size:20px}}';
   document.head.appendChild(css);
 
   LIST.forEach(function (b) {
     TIERS.forEach(function (x) {
       var id = cid(b.id, x.t);
       DB.items[id] = { n: b.n + ' 的' + x.n, type: 'misc', c: x.col, img: x.img, p: x.price, gachaWeight: 0, noTrade: false, bossCard: b.id, bossCardTier: x.t,
-        d: '王者卡冊的卡片（' + (b.type === 'field' ? '野外' : '地監') + '王）。這隻王在王者卡冊已經登錄到這一階以上，多的卡留著收藏或賣掉；之後可以拿來兌換魔法娃娃。' };
+        d: '王者卡片（' + (b.type === 'field' ? '野外' : '地監') + '王）。這隻王在卡片收集冊的王者分頁已經登錄到這一階以上，多的卡留著收藏或賣掉；之後可以拿來兌換魔法娃娃。' };
     });
   });
 
@@ -110,7 +103,7 @@
     } else if ((Number(d.x[code]) || 0) < t) { d.x[code] = t; used = 1; }
     if (used) {
       d.pts += used * x.pts; save(); refresh();
-      sys('<span class="' + x.col + ' font-bold">👑 王者卡冊登錄了「' + esc(b.n) + '」（' + x.n + (used > 1 ? ' ×' + used : '') + '）！</span>' + (why ? '<span class="text-slate-400">（' + why + '）</span>' : ''));
+      sys('<span class="' + x.col + ' font-bold">🎴 卡片收集冊（王者）登錄了「' + esc(b.n) + '」（' + x.n + (used > 1 ? ' ×' + used : '') + '）！</span>' + (why ? '<span class="text-slate-400">（' + why + '）</span>' : ''));
       try { if (typeof calcStats === 'function') calcStats(); } catch (e) {}
     }
     if (n > used) { try { gainItem(cid(code, t), n - used, true, true); } catch (e) {} sys('<span class="' + x.col + '">得到 ' + esc(b.n) + ' 的' + x.n + ' ×' + (n - used) + '</span>'); }
@@ -171,31 +164,31 @@
     render();
   };
 
-  // ── 介面 ──
-  var ui = { tab: 'field', sel: null }, box = null, layer = null;
-  var isOpen = function () { return !!(box && box.classList.contains('open')); };
+  // ── 介面：放在「收藏 → 怪物」卡片收集冊裡，多兩個分頁「王者・野外」「王者・地監」（Ping 11-11 16:15） ──
+  var ui = { sel: null };
+  var curTab = function () { try { var r = (0, eval)('_cardBookRegion'); return r === 'boss_field' ? 'field' : r === 'boss_dungeon' ? 'dungeon' : null; } catch (e) { return null; } };
+  var isOpen = function () { var el = document.getElementById('card-book'); return !!(el && !el.classList.contains('hidden') && curTab()); };
   var mapName = function (k) { try { return (typeof _cardMapName === 'function' && _cardMapName(k)) || k; } catch (e) { return k; } };
-  var render = function () {
-    if (!box) return;
-    var tab = TABS.filter(function (t) { return t.k === ui.tab; })[0], list = LIST.filter(function (b) { return b.type === ui.tab; });
+  var bodyHtml = function (tk) {
+    var tab = TABS.filter(function (t) { return t.k === tk; })[0], list = LIST.filter(function (b) { return b.type === tk; });
     var cnt = [0, 0, 0, 0, 0]; list.forEach(function (b) { var t = tierOf(b.id); for (var i = 0; i < t; i++) cnt[i]++; });
-    var tt = tabTier(ui.tab), d = load();
-    var h = '<div class="bc-h">' + tab.n + '王<small>收集 ' + TIERS.map(function (x, i) { return x.n.replace('卡', '') + cnt[i]; }).join(' / ') + '　共 ' + list.length + ' 種</small></div>';
+    var tt = tabTier(tk), d = load();
+    var h = '<div class="afk-bcw"><div class="bc-h">王者・' + tab.n + '<small>收集 ' + TIERS.map(function (x, i) { return x.n.replace('卡', '') + cnt[i]; }).join(' / ') + '　共 ' + list.length + ' 種</small></div>';
     h += '<div class="bc-line">完成加成（取最高）：' + TIERS.map(function (x, i) { var ok = tt >= x.t; return '<b class="' + (ok ? 'ok' : 'dim') + '">全' + x.n + ' ' + tab.stat + ' ' + tab.sign + tab.vals[i] + '%' + (ok ? ' ✓' : '') + '</b>'; }).join(' / ') + '</div>';
-    h += '<div class="bc-line">79 隻全部金卡以上：<b class="' + (allGold() ? 'ok' : 'dim') + '">達成「王者收藏家」：對頭目造成的傷害再 +2%' + (allGold() ? ' ✓' : '') + '</b></div>';
-    h += '<div class="bc-line">王者積分 <b class="ok">' + d.pts.toLocaleString() + '</b>　·　王之徽章 <b class="ok">' + badges() + '</b> 個（30 個換普卡、300 個換銀卡，只能換打倒過的王）</div>';
+    h += '<div class="bc-line">79 隻王全部金卡以上：<b class="' + (allGold() ? 'ok' : 'dim') + '">達成「王者收藏家」：對頭目造成的傷害再 +2%' + (allGold() ? ' ✓' : '') + '</b></div>';
+    h += '<div class="bc-line">王者積分 <b class="ok">' + d.pts.toLocaleString() + '</b>　·　王之徽章 <b class="ok">' + badges() + '</b> 個（30 個換普卡、300 個換銀卡，只能換打倒過的王；點卡片兌換）</div>';
     h += '<div class="bc-grid">';
     list.forEach(function (b) {
       var t = tierOf(b.id), s = score(b.id), seen = t > 0 || !!d.k[b.id], x = TIERS[t - 1];
       h += '<div class="bc-card t' + t + (ui.sel === b.id ? ' sel' : '') + '" data-bc="' + b.id + '"><span class="bc-tag">' + (b.type === 'field' ? '野外' : '地監') + '</span>'
-        + '<img src="assets/bosscard/' + b.id + '.png" alt="" loading="lazy"' + (seen ? '' : ' class="sil"') + '>'
+        + '<div class="bc-pic"><img src="assets/bosscard/' + b.id + '.png" alt="" loading="lazy"' + (seen ? '' : ' class="sil"') + '></div>'
         + '<div class="bc-nm">' + (seen ? esc(b.n) : '？？？') + '</div>'
         + '<div class="bc-tr ' + (x ? x.col : 'text-slate-500') + '">' + (x ? x.n : (d.k[b.id] ? '已打倒、未登錄' : '未遇見')) + '</div>'
         + (t < 3 ? '<div class="bc-bar"><i style="width:' + s + '%"></i></div>' : '') + '</div>';
     });
     h += '</div>';
     var sb = ui.sel && BY[ui.sel];
-    if (sb && sb.type === ui.tab) {
+    if (sb && sb.type === tk) {
       var st = tierOf(sb.id), killed = !!d.k[sb.id];
       h += '<div class="bc-det"><b style="color:#fbbf24;font-size:16px">' + esc(sb.n) + '</b>　' + (st ? '<span class="' + TIERS[st - 1].col + '">' + TIERS[st - 1].n + '</span>' : '未登錄') + '　積分 ' + score(sb.id) + '/100'
         + '<br>出沒：' + sb.maps.map(mapName).map(esc).join('、') + (sb.type === 'field' ? '（在那張地圖打倒 300 隻怪後出現）' : '（進入後待滿 10 分鐘出現）')
@@ -203,37 +196,31 @@
         + '<br>' + EX.map(function (e) { var x = TIERS[e.t - 1]; return '<button type="button" data-ex="' + e.t + '"' + (killed && badges() >= e.cost ? '' : ' disabled') + '>王之徽章 ×' + e.cost + ' → ' + x.n + '</button>'; }).join('')
         + '</div>';
     }
-    box.querySelector('.bc-tabs').innerHTML = TABS.map(function (t) { return '<button type="button" class="bc-tab' + (t.k === ui.tab ? ' on' : '') + '" data-tab="' + t.k + '">' + t.n + '（' + LIST.filter(function (b) { return b.type === t.k; }).length + '）</button>'; }).join('');
-    box.querySelector('.bc-body').innerHTML = h;
+    return h + '</div>';
   };
-  var hide = function () { if (box) box.classList.remove('open'); layer = null; };
-  var close = function () { if (layer && W.AFK_UI && AFK_UI.closeLayer) AFK_UI.closeLayer(layer); else hide(); };
-  var open = function () {
-    if (classic()) { sys('經典模式沒有王者卡冊。'); return; }
-    if (!box) {
-      box = document.createElement('div'); box.id = 'afk-boss-book'; box.setAttribute('aria-label', '王者卡冊');
-      box.innerHTML = '<div class="bc-box"><div class="bc-hd"><h2>👑 王者卡冊</h2><button type="button" class="bc-x">✕ 關閉</button></div><div class="bc-tabs"></div><div class="bc-body"></div></div>';
-      document.body.appendChild(box);
-      box.addEventListener('click', function (e) {
-        var t = e.target; if (t === box || (t.closest && t.closest('.bc-x'))) { close(); return; }
-        var tb = t.closest && t.closest('[data-tab]'); if (tb) { ui.tab = tb.getAttribute('data-tab'); ui.sel = null; render(); return; }
-        var ex = t.closest && t.closest('[data-ex]'); if (ex) { exchange(ui.sel, Number(ex.getAttribute('data-ex'))); return; }
-        var c = t.closest && t.closest('[data-bc]'); if (c) { ui.sel = c.getAttribute('data-bc'); render(); var det = box.querySelector('.bc-det'); if (det && det.scrollIntoView) det.scrollIntoView({ block: 'nearest' }); }
-      });
-    }
-    cache = null; refresh();
-    try { if (typeof closeModal === 'function') closeModal(); } catch (e) {}
-    box.classList.add('open'); render();
-    layer = (W.AFK_UI && AFK_UI.openLayer) ? AFK_UI.openLayer(hide) : null;
+  var render = function () { try { if (typeof renderCardBook === 'function') renderCardBook(); } catch (e) {} };
+  var paint = function () {
+    var tabHost = document.getElementById('card-book-tabs'), host = document.getElementById('card-book-body'); if (!tabHost || !host || classic()) return;
+    var cur = curTab();
+    TABS.forEach(function (t) {
+      var tt = tabTier(t.k), on = cur === t.k;
+      tabHost.insertAdjacentHTML('beforeend', '<button onclick="cardBookTab(\'boss_' + t.k + '\')" class="btn px-3 py-1.5 text-sm font-bold whitespace-nowrap ' + (on ? 'bg-amber-800 border-amber-500 text-amber-100' : 'bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700') + '">👑 王者・' + t.n + (tt > 0 ? '<span class="' + TIERS[tt - 1].col + '"> ●</span>' : '') + '</button>');
+    });
+    if (cur) { cache = null; refresh(); host.innerHTML = bodyHtml(cur); }
   };
-  // 收藏面板多一顆按鈕
-  var addEntry = function () {
-    if (document.getElementById('afk-bc-entry')) return;
-    var ref = document.querySelector('button[onclick="collectionOpenCard()"]'); if (!ref) return;
-    ref.insertAdjacentHTML('afterend', '<button id="afk-bc-entry" type="button" class="btn py-5 text-xl font-bold">👑 王者卡冊</button>');
-    document.getElementById('afk-bc-entry').addEventListener('click', function () { try { if (typeof leaveCollectionPanelForBook === 'function') leaveCollectionPanelForBook(); } catch (e) {} open(); });
-  };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addEntry); else addEntry();
+  if (typeof W.renderCardBook === 'function') {
+    var oRCB = W.renderCardBook;
+    W.renderCardBook = function () { var r = oRCB.apply(this, arguments); try { paint(); } catch (e) { console.warn('[AFK-bosscard]', e); } return r; };
+    try { (0, eval)('renderCardBook = window.renderCardBook'); } catch (e) {}
+  }
+  document.addEventListener('click', function (e) {
+    var host = document.getElementById('card-book-body'); if (!host || !curTab() || !host.contains(e.target)) return;
+    var t = e.target;
+    var ex = t.closest && t.closest('[data-ex]'); if (ex) { exchange(ui.sel, Number(ex.getAttribute('data-ex'))); return; }
+    var c = t.closest && t.closest('[data-bc]'); if (c) { ui.sel = c.getAttribute('data-bc'); render(); var det = host.querySelector('.bc-det'); if (det && det.scrollIntoView) det.scrollIntoView({ block: 'nearest' }); }
+  });
+  var open = function () { try { (0, eval)("_cardBookRegion = 'boss_field'"); if (typeof openCardBook === 'function') openCardBook(); } catch (e) {} };
+  var close = function () { try { if (typeof closeCardBook === 'function') closeCardBook(); } catch (e) {} };
 
   refresh();
   W.__afkBossCard = { TIERS: TIERS, TABS: TABS, EX: EX, LIST: LIST, open: open, close: close, acquire: acquire, exchange: exchange, tierOf: tierOf, score: score, tabTier: tabTier, bonus: function () { return BON; }, load: load, cid: cid };

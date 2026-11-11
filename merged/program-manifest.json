@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-302ee6abd634",
+  "build": "merge-0.4-f96692186777",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -168,8 +168,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-bosscard.js?v=e0adb4ace534",
-      "sha256": "e0adb4ace5349cd7b5f5461d1dc8b2c5c58f2aa23c199ddc6c8c8434e6f48639",
+      "url": "afk-bosscard.js?v=50c5a60267ab",
+      "sha256": "50c5a60267ab0d21b9519e351b64204ad907a4c8d9266fdffb69660d234a3dd3",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -803,8 +803,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-mapboss.js?v=14fafa9f36d6",
-      "sha256": "14fafa9f36d602f7f6a8055a02f3c988247091e3e77e3faf57234e7a8f29b801",
+      "url": "afk-mapboss.js?v=9b23a898c997",
+      "sha256": "9b23a898c99765da60ade4e5a0c5b540bcbdfb1cf0010137fe19c2caa3f18448",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1503,8 +1503,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-wiki.js?v=e1618885da0d",
-      "sha256": "e1618885da0d6113e9fa7d4f49e351347ba3319b91a49d583f7a81e53a8337bf",
+      "url": "afk-wiki.js?v=007f8c2569d1",
+      "sha256": "007f8c2569d1a04bb6489f623ec40862c6894dadb0e6196484a167edb895aba7",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1569,7 +1569,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "dd8f72081e94b5f878d36f2b112a144bc927b60fc3264e47fa1edeea47fe5c43",
+      "sha256": "287b84c8b3426d2f7fc6373b533250eae0ea57b83b433fccf49adf9c46b47fe6",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1748,8 +1748,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/anticheat.js?v=d49e1558d5db",
-      "sha256": "d49e1558d5db81f30e90d129749fc925630c62c9ba66b4f4f7b70ffb00105ab1",
+      "url": "merged/anticheat.js?v=f529926ae325",
+      "sha256": "f529926ae325ef0ba648eaea5506a2685ea459becce69b3d62d5c8b68d2403ca",
       "type": "text/javascript; charset=utf-8"
     },
     {

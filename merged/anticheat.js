@@ -155,7 +155,7 @@
       var st = (typeof state !== 'undefined' && state) || {};
       if (!st.ff && !LOCAL() && external()) {
         var p = P();
-        if (!unlocked) { if (S_TIER(id) && Date.now() >= S_FROM) return giveGlitch(p); return oGain.apply(this, arguments); }
+        if (!unlocked) { if (S_TIER(id) && Date.now() >= S_FROM) return giveGlitch(p); try { console.warn('從主控台叫道具需要先輸入管理密碼。'); } catch (e) {} return false; }   // Ping 11-11 16:15：F12 叫一般材料也要密碼
         adminLog.push({ id: id, n: arguments[1], at: Date.now() });
         var r = oGain.apply(this, arguments);
         try { if (p) { var a = store(p); if (r && r.uid != null) a.seen[r.uid] = costOf(r); (a.admin = a.admin || []).push([String(id), Number(arguments[1]) || 1, Date.now()]); if (a.admin.length > 200) a.admin.splice(0, a.admin.length - 200); } } catch (e) {}
