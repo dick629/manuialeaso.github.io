@@ -376,6 +376,7 @@
   setInterval(function () {
     try {
       var tic = document.getElementById('town-interaction-container'); if (!tic || tic.classList.contains('hidden') || tic.parentElement === document.body) return;
+      if (tic.closest('.lm-detail-page')) return;   // 11-11：手機殼的頁面被上一層（例如確認視窗）蓋住時本來就是 0×0，不能搬走，否則確認完回來是空白頁
       var r = tic.getBoundingClientRect(); if (r.width < 2 || r.height < 2) document.body.appendChild(tic);
     } catch (e) {}
   }, 1000);

@@ -42,7 +42,7 @@ const __icoCache=new Map();function icoOf(t,s){if(!t||!s)return '';let m=__icoCa
   if(cmd==='choose'){if(!await confirmText('永久大絕','本段大絕永久選為 '+C.skills.get(arg).name+'。',player.name))return;await A.choose(arg);}
   if(cmd==='auto'||cmd==='aura'){await A.configure(arg,cmd);}
   render();message('已保存並回讀確認。');
- }catch(err){message(err.message);b.disabled=false;}}
+ }catch(err){message(err.message);b.disabled=false;try{if(err&&err.message)W.alert(err.message);}catch(e){}}}
  function mount(){document.querySelector('#class-launch')?.remove();}
  const npc=W.interactNPC;W.interactNPC=function(id){if(host&&embedded)dismiss();const r=npc.apply(this,arguments);if(id==='npc_afk_skillup'||id==='npc_afk_zal'){document.querySelector('#aev')?.remove();const container=document.querySelector('#interaction-content');if(container){if(id==='npc_afk_skillup'){const panel=document.createElement('div');while(container.firstChild)panel.append(container.firstChild);open('enhance',{container,skillPanel:panel});}}}return r;};
  W.LineageClassUI={open,close,render,mount};W.addEventListener('load',mount);mount();
