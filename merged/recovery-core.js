@@ -76,6 +76,7 @@
   if(active.length)issue('OTHER_SESSION','blocking','另有遊戲分頁正在使用存檔；請先離開該分頁的遊戲，再重新檢查。',{automatic:false});
   return {schema:1,roles,estimatedBytes:bytes,issues,changes,activeSessions:active.length,canRepair:!active.length&&!issues.some(x=>x.code==='SESSION_DATA')};
  }
+ const OPTIONAL=/^(afk_hist_|afk_diag_|afk_return_probe|lineage_repair_quarantine|lineage_growth_transaction_backup)|_bak$/;
  async function transact(store,changes,backup,options={}){
   if(!Array.isArray(changes)||changes.some(c=>typeof c.key!=='string'||!(c.after===null||typeof c.after==='string')))throw error('PLAN','修復計畫不完整。');
   if(new Set(changes.map(c=>c.key)).size!==changes.length)throw error('PLAN','修復計畫包含重複項目。');
@@ -91,7 +92,14 @@
   try{
    for(const c of changes){
     if(store.getItem(c.key)!==c.before)throw error('CONFLICT','寫入期間資料已變更。');
-    if(c.after===null)store.removeItem(c.key);else store.setItem(c.key,c.after);
+    if(c.after===null)store.removeItem(c.key);else{
+     try{store.setItem(c.key,c.after);}
+     catch(q){
+      // 11-11：手機空間不夠時，可再生的紀錄（歷史、診斷、_bak 副本、隔離區紀錄）先略過，角色與倉庫照寫
+      if(OPTIONAL.test(c.key)&&/quota|22/i.test(String(q&&(q.name||q.code||q.message)))){try{store.removeItem(c.key);}catch{}c.skipped=true;c.after=null;}
+      else{q.failKey=c.key;q.failSize=c.after.length;throw q;}
+     }
+    }
     applied.push(c);
     if(store.getItem(c.key)!==c.after)throw error('VERIFY','寫入後驗證失敗。');
    }
@@ -107,8 +115,9 @@
      if(store.getItem(c.key)!==c.before)failed.push(c.key);
     }catch{failed.push(c.key);}
    }
+   let used=0;try{for(let i=0;i<store.length;i++){const k=store.key(i);used+=k.length+(store.getItem(k)||'').length;}}catch{}
    const e=error(failed.length?'ROLLBACK_INCOMPLETE':'WRITE_FAILED',failed.length?'寫入與回復未完全成功，請使用修復前備份還原。':'寫入失敗，已回復本次修改。');
-   e.backupId=receipt.id;e.rollbackFailed=failed;e.causeCode=cause.code||cause.name;throw e;
+   e.backupId=receipt.id;e.rollbackFailed=failed;e.causeCode=cause.code||cause.name;e.failKey=cause.failKey;e.failSize=cause.failSize;e.used=used;throw e;
   }
  }
  function undoPlan(snapshot,current){
