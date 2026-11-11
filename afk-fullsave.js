@@ -55,6 +55,7 @@
  * ========================================================================== */
 (function () {
   'use strict';
+  var VER = ((document.currentScript && /[?&]v=([\w]+)/.exec(document.currentScript.src)) || [])[1] || '';   // 錯誤訊息附版本，分辨手機是否還在跑舊版
 
   if (window.AFK_TOGGLES) AFK_TOGGLES.register({
     id: 'fullsave', parent: 'storage', name: '完整資料備份與還原', group: '系統與其他', def: true,
@@ -253,7 +254,7 @@
       window.LineageSaveGate.restoreFull(pack).then(function () {
         note('✅ 已還原，操作前資料已保留，重新載入中…');
         setTimeout(function () { location.reload(); }, 900);
-      }).catch(function (e) { note('❌ 還原未完成：' + String(e.message || '').replace(/。$/, '') + (e.causeCode ? '（' + ({ QuotaExceededError: '這台裝置的瀏覽器空間不夠', 22: '這台裝置的瀏覽器空間不夠', VERIFY: '寫入後讀回不一致', CONFLICT: '還原時資料被其他分頁改動' }[e.causeCode] || e.causeCode) + (e.failKey ? '；卡在 ' + e.failKey + '，' + Math.round((e.failSize || 0) / 1024) + 'K 字' : '') + (e.used ? '；目前已用 ' + Math.round(e.used / 1024) + 'K 字' : '') + '）' : '') + '。可到「存檔與修復」查看操作前備份。', true); });
+      }).catch(function (e) { note('❌ 還原未完成：' + String(e.message || '').replace(/。$/, '') + (e.causeCode ? '（' + ({ QuotaExceededError: '這台裝置的瀏覽器空間不夠', 22: '這台裝置的瀏覽器空間不夠', VERIFY: '寫入後讀回不一致', CONFLICT: '還原時資料被其他分頁改動' }[e.causeCode] || e.causeCode) + (e.failKey ? '；卡在 ' + e.failKey + '，' + Math.round((e.failSize || 0) / 1024) + 'K 字' : '') + (e.used ? '；目前已用 ' + Math.round(e.used / 1024) + 'K 字' : '') + '）' : '') + '。' + (VER ? '（程式版本 ' + VER.slice(0, 6) + '）' : '') + '可到「存檔與修復」查看操作前備份。', true); });
       return;
     }
     note('還原中…請不要關掉頁面。');

@@ -119,13 +119,24 @@
   var BADGE = 'afk_mb_badge', BYMAP = {}, BY = {};
   L.addItem(BADGE, { n: '王之徽章', type: 'misc', c: 'text-amber-300', img: 'assets/icons/items/法令軍王徽印.png', p: 0, noSell: true,
     d: '打倒地圖王、副本王得到的徽章。收集 30 個可以換一張地圖王卡片（之後開放）。' });
+  // 玩家 11-11 13:58：79 隻都有自己的圖了（assets/anim/<名稱>/idle、attack、hurt、death），不再借原型怪的動畫；裂縫版（名稱加「（裂縫）」）共用同一套
+  var GETG = function (n) { try { return (0, eval)(n); } catch (e) { return null; } };
+  var ownArt = function (b) {
+    try {
+      var names = GETG('MOB_ANIM_NAMES'), alias = GETG('MOB_ANIM_ALIAS'); if (!names) return;
+      names.add(b.n); names.add(b.n + '（裂縫）');
+      if (alias) { delete alias[b.n]; alias[b.n + '（裂縫）'] = b.n; }
+      var pk = protoOf(b.proto); if (pk && DB.mobs[pk] && DB.mobs[pk].img && !DB.mobs[b.mobId].img) DB.mobs[b.mobId].img = DB.mobs[pk].img;   // 圖鑑小圖照舊用原型怪的
+    } catch (e) {}
+  };
   K.forEach(function (b) {
     b.mobId = 'afk_mb_' + b.id;
     var pk = protoOf(b.proto), base = pk ? JSON.parse(JSON.stringify(DB.mobs[pk])) : {};
     ['n', 'afkTtmi', 'hard', 'img', 'boss', 'mag', 'mag2', 'mag3', 'transformTo'].forEach(function (k) { delete base[k]; });
     L.addMob(b.mobId, Object.assign(base, { s: 'L', beh: '主動', lv: REF }, { n: b.n, boss: true, race: b.race, e: b.e, hp: 30000, ac: -65, mr: 90, exp: 5000, goldMin: 3000, goldMax: 7000,
       atkSpd: 1.6, dmg: [3, 40], db: 40, hit: 80, afkMb: b.id,
-      mag: { skn: b.n.split(' ').pop() + '的重擊', cd: 70, chance: 0.4, dmg: [4, 60], db: 80, ele: b.e, alwaysHit: true } }), b.proto);
+      mag: { skn: b.n.split(' ').pop() + '的重擊', cd: 70, chance: 0.4, dmg: [4, 60], db: 80, ele: b.e, alwaysHit: true } }));
+    ownArt(b);
     try { if (typeof MOB_DROPS !== 'undefined' && !MOB_DROPS[b.n] && MOB_DROPS[b.proto]) MOB_DROPS[b.n] = MOB_DROPS[b.proto].filter(function (x) { return !(DB.items[x[0]] && DB.items[x[0]].questItem); }).map(function (x) { return x.slice(); }); } catch (e) {}
     b.maps.forEach(function (m) { BYMAP[m] = b; });
     BY[b.id] = b;

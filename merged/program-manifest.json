@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-4225cb7dfa54",
+  "build": "merge-0.4-6446c4727988",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -563,8 +563,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-fullsave.js?v=c8d679e2172e",
-      "sha256": "c8d679e2172e566ad94f2e26c45261ee32d962c89e028ab99559b4bda782ca82",
+      "url": "afk-fullsave.js?v=33c27467042f",
+      "sha256": "33c27467042f459369d41ca6ff21184ef394ce3d6fead6baf146e88e9c9b613c",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -798,8 +798,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-mapboss.js?v=64e7fbfc339e",
-      "sha256": "64e7fbfc339e568f65b531140ff5cb668083eb6f1d4f3c5676e5afc870ffc2ce",
+      "url": "afk-mapboss.js?v=8580eb225605",
+      "sha256": "8580eb225605e295d08bb4de8134c91ec279d50e529c38bf142f1e2ba0debd5c",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1564,7 +1564,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "b5e6b5c18bb422f05c5d2928d01a08761c86279fb5d1a6e8ba3e47a0eb2707df",
+      "sha256": "eacc0adef24ae0d6546a31e672a4609a6a228d89cf0111e6a74afb2b79ab37f1",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1728,8 +1728,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/anim-manifest.js?v=15076b295f88",
-      "sha256": "15076b295f8888849b9b1a481cdabdcbabb509e3d8c5fdb258b8d07bf10dfdfc",
+      "url": "js/anim-manifest.js?v=aafa84f5a116",
+      "sha256": "aafa84f5a116b3fd9a6b6463882d40e8f3bf66db926732e1fab62b10c40b6ac4",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1998,8 +1998,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/recovery-core.js?v=538414e5d656",
-      "sha256": "538414e5d656acea6387a1f4ee2cb830f7d9bc2b64cec3c7a47a57415e2e5763",
+      "url": "merged/recovery-core.js?v=4597b3202a76",
+      "sha256": "4597b3202a76a701f618e98014ee02bd42004fca01a7cdf297838ca3cb8e910f",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2064,7 +2064,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "63689846391e3725d88a2a406f9dc88d809b26ed8d39b133c4ee4e5bc66283ad",
+      "sha256": "3d6adc0918401888b823525aa7b8cf7a5f7e0e8bd1b58698f8aae5bad7610427",
       "type": "text/html; charset=utf-8"
     }
   ]

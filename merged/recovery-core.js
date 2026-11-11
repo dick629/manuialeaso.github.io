@@ -91,13 +91,21 @@
   const applied=[];
   try{
    for(const c of changes){
-    if(store.getItem(c.key)!==c.before)throw error('CONFLICT','寫入期間資料已變更。');
+    if(store.getItem(c.key)!==(c.freed?null:c.before))throw error('CONFLICT','寫入期間資料已變更。');
     if(c.after===null)store.removeItem(c.key);else{
      try{store.setItem(c.key,c.after);}
      catch(q){
+      const quota=/quota|22/i.test(String(q&&(q.name||q.code||q.message)));
       // 11-11：手機空間不夠時，可再生的紀錄（歷史、診斷、_bak 副本、隔離區紀錄）先略過，角色與倉庫照寫
-      if(OPTIONAL.test(c.key)&&/quota|22/i.test(String(q&&(q.name||q.code||q.message)))){try{store.removeItem(c.key);}catch{}c.skipped=true;c.after=null;}
-      else{q.failKey=c.key;q.failSize=c.after.length;throw q;}
+      if(OPTIONAL.test(c.key)&&quota){try{store.removeItem(c.key);}catch{}c.skipped=true;c.after=null;}
+      else{
+       // 11-11 13:58：重要資料寫不進去 → 把已寫入／原本就在的可再生紀錄全部讓出空間，再試一次
+       let freed=false;
+       if(quota){for(const x of applied)if(OPTIONAL.test(x.key)&&x.after!==null){try{store.removeItem(x.key);x.after=null;x.skipped=true;freed=true;}catch{}}
+        for(let i=store.length-1;i>=0;i--){const k=store.key(i);if(!k||!OPTIONAL.test(k)||applied.some(x=>x.key===k))continue;const pend=changes.find(x=>x.key===k);try{store.removeItem(k);freed=true;if(pend)pend.freed=true;}catch{}}}
+       let ok=false;if(freed)try{store.setItem(c.key,c.after);ok=true;}catch{}
+       if(!ok){q.failKey=c.key;q.failSize=c.after.length;throw q;}
+      }
      }
     }
     applied.push(c);
@@ -138,7 +146,9 @@
    if(before!==after)changes.push({key,before,after,reason:'FULL_RESTORE'});
   }
   // Release keys absent from the snapshot before growing others; backup already exists before transact writes.
-  return changes.sort((a,b)=>(a.after!==null)-(b.after!==null));
+  // 11-11 13:58：先刪、再寫角色與倉庫等重要資料，可再生的紀錄最後寫（空間不夠就略過）
+  const rank=c=>c.after===null?0:OPTIONAL.test(c.key)?2:1;
+  return changes.sort((a,b)=>rank(a)-rank(b));
  }
  function report(scanResult,events=[],build='merge-0.1'){
   return {format:'lineage-diagnostic',schema:1,build,createdAt:new Date().toISOString(),roles:scanResult.roles,
