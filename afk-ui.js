@@ -324,7 +324,12 @@
       return;
     }
     if (!modal) build();
-    if (showing) return;   // 一次只顯示一個
+    // 玩家 11-11 19:27：之前那個確認視窗如果已經看不到（被別的畫面收掉、沒走 doClose），不要卡住新的確認——先把舊的狀態清掉
+    if (showing) {
+      var vis = modal.classList.contains('open') && modal.isConnected && getComputedStyle(modal).display !== 'none' && modal.getBoundingClientRect().height > 0;
+      if (vis) return;   // 一次只顯示一個
+      showing = false; modal.classList.remove('open'); try { if (layer && U.closeLayer) U.closeLayer(layer); } catch (e) {} layer = null; cb = {};
+    }
     showing = true; pendingOk = false; decided = false;
     cb = { onOk: opts.onOk, onCancel: opts.onCancel, onDismiss: opts.onDismiss };
     titleEl.innerHTML = esc(opts.title || '確認');

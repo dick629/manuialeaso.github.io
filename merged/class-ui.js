@@ -1,7 +1,7 @@
 (function(W){
+ 'use strict';
 // 職業技能圖示（GPT 版畫，Ping 11-11 19:18）：assets/skills-v3/<路線>/<路線>_<序號>.webp；序號＝該路線技能（大絕三段合一）出現順序
 const __icoCache=new Map();function icoOf(t,s){if(!t||!s)return '';let m=__icoCache.get(t.id);if(!m){m=new Map();let n=0;for(const k of t.skills||[]){const b=String(k.name).replace(/・(啟誓|升華|終章)$/,'');if(!m.has(b))m.set(b,++n);}__icoCache.set(t.id,m);}const i=m.get(String(s.name).replace(/・(啟誓|升華|終章)$/,''));return i?'assets/skills-v3/'+t.id+'/'+t.id+'_'+String(i).padStart(2,'0')+'.webp':'';}
- 'use strict';
  const A=W.LineageClasses,C=A.C;let host,tab='route',soulOnly=false,selected='',step=1,focusBefore,layer,timer,skillPanel=null,embedded=false;
  const routesByClass=new Map(Object.keys(C.CLS).map(cls=>[cls,[...C.trees.values()].filter(t=>t.base===cls)]));
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
