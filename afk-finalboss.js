@@ -60,6 +60,10 @@
   //   0.06／0.6／0.5 時 8 人 +0 遺物 8 分鐘就打完、沒人倒 → HP ×0.52、防禦照原版、傷害 ×0.87；侵蝕改成固定每秒 1%（afk-dreamboss）
   // 2026-11-01 22:22（玩家：+5 改成八成能過，不然只是在噁心人）：HP ×0.51、傷害 ×0.86——10 場 +5 贏 8（17.8～19.7 分）、現有 +0 贏 6
   FB.novice = { hp: 0.51, def: 1, dmg: 0.86 };
+  FB.chainTicks = 30;   // 沉沒之鎖：必定暈眩 3 秒
+  FB.blessHp = 1000000;   // 一轉女神：玩家巴黎的祝福（11-11 22:15）
+  // 冥界的使徒倒下時自爆：全隊失去最大 HP 的這個比例（一轉 20%、二轉一階段 25%、二階段 35%、三階段 50%；單人試煉不爆）
+  FB.blast = { r1: 0.20, r2a: 0.25, r2b: 0.35, r2c: 0.50 };
   window.__afkFinalCfg = FB;
   // 動態血量：隊伍人數（你＋還站著的傭兵）÷ 16，最多 1 倍
   var partyN = function () { try { return 1 + (player.allies || []).filter(function (a) { return a && !a._downed; }).length; } catch (e) { return 1; } };
@@ -136,6 +140,12 @@
     else { t.curHp -= dmg; if (t.curHp <= 0) { t.curHp = 0; t._downed = true; t._reviveCd = 150; log('<span class="text-amber-400 font-bold">協力傭兵 ' + (t._allyName || '') + ' 被' + why + '擊倒。</span>'); } }
     return false;
   };
+  var blastKey = function () { var md = mode(); if (md === 'first') return novice() ? 'r1' : 'r2a'; return { second: 'r2a', tier2: 'r2b', tier3: 'r2c' }[md] || null; };
+  var blast = function (m) {
+    var k = blastKey(), pct = k && FB.blast[k]; if (!pct || !player || player.dead) return;
+    log(tag('亡者自爆', '#f43f5e') + ADD_NAME + '倒下時炸開了冥界的魂火，全隊失去最大 HP ' + Math.round(pct * 100) + '%。');
+    var mm = modeMult(); pctAll(mm > 0 ? pct / mm : pct, '亡者自爆');   // hurt 會再乘模式倍率，這裡先除掉，實際就是上面寫的比例
+  };
   var pctAll = function (pct, why) { var dead = false; members().forEach(function (x) { if (!dead) dead = hurt(x, (x.mhp || 1) * pct, why); }); return dead; };
   var pick = function () { var t = members(); return t.length ? t[Math.floor(Math.random() * t.length)] : null; };
 
@@ -155,12 +165,15 @@
     var nv = novice() ? FB.novice : { hp: 1, def: 1 };
     m.hp = m.curHp = Math.round(FB.hp * S()._afkFinalScale * tierHpK() * nv.hp); m.ac = Math.round(FB.ac * nv.def); m.dr = FB.dr * nv.def; m.mr = Math.round(FB.mr * nv.def); m.hard = false; m.hardSkin = 0;
     ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (k) { m[k] = Math.round(FB.res * nv.def); });
+    // 11-11 22:15（Ping）：一轉女神 AC 再 −50（−100 → −150）；玩家巴黎獻上祝福，HP 再 +1,000,000
+    if (novice()) { m.ac -= 50; m.hp += FB.blessHp; m.curHp = m.hp; }
     m.dmg = FB.atk.slice(); m.db = FB.db; m.hit = FB.hit; m.atkSpd = FB.spd;
     m._noBossRegen = true; m.regenHp = 0; m._dreamRegen = 0; m.exp = 0; m.goldMin = 0; m.goldMax = 0; m.noGold = true;
     m._fbRage = m.rageDmgMult || 1;
     if (TIER[mode()]) m.n = TIER[mode()].n + ' ' + BOSS_NAME;
     if (mode() === 'solo') { m.ac = Math.round(FB.ac * 0.5); m.dr = FB.dr * 0.5; m.mr = FB.mr * 0.5; ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (k) { m[k] = FB.res * 0.5; }); }
     S()._afkFinalSpawned = true;
+    if (novice()) sys('<span class="font-bold" style="color:#fde68a">✨ 由於 玩家巴黎 獻上祝福，女神血量微微增加。</span>');
     if (novice()) sys('<span class="text-cyan-200">初次輪迴：席琳還沒認真看待你——她的 HP 只有平常的一半左右，造成的傷害也比較低（隊伍人數越少，她的傷害越低）。</span>');
     if (S()._afkFinalScale < 1) sys('<span class="text-cyan-200">隊伍 ' + S()._afkFinalParty + ' 人：席琳的 HP 調整為 ' + m.hp.toLocaleString() + '（' + S()._afkFinalParty + '／' + FB.base + '），冥界的使徒同比例。</span>');
     sys('<span class="font-bold" style="color:#7dd3fc;">死亡之海的水面倒映著無數亡者的臉。沉沒神殿的最深處，' + BOSS_NAME + '緩緩睜開了眼睛。</span><span class="afk-lore">「孩子……你終於走到夢的盡頭了。……你也是被送來的嗎？」</span>');
@@ -312,7 +325,7 @@
     var pa = age - (m._fbPhaseAt || 0);
     if (ph === 1) {
       if (every(age, 20)) { log(tag('潮汐之嘆', '#38bdf8') + '冰冷的潮水漫過腳踝，全隊失去最大 HP ' + Math.round(FB.tide * 100) + '%。'); if (pctAll(FB.tide, '潮汐之嘆')) return; }
-      if (every(age, 30)) { var s1 = pick(); if (s1) { log(tag('沉沒之鎖', '#38bdf8') + '水底伸出的鎖鏈纏住了' + nameOf(s1) + '。'); try { var sk = { type: 'stun', pbase: 250, skn: '沉沒之鎖' }; if (s1 === player) applyMobMagic(m, sk); else applyMobMagicToAlly(m, sk, s1); } catch (e) {} } }
+      if (every(age, 30)) { var s1 = pick(); if (s1) { log(tag('沉沒之鎖', '#38bdf8') + '水底伸出的鎖鏈纏住了' + nameOf(s1) + '。'); try { var B1 = window.AFK_RELIC_DEFENSE_BRIDGE; if (B1 && B1.setStatus) B1.setStatus(s1, 'stun', FB.chainTicks, m); else if (s1.statuses) s1.statuses.stun = FB.chainTicks; } catch (e) {} /* 11-11 22:15：必中（原本走魔防判定，魔防 250 以上永遠不會中） */ } }
     } else if (ph === 2) {
       if (every(pa, 60)) { var k2 = summon(2); if (k2) log(tag('亡者之潮', '#a78bfa') + BOSS_NAME + '自海底喚起 ' + k2 + ' 名' + ADD_NAME + '。（每名存活的使徒讓席琳受到的傷害 −15%）'); }
       if (every(pa, 25)) { var s2 = pick(); if (s2) { log(tag('死亡的權柄', '#a78bfa') + BOSS_NAME + '指向' + nameOf(s2) + '，奪走其現有生命的 ' + Math.round(FB.scepter * 100) + '%。'); if (hurt(s2, (s2 === player ? player.hp : s2.curHp) * FB.scepter, '死亡的權柄')) return; } }
@@ -413,7 +426,10 @@
         var m = mapState.mobs && mapState.mobs[idx];
         if (m && m._afkFinal && on()) { var g = gateOf(m); if (g) { m.curHp = Math.max(1, Math.ceil(m.hp * g[0])); m._dead = false; seal(m, g); return; } }
       } catch (e) {}
-      return oKM.apply(this, arguments);
+      var ap = mapState.mobs && mapState.mobs[idx], apWas = !!(ap && ap._afkApostle && !ap._dead);
+      var res = oKM.apply(this, arguments);
+      try { if (apWas && ap._dead && on()) blast(ap); } catch (e) { console.warn('[AFK-finalboss] blast', e); }
+      return res;
     };
   }
   var oBossKill = window.antharasOnBossKill;
