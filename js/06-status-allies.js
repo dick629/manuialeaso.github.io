@@ -3372,7 +3372,10 @@ function _allyLevelRecompute(ally) {
     try { recomputeStats(); } catch (e) { ok = false; }
     _recomputingAlly = false;
     delete ally.cardDex; delete ally.equipDex; delete ally.miscDex; delete ally.relicDex;   // 🧹 v3.5.87 收集冊桶不入傭兵快照（零讀取死負載·換身時本就借隊長 live 桶）
-    player = _save; calcStats();   // 還原真實玩家的衍生值並刷新 UI（同 buildAlly）
+    player = _save;
+    // ⚡ 11-12 效能：tick 進行中只記下「玩家要重算」，等這個 tick 結束（settleDeadMobs）再算一次——傭兵重算不會改到玩家的數值（實測 7 名傭兵前後一致），
+    //    但玩家 calcStats 一次約 6ms、傭兵每秒會重算好幾次，原本佔掉補跑約兩成時間。tick 外（介面操作）照舊立刻算。
+    if (state && state.inTick) window._allyCalcDirty = true; else calcStats();   // 還原真實玩家的衍生值並刷新 UI（同 buildAlly）
     ally._recompN = (ally._recompN || 0) + 1;   // 🔮 v2.6.7：ally.d 已就地重建→遞增計數，讓 alliesTick 幻覺光環還原守衛偵測到本回合重算（避免把光環當基底扣掉）
     if (ok) { _applyMercCubeRes(ally); let _rm = royalAllyMult(); if (_rm !== 1) { ally.mhp = Math.max(1, Math.floor((ally.mhp || 1) * _rm)); ally.mmp = Math.floor((ally.mmp || 0) * _rm); } ally.curHp = Math.max(1, Math.min(_keepHp != null ? _keepHp : ally.mhp, ally.mhp || 1)); ally.mp = Math.min(_keepMp != null ? _keepMp : ally.mmp, ally.mmp || 0); }   // 🔮 v2.7.96 立方抗性 rider；👑 王族魅力加成：升級重算後重新套用 HP/MP ×(1+魅力/200)
     // 🔮 傭兵召喚物同步重算：召喚物一經建立就持有 3600 秒，期間傭兵升級／魅力變動都不會反映到

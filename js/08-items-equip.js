@@ -993,6 +993,8 @@ function equipItem(item) {
     if (slot === 'ear') {
         if(!player.eq.ear1) slot = 'ear1';
         else if(player.lv >= 59 && !player.eq.ear2) slot = 'ear2';   // 第2耳環欄：需 Lv59
+        // 兩格都滿、左耳已經是同名耳環（例：第二個幸運暴走兔腳）→ 換掉右耳，不然會把左耳那個換下來、永遠只戴得上一個（Ping 11-12）
+        else if(player.lv >= 59 && DB.items[player.eq.ear1.id] && DB.items[player.eq.ear1.id].n === d.n) slot = 'ear2';
         else slot = 'ear1';
     }
     // 🦻 不能同時裝備兩個名字相同的耳環

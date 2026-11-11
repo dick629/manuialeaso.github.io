@@ -266,7 +266,7 @@
     var K = W.__afkNpcKit;
     var def = { id: NPC_ID, n: NPC_N, title: NPC_T, type: 'quest', d: '從王都派來的傳令官米恩，記錄每一位冒險者在各地區的聲望，也知道誰是哪個地區的村長。' };
     Object.keys(DB.towns || {}).forEach(function (t) {
-      if (/_castle$|^town_rift$|^town_pride$|^town_flame_audience$|^town_elder_council$/.test(t)) return;
+      if (/_castle$|^town_rift$|^town_pride$|^town_flame_audience$|^town_elder_council$|^town_sherine$/.test(t)) return;   // Ping 11-12：席琳神殿人太多，不放米恩
       if (K && K.addNpc) K.addNpc(t, def); else { var tw = DB.towns[t]; if (tw && Array.isArray(tw.npcs) && !tw.npcs.some(function (x) { return x.id === NPC_ID; })) tw.npcs.push(def); }
     });
     if (typeof NPC_SPR_FIXED !== 'undefined' && !NPC_SPR_FIXED[NPC_ID]) NPC_SPR_FIXED[NPC_ID] = '914';

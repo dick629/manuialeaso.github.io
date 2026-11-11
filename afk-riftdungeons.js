@@ -23,7 +23,7 @@
   var dayKey = function () { return Math.floor((Date.now() + 8 * 3600000) / 86400000); };
   var weekKey = function () { return Math.floor((dayKey() + 3) / 7); };   // 週一 00:00 換週
   var mobs = function () { return (typeof mapState !== 'undefined' && mapState.mobs) || []; };
-  var MAP = 'afk_riftdg', TOWN = 'town_sherine', NPC_ID = 'npc_afk_riftgate', NPC_N = '裂縫之門';
+  var MAP = 'afk_riftdg', TOWN = 'town_sherine', DOOM_TOWN = 'town_behemoth', backTown = TOWN, NPC_ID = 'npc_afk_riftgate', NPC_N = '裂縫之門';
   var IMG = 'assets/icons/items/', BLOOD = 'afk_blood_dia', REF = 65;
   var R = { allyHp: 0.25, pts: 10, ptsDay: 60, mobHpK: 0.3, riftHp: 1.5, mobRef: 125000, bossRef: 30000, hpT: { hardin: 1.3, treason: 1, past: 8, clock: 90, mirror: 220, dragons: 68, ship: 53, anakin1: 8, anakin2: 6, anakin3: 5, anakin4: 3.5, anakin5: 2.2, altar: 68, seal: 1.3, endless: 1 } };   // hpT：11-07 依畢業存檔（面板 90%）校到目標通關時間：一般 3～5 分、四龍與阿納金 8～10 分、每週 15 分   // 11-07：HP 改用固定基準（不吃借來外觀的怪物原本 HP）
 
@@ -208,6 +208,7 @@
     stages: [{ n: '斷裂的天梯', waves: 0, boss: { n: '墮光天使 阿納金', re: '天使|阿納金', hpAbs: function (r) { return ANA[(+r.pick || 1) - 1]; }, final: true,
       mech: function (run, b, t, M) {
         var f = +run.pick || 1, cd = f === 5 ? 0.6 : 1;
+        if (M.artF !== f) { M.artF = f; anakinArt(f); }
         if (every(M, 'block', 20, t)) { M.block = t + 60; clog(tag('#fde047', '擋') + '6 秒內受傷 −80%。'); }
         if ((f === 1 || f === 5) && every(M, 'sil', 30 * cd, t)) { party().forEach(function (x) { status(x, 'silence', 30); }); dispel(tag('#93c5fd', '號角') + '全隊沉默 3 秒，增益全部消失。'); }
         if ((f === 2 || f === 5) && every(M, 'rain', 20 * cd, t)) { party().sort(function () { return Math.random() - 0.5; }).slice(0, 3).forEach(function (x) { L.boss.hurt(x, mhp(x) * 0.15); }); clog(tag('#fde047', '光羽雨') + '三個人被光羽打中。'); }
@@ -282,7 +283,8 @@
     if (d.fee.blood && cnt(BLOOD) < d.fee.blood) return '血龍鑽不夠。';
     var lack = (d.fee.items || []).filter(function (x) { return cnt(x[0]) < x[1]; })[0]; if (lack) return nm(lack[0]) + '不夠。';
     var st = S(); if (st.riftRun || st._afkFinal || st.antharas || st.prideClimb) return '你正身在其他副本之中。';
-    if (typeof mapState !== 'undefined' && mapState.current !== TOWN) return '要在席琳神殿。';
+    if (d.id === 'doom') { if (typeof mapState !== 'undefined' && mapState.current !== DOOM_TOWN) return '要在貝希摩斯（劍塚的守墓人在那裡）。'; }   // Ping 11-12：守墓人搬到龍騎士出生地
+    else if (typeof mapState !== 'undefined' && mapState.current !== TOWN) return '要在席琳神殿。';
     return '';
   };
 
@@ -305,6 +307,7 @@
     mapState.mobs = [null, null, null, null, null]; mapState.spawnAt = [null, null, null, null, null]; mapState.targetIdx = -1; mapState.forceBoss = false;
     run = { id: id, D: d, pick: pick, si: 0, wave: 0, pending: true, t0: tk(), st0: tk(), until: d.min ? Date.now() + d.min * 60000 : 0, lv: Math.max(80, Math.min(130, (Number(p.lv) || 100) + 5 * d.tier)), meter: 100, floor: 1, M: {}, SM: {}, deaths: 0 };
     if (d.onStart) d.onStart(run);
+    backTown = id === 'doom' ? DOOM_TOWN : TOWN;
     lastMap = MAP;
     sys('<span class="font-bold" style="color:#67e8f9">🌀 你走進了「' + esc(d.n) + (pick && d.pick ? '・' + esc((d.pick.filter(function (x) { return x[0] === pick; })[0] || [])[1] || pick) : '') + '」。</span>');
     try {
@@ -317,7 +320,7 @@
   };
   var leave = function (msg) {
     run = null; leaving = Date.now(); if (msg) sys(msg);
-    setTimeout(function () { try { if (mapState.current === MAP && run === null) { setMapSelectors(TOWN); changeMap(true); try { saveGame(); } catch (e) {} } } catch (e) {} }, 1500);
+    setTimeout(function () { try { if (mapState.current === MAP && run === null) { setMapSelectors(backTown); changeMap(true); try { saveGame(); } catch (e) {} } } catch (e) {} }, 1500);
   };
   function fail(msg) { if (!run) return; var r = run; if (r.D.endless) { finish(true); return; } leave('<span class="text-red-400">' + esc(msg) + '——挑戰失敗。</span>'); }
   var points = function () { var p = P(), dr = DR.rec(p), dk = dayKey(); if (dr.ptsDay !== dk) { dr.ptsDay = dk; dr.ptsToday = 0; } var key = 'pf_' + run.id + (run.pick || ''); dr.ptsSeen = dr.ptsSeen || {}; if (dr.ptsSeen[key] === dk || dr.ptsToday >= R.ptsDay) return ''; dr.ptsSeen[key] = dk; var g = Math.min(R.pts, R.ptsDay - dr.ptsToday); dr.ptsToday += g; dr.pts = (dr.pts || 0) + g; return '裂縫點數 +' + g; };
@@ -515,7 +518,7 @@
     var box = document.createElement('div'); box.className = 'afk-ax'; box.id = 'afk-rd-doom'; div.appendChild(box); paintDoom(div);
     if (!div.__afkRdBound) { div.__afkRdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-rd]'); if (!b || b.disabled) return; var k = (b.getAttribute('data-rd') || '').split(':'); if (k[0] === 'go') enter(k[1], k[2] || undefined); paint(div); }); }
   };
-  K.addNpc(TOWN, { id: 'npc_afk_doomgrave', n: '劍塚的守墓人', title: '龍騎士', type: 'quest', classicHide: true, d: '在席琳神殿外守著一座劍塚的老龍騎士。' });
+  K.addNpc(DOOM_TOWN, { id: 'npc_afk_doomgrave', n: '劍塚的守墓人', title: '龍騎士', type: 'quest', classicHide: true, d: '在貝希摩斯村外守著一座劍塚的老龍騎士。' });
   K.hookNpc('npc_afk_doomgrave', '劍塚的守墓人', '龍騎士', renderDoom);
 
   function growthCanShortcut(before) {
@@ -537,4 +540,32 @@
   });
   W.__afkRiftDg = { growthCanShortcut:growthCanShortcut,growthShortcut:growthShortcut,growthCheckpoint:growthCheckpoint,growthRestore:growthRestore, D: D, BYID: BYID, R: R, canEnter: canEnter, enter: enter, run: function () { return run; }, store: store, MAP: MAP, findBase: findBase, nextStage: nextStage };
   try { console.log('[AFK-riftdg] 已載入：次元裂縫的副本 ' + D.length + ' 個'); } catch (e) {}
+
+  // ── 11-12（Ping）：GPT 重繪的次元裂縫頭目與小怪、黃道十二宮、守護者之戒的王上線（assets/anim/<名字>/idle、attack、skill、hurt、death）──
+  //   這些名字原本借別的怪的圖（MOB_ANIM_ALIAS）；改成用自己的資料夾，並把借來的方向、武器層、陰影設定拿掉（那些是原本那隻怪的圖才有的）。
+  //   320 的大畫布給 mob-anim-big（跟頭目一樣的高度上限）。阿納金五個形態各一套：號角用本體，神諭／光翼／天梯／沉默各自一個資料夾。
+  var GPT_ART = ["伊娃的鎖鏈", "反王 肯恩", "搜尋之光", "守門影", "裂痕的窺視者", "鐘擺守衛", "鏽蝕的鐘匠", "停擺之主 克羅諾斯塔", "映照者 米菈", "熔岩挖掘者 博格", "墮光天使 阿納金", "墜星", "星蝕者 艾斯崔亞", "第二世的你", "殷海薩", "斷劍的龍騎士", "握劍的回憶", "衝角的牧者 伊芙蕾", "磐石的公牛 葛倫", "鏡雙子 莉亞與莉歐", "鏡雙子 莉歐", "潮甲的守衛 卡斯", "金鬃獅王 雷恩", "靜謐的祈禱者 瑟芙", "衡量者 艾斯特", "毒尾的刺客 薩迦", "星矢的獵手 奧瑞", "斷罪的山羊 卡普", "寒泉的侍者 阿克亞", "雙鰭的歌姬 菲絲", "魚形分身", "滿月的歐文", "巴爾森的鎧甲", "海音的深淵歌姬", "沒有影子的人", "黑暗之星", "裂縫的影子", "走向窗邊的影子", "時之蛀蟲", "呼喊者", "發光的齒輪", "天梯守衛", "監視之眼", "縫口", "最早的那一點光", "觸手", "不肯放下的劍", "白羊宮的星衛", "金牛宮的星衛", "雙子宮的星衛", "巨蟹宮的星衛", "獅子宮的星衛", "處女宮的星衛", "天秤宮的星衛", "天蠍宮的星衛", "射手宮的星衛", "摩羯宮的星衛", "水瓶宮的星衛", "雙魚宮的星衛"];
+  var GPT_BIG = ["停擺之主 克羅諾斯塔", "熔岩挖掘者 博格", "墮光天使 阿納金", "星蝕者 艾斯崔亞", "殷海薩", "握劍的回憶", "衝角的牧者 伊芙蕾", "磐石的公牛 葛倫", "鏡雙子 莉亞與莉歐", "鏡雙子 莉歐", "潮甲的守衛 卡斯", "金鬃獅王 雷恩", "靜謐的祈禱者 瑟芙", "衡量者 艾斯特", "毒尾的刺客 薩迦", "星矢的獵手 奧瑞", "斷罪的山羊 卡普", "寒泉的侍者 阿克亞", "雙鰭的歌姬 菲絲", "滿月的歐文", "巴爾森的鎧甲", "海音的深淵歌姬", "沒有影子的人", "黑暗之星"];
+  var GG = function (n) { try { return (0, eval)(n); } catch (e) { return null; } };
+  var clearCache = function (n) { try { var c = GG('_mobAnimCache'); if (c) delete c[n]; } catch (e) {} };
+  var gptArt = function () {
+    var names = GG('MOB_ANIM_NAMES'), alias = GG('MOB_ANIM_ALIAS'); if (!names || !names.add) return;
+    var drop = ['MOB_ANIM_8DIR', 'MOB_ANIM_WEAPON_FX', 'MOB_ANIM_WEAPON_FX2', 'MOB_ANIM_BAKED_SHADOW', 'MOB_ANIM_SPRITE_SHADOW', 'MOB_SHADOW_TINT', 'MOB_ANIM_SMALL'].map(GG);
+    var ylift = GG('MOB_YLIFT'), bigS = GG('MOB_ANIM_BIG');
+    GPT_ART.forEach(function (n) {
+      if (n === '墮光天使 阿納金' && alias && alias[n] && /^墮光天使 阿納金・/.test(alias[n])) { names.add(n); return; }   // 形態換圖中，別蓋掉
+      names.add(n); if (alias && alias[n]) { delete alias[n]; clearCache(n); }
+      drop.forEach(function (st) { if (st && st.delete) st.delete(n); });
+      if (ylift && ylift[n] != null) delete ylift[n];
+      if (bigS && bigS.add && GPT_BIG.indexOf(n) >= 0) bigS.add(n);
+    });
+  };
+  var anakinArt = function (f) {
+    var alias = GG('MOB_ANIM_ALIAS'), n = '墮光天使 阿納金', to = { 2: '神諭', 3: '光翼', 4: '天梯', 5: '沉默' }[f];
+    if (!alias) return;
+    if (to) alias[n] = n + '・' + to; else delete alias[n];
+    clearCache(n);
+  };
+  W.__afkGptArt = { names: GPT_ART, apply: gptArt, anakin: anakinArt };
+  gptArt(); W.addEventListener('load', function () { gptArt(); setTimeout(gptArt, 2000); });
 })();

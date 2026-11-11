@@ -2293,31 +2293,43 @@ function _resolveTownLabelOverlap() {
         let mapTop = map.getBoundingClientRect().top;
         let labels = [].slice.call(map.querySelectorAll('.town-npc .tn-label'));
         if (!labels.length) return;
-        labels.forEach(l => { l.style.marginBottom = ''; });   // 先歸零(回 CSS 預設 5px)再量測
+        labels.forEach(l => { l.style.marginBottom = ''; l.style.marginLeft = ''; });   // 先歸零(回 CSS 預設 5px)再量測
         let entries = labels.map(l => ({
             l,
             r: l.getBoundingClientRect(),
             baseMargin: l.parentElement && l.parentElement.classList.contains('has-castle-crown') ? 17 : 5
         })).filter(e => e.r.width > 0);
         entries.sort((a, b) => a.r.top - b.r.top);   // 由上而下：越高者當錨點，下方者往上讓
+        // 📱 11-12 手機巡檢：手機上地圖只有約 130px 高，只往上讓會全部擠到頂端疊成一排。
+        //    改成往上、往下輪流找空位（上 1 格、下 1 格、上 2 格…），也不准左右超出地圖；真的放不下才微疊。
+        let mr = map.getBoundingClientRect(), mapBottom = mr.bottom, mapLeft = mr.left, mapRight = mr.right;
         let placed = [];
         for (let e of entries) {
-            let r = e.l.getBoundingClientRect();
-            let left = r.left, right = r.right, top = r.top, bottom = r.bottom, guard = 0;
-            while (guard++ < 30) {
-                let hit = placed.find(p => left < p.right - 1 && right > p.left + 1 && top < p.bottom - 1 && bottom > p.top + 1);
-                if (!hit) break;
-                let lift = (bottom - hit.top) + 4;
-                if (top - lift < mapTop + 2) {   // 再抬會超出地圖頂端→抬到極限就停(寧可微疊也不裁掉)
-                    let maxLift = top - (mapTop + 2);
-                    if (maxLift > 0) { top -= maxLift; bottom -= maxLift; }
-                    break;
+            let r = e.l.getBoundingClientRect(), w = r.width, h = r.height;
+            let dx = 0;
+            if (r.left < mapLeft + 2) dx = (mapLeft + 2) - r.left; else if (r.right > mapRight - 2) dx = (mapRight - 2) - r.right;
+            let hit = (x, t) => placed.some(p => x < p.right - 1 && x + w > p.left + 1 && t < p.bottom - 1 && t + h > p.top + 1);
+            let x0 = r.left + dx, bx = x0, bt = r.top;
+            if (hit(x0, r.top)) {
+                // 候選位置：上下各幾格 × 左右各半個名牌，照離原位的距離由近到遠試
+                let cands = [], step = h + 2;
+                for (let k = -8; k <= 8; k++) for (let j = -5; j <= 5; j++) {
+                    let x = x0 + j * w * 0.4, t = r.top + k * step;
+                    if (t < mapTop + 1 || t + h > mapBottom - 1 || x < mapLeft + 1 || x + w > mapRight - 1) continue;
+                    cands.push({ x, t, d: Math.abs(k * step) + Math.abs(j * w * 0.4) * 0.8 });
                 }
-                top -= lift; bottom -= lift;
+                cands.sort((p, q) => p.d - q.d);
+                let c = cands.find(c => !hit(c.x, c.t));
+                if (!c && cands.length) {   // 真的沒有空位：挑重疊面積最小的
+                    let ov = (x, t) => placed.reduce((a, p) => a + Math.max(0, Math.min(x + w, p.right) - Math.max(x, p.left)) * Math.max(0, Math.min(t + h, p.bottom) - Math.max(t, p.top)), 0);
+                    c = cands.reduce((m, q) => { q.o = ov(q.x, q.t) + q.d * 0.5; return !m || q.o < m.o ? q : m; }, null);
+                }
+                if (c) { bx = c.x; bt = c.t; }
             }
-            placed.push({ left, right, top, bottom });
-            let shift = r.top - top;
-            if (shift > 0.5) e.l.style.marginBottom = (e.baseMargin + shift / scale) + 'px';
+            placed.push({ left: bx, right: bx + w, top: bt, bottom: bt + h });
+            let shift = r.top - bt; dx = bx - r.left;
+            if (Math.abs(shift) > 0.5) e.l.style.marginBottom = (e.baseMargin + shift / scale) + 'px';
+            e.l.style.marginLeft = Math.abs(dx) > 0.5 ? (dx / scale) + 'px' : '';
         }
     } catch (err) {}
 }

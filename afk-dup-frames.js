@@ -59,7 +59,8 @@
     d = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
     if (d && d.set && d.configurable) Object.defineProperty(HTMLImageElement.prototype, 'src', {
       configurable: true, enumerable: d.enumerable, get: d.get,
-      set: function (v) { d.set.call(this, map(v)); }
+      // ⚡ 11-12 效能：動畫每格都會重設 src；跟現在一模一樣、而且已經載好的就不再設（瀏覽器每設一次都會重跑一次圖片更新流程）
+      set: function (v) { var nv = map(v); if (typeof nv === 'string' && this.complete && this.naturalWidth > 0 && this.getAttribute('src') === nv) return; d.set.call(this, nv); }
     });
   } catch (e) {}
   // 2) setAttribute('src', …)

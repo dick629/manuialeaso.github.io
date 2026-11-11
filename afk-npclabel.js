@@ -66,29 +66,8 @@
       if (dy > 0.5) el.style.marginTop = Math.round(dy) + 'px';
     }
 
-    // ② 挪完還是進不來(地圖太矮/NPC 太高)→ 才退而求其次把名牌壓下來,至少看得到字
-    for (i = 0; i < npcs.length; i++) {
-      l = npcs[i].querySelector('.tn-label');
-      if (!l) continue;
-      r = l.getBoundingClientRect();
-      if (r.height && r.top < minY) {
-        var cur = parseFloat(getComputedStyle(l).marginBottom) || 0;
-        l.style.marginBottom = (cur - (minY - r.top) / scale) + 'px';   // 走 margin-bottom,與核心同一個管道
-      }
-    }
-
-    // ③ 左右出界 → 用 translateX 微調(核心沒用到名牌的水平位移)
-    for (i = 0; i < npcs.length; i++) {
-      l = npcs[i].querySelector('.tn-label');
-      if (!l) continue;
-      l.style.transform = '';                         // 先歸零再量,否則會疊加上一次的位移
-      r = l.getBoundingClientRect();
-      if (!r.width || maxX <= minX) continue;
-      var dx = 0;
-      if (r.right > maxX) dx = maxX - r.right;        // 右邊出界 → 往左推
-      if (r.left + dx < minX) dx = minX - r.left;     // 推完換左邊出界(名牌比可視範圍還寬)→ 靠左對齊
-      if (dx) l.style.transform = 'translateX(calc(-50% + ' + Math.round(dx) + 'px))';
-    }
+    // ②③ 11-12 起由核心 _resolveTownLabelOverlap 處理（上下左右找空位、不出地圖），這裡只清掉舊版留下的位移
+    for (i = 0; i < npcs.length; i++) { l = npcs[i].querySelector('.tn-label'); if (l) l.style.transform = ''; }
   }
 
   function init() {
@@ -106,8 +85,14 @@
         burst.push(setTimeout(function () { try { clamp(); } catch (e) {} }, ms));
       });
     }
+    // 11-12：順序改成「先把太高的 NPC 往下挪 → 再讓核心排名牌」，不然核心排好的名牌又被這裡推亂（手機上全部疊在一起）
+    var run = function () { try { clamp(); } catch (e) {} return orig.apply(this, arguments); };
+    clampSoon = function () {
+      burst.forEach(clearTimeout); burst = [];
+      [120, 400, 900].forEach(function (ms) { burst.push(setTimeout(function () { try { run(); } catch (e) {} }, ms)); });
+    };
     window._resolveTownLabelOverlap = function () {
-      var r = orig.apply(this, arguments);
+      var r = run.apply(this, arguments);
       clampSoon();
       return r;
     };
@@ -116,7 +101,7 @@
     var t = null;
     window.addEventListener('resize', function () {
       clearTimeout(t);
-      t = setTimeout(function () { try { clamp(); } catch (e) {} }, 120);
+      t = setTimeout(function () { try { run(); } catch (e) {} }, 120);
     });
 
     console.log('[AFK-npclabel] hooks OK — 村莊 NPC 名牌會夾在畫面內。');

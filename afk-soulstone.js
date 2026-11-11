@@ -370,7 +370,7 @@
   // ── 五、扎爾 ──
   try { if (typeof NPC_SPR !== 'undefined') NPC_SPR.afk_zal = { g: 'afk_zal', f: 8, w: 8 }; } catch (e) {}
   if (W.__afkLore && W.__afkLore.addNpc) W.__afkLore.addNpc(HOME, { id: NPC_ID, n: NPC_N, title: '靈魂石', type: 'afk', classicHide: true,
-    d: '把頭目的魂魄封進石頭裡的惡魔。拿靈魂石來，他就替你打開訓練所的門。' }, 'afk_zal', [85, 64]);
+    d: '把頭目的魂魄封進石頭裡的惡魔。拿靈魂石來，他就替你打開訓練所的門。' }, 'afk_zal', [76, 68]);   // Ping 11-12 席琳神殿重排
   var ui = { tab: 'mine' };
   var CSS_ID = 'afk-zal-css';
   var css = function () {

@@ -216,7 +216,15 @@
   if (typeof window.reviveMercenary === 'function') window.reviveMercenary = withScrolls(window.reviveMercenary, { cd: true, say: true });
   if (typeof window.tryAutoReviveMercScroll === 'function') window.tryAutoReviveMercScroll = withScrolls(window.tryAutoReviveMercScroll, { cd: true });
   if (typeof window.petRevive === 'function') window.petRevive = withScrolls(window.petRevive, { cd: true });
-  if (typeof window.petsTick === 'function') window.petsTick = withScrolls(window.petsTick);
+  if (typeof window.petsTick === 'function') {
+    // ⚡ 11-12 效能：寵物只有「這一 tick 開始時已經倒地」才可能吃復活卷軸；沒有倒地的寵物就不用前後各掃一次上千格背包
+    var oPT = window.petsTick, wPT = withScrolls(oPT);
+    window.petsTick = function () {
+      var outs = []; try { outs = (typeof petsOutList === 'function' ? petsOutList() : []) || []; } catch (e) { return wPT.apply(this, arguments); }
+      for (var i = 0; i < outs.length; i++) if (outs[i] && outs[i]._downed) return wPT.apply(this, arguments);
+      return oPT.apply(this, arguments);
+    };
+  }
 
   // 100 次起：召喚術等也算復活，冷卻中不能施放
   ['castSkillInner', 'manualCast'].forEach(function (fnName) {

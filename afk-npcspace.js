@@ -51,6 +51,9 @@
     town_orc_fortress_castle: { npc_wh_orc_fortress: [24, 46], npc_ally_orc_fortressc: [56, 40], npc_orc_fortress_guard: [46, 62], npc_esti: [78, 50], npc_tros: [78, 50], npc_track_orc_fortress: [74, 80] },
     town_dwarf_castle_castle: { npc_wh_dwarf_castle: [76, 30], npc_ally_dwarf_castlec: [84, 62], npc_dwarf_castle_guard: [68, 80], npc_esti: [40, 88], npc_tros: [40, 88], npc_track_dwarf_castle: [90, 86] },
     town_aden_castle: { npc_wh_aden: [32, 44], npc_ally_adenc: [58, 36], npc_aden_guard: [48, 56], npc_esti: [56, 80], npc_tros: [56, 80], npc_track_aden: [32, 70], npc_traitor_ira: [80, 72] },
+    // 席琳神殿（Ping 11-12：人太多，米恩拿掉、守墓人搬去貝希摩斯，剩下的重新排）：右邊圓形廣場＝席琳與次元相關，左邊石板路＝其他
+    town_sherine: { npc_sherine: [70, 46], npc_afk_riftgate: [80, 32], npc_afk_dimsmith: [86, 54], npc_afk_elena: [56, 54], npc_afk_trilogy: [66, 60], npc_afk_zal: [76, 68], npc_afk_storyteller: [60, 72],
+      npc_afk_josda: [46, 64], npc_ally_sherine: [34, 76], npc_kyo_sigh: [26, 60], npc_afk_skillup: [36, 48], npc_io: [22, 40], npc_afk_brace: [30, 32] },
     town_aden: { npc_aden_leo: [40, 33], npc_dragon_lindvior: [64, 60], npc_zomg: [56, 68], npc_ttmi_archive: [28, 76], npc_ally_aden: [46, 76] }
   };
   try {

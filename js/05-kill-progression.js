@@ -625,6 +625,7 @@ function killMob(idx) {
 // 🔧 架構#2：統一清算所有已標記死亡的怪。⚠️v2.7.47 取消輸送帶遞補（用戶要求）：死亡怪原格清空、存活怪不移動位置（固定站位）；
 //    空格交回 tick 出怪迴圈依格序(0→4)重排程新怪。目標死亡→-1，由 getTarget 依 [0,1,2,3,4] 自動鎖定下一個活著的位置。
 function settleDeadMobs() {
+    if (window._allyCalcDirty) { window._allyCalcDirty = false; try { calcStats(); } catch (e) {} }   // ⚡ 11-12：tick 裡傭兵重算後延到這裡才重算玩家一次（見 _allyLevelRecompute）
     let changed = false;
     // 🆕 v2.7.47 取消死亡遞補（輸送帶壓實）：怪物死亡→原格清空(null)、存活怪維持原位不移動；空格交回出怪迴圈依格序(0→4)重新排程新怪。
     //    目標死亡→targetIdx=-1，下一 tick getTarget 自動鎖定「最早出生(_born 最小·場上存活最久)」的活怪（v3.0.11 由格位序改為出生序）。存活的目標位置不變（免 uid 重映射）。

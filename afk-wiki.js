@@ -4163,7 +4163,7 @@
     var SC = window.__afkStarCard;
     if (SC && Z && Z.H) out += wCard('✦ 黃道星卡（星卡格）', wDesc('守宮者有 0.5% 機率留下自己那一宮的黃道星卡。到星鑄師 艾琳娜登錄（用掉 1 張）後，可以把一張放進<b>星卡格</b>：一次只放一張，不算裝備（不佔裝備欄、不算重量、不能強化），隨時免費換。')
       + wDesc('升級（每張各自升）：<b style="color:#c084fc">裂界</b>＝同宮星卡 ×' + SC.UP[2].card + '＋' + nm('afk_zd_sand') + ' ×' + SC.UP[2].sand + '＋次元密奧卡 ×' + fm(SC.UP[2].dim) + '；<b style="color:#fef3c7">歸一</b>＝同宮星卡 ×' + SC.UP[3].card + '＋砂 ×' + SC.UP[3].sand + '＋星蝕之核 ×' + SC.UP[3].core + '＋次元密奧卡 ×' + fm(SC.UP[3].dim) + '。')
-      + wDesc('放著的那張有保底（取較好的一邊）：星卡 曲線 95、裂界 100、歸一 105。<b>在次元裂縫裡效果 ×1.5</b>。舊版不分宮的黃道星卡可以在艾琳娜那裡換成任一宮。')
+      + wDesc('放著的那張有保底（取較好的一邊）：星卡 曲線 95、裂界 105、歸一 110。<b>在次元裂縫裡效果 ×1.5</b>。舊版不分宮的黃道星卡可以在艾琳娜那裡換成任一宮。')
       + wTbl(['宮', '星卡', '裂界', '歸一'], Z.H.map(function (h) { return ['<b style="color:#fde047">' + esc(h.n) + '</b>'].concat([1, 2, 3].map(function (st) { return esc(SC.descOf(h.k, st)); })); })));
     return out;
   }

@@ -86,6 +86,16 @@ body #poly-modal-list{overflow:visible!important;max-height:none!important;flex:
 body #poly-modal>.panel>button.btn.mt-4{position:sticky;bottom:0;z-index:2}
 }
 #poly-modal-list .afk-ca-tile{content-visibility:auto;contain-intrinsic-size:auto 110px}
+/* 2026-11-12 手機巡檢：村莊地圖只有約 130px 高，名牌太大會疊成一排；手機上名牌縮小、職稱藏起來（點了還是同一個 NPC） */
+@media (max-width:760px){
+#town-npc-map .town-npc .tn-label{padding:1px 5px;border-radius:5px;font-size:11px;line-height:1.15}
+#town-npc-map .town-npc .tn-label .tn-name{font-size:11px}
+#town-npc-map .town-npc .tn-label .tn-title{display:none}
+}
+/* 2026-11-12 手機巡檢：選角畫面左上「介面」「電台」蓋到第一張角色卡的「擔任傭兵」、右下「存檔與修復」蓋到能力表；上下各留出按鈕的位置 */
+@media (max-width:760px){
+#load-select-panel:not(.hidden){padding-top:44px!important;padding-bottom:64px!important;box-sizing:border-box}
+}
 /* Native dialogs must remain above the mobile log sheet (9500) and navigation
    (9600); confirmations keep their own higher layer. Do not close the log or
    change its scroll position merely because the user inspects an item. */

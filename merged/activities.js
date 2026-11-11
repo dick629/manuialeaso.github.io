@@ -122,9 +122,12 @@
     });
   }
   function cancel(){const r=round();if(r)G.transaction('結束本輪遠征',()=>{r.status='cancelled';r.reason='玩家結束本輪，不自動再扣款';});}
+  // 玩家 11-12「遠征一直發呆不進場」：手機跟不上時（每 tick 的時間超過 100ms）遊戲會進入補跑，補跑中的存檔一律延到補跑結束才寫（saveGame 回 false），
+  //   原本把這個當成「存檔失敗」→ 打完一項就暫停、或每 30 秒的進度點直接暫停。延後寫入不算失敗。
+  function saved(){const ok=saveGame();if(ok===true)return true;return typeof catchupActive==='function'&&catchupActive()&&typeof _ffSavePending!=='undefined'&&_ffSavePending===true;}
   function finishJob(){const r=round();if(!r||r.status!=='running')return;r.completed.push(r.queue[r.index]);r.index++;r.checkpoint=null;
     if(r.index>=r.queue.length){r.status='done';r.reason='本輪完成';saveGame();return;}
-    r.status='between';if(saveGame()!==true){r.status='paused';r.reason='通關紀錄尚未保存，已停止自動切換；請先保存再繼續';state.running=false;return;}scheduleNext(r.id);
+    r.status='between';if(!saved()){r.status='paused';r.reason='通關紀錄尚未保存，已停止自動切換；請先保存再繼續';state.running=false;return;}scheduleNext(r.id);
   }
   // 守護者之戒今天的次數已經用完的那幾項：直接跳過
   function skipUsed(r){while(r.index<r.queue.length){const q=r.queue[r.index],n=special(q);if(!n||!/^gr:/.test(q))break;let w='';try{w=n.check();}catch(e){w='';}if(!/用完/.test(w))break;(r.skipped=r.skipped||[]).push(r.index);r.completed.push(q);r.index++;}if(r.index>=r.queue.length){r.status='done';r.reason='本輪完成';saveGame();return true;}return false;}
@@ -135,7 +138,7 @@
     if(!(r.maps||[r.map]).includes(mapState.current)){pause('已離開副本，繼續時重新進場',!!native);return;}
     if(native&&!native.api.run()){pause('試煉已結束或失敗，重新進場仍受每日次數限制',true);return;}
     if(r.queue[r.index]==='hardin'){const h=W.__afkHardin.run();if(h&&h.stage==='choice')W.__afkHardin.choose(r.choice);}
-    if(state.ticks-lastCheckpoint>=300){checkpoint();if(!saveGame()){pause('存檔失敗，已暫停遠征');state.running=false;}lastCheckpoint=state.ticks;}
+    if(state.ticks-lastCheckpoint>=300){checkpoint();if(!saved()){pause('存檔失敗，已暫停遠征');state.running=false;}lastCheckpoint=state.ticks;}
   }}
   function shortcut(before){
     if(advancing||!C.movement(G.read(player)).shortcut||Math.random()>=.05)return;
@@ -159,7 +162,11 @@
     if(player.dead&&round()?.status==='running')checkRound();
     if(state.ticks>t&&state.ticks%10===0){checkRound();W.LineageTalents.tick();if(W.LineageGrowthUI)W.LineageGrowthUI.clock();}return r;
   };
+  // 玩家 11-12「遠征一直發呆」：重新整理／手機把分頁收掉再打開／上線後自動更新，遠征都會變成「暫停、按繼續恢復」，玩家沒注意就一直停著。
+  //   改成讀檔 4 秒後自動按一次「繼續」（跟手動按完全同一個流程，不會多扣錢）；繼續不了就把原因寫在本輪狀態上。
+  function autoResume(id){setTimeout(()=>{try{const r=round();if(!r||r.id!==id||r.status!=='paused'||!/^已讀取已付款的遠征/.test(r.reason||''))return;if(player.dead)return;
+    resume();logSys('<span class="text-violet-300">🧭 自動繼續已付款的遠征。</span>');}catch(e){const r=round();if(r&&r.id===id&&r.status==='paused')r.reason='自動繼續失敗：'+e.message+'（可以手動按繼續）';}},4000);}
   W.LineageActivities={MAP,MOB,quota,remaining,enterMushroom,rows,round,quote,paidRound,why,start,pause,resume,cancel,checkpoint,finishJob};
   // On reload, restore only through the explicit paid-round continuation button.
-  const loaded=new WeakSet();const oUI=W.updateUI;W.updateUI=function(){if(player&&player.cls&&!loaded.has(player)){loaded.add(player);const r=round();if(r&&['running','between','starting'].includes(r.status)){r.status='paused';r.reason='已讀取已付款的遠征，按繼續恢復';}}return oUI.apply(this,arguments);};
+  const loaded=new WeakSet();const oUI=W.updateUI;W.updateUI=function(){if(player&&player.cls&&!loaded.has(player)){loaded.add(player);const r=round();if(r&&['running','between','starting'].includes(r.status)){r.status='paused';r.reason='已讀取已付款的遠征，按繼續恢復';autoResume(r.id);}}return oUI.apply(this,arguments);};
 })(window);

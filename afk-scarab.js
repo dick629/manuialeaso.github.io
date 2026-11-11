@@ -85,6 +85,19 @@
   if (typeof W.petDerive === 'function') {
     var oPD = W.petDerive;
     W.petDerive = function () { var r = oPD.apply(this, arguments); try { var p = P(); if (r && equipped(p)) { var o = fxK(p, store(p)); if (o.petDr) r.dr = (r.dr || 0) + o.petDr; } } catch (e) {} return r; };
+    // ⚡ 11-12 效能：同一個 tick 裡同一隻寵物（同主人、同等級、同型態）的能力只算一次（實測每 tick 被問 26 次，每次都穿過整串外掛重算）
+    //    只在 tick 進行中快取；介面上換裝備、看寵物資料時照舊即時算。回傳複本，呼叫端改了也不影響快取。
+    var oPDc = W.petDerive, pdC = new WeakMap(); W.__afkPdStat = { hit: 0, miss: 0 };
+    W.petDerive = function (pet) {
+      var S = (typeof state !== 'undefined') ? state : null;
+      if (!S || !S.inTick || !pet || typeof pet !== 'object') return oPDc.apply(this, arguments);
+      var who = (typeof player !== 'undefined') ? player : null, c = pdC.get(pet);
+      if (c && c.t === S.ticks && c.who === who && c.lv === pet.lv && c.form === pet.form && c.eq === (pet.eq && pet.eq.arm)) { W.__afkPdStat.hit++; return Object.assign({}, c.r); }
+      W.__afkPdStat.miss++;
+      var r = oPDc.apply(this, arguments);
+      if (r && typeof r === 'object') pdC.set(pet, { t: S.ticks, who: who, lv: pet.lv, form: pet.form, eq: pet.eq && pet.eq.arm, r: Object.assign({}, r) });
+      return r;
+    };
     try { (0, eval)('petDerive = window.petDerive'); } catch (e) {}
   }
 
