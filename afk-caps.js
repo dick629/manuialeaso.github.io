@@ -110,5 +110,33 @@
   if (W.__afkMaxAdd && W.__afkMaxAdd.add) W.__afkMaxAdd.add(function (p) {
     try { if (p && p === ((typeof player !== 'undefined') ? player : null) && on() && p.rebirth > 0) offhandMax(p); } catch (e) {}
   });
+  // 11-11 21:39：_afkCrit 記的是「剛爆擊的那隻怪」本身，不能進存檔——怪身上若又指回角色（例如夢域頭目的疼痛的歡愉），
+  //   整份存檔會變成循環參照、保存失敗（遠征「存檔失敗，已暫停」）。存檔前先拿掉、存完放回去。
+  if (typeof W.saveStateJson === 'function') {
+    var oSSJ = W.saveStateJson;
+    W.saveStateJson = function () {
+      var held = [];
+      try { var pp = (typeof player !== 'undefined') ? player : null; [pp].concat((pp && pp.allies) || []).forEach(function (x) { if (x && Object.prototype.hasOwnProperty.call(x, '_afkCrit')) { held.push([x, x._afkCrit]); delete x._afkCrit; } }); } catch (e) {}
+      try {
+        try { return oSSJ.apply(this, arguments); }
+        catch (err) {
+          if (!/circular/i.test(String(err && err.message))) throw err;
+          // 保險：別的地方又掛了循環參照 → 這一次改用「遇到正在展開的物件就略過」的方式存，不要讓存檔整個失敗
+          try { console.warn('[AFK-caps] 存檔遇到循環參照，略過循環的欄位', err.message); } catch (e) {}
+          var js = JSON.stringify, self = this, args = arguments;
+          JSON.stringify = function (v, rep, sp) {
+            var stack = [];
+            return js.call(JSON, v, function (k, val) {
+              if (typeof rep === 'function') val = rep.call(this, k, val);
+              if (val && typeof val === 'object') { while (stack.length && stack[stack.length - 1] !== this) stack.pop(); if (stack.indexOf(val) >= 0) return undefined; stack.push(val); }
+              return val;
+            }, sp);
+          };
+          try { return oSSJ.apply(self, args); } finally { JSON.stringify = js; }
+        }
+      } finally { held.forEach(function (h) { try { h[0]._afkCrit = h[1]; } catch (e) {} }); }
+    };
+    try { (0, eval)('saveStateJson = window.saveStateJson'); } catch (e) {}
+  }
   W.AFK_CAPS = { cap: CAP, addOffhand: addOffhand, offhandMax: offhandMax, clamp: clamp };
 })();

@@ -158,7 +158,7 @@
   var pain = function (m) {
     var cs = chars(); if (!cs.length) return;
     var c = cs[Math.floor(Math.random() * cs.length)];
-    m._dbPain = { who: c, until: tk() + SK.painDur };
+    try { Object.defineProperty(m, '_dbPain', { value: { who: c, until: tk() + SK.painDur }, writable: true, configurable: true, enumerable: false }); } catch (e) { m._dbPain = { who: c, until: tk() + SK.painDur }; }   // 11-11：不能進存檔（who 是角色本身，會變成循環參照，整個存檔失敗）
     log(tag('疼痛的歡愉', '#e879f9') + esc(m.n) + ' 對' + nameOf(c) + '施放疼痛的歡愉——10 秒內' + nameOf(c) + '下一次打它的傷害 25% 會反彈回去（反彈一次就消失）！');
   };
   var drainMp = function (m) {
