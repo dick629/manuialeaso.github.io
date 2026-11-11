@@ -110,7 +110,8 @@
   // 玩家 11-11 10:10：會誤鎖道具 → 只留密碼保護 S 級道具；取得速度、重複編號、蜜罐後隔離都拿掉。
   //   之前被隔離的真道具全部放回背包；只有亂碼道具會被清掉。
   var S_FROM = Date.UTC(2026, 10, 14, 16, 0);   // 玩家 11-11 10:24：2026-11-15 00:00（台北）起才擋
-  var S_TIER = function (id) { var d = DB.items[id]; return !!d && (String(id) === '99998' || String(id) === '99999' || d.gmOnly || d.relicEvo != null || d.dimRelic); };
+  // 玩家 11-11 12:16：只鎖 GM 裝備，其他（至高的支配、次元遺物…）全部開放
+  var S_TIER = function (id) { var d = DB.items[id]; return !!d && (String(id) === '99998' || String(id) === '99999' || !!d.gmOnly); };
   var scan = function (force) {
     var p = P(); if (!p || p.classicMode) return;
     var a = store(p), changed = false;
