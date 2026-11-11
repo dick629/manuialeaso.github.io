@@ -120,11 +120,18 @@
     if (a.q.length) { a.q = []; changed = true; }
     a.sp = []; delete a.honey;
     allItems(p).forEach(function (r) { if (r.it.id === 'afk_glitch' && r.where === 'inv') { var i = p.inv.indexOf(r.it); if (i >= 0) { p.inv.splice(i, 1); changed = true; } } });
-    // 11-11 16:46：取消「11/15 前取得不檢查」的標註（改成 S 級封印，見下面）
-    allItems(p).forEach(function (r) { if (r.it.acPre) { delete r.it.acPre; changed = true; } });
-    if (changed) sealCache = new WeakMap();
+    // 玩家 11-11 16:56：11/15 前就在身上的 S 級道具照舊標「11/15 前取得：不受異常道具檢查」，但封印照算（見下面 S 級封印）
+    if (Date.now() < S_FROM) allItems(p).forEach(function (r) { if (sKind(r.it.id) && !r.it.acPre) { r.it.acPre = 1; changed = true; } });
     if (changed) { try { if (typeof calcStats === 'function') calcStats(); if (typeof updateUI === 'function') updateUI(); } catch (e) {} }
   };
+  if (typeof W.buildItemDescHTML === 'function') {
+    var oDesc = W.buildItemDescHTML;
+    W.buildItemDescHTML = function (item) {
+      var h = oDesc.apply(this, arguments);
+      try { if (item && item.acPre) h += '<div style="color:#86efac;font-size:12px;margin-top:4px">🛡 2026/11/15 前取得：不受異常道具檢查</div>'; } catch (e) {}
+      return h;
+    };
+  }
   // ── S 級封印（Ping 11-11 16:35／16:46；設計稿十四節）──
   //   S 級＝GM 道具、至高的支配、次元遺物（含次元時空武器）、創世密奧卡。
   //   正當來源＝遊戲正規流程做出來時蓋的印記（acs）。沒有印記、或印記標成「太快」的 S 級＝封印。
