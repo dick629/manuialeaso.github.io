@@ -8,7 +8,7 @@
  *   光蝕：場上有頭目時每 30 秒全隊 +1 層（最多 20），每層最大 HP −1%、受到的治療 −2%；相消術卷軸清除（王不在場、≥10 層自動用）；回村、換地圖、倒下都不清。
  *     王的斬殺線：頭目在場時每 30 秒，HP 低於 10% 的隊員直接倒下。
  *   怪物：HP 再 ×1.5、傷害 ×1.3、命中 ×4/3（夢域鏡 ×3 → ×4）；頭目每秒多回 0.1%（合計 0.2%）；經驗 ×1.2。
- *   面板：近遠魔的傷害、命中、爆擊傷害、傷害減免、魔防、五屬性抗性、AC、最大 HP／MP 減半；取回力量最多 40%。負重 −5,000，每取回 5% 再 −500。
+ *   面板：近遠魔的傷害、命中、爆擊傷害、傷害減免、魔防、五屬性抗性、AC、最大 HP／MP 壓到 60%；取回力量最多 40%。負重 −5,000，每取回 5% 再 −500。
  *   造成的傷害 −30%（聖衣 EX、雅典娜的祝福、次元支配 之後抵銷）。
  *   掉落：龍之鑽石多 0.1%（合計 0.2%）、裂縫碎光、次元結晶、次元密奧卡、破碎星光塵埃、分裂的蔑視塵埃、星辰之核。
  *   window.__afkDimRiftOn() 回傳是否開著裂縫（afk-riftsupply、afk-mio、afk-goddess3 看這個）。
@@ -112,7 +112,7 @@
           '<div id="afk-dimrift-card" class="bg-slate-950/80 border border-cyan-800 rounded p-3 text-sm leading-relaxed">'
           + '<div class="font-bold mb-1 text-cyan-200">🌀 次元裂縫：' + (isOn ? '<span class="text-cyan-300">開啟中</span>' : '<span class="text-slate-400">關閉</span>') + '</div>'
           + '<div class="afk-lore">「縫的那一邊，還有別的天空。總有一天，得有人替我把它縫上。」——席琳</div>'
-          + '<div class="text-slate-300 text-xs">比席琳夢域鏡更深的一層。所有地圖都會被縫隙的光侵蝕（回村清除）；頭目會留下光蝕；你的面板會被壓低一半，要靠各種成就取回。開放條件：完成二次轉生，並打贏終焉第三階層。</div></div>'
+          + '<div class="text-slate-300 text-xs">比席琳夢域鏡更深的一層。所有地圖都會被縫隙的光侵蝕（回村清除）；頭目會留下光蝕；你的面板會被壓到六成，要靠各種成就取回。開放條件：完成二次轉生，並打贏終焉第三階層。</div></div>'
           + '<button type="button" id="afk-dimrift-btn" class="btn py-3 text-base font-bold ' + (why && !isOn ? 'bg-slate-700 border-slate-600 opacity-60 cursor-not-allowed' : 'bg-cyan-800 hover:bg-cyan-700') + '"' + (why && !isOn ? ' disabled title="' + esc(why) + '"' : '') + '>🌀 ' + (isOn ? '退回夢域' : '踏進次元裂縫') + (why && !isOn ? '（' + esc(why) + '）' : '') + '</button>');
         var b = div.querySelector('#afk-dimrift-btn'); if (b) b.onclick = function () { toggle(); try { W.renderSherinePray(div); } catch (e) {} };
       } catch (e) { console.warn('[AFK-dimrift] ui', e); }
@@ -126,6 +126,7 @@
   var floorSum = function (p) { return Math.min(R.floorMax, FLOOR.reduce(function (s, x) { return s + (x[2](p) ? x[1] : 0); }, 0)); };
   var weightCut = function (p) { var d = p.d || {}, pct = Number(d.weightPct); if (!isFinite(pct)) return 0; return Math.max(0, Math.min(0.5, 0.5 * (1 - pct / 100))); };
   var pctCut = function (p) { var t = sealTier(p); return t ? [0, 0.05, 0.10, 0.15][t] : 0; };   // 刻印石徽記：侵蝕扣血 −5／−10／−15%
+  var BASE = 0.6;   // 裂縫面板保留比例（Ping 11-11 12:37：50% → 60%）
   var recoverPct = function (p) { return Math.min(40, RECOVER.reduce(function (s, x) { return s + (Number(x[1](p)) || 0); }, 0)); };
   function clearErosion(p, all) { var r = rec(p); r.ero = 0; if (all) { /* 光蝕不因回村清除 */ } }
   var members = function () { var p = P(), out = []; if (!p) return out; if (!p.dead) out.push(p); (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); }); return out; };
@@ -137,7 +138,7 @@
     // 扣血
     var net = R.hpPct - reduceSum(p);
     members().forEach(function (x) {
-      var mx = x === p ? (rec(p).hp50 || Math.floor((p.mhp || 1) / (0.5 + recoverPct(p) / 100) * 0.5)) : (x._dimBase ? Math.floor(x._dimBase.mhp * 0.5) : (x.mhp || 1));
+      var mx = x === p ? (rec(p).hp50 || Math.floor((p.mhp || 1) / (BASE + recoverPct(p) / 100) * BASE)) : (x._dimBase ? Math.floor(x._dimBase.mhp * BASE) : (x.mhp || 1));
       if (net <= 0) { var heal = Math.floor(mx * (-net) / 100); if (heal > 0) { if (x === p) p.hp = Math.min(p.mhp, p.hp + heal); else x.curHp = Math.min(x.mhp || x.curHp, x.curHp + heal); } return; }
       var dmg = mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p));
       if (x === p) W.__afkDrainHit = (Number(W.__afkDrainHit) || 0) + dmg;   // 聖十字之盾（禁衛軍）在裂縫只擋一部分：見 afk-castle-guards
@@ -197,8 +198,8 @@
   var RES4 = ['resFire', 'resWater', 'resWind', 'resEarth'];
   if (W.__afkMaxAdd && W.__afkMaxAdd.add) W.__afkMaxAdd.add(function (p) {
     if (!on() || p !== P()) return;
-    var f = 0.5 + recoverPct(p) / 100, light = (rec(p).light || 0) * R.lightHp / 100 * (1 - lightCut(p));
-    rec(p).hp50 = Math.max(1, Math.floor((Number(p.mhp) || 1) * 0.5));   // 侵蝕照「面板 50% 時的最大 HP」算（Ping 11-07 18:13）
+    var f = BASE + recoverPct(p) / 100, light = (rec(p).light || 0) * R.lightHp / 100 * (1 - lightCut(p));
+    rec(p).hp50 = Math.max(1, Math.floor((Number(p.mhp) || 1) * BASE));   // 侵蝕照「壓縮後（沒取回力量）的最大 HP」算（Ping 11-07 18:13）
     p.mhp = Math.max(1, Math.floor((Number(p.mhp) || 1) * f * (1 - light)));
     p.mmp = Math.max(0, Math.floor((Number(p.mmp) || 0) * f));
   });
@@ -208,7 +209,7 @@
       var r = oRe.apply(this, arguments);
       try {
         var p = P(); if (!on() || !p || !p.d) return r;
-        var d = p.d, f = 0.5 + recoverPct(p) / 100;
+        var d = p.d, f = BASE + recoverPct(p) / 100;
         // 負重上限跟面板一起打折（Ping 11-07 17:33）；剩下的上限超過 3,000，每多 1,000 造成的傷害 +1.5%（負重前行）
         if (typeof d.weightCapacity === 'number' && d.weightCapacity > 0) {
           var lim = Math.max(1, Math.floor(d.weightCapacity * f)), pct = Math.floor((Number(d.equippedWeight) || 0) / lim * 100);
@@ -295,9 +296,9 @@
     };
   }
 
-  // ── 傭兵：面板減半、侵蝕（每秒照隊長的取回比例與侵蝕層數，從原本的數值重算） ──
+  // ── 傭兵：面板壓到 60%、侵蝕（每秒照隊長的取回比例與侵蝕層數，從原本的數值重算） ──
   function allyPanel() {
-    var p = P(); if (!p || !p.allies) return; var live = on(), f = 0.5 + recoverPct(p) / 100, ero = live ? (rec(p).ero || 0) : 0, keep = floorSum(p);
+    var p = P(); if (!p || !p.allies) return; var live = on(), f = BASE + recoverPct(p) / 100, ero = live ? (rec(p).ero || 0) : 0, keep = floorSum(p);
     p.allies.forEach(function (a) {
       if (!a || !a.d) return;
       if (!live) { if (a._dimBase) { var b0 = a._dimBase; a.mhp = b0.mhp; a.mmp = b0.mmp; Object.keys(b0.d).forEach(function (k) { a.d[k] = b0.d[k]; }); delete a._dimBase; } return; }

@@ -1464,7 +1464,7 @@ function _updateUIImpl() {
     document.getElementById('status-panel').style.backgroundImage = `url('assets/character/${bgImageName}.webp')`;
     document.getElementById('status-panel').classList.add('bg-top'); // 確保圖片從頂部對齊
 
-    document.getElementById('st-ac').innerText = player.d.ac;
+    document.getElementById('st-ac').innerText = Math.round(Number(player.d.ac) || 0);   // 天賦／巔峰的百分比 AC 會算出小數（Ping 11-11）
     document.getElementById('st-mr').innerText = player.d.mr;
     document.getElementById('st-gold').innerText = player.gold.toLocaleString();
     

@@ -35,7 +35,7 @@
    for(const d of docs.values()){
     if(mode==='collection'){fill(d.p);for(const a of d.p.allies||[])if(a?.cls)fill(a);}
     else if(mode==='level'||mode==='max')grow(d.p,mode);
-    else {if(n(d.p.rebirth)<1||n(d.p.lv)<100)throw Error('巔峰需一轉 Lv100，請先使用測試二轉滿等');const g=W.LineageGrowth.read(d.p);if(!g)throw Error('成長資料異常');g.paragon.level=700;g.paragon.xp=0;}
+    else {if(n(d.p.rebirth)<1||n(d.p.lv)<100)throw Error('巔峰需一轉 Lv100，請先使用測試二轉滿等');const g=W.LineageGrowth.read(d.p);if(!g)throw Error('成長資料異常');g.paragon.level=W.LineageGrowthCore&&W.LineageGrowthCore.PMAX||1000;g.paragon.xp=0;}
     d.p.testTools={...(d.p.testTools||{}),used:true,last:mode,at:Date.now()};
    }
    for(const [s,d] of docs){const key='lineage_idle_save_'+s;changes.push({key,before:localStorage.getItem(key),after:'LZ1:'+LZString.compressToUTF16(_saveWrap(JSON.stringify(d))),reason:'LOCAL_TEST_NPC'});if(typeof _lzWorkerRev!=='undefined')_lzWorkerRev[key]=(_lzWorkerRev[key]||0)+1;}
@@ -44,7 +44,7 @@
    calcStats();updateUI();render('完成並保存；操作前完整備份可從「存檔與修復」還原。');
   }finally{busy=false;state.running=running;}
  }
- const options=[['collection','補滿全隊特殊收藏','補齊自己與現有隊友來源存檔的特殊收藏紀錄，包含劇情／任務完成紀錄；不發放任務獎品，也不修改終焉勝負或城堡。'],['level','目前轉生滿等','升到目前轉生上限（100／150／200），補足等級屬性點及應得天賦，不更改轉生。'],['max','測試二轉 Lv200','直接設為二轉 Lv200，天賦總額 135 點（扣除已用點）；不解鎖職業路線或補造終焉通關。'],['paragon','測試巔峰 P700','巔峰到 700，保留已配點，剩餘點數可自由配置。']];
+ const options=[['collection','補滿全隊特殊收藏','補齊自己與現有隊友來源存檔的特殊收藏紀錄，包含劇情／任務完成紀錄；不發放任務獎品，也不修改終焉勝負或城堡。'],['level','目前轉生滿等','升到目前轉生上限（100／150／200），補足等級屬性點及應得天賦，不更改轉生。'],['max','測試二轉 Lv200','直接設為二轉 Lv200，天賦總額 135 點（扣除已用點）；不解鎖職業路線或補造終焉通關。'],['paragon','測試巔峰 P1000','巔峰到 1,000，保留已配點，剩餘點數可自由配置。']];
  function render(msg=''){const el=document.querySelector('#interaction-content');if(!el)return;el.innerHTML='<div style="color:#ddcc9e;display:grid;gap:12px;padding:12px"><h3>測試員・本機測試工具</h3><p>僅供測試副本使用。每次操作先備份，會標記為測試角色。正式公開網址不顯示此 NPC。</p>'+options.map(([id,label,desc])=>'<section style="border:1px solid #766544;padding:12px;background:#172922"><button class="btn w-full py-2" data-test-action="'+id+'">'+label+'</button><p style="font-size:14px;margin-top:8px">'+desc+'</p></section>').join('')+'<p role="status"></p></div>';el.querySelector('[role=status]').textContent=msg;el.onclick=e=>{const b=e.target.closest('[data-test-action]');if(!b||busy)return;const opt=options.find(x=>x[0]===b.dataset.testAction);W.AFK_UI.confirm({title:opt[1],message:opt[2]+' 操作前會保存完整備份。',requireText:player.name,onOk:async()=>{b.disabled=true;try{await run(opt[0]);}catch(e){render(e.message);}}});};}
  const def={id:ID,n:'測試員',title:'本機測試',type:'quest',classicHide:true,d:'集中調整測試角色的特殊收藏、等級、天賦與巔峰。'};
  if(W.__afkLore?.addNpc)W.__afkLore.addNpc(TOWN,def,null,null);else DB.towns[TOWN].npcs.push(def);

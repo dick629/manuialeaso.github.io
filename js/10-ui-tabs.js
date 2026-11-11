@@ -929,7 +929,7 @@ function tooltipItemDescription(d, itemId) {
     addValue('(?:近距離|遠距離)命中', d.hit); addValue('(?:近距離|遠距離)傷害', d.dmgBonus);
     addValue('近距離命中', d.meleeHit); addValue('遠距離命中', d.rangedHit);
     addValue('近距離傷害', d.meleeDmg); addValue('遠距離傷害', d.rangedDmg);
-    addValue('(?:MR|魔防|魔法防禦)', d.mr); addValue('(?:AC|防禦)', d.ac);
+    addValue('(?:MR|魔防|魔法防禦)', d.mr); addValue('(?:AC|防禦)', Math.round(Number(d.ac) || 0));
     addValue('火屬性抗性', d.resFire); addValue('水屬性抗性', d.resWater);
     addValue('風屬性抗性', d.resWind); addValue('地屬性抗性', d.resEarth);
     if (d.potionBonus) statPatterns.push(`(?:藥水|治癒藥水).{0,12}(?:恢復|回復).{0,12}[+＋]\\s*${tooltipEscRegExp(d.potionBonus)}\\s*%`);
