@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-1cbe5c7df88d",
+  "build": "merge-0.4-cf03c48b766f",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -1584,7 +1584,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "c434d78145c69775800f09857a53f3e450dfdfecd9bf1098bca63a33c75cd402",
+      "sha256": "0d0d399a71d59df0a50179e102efcdbe7ac7e4546d5cb0b0e9394b05c755626d",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2023,8 +2023,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/recovery-ui.js?v=adb0717f553b",
-      "sha256": "adb0717f553b4a2bd42e0fd111057c407f21f21912eb103211406c8e0d4b0f5d",
+      "url": "merged/recovery-ui.js?v=0a1e40b0e442",
+      "sha256": "0a1e40b0e442d1ce595ead0863a386ba179634e87b042cfa731bb1a2cee41e1b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2043,8 +2043,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/save-gate.js?v=4b4a41b886ca",
-      "sha256": "4b4a41b886ca3effdb7d006375fa671294e2be0c11019091075d2846e93171a7",
+      "url": "merged/save-gate.js?v=edd467fa7ce2",
+      "sha256": "edd467fa7ce2c91ee61ef8de8650b6df07818bc0a524ae4488f74e51a9a0f9ee",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2084,7 +2084,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "e474be4c331a35916f888fc9b63b1c8b4b78325853a8e30069bf2edca3c3387a",
+      "sha256": "03674562e3ea476ae1071484b8db4685979086b62789727f1bbc4a24f48a0bfd",
       "type": "text/html; charset=utf-8"
     }
   ]

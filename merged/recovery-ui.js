@@ -121,5 +121,18 @@
   }
  }
  $('refresh-backups').onclick=()=>run(showBackups);
+ // 11-12 00:42：匯入紀錄（merged/save-gate.js 寫進 lineage_import_debug_v1）
+ function importDebug(){
+  const box=$('import-debug-list');if(!box)return;let list=[];try{list=JSON.parse(localStorage.getItem('lineage_import_debug_v1')||'[]');}catch(e){}
+  const esc=t=>String(t==null?'':t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  if(!list.length){box.innerHTML='<p>還沒有匯入紀錄。</p>';return;}
+  box.innerHTML=list.map((r,i)=>'<details'+(i===0?' open':'')+' style="margin:8px 0;border:1px solid #475569;border-radius:6px;padding:6px 10px"><summary><b style="color:'+(r.ok?'#86efac':'#fca5a5')+'">'+(r.ok?'✔ 成功':'✘ 失敗')+'</b>　'+esc(new Date(r.at).toLocaleString())+'　位置 '+esc(r.slot)+(r.ok?'':'　卡在「'+esc(r.failStep)+'」')+'</summary>'
+   +(r.msg?'<p style="color:#fca5a5">'+esc(r.msg)+'</p>':'')
+   +'<ol style="margin:4px 0 4px 20px">'+(r.steps||[]).map(s=>'<li><b>'+esc(s.n)+'</b>'+(s.d?'：'+esc(s.d):'')+'</li>').join('')+'</ol>'
+   +'<p style="font-size:12px;color:#94a3b8">檔案 '+esc(r.size)+' 字元、開頭「'+esc(r.head)+'」｜'+esc(r.ua)+'</p></details>').join('');
+ }
+ $('import-debug-copy')&&($('import-debug-copy').onclick=async()=>{let t='';try{t=JSON.stringify(JSON.parse(localStorage.getItem('lineage_import_debug_v1')||'[]'),null,1);}catch(e){}try{await navigator.clipboard.writeText(t);status('匯入紀錄已複製。');}catch(e){prompt('複製下面的文字：',t);}});
+ $('import-debug-clear')&&($('import-debug-clear').onclick=()=>{try{localStorage.removeItem('lineage_import_debug_v1');}catch(e){}importDebug();status('匯入紀錄已清除。');});
+ importDebug();
  window.LineageRecoveryUI={scan:()=>{const r=R.scan(current());display(r);return r;},showBackups};
 })();
