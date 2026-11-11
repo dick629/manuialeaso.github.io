@@ -124,7 +124,8 @@
   const changes=[];
   for(const key of new Set([...Object.keys(current),...Object.keys(incoming)])){
    if(key==='fb5_active_role_sessions_v1'||key==='afk_diag_hb'||key==='lineage_admin_receipts_v1')continue;
-   const before=bridge.own(current,key)?current[key]:null,after=bridge.own(incoming,key)?incoming[key]:null;
+   // 玩家 11-11：舊版的整份交易備份（約 5MB）不還原、而且清掉，否則手機容量不夠、轉移碼還原寫入失敗
+   const before=bridge.own(current,key)?current[key]:null,after=key==='lineage_growth_transaction_backup_v1'?null:(bridge.own(incoming,key)?incoming[key]:null);
    if(before!==after)changes.push({key,before,after,reason:'FULL_RESTORE'});
   }
   // Release keys absent from the snapshot before growing others; backup already exists before transact writes.

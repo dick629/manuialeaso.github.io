@@ -91,7 +91,7 @@
   // keyCount(檔案有沒有被截斷)。keys 內容一律原封不動,不解析、不認識、不判斷。
   function buildPack() {
     var keys = {}, n = 0;
-    lsKeys().forEach(function (k) { var v = localStorage.getItem(k); if (v != null) { keys[k] = v; n++; } });
+    lsKeys().forEach(function (k) { if (k === 'lineage_growth_transaction_backup_v1') return; var v = localStorage.getItem(k); if (v != null) { keys[k] = v; n++; } });   // 11-11：舊版交易備份（約 5MB）不打包
     return { format: FORMAT, schema: SCHEMA, exportedAt: new Date().toISOString(), keyCount: n, keys: keys };
   }
 
