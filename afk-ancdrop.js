@@ -50,7 +50,7 @@
 
     if (window.AFK_TOGGLES) AFK_TOGGLES.register({
         id: 'ancdrop', name: '遠古系裝備', group: '遊戲玩法', def: true,
-        desc: '金卡怪掉落的裝備有機會帶遠古系詞綴（只能打怪取得）；拿帶詞綴的裝備去製作或精煉也會保留'
+        desc: '金卡怪掉落的遺物、傳說裝備有機會帶遠古系詞綴（只能打怪取得；一般裝備打怪只會帶祝福）；拿帶詞綴的裝備去製作或精煉也會保留'
     });
 
     if (typeof window.rollAffixesNew !== 'function') {
@@ -212,6 +212,9 @@
             //   骰了也會被蓋掉，卻白白吃掉一個 committed RNG 序號、位移之後的掉落。
             //   一次做多件時「件數對件數」發（同祝福）：吃掉幾件帶詞綴的本體，前幾件成品就帶。
             if (enabled() && r && _watch && _carry.length) { r.anc = _carry.shift(); return r; }
+            // 玩家 11-11 18:52：白裝（遺物、傳說以外）打怪只掉祝福系，遠古系、屬性只有遺物（與傳說）才會掉——降低廢品
+            var _gd = _gainId && DB.items[_gainId];
+            if (r && typeof _lootMobInfo !== 'undefined' && _lootMobInfo && !(_gd && (_gd.relic || _gd.legend))) { r.anc = false; r.attr = false; return r; }
             if (enabled() && r && !r.anc && (goldCardMob() || nonKillAncOk())) {   // ⚠️ 先問條件，確定要抽了才動 lootRng（見檔頭）
                 var p = Number(baseChance);
                 if (!Number.isFinite(p)) p = 0.01;             // 無參呼叫（js/04 血盟掉寶）＝核心預設值
@@ -234,7 +237,7 @@
                     var head = host && host.firstElementChild;
                     if (head && !host.querySelector('.afk-ancdrop-note')) {
                         head.insertAdjacentHTML('afterend',
-                            '<div class="afk-ancdrop-note c-ancient text-sm mb-3">收集到金卡的怪，掉落的裝備有機會帶遠古系詞綴。</div>');
+                            '<div class="afk-ancdrop-note c-ancient text-sm mb-3">收集到金卡的怪，掉落的遺物、傳說裝備有機會帶遠古系詞綴（一般裝備打怪只會帶祝福）。</div>');
                     }
                 } catch (e) { /* 說明沒插上不影響功能本體 */ }
             }
