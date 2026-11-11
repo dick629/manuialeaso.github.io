@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-0a6ef44d7162",
+  "build": "merge-0.4-47214f054e2a",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -165,6 +165,11 @@
     {
       "url": "afk-bossavoid.js?v=6caed21cf66f",
       "sha256": "6caed21cf66f3ec21d94082a6ddd0fa6ebea6153e52d420cd5a143276b58ece4",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-bosscard.js?v=e0adb4ace534",
+      "sha256": "e0adb4ace5349cd7b5f5461d1dc8b2c5c58f2aa23c199ddc6c8c8434e6f48639",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -563,8 +568,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-fullsave.js?v=33c27467042f",
-      "sha256": "33c27467042f459369d41ca6ff21184ef394ce3d6fead6baf146e88e9c9b613c",
+      "url": "afk-fullsave.js?v=6ff886faa172",
+      "sha256": "6ff886faa172144ff7f14a7882027258d317165276c0b1c6522ccb12d0240109",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -798,8 +803,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-mapboss.js?v=8580eb225605",
-      "sha256": "8580eb225605e295d08bb4de8134c91ec279d50e529c38bf142f1e2ba0debd5c",
+      "url": "afk-mapboss.js?v=14fafa9f36d6",
+      "sha256": "14fafa9f36d602f7f6a8055a02f3c988247091e3e77e3faf57234e7a8f29b801",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1233,8 +1238,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-runes.js?v=add964ac892e",
-      "sha256": "add964ac892e4625cfb27c05b0867ac68d98a08d53a6590a3329496d5ba3c5fe",
+      "url": "afk-runes.js?v=760db76e87e1",
+      "sha256": "760db76e87e1d316641a038bbb98a366e9b69f6471d96a3ff0f6701c2a2f5157",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1498,8 +1503,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-wiki.js?v=ea47b1929098",
-      "sha256": "ea47b19290986f32227f23867febe9a4901b9b8e3f188c80aca033d90afbacd6",
+      "url": "afk-wiki.js?v=e1618885da0d",
+      "sha256": "e1618885da0d6113e9fa7d4f49e351347ba3319b91a49d583f7a81e53a8337bf",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1564,7 +1569,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "6a841cc2f52a6070b28c19bb821587e1cd969aa9027ef7a21a6129d27f6a5322",
+      "sha256": "cb0b9c3241bb95025658fb95b8ec08e69e785992e2504904b35743707ad48588",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1733,8 +1738,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/activities.js?v=90cfb31ebd00",
-      "sha256": "90cfb31ebd005f30fac8bec88fbfef6aec9d8c04f75a92377bba60b4cae73c74",
+      "url": "merged/activities.js?v=9ff016eddfb7",
+      "sha256": "9ff016eddfb772eb924e13c0c2d827d82b8ad0825a929f4d2f0823904827171b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1868,8 +1873,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-ui.js?v=0668a5173e70",
-      "sha256": "0668a5173e70db05c065fc6a02caff87b69346afc4928e081d500ca94c7fb5c2",
+      "url": "merged/growth-ui.js?v=2ec963bc1009",
+      "sha256": "2ec963bc1009b4e11edfac0d5946afd763ee52cd9555df3e850e0377f98b6a7c",
       "type": "text/javascript; charset=utf-8"
     },
     {

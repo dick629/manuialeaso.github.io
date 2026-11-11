@@ -90,9 +90,15 @@
 
   // 檔案裡只有三個「我們自己寫的」欄位:format(認得是不是我們的檔)、exportedAt(給玩家確認)、
   // keyCount(檔案有沒有被截斷)。keys 內容一律原封不動,不解析、不認識、不判斷。
+  // 11-11：角色存檔、倉庫若是沒壓縮的明文（一格可達 180 萬字），打包時先壓縮——檔案小很多，手機也寫得進去（遊戲讀取本來就會自動解壓）
+  function packVal(k, v) {
+    if (typeof LZString === 'undefined' || typeof v !== 'string' || v.length < 20000 || v.slice(0, 4) === 'LZ1:') return v;
+    if (!/^lineage_idle_save(?:_\d+)?$/.test(k) && !/^lineage_idle_warehouse(?:_[a-z]+)*$/.test(k)) return v;
+    try { var z = 'LZ1:' + LZString.compressToUTF16(v); return LZString.decompressFromUTF16(z.slice(4)) === v ? z : v; } catch (e) { return v; }
+  }
   function buildPack() {
     var keys = {}, n = 0;
-    lsKeys().forEach(function (k) { if (k === 'lineage_growth_transaction_backup_v1') return; var v = localStorage.getItem(k); if (v != null) { keys[k] = v; n++; } });   // 11-11：舊版交易備份（約 5MB）不打包
+    lsKeys().forEach(function (k) { if (k === 'lineage_growth_transaction_backup_v1') return; var v = localStorage.getItem(k); if (v != null) { keys[k] = packVal(k, v); n++; } });   // 11-11：舊版交易備份（約 5MB）不打包
     return { format: FORMAT, schema: SCHEMA, exportedAt: new Date().toISOString(), keyCount: n, keys: keys };
   }
 
@@ -167,10 +173,17 @@
     fd.append('reqtype', 'fileupload');
     fd.append('time', LB_EXPIRY);
     fd.append('fileToUpload', new Blob([text], { type: 'application/json' }), 'save.json');
-    return fetch(LB_UPLOAD, { method: 'POST', body: fd }).then(function (r) {
-      if (!r.ok) throw new Error('上傳失敗（' + r.status + '）');
-      return r.text();
-    }).then(function (url) {
+    // 11-11：轉移服務偶爾回 5xx（暫時忙不過來）→ 隔 2 秒、5 秒各自動重試一次
+    var tryUp = function (left) {
+      return fetch(LB_UPLOAD, { method: 'POST', body: fd }).then(function (r) {
+        if (!r.ok) {
+          if (r.status >= 500 && left > 0) return new Promise(function (ok) { setTimeout(ok, left === 2 ? 2000 : 5000); }).then(function () { return tryUp(left - 1); });
+          throw new Error('上傳失敗（' + r.status + (r.status >= 500 ? '，轉移服務那邊暫時出問題，等幾分鐘再試' : '') + '）');
+        }
+        return r.text();
+      });
+    };
+    return tryUp(2).then(function (url) {
       var code = codeFromUrl(url);
       if (!code) throw new Error('上傳結果看不懂');
       return code;

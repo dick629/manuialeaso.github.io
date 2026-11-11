@@ -12,14 +12,21 @@
   function key(){if(!player.enSeed)throw Error('角色識別資料未就緒，請先存檔');return 'lineage_mushroom_quota_'+String(player.enSeed);}
   function quota(){const g=G.read(player);if(!g)throw Error('成長資料異常');const disk=localStorage.getItem(key()),q=C.quota(disk?JSON.parse(disk):null,Date.now()),own=C.quota(g.mushroom,Date.now());q.used=Math.max(q.used,own.used);return q;}
   function remaining(){return Math.max(0,1800000-quota().used+(leaseOwner===player&&leaseDay===C.dayKey(Date.now())?lease:0));}
+  // 11-11 15:58：當傭兵進過也算——隊伍裡每個傭兵（玩家自己的其他角色）都一起扣時間，今天用完的傭兵不能再進
+  const mercs=()=>(player.allies||[]).filter(a=>a&&a.enSeed&&String(a.enSeed)!==String(player.enSeed));
+  const mKey=a=>'lineage_mushroom_quota_'+String(a.enSeed);
+  const mQuota=a=>{let d=null;try{d=JSON.parse(localStorage.getItem(mKey(a))||'null');}catch{}try{return C.quota(d,Date.now());}catch{return {day:C.dayKey(Date.now()),used:0};}};
+  const mDone=()=>mercs().filter(a=>mQuota(a).used>=1800000);
+  function chargeMercs(n){for(const a of mercs()){const q=mQuota(a);q.used=Math.min(1800000,q.used+n);try{localStorage.setItem(mKey(a),JSON.stringify(q));}catch{}}}
   function reserve(){
     if(leaseOwner!==player||leaseDay!==C.dayKey(Date.now())){lease=0;leaseOwner=player;leaseDay=C.dayKey(Date.now());}if(lease>0)return true;
-    const q=quota();if(q.used>=1800000)return false;const n=Math.min(1000,1800000-q.used);q.used+=n;
+    const q=quota();if(q.used>=1800000)return false;if(mDone().length)return false;const n=Math.min(1000,1800000-q.used);q.used+=n;
     const raw=JSON.stringify(q);localStorage.setItem(key(),raw);if(localStorage.getItem(key())!==raw)throw Error('副本時間無法保存');
-    G.read(player).mushroom=q;lease=n;return true;
+    G.read(player).mushroom=q;lease=n;chargeMercs(n);return true;
   }
   function town(){state.antharas=0;state._afkDragon=null;setMapSelectors('town_talking');changeMap(true);}
   function enterMushroom(){if(player.dead)throw Error('請先復活');if(!remaining())throw Error('今天的 30 分鐘已用完');if(state.antharas||state.riftRun)throw Error('請先離開目前副本');
+    {const d=mDone();if(d.length)throw Error('傭兵「'+d.map(a=>a.name||'?').join('、')+'」今天的蘑菇秘境時間已經用完（當主角或當傭兵進去過都算），請先讓他離隊');}
     const before={lease,leaseOwner,leaseDay};try{G.transaction('進入蘑菇秘境',()=>{if(!reserve())throw Error('今日時間已用完');enterOblivionMap(MAP);if(mapState.current!==MAP)throw Error('無法進入副本');});}catch(e){lease=before.lease;leaseOwner=before.leaseOwner;leaseDay=before.leaseDay;throw e;}
   }
   const bosses={antharas:'ant_antharas_s7',fafurion:'cr_fafurion_d7',valakas:'cr_valakas_d7',lindvior:'cr_lindvior_d7',hardin:'afk_hd_hardin',halpas:'afk_hp_halpas'};
@@ -147,7 +154,7 @@
     const base=DB.mobs[MOB];mapState.mobs[i]={...base,mobId:MOB,curHp:base.hp,uid:uid(),_born:++_mobBornSeq,_bornMs:Date.now(),_magCd:{},justHit:false,st:newMobStatus()};
   };
   const oTick=W.tick;W.tick=function(){const inMushroom=mapState.current===MAP,t=state.ticks;
-    if(inMushroom&&!player.dead&&state.running){try{if(!reserve()){town();logSys('今日蘑菇秘境時間已用完。');return;}}catch(e){state.running=false;logSys(e.message);return;}}
+    if(inMushroom&&!player.dead&&state.running){try{if(!reserve()){town();logSys(mDone().length?'隊伍裡有傭兵今天的蘑菇秘境時間用完了，回到村莊。':'今日蘑菇秘境時間已用完。');return;}}catch(e){state.running=false;logSys(e.message);return;}}
     const r=oTick.apply(this,arguments);if(inMushroom&&state.ticks>t)lease=Math.max(0,lease-(state.ticks-t)*100);
     if(player.dead&&round()?.status==='running')checkRound();
     if(state.ticks>t&&state.ticks%10===0){checkRound();W.LineageTalents.tick();if(W.LineageGrowthUI)W.LineageGrowthUI.clock();}return r;

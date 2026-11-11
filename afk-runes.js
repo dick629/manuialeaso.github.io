@@ -420,7 +420,7 @@
       + '<select id="afk-zo-rune" aria-label="選擇符文">' + (owned.length ? owned.map(function (r) { return '<option value="' + r.id + '"' + (r.id === ui.rune ? ' selected' : '') + '>' + esc(nm(r.id)) + '（' + RD.STAGE_N[r.stage] + '・' + RD.CAT_N[r.cat] + '）×' + have(r.id) + '</option>'; }).join('') : '<option value="">沒有可鑲的符文</option>') + '</select>';
     h += K.rowHtml({ key: 'inlay', ico: rr ? K.itemIco(rr.id) : K.icoTag('', '', false), name: '鑲嵌符文', color: '#a78bfa',
       desc: (rr ? '<b>' + esc(nm(rr.id)) + '</b>：' + esc(rr.d) + '<br>' : '') + '費用：階段一 哀石水晶 5、階段二 哀石精華 10、階段三 哀石結晶 20、傳說 哀石結晶 40。同一件裝備不能鑲兩顆同名符文；同名符文全身最多算 2 顆（傳說符文全身只能 1 顆）。',
-      req: rr ? K.reqTxt(have(cur), cost, nm(cur)) : '', why: !x ? noSel : !(it.sockets || []).length ? '這件還沒有開孔' : !empties.length ? '沒有空孔（要先拆下符文）' : !owned.length ? '背包裡沒有能鑲在' + KINDS[x.kind].n + '的符文' : '',
+      req: rr ? K.reqTxt(have(cur), cost, nm(cur)) : '', why: !x ? noSel : !(it.sockets || []).length ? '這件還沒有開孔' : !empties.length ? '沒有空孔（要先拆下符文）' : !owned.length ? '背包裡沒有能鑲在' + KINDS[x.kind].n + '的符文（' + KINDS[x.kind].n + '只能鑲' + KINDS[x.kind].cats.map(function (k) { return RD.CAT_N[k]; }).join('、') + '類）' : '',
       pick: pick, btns: [['inlay', '鑲嵌', !!rr && have(cur) >= cost]] }, 'data-zo');
     // 拆下
     var filled = it ? (it.sockets || []).map(function (r, i) { return r ? i : -1; }).filter(function (i) { return i >= 0; }) : [];
