@@ -19,7 +19,7 @@
   if (__T && !__T.enabled('screen')) { console.log('[AFK] 外掛開關「掛機模式（省電）」已關閉'); return; }
   var W = window;
   if (W.AFK_SCREEN) return;
-  var on = false, lock = null, ov = null, timer = 0, moveTimer = 0, start = null, kills = 0, lastTap = 0, saved = {};
+  var on = false, lock = null, ov = null, timer = 0, moveTimer = 0, start = null, kills = 0, lastTap = 0, lastX = 0, lastY = 0, saved = {};
   var THROTTLE = 5000;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var fmt = function (n) { n = Math.floor(Number(n) || 0); return n.toLocaleString(); };
@@ -107,14 +107,17 @@
     ov.innerHTML = '<div class="as-box"></div><div class="as-exit">結束掛機</div>';
     ov.addEventListener('click', function (e) {
       if (e.target.closest('.as-exit')) { stopMode(); return; }
-      // 玩家 11-11：常常不小心解除掛機 → 拿掉「點兩下結束」，只能按「結束掛機」
+      // 玩家 11-11 10:24：點兩下結束要留著（同一個位置附近、0.35 秒內連點兩下才算，減少誤觸）
+      var t = Date.now(), x = e.clientX || 0, y = e.clientY || 0;
+      if (t - lastTap < 350 && Math.abs(x - lastX) < 40 && Math.abs(y - lastY) < 40) { stopMode(); return; }
+      lastTap = t; lastX = x; lastY = y;
       if (!lock) acquire();
     });
     document.body.appendChild(ov);
     move(); paint(); acquire();
     try { sessionStorage.setItem('afk_screen_on', '1'); } catch (e) {}
     timer = setInterval(paint, THROTTLE); moveTimer = setInterval(move, 60000);
-    try { if (typeof logSys === 'function') logSys('<span class="text-slate-400">🌙 進入掛機模式：螢幕常亮、畫面全黑省電，戰鬥照常進行。按「結束掛機」回來。</span>'); } catch (e) {}
+    try { if (typeof logSys === 'function') logSys('<span class="text-slate-400">🌙 進入掛機模式：螢幕常亮、畫面全黑省電，戰鬥照常進行。點兩下螢幕或按「結束掛機」回來。</span>'); } catch (e) {}
   }
   function stopMode() {
     if (!on) return;
