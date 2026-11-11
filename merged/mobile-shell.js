@@ -34,7 +34,7 @@
   header.id = 'lm-header';
   header.innerHTML = '<div class="lm-hud"><button type="button" id="lm-player" aria-label="查看角色能力"><span class="lm-avatar"><img id="lm-portrait" alt="">'+icon('person')+'</span></button>'+
     '<div class="lm-hud-data"><div class="lm-identity"><button type="button" id="lm-rename" aria-label="修改角色名稱"><strong id="lm-player-name">冒險者</strong><span>改名</span></button><small id="lm-player-level">Lv —</small></div>'+
-    '<div class="lm-status-summary"><button type="button" id="lm-castle" aria-label="城堡與統一狀態">城堡 —</button><span id="lm-classic" hidden>經典</span></div><div class="lm-defenses" role="group" aria-label="防禦與魔法防禦"><span aria-label="防禦 AC">AC <b id="lm-ac">—</b></span><span aria-label="魔法防禦 MR">魔防 <b id="lm-mr">—</b></span></div></div>'+
+    '<div class="lm-status-summary"><button type="button" id="lm-castle" aria-label="城堡與統一狀態">城堡 —</button><span id="lm-classic" hidden>經典</span></div><div class="lm-defenses" role="group" aria-label="防禦與魔法防禦"><span aria-label="防禦 AC">AC <b id="lm-ac">—</b></span><span aria-label="魔法防禦 MR">魔防 <b id="lm-mr">—</b></span><span aria-label="正義值">正義 <b id="lm-law">—</b></span></div></div>'+
     '<a id="lm-recovery" href="recovery.html" aria-label="存檔與修復">'+icon('shield')+'<span>存檔</span></a></div>'+
     '<div class="lm-vitals-row"><div class="lm-vitals"><div class="lm-vital lm-hp" role="group" aria-label="生命 HP"><i id="lm-hp-fill"></i><span><b id="lm-hp-text">—</b></span></div><div class="lm-vital lm-mp" role="group" aria-label="魔力 MP"><i id="lm-mp-fill"></i><span><b id="lm-mp-text">—</b></span></div></div></div>'+
     '<div class="lm-worldbar"><div class="lm-world-events"><span>世界事件</span><span id="lm-event-text">目前沒有事件</span></div></div>'+
@@ -198,7 +198,7 @@
     if($('lm-player-level').textContent!==level)$('lm-player-level').textContent=level;
     text('lm-gold','st-gold','—');text('lm-hp-text','txt-hp','—');text('lm-mp-text','txt-mp','—');
     text('lm-exp-text','txt-exp','—');
-    text('lm-ac','st-ac','—');text('lm-mr','st-mr','—');
+    text('lm-ac','st-ac','—');text('lm-mr','st-mr','—');{const el=$('lm-law');if(el&&typeof player!=='undefined'&&player){const v=typeof pvpClampAlignment==='function'?pvpClampAlignment(player.alignmentValue):Math.round(Number(player.alignmentValue)||0),t=Number(v).toLocaleString('en-US');if(el.textContent!==t){el.textContent=t;try{el.style.color=typeof pvpAlignmentColor==='function'?pvpAlignmentColor(v):'';}catch(e){}}}}
     if(Date.now()-currencyUpdatedAt>=1000){
       currencyUpdatedAt=Date.now();
       const amount=(id,value)=>{const node=$(id),n=Number(value),label=Number.isFinite(n)?Math.max(0,Math.floor(n)).toLocaleString():'—';if(node.textContent!==label)node.textContent=label;};
