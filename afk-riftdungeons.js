@@ -511,6 +511,8 @@
     if (!div.__afkRdBound) { div.__afkRdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-rd]'); if (!b || b.disabled || !(div.querySelector('#afk-rd-gate') || div.querySelector('#afk-rd-doom'))) return; var k = (b.getAttribute('data-rd') || '').split(':'); if (k[0] === 'go') enter(k[1], k[2] || undefined); else if (k[0] === 'rank') DR.rankUp(); paint(div); }); }
   };
   K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: '次元裂縫', type: 'quest', classicHide: true, d: '神殿角落一道會呼吸的縫。次元裂縫打開時，從這裡進入裂縫的副本。' });
+  // Ping 11-12：裂縫之門是一道傳送門，不是人（assets/npc/rift_gate：石框裡旋轉的紫藍裂縫，12 格）
+  try { if (typeof NPC_SPR !== 'undefined' && !NPC_SPR.rift_gate) NPC_SPR.rift_gate = { g: 'rift_gate', f: 12, shadow: false }; if (typeof NPC_SPR_FIXED !== 'undefined') NPC_SPR_FIXED[NPC_ID] = 'rift_gate'; } catch (e) {}
   K.hookNpc(NPC_ID, NPC_N, '次元裂縫', render);
   var renderDoom = function (div) {
     if (!div) return; K.css();

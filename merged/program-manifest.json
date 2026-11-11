@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-656d022c3e70",
+  "build": "merge-0.4-630e01710433",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -1213,8 +1213,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftdungeons.js?v=2b0bbbe347fe",
-      "sha256": "2b0bbbe347fea4ba486c7d049e82d286224d1eaebc72bb64e04b9703da6dbd51",
+      "url": "afk-riftdungeons.js?v=4f439f281640",
+      "sha256": "4f439f281640f45ca13697fe0eba0c51f10a887b96c712450135311f12297cdd",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1584,7 +1584,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "dbb113792c3818c7be17b5f1fd8ddb63be949cbe29bb93c0d10f62d63d0e538f",
+      "sha256": "bd26151c5b89e1c4daf88b1cfd065384a51fe6952c73e6a3c10a41f98332532f",
       "type": "text/html; charset=utf-8"
     },
     {
