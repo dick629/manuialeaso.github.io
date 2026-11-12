@@ -151,7 +151,7 @@
     try { W.saveGame(); } catch (e) {}
     var raw = null; try { raw = localStorage.getItem(slotKey(currentSlot)); } catch (e) {}
     if (!raw) return;
-    cand = { slot: currentSlot, fight: fight, at: Date.now(), raw: raw, seq: Number(p._saveSeq) || 0, ident: ident(p), name: p.name || '' };
+    cand = { slot: currentSlot, fight: fight, at: Date.now(), raw: raw, seq: Number(p._saveSeq) || 0, ident: ident(p), name: p.name || '', rb: Number(p.rebirth) || 0 };
   };
   var wrapEnter = function (fn, fightOf) {
     var o = W[fn]; if (typeof o !== 'function' || o.__afkCk) return;
@@ -169,7 +169,7 @@
   var activate = function () {
     var s = S(); if (!cand || !s || cand.slot !== currentSlot) return;
     var c0 = cand; cand = null;
-    var k = String(c0.slot), meta = { slot: c0.slot, fight: c0.fight, at: c0.at, seq: c0.seq, ident: c0.ident, name: c0.name, active: true, bytes: c0.raw.length };
+    var k = String(c0.slot), meta = { slot: c0.slot, fight: c0.fight, at: c0.at, seq: c0.seq, ident: c0.ident, name: c0.name, rb: c0.rb, active: true, bytes: c0.raw.length };
     var m = ckRead(); m[k] = meta; ckWrite(m);   // 摘要先寫（同步），本體寫 IndexedDB
     rawPut(k, c0.raw).then(function () { sys('<span class="text-sky-300">已存下「挑戰前紀錄點」：這一場' + FIGHTS[meta.fight].n + '打輸的話，可以回到進場前重新挑戰。</span>'); })
       .catch(function (e) { var m2 = ckRead(); delete m2[k]; ckWrite(m2); sys('<span class="text-red-400">挑戰前紀錄點存不下（' + (e && e.message || e) + '），這一場不能回到挑戰前。</span>'); });
@@ -190,9 +190,22 @@
     if (!ck || !ck.active || s._afkFinal) return;
     if (ck.ident && ck.ident !== ident(p)) return;
     var F = FIGHTS[ck.fight]; if (!F) return;
+    // Ping 11-12 21:10：挑戰完已經轉生（輸了也能轉生）→ 紀錄點一定要作廢，不然每次登入都問「回到挑戰前」，按下去會退回轉生前
+    if (ck.rb == null) { rbOf(k, ck); return; }
+    if ((Number(p.rebirth) || 0) > ck.rb) { delete m[k]; ckWrite(m); rawDel(k); sys('<span class="text-slate-400">你已經轉生，' + F.n + '的挑戰前紀錄點已作廢。</span>'); return; }
     if (F.won(p)) { delete m[k]; ckWrite(m); rawDel(k); sys('<span class="text-amber-300">打贏了！' + F.n + '的挑戰前紀錄點已作廢。</span>'); return; }
     if (!ck.lost) { ck.lost = Date.now(); ckWrite(m); }
     if (!offered[k]) { offered[k] = 1; offer(ck); }
+  };
+  // 舊的紀錄點沒記轉生次數：從紀錄點存檔本體讀出來補上（讀不到就當作 0 轉）
+  var rbBusy = {};
+  var rbOf = function (k, ck) {
+    if (rbBusy[k]) return; rbBusy[k] = 1;
+    rawGet(k).then(function (raw) {
+      var rb = 0;
+      try { var txt = String(raw || ''); if (txt.slice(0, 4) === 'LZ1:' && W.LZString) txt = LZString.decompressFromUTF16(txt.slice(4)); if (/^SIG\d:/.test(txt) && typeof _saveUnwrap === 'function') txt = _saveUnwrap(txt).payload; var o = JSON.parse(txt); var pl = o && (o.player || o); rb = Number(pl && pl.rebirth) || 0; } catch (e) { rb = 0; }
+      var m = ckRead(); if (m[k]) { m[k].rb = rb; ckWrite(m); }
+    }).catch(function () { var m = ckRead(); if (m[k]) { m[k].rb = 0; ckWrite(m); } }).then(function () { rbBusy[k] = 0; });
   };
   setInterval(watch, 700);
   var offer = function (ck) {
