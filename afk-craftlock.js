@@ -12,7 +12,10 @@
     desc: '用到次元裂縫、裂縫副本、二轉後才打得到的材料的製作先關閉，等重新調整材料比例後再開（副本入場照常）' });
   var IDS = ['afk_rift_shard', 'afk_dim_crystal', 'afk_star_dust', 'afk_alien_dust', 'afk_split_dust', 'afk_star_core', 'afk_mio_dim', 'afk_anakin_horn', 'afk_rune_dim',
     'afk_rd_sand', 'afk_rd_water', 'afk_rd_scale', 'afk_rd_feather', 'afk_rd_echo', 'afk_rd_thread', 'afk_rd_remnant', 'afk_rd_pick', 'afk_rd_mirror',
-    'afk_rd_ember', 'afk_rd_ink', 'afk_rd_neptune', 'afk_rd_eclipse', 'afk_rd_hmark', 'afk_rd_dfrag'];
+    'afk_rd_ember', 'afk_rd_ink', 'afk_rd_neptune', 'afk_rd_eclipse', 'afk_rd_hmark', 'afk_rd_dfrag',
+    // 守護者之戒自己的裂縫材料（afk-guardring）
+    'afk_guard_dimcrystal', 'afk_guard_shard', 'afk_guard_oath_fire', 'afk_guard_oath_water', 'afk_guard_oath_wind', 'afk_guard_oath_earth',
+    'afk_guard_rift_glim', 'afk_guard_rift_memory', 'afk_guard_rift_thread', 'afk_guard_rift_sand', 'afk_guard_rift_scale'];
   var SET = {}; IDS.forEach(function (id) { SET[id] = 1; });
   var MSG = '這項製作用到次元裂縫的材料，目前暫停中，等材料比例重新調整後再開放。';
   var on = function () { return !T || T.enabled('craftlock'); };

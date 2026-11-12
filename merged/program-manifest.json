@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-6fd457c7532b",
+  "build": "merge-0.4-560db0678f3e",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -348,8 +348,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-craftlock.js?v=5a6d85c64cf2",
-      "sha256": "5a6d85c64cf284d5ec7a79d23288d210af9731aa254bc6aa30f1a6cb407ad904",
+      "url": "afk-craftlock.js?v=17e57cf563b2",
+      "sha256": "17e57cf563b2f849b0834dd489723ae8b40da9b09afb9ba518170a3458f79d52",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1604,7 +1604,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "88a382e04592efbe3a239424ad06f184140d6ff3285bb36f51392ea3cc66e4c9",
+      "sha256": "68a86304dc5694855f7a139ccc07582c3821ba8aff9cb99f945859b7107fb43d",
       "type": "text/html; charset=utf-8"
     },
     {
