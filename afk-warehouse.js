@@ -110,7 +110,7 @@
     var LP_MS = 450;          // 長按判定時間
     var LP_MOVE_TOL = 10;     // 位移超過此值視為捲動,取消長按
     var LP_CLICK_GUARD_MS = 900;   // 長按觸發後在此時間內攔掉一次 click(否則放開手指東西就被存/取走)
-    var LP_Z = 9700;          // 與 afk-mobile 浮動選單同層,壓得過倉庫浮動視窗(72)
+    var LP_Z = 2147483000;    // 11-12：手機整合版的倉庫頁（.lm-detail）是 z-index 100100，原本的 9700 被蓋在底下＝長按看不到；改成最上層（開機畫面 2147483646 以下）
 
     var _isTouch = (function () {
         try {
