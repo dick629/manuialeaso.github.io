@@ -37,6 +37,8 @@
   if(!target?._dimRift||!W.__afkDimRiftOn?.())return 0;
   const tick=num(state.ticks);if(!born.has(target))born.set(target,tick);
   const elapsed=Math.max(0,tick-born.get(target))/600;
+  // GD之子的期待（能進次元裂縫的角色）：次元格擋率固定 80%，不隨時間下降；破除、裝備的壓制照算，最低 60%（Ping 11-12 17:30）
+  if(W.__afkGdRiftOn?.()){const g=AFK_RELIC_RUNTIME.sources(player).reduce((n,s)=>Math.max(n,num(s.def.dimensionBlockSuppression)),0),sp=B.blockSuppression?B.blockSuppression(target):0;return Math.max(.6,.8-Math.max(g,sp+(W.LineageSherine?.suppression(target)||0))/100);}
   const gear=AFK_RELIC_RUNTIME.sources(player).reduce((n,s)=>Math.max(n,num(s.def.dimensionBlockSuppression)),0);
   const suppression=B.blockSuppression?B.blockSuppression(target):0;
   return Math.max(target.boss?.7:.5,(target.boss?1:.7)-Math.floor(elapsed)*.05-Math.max(gear,suppression+(W.LineageSherine?.suppression(target)||0))/100);
