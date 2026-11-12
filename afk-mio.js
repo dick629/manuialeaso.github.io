@@ -413,6 +413,7 @@
     var miss = missOf(st);
     if (miss) { sys('<span class="text-amber-300">升級密奧之卡「' + CARDS[i][0] + '」到' + STAGE[st + 1] + '：' + miss + '。</span>'); return false; }
     var nd = needOf(st), DC = window.__afkDiaCost;
+    if (window.__afkCraftLock && window.__afkCraftLock.stop(nd.list)) return false;   // 暫停次元裂縫材料的製作
     nd.list.forEach(function (x) { take(x.id, x.n); });
     if (nd.fee) { if (DC) DC.pay(DC.COST.mioUp); }
     else {

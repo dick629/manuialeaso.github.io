@@ -170,6 +170,7 @@
       sys('<span class="font-bold" style="color:#fde68a">✦ 黃道星卡・' + esc(nm) + ' 登錄好了。</span>');
     } else if (op === 'up') {
       var st = s.st[k] || 0, c = UP[st + 1]; if (!st || !c) return;
+      if ((c.dim || c.core) && W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作
       if (cnt(idOf(k)) < c.card || cnt(SAND) < c.sand || cnt(DIM) < c.dim || (c.core && cnt(CORE) < c.core)) { sys('<span class="text-amber-300">材料不夠。</span>'); return; }
       take(idOf(k), c.card); take(SAND, c.sand); take(DIM, c.dim); if (c.core) take(CORE, c.core);
       s.st[k] = st + 1; sys('<span class="font-bold" style="color:' + COLOR[st + 1] + '">✦ 黃道星卡・' + esc(nm) + ' 升到「' + STAGE[st + 1] + '」！</span>');

@@ -177,7 +177,7 @@
     Y: ['Yield', '每 30 秒回復 8% MP', ['mp', 0.08, 30]], Z: ['Zenith', '每 20 秒下一擊傷害 ×2', ['cdHit', 20, 2]]
   };
   var sigilOf = function (p) { var e = p && p.eq && p.eq.sigil, m = e && /^afk_sigil_([A-Z])$/.exec(e.id); return m ? { it: e, L: m[1] } : null; };
-  function phantomUp() {
+  function phantomUp() { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
     var p = P(), sg = sigilOf(p); if (!sg) { sys('<span class="text-amber-300">要先裝備聖紋。</span>'); return; } if (sg.it.phantom) return;
     if (!(W.__afkDimRiftOn && W.__afkDimRiftOn())) { sys('<span class="text-amber-300">要在次元裂縫裡才能升成幻聖紋。</span>'); return; }
     if (cnt('afk_split_dust') < PHANTOM.split || cnt(BLOOD) < PHANTOM.blood) { sys('<span class="text-amber-300">要分裂的蔑視塵埃 ' + PHANTOM.split + '＋血龍鑽 ' + PHANTOM.blood + '。</span>'); return; }
@@ -484,7 +484,7 @@
     w.dimLib = 1; w.dimLibEn = 0;
     sys('<span class="font-bold" style="color:#67e8f9">✦ ' + esc(DB.items[w.id].n) + ' 掙開了封印——它成了「次元支配」。</span>'); syncFlags(); try { calcStats(); saveGame(); } catch (e) {}
   }
-  function libEnhance() {
+  function libEnhance() { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
     var p = P(), w = wpnOf(p); if (!w || !w.dimLib) return; var n = w.dimLibEn || 0; if (n >= 5) return;
     var need = LIB.en[n]; if (cnt(DUST) < need) { sys('<span class="text-amber-300">異化星塵不夠（要 ' + need + '）。</span>'); return; }
     if (Math.random() * 100 >= LIB.rate[n]) { sys('<span class="text-amber-300">強化失敗了。（不降級、材料沒有被扣）</span>'); return; }
@@ -495,14 +495,14 @@
   var STONES = ['afk_asc_stone_wpn', 'afk_asc_stone_arm', 'afk_asc_stone_acc'];
   var stoneCnt = function () { return STONES.reduce(function (s, id) { return s + cnt(id); }, 0); };
   var takeStones = function (n) { STONES.forEach(function (id) { var c = Math.min(n, cnt(id)); if (c > 0) { take(id, c); n -= c; } }); };
-  function hornUp() {
+  function hornUp() { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
     var p = P(), r = drec(); if (!p || !r) return; if (cnt('afk_anakin_horn') < 1 && !(p.eq && p.eq.horn)) { sys('<span class="text-amber-300">你還沒有阿納金的號角。</span>'); return; }
     var lvh = r.hornLv || 0; if (lvh >= HORN.max) return;
     if (stoneCnt() < HORN.stone || cnt(BLOOD) < HORN.blood) { sys('<span class="text-amber-300">要昇華支配強化石 ×' + HORN.stone + '＋血龍鑽 ' + HORN.blood + '。</span>'); return; }
     takeStones(HORN.stone); take(BLOOD, HORN.blood); r.hornLv = lvh + 1;
     sys('<span class="font-bold" style="color:#fde047">✦ 阿納金的號角 ' + r.hornLv + ' 級：次元裂縫裡聖十字之盾擋 ' + HORN.block[r.hornLv] + '%。</span>'); try { saveGame(); } catch (e) {}
   }
-  function pickStone(k) { if (cnt('afk_rd_pick') < 1 || STONES.indexOf(k) < 0) return; take('afk_rd_pick', 1); gainItem(k, 1, true, true); sys('<span style="color:#67e8f9">換到了 ' + esc(DB.items[k].n) + '。</span>'); }
+  function pickStone(k) { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;  if (cnt('afk_rd_pick') < 1 || STONES.indexOf(k) < 0) return; take('afk_rd_pick', 1); gainItem(k, 1, true, true); sys('<span style="color:#67e8f9">換到了 ' + esc(DB.items[k].n) + '。</span>'); }
   function syncFlags() { var p = P(), r = drec(); if (!p || !r) return; var w = wpnOf(p); r.dimWpn = !!(w && w.dimLib); r.athena = r.dimWpn; r.dimWpn5 = !!(w && w.dimLib && (w.dimLibEn || 0) >= 5); r.supWpn = !!(w && isSup(w) && !w.dimLib); r.libEn = w && w.dimLib ? (w.dimLibEn || 0) : 0; }
 
   // ── 裂縫淬鍊：席琳遺骸（夢域效果 ×1.2）、之魂憶起（decisions-1107 1.8） ──
@@ -510,7 +510,7 @@
   var REF = { remain: { water: 0, sand: 0, crystal: 100 }, soul: { sand: 30, water: 30 } };
   var SD = function () { return W.__afkSherineDream; };
   var remainsList = function () { var p = P(), sd = SD(); if (!p || !sd) return []; var out = []; Object.keys(p.eq || {}).forEach(function (k) { var e = p.eq[k], d = e && DB.items[e.id]; if (d && d.remains && e.id !== sd.SOUL && sd.isDream(e)) out.push({ it: e, eq: true }); }); (p.inv || []).forEach(function (e) { var d = e && DB.items[e.id]; if (d && d.remains && e.id !== sd.SOUL && sd.isDream(e) && !e.lock) out.push({ it: e, eq: false }); }); return out; };
-  async function riftRefine(uid) {
+  async function riftRefine(uid) { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
     if(W.LineageSherineForge){try{return await W.LineageSherineForge.refine(uid);}catch(e){alert(e.message);return false;}}
     var x = remainsList().filter(function (r) { return r.it.uid === uid; })[0], c = REF.remain; if (!x || x.it.riftRef) return;
     if (cnt(WATER) < c.water || cnt(SAND) < c.sand || cnt(CRYSTAL) < c.crystal) { sys('<span class="text-amber-300">要席琳的水之記憶 ' + c.water + '、凝結的時之沙 ' + c.sand + '、次元結晶 ' + c.crystal + '。</span>'); return; }
@@ -518,7 +518,7 @@
     sys('<span class="font-bold" style="color:#f87171">✦ ' + esc(DB.items[x.it.id].n) + ' 在裂縫裡被重新淬鍊了。</span>'); try { calcStats(); saveGame(); } catch (e) {}
   }
   var soulItem = function () { var p = P(), sd = SD(); var e = p && sd && p.eq && p.eq[sd.SOUL]; return e && sd.soulRefined && sd.soulRefined(p) ? e : null; };
-  function soulMem() {
+  function soulMem() { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
     var e = soulItem(), c = REF.soul; if (!e) { sys('<span class="text-amber-300">要裝著粹煉過的之魂。</span>'); return; } if (e.soulMem) return;
     if (cnt(SAND) < c.sand || cnt(WATER) < c.water) { sys('<span class="text-amber-300">要凝結的時之沙 ' + c.sand + '、席琳的水之記憶 ' + c.water + '。</span>'); return; }
     take(SAND, c.sand); take(WATER, c.water); e.soulMem = 1;
@@ -563,7 +563,7 @@
   var mySlot = function (row) { return row.slotName === '盾牌' ? /^(盾牌|臂甲)$/ : new RegExp('^' + row.slotName + '$'); };
   var mats = function (uid) { var a = inv().filter(function (x) { return x && !x.lock && catalogSlot(x.id); }); return uid ? a.filter(function (x) { return x.uid === uid; })[0] : a; };
   var newInst = function (id) { var p = P(), before = inv().length; gainItem(id, 1, true, true); var it = inv()[inv().length - 1]; if (!it || it.id !== id) it = inv().filter(function (x) { return x && x.id === id && !x.dimEn && !x._dimNew; }).pop(); return it; };
-  function craft(srcUid, dimId) {
+  function craft(srcUid, dimId) { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
     var src = mats(srcUid), row = BY[dimId]; if (!src || !row) return;
     var sl = catalogSlot(src.id); if (!mySlot(row).test(sl)) { sys('<span class="text-amber-300">部位不同，不能做成這一件。</span>'); return; }
     if (cnt(CRYSTAL) < COST.craft) { sys('<span class="text-amber-300">次元結晶不夠（要 ' + COST.craft + '）。</span>'); return; }
@@ -574,7 +574,7 @@
     try { saveGame(); } catch (e) {}
   }
   var pick = function (arr) { return arr[Math.floor(Math.random() * arr.length)]; };
-  function enhance(uid) {
+  function enhance(uid) { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
     var it = findUid(uid); if (!it || !BY[it.id]) return; var n = lv(it); if (n >= 5) return;
     var need = COST.en[n]; if (cnt(DUST) < need) { sys('<span class="text-amber-300">異化星塵不夠（要 ' + need + '）。</span>'); return; }
     if (Math.random() * 100 >= COST.rate[n]) { sys('<span class="text-amber-300">強化失敗了。（不降級、材料沒有被扣）</span>'); return; }
@@ -584,20 +584,20 @@
     if (it.dimEn === 5 && !it.dimUlt) { it.dimUlt = pick(ULT[BY[it.id].cat]).k; msg += '大絕招：<b>' + esc(ULTK[it.dimUlt].n) + '</b>。'; }
     sys('<span class="font-bold" style="color:#67e8f9">✦ ' + msg + '</span>'); try { calcStats(); saveGame(); } catch (e) {}
   }
-  function reroll(uid, what) {
+  function reroll(uid, what) { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
     var it = findUid(uid); if (!it || !BY[it.id]) return;
     if (cnt(MIRROR) < COST.reroll) { sys('<span class="text-amber-300">倒影之鏡不夠。</span>'); return; }
     if (what === 'set' && lv(it) >= 3) { take(MIRROR, 1); var o = it.dimSet; it.dimSet = pick(SETS.filter(function (s) { return s.k !== o; })).k; sys('<span style="color:#67e8f9">套裝重抽：<b>' + esc(SETK[it.dimSet].n) + '</b>。</span>'); }
     else if (what === 'ult' && lv(it) >= 5) { take(MIRROR, 1); var o2 = it.dimUlt; it.dimUlt = pick(ULT[BY[it.id].cat].filter(function (u) { return u.k !== o2; })).k; sys('<span style="color:#67e8f9">大絕招重抽：<b>' + esc(ULTK[it.dimUlt].n) + '</b>。</span>'); }
     try { calcStats(); saveGame(); } catch (e) {}
   }
-  function synth(n) {
+  function synth(n) { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
     n = Math.max(1, n | 0); var s = COST.synth;
     var can = Math.min(n, Math.floor(cnt(STARDUST) / s.star), Math.floor(cnt(BLOOD) / s.blood)); if (can < 1) { sys('<span class="text-amber-300">要破碎星光塵埃 ' + s.star + '＋血龍鑽 ' + s.blood + '。</span>'); return; }
     take(STARDUST, s.star * can); take(BLOOD, s.blood * can); gainItem(DUST, can, true, true);
     sys('<span style="color:#67e8f9">合成了異化星塵 ×' + can + '。</span>');
   }
-  function evolveDragon(uid) {
+  function evolveDragon(uid) { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
     var it = findUid(uid), d = it && DB.items[it.id]; if (!d || d.dimDragon == null || d.dimDragon >= 3) return;
     var need = DRG_EVO[d.dimDragon + 1]; if (cnt(MIRROR) < need.mirror || cnt(FRAG) < need.frag) { sys('<span class="text-amber-300">要倒影之鏡 ×' + need.mirror + '＋四龍的時空碎片 ×' + need.frag + '。</span>'); return; }
     take(MIRROR, need.mirror); take(FRAG, need.frag); it.id = 'dimr_dragon_' + (d.dimDragon + 1); try { if (W.__afkAcStamp) W.__afkAcStamp(it); } catch (e) {}

@@ -560,6 +560,7 @@
     var p = P(); if (!p || !KN[k]) return false;
     var why = canUp(p, k); if (why) { sys('<span class="text-amber-300">' + esc(why) + '</span>'); return false; }
     var s = stageOf(p, k), need = needOf(k, s), DC = W.__afkDiaCost;
+    if (W.__afkCraftLock && W.__afkCraftLock.stop(need)) return false;   // 暫停次元裂縫材料的製作
     var dia = need.filter(function (x) { return x.kind === 'dia'; })[0];
     if (dia && DC && !DC.pay(dia.n)) { sys('<span class="text-amber-300">龍之鑽石暫時無法扣除，沒有升級。</span>'); return false; }
     need.forEach(function (x) { if (x.kind === 'refine') refineTake(x.set, x.part, x.n); else if (x.kind !== 'dia') take(x.id, x.n); });
