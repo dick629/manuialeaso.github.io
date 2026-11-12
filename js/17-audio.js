@@ -593,7 +593,7 @@ var HUNT_BGM = { 'tikal_area': 'music122', 'tikal_deep': 'music123', 'tikal_alta
     'sunrise_castle': 'music161', 'sunrise_east': 'music167', 'sunrise_west': 'music167', 'sunrise_north': 'music167',   // 🌅 v3.4.98 日出之國：城墎=music161·東/西/北之地=music167
     'antharas_nest_1': 'music128', 'antharas_nest_2': 'music130', 'antharas_nest_3': 'music130', 'antharas_lair': 'music133' };   // 🐉 v3.7.57 侵蝕的安塔瑞斯巢穴：入口128·通道/深處130·棲息地133（規格書指定）
 Object.keys(HUNT_BGM).forEach(function (id) { BGM_TRACKS[HUNT_BGM[id]] = HUNT_BGM[id]; });   // 註冊曲目 scene=檔名，_bgmInit 會預解析 URL
-var _bgmUrl = {}, _bgmEls = [null, null], _bgmActive = -1, _bgmScene = null, _bgmFadeTimer = null, _bgmInited = false;
+var _bgmPend = {}, _bgmUrl = {}, _bgmEls = [null, null], _bgmActive = -1, _bgmScene = null, _bgmFadeTimer = null, _bgmInited = false;
 
 function _bgmLoadCfg() {
     try {
@@ -656,6 +656,7 @@ function _bgmCrossfade(oldEl, newEl) {
 function _bgmSwitch(scene) {
     if (!_bgmCfg.on) return;
     if (scene === _bgmScene) return;
+    if (!(scene in _bgmUrl) && BGM_TRACKS[scene] && !_bgmPend[scene]) { _bgmPend[scene] = 1; _bgmResolve(scene, BGM_TRACKS[scene]); }   // 用到才解析（11-12：開場不再一次探測全部曲目）
     var url = _bgmUrl[scene];
     if (!url) return;   // 該場景無音檔（或尚未解析完）→不更新場景、保持目前曲目，下次輪詢再試
     _bgmScene = scene;
@@ -684,7 +685,7 @@ function _bgmSyncUI() {
 function _bgmInit() {
     if (_bgmInited) return; _bgmInited = true;
     _bgmLoadCfg();
-    Object.keys(BGM_TRACKS).forEach(function (s) { _bgmResolve(s, BGM_TRACKS[s]); });
+    // 11-12：不再開場一次探測全部曲目（手機上 41 首同時連網，會跟程式檔搶頻寬）；改成 _bgmSwitch 用到哪首才解析哪首
     _bgmSyncUI();
     setInterval(_bgmTick, 1000);   // 自我輪詢場景（每秒；只在場景改變時切換）
     var kick = function () { _bgmScene = null; _bgmTick(); };   // 首次互動立即啟動（autoplay 解鎖）

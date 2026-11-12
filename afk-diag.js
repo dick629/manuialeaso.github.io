@@ -143,6 +143,20 @@
   }
 
   // UA 原始字串太長沒人讀得下去,解析成人看得懂的;原始字串仍保留在最後一行(型號細節只有它有)
+  // 開機耗時（index.html 開頭的小程式記錄，最近 3 次）：秒數都是從開網頁算起
+  function bootTimes() {
+    var arr = []; try { arr = JSON.parse(localStorage.getItem('lineage_boot_times') || '[]') || []; } catch (e) {}
+    if (!arr.length) return '(還沒有紀錄：重新整理一次再看)';
+    var sec = function (ms) { return ms == null ? '?' : (ms / 1000).toFixed(1) + ' 秒'; };
+    var NM = { js: '程式', css: '樣式', img: '圖片', audio: '音效音樂', other: '其他' };
+    return '\n          ' + arr.map(function (r, i) {
+      var m = r.mark || {}, ag = r.agg || {};
+      var parts = Object.keys(NM).filter(function (k) { return ag[k] && ag[k][0]; }).map(function (k) { var a = ag[k]; return NM[k] + ' ' + a[0] + ' 個（' + kb(a[1]) + '，快取 ' + a[2] + '，最後完成 ' + sec(a[3]) + '）'; });
+      return '第 ' + (i + 1) + ' 次（' + hhmmss(r.at) + '）：主選單 ' + sec(m.menu) + '｜頁面骨架 ' + sec(m.dom) + '｜全部載完 ' + sec(m.load) + '｜首頁回應 ' + sec(r.nav && r.nav.ttfb) + '｜程式最後一個下載完 ' + sec(r.lastJs) + '｜卡住 ' + ((r.long || {}).n || 0) + ' 次共 ' + sec((r.long || {}).ms) + '｜離線快取 ' + (r.sw ? '有' : '沒有') + (r.mem ? '｜記憶體 ' + r.mem + 'GB' : '') + (r.cpu ? '｜核心 ' + r.cpu : '')
+        + '\n            ' + parts.join('；')
+        + '\n            最慢：' + (r.slow || []).map(function (x) { return x[1] + ' ' + sec(x[0]); }).join('、');
+    }).join('\n          ');
+  }
   function uaSummary() {
     var ua = navigator.userAgent, m;
     var browser = (m = ua.match(/(Edg|OPR|SamsungBrowser|Firefox|Chrome)\/([\d.]+)/)) ?
@@ -507,6 +521,7 @@
         '\n          畫面 ' + n.view + ' / 地圖 ' + (n.map || '?') + ' / tick ' + (n.tk != null ? n.tk : '?') +
         (n.run ? ' / 戰鬥中' : '') + ' / 背包 ' + (n.inv != null ? n.inv + ' 件' : '?');
     });
+    put('開機耗時', bootTimes);   // 11-12：手機開網頁到主選單很久 → 看卡在哪一段
     put('存檔健康', saveHealth);   // 擺在角色前面:它是「進度到底有沒有在存」,比其他欄位都急
     put('角色', charSummary);
     put('角色身分碼', identitySeeds);
