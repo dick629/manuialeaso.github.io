@@ -159,6 +159,8 @@ function ensureMiscDex(warehouse) {
         if (!player.miscDex[i.id]) { player.miscDex[i.id] = true; changed = true; }
     };
     player.inv.forEach(reg);
+    /* 🔌 加掛版補丁（11-12）：曾經登錄過、但靜態索引沒列的道具（動態補登的）重新整理後也要補回索引，否則收集冊看不到 */
+    Object.keys(player.miscDex).forEach(function (id) { if (player.miscDex[id] && !MISC_ITEM_CAT[id]) reg({ id: id }); });
     // 🏛️ v3.0.61 倉庫庫存也補登錄（唯讀當前模式倉庫桶·同 ensureEquipBook）：收集冊上線前入倉的道具從未經 gainItem 登錄→讀檔時一併點亮
     try { var _w = warehouse || (typeof loadWarehouse === 'function' ? loadWarehouse() : null); if (_w && Array.isArray(_w.items)) _w.items.forEach(reg); } catch (e) {}
     if (changed && typeof saveMiscDex === 'function') saveMiscDex();

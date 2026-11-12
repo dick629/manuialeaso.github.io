@@ -54,7 +54,7 @@
       var a = DB.items['mat_antharas_' + part] || {};
       DB.items[id] = { n: C.dragon + '之' + MAT[part], type: 'etc', p: a.p || 1000, c: 'text-amber-300', noUse: true, gachaWeight: 0,
         img: 'assets/icons/items/' + C.dragon + '之' + MAT[part] + '.png',
-        d: '取自' + C.pre + '的' + C.dragon + '的龍之素材（' + MAT[part] + '），仍殘留古龍氣息。可在材料工坊提煉，亦可作為已開放配方的材料。' };
+        d: '取自' + C.pre + '的' + C.dragon + '的龍之素材（' + MAT[part] + '），仍殘留古龍氣息。同一條龍的心、爪、眼、牙、肉、骨、血、鱗各 1 個，可以請艾格尼絲化成龍印碎片；心、鱗、骨也是龍之盔甲的材料。' };   // 11-12：材料工坊的舊提煉配方已拿掉（融合版改四龍水晶），說明跟著改
     });
   });
 
