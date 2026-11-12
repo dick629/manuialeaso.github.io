@@ -122,6 +122,27 @@
     if (v === '0') return false;
     return autoLite();
   }
+  // ── 整體畫面縮放（Ping 11-12 19:40：S24+ 畫面擠在一起）─────────────────────
+  //   跟上面的「文字與按鈕大小」不同：這裡是把整個畫面（含地圖、戰鬥框、圖片）一起縮小，像把手機螢幕變大。
+  //   做法：viewport 的 width 改成「螢幕寬 ÷ 縮放」，瀏覽器自己把整頁縮進螢幕——座標系統一致，不會像 CSS zoom 那樣錯位。
+  //   直向寬度最多 760（超過 768 會變成電腦版排版）；橫向高度最多 515（超過 520 一樣會變電腦版）。只在觸控手機生效。
+  var LS_VIEW = 'afk_view_scale', VIEWS = [1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7], viewBase = null;
+  function viewOk() { try { return matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 600; } catch (e) { return false; } }
+  function getView() { var v = parseFloat(lsGet(LS_VIEW)); if (!(v > 0)) return 1; return Math.min(1, Math.max(0.7, v)); }
+  function applyView() {
+    var m = document.querySelector('meta[name="viewport"]'); if (!m) return;
+    if (viewBase == null) viewBase = m.getAttribute('content') || 'width=device-width, initial-scale=1.0, viewport-fit=cover';
+    var v = getView(), c = viewBase;
+    if (viewOk() && v < 0.999) {
+      var sw = Math.min(screen.width, screen.height), sh = Math.max(screen.width, screen.height), w;
+      if (innerWidth <= innerHeight) w = Math.min(760, Math.round(sw / v));
+      else w = Math.round(sh / Math.max(v, sw / 515));
+      c = 'width=' + w + ', viewport-fit=cover';
+    }
+    if (m.getAttribute('content') !== c) m.setAttribute('content', c);
+  }
+  function setView(v) { lsSet(LS_VIEW, String(Math.min(1, Math.max(0.7, Number(v) || 1)))); applyView(); }
+  function watchView() { var t = 0, f = function () { clearTimeout(t); t = setTimeout(applyView, 250); }; window.addEventListener('orientationchange', f); window.addEventListener('resize', f); }
   function setLite(onOff) { lsSet(LS_LITE, onOff ? '1' : '0'); applyScale(); }
   function applyScale() {
     var root = document.documentElement;
@@ -228,6 +249,7 @@
       '#afk-ms-card .afk-ms-lbl{font-weight:600;margin-bottom:8px;}',
       '#afk-ms-card .afk-ms-seg{display:flex;gap:8px;margin-bottom:14px;}',
       '#afk-ms-card .afk-ms-seg button{flex:1;min-height:44px;border:1px solid #334155;border-radius:10px;background:#0b1222;color:#cbd5e1;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;touch-action:manipulation;}',
+      '#afk-ms-card .afk-ms-view{flex-wrap:wrap;gap:6px}#afk-ms-card .afk-ms-view button{flex:1 0 calc(25% - 6px);min-height:40px;font-size:14px}',
       '#afk-ms-card .afk-ms-seg button.on{background:#0ea5e9;border-color:#0ea5e9;color:#04263a;}',
       '#afk-ms-card label{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid #1e293b;border-radius:10px;background:#0b1222;cursor:pointer;min-height:44px;}',
       '#afk-ms-card label input{width:18px;height:18px;flex:none;accent-color:#22c55e;}',
@@ -319,6 +341,10 @@
         '<div class="afk-ms-seg">' + SCALES.map(function (v) {
           return '<button type="button" data-scale="' + v + '"' + (Math.abs(v - cur) < 0.01 ? ' class="on"' : '') + '>' + Math.round(v * 100) + '%</button>';
         }).join('') + '</div>' +
+        (viewOk() ? '<div class="afk-ms-lbl">整體畫面大小（地圖、戰鬥畫面、圖片一起縮小，看得到更多東西）</div>' +
+        '<div class="afk-ms-seg afk-ms-view">' + VIEWS.map(function (v) {
+          return '<button type="button" data-view="' + v + '"' + (Math.abs(v - getView()) < 0.01 ? ' class="on"' : '') + '>' + Math.round(v * 100) + '%</button>';
+        }).join('') + '</div>' : '') +
         '<label><input type="checkbox" id="afk-ms-lite"' + (liteOn() ? ' checked' : '') + '><span><span>輕量模式</span><small>減少陰影與動畫，舊手機較順；光暈與濾鏡在「省電模式」調整</small></span></label>' +
       '</div>' +
       '<div class="afk-ms-ft"><button type="button" id="afk-ms-close">完成</button></div>';
@@ -333,6 +359,12 @@
       b.addEventListener('click', function () {
         setScale(b.getAttribute('data-scale'));
         card.querySelectorAll('[data-scale]').forEach(function (x) { x.classList.toggle('on', x === b); });
+      });
+    });
+    card.querySelectorAll('[data-view]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        setView(b.getAttribute('data-view'));
+        card.querySelectorAll('[data-view]').forEach(function (x) { x.classList.toggle('on', x === b); });
       });
     });
     card.querySelector('#afk-ms-lite').addEventListener('change', function () { setLite(this.checked); });
@@ -362,11 +394,12 @@
 
   // ── init ─────────────────────────────────────────────────────────────────
   function init() {
-    window.AFK_MOBILE_SCALE = { get: getScale, set: setScale, lite: liteOn, setLite: setLite, open: openPanel, measure: measure, refresh: applyScale, version: '1.0.1' };
+    window.AFK_MOBILE_SCALE = { get: getScale, set: setScale, lite: liteOn, setLite: setLite, open: openPanel, measure: measure, refresh: applyScale, view: getView, setView: setView, version: '1.0.1' };
     if (!on()) { try { console.log('[AFK-mobile-scale] 已由外掛開關停用。'); } catch (e) {} return; }
     injectCSS();
     applyScale();
     iosViewport();
+    applyView(); watchView();
     watch();
     watchLate();
     injectGameEntry();

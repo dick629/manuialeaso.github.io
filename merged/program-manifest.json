@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-5d2bff6348eb",
+  "build": "merge-0.4-f836654e5193",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -878,8 +878,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-mobile-scale.js?v=baa2aeae8f2a",
-      "sha256": "baa2aeae8f2a7c5a09e1032e6f7cfec490520dd1018f6719a01726240817ee52",
+      "url": "afk-mobile-scale.js?v=34e6eaf0497a",
+      "sha256": "34e6eaf0497ac6c7fbaf5bfd6f5825e1d4088265118a9f085f0a0724009fc2a9",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1503,8 +1503,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-warehouse.js?v=ddee7b27af30",
-      "sha256": "ddee7b27af30d681bac18b036969a02ba899db7e7f60d8e6f64d7101933a4635",
+      "url": "afk-warehouse.js?v=e657b0b9d2ae",
+      "sha256": "e657b0b9d2ae08b3329bac4c7a5494d32e6f65c6283612e26ffc24384c6ee8f2",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1599,7 +1599,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "6607c0760cda9c5239b76c37d0f9e6c641edc2b284f181db5b81223cacd0c969",
+      "sha256": "44a2a4af531ffedf12df298da51ec22bf5fde219d010c3bc50194accfc34ca06",
       "type": "text/html; charset=utf-8"
     },
     {

@@ -56,10 +56,18 @@
     };
 
     // ── 主分類擴充:relic / remains ──────────────────────────────
-    var _subOpts = window.whSubCatOptions;
+    var _subOpts = window.whSubCatOptions, _relicSubs = null;
     window.whSubCatOptions = function () {
         try {
-            if (_whFilter === 'relic') return [{ key: 'wpn', name: '武器' }, { key: 'arm', name: '防具' }, { key: 'acc', name: '飾品' }];
+            // Ping 11-12 19:40：遺物改成依部位分（單手劍、頭盔、戒指…），只列遺物真的有的部位
+            if (_whFilter === 'relic') {
+                if (_relicSubs) return _relicSubs;
+                var cats = (typeof EQUIP_CATEGORIES !== 'undefined' ? EQUIP_CATEGORIES : []), has = {};
+                Object.keys(DB.items).forEach(function (k) { var d = DB.items[k]; if (d && !/~/.test(k) && typeof isRelic === 'function' && isRelic(d)) { var c = typeof equipCatKey === 'function' ? equipCatKey(k, d) : null; if (c) has[c] = 1; } });
+                var out = cats.filter(function (c) { return has[c.key]; }).map(function (c) { return { key: c.key, name: (c.group === '武器' ? '武器・' : c.group === '飾品' ? '飾品・' : '防具・') + c.name }; });
+                Object.keys(has).forEach(function (k) { if (!out.some(function (o) { return o.key === k; })) out.push({ key: k, name: k === 'tshirt' ? '防具・內衣' : k === 'quiver' ? '武器・箭筒' : k }); });
+                return (_relicSubs = out);
+            }
             if (_whFilter === 'remains') return (typeof SHERINE_EFFECTS !== 'undefined' ? SHERINE_EFFECTS : []).map(function (n) { return { key: n, name: n }; });
         } catch (e) {}
         return _subOpts.apply(this, arguments);
@@ -71,7 +79,7 @@
             if (_whFilter === 'relic') {
                 var d = DB.items[id];
                 if (!d || typeof isRelic !== 'function' || !isRelic(d)) return false;
-                return !_whSubFilter || d.type === _whSubFilter;
+                return !_whSubFilter || (typeof equipCatKey === 'function' ? equipCatKey(id, d) : d.type) === _whSubFilter;
             }
             if (_whFilter === 'remains') {
                 var d2 = DB.items[id];
