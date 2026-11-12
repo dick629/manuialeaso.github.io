@@ -1692,10 +1692,50 @@
   window.addEventListener('beforeunload', stamp);
   window.addEventListener('pagehide', stamp);
 
+  // ----- ⏩ 背景欠太多 → 改交給離線結算（玩家 2026-11-12：休眠掛網整晚，起床補跑還要兩個多小時）-----
+  //   分頁在背景（或螢幕關掉、電腦省電）時，瀏覽器把遊戲壓到每秒、甚至每分鐘才跑一次，時間越欠越多。
+  //   回到畫面時核心會逐 tick 補跑（js/03 gameLoop），長時間要等很久；離線結算（runCatchup）有「先取樣、再逐殺快轉」，
+  //   同一段時間快很多，而且有檢查點、結算摘要。欠超過 HANDOVER_MS 就把剩下的時間交給它。
+  //   跟關掉遊戲再打開的離線結算同一套規則；不適合快轉的地方（攀登、遺忘之島、時空裂痕、木人場、攻城、
+  //   次元裂縫、非狩獵圖、受僱傭兵）照舊由核心逐 tick 補跑。
+  var HANDOVER_MS = 15 * 60 * 1000;
+  function handoverMap() {
+    try {
+      if (!state || !state.running || !player || player.dead) return '';
+      if (state.prideClimb || state.oblivion || state.riftRun) return '';
+      var m = (typeof mapState !== 'undefined' && mapState && mapState.current) || '';
+      if (!m || m.indexOf('town_') === 0 || m === 'rift_battle' || m === 'afk_dummy') return '';
+      if (typeof DB === 'undefined' || !DB.maps || !DB.maps[m]) return '';
+      if (typeof isSiegeArea === 'function' && isSiegeArea(m)) return '';
+      if (window.__afkDimRiftOn && window.__afkDimRiftOn()) return '';
+      if (typeof currentRoleIsMercenary === 'function' && currentRoleIsMercenary()) return '';
+      return m;
+    } catch (e) { return ''; }
+  }
+  function tryHandover() {
+    try {
+      if (catchingUp || document.hidden || !validSlot()) return false;
+      var debt = coreLagMs();
+      if (debt < HANDOVER_MS) return false;
+      var m = handoverMap(); if (!m) return false;
+      var ticks = Math.floor(Math.min(debt, CAP_MS) / TICK_MS);
+      if (typeof _ffCancelScheduledLoop === 'function') _ffCancelScheduledLoop();
+      if (typeof _ffAcc !== 'undefined' && _ffAcc && typeof _ffFinishCatchup === 'function') _ffFinishCatchup();   // 核心已補的那一段先收尾（摘要、存檔）
+      _tickDebt = 0;
+      var now = Date.now();
+      console.info('[AFK] 背景欠 ' + Math.round(debt / 60000) + ' 分鐘 → 改用離線結算（快轉）');
+      runCatchup(ticks, true, m, null, null, { closeTs: now - ticks * TICK_MS, loginTs: now });
+      return true;
+    } catch (e) { console.warn('[AFK] handover', e); return false; }
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(tryHandover, 50); });
+  setInterval(tryHandover, 1000);   // 螢幕喚醒但分頁一直在前景（沒有 visibilitychange）時也接得到
+
   // ----- 除錯介面 ----------------------------------------------------------
   window.__afk = {
     version: '2.0.0',   // 2.x=核心版(js/offline.js);1.x=外掛版(afk-offline.js,已退役)
     capHours: CAP_HOURS,
+    handover: tryHandover,   // 背景欠太多 → 改交給離線結算（測試用）
     stamp: stamp,
     readTs: readTs,
     mapName: mapName,   // 對外:地圖 id→中文名(供 afk-mobile 在匯入頁顯示「掛在哪張地圖」)

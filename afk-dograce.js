@@ -545,7 +545,7 @@
         //   矮螢幕上實測下注鈕直接點不到(elementFromPoint 打到日誌的關閉鈕)。拉高 z-index 不對——
         //   日誌是玩家自己叫出來的覆蓋層,不該被賽狗視窗壓過去。
         var b = document.body;
-        if (!b.classList.contains('m-mobile')) return false;
+        if (!b.classList.contains('m-mobile') || b.classList.contains('m-unified')) return false;   // 手機整合版沒有 mview-* 檢視 class
         return !b.classList.contains('mview-center') || b.classList.contains('mlog-open');
     }
     // 手機切檢視(body class 變動)→重算顯示;球與視窗共用。⚠ 要在「純圓球」路徑也註冊(原本只在開過視窗才註冊,

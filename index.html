@@ -572,7 +572,7 @@
     <script src="js/04-combat-attack.js?v=32177b0c60d3"></script>
 <script src="js/05-kill-progression.js?v=524cae4b0f1a"></script>
     <script src="js/06-status-allies.js?v=ac68fde03b12"></script>
-    <script src="js/07-skills-cast.js?v=a2615689a93f"></script>
+    <script src="js/07-skills-cast.js?v=57460ba1a5f4"></script>
 <script src="js/08-items-equip.js?v=a3c36b5ae5fa"></script>
 <script src="js/09-vfx-render.js?v=e13af1b34657"></script>
     <script src="js/10-ui-tabs.js?v=366e94255113"></script>
@@ -604,7 +604,7 @@
          無開關：這是顯示正確性，不是功能。實測 forceDarkModeEnabled+darkModeImagePolicy=smart 可重現、加這行即解。 -->
     <style>:root{color-scheme:dark}</style>
     <!-- afk-toggles 必須最先載入：外掛開關中樞（逃生門，自己不可被關；某支外掛壞掉時玩家關掉它就能用原版繼續玩） -->
-    <script src="afk-toggles.js?v=9552a2eb998e"></script>
+    <script src="afk-toggles.js?v=43e6256ef718"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=fab41eefb426"></script>
@@ -680,7 +680,7 @@
     <script src="afk-ui.js?v=7702f0d7ad30"></script>
     <script src="afk-extradata.js?v=0929c517dcf2"></script>
     <!-- 離線快速結算（自己 monkey-patch 包核心 saveGame/loadGame/changeMap/killMob/gainItem；搭配 maybeSpawnMobs 補丁） -->
-    <script src="afk-offline.js?v=c6921cd9efd2"></script>
+    <script src="afk-offline.js?v=a7b9dc381056"></script>
     <!-- 手機版面 / 返回鍵 -->
     <script src="afk-mobile.js?v=f9d88805f34b"></script>
     <!-- afk-uiscale：畫面調整（只縮放遊戲畫面 60～100%、每個框都能拖曳調整；外掛開關，預設關；手機版禁用）；排在 afk-mobile 之後 -->
@@ -723,7 +723,7 @@
     <!-- 能力分頁條列式：拿掉背景圖改大字卡片(純 CSS,DOM/updateUI 不動) -->
     <script src="afk-statlist.js?v=675586c010d2"></script>
     <script src="afk-autobuy.js?v=0b3c6ef1f6b4"></script>
-    <script src="afk-training.js?v=d15816874fb0"></script>
+    <script src="afk-training.js?v=26f53b571eb9"></script>
     <!-- 廢品標記管理：入口排在木人場鈕下方（自己 insertAdjacentElement，不靠載入順序） -->
     <script src="afk-junkmgr.js?v=48da09305a18"></script>
     <!-- 傭兵招募擋下提示：核心只寫系統日誌，改跳彈窗（不重刻條件，收核心自己的紅字） -->
@@ -832,7 +832,7 @@
     <!-- afk-whfilter：倉庫條件存入（類別／部位／道具種類／完整詞條／+N；需 afk-whall 的批次存入、afk-quickjunk 的道具分類） -->
     <script src="afk-whfilter.js?v=b66bc38392ab"></script>
     <!-- 迷你遊戲（我方自製） -->
-    <script src="afk-dograce.js?v=edd345fe1a87"></script>
+    <script src="afk-dograce.js?v=32b2ffd33c0d"></script>
     <!-- PWA / SW / 統計 / 品牌（skin 固定排最後） -->
     <script src="afk-pwa.js?v=74e56b974822"></script>
     <script src="afk-sw.js?v=6a1669d3ffff"></script>
@@ -1096,11 +1096,11 @@
     <!-- afk-blooddia：潘朵拉黑市「血龍鑽兌換」分頁（龍之鑽石 50 → 血龍鑽 1）；包 pandoraRenderMarket，要在 afk-bmprice、afk-craftui 之後 -->
     <script src="afk-blooddia.js?v=ef49f710b58e"></script>
     <!-- afk-poker：德州撲克（歐瑞村莊 荷官 洛蒂；金幣／龍之鑽石／血龍鑽買籌碼對 3～5 位 NPC）；要在 afk-lore-kit、afk-npc-kit、afk-blooddia 之後 -->
-    <script src="afk-poker.js?v=443ed596ed1b"></script>
+    <script src="afk-poker.js?v=3cd0e47cd249"></script>
     <!-- afk-gamehall：🎰 遊戲廳（德州撲克＋百家樂＋沙海法老的寶庫＋賽狗場的統一入口）；要在 afk-poker、afk-dograce 之後 -->
     <script src="afk-gamehall.js?v=5806fe9ada3d"></script>
     <!-- afk-fishing：🐟 海音深海獵場（捕魚機，遊戲廳裡）；要在 afk-gamehall 之後 -->
-    <script src="afk-fishing.js?v=bb1a23267726"></script>
+    <script src="afk-fishing.js?v=3e99f1535800"></script>
     <!-- afk-dmgfont：🔤 傷害字體（潘朵拉黑市「字體販賣所」分頁）；要在 afk-bmprice 等包黑市畫面的外掛之後 -->
     <script src="afk-dmgfont.js?v=4ce2ea8ade31"></script>
     <!-- afk-matwh：進副本要交的材料背包不夠時直接從倉庫補足（星途遠征、時空裂痕、暗夢星迴、聖地、鑰匙地圖）；要在 afk-rift2、afk-dreamstar 之後 -->
@@ -1147,7 +1147,7 @@
     <!-- afk-mapboss：地圖王（野外打倒 300 隻）、副本王（地監待滿 10 分鐘）、王之徽章；要在 afk-lore-kit、afk-region-boss 之後 -->
     <script src="afk-mapboss.js?v=9b23a898c997"></script>
     <script src="afk-bosscard.js?v=50c5a60267ab"></script>
-<script src="afk-timeroom.js?v=168f739291b8"></script>
+<script src="afk-timeroom.js?v=0c66693ced64"></script>
 <script src="afk-avatar.js?v=645fd5dff69f"></script>
     <!-- afk-dimrift：次元裂縫（世界規則：侵蝕、光蝕、面板減半、怪物倍率、掉落）；要在 afk-rebirth、afk-relic-companions、afk-lore-kit、afk-mio、afk-bracelet 之後 -->
     <script src="afk-dimrift.js?v=46cbcd68389f"></script>

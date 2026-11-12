@@ -73,7 +73,11 @@
   }
   if (typeof W.gainItem === 'function') {
     var oGain = W.gainItem;
-    W.gainItem = function () { if (blocked()) return undefined; return oGain.apply(this, arguments); };
+    // ⚠ 11-12 修：補跑／離線結算時「自動買藥水、卷軸」也走 gainItem(id, n, true, true)——以前一律擋掉，
+    //   錢扣了卻拿不到東西（每一拍重買一次，4 分鐘扣掉 200 多億金幣），核心隨後讀不到那瓶藥水而丟例外、補跑中止。
+    //   第 4 個參數 forceNormal=true 的是購買／補給，不算掉落 → 放行；擊殺結算中（killing>0）照擋。
+    var buying = function (a) { return a && a[3] === true && killing <= 0; };
+    W.gainItem = function () { if (!buying(arguments) && blocked()) return undefined; return oGain.apply(this, arguments); };
     try { (0, eval)('gainItem = window.gainItem'); } catch (e) {}
   }
   if (typeof W.pandoraAdjustSharedDiamonds === 'function') {

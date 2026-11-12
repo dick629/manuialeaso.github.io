@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-21c457dac952",
+  "build": "merge-0.4-281c6edb4a0f",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -398,8 +398,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dograce.js?v=edd345fe1a87",
-      "sha256": "edd345fe1a87d4f156be39547125a1aa408a0863e52bf194fcd7d90b3205b927",
+      "url": "afk-dograce.js?v=32b2ffd33c0d",
+      "sha256": "32b2ffd33c0d4340d041818e5d539fefc143268fe2e0e258bd35d926e1f71657",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -538,8 +538,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-fishing.js?v=bb1a23267726",
-      "sha256": "bb1a23267726e916d2cf27627f21994e21445125530a4f9413a2a91d1c329688",
+      "url": "afk-fishing.js?v=3e99f1535800",
+      "sha256": "3e99f1535800af17bae9ec48869ee0e5f7dc2b0e87ba8500a97bca022e6c2fdc",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -948,8 +948,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-offline.js?v=c6921cd9efd2",
-      "sha256": "c6921cd9efd2370a746a627fceb07e7d06550641900bce70064727c8dd299d05",
+      "url": "afk-offline.js?v=a7b9dc381056",
+      "sha256": "a7b9dc381056f2e8a52af932b821f2e9e902d4c9564a89cc190c6a5587140484",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -988,8 +988,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-poker.js?v=443ed596ed1b",
-      "sha256": "443ed596ed1be85f62ff12418ae56534f452ec59b8dfab129c9ec1c9165bce51",
+      "url": "afk-poker.js?v=3cd0e47cd249",
+      "sha256": "3cd0e47cd249af7015c85a72ca796ac1d2a6ed21d89b980f293b2c27135bf2be",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1393,8 +1393,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-timeroom.js?v=168f739291b8",
-      "sha256": "168f739291b8620eeb3d6455036e132bb1a58c76b07ae1cb51cc94a6e6013663",
+      "url": "afk-timeroom.js?v=0c66693ced64",
+      "sha256": "0c66693ced645349ecf3433b110998834043356d6592ee1122d7ad828816bf7c",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1403,8 +1403,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-toggles.js?v=9552a2eb998e",
-      "sha256": "9552a2eb998ee5554ccb236c12cfd33b29d8bbf7c3d9419c9f6536e19d30ff76",
+      "url": "afk-toggles.js?v=43e6256ef718",
+      "sha256": "43e6256ef718f68d8879f525d61902c8c3ee0c6f0c688a5306bc0867e810b4a4",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1433,8 +1433,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-training.js?v=d15816874fb0",
-      "sha256": "d15816874fb0b583e321d0b1ff9a68f2b40d44985b6793ef8ff376c03a5bea2a",
+      "url": "afk-training.js?v=26f53b571eb9",
+      "sha256": "26f53b571eb980e8a857509949f488ae955202595a4410f9e902ea8079460ebd",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1584,7 +1584,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "a636f861407160ed2b8c74238fc70f5a42cb70de3a01835cd646bdc42e6abede",
+      "sha256": "c0e58ee2cafdd90969c96f92fdee9443edb93845ae066c6456475d1287fcfd21",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1623,8 +1623,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/07-skills-cast.js?v=a2615689a93f",
-      "sha256": "a2615689a93f44b5684bba35bc815d9dbf2316c6c9aa019a9fa5fb43003a383a",
+      "url": "js/07-skills-cast.js?v=57460ba1a5f4",
+      "sha256": "57460ba1a5f4e45bb928663f3b4df177710e2d96f3e0a61388b6ec23c4fc232a",
       "type": "text/javascript; charset=utf-8"
     },
     {

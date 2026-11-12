@@ -801,7 +801,7 @@
   var el = function (id) { return document.getElementById(id); };
   function isMobileHidden() {
     var b = document.body;
-    if (!b.classList.contains('m-mobile')) return false;
+    if (!b.classList.contains('m-mobile') || b.classList.contains('m-unified')) return false;   // 手機整合版沒有 mview-* 檢視 class
     return !b.classList.contains('mview-center') || b.classList.contains('mlog-open');
   }
   var visObs = null;

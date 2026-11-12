@@ -1036,7 +1036,8 @@ function autoActions() {
                  if(player.gold >= price) {
                      player.gold -= price;
                      gainItem(cfg.pot, 1, true, true);
-                     useItem(player.inv.find(i => i.id === cfg.pot).uid, true);
+                     let _bought = player.inv.find(i => i.id === cfg.pot);   /* 🔌 加掛版補丁（11-12）：買了卻沒進背包（被外掛擋）→ 退錢，不丟例外 */
+                     if (_bought) useItem(_bought.uid, true); else player.gold += price;
                  }
             }
         }

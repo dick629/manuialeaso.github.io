@@ -714,7 +714,7 @@
   //   這個名字——寫錯的話這裡恆為 true、HUD 在手機上永遠不會出現，畫面上完全看不出是誰把它藏起來）
   function isMobileHidden() {
     var b = document.body;
-    if (!b.classList.contains('m-mobile')) return false;
+    if (!b.classList.contains('m-mobile') || b.classList.contains('m-unified')) return false;   // 手機整合版沒有 mview-* 檢視 class
     return !b.classList.contains('mview-center') || b.classList.contains('mlog-open');
   }
   function updateHudVisibility() {

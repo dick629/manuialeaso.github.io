@@ -454,7 +454,7 @@
   }
   function visible() {
     var w = el('afk-fish-win'); if (!w || w.style.display === 'none' || document.hidden) return false;
-    var b = document.body; if (b.classList.contains('m-mobile') && (!b.classList.contains('mview-center') || b.classList.contains('mlog-open'))) return false;
+    var b = document.body; if (b.classList.contains('m-mobile') && !b.classList.contains('m-unified') && (!b.classList.contains('mview-center') || b.classList.contains('mlog-open'))) return false;
     return true;
   }
   function kick() { if (!raf && visible()) { lastT = 0; raf = requestAnimationFrame(loop); } }
