@@ -956,6 +956,22 @@
         let nonPotionHealing = Math.max(0, healing - potionHealing);
         let potionRate = Math.max(0, survival.potionPerMin);
         let potionId = survival.potionId;
+        // 📥 上游 v3.9.30（lostshin 693813f7f，Ping 11-12 要求移植）：取樣尾端可能正好落在下一次自動喝水之前；固定沿用原頻率會把這段血差外推成永久失血。
+        // 只用同瓶藥水的實測有效治療量補足缺口，並遵守線上每秒一瓶的冷卻；額外瓶數仍須實際付費／扣庫存。
+        let cfg = player.config || {};
+        let potSelect = typeof document !== 'undefined' ? document.getElementById('set-pot') : null;
+        let potThreshold = typeof document !== 'undefined' ? document.getElementById('set-hp-pot') : null;
+        let selectedPotion = cfg.setPot === undefined ? potSelect && potSelect.value : cfg.setPot;
+        let threshold = Number(cfg.setHpPot === undefined ? potThreshold && potThreshold.value : cfg.setHpPot) || 0;
+        let automaticPotion = potionId !== 'new_item_141' && potionId === selectedPotion && threshold > 0;
+        if (automaticPotion && potionRate > 0 && potionHealing > 0 && damage > healing) {
+            let healPerPotion = potionHealing / potionRate;
+            let extraRate = Math.min(Math.max(0, 60 - potionRate), (damage - healing) / healPerPotion);
+            let extraHealing = extraRate * healPerPotion;
+            potionRate += extraRate;
+            potionHealing += extraHealing;
+            healing += extraHealing;
+        }
         let potionStock = potionId ? _offlineInventoryCount(potionId) : 0;
         // 🧪 v3.7.72 自動購買納入續戰力：有效庫存＝背包存量＋（離線開始時金幣 ÷ 單價）
         let autoBuy = _offlineAutoBuyPotionPlan(potionId);

@@ -139,9 +139,15 @@
                 slot.classList.add('tip-host');
                 slot.setAttribute('data-tip-uid', item.uid); slot.setAttribute('data-tip-src', 'eq');   // 🖱️ hover 即時顯示已裝備物品完整資訊 tooltip
                 slot.onclick = function () {   // 嵌入模式：單擊開物品視窗（原浮動模式的側欄延遲單擊已隨側欄移除）
-                    if (typeof openModal === 'function') openModal(item, true, actualKey);
+                    if (typeof openModal !== 'function') return;
+                    // 📥 上游 v3.9.28（lostshin 7cb08ef5a，Ping 11-12 移植）：手機上單擊會立刻蓋上物品頁、第二下點不到 → 延 230ms 再開，雙擊才卸得下來
+                    const mobile = document.body.classList.contains('m-unified') || document.body.classList.contains('m-mobile') || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
+                    if (!mobile) return openModal(item, true, actualKey);
+                    clearTimeout(window._eqSlotClickTimer);
+                    window._eqSlotClickTimer = setTimeout(() => openModal(item, true, actualKey), 230);
                 };
                 slot.ondblclick = function (event) {
+                    clearTimeout(window._eqSlotClickTimer);
                     event.preventDefault();
                     event.stopPropagation();
                     unequipItem(actualKey);

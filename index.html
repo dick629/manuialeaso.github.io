@@ -584,7 +584,7 @@
 <script src="js/16-equip-book.js?v=db30ba2eab50"></script>
 <script src="js/18-misc-book.js?v=6710faf4f17c"></script>
 <script src="js/17-audio.js?v=0533a411a7fb"></script>
-<script src="js/19-equipment-window.js?v=8f1ae42dd61b"></script>
+<script src="js/19-equipment-window.js?v=37937a951006"></script>
 <script src="js/20-warehouse-window.js?v=92e5e1d96a5a"></script>
 <script src="js/21-relic-book.js?v=2cf7d69f2832"></script>
     <script src="js/23-summons.js?v=69b7f657728e"></script>
@@ -604,7 +604,7 @@
          無開關：這是顯示正確性，不是功能。實測 forceDarkModeEnabled+darkModeImagePolicy=smart 可重現、加這行即解。 -->
     <style>:root{color-scheme:dark}</style>
     <!-- afk-toggles 必須最先載入：外掛開關中樞（逃生門，自己不可被關；某支外掛壞掉時玩家關掉它就能用原版繼續玩） -->
-    <script src="afk-toggles.js?v=44a5a3b515e3"></script>
+    <script src="afk-toggles.js?v=9552a2eb998e"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=fab41eefb426"></script>
@@ -824,7 +824,7 @@
     <script src="afk-buyercompat.js?v=beccce431ae5"></script>
     <!-- 傳統模式(偽)/自動衝裝：需搭配 scripts/apply-core-patches.mjs 的 gainItem _tEn 鉤子 -->
     <script src="afk-traditional.js?v=f05bb4d27e13"></script>
-    <script src="afk-warehouse.js?v=8ec3a0f435ac"></script>
+    <script src="afk-warehouse.js?v=d2f0c7e01323"></script>
     <!-- 倉庫批次存取:勾選/全選一次搬完(核心是一件一件搬、每件都 saveGame,幾千格搬不動);排在 afk-warehouse 之後 → afterRender 在它的注入之後才跑 -->
     <script src="afk-whbatch.js?v=e23ab1dda4fe"></script>
     <!-- afk-whall：倉庫一鍵存入／一鍵取出（目前分類）；排在 afk-whbatch 之後 -->

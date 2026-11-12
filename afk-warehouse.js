@@ -77,6 +77,11 @@
                 var d2 = DB.items[id];
                 return !!(d2 && d2.remains);   // 套裝名子分類看「實例」的 seteff → render 後過濾(见 afterRender)
             }
+            // 上游 v3.9.29（lostshin 5469b8371，Ping 11-12 要求移植）：遺物、席琳遺骸只列在自己的分類，不再混進一般武器、防具（搜尋仍跨分類）
+            if (_whFilter === 'weapon' || _whFilter === 'armor') {
+                var d3 = DB.items[id];
+                if (d3 && (d3.remains || (typeof isRelic === 'function' && isRelic(d3)))) return false;
+            }
         } catch (e) {}
         return _match.apply(this, arguments);
     };

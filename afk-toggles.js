@@ -53,7 +53,7 @@
     function enabledRaw(id) {
         var r = find(id), def = r ? r.def : true;
         if (r && r.locked || RETIRED[id]) return false;
-        if (window.__afkTestAnyToggle && lsCache[id] != null) return lsCache[id] === '1';   // 測試環境：測試自己 set 過的開關以它為準（含併進夢域鏡、隱藏規則的那些）
+        if (window.__afkTestAnyToggle) { var tv = lsCache[id]; if (tv == null) { try { tv = localStorage.getItem(LS + id); } catch (e) {} } if (tv != null) return tv === '1'; }   // 測試環境：測試自己 set 過的開關以它為準（含併進夢域鏡、隱藏規則的那些）
         if (MERGED[id]) return api.enabled(MERGED[id]);
         if (r && r.parent && !api.enabled(r.parent)) return false;
         // Ignore stale module-off flags, without deleting or rewriting any saved key.
