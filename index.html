@@ -15,7 +15,7 @@
     <!-- 11-11 玩家：App 第一次開要等很久、整片白 → 先上深色底與載入畫面，程式全部載完才拿掉 -->
     <style>html,body{background:#0f141d}#afk-boot{position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0f141d;color:#e8d8b6;font:15px/1.5 system-ui,sans-serif;transition:opacity .3s}#afk-boot img{width:88px;height:88px;border-radius:18px}#afk-boot .bar{width:180px;height:4px;border-radius:2px;background:#2a2f3a;overflow:hidden}#afk-boot .bar i{display:block;height:100%;width:0;background:#c9a55a;transition:width .2s}</style>
     <!-- 11-12 玩家：手機開網頁到主選單要 3.5 分鐘 → 記錄每次開機各階段花多久（快取診斷「開機耗時」看得到） -->
-    <script>(function(){var P=window.performance;if(!P||!P.now)return;try{P.setResourceTimingBufferSize&&P.setResourceTimingBufferSize(3000);}catch(e){}var L={n:0,ms:0,top:{}};try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){L.n++;L.ms+=e.duration;});}).observe({type:"longtask",buffered:true});}catch(e){}window.__afkBootLong=L;var mark={};window.__afkBootMark=function(k){if(!(k in mark))mark[k]=Math.round(P.now());};document.addEventListener("DOMContentLoaded",function(){__afkBootMark("dom");});window.addEventListener("load",function(){__afkBootMark("load");});var save=function(){try{var rs=P.getEntriesByType("resource"),agg={js:[0,0,0,0],css:[0,0,0,0],img:[0,0,0,0],audio:[0,0,0,0],other:[0,0,0,0]},slow=[],lastJs=0;rs.forEach(function(r){var u=r.name,k=/\/(bgm|sfx)\//.test(u)?"audio":/\.js(\?|$)/.test(u)?"js":/\.css(\?|$)/.test(u)?"css":/\.(webp|png|jpe?g|gif)(\?|$)/.test(u)?"img":"other",a=agg[k];a[0]++;a[1]+=r.transferSize||0;if(!r.transferSize)a[2]++;a[3]=Math.max(a[3],Math.round(r.responseEnd));if(k==="js")lastJs=Math.max(lastJs,r.responseEnd);var nm=u.replace(/^.*\//,"").replace(/\?.*$/,"");try{nm=decodeURIComponent(nm);}catch(e){}slow.push([Math.round(r.duration),nm]);});slow.sort(function(a,b){return b[0]-a[0];});var nav=(P.getEntriesByType("navigation")||[])[0]||{};var rec={at:Date.now(),mark:mark,nav:{ttfb:Math.round(nav.responseStart||0),html:Math.round(nav.responseEnd||0),sw:Math.round(nav.workerStart||0)},agg:agg,lastJs:Math.round(lastJs),slow:slow.slice(0,8),long:{n:L.n,ms:Math.round(L.ms)},sw:!!(navigator.serviceWorker&&navigator.serviceWorker.controller),mem:(navigator.deviceMemory||0),cpu:(navigator.hardwareConcurrency||0)};var arr=[];try{arr=JSON.parse(localStorage.getItem("lineage_boot_times")||"[]")||[];}catch(e){}arr.unshift(rec);localStorage.setItem("lineage_boot_times",JSON.stringify(arr.slice(0,3)));}catch(e){}};var iv=setInterval(function(){if(typeof loadGame==="function"&&!document.getElementById("afk-boot")&&document.readyState!=="loading"){clearInterval(iv);__afkBootMark("menu");setTimeout(save,3000);}},250);})();</script>
+    <script>(function(){var P=window.performance;if(!P||!P.now)return;try{P.setResourceTimingBufferSize&&P.setResourceTimingBufferSize(3000);}catch(e){}var L={n:0,ms:0,top:{}};try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){L.n++;L.ms+=e.duration;});}).observe({type:"longtask",buffered:true});}catch(e){}window.__afkBootLong=L;var mark={};window.__afkBootMark=function(k){if(!(k in mark))mark[k]=Math.round(P.now());};document.addEventListener("DOMContentLoaded",function(){__afkBootMark("dom");});window.addEventListener("load",function(){__afkBootMark("load");});var save=function(){try{var rs=P.getEntriesByType("resource"),agg={js:[0,0,0,0],css:[0,0,0,0],img:[0,0,0,0],audio:[0,0,0,0],other:[0,0,0,0]},slow=[],lastJs=0;rs.forEach(function(r){var u=r.name,k=/\/(bgm|sfx)\//.test(u)?"audio":/\.js(\?|$)/.test(u)?"js":/\.css(\?|$)/.test(u)?"css":/\.(webp|png|jpe?g|gif)(\?|$)/.test(u)?"img":"other",a=agg[k];a[0]++;a[1]+=r.transferSize||0;if(!r.transferSize)a[2]++;a[3]=Math.max(a[3],Math.round(r.responseEnd));if(k==="js")lastJs=Math.max(lastJs,r.responseEnd);var nm=u.replace(/^.*\//,"").replace(/\?.*$/,"");try{nm=decodeURIComponent(nm);}catch(e){}slow.push([Math.round(r.duration),nm]);});slow.sort(function(a,b){return b[0]-a[0];});var nav=(P.getEntriesByType("navigation")||[])[0]||{};var rec={at:Date.now(),mark:mark,nav:{ttfb:Math.round(nav.responseStart||0),html:Math.round(nav.responseEnd||0),sw:Math.round(nav.workerStart||0)},agg:agg,lastJs:Math.round(lastJs),slow:slow.slice(0,8),long:{n:L.n,ms:Math.round(L.ms)},sw:!!(navigator.serviceWorker&&navigator.serviceWorker.controller),mem:(navigator.deviceMemory||0),cpu:(navigator.hardwareConcurrency||0)};var arr=[];try{arr=JSON.parse(localStorage.getItem("afk_boot_times")||"[]")||[];}catch(e){}arr.unshift(rec);localStorage.setItem("afk_boot_times",JSON.stringify(arr.slice(0,3)));try{localStorage.removeItem("lineage_boot_times");}catch(e){}}catch(e){}};var iv=setInterval(function(){if(typeof loadGame==="function"&&!document.getElementById("afk-boot")&&document.readyState!=="loading"){clearInterval(iv);__afkBootMark("menu");setTimeout(save,3000);}},250);})();</script>
     <script src="merged/recovery-boot.js?v=ffe629596dba"></script>
     <link rel="icon" type="image/png" href="assets/favicon.png">   <!-- 🖼️ 瀏覽器分頁圖示(favicon)：把你的圖放到 assets/favicon.png 即生效；可改 href 路徑或副檔名(.ico/.svg) -->
 
@@ -566,7 +566,7 @@
     })();
     </script>
 
-    <script src="js/anim-manifest.js?v=655fcebc1c3c"></script>
+    <script src="js/anim-manifest.js?v=050235a09d8e"></script>
     <script src="js/00-data.js?v=6637104e1fa8"></script>
 <script src="js/01-drops-config.js?v=287d6f0e5cdc"></script>
 <script src="js/02-stats-recompute.js?v=8cefe7e46f92"></script>
@@ -610,7 +610,7 @@
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=fab41eefb426"></script>
-    <script src="afk-dup-frames-data.js?v=91c6ad0c907c"></script>
+    <script src="afk-dup-frames-data.js?v=bbe6b7979d4c"></script>
     <script src="afk-dup-frames.js?v=3b208c70aa17"></script>
     <!-- afk-gptart-icons：GPT新美術——裝備圖示光影修補 837 張（原圖 → assets/icons/gpt/）；要早於其他外掛，開關 art-v3 -->
     <script src="afk-gptart-icons-data.js?v=e1f62a94f46b"></script>
@@ -716,7 +716,7 @@
     <script src="afk-notice.js?v=291c2c4bba97"></script>
     <script src="afk-history.js?v=d66edd2d5320"></script>
     <script src="afk-reissueid.js?v=87f3531cd0ff"></script>
-    <script src="afk-diag.js?v=106570cb638d"></script>
+    <script src="afk-diag.js?v=0840bca77c50"></script>
     <script src="afk-powersave.js?v=2682d9fac1bd"></script>
     <!-- afk-lowend：低階電腦第一次自動套用「流暢顯示」（需 afk-powersave、afk-perf） -->
     <script src="afk-lowend.js?v=64a939dd2ea3"></script>
@@ -896,7 +896,7 @@
     <script src="afk-dollaffix.js?v=158e288abc77"></script>
     <script src="afk-card-combat.js?v=403329c4d993"></script>
     <!-- afk-saint-cloth：聖衣光輝（解除封印 5 次失去光輝、雅典娜祝福恢復）、光輝碎片升星（對最終頭目）、封印型態沒有翅膀；需 afk-card-ascension、afk-card-combat -->
-    <script src="afk-saint-cloth.js?v=2373994475a8"></script>
+    <script src="afk-saint-cloth.js?v=7b80cb8fd40a"></script>
     <!-- afk-magefix（要在 afk-rebirth-rules 之前，溢補護盾才算得到多回的量）：法師修補——體力回復術智力加成不封頂、另外回復目前 HP 5% -->
     <script src="afk-magefix.js?v=c12862830af7"></script>
     <!-- afk-rebirth-rules：轉生魔法消耗與 SP、溢補護盾、敗者榮光、聖衣補血、魔法武器加倍、百般武藝首擊（排在 afk-arts、afk-card-combat 之後） -->
@@ -1030,7 +1030,7 @@
     <script src="afk-fix1031.js?v=8ab2b20547e4"></script>
     <!-- afk-art-v3：GPT變身檔（外掛開關，預設關）——神話／天上／時空／十二聖衣改用新繪製的三方向逐幀動畫與聖衣星座翅膀；只換外觀 -->
     <script src="art-v3/game-data.js?v=f4a42921630f"></script>
-    <script src="afk-art-v3.js?v=52d3b66d80da"></script>
+    <script src="afk-art-v3.js?v=6e4ca0974ea0"></script>
     <!-- afk-batchopen：禮盒、袋子、寶箱一次開多個（物品視窗「開 10 個」「全部開啟」；開完只重畫、存檔一次，列出總共拿到的東西） -->
     <script src="afk-batchopen.js?v=c996df28a467"></script>
     <!-- afk-boxkey：歐西里斯／庫庫爾坎寶箱碎片各 50 合成、席琳結晶 50 也能開箱（包 openOsirisBox／doOpenOsirisBox） -->

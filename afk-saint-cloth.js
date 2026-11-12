@@ -1,7 +1,8 @@
 /* ============================================================================
  * afk-saint-cloth.js — 聖衣的光輝、雅典娜祝福、聖衣升星（玩家 2026-10-29）
  *
- *   外觀：解除封印＝有翅膀；封印型態（或失去光輝、或在副本裡）＝沒有翅膀（assets/morphanim/<聖衣>・封{,2,F}）。
+ *   外觀：解除封印＝有翅膀；封印型態（或失去光輝、或在副本裡）＝沒有翅膀（assets/morphanim/<聖衣>・封{,2,F}）；
+ *         神聖衣（原 EX）＝自己的一套（assets/morphanim/<聖衣>・神{,2,F}，11-12 GPT 新圖）。
  *   封印型態也能變身；30 分鐘冷卻期間不能穿任何聖衣（afk-card-ascension 原本就擋）。
  *   解除封印的效果（afk-card-combat RULES.samsaraOpen）：六項能力 +75、五屬性抗性 +250、爆擊傷害 +100%、開啟星座能力。
  *   光輝：已解除封印的聖衣，只有在四龍副本、最終女神戰、靈魂石訓練所裡以解除封印的樣子變身才算一次（2026-11-04 改；其他地方不消耗），五次之後失去光輝，回到封印型態；
@@ -76,6 +77,18 @@
     W.tick = function () { var r = oTick.apply(this, arguments); try { var t = (typeof state !== 'undefined' && state.ticks) || 0; if (t % 10 === 0) checkWear(); } catch (e) {} return r; };
   }
 
+  // ── 外觀：神聖衣（原 EX，11-12 GPT 新圖）有自己的一套 assets/morphanim/<聖衣>・神{,2,F}；封印、副本裡照封印型態 ──
+  var holyForm = function (actor, m, sfx, wpn) {
+    var row = nameSet[m]; if (!row || !actor) return null;
+    var cl = actor.cardAscension && actor.cardAscension.cloth && actor.cardAscension.cloth[row.id];
+    if (!(cl && cl.ex) || A.sealed(row.id, actor) || inDungeon()) return null;
+    var hm = m + '・神';
+    return { key: 'morph:' + hm + sfx, domKey: 'morph:' + hm, base: 'assets/morphanim/' + encodeURIComponent(hm + sfx) + '/', wpn: wpn || null };
+  };
+  // GPT 新美術（afk-art-v3）蓋在最外層：它先問這裡，神聖衣就用新圖
+  W.__afkHolyClothForm = function (actor, name) {
+    try { var s = typeof _animDirSfx === 'function' ? _animDirSfx(actor && actor._faceD != null ? actor._faceD : 2, false) : ''; return holyForm(actor, String(name || '').replace(/^輪迴・/, ''), s, null); } catch (e) { return null; }
+  };
   // ── 外觀：封印型態沒有翅膀 ──
   if (typeof W._actorBattleForm === 'function') {
     var oForm = W._actorBattleForm;
@@ -84,8 +97,9 @@
       try {
         if (!f || typeof f.key !== 'string' || f.key.indexOf('morph:') !== 0) return f;
         var m = String(f.domKey || '').slice(6), row = nameSet[m]; if (!row) return f;
-        if (!(A.sealed(row.id, actor) || inDungeon())) return f;
-        var sfx = f.key.slice(6 + m.length), sm = m + '・封';
+        var sfx = f.key.slice(6 + m.length);
+        if (!(A.sealed(row.id, actor) || inDungeon())) return holyForm(actor, m, sfx, f.wpn) || f;
+        var sm = m + '・封';
         return { key: 'morph:' + sm + sfx, domKey: 'morph:' + sm, base: 'assets/morphanim/' + encodeURIComponent(sm + sfx) + '/', wpn: f.wpn || null };
       } catch (e) { return f; }
     };

@@ -145,7 +145,7 @@
   // UA 原始字串太長沒人讀得下去,解析成人看得懂的;原始字串仍保留在最後一行(型號細節只有它有)
   // 開機耗時（index.html 開頭的小程式記錄，最近 3 次）：秒數都是從開網頁算起
   function bootTimes() {
-    var arr = []; try { arr = JSON.parse(localStorage.getItem('lineage_boot_times') || '[]') || []; } catch (e) {}
+    var arr = []; try { arr = JSON.parse(localStorage.getItem('afk_boot_times') || '[]') || []; } catch (e) {}
     if (!arr.length) return '(還沒有紀錄：重新整理一次再看)';
     var sec = function (ms) { return ms == null ? '?' : (ms / 1000).toFixed(1) + ' 秒'; };
     var NM = { js: '程式', css: '樣式', img: '圖片', audio: '音效音樂', other: '其他' };

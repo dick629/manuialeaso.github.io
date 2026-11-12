@@ -33,6 +33,7 @@
   var oldForm=W._actorBattleForm;
   W._actorBattleForm=function(actor,allyGroup){
     var c=active(actor);if(!c)return oldForm.apply(this,arguments);
+    if(typeof W.__afkHolyClothForm==='function'){var hf=W.__afkHolyClothForm(actor,c.name);if(hf)return hf;}   /* 神聖衣（11-12 GPT 新圖）用自己的一套 */
     var s=typeof _animDirSfx==='function'?_animDirSfx(actor._faceD==null?2:actor._faceD,false):'',dir=s==='F'?'rear':s==='2'?'left':'right';
     var folder=c.id+'-'+dir+(showWings(actor,c)?'-wing':'');
     return {key:'morph:afk-v3-'+folder,domKey:'morph:afk-v3-'+c.id,base:'art-v3/frames/'+folder+'/',wpn:null};

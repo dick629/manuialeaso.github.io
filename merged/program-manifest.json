@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-c8d5f24bf236",
+  "build": "merge-0.4-44e2bc2017a4",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -48,8 +48,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-art-v3.js?v=52d3b66d80da",
-      "sha256": "52d3b66d80da4baede00b9601e07956bcb2220cc7baa75c2ce080434d5d70f7f",
+      "url": "afk-art-v3.js?v=6e4ca0974ea0",
+      "sha256": "6e4ca0974ea0c3901c3498a86378086153f523b78c1b76439017469bdac28afa",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -373,8 +373,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-diag.js?v=106570cb638d",
-      "sha256": "106570cb638d1d4a3232d0236a9548244e760c1cd16d96cecdebb5038b40fa81",
+      "url": "afk-diag.js?v=0840bca77c50",
+      "sha256": "0840bca77c50ce7a3bc7b42c77808c768eb69487b0184092d8b619b1647f3617",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -473,8 +473,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dup-frames-data.js?v=91c6ad0c907c",
-      "sha256": "91c6ad0c907c0fdc607e3e115f6b7b347c323f180464279956235606f59f3de4",
+      "url": "afk-dup-frames-data.js?v=bbe6b7979d4c",
+      "sha256": "bbe6b7979d4cbc8d0b1bd34bf8f713c455e60ada932ca11708bbed11c1a0366e",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1253,8 +1253,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-saint-cloth.js?v=2373994475a8",
-      "sha256": "2373994475a8d02a0fceef2a5c84a2cff443f6eda89152f1012008a8c4c32334",
+      "url": "afk-saint-cloth.js?v=7b80cb8fd40a",
+      "sha256": "7b80cb8fd40a4638bc3d9aa9e9661cc736c307e2ded518c1424f327d8983b2e9",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1584,7 +1584,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "46942089b8e11c518cb7f3c3b2bc4a6da85b7a79ee4e3a5fb66714c5dbbd6c85",
+      "sha256": "cb7959a9ca8322ccf9d0cc87b8a6e6d241910c5f7b6355783e30f82026080d8b",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1748,8 +1748,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/anim-manifest.js?v=655fcebc1c3c",
-      "sha256": "655fcebc1c3c1210a627bf142a271799cea6f0ee24cbc2ba42954dd6053632d8",
+      "url": "js/anim-manifest.js?v=050235a09d8e",
+      "sha256": "050235a09d8e470f13a57136916973d8d2577123c184fb43dbbb28e016a329aa",
       "type": "text/javascript; charset=utf-8"
     },
     {
