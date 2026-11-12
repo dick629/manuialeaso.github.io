@@ -21,7 +21,7 @@
     if (!m || m._dead || !(m.curHp > 0)) return;
     var w = m._afkPetBite || (m._afkPetBite = { n: 0, until: 0, mr: 0 });
     w.until = tk() + CFG.dur;
-    if (w.n >= CFG.max) return;
+    if (w.n >= maxN()) return;
     w.n++;
     m.ac = (Number(m.ac) || 0) + CFG.ac;
     var mr = Number(m.mr) || 0, cut = Math.min(CFG.mr, Math.max(0, mr)); m.mr = mr - cut; w.mr += cut;
@@ -34,6 +34,9 @@
     RES4.forEach(function (k) { m[k] = (Number(m[k]) || 0) + CFG.res * w.n; });
     m._afkPetBite = null;
   };
+  // 大絕第三版：靈契使「靈契號令」期間上限 ×2；「契約審判」一次疊滿
+  var maxN = function () { var k = 1; try { k = W.__afkBiteCapMult ? Math.max(1, Number(W.__afkBiteCapMult()) || 1) : 1; } catch (e) {} return CFG.max * k; };
+  var fill = function (m) { if (!on()) return; var guard = 0; while (m && !m._dead && m.curHp > 0 && (!m._afkPetBite || m._afkPetBite.n < maxN()) && guard++ < 50) add(m); };
   var cur = null;   // 正在結算的寵物一般攻擊
   if (typeof W.petAttackOnce === 'function') {
     var oA = W.petAttackOnce;
@@ -70,5 +73,5 @@
     };
     try { (0, eval)('tick = window.tick'); } catch (e) {}
   }
-  W.__afkPetBite = { CFG: CFG, on: on, add: add, expire: expire };
+  W.__afkPetBite = { CFG: CFG, on: on, add: add, expire: expire, fill: fill, max: maxN };
 })();

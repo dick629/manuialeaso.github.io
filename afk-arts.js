@@ -145,6 +145,7 @@
   // ── 免死：不屈命運（HP<50%）→ 絕望身軀（HP<30%）→ 命運迴響的每場免死（共用冷卻 30 秒）──
   var trySaves = function (p, lethal) {
     var a = art(p); if (!a) return false;
+    if (!lethal && (p._afkSelfCostUntil || 0) > Date.now()) return false;   // 大絕自己扣的 HP 不觸發不屈命運、絕望身軀（真的要死時照常）
     var sv = SAVES[a], s = st(p), hp = hpOf(p) || 0, mx = p.mhp || 1;
     if (sv && sv.fate && !s.fate && hp < mx * 0.5) {
       s.fate = true; s.mode = Math.max(s.mode, 2); refresh(p); setHp(p, p.mhp);

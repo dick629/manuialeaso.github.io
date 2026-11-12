@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-560db0678f3e",
+  "build": "merge-0.4-5c8686d78062",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -68,8 +68,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-arts.js?v=e7ed030a1ebd",
-      "sha256": "e7ed030a1ebd5319b7f2a6be3d9bd0f6e1e2b01c1ffc7aec33ec8d7203a8d587",
+      "url": "afk-arts.js?v=2726d9d66f9d",
+      "sha256": "2726d9d66f9d30fce3bf4df34408fe417d0f17ee677e8ed101feba0c185341b3",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -393,8 +393,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dimrelic.js?v=7313cfa7c560",
-      "sha256": "7313cfa7c56010c219007f1f0f062efa93e153191698322ed68fc829db7b8733",
+      "url": "afk-dimrelic.js?v=4d09f7db8dbc",
+      "sha256": "4d09f7db8dbc0bda3ce6ecaa227cb0953dcb71651e8968edb7266c78fe750575",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -593,8 +593,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-game-guide.js?v=4edb8186ffdd",
-      "sha256": "4edb8186ffddd6e4ea8921ebbe1b32969e3695a162f461993aa40f44b0dd3c78",
+      "url": "afk-game-guide.js?v=ec2d9563d9c7",
+      "sha256": "ec2d9563d9c7fe1d0f7db2ff05e63edf430bae171302ba4031a18396791429c9",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -988,8 +988,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-petbite.js?v=7af66feb0715",
-      "sha256": "7af66feb0715ec77799b324a80f4979d6d34cddd74d4c6ec0fb682382e860f69",
+      "url": "afk-petbite.js?v=48570558ea50",
+      "sha256": "48570558ea5040ef418919e896c29305be97f7d0c7e77afec5557a883b187acc",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1604,7 +1604,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "68a86304dc5694855f7a139ccc07582c3821ba8aff9cb99f945859b7107fb43d",
+      "sha256": "b515c77960397fce4cbbb5fe5061f89c2e536eeb122efe6744ef975630628514",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1628,8 +1628,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/04-combat-attack.js?v=32177b0c60d3",
-      "sha256": "32177b0c60d39e66ccd2fa6931c00cbac3189a4b933e3199e7da08b0e0863725",
+      "url": "js/04-combat-attack.js?v=10982ffa2dc1",
+      "sha256": "10982ffa2dc112759dc1861cb7a02c6bb1b2f70c0486f9280e4e3c09fc5a4208",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1828,18 +1828,18 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/class-catalog.js?v=2b03afef4a8d",
-      "sha256": "2b03afef4a8d0581c75f317e11ed5873c277c828106c67b5f647df03dbaaf429",
+      "url": "merged/class-catalog.js?v=e4ba42e722f6",
+      "sha256": "e4ba42e722f6bf88ec6c68b766a44d000ef1d7a1278a187f515b4b47c26df73e",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/class-combat.js?v=f38abe364d22",
-      "sha256": "f38abe364d228de1d10441c08c03948c76b53bc29d9081c7ef10269a4d81293c",
+      "url": "merged/class-combat.js?v=6f92a4fe8711",
+      "sha256": "6f92a4fe871138558f48146ebdd392215c3fba92a9c11ba8cc2b803f5577669c",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/class-core.js?v=963e2241bbee",
-      "sha256": "963e2241bbeeb62a9916c7b72e61660208f0ed23532c985f0ea94a8623f803a0",
+      "url": "merged/class-core.js?v=b45e40782f76",
+      "sha256": "b45e40782f76d3ef6142f476d70482fa528b520876e8b3fe74aec46c0d5d7392",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1858,8 +1858,8 @@
       "type": "text/css; charset=utf-8"
     },
     {
-      "url": "merged/class-ui.js?v=94874d45ffcf",
-      "sha256": "94874d45ffcf3f9435e2cd62aa03fe62edc3b83295defb409a9c566336256eb0",
+      "url": "merged/class-ui.js?v=cc51e3321451",
+      "sha256": "cc51e33214514d3c11937db161fe09a91dd004f5cbec03b693cfd18ec0f80599",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2109,7 +2109,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "3ce1f76f82afff1321817acb0d7f4353dfd09ab3e0110b4911c6be1acacab5f8",
+      "sha256": "27ff90db0139adc3bd027d0fa66ae9e627ee0b6c7c7d068f7df4cdb912371968",
       "type": "text/html; charset=utf-8"
     }
   ]

@@ -666,7 +666,7 @@
     if(key!=='classevolution'&&key!=='classtransfer')return null;
     if(!C)return note('職業資料載入中，請稍後重開。');
     var fusion=key==='classtransfer';
-    var out=note('席琳神殿・薇爾娜 → '+(fusion?'職業轉職':'職業進化')+'。路線與每段大絕選擇永久固定。')+card('進階條件',desc(fusion?'三段均需所選外職二轉 Lv200 的魂魄，每次消耗一顆。':'三段都需要本職業 Lv100 魂魄，轉生依序為零轉、一轉、二轉。')+desc('本人第一段需一轉，第二段需二轉；第三段另需通過終焉第三階層。每段新增五種法術及三選一大絕；第二、三段各新增一個隊伍光環。'+(fusion?'融合流派每段另開放三種龍魔法。':''))+desc('大絕第一段冷卻 30 秒、第二段 60 秒、第三段 180 秒，使用時共用大絕冷卻。被動只影響自己，光環影響隊伍。'));
+    var out=note('席琳神殿・薇爾娜 → '+(fusion?'職業轉職':'職業進化')+'。路線與每段大絕選擇永久固定。')+card('進階條件',desc(fusion?'三段均需所選外職二轉 Lv200 的魂魄，每次消耗一顆。':'三段都需要本職業 Lv100 魂魄，轉生依序為零轉、一轉、二轉。')+desc('本人第一段需一轉，第二段需二轉；第三段另需通過終焉第三階層。每段新增五種法術及三選一大絕；第二、三段各新增一個隊伍光環。'+(fusion?'融合流派每段另開放三種龍語絕技。':''))+desc('大絕第一段冷卻 30 秒、第二段 60 秒、第三段 180 秒，使用時共用大絕冷卻。被動只影響自己，光環影響隊伍。'));
     C.trees.forEach(function(t){if(!!t.requiresFusionTransfer!==fusion||cls&&cls!=='all'&&t.base!==cls)return;out+='<details class="m-wiki-card"><summary>'+esc(C.CLS[t.base]+'・'+t.name)+'</summary>'+desc(esc(t.theme))+t.skills.map(function(s){return factCard(esc(s.name),'第 '+s.stage+' 段・'+esc(s.type),esc(C.description(s)),[s.type==='被動'?'個人被動':s.type==='光環'?'啟用消耗 3% MP，每 5 秒消耗 1% MP'+(s.plan.blood?'、1% HP':''):'冷卻 '+s.plan.cd+' 秒']);}).join('')+'</details>';});return out;
   }
   var guide=W.AFK_GAME_GUIDE={

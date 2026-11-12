@@ -7,15 +7,15 @@
  *   次元強化：異化星塵 +1 20、+2 30、+3 40、+4 50、+5 100；成功率 100／80／60／40／100%；失敗不降級、不會壞、不扣材料。
  *   特效：+1、+2、+4 固定（每件不同的角色主題＋部位特性）；
  *         +3 隨機抽一套「套裝」：給套裝的名稱效果，同一套 3 件開「核心技能」、6 件開六件效果；
- *         +5 隨機抽一招同類（武器／防具／飾品）的「大絕招」，有冷卻、強度約曲線 100；同一套的 +5 有 9 件才開九件效果。
- *         倒影之鏡 1 個可以重抽 +3 的套裝或 +5 的大絕招。
+ *         +5 隨機抽一招同類（武器／防具／飾品）的「遺物絕技」，有冷卻、強度約曲線 100；同一套的 +5 有 9 件才開九件效果。
+ *         倒影之鏡 1 個可以重抽 +3 的套裝或 +5 的遺物絕技。
  *   四龍專屬：四龍副本・裂縫的龍掉「次元時空・破」；倒影之鏡＋四龍的時空碎片進化成 斬 → 解 → 序。只在四龍副本裡有效果。
  *   效果只算你本人（傭兵身上沒有效果）。經典模式沒有；外掛開關 dimrelic。
  * ========================================================================== */
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES, K = W.__afkNpcKit, L = W.__afkLore;
-  if (T && T.register) T.register({ id: 'dimrelic', name: '次元遺物', group: '遊戲內容', desc: '180 件次元遺物（+3 套裝、+5 大絕招）與四龍專屬的次元時空武器' });
+  if (T && T.register) T.register({ id: 'dimrelic', name: '次元遺物', group: '遊戲內容', desc: '180 件次元遺物（+3 套裝、+5 遺物絕技）與四龍專屬的次元時空武器' });
   if (T && !T.enabled('dimrelic')) return;
   if (typeof DB === 'undefined' || !DB.items || !K) return;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
@@ -99,7 +99,7 @@
     { k: 'pendulum', n: '鐘擺', piece: ['暈眩、凍結的時間 −5%', ['cc', 0.05]], core: { n: '停擺', cd: 30, d: '每 30 秒讓全體敵人暈眩 2 秒（頭目 0.5 秒）' }, six: ['每 20 秒下一擊傷害 ×3', ['cdHit', 20, 3]], nine: ['不會被暈眩、凍結（含時間停止）', ['cc', 1]] }
   ];
   var SETK = {}; SETS.forEach(function (s) { SETK[s.k] = s; });
-  // ── 大絕招（+5 抽，同類） ──
+  // ── 遺物絕技（+5 抽，同類） ──
   var ULT = {
     w: [{ k: 'collapse', n: '次元崩落', cd: 60, off: true, d: '每 60 秒，下一擊 ×12，同時對其他敵人造成那一擊的 50%' },
       { k: 'ladder', n: '斷羽天梯', cd: 45, off: true, d: '每 45 秒，接下來 5 擊各 ×3' },
@@ -137,7 +137,7 @@
     d.n = ch[0] + '的' + part; d.p = 0; d.gachaWeight = 0; d.noEnhance = true; d.noSell = true; d.dimRelic = true; d.c = 'text-cyan-300'; d.weight = 0;
     d.img = (base && base.img) || IMG + '原石碎片.png';
     var row = { id: id, cat: cat, slotName: slotName, ch: ch, fx: [th[0], p2, null, th[1], null], tpl: tpl };
-    d.d = '【次元遺物】' + ch[2] + '　' + ch[0] + '留在裂縫裡的' + part + '。\n+1：' + th[0][0] + '\n+2：' + p2[0] + '\n+3：隨機套裝\n+4：' + th[1][0] + '\n+5：隨機大絕招';
+    d.d = '【次元遺物】' + ch[2] + '　' + ch[0] + '留在裂縫裡的' + part + '。\n+1：' + th[0][0] + '\n+2：' + p2[0] + '\n+3：隨機套裝\n+4：' + th[1][0] + '\n+5：隨機遺物絕技';
     DB.items[id] = d; LIST.push(row); BY[id] = row;
     try { if (tpl && typeof WEAPON_TAGS !== 'undefined' && WEAPON_TAGS[tpl]) WEAPON_TAGS[id] = WEAPON_TAGS[tpl].slice(); } catch (e) {}
     return row;
@@ -372,7 +372,7 @@
     };
   }
 
-  // ── 冷卻：核心技能、大絕招 ──
+  // ── 冷卻：核心技能、遺物絕技 ──
   var tag = function (s) { return '<span class="font-bold" style="color:#67e8f9">【' + s + '】</span>'; };
   var hasUlt = function (k) { return fx().ults.some(function (u) { return u.k === k; }); };
   var ready = function (k) { return now() >= (B.cd['u' + k] || 0); };
@@ -581,14 +581,14 @@
     take(DUST, need); it.dimEn = n + 1; try { if (W.__afkAcStamp) W.__afkAcStamp(it); } catch (e) {}
     var msg = '「' + esc(DB.items[it.id].n) + '」強化到 +' + it.dimEn + '。';
     if (it.dimEn === 3 && !it.dimSet) { it.dimSet = pick(SETS).k; msg += '套裝：<b>' + esc(SETK[it.dimSet].n) + '</b>。'; }
-    if (it.dimEn === 5 && !it.dimUlt) { it.dimUlt = pick(ULT[BY[it.id].cat]).k; msg += '大絕招：<b>' + esc(ULTK[it.dimUlt].n) + '</b>。'; }
+    if (it.dimEn === 5 && !it.dimUlt) { it.dimUlt = pick(ULT[BY[it.id].cat]).k; msg += '遺物絕技：<b>' + esc(ULTK[it.dimUlt].n) + '</b>。'; }
     sys('<span class="font-bold" style="color:#67e8f9">✦ ' + msg + '</span>'); try { calcStats(); saveGame(); } catch (e) {}
   }
   function reroll(uid, what) { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
     var it = findUid(uid); if (!it || !BY[it.id]) return;
     if (cnt(MIRROR) < COST.reroll) { sys('<span class="text-amber-300">倒影之鏡不夠。</span>'); return; }
     if (what === 'set' && lv(it) >= 3) { take(MIRROR, 1); var o = it.dimSet; it.dimSet = pick(SETS.filter(function (s) { return s.k !== o; })).k; sys('<span style="color:#67e8f9">套裝重抽：<b>' + esc(SETK[it.dimSet].n) + '</b>。</span>'); }
-    else if (what === 'ult' && lv(it) >= 5) { take(MIRROR, 1); var o2 = it.dimUlt; it.dimUlt = pick(ULT[BY[it.id].cat].filter(function (u) { return u.k !== o2; })).k; sys('<span style="color:#67e8f9">大絕招重抽：<b>' + esc(ULTK[it.dimUlt].n) + '</b>。</span>'); }
+    else if (what === 'ult' && lv(it) >= 5) { take(MIRROR, 1); var o2 = it.dimUlt; it.dimUlt = pick(ULT[BY[it.id].cat].filter(function (u) { return u.k !== o2; })).k; sys('<span style="color:#67e8f9">遺物絕技重抽：<b>' + esc(ULTK[it.dimUlt].n) + '</b>。</span>'); }
     try { calcStats(); saveGame(); } catch (e) {}
   }
   function synth(n) { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
@@ -608,7 +608,7 @@
     [['+1', row.fx[0]], ['+2', row.fx[1]], ['+3', null], ['+4', row.fx[3]], ['+5', null]].forEach(function (x, i) {
       var on = n >= i + 1, txt;
       if (i === 2) txt = it && it.dimSet ? '套裝「' + SETK[it.dimSet].n + '」：' + SETK[it.dimSet].piece[0] : '隨機套裝';
-      else if (i === 4) txt = it && it.dimUlt ? '大絕招「' + ULTK[it.dimUlt].n + '」：' + ULTK[it.dimUlt].d : '隨機大絕招';
+      else if (i === 4) txt = it && it.dimUlt ? '遺物絕技「' + ULTK[it.dimUlt].n + '」：' + ULTK[it.dimUlt].d : '隨機遺物絕技';
       else txt = x[1][0];
       lines.push('<span style="color:' + (on ? '#a5f3fc' : '#64748b') + '">' + x[0] + '　' + esc(txt) + '</span>');
     });
@@ -617,13 +617,13 @@
   var VIEW = { tab: 'mine', slot: '' };
   // 分頁：上排是次元遺物本身，下排是其他裂縫裝備
   var TABS = [
-    ['次元遺物', [['mine', '我的次元遺物'], ['craft', '製作'], ['sets', '套裝與大絕招'], ['synth', '異化星塵']]],
+    ['次元遺物', [['mine', '我的次元遺物'], ['craft', '製作'], ['sets', '套裝與遺物絕技'], ['synth', '異化星塵']]],
     ['裂縫裝備', [['lib', '次元支配'], ['ref', '裂縫淬鍊'], ['phantom', '幻聖紋'], ['horn', '阿納金的號角'], ['dragon', '次元時空'], ['sherine', '席琳界約']]]
   ];
   var TAB_INFO = {
-    mine: ['強化、重抽你身上與背包裡的次元遺物。', '強化用異化星塵，失敗不降級、不扣材料。+3 隨機得到一種套裝，+5 隨機得到一招大絕招；不喜歡可以用倒影之鏡重抽。', [DUST, MIRROR]],
+    mine: ['強化、重抽你身上與背包裡的次元遺物。', '強化用異化星塵，失敗不降級、不扣材料。+3 隨機得到一種套裝，+5 隨機得到一招遺物絕技；不喜歡可以用倒影之鏡重抽。', [DUST, MIRROR]],
     craft: ['把一件 +0 遺物丟進裂縫，換成同部位的次元遺物。', '① 先在清單裡選一件 +0、沒有昇華、沒上鎖的遺物　② 再選要做成哪一件。每件次元結晶 ' + COST.craft + '。', [CRYSTAL]],
-    sets: ['次元遺物 +3 與 +5 會抽到的效果一覽。', '套裝看同一套的件數生效；大絕招每個部位類別各有一組可以抽。', []],
+    sets: ['次元遺物 +3 與 +5 會抽到的效果一覽。', '套裝看同一套的件數生效；遺物絕技每個部位類別各有一組可以抽。', []],
     synth: ['用破碎星光塵埃與血龍鑽合成強化用的異化星塵。', '', [STARDUST, BLOOD, DUST]],
     lib: ['把裝備中的「至高支配・封」武器解放成次元支配，再用縫天★強化。', '', [DUST]],
     ref: ['讓之魂與夢域淬鍊過的席琳遺骸，在次元裂縫裡更好用。', '', [SAND, WATER, CRYSTAL]],
@@ -650,11 +650,11 @@
         var row = BY[it.id], n = lv(it), on = eqd.indexOf(it) >= 0, btns = [], req = '';
         if (n < 5) { btns.push(['en:' + it.uid, '強化 +' + (n + 1) + '（' + COST.rate[n] + '%）', cnt(DUST) >= COST.en[n]]); req = reqBtn(cnt(DUST), COST.en[n], '異化星塵'); }
         if (n >= 3) btns.push(['rs:' + it.uid, '重抽套裝', cnt(MIRROR) >= 1]);
-        if (n >= 5) btns.push(['ru:' + it.uid, '重抽大絕招', cnt(MIRROR) >= 1]);
+        if (n >= 5) btns.push(['ru:' + it.uid, '重抽遺物絕技', cnt(MIRROR) >= 1]);
         h += K.rowHtml({ key: it.uid, ico: K.invIco(it, on ? 'eq' : 'inv'), name: esc(DB.items[it.id].n) + '　<span style="color:#fde68a">+' + n + '</span>' + (on ? '　<span style="color:#86efac;font-size:13px">裝備中</span>' : ''), color: '#67e8f9', desc: esc(row.slotName) + '・' + esc(row.ch[2]), note: fxText(row, it), req: req, btns: btns }, 'data-dr');
       });
       var f = fx(), sets = Object.keys(f.setN);
-      if (sets.length || f.ults.length) h += '<div class="ax-h">現在生效</div><div class="ax-sel" style="display:block">' + (sets.length ? '<ul>' + sets.map(function (k) { var s = SETK[k], c = f.setN[k], c9 = f.set9[k] || 0; return '<li><b style="color:#67e8f9">' + esc(s.n) + '</b> ' + c + ' 件' + (c >= 3 ? '・核心「' + esc(s.core.n) + '」' : '') + (c >= 6 ? '・六件' : '') + (c9 >= 9 ? '・九件' : '') + '</li>'; }).join('') + '</ul>' : '') + (f.ults.length ? '<div class="ax-desc" style="margin-top:4px">大絕招：' + f.ults.map(function (u) { return esc(u.n); }).join('、') + '</div>' : '') + '</div>';
+      if (sets.length || f.ults.length) h += '<div class="ax-h">現在生效</div><div class="ax-sel" style="display:block">' + (sets.length ? '<ul>' + sets.map(function (k) { var s = SETK[k], c = f.setN[k], c9 = f.set9[k] || 0; return '<li><b style="color:#67e8f9">' + esc(s.n) + '</b> ' + c + ' 件' + (c >= 3 ? '・核心「' + esc(s.core.n) + '」' : '') + (c >= 6 ? '・六件' : '') + (c9 >= 9 ? '・九件' : '') + '</li>'; }).join('') + '</ul>' : '') + (f.ults.length ? '<div class="ax-desc" style="margin-top:4px">遺物絕技：' + f.ults.map(function (u) { return esc(u.n); }).join('、') + '</div>' : '') + '</div>';
     } else if (VIEW.tab === 'craft') {
       var ms = mats();
       h += '<div class="ax-h" style="margin-top:4px">① 選一件 +0 遺物</div><div class="ax-list">';
@@ -672,7 +672,7 @@
     } else if (VIEW.tab === 'sets') {
       h += '<div class="ax-h" style="margin-top:4px">套裝（+3 隨機一種）</div>';
       SETS.forEach(function (st) { h += K.rowHtml({ key: st.k, name: esc(st.n), color: '#67e8f9', desc: '每件：' + esc(st.piece[0]), note: '3 件・核心「' + esc(st.core.n) + '」：' + esc(st.core.d) + '<br>6 件：' + esc(st.six[0]) + '<br>9 件（都 +5）：' + esc(st.nine[0]), btns: [] }, 'data-dr'); });
-      [['w', '武器'], ['a', '防具'], ['c', '飾品']].forEach(function (c) { h += '<div class="ax-h">大絕招・' + c[1] + '（+5 隨機一招）</div>' + ULT[c[0]].map(function (u) { return K.rowHtml({ key: u.k, name: esc(u.n), color: '#f0abfc', desc: esc(u.d), btns: [] }, 'data-dr'); }).join(''); });
+      [['w', '武器'], ['a', '防具'], ['c', '飾品']].forEach(function (c) { h += '<div class="ax-h">遺物絕技・' + c[1] + '（+5 隨機一招）</div>' + ULT[c[0]].map(function (u) { return K.rowHtml({ key: u.k, name: esc(u.n), color: '#f0abfc', desc: esc(u.d), btns: [] }, 'data-dr'); }).join(''); });
     } else if (VIEW.tab === 'lib') {
       var w = wpnOf(p), mt = libMats();
       h += '<ul class="ax-note dr-ul"><li><b>解放材料</b>：14 種武器遺物各 1 件（+0、未昇華、背包裡沒上鎖的）；不用龍鑽、金幣，100% 成功；保留強化值、星數、雅典娜的祝福。</li><li><b>次元裂縫裡</b>：次元支配武器效果完整、對裂縫敵人傷害 +30%，並得到雅典娜的祝福（抵銷裂縫傷害懲罰 15%）；沒解放的至高支配・封武器效果打折（造成的傷害 −10%）。</li><li><b>縫天★</b>：異化星塵 ' + LIB.en.join('／') + '，成功率 ' + LIB.rate.join('／') + '%（失敗不降級、不扣材料）；每一顆星打倒怪物恢復 5 點五屬性抗性，★5 侵蝕最低保留 +100。</li></ul>';

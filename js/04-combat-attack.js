@@ -2109,7 +2109,7 @@ function _applyMobMagicInner(mob, sk) {
     }
     if(inAbsBarrier()) return;   // 🛡️ 絕對屏障：與世界隔絕，敵方魔法（傷害與異常狀態）一律無效
     if(!mob || mob.curHp <= 0) return;   // 🔧 施法者已死亡（如 mag1 追加攻擊期間被反殺）：mag2/mag3 不得以死怪身分施放
-    if(mob.st && mob.st.confuse > 0 && !mob.boss) { logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 思緒混亂，無法施放技能。`, 'magic'); return; }   // 🔮 混亂：非BOSS敵人無法施放技能
+    if(mob.st && mob.st.confuse > 0) {   /* Ping 11-12 21:25：頭目也吃混亂 */ logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 思緒混亂，無法施放技能。`, 'magic'); return; }   // 🔮 混亂：非BOSS敵人無法施放技能
     
     // 衝擊之暈：追加一次一般攻擊（含看破判定），命中時依機率附加暈眩
     if(sk.type === 'extra_attack') {

@@ -36,18 +36,116 @@
  function hitChance(p,t,kind){if(kind==='magic')return true;const d=p.d||{},bonus=N(d[kind+'Hit'])+N(d.extraHit)+hitBonus(p,t,false),ac=typeof mobEffAC==='function'?mobEffAC(t):N(t.ac);let h=stretchHitValue(N(p.lv)+bonus-N(t.lv)+ac);h=Math.max(h,physicalHitSoftFloor(bonus,t));const rollHit=1+Math.floor(Math.random()*20);return rollHit===20||rollHit!==1&&rollHit<=Math.min(20,h);}
  function damage(p,t,amount,s,options={}){if(!live(t)||!live(p))return 0;const kind=options.kind||s.plan.channel;
   if(!options.dot&&!hitChance(p,t,kind)){if(typeof vfxMiss==='function')vfxMiss(t);return 0;}
-  if(kind==='magic')amount*=mrMult(N(t.mr));else amount=Math.max(0,amount-N(t.dr)-(typeof mobHardSkin==='function'?mobHardSkin(t):0));
+  if(kind==='magic')amount*=mrMult(N(t.mr)*(1-(options.pierceMr||0)));else amount=Math.max(0,amount-(N(t.dr)+(typeof mobHardSkin==='function'?mobHardSkin(t):0))*(1-(options.pierceAc||0)));
   const ele=options.element||(/火|炎/.test(s.name)?'fire':/水|冰|霜/.test(s.name)?'water':/風|雷/.test(s.name)?'wind':/地|土/.test(s.name)?'earth':'none');
   if(kind==='magic'&&typeof elementCounterMult==='function')amount*=elementCounterMult(ele,t.e);
+  amount*=1+vulnOf(options.attacker||p,t,{kind,element:ele});
   amount=W.LineageGrowth.absolute(p,t,amount,kind);if(!(amount>0))return 0;
   if(!options.dot&&W.LineageSherine&&!s.id.startsWith('sherine-')){const ctx={actor:p,target:t,damage:amount,kind,skillId:s.id,origin:'normal',direct:true};W.LineageSherine.event('beforeSkill',ctx);amount=ctx.damage;}
   const actual=R.api.damage(t,amount,{actor:p,source:s.id,type:options.dot?'dot':kind,element:ele,origin:'class',generated:true,direct:!options.dot,cardInherited:true,reflect:!options.dot,settle:true,dotKind:options.poison?'poison':undefined,budgeted:false});
-  if(actual>0){if(typeof threatHeal==='function'&&false)threatHeal(p,actual);if(typeof _threatAdd==='function')_threatAdd(t,threatKey(p),actual*computeThreatMult(p));if(typeof vfxText==='function')vfxText(t,String(Math.floor(actual)),kind==='magic'?'#92bcf5':'#e2c588');}
+  if(actual>0){burstAdd(p,t,actual);const lr=s.plan?.v3ult||options.dot?0:leechRate(p);if(lr>0)R.api.heal(p,actual*lr,{owner:p,source:'class-leech3',prepaid:true});if(typeof threatHeal==='function'&&false)threatHeal(p,actual);if(typeof _threatAdd==='function')_threatAdd(t,threatKey(p),actual*computeThreatMult(p));if(typeof vfxText==='function')vfxText(t,String(Math.floor(actual)),kind==='magic'?'#92bcf5':'#e2c588');}
   return actual;
  }
  function heal(p,t,amount,s){if(!live(t))return 0;return R.api.heal(t,amount*(1+value(p,'healing')),{owner:p,source:s.id,prepaid:true});}
  function shield(p,t,amount,s,seconds){if(!live(t))return;R.api.shield(t,amount*(1+value(p,'shield')),{owner:p,source:'class:'+s.id,cap:maxhp(p)*1.2,duration:seconds,classOnlyDirect:true,classSingle:/普通單體/.test(s.description||'')});}
- function perform(p,s,target,selected){const a=st(p),H=maxhp(p),M=N(p.mmp),B=baseline(p);let actual=0;const next=s.type==='法術'?consume(p,'nextSkill'):0,mult=(1+value(p,'skill',target)+value(p,'damage',target)+next+(s.type==='法術'?consume(p,'nextClassDamage'):0))*tradeDamage(p);let useful=0;
+ // ── 大絕、龍語絕技第三版（docs/ultimate-redesign.md「零之二」的疊加規則都在這一段）──
+ const VIRTUAL=new Set(['vulnerability','physVuln','magicVuln','eleVuln','eleRes','critVuln','comboVuln','petVuln','guardVuln','allyVuln','rangedVuln','weakVuln','lowHpVuln','debuffedVuln','lightVuln','dotVuln','bleedVuln','bloodVuln','healSteal','eleRes_fire','eleRes_water','eleRes_wind','eleRes_earth','atkDown']);
+ const ELE4={fire:1,water:1,wind:1,earth:1};
+ const isGuard=x=>!!(x&&typeof player!=='undefined'&&(player.guardsV2||[]).includes(x));
+ const guardsOf=p=>p===player?(player.guardsV2||[]).filter(live):[];
+ const weakMax=()=>typeof weakExposeMaxLayers==='function'?weakExposeMaxLayers():3;
+ function dv(t,key){if(!t)return 0;let n=0;for(const d of Object.values(ms(t).debuffs))if(d.key===key&&d.until>now())n+=d.value;return n;}
+ function poisoned(t){if(!t)return false;const z=t.st||{};if(N(z.poison)>0||N(z.venom)>0||N(z.deadlyPoison)>0)return true;for(const m of members())if(st(m).dots.some(x=>x.target===t&&x.poison&&x.until>now()))return true;return false;}
+ // 敵人受到的傷害 +%：大絕來源先相加，合計最多 +300%（B5）
+ function vulnOf(attacker,t,ctx={}){if(!t)return 0;const k=ctx.kind;let n=dv(t,'vulnerability')+dv(t,'bloodVuln');
+  if(k==='melee'||k==='ranged'||k==='phys')n+=dv(t,'physVuln');if(k==='magic')n+=dv(t,'magicVuln');
+  const e=ctx.element;if(e&&e!=='none'){n+=dv(t,'eleVuln')+dv(t,'eleRes')/1000+(ELE4[e]?dv(t,'eleRes_'+e)/1000:0);if(e==='light')n+=dv(t,'lightVuln');}
+  if(ctx.crit)n+=dv(t,'critVuln');if(ctx.extra)n+=dv(t,'comboVuln');if(k==='ranged')n+=dv(t,'rangedVuln');
+  if(attacker&&!attacker.cls){n+=dv(t,'petVuln');if(isGuard(attacker))n+=dv(t,'guardVuln');}
+  if(attacker&&attacker!==player)n+=dv(t,'allyVuln');
+  if(N(t.weakExpose)>0)n+=dv(t,'weakVuln');if(hp(t)<maxhp(t)*.5)n+=dv(t,'lowHpVuln');
+  const z=t.st||{};if(dv(t,'debuffedVuln')&&Object.keys(z).some(x=>N(z[x])>0&&!/Dmg|Tick|Stacks|Cd/.test(x)))n+=dv(t,'debuffedVuln');
+  return Math.min(3,n);}
+ function ultMult(p,t,kind){let m=value(p,'damage2')+value(p,'damage3');if(kind==='ranged')m+=value(p,'rangedDamage');if(t&&N(t.weakExpose)>0)m+=value(p,'weakDamage')+value(p,'weakDamage2');const ls=value(p,'lowHpScale');if(ls)m+=ls*Math.floor((1-hp(p)/maxhp(p))*10);return m;}
+ function leechRate(p){return Math.min(1,value(p,'leech')+value(p,'leech2')+value(p,'leech3'));}   // 吸血合計最多 100%（B6）
+ function burstAdd(p,t,n){const b=ms(t).burst;if(b&&b.owner===p&&b.until>now())b.acc+=n;}
+ // 追加攻擊：追加出來的還能再觸發，同一下最多往下追 3 層（Ping 21:49）
+ function extraHits(p,t,base,depth,c){if(depth>=3||!live(t)||!(base>0))return;const list=[];const add=r=>{if(r>0)list.push(r);};
+  add(value(p,'extraHit'));add(value(p,'extraHit2'));add(value(p,'cloneHit'));
+  if(Math.random()<value(p,'procExtra'))add(1);if(Math.random()<value(p,'procExtra2'))add(1);if(depth===0&&consume(p,'comboNext'))add(1);
+  for(const r of list){if(!live(t))break;const n=R.api.damage(t,base*r*(1+vulnOf(p,t,{kind:c.kind,element:c.element,extra:true})),{actor:p,source:'class-extra',type:c.kind==='magic'?'magic':c.kind==='ranged'?'ranged':'physical',origin:'class',generated:true,direct:false,settle:true,noProc:true,reflect:false});
+   if(n>0){burstAdd(p,t,n);if(!state.ff&&typeof vfxText==='function')vfxText(t,String(Math.floor(n)),'#c4b5fd');extraHits(p,t,n,depth+1,c);}}}
+ function allNeg(t,list,seconds,strength,bossToo,actor){let n=0;for(const k of list){if(t.boss&&!bossToo)continue;if(R.api.status(t,k,seconds,strength)!==false)n++;}return n;}
+ function revive(p,ratio){let n=0;const pool=[].concat(p===player?(player.allies||[]):[],R.api.pets(p)||[],R.api.summons(p)||[],p===player?(player.guardsV2||[]):[]);
+  for(const x of pool){if(!x)continue;const mh=maxhp(x);if(x._downed||x.dead||hp(x)<=0){x._downed=false;x.dead=false;x._dead=false;x[hpKey(x)]=Math.max(1,Math.floor(mh*ratio));n++;}else if(x._afkImmortal||hp(x)<=1){x[hpKey(x)]=Math.min(mh,hp(x)+Math.floor(mh*ratio));n++;}}return n;}   // B13：不會死的寵物改成回血
+ function payCost(p,o,s){const H=maxhp(p);let paid=0;const who=o.who==='team'?members():o.who==='highest'?[members().slice().sort((x,y)=>hp(y)-hp(x))[0]].filter(Boolean):[p];
+  for(const m of who){let n=Math.floor(maxhp(m)*o.ratio);if(o.costHalf&&m===p)n=Math.floor(n/2);n=Math.min(n,Math.max(0,hp(m)-1));m[hpKey(m)]-=n;if(m===p)paid+=n;m._afkSelfCostUntil=Date.now()+15000;}   // B1：自己付的代價不觸發不屈命運
+  if(paid>0){if(o.costShield)shield(p,p,paid*o.costShield,{id:s.id+':cost'},10);if(o.costMp)p.mp=Math.min(p.mmp,N(p.mp)+paid);
+   if(o.guardDrain){let pool=paid;for(const g of guardsOf(p)){const take=Math.min(pool,Math.max(0,hp(g)-1));g[hpKey(g)]-=take;pool-=take;const room=H-hp(p),back=Math.min(room,paid-pool);p[hpKey(p)]+=back;if(paid-pool>back)shield(p,p,paid-pool-back,{id:s.id+':drain'},10);if(pool<=0)break;}}}
+  W.LineageSherine?.signal(p,'blood',null,{amount:paid});return paid;}
+ function remainingDots(t){let n=0;const list=[];for(const m of members())for(const x of st(m).dots)if(x.target===t&&x.until>now()){n+=x.damage*Math.max(0,x.until-now());list.push([m,x]);}
+  const z=t.st||{};for(const k of ['poison','burn','bleed','scald'])if(N(z[k])>0&&N(z[k+'Dmg'])>0)n+=N(z[k+'Dmg'])*N(z[k])/10;return {n,list};}
+ function clearDots(t,list){for(const [m,x] of list)st(m).dots=st(m).dots.filter(y=>y!==x);const z=t.st||{};for(const k of ['poison','burn','bleed','scald'])if(N(z[k])>0)z[k]=0;}
+ function debuffAll(p,o,targets){for(const t of targets){if(!live(t))continue;let val=o.value;if(o.poisonedX&&poisoned(t))val*=o.poisonedX;
+   if(o.key==='mr'&&val<0)val=-Math.min(-val,Math.max(0,N(t.mr)));   // 魔防扣到 0 為止
+   if(o.key==='atkDown'){R.api.status(t,'physicalDamageDown',o.seconds,val);R.api.status(t,'magicDamageDown',o.seconds,val);}
+   debuff(t,'u3:'+o.key+':'+(o.src||''),o.key,val,o.seconds);}}
+ function perform3(p,s,target,selected){const a=st(p),H=maxhp(p),B=baseline(p);let actual=0,useful=0;
+  const ens=()=>enemies(),main=target&&live(target)?target:ens()[0];
+  const mult0=(1+value(p,'skill',main)+value(p,'damage',main)+ultMult(p,main,s.plan.channel)+consume(p,'nextDamage'))*tradeDamage(p);
+  const lowOf=o=>{let m=1;if(o.lowHp&&hp(p)/H<o.lowHp.below)m*=o.lowHp.mult;if(o.lowHpScale)m*=1+o.lowHpScale*Math.floor((1-hp(p)/H)*10);return m;};
+  const hitOne=(t,scale,o)=>{if(!live(t))return 0;let sc=scale;if(o.weakFull&&N(t.weakExpose)>=weakMax())sc*=1+o.weakFull;return damage(p,t,B*sc*mult0*lowOf(o),s,{element:o.element,pierceAc:o.pierceAc,pierceMr:o.pierceMr,kind:o.channel});};
+  const pick=o=>o.target==='guards'?guardsOf(p):o.target==='companions'?companions(p):o.target==='team'?team():[p];
+  for(const o of s.plan.ops){
+   if(o.kind==='hit'){
+    if(o.all){for(const t of ens())actual+=hitOne(t,o.scale*(t.boss?(o.bossMult||1):1),o);useful++;continue;}
+    const t=main;if(!t)continue;
+    if(o.execute&&hp(t)<maxhp(t)*o.execute.below){if(!t.boss&&o.execute.kill){actual+=R.api.damage(t,hp(t)+1,{actor:p,source:s.id,type:'true',origin:'class',generated:true,settle:true,reflect:false,execute:true});useful++;continue;}actual+=hitOne(t,o.scale*o.execute.mult,o);useful++;continue;}
+    for(let i=0;i<(o.hits||1)&&live(t);i++)actual+=hitOne(t,o.scale,o);
+    if(o.chain){let j=0,last=t;while(j<o.chain.jumps&&!live(last)){const nx=ens()[0];if(!nx)break;actual+=hitOne(nx,o.scale*o.chain.ratio,o);last=nx;j++;}}
+    useful++;continue;}
+   if(o.kind==='settle'){for(const t of o.all?ens():[main].filter(Boolean)){const r=remainingDots(t);clearDots(t,r.list);let n=r.n*o.mult*lowOf(o);n=Math.min(n,B*40);if(n>0)actual+=damage(p,t,n,s,{kind:'magic',dot:true});if(o.add)actual+=hitOne(t,o.add,o);}useful++;continue;}
+   if(o.kind==='markBurst'){for(const t of ens())ms(t).burst={owner:p,until:now()+o.seconds,ratio:o.ratio*lowOf(o),cap:B*o.cap,acc:0,skill:s};useful++;continue;}
+   if(o.kind==='spread'){const z=main?.st||{};const ks=['stun','freeze','stone','sleep','paralyze','blind','weaken','disease','slow','confuse','fear','mrhalf','poison','bind','curse'].filter(k=>N(z[k])>0);for(const t of ens())if(t!==main)for(const k of ks)R.api.status(t,k,Math.max(1,N(z[k])/10),z[k+'Dmg']);useful++;continue;}
+   if(o.kind==='cdr'){const cds=p.classPath?.cooldowns||{};for(const k of Object.keys(cds)){if(k==='ult'||k.startsWith('dragon'))continue;const left=N(cds[k])-Date.now();if(left>0)cds[k]=Date.now()+left*(1-o.ratio);}useful++;continue;}   // 不影響大絕冷卻
+   if(o.kind==='cost'){payCost(p,o,s);useful++;continue;}
+   if(o.kind==='buff'){for(const t of pick(o)){let val=o.value;if(o.royalX&&t.cls==='royal')val*=o.royalX;if(o.guardX&&isGuard(t))val*=o.guardX;put(t,o.key,val,o.seconds,s.id,o.charges);}useful++;continue;}
+   if(o.kind==='shield'){for(const t of pick(o)){let r=o.ratio;if(o.royalX&&t.cls==='royal')r*=o.royalX;if(o.royalAdd&&t.cls==='royal')r+=o.royalAdd;shield(p,t,maxhp(t)*r,{id:s.id+(o.src?':'+o.src:'')},o.seconds);}useful++;continue;}
+   if(o.kind==='heal'){const xs=pick(o);const low=xs.slice().sort((x,y)=>hp(x)/maxhp(x)-hp(y)/maxhp(y))[0];for(const t of xs){let r=o.ratio;if(o.royalX&&t.cls==='royal')r*=o.royalX;if(o.lowestX&&t===low)r*=o.lowestX;const amt=maxhp(t)*r;
+     if(o.overTime){const steps=o.interval?Math.floor(o.overTime/o.interval):3;for(let k=1;k<=steps;k++)a.delayed.push({at:now()+o.overTime*k/steps,type:'heal',target:t,amount:amt,skill:s});useful++;continue;}
+     const room=maxhp(t)-hp(t);useful+=heal(p,t,amt,s);if(o.overflowMp&&amt>room&&t.mmp>0)t.mp=Math.min(t.mmp,N(t.mp)+Math.floor(amt-room));}
+    a.resources.support={until:now()+8};continue;}
+   if(o.kind==='mana'){for(const t of pick(o))if(t.mmp>0)t.mp=Math.min(t.mmp,N(t.mp)+Math.floor(t.mmp*o.ratio));useful++;continue;}
+   if(o.kind==='cleanse'){let n=0;for(const t of pick(o))n+=cleanse(t,o.number,o.statuses);useful+=n;continue;}
+   if(o.kind==='revive'){useful+=revive(p,o.ratio);continue;}
+   if(o.kind==='taunt'){for(const t of o.one?[main].filter(Boolean):ens()){if(t.boss&&!o.bossToo)continue;if(typeof ironGuardTaunt==='function'){ironGuardTaunt(t,p);if(t._ironGuardTaunt)t._ironGuardTaunt.until=state.ticks+o.seconds*10;}}useful++;continue;}
+   if(o.kind==='redirectAll'){const guards=o.byGuards?guardsOf(p):null;for(const m of team()){if(m===p||isGuard(m))continue;const ratio=m.cls==='royal'&&o.royalRatio!=null?o.royalRatio:o.ratio;if(!(ratio>0))continue;const guardian=guards?guards[0]:p;if(!guardian||guardian===m)continue;st(m).redirect={guardian,ratio,guardianReduction:0,single:false,until:now()+o.seconds,fromRoyal:m.cls==='royal',owner:p};}useful++;continue;}
+   if(o.kind==='store'){a.store={until:now()+o.seconds,ratio:o.ratio*lowOf(o),royalRatio:o.royalRatio||o.ratio,acc:0,royalAcc:0,skill:s};useful++;continue;}
+   if(o.kind==='debuffAll'){debuffAll(p,o,ens());useful++;continue;}
+   if(o.kind==='debuffMain'){if(main)debuff(main,'u3:'+o.key,o.key,o.value,o.seconds);useful++;continue;}
+   if(o.kind==='bloodVuln'){const v=o.per*Math.floor((1-hp(p)/H)*10);if(v>0)debuffAll(p,{key:'bloodVuln',value:v,seconds:o.seconds},ens());useful++;continue;}
+   if(o.kind==='block'){for(const t of ens()){const m=ms(t),cur=m.suppression?.until>now()?m.suppression.value:0;m.suppression={until:now()+o.seconds,value:Math.max(cur,o.value)};}useful++;continue;}
+   if(o.kind==='breachAll'){for(const t of ens()){const m=ms(t);for(const mode of ['phys','magic']){const old=m.breaches[mode];m.breaches[mode]={until:now()+o.seconds,recover:Math.max(N(old?.recover),now()+o.seconds)};}}useful++;continue;}   // B9：無視回復冷卻
+   if(o.kind==='statusAll'){for(const t of ens())useful+=allNeg(t,o.statuses,o.seconds,o.strength,o.bossToo,p);continue;}
+   if(o.kind==='statusOne'){if(main){const sec=main.boss&&o.bossSeconds!=null?o.bossSeconds:o.seconds;useful+=allNeg(main,[o.status],sec,o.strength,o.bossToo||o.bossSeconds!=null,p);}continue;}
+   if(o.kind==='weak'){for(const t of o.all?ens():[main].filter(Boolean)){const mx=weakMax();t.weakExpose=o.add==='max'?mx:Math.min(mx,N(t.weakExpose)+o.add);}useful++;continue;}
+   if(o.kind==='dot'){for(const t of [main].filter(Boolean)){if(o.poison&&(t.immPoison||t.poisonImmune))continue;a.dots=a.dots.filter(x=>!(x.target===t&&x.skill.id===s.id));a.dots.push({target:t,skill:s,poison:o.poison,damage:B*o.scale*mult0*(1+value(p,'poison',t)),next:now()+1,until:now()+o.seconds});}useful++;continue;}   // B7：同一招只留一條
+   if(o.kind==='assist'){const list=o.guards?guardsOf(p):companions(p);for(const c of list)if(main)actual+=damage(p,main,B*.3*o.scale,s,{kind:'melee',attacker:c});useful++;continue;}
+   if(o.kind==='trueDps'){const w=DB.items[p.eq?.wpn?.id]||{},per=Math.max(N(w.dmgS),N(w.dmgL),1)*o.weaponMax;(a.pulses||(a.pulses=[])).push({skill:s,until:now()+o.seconds,next:now()+1,true:per});useful++;continue;}
+   if(o.kind==='pulse'){(a.pulses||(a.pulses=[])).push({skill:s,until:now()+o.seconds,next:now()+1,scale:o.scale*mult0,element:o.element});useful++;continue;}
+   if(o.kind==='bite'){const B2=W.__afkPetBite;if(B2&&B2.fill)for(const t of ens())B2.fill(t);useful++;continue;}   // 用現有的寵物傷口撕咬（afk-petbite）
+  }
+  R.recalc(p);return {actual,useful};
+ }
+ // 每一刻：印記爆發、累積反攻、持續脈衝、殿堂偷回復
+ function tick3(p){const a=st(p);
+  if(a.store&&a.store.until<=now()){const x=a.store;a.store=null;const total=x.acc*x.ratio+x.royalAcc*x.royalRatio;if(total>0)for(const t of enemies())damage(p,t,Math.min(total,baseline(p)*50),x.skill,{kind:'melee',dot:true});}
+  if(a.pulses?.length){for(const x of a.pulses)if(x.next<=now()&&x.until>=now()){x.next+=1;for(const t of enemies()){if(x.true)R.api.damage(t,x.true,{actor:p,source:x.skill.id,type:'true',origin:'class',generated:true,settle:true,reflect:false});else damage(p,t,baseline(p)*x.scale,x.skill,{kind:'magic',element:x.element,dot:true});}}a.pulses=a.pulses.filter(x=>x.until>now());}
+  if(p!==player)return;
+  for(const t of enemies()){const m=ms(t);if(m.burst&&m.burst.until<=now()){const b=m.burst;m.burst=null;const n=Math.min(b.acc*b.ratio,b.cap);if(n>0)damage(b.owner,t,n,b.skill,{kind:'magic',dot:true});}
+   if(dv(t,'healSteal')>0){const was=N(t._afkHsHp);if(was>0&&hp(t)>was){const diff=hp(t)-was;t[hpKey(t)]=was;const low=team().sort((x,y)=>hp(x)/maxhp(x)-hp(y)/maxhp(y))[0];if(low)R.api.heal(low,Math.min(diff,maxhp(low)-hp(low)),{owner:p,source:'class-healsteal',prepaid:true});}t._afkHsHp=hp(t);}else t._afkHsHp=0;}
+ }
+ function perform(p,s,target,selected){if(s.plan.v3ult)return perform3(p,s,target,selected);const a=st(p),H=maxhp(p),M=N(p.mmp),B=baseline(p);let actual=0;const next=s.type==='法術'?consume(p,'nextSkill'):0,mult=(1+value(p,'skill',target)+value(p,'damage',target)+next+(s.type==='法術'?consume(p,'nextClassDamage'):0))*tradeDamage(p);let useful=0;
   const ordered=s.plan.ops.slice().sort((x,y)=>(x.kind==='require'?-1:0)-(y.kind==='require'?-1:0));
   for(const o of ordered){
    const xs=targets(p,o,selected);if(['mark','debuff','status'].includes(o.kind)&&s.plan.ops.some(x=>x.kind==='hit')&&actual<=0)continue;
@@ -88,13 +186,13 @@
  function cast(id,target,selected,p=player){const s=C.skills.get(id);target=target||enemies()[0];const why=reason(p,s,target);if(why)return {ok:false,reason:why};if(s.type==='光環')return {ok:false,reason:'請在光環頁啟用'};const c=cost(p,s);spendCharged(p,'cost');p.mp-=c.mp;p[hpKey(p)]-=c.hp;if(c.hp>0)W.LineageSherine?.signal(p,'blood',target,{amount:c.hp});W.LineageSherine?.consumeSilence(p);const cds=p.classPath.cooldowns||(p.classPath.cooldowns={}),key=s.type==='大絕'?'ult':s.type==='龍魔法'?'dragon:'+s.plan.dragonFamily:s.id;cds[key]=Date.now()+s.plan.cd*1000*(s.type==='大絕'?1:st(p).spellDelay||1);if(s.type==='龍魔法')cds.dragonGlobal=Date.now()+5000;
   if(s.plan.castTime){st(p).casting={at:now()+s.plan.castTime,s,target,selected};return {ok:true,charging:true};}const result=perform(p,s,target,selected);if(!state.ff&&typeof logCombat==='function')logCombat('<span style="color:#d8c58d">'+s.name+'</span>','magic');return {ok:true,...result};
  }
- function debuff(t,source,key,value,seconds){if(!t)return;const m=ms(t),old=m.debuffs[source];if(old&&old.key!=='vulnerability')t[old.key]-=old.value;m.debuffs[source]={key,value,until:now()+seconds};if(key!=='vulnerability')t[key]=N(t[key])+value;}
+ function debuff(t,source,key,value,seconds){if(!t)return;const m=ms(t),old=m.debuffs[source];if(old&&!VIRTUAL.has(old.key))t[old.key]-=old.value;m.debuffs[source]={key,value,until:now()+seconds};if(!VIRTUAL.has(key))t[key]=N(t[key])+value;}
  function broken(t,kind){if(kind==='melee'||kind==='ranged')kind='phys';return N(ms(t).breaches[kind]?.until)>now();}
  function summon(p,s,seconds){if(p!==player)return false;const list=p.summonsV2||(p.summonsV2=[]);if(list.some(x=>x._classSpirit&&live(x)))return false;const form=typeof _sumDefaultForm==='function'?_sumDefaultForm(p):null;if(!form)return false;const limit=_sumCountFor(form,p),e=_sumTierOf(form);if(!e||limit<=0||list.filter(live).length>=limit)return false;list.push({uid:uid(),skId:'sk_summon',form,lv:e.mob.lv,hp:e.mob.hp,mhp:e.mob.hp,_atkCd:5,_classSpirit:true,_classExpires:now()+seconds});return true;}
  function stats(p){if(!p?.d||!C.valid(p))return;const a=st(p);if(!a.baseStats||!enemies().length)a.baseStats={...p.d};if(!C.tree(p))return;const d=p.d;p.mhp=Math.max(1,Math.floor(p.mhp*(1+value(p,'maxHp'))));
   const trade=C.tree(p).tradeoff||'';const atkCut=trade.match(/攻速[−-](\d+)/);if(atkCut){d.aspd/=Math.max(.2,1-Number(atkCut[1])/100);if(d.aspdOff)d.aspdOff/=Math.max(.2,1-Number(atkCut[1])/100);}if(/施法間隔\+10%/.test(trade))st(p).spellDelay=1.1;const cut=(trade.match(/最大MP[−-](\d+)%/)||[])[1];if(tIs(p,'knight','mage')&&!cut)p.mmp=Math.max(1,Math.floor(p.mmp*.2));if(cut)p.mmp=Math.max(0,Math.floor(p.mmp*(1-Number(cut)/100)));
   if(/最大HP[−-]10%/.test(trade))p.mhp=Math.max(1,Math.floor(p.mhp*.9));
-  for(const k of ['meleeHit','rangedHit','magicHit'])d[k]=N(d[k])+value(p,'hit');for(const k of ['meleeCritDmg','rangedCritDmg','magicCritDmg'])d[k]=N(d[k])+value(p,'critDamage');d.mr=N(d.mr)+value(p,'mr');for(const k of ['resFire','resWater','resWind','resEarth'])d[k]=N(d[k])+value(p,'resist');d.moveSpeedPct=N(d.moveSpeedPct)+value(p,'move');const speed=1+Math.min(1,value(p,'haste'));d.aspd=Math.max(.1,N(d.aspd)/speed);if(d.aspdOff>0)d.aspdOff=Math.max(.1,d.aspdOff/speed);p.hp=Math.min(p.hp,p.mhp);p.mp=Math.min(p.mp,p.mmp);
+  for(const k of ['meleeHit','rangedHit','magicHit'])d[k]=N(d[k])+value(p,'hit');for(const k of ['meleeCritDmg','rangedCritDmg','magicCritDmg'])d[k]=N(d[k])+value(p,'critDamage');d.mr=N(d.mr)+value(p,'mr');d.ac=N(d.ac)+value(p,'ac');for(const [e,k] of [['fire','resFire'],['water','resWater'],['wind','resWind'],['earth','resEarth']])d[k]=N(d[k])+value(p,'res_'+e);for(const k of ['meleeCritDmg','rangedCritDmg','magicCritDmg'])d[k]=N(d[k])+value(p,'critDamage2');for(const k of ['resFire','resWater','resWind','resEarth'])d[k]=N(d[k])+value(p,'resist');d.moveSpeedPct=N(d.moveSpeedPct)+value(p,'move');const speed=1+Math.min(1,value(p,'haste'));d.aspd=Math.max(.1,N(d.aspd)/speed);if(d.aspdOff>0)d.aspdOff=Math.max(.1,d.aspdOff/speed);p.hp=Math.min(p.hp,p.mhp);p.mp=Math.min(p.mp,p.mmp);
  }
  function direct(c){return c.direct!==false&&!c.generated&&!c.isDot&&!c.reflection&&!c.redirected&&['normal','auto','gm'].includes(c.origin||'normal');}
  function event(name,c){if(!c?.actor)return;let done=seen.get(c);if(!done){done=new Set();seen.set(c,done);}const eventKey=name==='petHit'?name+':'+(c.actualDamage==null?'before':'after'):name;if(done.has(eventKey))return;done.add(eventKey);const p=c.actor,a=st(p);
@@ -102,31 +200,40 @@
   if(name==='beforeCast'&&direct(c)){c.mpCost*=1-Math.min(.6,value(p,'cost'));if(['atk','heal'].includes(c.skillType)){c.classSkillBoost=value(p,'nextSkill');c.damageMult=(c.damageMult||1)*(1+c.classSkillBoost);c.healMult=(c.healMult||1)*(1+c.classSkillBoost);}}
   if(name==='castPaid'&&direct(c)){spendCharged(p,'cost');if(c.classSkillBoost)consume(p,'nextSkill');}
   if(name==='regen'&&c.regenKind==='hp')c.value*=1+value(p,'regen');
+  if(name==='regen'&&c.regenKind==='mp')c.value*=1+value(p,'mpRegen');
   if(name==='beforeDot'&&c.dotKind==='poison')c.damage*=1+value(p,'poison',c.target);
+  if(name==='beforeDot'&&c.target)c.damage*=1+Math.min(3,dv(c.target,'dotVuln')+(c.dotKind==='bleed'?dv(c.target,'bleedVuln'):0)+vulnOf(p,c.target,{kind:'dot'}));
   if(name==='onCast'&&direct(c)){a.resources.nativeSpell={until:now()+8};triggerPassives(p,'cast');}
 
   if(name==='tick'){tick(p);return;}
+  if(name==='beforeStatus'&&value(p,'statusImmune')>0){c.immune=true;c.duration=0;return;}
   if(name==='beforeStatus'&&c.duration>0){const allowed=passive(p).filter(o=>o.kind==='passive'&&o.key==='control'&&(!o.statuses||o.statuses.includes(c.statusKind))).reduce((n,o)=>n+o.value,0);c.duration*=1-Math.min(.75,allowed+Math.max(0,...buffs(p).filter(b=>b.key==='control').map(b=>b.value))+aura(p,'control'));}
   if(name==='beforeHeal')c.amount*=Math.max(0,1+value(c.recipient||p,'healingIn'));
 
   if(name==='onCompanionStats'&&c.companion){c.maxHpMult*=1+value(c.companion,'maxHp');c.attackSpeedPct=N(c.attackSpeedPct)+value(c.companion,'haste')*100;}
-  if(name==='petHit'&&c.companion){if(c.actualDamage==null){const pet=c.companion;let bonus=c.damage*value(pet,'damage',c.target);for(const b of buffs(pet))if(b.key==='damage'&&b.budget){const n=Math.min(bonus,b.budget.remaining);b.budget.remaining-=n;bonus=n;}c.damage+=bonus+c.damage*consume(pet,'nextDamage');}else if(c.actualDamage>0){a.resources.companion={until:now()+6};refundTriggers(p,'companion');}}
+  if(name==='petHit'&&c.companion){if(c.actualDamage==null&&c.target){c.damage*=1+vulnOf(c.companion,c.target,{kind:'melee'});}if(c.actualDamage==null){const pet=c.companion;let bonus=c.damage*value(pet,'damage',c.target);for(const b of buffs(pet))if(b.key==='damage'&&b.budget){const n=Math.min(bonus,b.budget.remaining);b.budget.remaining-=n;bonus=n;}c.damage+=bonus+c.damage*consume(pet,'nextDamage');}else if(c.actualDamage>0){a.resources.companion={until:now()+6};refundTriggers(p,'companion');}}
   if(name==='shieldAbsorb'&&c.shieldSource?.startsWith('class:')){a.absorbed=N(a.absorbed)+N(c.absorbed);a.shieldLog.push({at:now(),amount:N(c.absorbed)});a.resources.hurt={until:now()+6};}
   if(name==='shieldBreak'&&c.shieldSource?.startsWith('class:')&&direct(c)){a.resources.shieldBroken={until:now()+6};refundTriggers(p,'shieldBroken');const f=a.shieldRefund;if(f&&!f.used&&f.until>=now()&&f.source===c.shieldSource){f.used=true;f.owner.mp=Math.min(f.owner.mmp,f.owner.mp+f.owner.mmp*f.ratio);}}
-  if((name==='beforeHit'||name==='beforeSkill')&&direct(c)&&!done.has('damage')){done.add('damage');c.damage*=tradeDamage(p);c.damage*=1+value(p,'damage',c.target,c)+consume(p,'nextDamage')+(c.skillId?value(p,'skill',c.target):0);const debuffs=ms(c.target).debuffs;c.damage*=1+Math.max(0,...Object.values(debuffs).filter(d=>d.until>now()&&d.key==='vulnerability').map(d=>d.value));}
+  if((name==='beforeHit'||name==='beforeSkill')&&direct(c)&&!done.has('damage')){done.add('damage');c.damage*=tradeDamage(p);c.damage*=1+value(p,'damage',c.target,c)+consume(p,'nextDamage')+(c.skillId?value(p,'skill',c.target):0);c.damage*=1+ultMult(p,c.target,c.kind);c.damage*=1+vulnOf(p,c.target,{kind:c.kind,element:c.element,crit:c.crit||c.isCrit});}
+  if(name==='beforeHurt'&&c.damage>0){if(value(p,'invuln')>0){c.damage=0;return;}
+   if(c.normalAttack&&N(c.attacker?.st?.confuse)>0&&Math.random()<.5){c.damage=0;return;}   // 混亂的怪物：一般攻擊 50% 打空（Ping 21:49）
+   const mg=value(p,'manaGuard');if(mg>0&&N(p.mp)>0){const take=Math.min(c.damage*mg,N(p.mp));p.mp-=take;c.damage-=take;}
+   if(c.damage>=hp(p)){if(value(p,'hpFloor')>0)c.damage=Math.max(0,hp(p)-1);else if(value(p,'antiExecute')>0){c.damage=Math.max(0,hp(p)-1);spendCharged(p,'antiExecute');}}}
   if(name==='beforeHurt'&&direct(c)){
-   c.damage*=1-Math.min(.7,value(p,'reduction',c.attacker,c));if(c.normalAttack&&Math.random()<Math.min(.5,value(p,'dodge')/100)){c.damage=0;a.resources.dodge={until:now()+6};triggerPassives(p,'dodge');}
-   const link=a.redirect;if(link?.until>now()&&live(link.guardian)&&!c.redirected&&(!link.single||c.normalAttack&&!c.aoe)){const n=c.damage*link.ratio;c.damage-=n;R.api.damage(link.guardian,n*(1-link.guardianReduction),{actor:link.guardian,attacker:c.attacker,source:'class-redirect',redirected:true,origin:'redirect',direct:true,type:c.kind,noProc:true});if(hp(link.guardian)<=0){if(link.guardian===player)killPlayer();else link.guardian._downed=true;}}
+   c.damage*=1-Math.min(.75,value(p,'reduction',c.attacker,c)+value(p,'reduction2'));if(c.normalAttack&&Math.random()<value(p,'decoy'))c.damage=0;if(c.normalAttack&&Math.random()<Math.min(.5,value(p,'dodge')/100)){c.damage=0;a.resources.dodge={until:now()+6};triggerPassives(p,'dodge');}
+   const link=a.redirect;if(link?.until>now()&&live(link.guardian)&&!c.redirected&&(!link.single||c.normalAttack&&!c.aoe)){const n=c.damage*link.ratio;c.damage-=n;if(link.fromRoyal&&st(link.guardian).store)st(link.guardian).store.royalAcc+=n;R.api.damage(link.guardian,n*(1-link.guardianReduction),{actor:link.guardian,attacker:c.attacker,source:'class-redirect',redirected:true,origin:'redirect',direct:true,type:c.kind,noProc:true});if(hp(link.guardian)<=0){if(link.guardian===player)killPlayer();else link.guardian._downed=true;}}
   }
+  if(name==='afterHurt'&&c.actualDamage>0&&!c.reflection){if(a.store&&a.store.until>now())a.store.acc+=c.actualDamage;const rf=value(p,'reflect');if(rf>0&&live(c.attacker)&&c.attacker.curHp!=null)R.api.damage(c.attacker,c.actualDamage*rf,{actor:p,source:'class-reflect',type:'true',origin:'reflection',reflection:true,generated:true,settle:true,reflect:false});const hl=value(p,'hurtLeech');if(hl>0)R.api.heal(p,c.actualDamage*hl,{owner:p,source:'class-hurtleech',prepaid:true});}
   if(name==='afterHurt'&&direct(c)&&c.actualDamage>0){a.resources.hurt={until:now()+6};a.hurt=N(a.hurt)+c.actualDamage;a.damageLog.push({at:now(),amount:c.actualDamage});const rate=value(p,'hurtHeal');if(rate&&N(a.cd.hurtHeal)<=now()){a.cd.hurtHeal=now()+2;heal(p,p,maxhp(p)*rate,{id:'class-hurt-regen'});}for(const o of passive(p))if(o.kind==='hurtHeal'&&N(a.cd[o.source])<=now()){a.cd[o.source]=now()+o.cd;heal(p,p,maxhp(p)*o.ratio,{id:o.source});}}
-  if(name==='directHit'&&direct(c)&&c.actualDamage>0){if(c.skillId&&c.element&&a.lastElement&&a.lastElement!==c.element)refundTriggers(p,'alternate');if(c.element)a.lastElement=c.element;if(c.actionId!=null&&a.lastAction===c.actionId)return;a.lastAction=c.actionId;if(!c.skillId&&c.main!==false)spendCharged(p,'critDamage');a.resources.mainHit={until:now()+8};if(c.skillId)a.resources.nativeSpell={until:now()+8};const m=mark(p,c.target);m.last=now();m.stack=Math.min(3,m.stack+1);if(c.skillId)m.casts.add(c.skillId);m.stack=Math.min(3,m.stack+consume(p,'extraStack'));const leech=value(p,'leech',c.target);if(leech>0&&N(a.cd.leech)<=now()){a.cd.leech=now()+1;heal(p,p,Math.min(c.actualDamage*leech,maxhp(p)*Math.max(.02,...buffs(p).filter(b=>b.key==='leech').map(b=>b.leechCap||.02))),{id:'class-leech'});}for(const o of passive(p))if(o.kind==='resourceTrigger'&&o.trigger==='hit'&&N(a.cd[o.source])<=now()){a.cd[o.source]=now()+o.cd;p.mp=Math.min(p.mmp,p.mp+p.mmp*o.ratio);}}
+  if(name==='directHit'&&direct(c)&&c.actualDamage>0){if(c.skillId&&c.element&&a.lastElement&&a.lastElement!==c.element)refundTriggers(p,'alternate');if(c.element)a.lastElement=c.element;if(c.actionId!=null&&a.lastAction===c.actionId)return;a.lastAction=c.actionId;if(!c.skillId&&c.main!==false)spendCharged(p,'critDamage');a.resources.mainHit={until:now()+8};if(c.skillId)a.resources.nativeSpell={until:now()+8};const m=mark(p,c.target);m.last=now();m.stack=Math.min(3,m.stack+1);if(c.skillId)m.casts.add(c.skillId);m.stack=Math.min(3,m.stack+consume(p,'extraStack'));const leech=value(p,'leech',c.target);if(leech>0&&N(a.cd.leech)<=now()){a.cd.leech=now()+1;heal(p,p,Math.min(c.actualDamage*leech,maxhp(p)*Math.max(.02,...buffs(p).filter(b=>b.key==='leech').map(b=>b.leechCap||.02))),{id:'class-leech'});}for(const o of passive(p))if(o.kind==='resourceTrigger'&&o.trigger==='hit'&&N(a.cd[o.source])<=now()){a.cd[o.source]=now()+o.cd;p.mp=Math.min(p.mmp,p.mp+p.mmp*o.ratio);}
+   burstAdd(p,c.target,c.actualDamage);const l3=Math.min(1,value(p,'leech2')+value(p,'leech3'));if(l3>0)R.api.heal(p,c.actualDamage*l3,{owner:p,source:'class-leech3',prepaid:true});if(!c.skillId&&c.main!==false)extraHits(p,c.target,c.actualDamage,0,c);}
   if(name==='onHeal'&&c.actualHeal>0){const owner=c.healer||c.owner||c.actor;if(owner)for(const o of passive(owner)){if(o.kind==='supportShield'&&N(st(owner).cd[o.source])<=now()){st(owner).cd[o.source]=now()+o.cd;shield(owner,owner,maxhp(owner)*o.ratio,{id:o.source},6);}if(o.kind==='resourceTrigger'&&o.trigger==='support'&&N(st(owner).cd[o.source])<=now()){st(owner).cd[o.source]=now()+o.cd;owner.mp=Math.min(owner.mmp,owner.mp+owner.mmp*o.ratio);}}}
   const trigger=name==='afterHurt'&&direct(c)&&c.actualDamage>0?'hurt':name==='directHit'&&direct(c)&&c.actualDamage>0?'third':name==='onDodge'?'dodge':null;
   if(trigger)for(const o of passive(p))if(o.kind==='nextTrigger'&&o.trigger===trigger&&(!o.filter||o.filter===c.kind)&&N(a.cd[o.source])<=now()){if(trigger==='third'){const k='count:'+o.source;a.cd[k]=N(a.cd[k])+1;if(a.cd[k]%3)continue;}a.cd[o.source]=now()+o.cd;put(p,o.key||'nextDamage',o.value,6,o.source,1);}
  }
- function tick(p){const a=st(p);if(!live(p))return;a.damageLog=a.damageLog.filter(x=>now()-x.at<=10);a.shieldLog=a.shieldLog.filter(x=>now()-x.at<=10);if(a.casting){if(controls(p))a.casting=null;else if(a.casting.at<=now()){const x=a.casting;a.casting=null;if(!x.target||live(x.target))perform(p,x.s,x.target,x.selected);}}for(const [k,b] of Object.entries(a.buffs))if(b.until<=now()){delete a.buffs[k];R.recalc(p);}
+ function tick(p){const a=st(p);if(!live(p))return;try{tick3(p);}catch(e){}a.damageLog=a.damageLog.filter(x=>now()-x.at<=10);a.shieldLog=a.shieldLog.filter(x=>now()-x.at<=10);if(a.casting){if(controls(p))a.casting=null;else if(a.casting.at<=now()){const x=a.casting;a.casting=null;if(!x.target||live(x.target))perform(p,x.s,x.target,x.selected);}}for(const [k,b] of Object.entries(a.buffs))if(b.until<=now()){delete a.buffs[k];R.recalc(p);}
   if(Array.isArray(p.summonsV2)){const before=p.summonsV2.length;p.summonsV2=p.summonsV2.filter(x=>!x._classSpirit||x._classExpires>now());if(before!==p.summonsV2.length)for(const o of passive(p))if(o.kind==='resourceTrigger'&&o.trigger==='companionGone'&&N(a.cd[o.source])<=now()){a.cd[o.source]=now()+o.cd;p.mp=Math.min(p.mmp,p.mp+p.mmp*o.ratio);}}
-  if(p===player)for(const t of enemies()){const m=ms(t);for(const [key,d] of Object.entries(m.debuffs))if(d.until<=now()){if(d.key!=='vulnerability')t[d.key]-=d.value;delete m.debuffs[key];}}
+  if(p===player)for(const t of enemies()){const m=ms(t);for(const [key,d] of Object.entries(m.debuffs))if(d.until<=now()){if(!VIRTUAL.has(d.key))t[d.key]-=d.value;delete m.debuffs[key];}}
   for(const x of a.delayed.filter(x=>x.at<=now())){if(x.type==='heal')heal(p,x.target,x.amount,x.skill);else if(x.type==='shieldEnd'){if(x.endHeal)heal(p,p,N(R.state(p,'_shields')[x.source]?.amount)*x.endHeal,x.skill);}}a.delayed=a.delayed.filter(x=>x.at>now());
   for(const x of a.dots)if(live(x.target)&&x.until>=now()&&x.next<=now()){x.next+=1;damage(p,x.target,x.damage,x.skill,{dot:true,poison:x.poison});}a.dots=a.dots.filter(x=>live(x.target)&&x.until>now());
   if(a.drains?.until>now()&&a.drains.next<=now()){a.drains.next=now()+1;const n=maxhp(p)*a.drains.ratio;if(hp(p)>n)p[hpKey(p)]-=n;else{a.drains=null;a.buffs={};}}
@@ -141,9 +248,10 @@
  function tradeDamage(p){const d=C.tree(p)?.tradeoff||'';const m=d.match(/(?:自身|自己|直接|法術|普通直接|站樁遠攻)(?:傷害|法術傷害)?[−-](\d+)%/);return m?Math.max(.1,1-Number(m[1])/100):1;}
  function tIs(p,base,partner){const t=C.tree(p);return !!(t?.requiresFusionTransfer&&t.base===base&&t.partnerKey===partner);}
  function reset(p){const old=states.get(p);if(old?.baseStats){states.delete(p);st(p).baseStats=old.baseStats;}else states.delete(p);passes.delete(p);}
-  W.LineageClassCombat={cast,reason,cooldown,cost,baseline,event,stats,reset,broken,state:st,mark,resource,passive,perform,team,companions,value,damage,tIs,absoluteLock,shieldAmount,hitBonus,blockSuppression:t=>ms(t).suppression?.until>now()?ms(t).suppression.value:0};
+  W.__afkBiteCapMult=()=>typeof player!=='undefined'&&player?(value(player,'biteCap')||1):1;
+ W.LineageClassCombat={cast,reason,cooldown,cost,baseline,event,stats,reset,broken,state:st,mark,resource,passive,perform,team,companions,value,damage,vulnOf,extraHits,leechRate,mobState:ms,tIs,absoluteLock,shieldAmount,hitBonus,blockSuppression:t=>ms(t).suppression?.until>now()?ms(t).suppression.value:0};
  const orig=W.castSkill;W.castSkill=function(id){if(C.skills.has(id))return cast(id).ok;return orig.apply(this,arguments);};
  const recompute=W.recomputeStats;W.recomputeStats=function(){const out=recompute.apply(this,arguments);stats(player);return out;};
  const oldKill=W.killMob;W.killMob=function(i){const t=mapState.mobs[i],was=live(t)||t&&t.curHp<=0&&!t._dead;const out=oldKill.apply(this,arguments);if(was&&t&&!t.boss)for(const p of members())if(C.tree(p))st(p).resources.corpse=Math.min(3,N(st(p).resources.corpse)+1);return out;};
- const serialize=W.saveStateJson;W.saveStateJson=function(){const restored=[];for(const t of mapState.mobs||[]){if(!t)continue;for(const d of Object.values(ms(t).debuffs))if(d.key!=='vulnerability'){t[d.key]-=d.value;restored.push([t,d]);}}try{const doc=JSON.parse(serialize.apply(this,arguments));if(Array.isArray(doc.p?.summonsV2))doc.p.summonsV2=doc.p.summonsV2.filter(x=>!x._classSpirit);return JSON.stringify(doc);}finally{for(const [t,d] of restored)t[d.key]+=d.value;}};
+ const serialize=W.saveStateJson;W.saveStateJson=function(){const restored=[];for(const t of mapState.mobs||[]){if(!t)continue;for(const d of Object.values(ms(t).debuffs))if(!VIRTUAL.has(d.key)){t[d.key]-=d.value;restored.push([t,d]);}}try{const doc=JSON.parse(serialize.apply(this,arguments));if(Array.isArray(doc.p?.summonsV2))doc.p.summonsV2=doc.p.summonsV2.filter(x=>!x._classSpirit);return JSON.stringify(doc);}finally{for(const [t,d] of restored)t[d.key]+=d.value;}};
 })(window);
