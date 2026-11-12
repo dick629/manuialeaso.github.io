@@ -36,7 +36,7 @@
     var UI_SECTIONS = {
         '版面微調': ['uiscale'],
         '畫面': ['artfix', 'npclist', 'eqlist', 'invlist'],   // 玩家 11-11 18:52：背包條列式也開放（取消勾選＝舊版一格一格）   // 玩家 11-11 13:19：人物裝備條列式也開放勾選   // 玩家 11-11 10:58：村莊 NPC 條列式也開放勾選   // 玩家 11-10：圖檔修復版保留開關（預設關）
-        '玩法選項': ['offlinechase', 'autoupdate', 'rebirth-quest'],   // 玩家 11-11 02:39：只列這三個，其他融合
+        '玩法選項': ['offlinechase', 'autoupdate', 'rebirth-quest', 'autocancel'],   // 玩家 11-12 15:05：相消術卷軸自動解控可以關；玩家 11-11 02:39：原本只列三個，其他融合
         '資訊顯示': ['statpts','notip','killlog','nobanner'],
         '效能與省電': ['fpscap','lowend','autoreload']
     };
