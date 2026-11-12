@@ -67,6 +67,15 @@ await A.release(s.id)
   win.classList.toggle('class-tabmode',clsMode);if(!clsMode)return
   const head=win.querySelector('.classic-skill-heading');if(head)head.textContent=C.tree(player)?.name||'流派'
   const grid=win.querySelector('.classic-skill-grid-scroll');if(grid){grid.removeAttribute('onscroll');grid.innerHTML=html}
+  if(!host.dataset.clsTip){host.dataset.clsTip='1'   // Ping 11-12 17:49：滑鼠移上去（手機點圖示／名稱）顯示技能說明
+   const box=()=>{let t=document.getElementById('class-tabskill-tip');if(!t){t=document.createElement('div');t.id='class-tabskill-tip';document.body.appendChild(t)}return t}
+   const hide=()=>{const t=document.getElementById('class-tabskill-tip');if(t)t.style.display='none'}
+   const show=row=>{const t=box(),b=row.querySelector('.class-tabskill-body');if(!b)return;t.innerHTML='<b>'+b.querySelector('b').innerHTML+'</b><small>'+b.querySelector('small').innerHTML+'</small><p>'+b.querySelector('p').innerHTML+'</p>';t.style.display='block'
+    const r=row.getBoundingClientRect(),w=Math.min(320,innerWidth-16);t.style.width=w+'px';const h=t.offsetHeight;let x,y=r.top;if(r.right+8+w<=innerWidth-8)x=r.right+8;else if(r.left-w-8>=8)x=r.left-w-8;else{x=Math.max(8,Math.min(innerWidth-w-8,r.left));y=r.bottom+4;if(y+h>innerHeight-8)y=r.top-h-4}y=Math.max(8,Math.min(y,innerHeight-h-8));t.style.left=x+'px';t.style.top=y+'px'}
+   host.addEventListener('mouseover',ev=>{if(ev.pointerType==='touch')return;const row=ev.target.closest('.class-tabmode .class-tabskill');if(row&&!ev.target.closest('button'))show(row);else if(!row)hide()})
+   host.addEventListener('mouseleave',hide);host.addEventListener('scroll',hide,true)
+   host.addEventListener('click',ev=>{const row=ev.target.closest('.class-tabmode .class-tabskill');if(!row||ev.target.closest('button'))return hide();show(row)})
+   document.addEventListener('click',ev=>{if(!host.contains(ev.target))hide()},true)}
   if(!host.dataset.clsBound){host.dataset.clsBound='1';host.addEventListener('click',async ev=>{const el=ev.target.closest('[data-cls-act]');if(!el)return;ev.preventDefault();ev.stopPropagation()
    const [cmd,id]=String(el.dataset.clsAct).split(/:(.*)/);try{if(cmd==='cast'||cmd==='dual'||cmd==='claw'){const r=W.LineageClassCombat.cast(id,null,cmd==='cast'?null:{style:cmd});if(!r.ok&&r.reason)try{logSys('<span class="text-amber-300">'+esc(r.reason)+'</span>')}catch(e){}return}
     el.disabled=true;await A.configure(id,cmd==='aura'?'aura':'auto');tabSkills()}catch(e){el.disabled=false;try{W.alert(e.message)}catch(x){}}})}}catch(e){console.warn('[class-ui] 技能分頁',e)}}

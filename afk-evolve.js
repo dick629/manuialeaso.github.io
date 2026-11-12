@@ -301,6 +301,11 @@
       var r = oRe2.apply(this, arguments);
       try {
         var p = P(); if (p && isLeader && has(p, 'royal_will', 1)) { p.grantedSkills = p.grantedSkills || []; willList().forEach(function (k) { if ((p.skills || []).indexOf(k) < 0) { p.grantedSkills.push(k); p.skills.push(k); } }); }
+        // Ping 11-12 17:48：轉成新版流派（或沒有意志）後，意志加進來的別職業增益技能要拿掉——原本會一直留在技能清單、自動施放清單裡
+        else if (p && isLeader && Array.isArray(p.skills)) {
+          var g = p.grantedSkills || [], drop = willList().filter(function (k) { var sk = DB.skills[k]; if (p.skills.indexOf(k) < 0 || g.indexOf(k) >= 0) return false; if ((p._afkGmLearned || []).indexOf(k) >= 0 || (p._afkRulerLearned || []).indexOf(k) >= 0) return false; /* GM 武器、主宰者學到的照舊保留 */ var lv; try { lv = typeof skillReqLv === 'function' ? skillReqLv(sk, k) : 0; } catch (e) { lv = 0; } return lv === undefined; });
+          if (drop.length) { p.skills = p.skills.filter(function (k) { return drop.indexOf(k) < 0; }); if (p.buffs) drop.forEach(function (k) { delete p.buffs[k]; }); try { drop.forEach(function (k) { var el = document.getElementById('auto-sk-' + k); if (el) el.checked = false; }); } catch (e) {} }
+        }
       } catch (e) {}
       return r;
     };
