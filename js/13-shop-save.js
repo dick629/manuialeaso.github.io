@@ -1535,6 +1535,7 @@ function saveGame() {
         return false;
     }
     try {
+    player._saveSeq = (Number(player._saveSeq) || 0) + 1;   /* 🔌 加掛版補丁（11-12）：存檔序號，匯入時判斷「比較新的進度」（merged/integrity-core） */
     if (typeof sanitizeState === 'function') sanitizeState();   // 🛡️ 寫檔前合理性夾擠：把 runtime(Console)改出的不可能數值夾回合法範圍，連同簽章一起固化、不讓作弊值被存檔/匯出
     // 收集目前的自動化設定 UI 狀態（🛡️ 僅在 UI 已同步時重建；否則沿用記憶體中既有 config）
     if (_uiConfigReady) {

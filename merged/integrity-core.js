@@ -8,6 +8,8 @@
  function seed(p){return String(p.enSeed||('es'+codec.seedHash((p.name||'')+'|'+p.cls+'|lz').toString(36)));}
  function identity(p){return seed(p)+'|'+(p.classicMode?'classic':'normal');}
  function roles(keys,tolerateInvalid=false){const out={};for(const k of B.roleKeys(keys)){let p;try{p=B.validateRole(B.decode(keys[k]).value).p;if(!C().valid(p))fail('職業資料無法驗證');}catch(e){if(tolerateInvalid)continue;throw e;}const id=identity(p);if(own(out,id))fail('發現重複角色身分，請先保留備份並檢查');Object.defineProperty(out,id,{value:{key:k,p},enumerable:true});}return out;}
+ // 11-12：存檔序號（js/13 saveGame 每存一次 +1）。曾經存在過的角色，只准匯入「比這台裝置上最後見過的還新」的進度（讀舊檔＝重：不准）
+ function saveSeq(p){const n=Number(p&&p._saveSeq);return Number.isSafeInteger(n)&&n>0?n:0;}
  function path(p){return p.classPath?{route:p.classPath.route,stage:p.classPath.stage,ultimates:copy(p.classPath.ultimates||{})}:null;}
  function pathCheck(old,p,advance){const n=path(p);if(!old)return;if(!n||n.route!==old.route||n.stage<old.stage)fail('不能用舊存檔回退或更換永久職業路線');for(const [k,v] of Object.entries(old.ultimates))if(n.ultimates[k]!==v)fail('不能用舊存檔更換已選定的大絕');if(!advance&&(n.stage!==old.stage||Object.keys(n.ultimates).length!==Object.keys(old.ultimates).length))fail('職業進階與大絕必須由導師完成');}
  function vault(keys){if(!own(keys,V))return C().freshVault();const v=B.parse(keys[V]);if(!C().validVault(v))fail('魂魄簿異常，未重建或刪除原資料');return v;}
@@ -18,7 +20,7 @@
   try{v=vault(keys);}catch(e){if(!tolerateInvalid)throw e;}
   try{used=own(keys,S)?B.parse(keys[S]):[];if(!Array.isArray(used)||used.some(x=>typeof x!=='string'))fail('舊制魂魄消耗紀錄異常');}catch(e){if(!tolerateInvalid)throw e;used=[];}
   for(const k of ['seen','sealed','spent','paths','retired'])Object.setPrototypeOf(out[k],null);
-  for(const [id,{p}] of Object.entries(rs)){if(own(l.sealed,id)||own(l.retired,seed(p)))fail('備份含已封魂或已消耗的角色，不能恢復成可使用角色');if(!C().valid(p))fail('職業資料無法驗證');pathCheck(l.paths[id],p,advance);out.seen[id]=true;if(path(p))out.paths[id]=path(p);}
+  for(const [id,{p}] of Object.entries(rs)){if(own(l.sealed,id)||own(l.retired,seed(p)))fail('備份含已封魂或已消耗的角色，不能恢復成可使用角色');if(!C().valid(p))fail('職業資料無法驗證');pathCheck(l.paths[id],p,advance);out.seen[id]=true;{const q=saveSeq(p);if(q>0){if(!dict(out.seq))out.seq=Object.create(null);if(!(Number(out.seq[id])>=q))out.seq[id]=q;}}if(path(p))out.paths[id]=path(p);}
   if(v){
   for(const [id,sid] of Object.entries(l.sealed))if(v.sealed[id]!==sid)fail('還原會回退封魂紀錄，已停止');
   for(const [sid,receipt] of Object.entries(l.spent))if(!own(v.spent,sid)||JSON.stringify(v.spent[sid])!==JSON.stringify(receipt))fail('還原會回退魂魄消耗紀錄，已停止');
@@ -33,10 +35,10 @@
  }
  function plan(l,before,changes,kind='repair'){
   const base=absorb(l,before,{tolerateInvalid:true}),after={...before};for(const c of changes){if((own(before,c.key)?before[c.key]:null)!==c.before)fail('資料已變更，請重新操作');if(c.after===null)delete after[c.key];else after[c.key]=c.after;}
-  if(kind==='import')for(const [id] of Object.entries(roles(after)))if(!own(roles(before,true),id)&&own(base.seen,id))fail('這個角色曾經存在或匯入過；不能刪角後重複匯入舊裝備。請使用完整備份檢查還原');
+  if(kind==='import'){const rb=roles(before,true);for(const [id,{p}] of Object.entries(roles(after)))if(!own(rb,id)&&own(base.seen,id)){const last=dict(base.seq)?Number(base.seq[id])||0:0;if(!(saveSeq(p)>last))fail('這個角色曾經在這台裝置上出現過，而這份存檔不比上次的進度新；為了防止重複匯入舊裝備，只能匯入比較新的進度（請在原本的裝置上繼續玩、存檔後再匯出）');}}
   // 11-11 21:37 同一個角色讀回自己的舊存檔（覆蓋原位置）：角色名單必須完全不變；封魂、魂魄消耗、職業路線照樣由 absorb 擋
   if(kind==='reload'){const b=Object.keys(roles(before,true)).sort().join('\n'),a2=Object.keys(roles(after)).sort().join('\n');if(b!==a2)fail('只能讀回同一個角色自己的舊存檔');}
   const next=absorb(base,after,{advance:kind==='class'});next.revision=l.revision+1;return next;
  }
- return Object.freeze({fresh,valid,seed,identity,roles,vault,absorb,plan,path});
+ return Object.freeze({fresh,valid,seed,identity,roles,vault,absorb,plan,path,saveSeq});
 });
