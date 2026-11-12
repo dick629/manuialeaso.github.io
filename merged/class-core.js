@@ -1,6 +1,13 @@
 (function(root,factory){'use strict';if(typeof module==='object'&&module.exports)module.exports=factory;else root.LineageClassCore=factory(root.LineageClassCatalog);})(typeof globalThis!=='undefined'?globalThis:this,function(D){
  'use strict';
  const copy=v=>JSON.parse(JSON.stringify(v)),integer=(n,a,b)=>Number.isSafeInteger(n)&&n>=a&&n<=b;
+ // Ping 11-12 17:07：每條路線的破除（破界式）拆成「破魔免」「破物免」兩招：第一段二選一，第二段起另一招也學會（兩段以上才會雙破除）
+ for(const t of D.trees){const i=t.skills.findIndex(s=>s.breakImmunity&&!s.breachPair);if(i<0||t.skills.some(s=>s.breachPair))continue
+  const s=t.skills[i],op=s.plan.ops.find(o=>o.kind==='breach');if(!op)continue
+  const tag=m=>m==='magic'?'破魔':'破物',base=String(s.name).replace(/・(破魔|破物)$/,''),alt=JSON.parse(JSON.stringify(s)),other=op.mode==='magic'?'phys':'magic'
+  s.name=base+'・'+tag(op.mode);s.breachPair=s.id+'_x';s.breachMode=op.mode
+  alt.id=s.id+'_x';alt.name=base+'・'+tag(other);alt.breakImmunity=other==='magic'?'魔法免疫':'物理免疫';alt.breachPair=s.id;alt.breachMode=other;alt.breachAlt=true;alt.plan.ops.forEach(o=>{if(o.kind==='breach')o.mode=other})
+  t.skills.splice(i+1,0,alt)}
  const trees=new Map(D.trees.map(t=>[t.id,t])),skills=new Map(D.trees.flatMap(t=>t.skills.map(s=>[s.id,{...s,tree:t.id}])));
  const CLS={knight:'騎士',royal:'王族',elf:'妖精',mage:'法師',dark:'黑暗妖精',warrior:'戰士',dragon:'龍騎士',illusion:'幻術士'};
  function fail(message){throw Error(message);}
@@ -11,7 +18,9 @@
   if(v.cooldowns&&(typeof v.cooldowns!=='object'||Array.isArray(v.cooldowns)||Object.values(v.cooldowns).some(x=>!Number.isFinite(x)||x<0)))return false;
   return (!v.auto||Array.isArray(v.auto)&&v.auto.length<=8&&new Set(v.auto).size===v.auto.length&&v.auto.every(id=>canUse(p,id)))&&(!v.auras||Array.isArray(v.auras)&&v.auras.length<=2&&new Set(v.auras).size===v.auras.length&&v.auras.every(id=>canUse(p,id)&&skills.get(id).type==='光環'));
  }
- function canUse(p,id){const s=skills.get(id),v=get(p);return !!(s&&v&&s.tree===v.route&&s.stage<=v.stage&&s.stage>=1&&(!s.requiresFusionTransfer||tree(p)?.requiresFusionTransfer)&& (s.type!=='大絕'||v.ultimates&&v.ultimates[s.stage]===id));}
+ // 第一段選的破除（舊存檔沒有記錄＝原本那一招）
+ function breachOf(v,s){if(v&&(v.breach==='magic'||v.breach==='phys'))return v.breach;const o=s&&s.breachAlt?skills.get(s.breachPair):s;return o?o.breachMode:''}
+ function canUse(p,id){const s=skills.get(id),v=get(p);return !!(s&&v&&s.tree===v.route&&s.stage<=v.stage&&s.stage>=1&&(!s.requiresFusionTransfer||tree(p)?.requiresFusionTransfer)&& (s.type!=='大絕'||v.ultimates&&v.ultimates[s.stage]===id)&&(!s.breachMode||v.stage>=2||s.breachMode===breachOf(v,s)));}
  function requirement(t,stage){return t.requiresFusionTransfer?{cls:t.partnerKey,rebirth:2,level:200}:{cls:t.base,rebirth:stage-1,level:100};}
  function description(s){
   const breach=s.plan?.ops?.find(o=>o.kind==='breach');
@@ -29,9 +38,9 @@
   const out=copy(v),s={id:meta.id,identity:meta.identity,name:String(p.name||'冒險者'),cls:p.cls,level:p.lv,rebirth:p.rebirth||0,classic:!!p.classicMode,sealedAt:meta.at,sourceSlot:meta.slot};out.souls.push(s);out.sealed[s.identity]=s.id;out.revision++;return out;
  }
  function eligible(p,t,stage,s){const r=requirement(t,stage);return !!(s&&s.cls===r.cls&&s.rebirth===r.rebirth&&s.level>=r.level&&s.classic===!!p.classicMode);}
- function advance(p,v,route,soulId,ultimateId){if(!valid(p)||!validVault(v))fail('職業或魂魄資料異常，未消耗材料');const t=trees.get(route);if(!t||t.base!==p.cls)fail('流派與本職業不符');const old=get(p);if(!old&&p.afkEvo?.stage>0)fail('已有舊制進化，請先使用一次轉換');if(old&&old.route!==route)fail('流派永久固定，不能更換');const stage=(old?.stage||0)+1;if(stage>3)fail('已完成第三段');const gate=recipientGate(p,stage);if(gate)fail(gate);
+ function advance(p,v,route,soulId,ultimateId,breach){if(!valid(p)||!validVault(v))fail('職業或魂魄資料異常，未消耗材料');const t=trees.get(route);if(!t||t.base!==p.cls)fail('流派與本職業不符');const old=get(p);if(!old&&p.afkEvo?.stage>0)fail('已有舊制進化，請先使用一次轉換');if(old&&old.route!==route)fail('流派永久固定，不能更換');const stage=(old?.stage||0)+1;if(stage>3)fail('已完成第三段');const gate=recipientGate(p,stage);if(gate)fail(gate);
   const soul=v.souls.find(s=>s.id===soulId),u=skills.get(ultimateId);if(!eligible(p,t,stage,soul))fail('魂魄職業、轉生次數或等級不符');if(!u||u.tree!==route||u.type!=='大絕'||u.stage!==stage)fail('請選擇本段永久大絕');
-  const q=copy(p),w=copy(v);q.classPath={...(q.classPath||{version:1,route,stage:0,ultimates:{},auto:[],auras:[]}),stage};q.classPath.ultimates[stage]=ultimateId;w.souls=w.souls.filter(s=>s.id!==soulId);w.spent[soulId]={recipient:p.enSeed||p.name,route,stage};w.revision++;return {player:q,vault:w};
+  const q=copy(p),w=copy(v);q.classPath={...(q.classPath||{version:1,route,stage:0,ultimates:{},auto:[],auras:[]}),stage};q.classPath.ultimates[stage]=ultimateId;if(stage===1){if(breach!=null&&breach!==''&&breach!=='magic'&&breach!=='phys')fail('請選擇第一段要學的破除');if(breach)q.classPath.breach=breach}w.souls=w.souls.filter(s=>s.id!==soulId);w.spent[soulId]={recipient:p.enSeed||p.name,route,stage};w.revision++;return {player:q,vault:w};
  }
  function convert(p,route,knownLegacy){if(p.classicMode)fail('經典模式不支援職業進化');if(get(p)||!knownLegacy||knownLegacy.cls!==p.cls||!integer(p.afkEvo?.stage,1,3))fail('沒有可轉換的舊制進化');const t=trees.get(route);if(!t||t.base!==p.cls||t.requiresFusionTransfer)fail('免費轉換僅限本職非融合流派；融合需外職二轉 Lv200 魂魄');const q=copy(p);q.classPath={version:1,route,stage:p.afkEvo.stage,ultimates:{},auto:[],auras:[],legacy:copy(p.afkEvo)};return q;}
  function chooseUltimate(p,id){if(!valid(p))fail('職業資料異常');const q=copy(p),s=skills.get(id),v=q.classPath;if(!v||!s||s.type!=='大絕'||s.tree!==v.route||s.stage>v.stage)fail('大絕未開放');if(v.ultimates[s.stage]&&v.ultimates[s.stage]!==id)fail('大絕已永久選定');v.ultimates[s.stage]=id;return q;}

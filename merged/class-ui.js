@@ -1,7 +1,7 @@
 (function(W){
  'use strict';
 // 職業技能圖示（GPT 版畫，Ping 11-11 19:18）：assets/skills-v3/<路線>/<路線>_<序號>.webp；序號＝該路線技能（大絕三段合一）出現順序
-const __icoCache=new Map();function icoOf(t,s){if(!t||!s)return '';let m=__icoCache.get(t.id);if(!m){m=new Map();let n=0;for(const k of t.skills||[]){const b=String(k.name).replace(/・(啟誓|升華|終章)$/,'');if(!m.has(b))m.set(b,++n);}__icoCache.set(t.id,m);}const i=m.get(String(s.name).replace(/・(啟誓|升華|終章)$/,''));return i?'assets/skills-v3/'+t.id+'/'+t.id+'_'+String(i).padStart(2,'0')+'.webp':'';}
+const __icoCache=new Map();function icoOf(t,s){if(!t||!s)return '';let m=__icoCache.get(t.id);if(!m){m=new Map();let n=0;for(const k of t.skills||[]){const b=String(k.name).replace(/・(啟誓|升華|終章|破魔|破物)$/,'');if(!m.has(b))m.set(b,++n);}__icoCache.set(t.id,m);}const i=m.get(String(s.name).replace(/・(啟誓|升華|終章|破魔|破物)$/,''));return i?'assets/skills-v3/'+t.id+'/'+t.id+'_'+String(i).padStart(2,'0')+'.webp':'';}
  const A=W.LineageClasses,C=A.C;let host,tab='route',soulOnly=false,selected='',step=1,focusBefore,layer,timer,skillPanel=null,embedded=false;
  const routesByClass=new Map(Object.keys(C.CLS).map(cls=>[cls,[...C.trees.values()].filter(t=>t.base===cls)]));
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -21,7 +21,7 @@ host.querySelector('nav').innerHTML=(soulOnly?[['souls','五格魂魄']]:[...(sk
     if(legacy){html+=h('舊制 '+(W.__afkEvolve?.S[p.afkEvo.school]?.n||p.afkEvo.school)+' 第 '+p.afkEvo.stage+' 段可免費換入一次新版本職路線。舊制效果在確認轉換前保留；融合轉職仍需要外職魂魄。')+btn('免費換入此本職流派','convert:'+t.id,t.requiresFusionTransfer);}
     else if(v&&v.route!==t.id)html+=h('目前流派已永久固定，此處僅供查看其他路線。');
     else if(next>3)html+=h('已完成三段職業傳承。');
-    else {const why=C.recipientGate(p,next),souls=A.vault().souls.filter(s=>C.eligible(p,t,next,s));html+='<div class="class-commit"><h4>第 '+next+' 段永久選擇</h4><label>消耗魂魄<select id="class-soul"><option value="">請選擇符合條件的魂魄</option>'+souls.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name+' · '+C.CLS[s.cls]+' '+s.rebirth+'轉 Lv'+s.level)+'</option>').join('')+'</select></label><label>永久大絕<select id="class-ultimate"><option value="">本段三選一</option>'+t.skills.filter(s=>s.type==='大絕'&&s.stage===next).map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('')+'</select></label>'+h(why||(!souls.length?'沒有符合條件的魂魄。請找扎爾製作魂魄。':'確認後消耗一顆魂魄，與職業段數一併保存。'))+btn('確認第 '+next+' 段','advance:'+t.id,!!why||!souls.length)+'</div>';}
+    else {const why=C.recipientGate(p,next),souls=A.vault().souls.filter(s=>C.eligible(p,t,next,s));html+='<div class="class-commit"><h4>第 '+next+' 段永久選擇</h4><label>消耗魂魄<select id="class-soul"><option value="">請選擇符合條件的魂魄</option>'+souls.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name+' · '+C.CLS[s.cls]+' '+s.rebirth+'轉 Lv'+s.level)+'</option>').join('')+'</select></label><label>永久大絕<select id="class-ultimate"><option value="">本段三選一</option>'+t.skills.filter(s=>s.type==='大絕'&&s.stage===next).map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('')+'</select></label>'+(next===1&&t.skills.some(s=>s.breachMode)?'<label>第一段破除<select id="class-breach"><option value="">二選一（第二段起另一招也會學會）</option><option value="phys">破除物理免疫</option><option value="magic">破除魔法免疫</option></select></label>':'')+h(why||(!souls.length?'沒有符合條件的魂魄。請找扎爾製作魂魄。':'確認後消耗一顆魂魄，與職業段數一併保存。'))+btn('確認第 '+next+' 段','advance:'+t.id,!!why||!souls.length)+'</div>';}
     html+=btn('查看此流派全部技能','inspect:'+t.id)+'</article>';
    }
    html+='</div>';
@@ -43,7 +43,7 @@ b.disabled=true
 await A.release(s.id)
 }
   if(cmd==='seal'){const s=A.candidates().find(x=>x.slot===Number(arg));if(!s||!await confirmText('永久封魂','封存「'+s.name+'」並移除第 '+s.slot+' 格角色；不複製裝備，魂魄可供進化使用。',s.name))return;b.disabled=true;await A.seal(s.slot);}
-  if(cmd==='advance'){const soul=host.querySelector('#class-soul').value,u=host.querySelector('#class-ultimate').value;if(!soul||!u)throw Error('請同時選擇魂魄與永久大絕');if(!await confirmText('職業永久進階','消耗所選魂魄，永久選擇 '+C.trees.get(arg).name+'／'+C.skills.get(u).name+'。',player.name))return;b.disabled=true;await A.advance(arg,soul,u);}
+  if(cmd==='advance'){const soul=host.querySelector('#class-soul').value,u=host.querySelector('#class-ultimate').value;if(!soul||!u)throw Error('請同時選擇魂魄與永久大絕');const br=host.querySelector('#class-breach')?.value||'';if(host.querySelector('#class-breach')&&!br)throw Error('請選擇第一段要學的破除（物理或魔法）');if(!await confirmText('職業永久進階','消耗所選魂魄，永久選擇 '+C.trees.get(arg).name+'／'+C.skills.get(u).name+(br?'／'+(br==='magic'?'破除魔法免疫':'破除物理免疫'):'')+'。',player.name))return;b.disabled=true;await A.advance(arg,soul,u,br);}
   if(cmd==='convert'){if(!await confirmText('舊制一次免費轉換','換入 '+C.trees.get(arg).name+'，保留段數並停用舊流派效果，之後不可返回或更換。',player.name))return;b.disabled=true;await A.convert(arg);selected=arg;}
   if(cmd==='choose'){if(!await confirmText('永久大絕','本段大絕永久選為 '+C.skills.get(arg).name+'。',player.name))return;await A.choose(arg);}
   if(cmd==='auto'||cmd==='aura'){await A.configure(arg,cmd);}

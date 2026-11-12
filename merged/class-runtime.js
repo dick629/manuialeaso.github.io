@@ -43,7 +43,7 @@
   });
  }
  async function release(soulId){return commit('解除魂魄',(p,v)=>({vault:C.release(v,soulId)}))}
- async function advance(route,soul,ult){return commit('職業進化／融合轉職',(p,v)=>C.advance(p,v,route,soul,ult));}
+ async function advance(route,soul,ult,breach){return commit('職業進化／融合轉職',(p,v)=>C.advance(p,v,route,soul,ult,breach));}
  async function convert(route){return commit('舊制進化一次轉換',p=>({player:C.convert(p,route,W.__afkEvolve?.S[p.afkEvo?.school])}));}
  async function choose(id){return commit('永久選定大絕',p=>({player:C.chooseUltimate(p,id)}));}
  async function configure(id,kind){return commit('職業技能設定',p=>{if(!C.canUse(p,id))throw Error('尚未開放此技能');const s=C.skills.get(id);if(s.type==='被動')throw Error('被動常駐生效');const key=kind==='aura'?'auras':'auto';if(key==='auras'&&s.type!=='光環'||key==='auto'&&s.type==='光環')throw Error('技能類型不符');const list=p.classPath[key]||[];if(list.includes(id))p.classPath[key]=list.filter(x=>x!==id);else{if(list.length>=(key==='auras'?2:8))throw Error('自動技能最多八招，光環最多兩個');p.classPath[key]=list.concat(id);}return {player:p};});}
