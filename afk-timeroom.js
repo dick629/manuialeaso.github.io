@@ -23,7 +23,7 @@
   (MAP_CATEGORIES.wild = MAP_CATEGORIES.wild || []).push({ v: MAP, t: '時光屋', c: '#fde68a', classicHide: true });
   var reg = MAP_REGIONS.filter(function (r) { return r.key === 'sherine'; })[0];
   if (reg) reg.maps.push({ v: MAP, t: '時光屋' });
-  try { if (typeof SPECIAL_AREA_BG !== 'undefined') SPECIAL_AREA_BG[MAP] = 'assets/area/1920x1080/日出之國西之地.jpg'; } catch (e) {}
+  try { if (typeof SPECIAL_AREA_BG !== 'undefined') SPECIAL_AREA_BG[MAP] = 'assets/area/1920x1080/time_room.jpg'; /* 11-12：GPT 畫的時光屋 */ } catch (e) {}
 
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var here = function () { return typeof mapState !== 'undefined' && mapState && mapState.current === MAP; };

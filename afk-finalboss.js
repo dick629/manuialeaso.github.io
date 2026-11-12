@@ -511,7 +511,7 @@
       KG.addNpc('town_sherine', { id: GODDESS_NPC, n: BOSS_NAME, title: GODDESS_T, type: 'quest', classicHide: true, d: '沉在死亡之海底下的水之女神。一轉女神、二轉決戰、單人試煉、終焉階層都從她這裡進入。' });
       if (typeof NPC_SPR !== 'undefined' && !NPC_SPR.shilen_goddess) NPC_SPR.shilen_goddess = { g: 'shilen_goddess', f: 12, shadow: false };
       if (typeof NPC_SPR_FIXED !== 'undefined') NPC_SPR_FIXED[GODDESS_NPC] = 'shilen_goddess';
-      try { if (typeof TOWN_NPC_POS_OVERRIDE !== 'undefined') (TOWN_NPC_POS_OVERRIDE.town_sherine = TOWN_NPC_POS_OVERRIDE.town_sherine || {})[GODDESS_NPC] = [62, 30]; } catch (e) {}
+      try { if (typeof TOWN_NPC_POS_OVERRIDE !== 'undefined') (TOWN_NPC_POS_OVERRIDE.town_sherine = TOWN_NPC_POS_OVERRIDE.town_sherine || {})[GODDESS_NPC] = [60, 40]; } catch (e) {}
       KG.hookNpc(GODDESS_NPC, BOSS_NAME, GODDESS_T, renderGoddess);
     }
   } catch (e) { console.warn('[AFK-finalboss] goddess npc', e); }

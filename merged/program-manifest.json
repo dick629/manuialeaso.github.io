@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-bb910d4babc2",
+  "build": "merge-0.4-21c457dac952",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -213,8 +213,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-bracelet.js?v=81ad708a70a4",
-      "sha256": "81ad708a70a4cf023d5e100da72137260efc7709433a4844b89479a1aab0eb9a",
+      "url": "afk-bracelet.js?v=a6a36a9d648a",
+      "sha256": "a6a36a9d648ad3bd7425af3a091888844e9d10c34307235123ac3f2aa8986b58",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -528,8 +528,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-finalboss.js?v=988efc99a7be",
-      "sha256": "988efc99a7be16e05375531f819385b5670156a473877ae0e3c620bc8255c853",
+      "url": "afk-finalboss.js?v=1d57852c6013",
+      "sha256": "1d57852c6013692a3840d3d699ddd0cce32215c6e79ce912df7caddd4ef6cd0b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -933,8 +933,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-npcspace.js?v=5fbd772c67a0",
-      "sha256": "5fbd772c67a0baba061fdc0f29519010eeb43e615138b2f662386a73d1a268d5",
+      "url": "afk-npcspace.js?v=821735d54129",
+      "sha256": "821735d541293f82653988a95f7c2df2095f0cd41d03ef70557cc5ff353ae4e9",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1213,8 +1213,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftdungeons.js?v=4f439f281640",
-      "sha256": "4f439f281640f45ca13697fe0eba0c51f10a887b96c712450135311f12297cdd",
+      "url": "afk-riftdungeons.js?v=8ee9d68e8a67",
+      "sha256": "8ee9d68e8a67b12c15005f478f72284d7e811936f2279db0db67e17215c9517f",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1338,8 +1338,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-starcard.js?v=07106f6efbda",
-      "sha256": "07106f6efbda76f77d4623fff1264977da8defbad2512d52e5732ba4b02e7571",
+      "url": "afk-starcard.js?v=ef93e0320935",
+      "sha256": "ef93e03209356d69f424a5928f7c2015aaf1d794d0041a9fe5824f822449c67b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1393,8 +1393,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-timeroom.js?v=91d8bf12d683",
-      "sha256": "91d8bf12d6833038f91ee213dfac185045f9a6bc008302e4fa2e92c46d13c614",
+      "url": "afk-timeroom.js?v=168f739291b8",
+      "sha256": "168f739291b8620eeb3d6455036e132bb1a58c76b07ae1cb51cc94a6e6013663",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1584,7 +1584,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "768de09bfe8f7daf6e02717bec40951ab7773f4ac2a57ee960dfe8a721d9498c",
+      "sha256": "a636f861407160ed2b8c74238fc70f5a42cb70de3a01835cd646bdc42e6abede",
       "type": "text/html; charset=utf-8"
     },
     {

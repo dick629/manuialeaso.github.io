@@ -76,7 +76,7 @@
   };
   var idOf = function (type, lv) { return 'afk_brace_' + type + '_' + lv; };
   // 手環圖：玩家 2026-11-05 給的波西米亞＋埃及風新圖放在 brace-art/（scripts/build-brace-icons.py 產生）；還沒有新圖的種類用舊圖
-  var BRACE_ART = { resist: 1, element: 1, weight: 1, panel: 1, combo: 1, weave: 1 };
+  var BRACE_ART = { resist: 1, element: 1, weight: 1, panel: 1, pet: 1, combo: 1, weave: 1 };   // 11-12：七種都換成 GPT 原創圖示
   var braceImg = function (type) { return BRACE_ART[type] ? 'brace-art/' + type + '-128.png' : 'assets/icons/items/afk_brace_' + type + '.png'; };
   TYPES.forEach(function (t) {
     LV.forEach(function (lv) {

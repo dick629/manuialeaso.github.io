@@ -62,7 +62,7 @@
   // ── 道具 ──
   var IMG = 'assets/icons/items/原石碎片.png';
   Z.H.forEach(function (h) {
-    if (!DB.items[idOf(h.k)]) DB.items[idOf(h.k)] = { n: '黃道星卡・' + h.n, type: 'misc', c: 'text-yellow-200', img: IMG, p: 0, gachaWeight: 0, weight: 0, noSell: true,
+    if (!DB.items[idOf(h.k)]) DB.items[idOf(h.k)] = { n: '黃道星卡・' + h.n, type: 'misc', c: 'text-yellow-200', img: 'assets/icons/zodiac/zd_card_' + h.k + '.webp', p: 0, gachaWeight: 0, weight: 0, noSell: true,
       d: h.g + '留下的星卡。到席琳神殿 星鑄師 艾琳娜登錄，放進星卡格（不算裝備）。效果（星卡／裂界／歸一）：' + [1, 2, 3].map(function (st) { return descOf(h.k, st); }).join('／') + '；在次元裂縫裡效果 ×1.5。重複的可以拿來升裂界、歸一。' };
   });
   if (DB.items[OLD]) DB.items[OLD].d = '守宮者身上留下的星卡（還沒分宮的舊版）。到席琳神殿 星鑄師 艾琳娜，可以換成任一宮的黃道星卡。';
@@ -72,7 +72,7 @@
   var on = function (p) { return !!(p && !p.classicMode); };
   var curK = function (p) { p = p || P(); if (!on(p)) return null; var s = store(p); return s.eq && FX[s.eq] && (s.st[s.eq] || 0) >= 1 ? s.eq : null; };
   var A = function (k) { var p = P(), c = curK(p); if (!c || c !== k) return null; return valOf(k, store(p).st[k], inRift()); };
-  var fire = function (k) { var h = HN[k]; if (!X || !h) return; try { X.pop('zdsc_' + k, IMG, '星卡・' + h.n, '#fde68a'); X.note('zdsc_' + k, '<span style="color:#fde68a">✦【星卡・' + esc(h.n) + '】</span>' + esc(descOf(k, store().st[k], inRift()))); } catch (e) {} };
+  var fire = function (k) { var h = HN[k]; if (!X || !h) return; try { X.pop('zdsc_' + k, 'assets/icons/zodiac/zd_card_' + k + '.webp', '星卡・' + h.n, '#fde68a'); X.note('zdsc_' + k, '<span style="color:#fde68a">✦【星卡・' + esc(h.n) + '】</span>' + esc(descOf(k, store().st[k], inRift()))); } catch (e) {} };
   var recalc = function () { try { if (typeof recomputeStats === 'function') recomputeStats(); else if (typeof calcStats === 'function') calcStats(); } catch (e) {} };
 
   // ── 數值：保底、處女的持續時間 ──
