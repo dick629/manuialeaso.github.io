@@ -23,6 +23,8 @@
  const SOUL_SLOTS=5;   // Ping 11-12：魂魄簿 3 → 5 格
  function validVault(v){return !!(v&&v.version===1&&integer(v.revision,0,Number.MAX_SAFE_INTEGER)&&Array.isArray(v.souls)&&v.souls.length<=SOUL_SLOTS&&v.spent&&v.sealed&&typeof v.spent==='object'&&typeof v.sealed==='object'&&!Array.isArray(v.spent)&&!Array.isArray(v.sealed)&&v.souls.every(s=>s&&typeof s==='object')&&new Set(v.souls.map(s=>s.id)).size===v.souls.length&&new Set(v.souls.map(s=>s.identity)).size===v.souls.length&&v.souls.every(s=>s&&typeof s.id==='string'&&!!s.id&&typeof s.identity==='string'&&!!s.identity&&typeof s.name==='string'&&CLS[s.cls]&&integer(s.level,1,200)&&integer(s.rebirth,0,2)&&typeof s.classic==='boolean'&&v.sealed[s.identity]===s.id&&!v.spent[s.id]));}
  function sourceIdentity(p,fingerprint){if(!p||!p.cls||!fingerprint)return '';return String(fingerprint).split('|')[0]+'|'+(p.classicMode?'classic':'normal');}
+ // Ping 11-12 16:52：魂魄可以解除。解除＝直接刪掉，原本的存檔不會恢復；這顆魂魄記成已用掉（spent），同一個角色也不能再封一次
+ function release(v,soulId){if(!validVault(v))fail('魂魄簿資料異常，請先修復存檔');const s=v.souls.find(x=>x.id===soulId);if(!s)fail('找不到這個魂魄');const w=copy(v);w.souls=w.souls.filter(x=>x.id!==soulId);w.spent[soulId]={released:true,name:s.name,cls:s.cls,at:Date.now()};w.revision=(Number(v.revision)||0)+1;return w;}
  function seal(v,p,meta){if(!validVault(v))fail('魂魄簿資料異常，請先修復存檔');if(v.souls.length>=SOUL_SLOTS)fail('五格魂魄已滿');if(!meta||!meta.id||!meta.identity||v.sealed[meta.identity]||v.spent[meta.id]||v.souls.some(s=>s.id===meta.id))fail('角色或魂魄已使用，不能重複封存');if(!CLS[p.cls]||!integer(p.lv,1,200)||!integer(p.rebirth||0,0,2))fail('來源角色資料不完整');
   const out=copy(v),s={id:meta.id,identity:meta.identity,name:String(p.name||'冒險者'),cls:p.cls,level:p.lv,rebirth:p.rebirth||0,classic:!!p.classicMode,sealedAt:meta.at,sourceSlot:meta.slot};out.souls.push(s);out.sealed[s.identity]=s.id;out.revision++;return out;
  }
@@ -33,5 +35,5 @@
  }
  function convert(p,route,knownLegacy){if(p.classicMode)fail('經典模式不支援職業進化');if(get(p)||!knownLegacy||knownLegacy.cls!==p.cls||!integer(p.afkEvo?.stage,1,3))fail('沒有可轉換的舊制進化');const t=trees.get(route);if(!t||t.base!==p.cls||t.requiresFusionTransfer)fail('免費轉換僅限本職非融合流派；融合需外職二轉 Lv200 魂魄');const q=copy(p);q.classPath={version:1,route,stage:p.afkEvo.stage,ultimates:{},auto:[],auras:[],legacy:copy(p.afkEvo)};return q;}
  function chooseUltimate(p,id){if(!valid(p))fail('職業資料異常');const q=copy(p),s=skills.get(id),v=q.classPath;if(!v||!s||s.type!=='大絕'||s.tree!==v.route||s.stage>v.stage)fail('大絕未開放');if(v.ultimates[s.stage]&&v.ultimates[s.stage]!==id)fail('大絕已永久選定');v.ultimates[s.stage]=id;return q;}
- return Object.freeze({D,CLS,trees,skills,copy,get,tree,valid,canUse,requirement,description,recipientGate,freshVault,validVault,sourceIdentity,seal,eligible,advance,convert,chooseUltimate});
+ return Object.freeze({D,CLS,trees,skills,copy,get,tree,valid,canUse,requirement,description,recipientGate,freshVault,validVault,sourceIdentity,seal,release,eligible,advance,convert,chooseUltimate});
 });

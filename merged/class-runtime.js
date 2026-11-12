@@ -42,6 +42,7 @@
    return {player:p,vault:souls};
   });
  }
+ async function release(soulId){return commit('解除魂魄',(p,v)=>({vault:C.release(v,soulId)}))}
  async function advance(route,soul,ult){return commit('職業進化／融合轉職',(p,v)=>C.advance(p,v,route,soul,ult));}
  async function convert(route){return commit('舊制進化一次轉換',p=>({player:C.convert(p,route,W.__afkEvolve?.S[p.afkEvo?.school])}));}
  async function choose(id){return commit('永久選定大絕',p=>({player:C.chooseUltimate(p,id)}));}
@@ -49,5 +50,5 @@
  const save=W.saveGame;W.saveGame=function(){if(busy)return false;return save.apply(this,arguments);};
  // Ordinary old evolution keeps working until its owner accepts the one-time migration.
  if(W.__afkEvolve)W.__afkEvolve.evolve=function(){W.LineageClassUI?.open('route');};
- W.LineageClasses={C,KEY,vault,candidates,identity,seal,advance,convert,choose,configure,commit,isBusy:()=>busy,failedBackup:()=>failedBackup};
+ W.LineageClasses={C,KEY,vault,candidates,identity,seal,release,advance,convert,choose,configure,commit,isBusy:()=>busy,failedBackup:()=>failedBackup};
 })(window);
