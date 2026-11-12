@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-b6b12ac515e1",
+  "build": "merge-0.4-5d2bff6348eb",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -403,8 +403,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dmgfont.js?v=4ce2ea8ade31",
-      "sha256": "4ce2ea8ade3192351fdfd747e4e96dd10d77c24a302259c7f94f758d2c411941",
+      "url": "afk-dmgfont.js?v=8e05869c0bef",
+      "sha256": "8e05869c0bef893640bfe775a5c9dba59e5ba481348cfb5f95a2ab9695611f16",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -598,8 +598,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-gdrift.js?v=ee9b8368f247",
-      "sha256": "ee9b8368f247ac47ff8cb53becbdeb30dd0c023a401cbf2b012b028ec812fb9e",
+      "url": "afk-gdrift.js?v=a099b5e06384",
+      "sha256": "a099b5e06384bdfa51529a005d054862c06d04ee0e546e8e3b2afcf95f988af2",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1263,8 +1263,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-runes.js?v=108a3026ba8c",
-      "sha256": "108a3026ba8cd44948597e5863cda5d12ef7f4608a2fd296da7509a5532ebe6d",
+      "url": "afk-runes.js?v=b60d20de427a",
+      "sha256": "b60d20de427ad4d694d85c61ea17c035cf0510295b1695f5420ee3d7aa699678",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1599,7 +1599,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "4136c7de0d23b3a2a869c198bc694ec85d2e468662eb8cacc00cfcb841317363",
+      "sha256": "6607c0760cda9c5239b76c37d0f9e6c641edc2b284f181db5b81223cacd0c969",
       "type": "text/html; charset=utf-8"
     },
     {

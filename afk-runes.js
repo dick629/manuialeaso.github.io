@@ -160,7 +160,7 @@
   // ── 次元符文石（11-12，時空裂痕「GD之子的期待」的頭目極少掉落）：在佐爾頓這裡用，開啟這個角色的符文次元模式（永久；一個角色一顆）──
   var DIM_ID = 'afk_rune_dim';
   if (typeof DB !== 'undefined' && DB.items && !DB.items[DIM_ID]) DB.items[DIM_ID] = { n: '次元符文石', type: 'misc', req: 'all', gachaWeight: 0, p: 0, c: 'text-fuchsia-300', weight: 0,
-    img: (DB.items.afk_runebox_3 && DB.items.afk_runebox_3.img) || '',
+    img: 'assets/icons/rift-supply/afk_rune_dim.webp',
     d: '撕開時空的符文原石。交給燃柳村的符文師佐爾頓，開啟這個角色的「符文次元模式」：符文之語跟著星數變強（取組成它的符文裡最低的星，每星 +10%）。每個角色各自開，一個角色用一顆。' };
   var dimOpen = function () {
     var p = P(); if (!p) return '找不到角色。';

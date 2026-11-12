@@ -116,7 +116,7 @@
       var s = SUP[k];
       if (!DB.items[s.id]) DB.items[s.id] = { n: s.n + '（裂痕專用）', type: 'misc', req: 'all', gachaWeight: 0, p: 0, ttmiRiftOnly: true, noTrade: true, eff: 'ttmi_item', c: 'text-violet-300', img: img(IMG[k]) };
       DB.items[s.id].d = s.d + ' 僅限時空裂痕內使用，離場後消失。';
-      DB.items[s.id].ttmiCost = s.c;
+      DB.items[s.id].ttmiCost = s.c; DB.items[s.id].img = 'assets/icons/rift-supply/rift_' + k + '.webp';   // GPT 11-12 新圖
       if (a && typeof a.addRift === 'function') a.addRift(s.id);
     });
   })();
