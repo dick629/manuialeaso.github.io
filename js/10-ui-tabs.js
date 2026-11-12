@@ -1792,6 +1792,8 @@ function buildQuickHeader(type) {
     let btns = '';
     if (hasEnh) btns += `<button onclick="toggleQuickEnhance('${type}')" class="flex-1 btn border-blue-700 bg-blue-900/70 hover:bg-blue-800 py-1.5 text-sm font-bold text-blue-200 rounded shadow">⚡ 快速強化</button>`;
     btns += `<button onclick="toggleQuickJunk('${type}')" class="flex-1 btn border-amber-700 bg-amber-900/60 hover:bg-amber-800 py-1.5 text-sm font-bold text-amber-200 rounded shadow">🗑️ 快速廢品</button>`;
+    // Ping 11-12 20:33：手機版（底部導覽那一版）在快速廢品旁邊放「自動販賣」，直接開規則視窗（裡面有「立即賣出」）
+    if (document.body && document.body.classList.contains('m-unified')) btns += `<button onclick="openAutoSellRules()" class="flex-1 btn border-violet-600 bg-violet-950/70 hover:bg-violet-900 py-1.5 text-sm font-bold text-violet-200 rounded shadow whitespace-nowrap">💰 自動販賣</button>`;
     hdr.innerHTML = `<div class="flex gap-1">${btns}</div>`;
     return hdr;
 }

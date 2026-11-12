@@ -62,24 +62,24 @@
   const more = document.createElement('section');
   more.id = 'lm-more'; more.setAttribute('aria-label','更多功能');
   more.innerHTML = '<label class="lm-menu-search">'+icon('grid')+'<input id="lm-menu-search" type="search" placeholder="搜尋功能、收藏、小說…" aria-label="搜尋功能"></label>'+
-    '<section class="lm-menu-group" data-menu-group="adventure"><h3>冒險與收藏</h3><div class="lm-menu-items lm-menu-grid"></div></section>'+
-    '<section class="lm-menu-group" data-menu-group="idle"><h3>掛機與整理</h3><div class="lm-menu-items lm-menu-list"></div></section>'+
-    '<section class="lm-menu-group" data-menu-group="system"><h3>系統</h3><div class="lm-menu-items lm-menu-list"></div></section>'+
+    '<section class="lm-menu-group" data-menu-group="common"><h3>常用</h3><div class="lm-menu-items lm-menu-grid"></div></section>'+
+    '<section class="lm-menu-group" data-menu-group="other"><h3>其他功能</h3><div class="lm-menu-items lm-menu-grid"></div></section>'+
     '<p id="lm-menu-empty" hidden>沒有符合的功能，試試其他關鍵字。</p>';
+  // Ping 11-12 20:33：「常用」四個在最上面，其他依玩家指定的順序排在「其他功能」
   const menu = [
-    ['收藏圖鑑','卡片、裝備與冒險收藏','btn-collection'],
-    ['自動販賣','整理規則與出售預覽','btn-autosell'],
+    ['遊戲設定','自動戰鬥、藥水與功能選項','automation'],
+    ['切換角色／登出','儲存進度後回到首頁','logout'],
     ['統計與存檔','冒險紀錄、匯出進度','audit'],
-    ['社交','互動與角色資訊','pvp'],
     ['血盟','血盟成員與共同冒險','clan'],
-    ['遊戲設定','自動戰鬥與功能選項','automation'],
-    ['介面設定','顯示與操作偏好','afk-toggles-entry'],
-    ['冒險小百科','規則、道具與玩法查詢','m-afk-nav-wiki'],
+    ['社交','互動與角色資訊','pvp'],
+    ['自動販賣','整理規則與出售預覽','btn-autosell'],
+    ['收藏圖鑑','卡片、裝備與冒險收藏','btn-collection'],
     ['次元裂縫小說','閱讀故事，保留閱讀進度','m-afk-nav-novel'],
+    ['冒險小百科','規則、道具與玩法查詢','m-afk-nav-wiki'],
     ['遊戲廳','前往遊戲廳與休閒活動','m-afk-nav-gamehall'],
-    ['手機顯示','字體大小與輕量模式','display'],
-    ['存檔與修復','備份、檢查與安全復原','recovery'],
-    ['切換角色／登出','儲存進度後回到首頁','logout']
+    ['外掛與介面','外掛開關與顯示偏好','afk-toggles-entry'],
+    ['手機顯示','縮放、字體大小、輕量模式','display'],
+    ['存檔與修復','備份、檢查與安全復原','recovery']
   ];
   const menuArt={
     'btn-collection':'assets/icons/items/古代的卷軸.png',
@@ -119,8 +119,7 @@
     }
     b.append(mark,title,small);
     b.addEventListener('click',()=>openMenuAction(action));
-    const category=['display','recovery','logout'].includes(action)?'system':
-      ['btn-autosell','automation','afk-toggles-entry'].includes(action)?'idle':'adventure';
+    const category=['automation','logout','audit','clan'].includes(action)?'common':'other';
     more.querySelector('[data-menu-group="'+category+'"] .lm-menu-items').appendChild(b);
   });
   const logs = document.createElement('section'); logs.id='lm-logs';
