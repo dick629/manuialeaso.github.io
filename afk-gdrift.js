@@ -26,8 +26,10 @@
   var GD = function () { return W.__afkGdTune || {}; };
   var R2 = function () { return W.__afkRift2 || null; };
   var inRift = function () { var s = S(); return !!(s.riftRun && typeof mapState !== 'undefined' && mapState && mapState.current === 'rift_battle'); };
-  var gdOn = W.__afkGdRiftOn = function () { return inRift() && S()._r2Mode === 'gd'; };
-  W.__afkNoFloor = function () { return gdOn(); };
+  var gdOn = function () { return inRift() && S()._r2Mode === 'gd'; };
+  // 次元裂縫規則、保底不生效只套在能進次元裂縫的角色（Ping 11-12 17:13）
+  W.__afkGdRiftOn = function () { return gdOn() && !!S()._r2GdElite; };
+  W.__afkNoFloor = function () { return W.__afkGdRiftOn(); };
   var mins = function () { var r = R2(); try { return r && r.minutes ? r.minutes() : 0; } catch (e) { return 0; } };
   var step = function (m, from, every, st, max) { return m < from ? 0 : Math.min(max, st * (1 + Math.floor((m - from) / every))); };
 
@@ -235,12 +237,14 @@
         var div = document.createElement('div');
         div.className = 'rounded-lg p-3 text-sm leading-relaxed text-slate-200';
         div.style.cssText = 'background:#1a0b24cc;border:1px solid #c026d3';
+        var elite = (function () { try { var D = W.__afkDimRift; return !!(D && D.canOpen && p && D.canOpen(p) === ''); } catch (e) { return false; } })();
         div.innerHTML = '<button type="button" id="afk-gd-enter" class="btn w-full py-3 text-lg font-bold text-white" style="background:#701a75;border:1px solid #f0abfc">🌀 GD之子的期待</button>'
           + '<div class="mt-2">不需要任何條件或材料。裂痕從第 ' + g.from + ' 分鐘的強度開始，之後一直變強、沒有上限，也沒有時間限制，倒下或撤離才結束。只出現頭目，從等級最低的地區霸主、首領開始。</div>'
-          + '<div>進場就套用次元裂縫的規則；保底不生效；五屬性抗性每 ' + g.resEvery + ' 分鐘 −' + g.resStep + '（沒有下限）。'
+          + '<div class="text-fuchsia-200">' + (elite ? '你能進次元裂縫：進場套用次元裂縫的規則、保底不生效，頭目掉落率 ×' + g.dropX + '。' : '你還不能進次元裂縫：不套次元裂縫的規則，掉落率維持正常。（能進次元裂縫後，這裡會變難、掉落率 ×' + g.dropX + '）') + '</div>'
+          + '<div>五屬性抗性每 ' + g.resEvery + ' 分鐘 −' + g.resStep + '（沒有下限）。'
           + '進場 ' + g.healFrom + ' 分鐘起治療 −' + Math.round(g.healStep * 100) + '%、每 ' + g.healEvery + ' 分鐘再 −' + Math.round(g.healStep * 100) + '%（最多 −' + Math.round(g.healMax * 100) + '%，吸血不受影響）；'
           + g.dmgFrom + ' 分鐘起造成的傷害 −' + Math.round(g.dmgStep * 100) + '%、每 ' + g.dmgEvery + ' 分鐘再 −' + Math.round(g.dmgStep * 100) + '%（最多 −' + Math.round(g.dmgMax * 100) + '%）。</div>'
-          + '<div>沒有結算獎勵，只能靠打：頭目掉落率 ×' + g.dropX + '；遺物、符文石每隻頭目判定 ' + g.rollN + ' 次；掉到的遺物有 ' + (g.p5 * 100) + '% 是 +5、' + (g.p10 * 100).toFixed(4).replace(/0+$/, '') + '% 是 +10；'
+          + '<div>沒有結算獎勵，只能靠打：遺物、符文石每隻頭目判定 ' + g.rollN + ' 次；掉到的遺物有 ' + (g.p5 * 100) + '% 是 +5、' + (g.p10 * 100).toFixed(4).replace(/0+$/, '') + '% 是 +10；'
           + '另有 2★ 符文石 ' + (g.s2 * 100).toFixed(3).replace(/0+$/, '') + '%、3★ 符文石 ' + (g.s3 * 100).toFixed(4).replace(/0+$/, '') + '%、次元符文石 ' + (g.dim * 100).toFixed(5).replace(/0+$/, '') + '%（每隻頭目）。</div>'
           + '<div class="text-fuchsia-300">最久紀錄：' + (best ? Math.floor(best) + ' 分鐘' : '還沒有') + '</div>';
         (container.firstElementChild || container).appendChild(div);

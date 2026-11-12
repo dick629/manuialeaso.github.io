@@ -121,7 +121,7 @@
   //   沒有進場條件；開場就是 60 分鐘的曲線、之後一直往上；只出頭目；吃次元裂縫規則；保底不生效；沒有時間限制、沒有結算。
   var GD = W.__afkGdTune = W.__afkGdTune || {
     from: 60,                      // 曲線從第幾分鐘開始
-    lvStart: 1, lvPerMin: 1.5, lvSpan: 10,   // 頭目等級：從最低開始，每分鐘 +1.5 級，取 [L, L+10]
+    lvStart: 45, lvPerMin: 2.5, lvSpan: 10,   // 頭目等級：45 級起，每分鐘 +2.5 級，取 [L, L+10]（Ping 11-12 17:13：打 10 分鐘還沒出王 → 原本 1 級起、每分鐘 +1.5 太慢）
     dropX: 10, rollN: 2,           // 掉落率 ×10；遺物、符文石每隻頭目判定 2 次
     p5: 0.01, p10: 0.000001,       // 掉到遺物的當下：1% 是 +5、0.0001% 是 +10
     s2: 0.00005, s3: 0.000001, dim: 0.0000001,   // 2★ 符文石 0.005%、3★ 0.0001%、次元符文石 0.00001%（每隻頭目）
@@ -130,6 +130,8 @@
     dmgFrom: 20, dmgEvery: 20, dmgStep: 0.1, dmgMax: 0.8         // 傷害降低
   };
   var gdOn = function () { return !!(ON && S().riftRun && S()._r2Mode === 'gd' && mapState && mapState.current === 'rift_battle'); };
+  // 能進次元裂縫的角色（跟次元裂縫同一條件）：GD 套次元裂縫規則、掉落 ×10；其他角色維持正常難度與掉落率（Ping 11-12 17:13）
+  var gdElite = function () { try { var D = W.__afkDimRift, p = P(); return !!(D && D.canOpen && p && D.canOpen(p) === ''); } catch (e) { return false; } };
   var gdStep = function (m, from, every, step, max) { return m < from ? 0 : Math.min(max, step * (1 + Math.floor((m - from) / every))); };
   var relicDay = function () { return Math.floor((Date.now() + 8 * 3600000) / 86400000); };
   var relicUsed = function (p) { var r = p && p.afkRift2RelicDay; return r && r.d === relicDay() ? (Number(r.n) || 0) : 0; };
@@ -177,7 +179,7 @@
   };
   var afterEnter = function (gd) {
     var s = S();
-    if (s.riftRun) { s._riftRunKey = s.riftStartMs; s._r2Start = s.ticks || 0; s._r2BossDue = s._r2Start + 3000; s._r2World = modeNow(); s._r2Mode = gd ? 'gd' : modeNow(); s._r2Clear = false; s._r2Wall = 0; s._r2Legend = false; s._r2GdRes = 0; sync();
+    if (s.riftRun) { s._riftRunKey = s.riftStartMs; s._r2Start = s.ticks || 0; s._r2BossDue = s._r2Start + 3000; s._r2World = modeNow(); s._r2Mode = gd ? 'gd' : modeNow(); s._r2Clear = false; s._r2Wall = 0; s._r2Legend = false; s._r2GdRes = 0; s._r2GdElite = !!(gd && gdElite()); sync();
       if (gd) { try { logSys('<span class="font-bold" style="color:#f0abfc;">🌀 GD之子的期待：裂痕從第 ' + GD.from + ' 分鐘的強度開始，而且不會停下來。只會出現頭目；撐得越久，掉落越好。</span>'); } catch (e) {} try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {} } }
   };
   // GD之子的期待的入口：沒有進場條件、不用龜裂之核；上一趟的獎勵還沒領也能進（離場時原封不動放回去）
@@ -369,7 +371,7 @@
   // ── 掉落 ──
   W.__afkRiftDrop = function (itemId, pct, mob) {
     if (!rule()) return null;
-    var d = DB.items[itemId], gd = S()._r2Mode === 'gd', x = gd ? GD.dropX : 1;   // GD之子的期待：再 ×10
+    var d = DB.items[itemId], gd = S()._r2Mode === 'gd', x = gd && S()._r2GdElite ? GD.dropX : 1;   // GD之子的期待：能進次元裂縫的角色再 ×10（Ping 11-12 17:13；其他角色維持正常掉落率）
     var q = (d && d.relic ? pct * DROP.relicX : pct) * x;
     if (gd && d && d.relic) {   // GD：遺物每隻頭目判定 2 次；掉到的當下判定 +5／+10
       for (var i = 0; i < GD.rollN; i++) if (Math.random() < q / 100) gdRelic(itemId, mob);
@@ -418,7 +420,7 @@
             try { logSys('<span class="text-amber-300 font-bold">✦ 傳說！' + esc(m.n) + ' 的殘影裡掉出了 ' + DB.items[DROP.legendId].n + '。</span>'); } catch (e) {}
           }
           for (var bi = 0; bi < (gd ? GD.rollN : 1); bi++)   // GD：符文石箱每隻頭目判定 2 次、機率 ×10
-            if (m.boss && stage && Math.random() < DROP.box * (gd ? GD.dropX : 1)) { gainItem(RD.BOX[stage], 1, true, true); try { logSys('<span class="text-amber-300 font-bold">✦ 極稀有！' + esc(m.n) + ' 留下了 ' + DB.items[RD.BOX[stage]].n + '。</span>'); } catch (e) {} }
+            if (m.boss && stage && Math.random() < DROP.box * (gd && S()._r2GdElite ? GD.dropX : 1)) { gainItem(RD.BOX[stage], 1, true, true); try { logSys('<span class="text-amber-300 font-bold">✦ 極稀有！' + esc(m.n) + ' 留下了 ' + DB.items[RD.BOX[stage]].n + '。</span>'); } catch (e) {} }
           if (gd && m.boss) {   // GD：2★／3★ 符文石、次元符文石
             var gx = [[GD.s2, function () { return gdRune(2); }], [GD.s3, function () { return gdRune(3); }], [GD.dim, function () { return DB.items.afk_rune_dim ? 'afk_rune_dim' : null; }]];
             gx.forEach(function (g) { if (Math.random() < g[0]) { var gid = g[1](); if (gid && DB.items[gid]) { gainItem(gid, 1, true, true); try { logSys('<span class="font-bold" style="color:#f0abfc;">✦ 傳說！' + esc(m.n) + ' 的殘影裡掉出了 ' + DB.items[gid].n + '。</span>'); } catch (e) {} } } });
