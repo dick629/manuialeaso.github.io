@@ -280,7 +280,7 @@
           if (!r || !a) return r;
           var st = stageOf(a);
           if (st >= 1 && a.cls === 'illusion' && H && H.illuSk && H.illuSk(sk) && H.ILLU_CUT) r.mult = r.mult / H.ILLU_CUT;   // 十三：幻術士做過技能強化就取消
-          if (st >= 2 && sk && sk._afkSuId === 'sk_meteor' && H && H.SPLASH && r.noCrit && Math.abs(r.mult - H.SPLASH) < 1e-9) r.mult = 1;   // 流星雨二：副目標 ×1.0（仍不爆擊）
+          if (st >= 2 && sk && sk._afkSuId === 'sk_meteor' && H && H.SPLASH && Math.abs(r.mult - H.SPLASH) < 1e-9) r.mult = 1;   // 流星雨二：副目標 ×1.0（仍不爆擊）
         } catch (e) {}
         return r;
       };

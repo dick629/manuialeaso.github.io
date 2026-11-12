@@ -1254,7 +1254,7 @@ function allyCastMagic(ally, sk) {
         let effMr = (t.st && t.st.mrhalf > 0) ? (t.mr / 2) : t.mr;
         let mrFactor = mrMult(effMr);
         let isCrit = Math.random()*100 < (d.magicCrit||0); let _afkSR = (typeof window.__afkSpellRoll === 'function') ? window.__afkSpellRoll(ally, t, sk, targets, true) : null; if (_afkSR && _afkSR.noCrit) isCrit = false;   /* 🔌 加掛版補丁:法術目標修正 */
-        let critMult = isCrit ? (1 + (d.magicCritDmg||0)/100) : 1;
+        let critMult = isCrit ? (1 + ((d.magicCritDmg||0) + ((_afkSR && _afkSR.critAdd) || 0))/100) : 1;
         let dmgArray = sk.multiDmg || (sk.dmgDice ? [[sk.dmgDice[0], sk.dmgDice[1]]] : []);
         let totalDmg = 0;
         dmgArray.forEach((dc, idx) => {

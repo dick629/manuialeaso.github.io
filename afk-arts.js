@@ -17,10 +17,12 @@
   // 2026-11-02 02:56（玩家）：幻刃 ×2（減傷 15%、吸血 2%）、織命 ×2（吸血 2%）、四元素主宰一般攻擊 ×8、殷海薩一般攻擊 ×5；16 人減半改成同一門技藝的人數懲罰（artPen）
   // 2026-10-28 八職業平衡（冷門職業加強，數值集中在這裡）：騎士傷害 ×3、幻刃 ×5、織命 ×4、四元素主宰 ×15、殷海薩 ×17、魔血 +50%；
   //   （第二輪 2026-10-29 的新數值見 docs/class-balance.md）減傷：萬兵之道 30%、魔血咒者 20%、幻刃術士 30%；吸血：萬兵之道／魔血咒者／幻術士兩門 5%、時流暗殺者 1%（2026-10-28 晚 3% → 1%）。依據見 docs/class-balance.md
-  var W = window; W.__afkArtTune = W.__afkArtTune || { knight: 3.5, arms: 2.5, sorc: 1, life: 1, ruler: 7, god: 4, ein: 6, classOut: { mage: 0.72 }, dmag: 2.5, fuse: 3, minionMage: 0.8, athAttr: 2, athMag: 50, fafPanel: 0.5, fafAxe: 0.7, kdark: 3, kdoom: 0.3, dtime: 1.6, armsDr: 0.3, timeDr: 0, darkDr: 0.2, sorcDr: 0.15, leech: 0.05, illuLeech: 0.02, timeLeech: 0.01 };
+  var W = window; W.__afkArtTune = W.__afkArtTune || { knight: 3.5, arms: 2.5, sorc: 1, life: 1, ruler: 7, god: 4, ein: 6, classOut: { mage: 1 }, classPet: { mage: 1.2 }, dmag: 2.5, fuse: 3, minionMage: 0.8, athAttr: 2, athMag: 50, fafPanel: 0.5, fafAxe: 0.7, kdark: 3, kdoom: 0.3, dtime: 1.6, armsDr: 0.3, timeDr: 0, darkDr: 0.2, sorcDr: 0.15, leech: 0.05, illuLeech: 0.02, timeLeech: 0.01 };
   // 職業平衡係數（2026-10-29）：該職業的魔法基礎傷害與召喚物／夥伴傷害再乘上這個倍率（取整）；法師 ×0.72
   var clsOfStats = function (d) { try { if (typeof player !== 'undefined' && player && player.d === d) return player.cls; var a = (player && player.allies || []).find(function (x) { return x && x.d === d; }); return a ? a.cls : null; } catch (e) { return null; } };
   var classK = function (cls) { var t = W.__afkArtTune.classOut; return (cls && t && t[cls]) || 1; };
+  // Ping 11-13 02:25：法師魔法基礎 ×0.72 → ×1；召喚物、夥伴 ×0.72 → ×1.2
+  var classPetK = function (cls) { var t = W.__afkArtTune.classPet; return (cls && t && t[cls]) || classK(cls); };
   if (typeof W.magicBaseDamage === 'function') {
     var oMBD = W.magicBaseDamage;
     W.magicBaseDamage = function (rolled, dStats) { var v = oMBD.apply(this, arguments); try { var k = classK(clsOfStats(dStats)); if (k !== 1 && v > 0) v = Math.max(1, Math.floor(v * k)); } catch (e) {} return v; };
@@ -28,13 +30,13 @@
   var hookCompanion = function () {   // 召喚術（v2）、寵物等夥伴的傷害走 AFK_RELIC_RUNTIME.companionDamage
     var R = W.AFK_RELIC_RUNTIME; if (!R || typeof R.companionDamage !== 'function' || R.companionDamage._afkCls) return;
     var o = R.companionDamage;
-    R.companionDamage = function (owner, s, t, dmg) { var v = o.apply(this, arguments); try { var k = classK(owner && owner.cls); if (k !== 1 && v > 0) v = Math.max(1, Math.floor(v * k)); } catch (e) {} return v; };
+    R.companionDamage = function (owner, s, t, dmg) { var v = o.apply(this, arguments); try { var k = classPetK(owner && owner.cls); if (k !== 1 && v > 0) v = Math.max(1, Math.floor(v * k)); } catch (e) {} return v; };
     R.companionDamage._afkCls = true;
   };
   try { hookCompanion(); document.addEventListener('DOMContentLoaded', hookCompanion); } catch (e) {}
   if (typeof W.summonDamageMult === 'function') {
     var oSDM = W.summonDamageMult;
-    W.summonDamageMult = function (sm, owner) { var v = oSDM.apply(this, arguments); try { var k = classK(owner && owner.cls); if (k !== 1) v = v * k; } catch (e) {} return v; };
+    W.summonDamageMult = function (sm, owner) { var v = oSDM.apply(this, arguments); try { var k = classPetK(owner && owner.cls); if (k !== 1) v = v * k; } catch (e) {} return v; };
   }
   var S = function () { return (typeof state !== 'undefined' && state) ? state : {}; };
   var P = function () { return (typeof player !== 'undefined' && player) ? player : null; };

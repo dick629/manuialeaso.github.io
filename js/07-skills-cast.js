@@ -823,7 +823,7 @@ function castSkillInner(skId) {
     let spCoef = magicDamageCoef(player.d, magicAttrDefense(t, sk.ele || 'none'), sk.tier);
     let mageDmgMult = 1.0;
     
-    let magicCritMult = isCrit ? (1 + player.d.magicCritDmg / 100) : 1.0;
+    let magicCritMult = isCrit ? (1 + (player.d.magicCritDmg + ((_afkSR && _afkSR.critAdd) || 0)) / 100) : 1.0;
 
                 dmgArray.forEach((diceArr, idx) => {
                     let baseMagicDmg = roll(diceArr[0], diceArr[1]);

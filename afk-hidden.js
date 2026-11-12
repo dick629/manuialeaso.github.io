@@ -19,6 +19,8 @@
  *   十、法術的副目標與連發（玩家 2026-11-01 22:22）：範圍魔法（有 3 秒冷卻的那些）冷卻改 3.5 秒（afk-balance1101 問這裡）；
  *       同一發打到的怪：主目標（目前鎖定的目標，沒鎖定就第一隻）照算，其他目標傷害 ×0.8 而且不會爆擊。
  *       迴響精通的連發、魔法精通（王族）的追加施放不會爆擊——除非施法者同時裝了符文「雷」和「裂」。玩家與傭兵一樣；經典模式不套用。
+ *       ★ 2026-11-13 02:25 改：範圍冷卻 3 秒；副目標 ×0.9 可以爆擊；連發、追加施放可以爆擊；流星雨連續打中同一隻三發，第四發 ×1.5；
+ *         同時裝「雷」「裂」＝法術爆擊傷害 +100%，打中的怪 5 秒內受到的火屬性法術 ×1.5。法師魔法基礎 ×0.72 → ×1、召喚物與夥伴 ×1.2（afk-arts）。
  *       （核心補丁 81 在每個目標算傷害時呼叫 __afkSpellRoll。）
  *   十一、雅典娜之杖（玩家 2026-11-01 22:22）：身上（背包或裝備）帶著雅典娜之杖（ttmi_5413）去打一轉女神（初次輪迴）：
  *       女神受到的傷害 +15%；女神與使徒打你、傭兵、警衛、寵物、召喚物的傷害 −30%。
@@ -195,7 +197,7 @@
   // ── 十、法術的副目標與連發 ──
   var hOn = function (a) { var p = P(); return !!(a && !a.classicMode && !(p && p.classicMode) && (!T || T.enabled('hiddenbonus'))); };
   var EV = function (x) { try { return (0, eval)(x); } catch (e) { return undefined; } };
-  var SPLASH = 0.8, AOE_CD_HIDDEN = 35;
+  var SPLASH = 0.9, AOE_CD_HIDDEN = 30;   // Ping 11-13 02:25：副目標 ×0.9 可以爆擊、範圍冷卻 3 秒
   var isAoeSk = function (sk) { var b = W.__afkBalance1101; return b && b.isAoe ? b.isAoe(sk) : !!(sk && sk.type === 'atk' && sk.dmgType === 'magic' && sk.target === 'all'); };
   var freeCast = function (a, ally) {
     if (ally) return !!(a._echoing || EV('typeof _allyRoyalFreeCast !== "undefined" && _allyRoyalFreeCast'));
@@ -210,9 +212,18 @@
     if (isAoeSk(sk) && targets && targets.length > 1) {
       var main = null; try { main = getTarget(); } catch (e) {}
       if (!main || targets.indexOf(main) < 0) main = targets[0];
-      if (t !== main) { r.mult = SPLASH; r.noCrit = true; }
+      if (t !== main) r.mult = SPLASH;
     }
-    if (!r.noCrit && freeCast(a, ally) && !runeCrit(a)) r.noCrit = true;
+    // Ping 11-13 02:25：迴響精通的連發、王族魔法精通的追加施放也可以爆擊（不再擋）
+    // 流星雨連環爆：同一隻怪連續吃到三發流星雨，第四發 ×1.5（可以爆擊），之後重新數；兩發之間隔超過 15 秒就重數
+    if (sk && (sk._afkSuId === 'sk_meteor' || sk.n === '流星雨')) {
+      var nowM = Date.now(); if (!t._afkMeteorAt || nowM - t._afkMeteorAt > 15000) t._afkMeteorN = 0;
+      t._afkMeteorAt = nowM; t._afkMeteorN = (t._afkMeteorN || 0) + 1;
+      if (t._afkMeteorN >= 4) { r.mult *= 1.5; r.chain = true; t._afkMeteorN = 0; }
+    }
+    // 同時裝符文「雷」和「裂」：法術爆擊傷害 +100%，打中的怪 5 秒內受到的火屬性法術傷害 ×1.5
+    if (runeCrit(a)) { r.critAdd = 100; t._afkFireMarkUntil = Date.now() + 5000; }
+    if (sk && sk.ele === 'fire' && (t._afkFireMarkUntil || 0) > Date.now()) r.mult *= 1.5;
     if (illuSk(sk)) r.mult *= ILLU_CUT;   // 十三
     return r;
   };
