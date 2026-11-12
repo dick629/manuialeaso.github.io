@@ -38,7 +38,9 @@
     const key='lineage_idle_save_'+slot;
     const cur=localStorage.getItem(key),reload=cur!==null;
     trace.step(reload?'讀回舊進度檢查':'匯入到空位置',reload?'倉庫存入次數：存檔 '+(Number(doc.p.afkWhPut)||0)+'／帳本 '+(window.__afkReloadLedger?window.__afkReloadLedger.wh(doc.p):'?'):'位置 '+slot);
-    if(reload){const why=this.reloadWhy(doc.p,slot);if(why)throw Error(why);if(!confirm('這份是「'+(doc.p.name||'')+'」自己的舊存檔。\n要讀回這份舊進度嗎？這個位置目前的進度會被蓋掉（會先自動備份一份）。')){trace.step('玩家按了取消','');trace.end(false,'玩家取消');return false;}
+    if(!reload){try{const IC=window.LineageIntegrityCore,q=Object.assign({},doc.p);q.enSeed=IC.seed(doc.p);const want=IC.identity(q);for(let n=1;n<=SAVE_SLOT_MAX;n++){if(n===slot)continue;const o=typeof _roleReadSavePlayer==='function'?_roleReadSavePlayer(n):null;if(!o)continue;const r=Object.assign({},o);r.enSeed=IC.seed(o);if(IC.identity(r)===want)throw Error('「'+(doc.p.name||'')+'」已經在第 '+n+' 格。要換成這份進度，請選第 '+n+' 格再匯入。');}}catch(e){if(/已經在第/.test(e.message))throw e;}}
+    const curSeq=(()=>{try{return Number(B.decode(cur).value.p._saveSeq)||0;}catch(e){return 0;}})(),inSeq=Number(doc.p._saveSeq)||0,newer=inSeq>curSeq;
+    if(reload){const why=this.reloadWhy(doc.p,slot);if(why)throw Error(why);if(!confirm(newer?'這份是「'+(doc.p.name||'')+'」比較新的進度（第 '+inSeq+' 次存檔，這裡是第 '+curSeq+' 次）。\n要換成這份進度嗎？這個位置目前的進度會被蓋掉（會先自動備份一份）。':'這份是「'+(doc.p.name||'')+'」自己的舊存檔。\n要讀回這份舊進度嗎？這個位置目前的進度會被蓋掉（會先自動備份一份）。')){trace.step('玩家按了取消','');trace.end(false,'玩家取消');return false;}
      const RL=window.__afkReloadLedger;if(RL)doc.p.afkReloadN=RL.count(doc.p)+1;}
     const apply=async()=>{
      if(localStorage.getItem(key)!==cur)throw Error('目的位置的資料已變更，請重新操作');
@@ -49,7 +51,7 @@
     trace.step('寫入存檔（保護交易）','先自動備份再寫入');
     await (navigator.locks?navigator.locks.request('lineage-merged-save-write',{mode:'exclusive'},apply):apply());
     trace.step('完成',reload?'讀回成功':'匯入成功');trace.end(true,'');
-    renderLoadSelect();alert(reload?'已讀回「'+(doc.p.name||'')+'」的舊進度；倉庫等共用資料維持原樣。':'角色已匯入；共用資料維持原進度。');return true;
+    renderLoadSelect();alert(reload?(newer?'已換成「'+(doc.p.name||'')+'」比較新的進度；倉庫等共用資料維持原樣。':'已讀回「'+(doc.p.name||'')+'」的舊進度；倉庫等共用資料維持原樣。'):'角色已匯入；共用資料維持原進度。');return true;
    }catch(e){alert(trace.fail(e));return false;}
   },
   roleFromFull(d0,slot){
