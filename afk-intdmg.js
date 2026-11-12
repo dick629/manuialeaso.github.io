@@ -86,6 +86,7 @@
   };
 
   // ── 三、能力重算後 HP／MP 上限取整數（傭兵重算時全域 player 暫時是那個傭兵）──
+  var FLAT = ['meleeDmg', 'meleeHit', 'rangedDmg', 'rangedHit', 'magicDmg', 'magicHit', 'extraDmg', 'extraHit', 'extraMp', 'dmgBonus', 'hit', 'dr', 'mr', 'hpR', 'mpR', 'str', 'dex', 'con', 'int', 'wis', 'cha'];
   var wrapRecompute = function () {
     if (typeof W.recomputeStats !== 'function' || W.recomputeStats.__afkInt) return;
     var o = W.recomputeStats;
@@ -99,6 +100,8 @@
           if (typeof p.hp === 'number' && p.hp > p.mhp) p.hp = p.mhp;
           if (typeof p.mp === 'number' && p.mp > p.mmp) p.mp = p.mmp;
           if (typeof p.curHp === 'number' && p.curHp > p.mhp) p.curHp = p.mhp;
+          // Ping 11-12 21:49：面板的固定數值（傷害、命中、減免…）被百分比倍率乘出小數 → 一律四捨五入成整數
+          var dd = p.d; if (dd && typeof dd === 'object') FLAT.forEach(function (k) { var v = dd[k]; if (typeof v === 'number' && isFinite(v) && v !== Math.round(v)) dd[k] = Math.round(v); });
         }
       } catch (e) {}
       return r;

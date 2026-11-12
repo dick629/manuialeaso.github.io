@@ -1500,7 +1500,7 @@ function _updateUIImpl() {
         if(document.getElementById('dt-cha')) document.getElementById('dt-cha').innerText = player.d.cha;
     }
     
-    const sign = formatBonus;
+    const sign = v => formatBonus(Math.round(Number(v) || 0));   // Ping 11-12 21:49：面板固定數值不顯示小數
     // 額外傷害/命中：折入近距離與遠距離的顯示（兩者都 +）
     let _ed = player.d.extraDmg || 0, _eh = player.d.extraHit || 0;
     // 近距離
@@ -1531,7 +1531,7 @@ function _updateUIImpl() {
 	if(document.getElementById('dt-mpr')) document.getElementById('dt-mpr').innerText = formatBonus(player.d.mpR);
 	if(document.getElementById('dt-hpr')) document.getElementById('dt-hpr').innerText = formatBonus(player.d.hpR || 0);
     document.getElementById('dt-er').innerText = `${formatStatNumber(Math.min(window.__afkEvadeCap || 100, effResistPct(player.d.er)))}%`; /* 🔌 加掛版補丁:迴避上限 */   // 🔧 顯示有效迴避率（>50 每+5才+1%）
-    document.getElementById('dt-dr').innerText = formatStatNumber(player.d.dr);
+    document.getElementById('dt-dr').innerText = formatStatNumber(Math.round(Number(player.d.dr) || 0));
     { let _attackSec = (typeof playerAttackIntervalTicks === 'function')
             ? playerAttackIntervalTicks(false) / 10
             : Math.max(0.1, Number(player.d.aspd) || 0.1);
