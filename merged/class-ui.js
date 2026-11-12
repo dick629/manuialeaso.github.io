@@ -58,8 +58,19 @@ await A.release(s.id)
    const b=(text,act)=>'<button type="button" data-cls-act="'+esc(act)+'">'+esc(text)+'</button>'
    const ctl=s.type==='被動'?'<span class="class-tabskills-note">常駐生效</span>':s.type==='光環'?b((v.auras||[]).includes(s.id)?'停用光環':'啟用光環','aura:'+s.id):(dual?b('雙刀姿態','dual:'+s.id)+b('鋼爪姿態','claw:'+s.id):b('施放','cast:'+s.id))+b((v.auto||[]).includes(s.id)?'移出自動':'加入自動','auto:'+s.id)
    return '<div class="class-tabskill">'+(ico?'<img src="'+ico+'" alt="" loading="lazy" onerror="this.remove()">':'')+'<div class="class-tabskill-body"><b>'+esc(s.name)+'</b><small>'+esc(s.type+(s.type==='被動'?'':s.type==='光環'?' · 啟用 3% MP，每 5 秒 1% MP':' · MP '+cost.mp+(cost.hp?' · HP '+cost.hp:'')+' · 冷卻 '+s.plan.cd+' 秒'))+'</small><p>'+esc(C.description(s))+'</p></div><div class="class-tabskill-ctl">'+ctl+'</div></div>'}).join('')+'</section>'}
+ // Ping 11-13 02:35：技能視窗下面空白處列出自動施放的 8 格（點「移出」拿掉；冷卻每秒更新）
+ function autoBar(win){const p=player,v=p&&C.get(p),t=p&&C.tree(p);let bar=document.getElementById('class-autobar');
+  if(!v||!t){if(bar)bar.remove();return}
+  if(!bar){bar=document.createElement('section');bar.id='class-autobar';bar.addEventListener('click',async ev=>{const el=ev.target.closest('[data-auto-rm]');if(!el)return;ev.preventDefault();ev.stopPropagation();el.disabled=true;try{await A.configure(el.dataset.autoRm,'auto');tabSkills()}catch(e){el.disabled=false;try{W.alert(e.message)}catch(x){}}})}if(bar.previousElementSibling!==win)win.insertAdjacentElement('afterend',bar)
+  const ids=(v.auto||[]).filter(id=>C.skills.get(id)),cell=[]
+  for(let i=0;i<8;i++){const id=ids[i],s=id&&C.skills.get(id);if(!s){cell.push('<div class="class-auto-slot empty"><span>空格</span></div>');continue}const ico=icoOf(t,s)
+   cell.push('<div class="class-auto-slot" data-auto-id="'+esc(id)+'">'+(ico?'<img src="'+ico+'" alt="" loading="lazy" onerror="this.remove()">':'')+'<b>'+esc(s.shortName||String(s.name).replace(/^.*?・/,''))+'</b><i class="class-auto-cd"></i><button type="button" data-auto-rm="'+esc(id)+'">移出</button></div>')}
+  bar.innerHTML='<h4>自動施放 <small>'+ids.length+' / 8</small></h4><div class="class-auto-grid">'+cell.join('')+'</div>';autoTick()
+  if(!autoBar.timer)autoBar.timer=setInterval(()=>{if(!document.getElementById('class-autobar')?.offsetParent)return;autoTick()},1000)}
+ function autoTick(){const bar=document.getElementById('class-autobar');if(!bar||!player)return;bar.querySelectorAll('[data-auto-id]').forEach(el=>{const s=C.skills.get(el.dataset.autoId);let left=0;try{left=Math.ceil(W.LineageClassCombat.cooldown(player,s))}catch(e){}const i=el.querySelector('.class-auto-cd');i.textContent=left>0?left+' 秒':'可施放';el.classList.toggle('ready',!(left>0))})}
  let clsMode=false   // 技能分頁的「流派」頁籤（跟核心的 一般／職業／裝備 並排）
  function tabSkills(){try{const host=document.getElementById('tab-skill');if(!host)return;const win=host.querySelector('.classic-skill-window'),modes=win&&win.querySelector('.classic-skill-mode');if(!win||!modes)return
+  autoBar(win)
   const html=tabSkillsHtml();if(!html){clsMode=false;return}
   if(!modes.querySelector('[data-cls-mode]')){const b=document.createElement('button');b.type='button';b.dataset.clsMode='1';b.textContent='流派';modes.appendChild(b)
    modes.addEventListener('click',ev=>{const x=ev.target.closest('button');if(!x)return;if(x.dataset.clsMode){ev.preventDefault();ev.stopPropagation();clsMode=true;tabSkills();return}clsMode=false},true)}
