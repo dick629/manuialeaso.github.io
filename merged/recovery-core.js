@@ -141,7 +141,7 @@
   if(!bridge.record(incoming)||Object.values(incoming).some(v=>typeof v!=='string'))throw error('PACK','備份資料不完整。');
   const changes=[];
   for(const key of new Set([...Object.keys(current),...Object.keys(incoming)])){
-   if(key==='fb5_active_role_sessions_v1'||key==='afk_diag_hb'||key==='lineage_admin_receipts_v1')continue;
+   if(key==='fb5_active_role_sessions_v1'||/^afk_diag_/.test(key)||key==='lineage_admin_receipts_v1')continue;   // afk_diag_*：診斷紀錄（心跳、操作、開機耗時），隨時會寫，不跟著還原
    // 玩家 11-11：舊版的整份交易備份（約 5MB）不還原、而且清掉，否則手機容量不夠、轉移碼還原寫入失敗
    const before=bridge.own(current,key)?current[key]:null,after=key==='lineage_growth_transaction_backup_v1'?null:(bridge.own(incoming,key)?incoming[key]:null);
    if(before!==after)changes.push({key,before,after,reason:'FULL_RESTORE'});

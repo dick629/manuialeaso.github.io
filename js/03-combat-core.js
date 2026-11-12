@@ -928,6 +928,7 @@ function tick() {
                 let heal = _h.healDice
                     ? Math.max(1, Math.floor((rollDice(_h.healDice[0], _h.healDice[1]) + (_h.healBase || 0)) * _h.spCoef * (_h.healMult || 1)))
                     : Math.max(1, Math.floor((roll(_h.valDice[0], _h.valDice[1]) + (_h.magicDmg || 0)) * (_h.healMult || 1)));   // 🏺 v3.1.80 治癒者的恢復魔棒：施放者持有 groupHealMult 武器→每跳回復 ×2（施放時快照在 HoT 實例；v3.5.94 欄位更名同步）
+                if (typeof window.__afkGdHealMult === 'function') heal = Math.max(1, Math.floor(heal * window.__afkGdHealMult()));   /* 🔌 加掛版補丁:GD之子的期待 治療降低 */
                 player.hp = Math.min(player.mhp, player.hp + heal);   // 🔧 水之元氣不套用於持續回復(HoT)
                 _hotAllies.forEach(a => { a.curHp = Math.min(a.mhp || 1, (a.curHp || 0) + heal); });   // 🍃 全體傭兵同步回復
                 try { if (typeof petsOutList === 'function') petsOutList().forEach(p => { if (p && !p._downed && (p.hp || 0) > 0) p.hp = Math.min(p.mhp || 1, (p.hp || 0) + heal); }); } catch (e) {}   // 🩹 v3.2.67 團隊 HoT 也回復出戰寵物

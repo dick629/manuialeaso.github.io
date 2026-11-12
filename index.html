@@ -15,7 +15,7 @@
     <!-- 11-11 玩家：App 第一次開要等很久、整片白 → 先上深色底與載入畫面，程式全部載完才拿掉 -->
     <style>html,body{background:#0f141d}#afk-boot{position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0f141d;color:#e8d8b6;font:15px/1.5 system-ui,sans-serif;transition:opacity .3s}#afk-boot img{width:88px;height:88px;border-radius:18px}#afk-boot .bar{width:180px;height:4px;border-radius:2px;background:#2a2f3a;overflow:hidden}#afk-boot .bar i{display:block;height:100%;width:0;background:#c9a55a;transition:width .2s}</style>
     <!-- 11-12 玩家：手機開網頁到主選單要 3.5 分鐘 → 記錄每次開機各階段花多久（快取診斷「開機耗時」看得到） -->
-    <script>(function(){var P=window.performance;if(!P||!P.now)return;try{P.setResourceTimingBufferSize&&P.setResourceTimingBufferSize(3000);}catch(e){}var L={n:0,ms:0,top:{}};try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){L.n++;L.ms+=e.duration;});}).observe({type:"longtask",buffered:true});}catch(e){}window.__afkBootLong=L;var mark={};window.__afkBootMark=function(k){if(!(k in mark))mark[k]=Math.round(P.now());};document.addEventListener("DOMContentLoaded",function(){__afkBootMark("dom");});window.addEventListener("load",function(){__afkBootMark("load");});var save=function(){try{var rs=P.getEntriesByType("resource"),agg={js:[0,0,0,0],css:[0,0,0,0],img:[0,0,0,0],audio:[0,0,0,0],other:[0,0,0,0]},slow=[],lastJs=0;rs.forEach(function(r){var u=r.name,k=/\/(bgm|sfx)\//.test(u)?"audio":/\.js(\?|$)/.test(u)?"js":/\.css(\?|$)/.test(u)?"css":/\.(webp|png|jpe?g|gif)(\?|$)/.test(u)?"img":"other",a=agg[k];a[0]++;a[1]+=r.transferSize||0;if(!r.transferSize)a[2]++;a[3]=Math.max(a[3],Math.round(r.responseEnd));if(k==="js")lastJs=Math.max(lastJs,r.responseEnd);var nm=u.replace(/^.*\//,"").replace(/\?.*$/,"");try{nm=decodeURIComponent(nm);}catch(e){}slow.push([Math.round(r.duration),nm]);});slow.sort(function(a,b){return b[0]-a[0];});var nav=(P.getEntriesByType("navigation")||[])[0]||{};var rec={at:Date.now(),mark:mark,nav:{ttfb:Math.round(nav.responseStart||0),html:Math.round(nav.responseEnd||0),sw:Math.round(nav.workerStart||0)},agg:agg,lastJs:Math.round(lastJs),slow:slow.slice(0,8),long:{n:L.n,ms:Math.round(L.ms)},sw:!!(navigator.serviceWorker&&navigator.serviceWorker.controller),mem:(navigator.deviceMemory||0),cpu:(navigator.hardwareConcurrency||0)};var arr=[];try{arr=JSON.parse(localStorage.getItem("afk_boot_times")||"[]")||[];}catch(e){}arr.unshift(rec);localStorage.setItem("afk_boot_times",JSON.stringify(arr.slice(0,3)));try{localStorage.removeItem("lineage_boot_times");}catch(e){}}catch(e){}};var iv=setInterval(function(){if(typeof loadGame==="function"&&!document.getElementById("afk-boot")&&document.readyState!=="loading"){clearInterval(iv);__afkBootMark("menu");setTimeout(save,3000);}},250);})();</script>
+    <script>(function(){var P=window.performance;if(!P||!P.now)return;try{P.setResourceTimingBufferSize&&P.setResourceTimingBufferSize(3000);}catch(e){}var L={n:0,ms:0,top:{}};try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){L.n++;L.ms+=e.duration;});}).observe({type:"longtask",buffered:true});}catch(e){}window.__afkBootLong=L;var mark={};window.__afkBootMark=function(k){if(!(k in mark))mark[k]=Math.round(P.now());};document.addEventListener("DOMContentLoaded",function(){__afkBootMark("dom");});window.addEventListener("load",function(){__afkBootMark("load");});var save=function(){try{var rs=P.getEntriesByType("resource"),agg={js:[0,0,0,0],css:[0,0,0,0],img:[0,0,0,0],audio:[0,0,0,0],other:[0,0,0,0]},slow=[],lastJs=0;rs.forEach(function(r){var u=r.name,k=/\/(bgm|sfx)\//.test(u)?"audio":/\.js(\?|$)/.test(u)?"js":/\.css(\?|$)/.test(u)?"css":/\.(webp|png|jpe?g|gif)(\?|$)/.test(u)?"img":"other",a=agg[k];a[0]++;a[1]+=r.transferSize||0;if(!r.transferSize)a[2]++;a[3]=Math.max(a[3],Math.round(r.responseEnd));if(k==="js")lastJs=Math.max(lastJs,r.responseEnd);var nm=u.replace(/^.*\//,"").replace(/\?.*$/,"");try{nm=decodeURIComponent(nm);}catch(e){}slow.push([Math.round(r.duration),nm]);});slow.sort(function(a,b){return b[0]-a[0];});var nav=(P.getEntriesByType("navigation")||[])[0]||{};var rec={at:Date.now(),mark:mark,nav:{ttfb:Math.round(nav.responseStart||0),html:Math.round(nav.responseEnd||0),sw:Math.round(nav.workerStart||0)},agg:agg,lastJs:Math.round(lastJs),slow:slow.slice(0,8),long:{n:L.n,ms:Math.round(L.ms)},sw:!!(navigator.serviceWorker&&navigator.serviceWorker.controller),mem:(navigator.deviceMemory||0),cpu:(navigator.hardwareConcurrency||0)};var arr=[];try{arr=JSON.parse(localStorage.getItem("afk_diag_boot")||"[]")||[];}catch(e){}arr.unshift(rec);localStorage.setItem("afk_diag_boot",JSON.stringify(arr.slice(0,3)));try{localStorage.removeItem("lineage_boot_times");localStorage.removeItem("afk_boot_times");}catch(e){}}catch(e){}};var iv=setInterval(function(){if(typeof loadGame==="function"&&!document.getElementById("afk-boot")&&document.readyState!=="loading"){clearInterval(iv);__afkBootMark("menu");setTimeout(save,3000);}},250);})();</script>
     <script src="merged/recovery-boot.js?v=ffe629596dba"></script>
     <link rel="icon" type="image/png" href="assets/favicon.png">   <!-- 🖼️ 瀏覽器分頁圖示(favicon)：把你的圖放到 assets/favicon.png 即生效；可改 href 路徑或副檔名(.ico/.svg) -->
 
@@ -570,7 +570,7 @@
     <script src="js/00-data.js?v=6637104e1fa8"></script>
 <script src="js/01-drops-config.js?v=287d6f0e5cdc"></script>
 <script src="js/02-stats-recompute.js?v=8cefe7e46f92"></script>
-    <script src="js/03-combat-core.js?v=1a45dd14043d"></script>
+    <script src="js/03-combat-core.js?v=95d8f7ae327e"></script>
     <script src="js/04-combat-attack.js?v=32177b0c60d3"></script>
 <script src="js/05-kill-progression.js?v=524cae4b0f1a"></script>
     <script src="js/06-status-allies.js?v=ac68fde03b12"></script>
@@ -580,7 +580,7 @@
     <script src="js/10-ui-tabs.js?v=366e94255113"></script>
 <script src="js/11-world-map.js?v=1fe30352e04e"></script>
 <script src="js/12-npc-quests.js?v=317cf201e2f4"></script>
-<script src="js/13-shop-save.js?v=92c08144008c"></script>
+<script src="js/13-shop-save.js?v=98460a8fb3da"></script>
 <script src="js/14-craft-pandora.js?v=369c3e83de29"></script>
 <script src="js/15-cards.js?v=1dba66f22dd3"></script>
 <script src="js/16-equip-book.js?v=db30ba2eab50"></script>
@@ -592,7 +592,7 @@
     <script src="js/23-summons.js?v=69b7f657728e"></script>
     <script src="js/22-pets.js?v=f9735c9e1ba5"></script>
     <script src="js/24-pandora-relic-market.js?v=f75cfb247059"></script>
-    <script src="js/25-clan-system.js?v=fef35d2e0193"></script>
+    <script src="js/25-clan-system.js?v=9f104b862b0f"></script>
     <script src="js/26-world-channel.js?v=f03d4f92d3f4"></script>
 <script src="js/28-pvp-arena.js?v=735b3ed78942"></script>
 <script src="js/29-siege-v2-data.js?v=9e6e76f0aade"></script>
@@ -716,7 +716,7 @@
     <script src="afk-notice.js?v=291c2c4bba97"></script>
     <script src="afk-history.js?v=d66edd2d5320"></script>
     <script src="afk-reissueid.js?v=87f3531cd0ff"></script>
-    <script src="afk-diag.js?v=0840bca77c50"></script>
+    <script src="afk-diag.js?v=750ef33a77b0"></script>
     <script src="afk-powersave.js?v=2682d9fac1bd"></script>
     <!-- afk-lowend：低階電腦第一次自動套用「流暢顯示」（需 afk-powersave、afk-perf） -->
     <script src="afk-lowend.js?v=64a939dd2ea3"></script>
@@ -866,7 +866,7 @@
     <!-- 天堂透視鏡已核對物品；套裝與地圖資料就緒後加入配方與裂痕補給。 -->
     <script src="afk-ttmi-items-data.js?v=9773f1d960da"></script>
     <script src="afk-ttmi-icons-data.js?v=a93979b08d9a"></script>
-    <script src="afk-ttmi-items.js?v=dd10ed1d7877"></script>
+    <script src="afk-ttmi-items.js?v=3afe936a29a8"></script>
     <!-- afk-exprebirth：轉生後經驗藥水、料理無效（娃娃、符文、聖紋、組隊照算）；要緊接在 afk-ttmi-items 之後、符文／聖紋包經驗倍率之前 -->
     <script src="afk-exprebirth.js?v=9c76549115ff"></script>
     <!-- afk-knightnames：守護騎士譯名（依詩蒂→伊席蘿蒂、朱利安→絲莉安、歐薇→歐文；怪物、NPC、物品、載入畫面）＋變身形態伊詩蒂→伊席蘿蒂（只改顯示，形態名、收集冊與存檔 key 照舊）。素材沿用舊名資料夾；排在 afk-castlewar、afk-ttmi-items 之後，afk-matprice、afk-poly-codex 之前 -->
@@ -964,7 +964,7 @@
     <!-- afk-sherine-dream：夢域席琳遺骸（伊奧夢域淬鍊，紅字、效果強化）與第 9 格遺骸「之魂」（謀叛者的低語頭目 5%；套裝件數 −1）；須在 afk-caps 之前 -->
     <script src="afk-sherine-dream.js?v=e0131dab8130"></script>
     <!-- afk-runes：說話之島符文師佐爾頓——武器的星蝕·解三個符文孔（墜蝕·解、刻解·骸、瘴骸·破）；需 afk-sherine-dream -->
-    <script src="afk-runes.js?v=61e1314fc99d"></script>
+    <script src="afk-runes.js?v=108a3026ba8c"></script>
     <!-- afk-redguard：避免紅人持續追殺（席琳神殿「女神嘆息信徒 京」：10 龍鑽或 100 萬金幣，正義值歸 0、追殺散去、追殺永久解除）；需 afk-npc-kit -->
     <script src="afk-redguard.js?v=70f8ee00653a"></script>
     <!-- afk-kurt-hunt：世界事件「克特的追殺令」（隊伍有王族、Lv30+、每次出怪 5%、冷卻 15 分；地圖等級縮放；副本不出現）＋克特技能組 -->
@@ -1015,9 +1015,9 @@
     <!-- afk-novice-econ：新手曲線（無用掉落物 ×0.2、Lv30 以下必掉金幣、魔物追蹤收費依等級）；排在 afk-classic、afk-ttmi-items、afk-bosstrack 之後 -->
     <script src="afk-novice-econ.js?v=c6d9b03968d6"></script>
     <!-- afk-rift2：時空裂痕改用遊戲時間；席琳三模式新規則（80 分鐘完全通關、頭目暴走、60 分鐘起壓力牆、哀石系列、結算符文石、瘴骸·破材料）；需 afk-runedata、核心補丁 67 -->
-    <script src="afk-rift2.js?v=24f4a68d257b"></script>
+    <script src="afk-rift2.js?v=8c8467e39d7f"></script>
     <!-- afk-runefx：符文石與符文之語的效果（減傷、藥水、寵物、套裝、攻擊、補助）；排在 afk-runes、afk-rift2、afk-caps、afk-sherine-dream 之後 -->
-    <script src="afk-runefx.js?v=e4a9fa76f180"></script>
+    <script src="afk-runefx.js?v=c9e2a4183c9d"></script>
     <!-- afk-finaltiers：終焉三階層（席琳夢境／席琳幻影 ×1.25／席琳伴身 ×1.5625 只能一次）；需 afk-finalboss -->
     <script src="afk-finaltiers.js?v=735452a2bce1"></script>
     <!-- afk-caps：轉生雙持的副手武器固定加成計入能力；爆擊率上限 80%（包 recomputeStats 最外層，必須最後載入）；迴避上限見核心補丁 patchEvadeCap -->
@@ -1050,7 +1050,7 @@
     <!-- afk-autosupply：技能設定藥水區多「三段加速藥水」「增益料理」自動喝／自動買（照洛依的售價）；要在 afk-ttmi-items 之後 -->
     <script src="afk-autosupply.js?v=3df52b984c4a"></script>
     <!-- afk-riftsupply：裂痕專用補給增強（加速、魔力 ×2 可疊加；治癒 5000、魔力 200、解毒清全部負面＋免疫 5 秒，各 15 秒冷卻；裂痕裡自動使用）；要在 afk-ttmi-items、afk-rift2 之後 -->
-    <script src="afk-riftsupply.js?v=1a5f39c173fa"></script>
+    <script src="afk-riftsupply.js?v=fba6bbf4cee8"></script>
     <script src="afk-autocancel.js?v=0cdc48e598d7"></script>
     <!-- afk-bufficons：料理、三段加速、古物增益、裂痕補給增益的狀態圖示（倒數、點一下看說明）；要在 afk-ttmi-items、afk-autosupply、afk-riftsupply 之後 -->
     <script src="afk-bufficons.js?v=d60fa8cf2d3e"></script>
@@ -1063,7 +1063,7 @@
     <!-- afk-procfx：觸發型特效的共用底層（密奧之卡、聖紋共用；沒有開關，本身不做事） -->
     <script src="afk-procfx.js?v=1712f0dfffe9"></script>
     <!-- afk-mio：密奧之卡（22 張塔羅牌，夢域鏡掉密奧碎片；偉特→托特→馬賽；裝備視窗第二頁刻印下面那格）；要在 afk-rebirth（__afkMaxAdd）之後 -->
-    <script src="afk-mio.js?v=5f4441f9da9b"></script>
+    <script src="afk-mio.js?v=8ce580d482a7"></script>
     <!-- afk-sigil：聖紋（25 個字母，Lv40～70 頭目與怪物掉；裝備視窗第二頁項鍊的位置，只能裝一個） -->
     <script src="afk-sigil.js?v=d8c0873c9f89"></script>
     <!-- afk-scarab：成長型遺物「日輪聖甲蟲」（說話之島莉娜給；聖物格；Lv1～100、三型態）；要在 afk-questweapon、afk-expedition、afk-procfx 之後 -->
@@ -1153,11 +1153,12 @@
 <script src="afk-timeroom.js?v=0c66693ced64"></script>
 <script src="afk-avatar.js?v=645fd5dff69f"></script>
     <!-- afk-dimrift：次元裂縫（世界規則：侵蝕、光蝕、面板減半、怪物倍率、掉落）；要在 afk-rebirth、afk-relic-companions、afk-lore-kit、afk-mio、afk-bracelet 之後 -->
-    <script src="afk-dimrift.js?v=46cbcd68389f"></script>
+    <script src="afk-dimrift.js?v=30d0f3ab7f45"></script>
     <!-- afk-zodiac：副本「黃道十二宮」（席琳神殿 星鑄師 艾琳娜）與聖衣 EX；要在 afk-saint-cloth、afk-dimrift、afk-npc-kit 之後 -->
     <script src="afk-zodiac.js?v=7a2f47f25281"></script>
     <!-- afk-starcard：黃道星卡（星卡格；艾琳娜登錄、升級）；要在 afk-zodiac、afk-mio、afk-procfx 之後 -->
-    <script src="afk-starcard.js?v=ef93e0320935"></script>
+    <script src="afk-starcard.js?v=b415858943eb"></script>
+    <script src="afk-gdrift.js?v=8037df3631d0"></script>
     <!-- afk-dollrift：魔法娃娃 7～10 階（次元裂縫 32 隻；魔法娃娃商人）；要在 afk-cardplus、afk-dollaffix、afk-bosscard、afk-dimrift、afk-procfx 之後 -->
     <script src="afk-dollrift.js?v=e824e4767bcd"></script>
     <!-- afk-riftdungeons：次元裂縫的副本（席琳神殿 裂縫之門）；要在 afk-dimrift、afk-lore-kit、afk-npc-kit 之後 -->
@@ -1176,32 +1177,33 @@
 <script src="merged/doll-policy.js?v=78965e06c4ed"></script>
 <script src="merged/legacy-codec.js?v=fe92258855d8"></script>
 <script src="merged/save-bridge.js?v=0501fc14f4ba"></script>
-<script src="merged/recovery-core.js?v=cf8d96328caf"></script>
+<script src="merged/recovery-core.js?v=cc0034aba24d"></script>
 <script src="merged/backup-store.js?v=f40a03e26107"></script>
-<script src="merged/integrity-core.js?v=0e0d0210b3d0"></script>
+<script src="merged/integrity-core.js?v=3acdc2104742"></script>
 <script src="merged/integrity-store.js?v=3bae9d66d9d1"></script>
 <script src="merged/integrity-runtime.js?v=0db7761d06ea"></script>
-<script src="merged/save-gate.js?v=9d97754f9fe9"></script>
+<script src="merged/save-gate.js?v=3db834f292b2"></script>
 <!-- afk-reloadguard：同一個角色讀回自己舊存檔的帳本（倉庫存入次數、讀回次數）；要在 js/12、merged/integrity-core、merged/save-gate 之後 -->
 <script src="afk-reloadguard.js?v=591fcee39605"></script>
 <script src="merged/mobile-adventure.js?v=d606d4cac5f9"></script>
 <script src="merged/mobile-shell.js?v=455e0b01772d"></script>
 <script src="afk-bodyflags.js?v=5aec880878c0"></script>
-<link rel="stylesheet" href="merged/growth.css?v=634a09d9388f">
+<link rel="stylesheet" href="merged/growth.css?v=9606e5dc40fc">
 <script src="merged/dragon-workshop.js?v=a556ae60cf54"></script>
 <script src="merged/growth-core.js?v=a4a388a97365"></script>
-<script src="merged/growth-runtime.js?v=4f27c025a028"></script>
+<script src="merged/growth-runtime.js?v=2d2d5cd89f68"></script>
 <script src="merged/clan-rewards.js?v=eb51d8cf2b4c"></script>
 <link rel="stylesheet" href="merged/medieval-frame.css?v=3153c149b11a">
 <script src="merged/cloth-progression.js?v=d3b47c9995eb"></script>
 <script src="merged/talent-catalog.js?v=7f642b81f4cb"></script>
 <script src="merged/talents.js?v=85c87fc7c5c7"></script>
 <script src="merged/activities.js?v=c62b60775945"></script>
-<script src="merged/growth-views.js?v=9bf6a872e340"></script>
-<script src="merged/growth-ui.js?v=75361fdf45a9"></script>
+<script src="merged/growth-views.js?v=8a0267e6232c"></script>
+<script src="merged/growth-ui.js?v=52d0c7b79528"></script>
 <link rel="stylesheet" href="merged/class-ui.css?v=407c00f2d43a">
 <link rel="stylesheet" href="merged/progression-desktop.css?v=80ff2924c507" media="(min-width: 821px)">
 <link rel="stylesheet" href="merged/progression-mobile.css?v=df9be8980291" media="(max-width: 820px)">
+<link rel="stylesheet" href="merged/growth-dark.css?v=85a5fe7a4444">
 <script src="merged/class-catalog.js?v=2b03afef4a8d"></script>
 <script src="merged/class-core.js?v=be5823f6defe"></script>
 <script src="merged/class-runtime.js?v=cc7d79edd497"></script>
@@ -1231,6 +1233,8 @@
       <script src="merged/arcade-ui.js?v=7e1500ed5305"></script>
     </template>
     <script src="merged/arcade-entry.js?v=e5a72d16fa25"></script>
-    <script src="merged/anticheat.js?v=c49393e3ad18"></script>
+    <script src="merged/anticheat.js?v=452dbdfefb0d"></script>
+    <!-- afk-antisl：防 SL（點按鈕的結果先定好、女神挑戰紀錄點、道具身分證、帳號血盟編號）；要在 afk-finalboss／rebirth2／finaltiers、merged/integrity-*、anticheat 之後 -->
+    <script src="afk-antisl.js?v=ce596d8bcc99"></script>
 </body>
 </html>

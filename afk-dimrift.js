@@ -82,7 +82,8 @@
 
   // ── 開關 ──
   var rec = function (p) { p = p || P(); if (!p) return {}; if (!p.afkDimRift || typeof p.afkDimRift !== 'object') p.afkDimRift = { on: false }; return p.afkDimRift; };
-  var on = function () { var p = P(); return !!(p && !p.classicMode && p.afkDimRift && p.afkDimRift.on && p.sherineDream && p.sherineMad); };
+  var on = function () { var p = P(); if (p && typeof W.__afkGdRiftOn === 'function' && W.__afkGdRiftOn()) return true;   // GD之子的期待：裂痕裡強制套次元裂縫規則
+    return !!(p && !p.classicMode && p.afkDimRift && p.afkDimRift.on && p.sherineDream && p.sherineMad); };
   W.__afkDimRiftOn = function () { return on(); };
   try { Object.defineProperty(W, '__afkG3Rift', { configurable: true, get: function () { return on(); }, set: function () {} }); } catch (e) {}
   var canOpen = function (p) { if (!p || p.classicMode) return '經典模式沒有次元裂縫。'; if (Math.floor(p.rebirth || 0) < 2) return '要完成二次轉生。'; if (!(p.afkFinalTier && p.afkFinalTier.t3 === 'win')) return '要打贏終焉第三階層。'; return ''; };

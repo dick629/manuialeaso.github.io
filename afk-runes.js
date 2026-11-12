@@ -157,6 +157,23 @@
   };
 
   // ── 動作（回傳錯誤訊息，成功回傳 null）──
+  // ── 次元符文石（11-12，時空裂痕「GD之子的期待」的頭目極少掉落）：在佐爾頓這裡用，開啟這個角色的符文次元模式（永久；一個角色一顆）──
+  var DIM_ID = 'afk_rune_dim';
+  if (typeof DB !== 'undefined' && DB.items && !DB.items[DIM_ID]) DB.items[DIM_ID] = { n: '次元符文石', type: 'misc', req: 'all', gachaWeight: 0, p: 0, c: 'text-fuchsia-300', weight: 0,
+    img: (DB.items.afk_runebox_3 && DB.items.afk_runebox_3.img) || '',
+    d: '撕開時空的符文原石。交給燃柳村的符文師佐爾頓，開啟這個角色的「符文次元模式」：符文之語跟著星數變強（取組成它的符文裡最低的星，每星 +10%）。每個角色各自開，一個角色用一顆。' };
+  var dimOpen = function () {
+    var p = P(); if (!p) return '找不到角色。';
+    if (p.afkRuneDim) return '這個角色已經開啟符文次元模式了。';
+    if (have(DIM_ID) < 1) return '需要 1 顆次元符文石。';
+    if (!take(DIM_ID, 1)) return '次元符文石扣不掉，沒有開啟。';
+    p.afkRuneDim = { at: Date.now() };
+    try { if (W.__afkRuneFx && W.__afkRuneFx.bump) W.__afkRuneFx.bump(); } catch (e) {}
+    try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {}
+    try { logSys('<span class="font-bold" style="color:#f0abfc;">🌀 佐爾頓把次元符文石按進你的符文裡——符文之語開始跟著星辰的數量發光。（符文次元模式已開啟）</span>'); } catch (e) {}
+    try { saveGame(); } catch (e) {}
+    return null;
+  };
   var ACT = {
     open1: function (ref) {
       var p = P(); if (!p) return '請先進入遊戲。';
@@ -374,6 +391,8 @@
     var DCr = W.__afkDiaCost, feeLine = DCr ? '<p class="ax-lore" style="color:' + (DCr.check(DCr.COST.rune) ? '#fca5a5' : '#fde68a') + '">每項服務收' + DCr.txt(DCr.COST.rune) + '（哀石兌換不收）' + (DCr.check(DCr.COST.rune) ? '：' + DCr.check(DCr.COST.rune) : '') + '。</p>' : '';
     var h = feeLine + '<p class="ax-lore">「星辰墜落時會在大地刻下傷痕，席琳的遺骸也一樣。把它們交給我，我替你的裝備鑿出能容納星蝕的孔，再把符文嵌進去。」——符文師 ' + NPC_N + '</p>'
       + K.matBar([RD.CUR[1], RD.CUR[2], RD.CUR[3], RD.REMOVE[0], RD.FATE.id, COST.reverie])
+      + (p.afkRuneDim ? '<div class="ax-note" style="color:#f0abfc">🌀 符文次元模式：已開啟。符文之語跟著星數變強（取組成它的符文裡最低的星，每星 +10%）。</div>'
+        : (have(DIM_ID) > 0 ? '<div class="ax-note" style="color:#f0abfc">🌀 你帶著次元符文石。<button type="button" class="btn" data-zo="dim" style="margin-left:6px">交給佐爾頓，開啟符文次元模式</button></div>' : ''))
       + '<div class="ax-h">① 選擇裝備</div>'
       + '<div class="ax-filter">' + Object.keys(FILTERS).map(function (k) { return '<button type="button" data-zof="' + k + '"' + (ui.filter === k ? ' class="on"' : '') + '>' + FILTERS[k] + '</button>'; }).join('')
       + '<input id="afk-zo-q" type="search" placeholder="搜尋裝備名稱" aria-label="搜尋裝備名稱" value="' + esc(ui.q) + '" style="flex:1 1 140px;min-width:120px;background:#0f172a;color:#fff;border:1px solid #475569;border-radius:6px;padding:4px 8px;font-size:13px"></div>';
@@ -522,6 +541,7 @@
       else if (a === 'inlay') err = ACT.inlay(ui.sel, Number(ui.slot), ui.rune);
       else if (a === 'remove') err = ACT.remove(ui.sel, Number(ui.rm));
       else if (a === 'fate') err = ACT.fate();
+      else if (a === 'dim') err = dimOpen();
       else if (a.indexOf('st:') === 0) err = ACT.star(a.slice(3));
       else if (a.indexOf('sto:') === 0) { var q2 = a.slice(4), bar = q2.lastIndexOf('|'); err = ACT.starTo(q2.slice(0, bar), Number(q2.slice(bar + 1))); }
       else if (a.indexOf('lg:') === 0) err = ACT.legend(a.slice(3));

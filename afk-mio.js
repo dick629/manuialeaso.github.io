@@ -232,7 +232,7 @@
           var moon = A('moon'); if (moon) d.er = (Number(d.er) || 0) + moon.er;
           var aura = auraC(c); if (aura) res += aura.res;
           if (res) RES.forEach(function (k) { d[k] = (Number(d[k]) || 0) + res; });
-          var std = c.eqSt >= 2 ? (STD[stdKeyC(c)] || {})[p.cls] : null;
+          var std = c.eqSt >= 2 && !(W.__afkNoFloor && W.__afkNoFloor()) ? (STD[stdKeyC(c)] || {})[p.cls] : null;   // GD之子的期待：保底不生效
           if (std) {
             d.dr = Math.max(Number(d.dr) || 0, std[1]); d.mr = Math.max(Number(d.mr) || 0, std[2]); d.ac = Math.min(Number(d.ac) || 0, std[3]);
             d.er = Math.max(Number(d.er) || 0, std[4]); d.extraDmg = Math.max(Number(d.extraDmg) || 0, std[5]); d.extraHit = Math.max(Number(d.extraHit) || 0, std[6]);
@@ -250,7 +250,7 @@
     if (!p || p !== P() || !on(p)) return;
     var c = compute(p);
     if (c.set.mhpPct) p.mhp = Math.floor((p.mhp || 0) * (1 + c.set.mhpPct / 100));
-    var std = c.eqSt >= 2 ? (STD[stdKeyC(c)] || {})[p.cls] : null;
+    var std = c.eqSt >= 2 && !(W.__afkNoFloor && W.__afkNoFloor()) ? (STD[stdKeyC(c)] || {})[p.cls] : null;
     if (std) p.mhp = Math.max(p.mhp || 0, std[0]);
   };
   if (W.__afkMaxAdd && W.__afkMaxAdd.add) W.__afkMaxAdd.add(maxAdd);

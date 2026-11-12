@@ -57,7 +57,7 @@
       if(!receipt?.verified||!receipt.id)throw Error('交易備份未驗證，未扣款');
       if(P()!==p||currentSlot!==slot)throw Error('備份期間角色已切換，未扣款');
       if(stamp()!==roleBefore){const a=JSON.parse(roleBefore),b=JSON.parse(stamp()),changed=Object.keys(a).filter(k=>JSON.stringify(a[k])!==JSON.stringify(b[k]));throw Error('備份期間角色已變更（'+changed.join('、')+'），未扣款');}
-      const after=snapshot();for(const k of new Set([...Object.keys(before),...Object.keys(after)]))if(k!=='fb5_active_role_sessions_v1'&&k!=='afk_diag_hb'&&before[k]!==after[k])throw Error('備份期間資料已變更（'+k+'），未扣款');
+      const after=snapshot();for(const k of new Set([...Object.keys(before),...Object.keys(after)]))if(k!=='fb5_active_role_sessions_v1'&&!/^afk_diag_/.test(k)&&before[k]!==after[k])throw Error('備份期間資料已變更（'+k+'），未扣款');
       prepared=receipt;return transaction(label,fn,verifySaved);
     }finally{prepared=null;preparing=false;if(P()===p)state.running=running;}
   }

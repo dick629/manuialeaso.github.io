@@ -815,8 +815,8 @@
   function renderRiftSupplies(){
     var body=document.getElementById('ttmi-rift-supplies-body');if(!body)return;
     var top=body.scrollTop,h='<p>可用戰勳：'+count(creditId)+'。補給與戰勳於離場後消失。</p>';
-    riftIds.forEach(function(id){var d=DB.items[id];if(!d.ttmiCost)return;h+='<div style="border-bottom:1px solid #334155;padding:10px 0"><b>'+esc(d.n)+'</b><p style="font-size:13px;color:#94a3b8">'+esc(d.d)+'</p><button type="button" class="btn" data-rift-buy="'+esc(id)+'">'+d.ttmiCost+' 戰勳 · 兌換</button></div>';});body.innerHTML=h;body.scrollTop=top;
-    body.querySelectorAll('[data-rift-buy]').forEach(function(b){b.onclick=function(){riftBuy(b.getAttribute('data-rift-buy'));};});
+    riftIds.forEach(function(id){var d=DB.items[id];if(!d.ttmiCost)return;h+='<div style="border-bottom:1px solid #334155;padding:10px 0"><b>'+esc(d.n)+'</b><p style="font-size:13px;color:#94a3b8">'+esc(d.d)+'</p><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="color:#c4b5fd;flex:1 0 100%">每個 '+d.ttmiCost.toLocaleString()+' 戰勳</span><input type="number" min="1" step="1" value="1" inputmode="numeric" data-rift-qty="'+esc(id)+'" aria-label="數量" style="width:64px;background:#020617;color:#e2e8f0;border:1px solid #475569;border-radius:6px;padding:4px 6px"><button type="button" class="btn" style="padding:4px 10px;min-height:0" data-rift-buy="'+esc(id)+'" data-rift-n="input">兌換</button><button type="button" class="btn" style="padding:4px 10px;min-height:0" data-rift-buy="'+esc(id)+'" data-rift-n="1">×1</button><button type="button" class="btn" style="padding:4px 10px;min-height:0" data-rift-buy="'+esc(id)+'" data-rift-n="10">×10</button><button type="button" class="btn" style="padding:4px 10px;min-height:0" data-rift-buy="'+esc(id)+'" data-rift-n="all">全部</button></div></div>';});body.innerHTML=h;body.scrollTop=top;
+    body.querySelectorAll('[data-rift-buy]').forEach(function(b){b.onclick=function(){var id=b.getAttribute('data-rift-buy'),n=b.getAttribute('data-rift-n');if(n==='input'){var q=body.querySelector('[data-rift-qty="'+(window.CSS&&CSS.escape?CSS.escape(id):id)+'"]');n=q?q.value:1;}riftBuy(id,n);};});
   }
   function openRiftSupplies(){
     if(!enabled()||!inRift()||typeof document==='undefined')return;
@@ -828,9 +828,14 @@
     else if(window.AFK_BANNER){AFK_BANNER.remeasure();box.style.paddingTop='calc(var(--orig-bar-h, 0px) + 14px)';}
     renderRiftSupplies();if(window.AFK_UI&&AFK_UI.openLayer)riftLayer=AFK_UI.openLayer(hideRiftSupplies);box.querySelector('[data-rift-close]').focus();
   }
-  function riftBuy(id){
-    if(!enabled()||!inRift()||riftIds.indexOf(id)<0)return false;var d=DB.items[id];if(!d.ttmiCost||!take(creditId,d.ttmiCost)){say('你的裂痕戰勳不夠。');return false;}
-    give(id,1);refresh();save();renderRiftSupplies();return true;
+  // 11-12（Ping）：批次購買——一次扣齊戰勳；不夠就整筆不買。n＝數量、'all'＝買得起的最多數量
+  function riftBuy(id,n){
+    if(!enabled()||!inRift()||riftIds.indexOf(id)<0)return false;var d=DB.items[id];if(!d.ttmiCost){say('你的裂痕戰勳不夠。');return false;}
+    var have=count(creditId),q=n==='all'?Math.floor(have/d.ttmiCost):Math.floor(Number(n==null?1:n));
+    if(!(q>=1)){say(n==='all'?'你的裂痕戰勳不夠。':'請輸入 1 以上的數量。');return false;}
+    q=Math.min(q,99999);var cost=d.ttmiCost*q;
+    if(have<cost||!take(creditId,cost)){say('你的裂痕戰勳不夠（'+esc(d.n)+' ×'+q+' 要 '+cost.toLocaleString()+'，目前 '+have.toLocaleString()+'）。');return false;}
+    give(id,q);if(q>1)say('兌換了 '+esc(d.n)+' ×'+q+'（花掉 '+cost.toLocaleString()+' 戰勳）。');refresh();save();renderRiftSupplies();return true;
   }
   wrap('enterRiftMap',function(old,self,args){var r=old.apply(self,args);beginRift();return r;});
   function endRift(old,self,args){var active=inRift(),r=old.apply(self,args);if(active&&!state.riftRun){clearRift();refresh();}return r;}

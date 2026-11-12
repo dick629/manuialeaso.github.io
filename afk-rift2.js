@@ -117,6 +117,20 @@
   var RELIC = { min: 12, day: 5, lv: { mad: 5, dream: 10 } };
   // 未滿 12 分鐘（撤離或戰死）改給隨機遺物（玩家 2026-11-06 15:17）：瘋狂 +0、夢域 +5；每個角色每天 3 件，跟上面的 5 件分開算；超過照舊給階段一
   var EARLY = { day: 3, lv: { mad: 0, dream: 5 } };
+  // ── GD之子的期待（Ping 11-12 12:00／12:24，設計稿 docs/gd-rift-design.md）──
+  //   沒有進場條件；開場就是 60 分鐘的曲線、之後一直往上；只出頭目；吃次元裂縫規則；保底不生效；沒有時間限制、沒有結算。
+  var GD = W.__afkGdTune = W.__afkGdTune || {
+    from: 60,                      // 曲線從第幾分鐘開始
+    lvStart: 1, lvPerMin: 1.5, lvSpan: 10,   // 頭目等級：從最低開始，每分鐘 +1.5 級，取 [L, L+10]
+    dropX: 10, rollN: 2,           // 掉落率 ×10；遺物、符文石每隻頭目判定 2 次
+    p5: 0.01, p10: 0.000001,       // 掉到遺物的當下：1% 是 +5、0.0001% 是 +10
+    s2: 0.00005, s3: 0.000001, dim: 0.0000001,   // 2★ 符文石 0.005%、3★ 0.0001%、次元符文石 0.00001%（每隻頭目）
+    resEvery: 5, resStep: 50,      // 五抗每 5 分鐘 −50，沒有下限
+    healFrom: 10, healEvery: 10, healStep: 0.1, healMax: 0.8,   // 治療降低（吸血不受影響）
+    dmgFrom: 20, dmgEvery: 20, dmgStep: 0.1, dmgMax: 0.8         // 傷害降低
+  };
+  var gdOn = function () { return !!(ON && S().riftRun && S()._r2Mode === 'gd' && mapState && mapState.current === 'rift_battle'); };
+  var gdStep = function (m, from, every, step, max) { return m < from ? 0 : Math.min(max, step * (1 + Math.floor((m - from) / every))); };
   var relicDay = function () { return Math.floor((Date.now() + 8 * 3600000) / 86400000); };
   var relicUsed = function (p) { var r = p && p.afkRift2RelicDay; return r && r.d === relicDay() ? (Number(r.n) || 0) : 0; };
   var earlyUsed = function (p) { var r = p && p.afkRift2EarlyDay; return r && r.d === relicDay() ? (Number(r.n) || 0) : 0; };
@@ -158,9 +172,28 @@
       }
     } catch (e) {}
     var r = oEnter.apply(this, arguments);
-    var s = S();
-    if (s.riftRun) { s._riftRunKey = s.riftStartMs; s._r2Start = s.ticks || 0; s._r2BossDue = s._r2Start + 3000; s._r2Mode = modeNow(); s._r2Clear = false; s._r2Wall = 0; s._r2Legend = false; sync(); }
+    afterEnter(false);
     return r;
+  };
+  var afterEnter = function (gd) {
+    var s = S();
+    if (s.riftRun) { s._riftRunKey = s.riftStartMs; s._r2Start = s.ticks || 0; s._r2BossDue = s._r2Start + 3000; s._r2World = modeNow(); s._r2Mode = gd ? 'gd' : modeNow(); s._r2Clear = false; s._r2Wall = 0; s._r2Legend = false; s._r2GdRes = 0; sync();
+      if (gd) { try { logSys('<span class="font-bold" style="color:#f0abfc;">🌀 GD之子的期待：裂痕從第 ' + GD.from + ' 分鐘的強度開始，而且不會停下來。只會出現頭目；撐得越久，掉落越好。</span>'); } catch (e) {} try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {} } }
+  };
+  // GD之子的期待的入口：沒有進場條件、不用龜裂之核；上一趟的獎勵還沒領也能進（離場時原封不動放回去）
+  W.afkGdEnter = function () {
+    if (!ON) return;
+    var p = P(), s = S(); if (!p || s.riftRun) return;
+    if (typeof mercenaryRoleBattleBlocked === 'function' && mercenaryRoleBattleBlocked('rift_battle')) return;
+    var st = p.statuses || {};
+    if (st.stone > 0 || st.paralyze > 0 || st.freeze > 0 || st.stun > 0 || st.sleep > 0) { logSys('你目前無法行動（石化／麻痺／冰凍／暈眩），無法進入時空裂痕。'); return; }
+    var keep = { ms: p.riftRewardMs, info: p.afkRift2Reward || null };
+    try { keep.rank = JSON.stringify([p.riftRank || null, p.riftRankSherine || null]); } catch (e) {}
+    p._gdKeep = keep;
+    s.riftRun = true; s.riftStartMs = Date.now(); s.riftBossDue = Date.now() + 300000;
+    enterRiftMap();
+    afterEnter(true);
+    try { saveGame(); } catch (e) {}
   };
   var oSpawn = W.spawnRiftMob;
   // 核心抽一隻、抽到副本專屬頭目就重抽（拒絕取樣＝在允許的頭目裡一樣平均）
@@ -171,14 +204,16 @@
   };
   // 席琳三模式的出怪（照核心 spawnRiftMob，只換時間軸；暗夢星迴不經過這裡——rule() 已排除）
   var spawnMine = function (idx) {
-    var s = S(), t = s.ticks || 0, m = minutes();
-    var ks = m * 60 * (30 / TUNE.lvFull);   // 換算成核心時間軸的秒數：lvFull 分鐘 ↔ 核心的 30 分鐘
+    var s = S(), t = s.ticks || 0, m = minutes(), gd = s._r2Mode === 'gd';
+    var ks = (gd ? m + GD.from : m) * 60 * (30 / TUNE.lvFull);   // 換算成核心時間軸的秒數：lvFull 分鐘 ↔ 核心的 30 分鐘
     var inc = Math.floor(ks / 30), minLv = Math.min(40, 1 + inc), maxLv = Math.min(100, 40 + inc);
+    if (gd) { var L = Math.min(100, Math.floor(GD.lvStart + GD.lvPerMin * m)); minLv = Math.max(1, Math.min(L, 100 - GD.lvSpan)); maxLv = Math.min(200, L + GD.lvSpan); }
     var isBoss;
-    if (m >= TUNE.bossHalf) isBoss = Math.random() < 0.5;
+    if (gd) isBoss = true;   // GD之子的期待：只出頭目
+    else if (m >= TUNE.bossHalf) isBoss = Math.random() < 0.5;
     else if (s._r2BossDue != null && t >= s._r2BossDue) { isBoss = true; s._r2BossDue = t + 3000; }
     else isBoss = false;
-    var id = pickOk(isBoss, minLv, maxLv, ks) || pickOk(!isBoss, minLv, maxLv, ks);
+    var id = pickOk(isBoss, minLv, maxLv, ks) || (gd ? (pickOk(true, 1, maxLv + 20, ks) || pickOk(true, 1, 999, ks)) : pickOk(!isBoss, minLv, maxLv, ks));
     if (!id) return;
     var base = DB.mobs[id];
     mapState.mobs[idx] = Object.assign({}, base, { curHp: base.hp, uid: uid(), _born: ++_mobBornSeq, _magCd: {}, justHit: false, st: newMobStatus() });
@@ -197,7 +232,7 @@
   };
   if (typeof W.riftDamageMult === 'function') {
     var oRDM = W.riftDamageMult;
-    W.riftDamageMult = function () { try { if (rule()) return dmgMult(minutes()); } catch (e) {} return oRDM.apply(this, arguments); };
+    W.riftDamageMult = function () { try { if (rule()) return dmgMult(minutes() + (S()._r2Mode === 'gd' ? GD.from : 0)); } catch (e) {} return oRDM.apply(this, arguments); };
     try { (0, eval)('riftDamageMult = window.riftDamageMult'); } catch (e) {}
   }
   W.spawnRiftMob = function (idx) {
@@ -216,7 +251,11 @@
     sync();
     var info = { mode: s.dreamStar ? 'plain' : (s._r2Mode || 'plain'), min: minutes(), clear: !!s._r2Clear };   // 暗夢星迴沒有裂痕獎勵
     var r = oEnd.apply(this, arguments);
-    try { if (ON && p && info.mode !== 'plain') p.afkRift2Reward = info; } catch (e) {}
+    try { if (ON && p && info.mode !== 'plain' && info.mode !== 'gd') p.afkRift2Reward = info; } catch (e) {}
+    if (info.mode === 'gd') {   // GD之子的期待：沒有結算；記最久紀錄
+      try { if (p) { var kp = p._gdKeep || {}; p.riftRewardMs = kp.ms != null ? kp.ms : null; p.afkRift2Reward = kp.info || null; if (kp.rank) { try { var rk = JSON.parse(kp.rank); p.riftRank = rk[0] || undefined; p.riftRankSherine = rk[1] || undefined; } catch (e2) {} } delete p._gdKeep; var best = Number(p.afkGdBest) || 0; if (info.min > best) p.afkGdBest = Math.floor(info.min * 10) / 10; logSys('<span class="font-bold" style="color:#f0abfc;">🌀 GD之子的期待：撐了 ' + Math.floor(info.min) + ' 分鐘' + (info.min > best ? '（新紀錄）' : '（最久 ' + Math.floor(best) + ' 分鐘）') + '。這個難度沒有結算獎勵。</span>'); } } catch (e) {}
+      s._r2Mode = null; try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {}
+    }
     s._r2Start = null; s._r2BossDue = null;
     return r;
   };
@@ -264,9 +303,12 @@
   var lastLog = {};
   var step = function () {
     var s = S(); if (!rule()) return;
-    var m = minutes(), mode = s._r2Mode, t = s.ticks || 0;
+    var m = minutes(), mode = s._r2Mode, t = s.ticks || 0, gd = mode === 'gd';
+    if (gd) { mode = s._r2World && s._r2World !== 'plain' ? s._r2World : 'sherine'; m += GD.from; }   // GD：曲線從 60 分鐘起、沒有通關
+    // 五抗每 5 分鐘 −50（GD）：階段變了就重算面板
+    if (gd) { var rs = Math.floor((m - GD.from) / GD.resEvery); if (rs !== s._r2GdRes) { s._r2GdRes = rs; try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {} if (rs > 0) logC('<span class="font-bold" style="color:#f0abfc;">【時空腐蝕】</span>五屬性抗性 −' + (rs * GD.resStep) + '。'); } }
     // 撐滿 80 分鐘：完全通關
-    if (m >= TUNE.clearMin) {
+    if (!gd && m >= TUNE.clearMin) {
       s._r2Clear = true;
       try { logSys('<span class="font-bold" style="color:#fde68a;">🌀 你在時空裂痕撐滿了 ' + TUNE.clearMin + ' 分鐘——裂痕在你面前閉合（完全通關）。</span>'); } catch (e) {}
       try { W.riftEndRun(); setMapSelectors('town_rift'); changeMap(true); saveGame(); } catch (e) { console.warn('[AFK-rift2] clear', e); }
@@ -327,18 +369,41 @@
   // ── 掉落 ──
   W.__afkRiftDrop = function (itemId, pct, mob) {
     if (!rule()) return null;
-    var d = DB.items[itemId];
-    return d && d.relic ? pct * DROP.relicX : pct;   // 不吃任何加倍；遺物 ×10
+    var d = DB.items[itemId], gd = S()._r2Mode === 'gd', x = gd ? GD.dropX : 1;   // GD之子的期待：再 ×10
+    var q = (d && d.relic ? pct * DROP.relicX : pct) * x;
+    if (gd && d && d.relic) {   // GD：遺物每隻頭目判定 2 次；掉到的當下判定 +5／+10
+      for (var i = 0; i < GD.rollN; i++) if (Math.random() < q / 100) gdRelic(itemId, mob);
+      return 0;
+    }
+    return q;   // 不吃任何加倍；遺物 ×10
   };
   ['partyDropRate', '__afkRelicDropMult'].forEach(function (fn) {
     if (typeof W[fn] !== 'function') return;
     var o = W[fn];
     W[fn] = function (x) { if (rule()) return fn === 'partyDropRate' ? x : 1; return o.apply(this, arguments); };
   });
+  // GD：掉到遺物的當下判定強化值
+  var gdRelic = function (itemId, mob) {
+    var R = W.__afkRelicPlus, r = Math.random(), n = r < GD.p10 ? 10 : (r < GD.p10 + GD.p5 ? 5 : 0), id = itemId;
+    if (n && R && R.makeId) {
+      try { var d = DB.items[itemId]; n = Math.min(n, d && d.type === 'acc' ? 10 : 15); var fx = null;
+        if (n >= R.fxAt(itemId)) { var ds = R.donorsFor(itemId); fx = ds.length ? ds[Math.floor(Math.random() * ds.length)] : null; }
+        var nid = R.makeId(itemId, n, fx); if (R.ensure(nid)) { R.remember && R.remember(nid); id = nid; } } catch (e) { id = itemId; }
+    }
+    gainItem(id, 1, true, true);
+    try { logSys('<span class="text-amber-300 font-bold">✦ 極稀有！' + esc(mob && mob.n || '頭目') + ' 留下了 ' + DB.items[id].n + '。</span>'); } catch (e) {}
+  };
+  // GD：隨機一顆可以升星的符文，指定星數
+  var gdRune = function (star) {
+    var pool = (RD.list || []).filter(function (r) { return RD.starOk(r) && DB.items[RD.starId(r.id, star)]; });
+    if (!pool.length) return null;
+    return RD.starId(pool[Math.floor(Math.random() * pool.length)].id, star);
+  };
   if (typeof W.killMob === 'function') {
     var oKill = W.killMob;
     W.killMob = function (idx) {
-      var m = mapState.mobs ? mapState.mobs[idx] : null, on = rule(), mode = S()._r2Mode, mm = minutes();
+      var m = mapState.mobs ? mapState.mobs[idx] : null, on = rule(), mode = S()._r2Mode, mm = minutes(), gd = mode === 'gd';
+      if (gd) { mode = S()._r2World && S()._r2World !== 'plain' ? S()._r2World : 'sherine'; mm += GD.from; }
       var r = oKill.apply(this, arguments);
       try {
         if (on && m && m._dead && !m._r2Paid) {
@@ -348,11 +413,16 @@
           if (dust && Math.random() < rate) gainItem(dust, 1, true, true);
           var stage = { sherine: 1, mad: 2, dream: 3 }[mode];
           var S0 = S();
-          if (mode === 'sherine' && mm < TUNE.clearMin * DROP.legendPct && !S0._r2Legend && DB.items[DROP.legendId] && Math.random() < DROP.legend) {
+          if (!gd && mode === 'sherine' && mm < TUNE.clearMin * DROP.legendPct && !S0._r2Legend && DB.items[DROP.legendId] && Math.random() < DROP.legend) {
             S0._r2Legend = true; gainItem(DROP.legendId, 1, true, true);
             try { logSys('<span class="text-amber-300 font-bold">✦ 傳說！' + esc(m.n) + ' 的殘影裡掉出了 ' + DB.items[DROP.legendId].n + '。</span>'); } catch (e) {}
           }
-          if (m.boss && stage && Math.random() < DROP.box) { gainItem(RD.BOX[stage], 1, true, true); try { logSys('<span class="text-amber-300 font-bold">✦ 極稀有！' + esc(m.n) + ' 留下了 ' + DB.items[RD.BOX[stage]].n + '。</span>'); } catch (e) {} }
+          for (var bi = 0; bi < (gd ? GD.rollN : 1); bi++)   // GD：符文石箱每隻頭目判定 2 次、機率 ×10
+            if (m.boss && stage && Math.random() < DROP.box * (gd ? GD.dropX : 1)) { gainItem(RD.BOX[stage], 1, true, true); try { logSys('<span class="text-amber-300 font-bold">✦ 極稀有！' + esc(m.n) + ' 留下了 ' + DB.items[RD.BOX[stage]].n + '。</span>'); } catch (e) {} }
+          if (gd && m.boss) {   // GD：2★／3★ 符文石、次元符文石
+            var gx = [[GD.s2, function () { return gdRune(2); }], [GD.s3, function () { return gdRune(3); }], [GD.dim, function () { return DB.items.afk_rune_dim ? 'afk_rune_dim' : null; }]];
+            gx.forEach(function (g) { if (Math.random() < g[0]) { var gid = g[1](); if (gid && DB.items[gid]) { gainItem(gid, 1, true, true); try { logSys('<span class="font-bold" style="color:#f0abfc;">✦ 傳說！' + esc(m.n) + ' 的殘影裡掉出了 ' + DB.items[gid].n + '。</span>'); } catch (e) {} } } });
+          }
         }
       } catch (e) { console.warn('[AFK-rift2] drop', e); }
       return r;

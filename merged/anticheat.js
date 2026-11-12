@@ -176,6 +176,7 @@
     Object.keys(actor.eq).forEach(function (k) {
       var it = actor.eq[k]; if (!it) return;
       if (k === 'mio') { var m = actor.afkMio, i = /^afk_mio_(\d\d)$/.exec(it.id || ''); if (m && i && Number((m.cards || {})[Number(i[1])]) >= 6 && !stampOk((m.acg || {})[Number(i[1])])) n++; return; }
+      if (it.afkDup) { n++; if (k === 'weapon') w = 1; var dd = DB.items[it.id]; keys[(dd && dd.relicBase) || String(it.id).split('~')[0]] = 1; return; }   // 11-12 道具身分證：同一個編號同時出現在兩處的複本（afk-antisl）
       if (!sKind(it.id) || stampOk(it.acs)) return;
       n++; if (k === 'weapon') w = 1;
       var d = DB.items[it.id]; keys[(d && d.relicBase) || String(it.id).split('~')[0]] = 1;

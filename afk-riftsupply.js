@@ -113,10 +113,10 @@
     var d = DB.items[it.id];
     if (k === 'heal1') {
       if (cdLeft(p, 'heal') > 0) return false;
-      p.hp = Math.min(p.mhp, (p.hp || 0) + HEAL); setCd(p, 'heal');
+      p.hp = Math.min(p.mhp, (p.hp || 0) + Math.floor(HEAL * (typeof W.__afkGdHealMult === 'function' ? W.__afkGdHealMult() : 1))); setCd(p, 'heal');
     } else if (k === 'heal2') {
       if (cdLeft(p, 'heal2') > 0) return false;
-      p.hp = Math.min(p.mhp, (p.hp || 0) + Math.floor((Number(p.mhp) || 0) * HEAL2_PCT)); setCd(p, 'heal2');
+      p.hp = Math.min(p.mhp, (p.hp || 0) + Math.floor((Number(p.mhp) || 0) * HEAL2_PCT * (typeof W.__afkGdHealMult === 'function' ? W.__afkGdHealMult() : 1))); setCd(p, 'heal2');
     } else if (k === 'calm') {
       var R2 = W.__afkRift2, en = R2 && R2.enrage ? R2.enrage() : null;
       if (cdLeft(p, 'calm') > 0) return false;

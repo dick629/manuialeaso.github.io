@@ -996,7 +996,7 @@ async function loadDeleteSelected(){
     const oldPlayer = _roleReadSavePlayer(slot), fp = _roleFingerprint(oldPlayer);
     // 👑 v3.6.01 血盟盟主刪角警告（用戶拍板）：盟主刪除＝clanOnRoleDeleted 會解散該模式血盟並清空同模式所有角色的貢獻，刪前必須講明
     let _clanWarn = '';
-    try { if(typeof clanIsLeaderRole === 'function' && clanIsLeaderRole(oldPlayer)) _clanWarn = '\n\n⚠ 此角色是血盟盟主：刪除後將解散該模式的血盟，並清空同模式所有角色的血盟貢獻（血盟等級經驗保留）！'; } catch(e){}
+    try { if(typeof clanIsLeaderRole === 'function' && clanIsLeaderRole(oldPlayer)) _clanWarn = '\n\n此角色是血盟盟主：刪除後血盟會保留（血盟不會解散），盟主空缺，其他王族可以到血盟分頁接任。'; } catch(e){}
     if(!confirm(`確定永久刪除「${expected}」嗎？\n角色存檔與角色專屬傭兵資料將刪除；共享倉庫、圖鑑與寵物名冊會保留。${_clanWarn}`)) return;
     if (!_FS) {
         const beforeDelete = localStorage.getItem('lineage_idle_save_' + slot);

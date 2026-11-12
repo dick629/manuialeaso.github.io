@@ -1,0 +1,71 @@
+﻿/* growth-dark.css — 天賦・巔峰・遠征：中古世紀暗黑風＋流亡黯道感（Ping 11-12；GPT 新圖 assets/ui/growth-v5）。
+   排在 progression-desktop.css／progression-mobile.css 之後，那兩支有 !important，所以這裡也全部 !important。 */
+html body #growth-overlay>section{background:#0b0a0c !important;border:24px solid transparent !important;border-image:url('../assets/ui/growth-v5/growth_frame.webp') 96 / 24px stretch !important;padding:0 !important;box-shadow:0 0 0 1px #000,0 18px 60px #000c !important}
+html body #growth-overlay>section:before,html body #growth-overlay>section:after{display:none !important}
+html body #growth-overlay .growth-body{background:linear-gradient(#0a090ccc,#0a090ccc),url('../assets/ui/growth-v5/growth_bg.webp') center/cover !important}
+html body #growth-overlay header,html body #growth-overlay nav,html body #growth-overlay footer{background:linear-gradient(#1b1715,#0e0c0d) !important;border-color:#000 !important;border-bottom-color:#5b4325 !important}
+html body #growth-overlay nav{gap:6px !important;padding:6px 12px !important;background:#0b0a0b !important}
+html body #growth-overlay nav button{flex:0 1 200px !important;min-height:40px !important;border:0 !important;border-radius:0 !important;background:url('../assets/ui/growth-v5/growth_tab.webp') center/100% 100% no-repeat !important;color:#9c8e7c !important;text-shadow:0 1px 2px #000 !important}
+html body #growth-overlay nav [aria-current=page]{background:url('../assets/ui/growth-v5/growth_tab_on.webp') center/100% 100% no-repeat !important;color:#f0d79f !important;box-shadow:none !important}
+html body #growth-overlay .growth-primary,html body #growth-overlay .growth-actions>button{border:0 !important;border-radius:0 !important;background:url('../assets/ui/growth-v5/growth_button.webp') center/100% 100% no-repeat !important;color:#f3dcae !important;text-shadow:0 1px 2px #000 !important;box-shadow:none !important;padding:8px 22px !important;min-height:40px !important}
+html body #growth-overlay .growth-primary:active:not(:disabled),html body #growth-overlay .growth-actions>button:active:not(:disabled){background-image:url('../assets/ui/growth-v5/growth_button_on.webp') !important}
+/* 天賦：七個方向的星盤底圖 */
+html body #growth-overlay .growth-tree{background:url('../assets/ui/growth-v5/tal_bg_melee.webp') center/100% 100% no-repeat !important;border-radius:4px !important;box-shadow:inset 0 0 40px #000 !important}
+html body #growth-overlay .growth-dir--melee .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_melee.webp') !important}
+html body #growth-overlay .growth-dir--ranged .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_ranged.webp') !important}
+html body #growth-overlay .growth-dir--magic .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_magic.webp') !important}
+html body #growth-overlay .growth-dir--defense .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_defense.webp') !important}
+html body #growth-overlay .growth-dir--support .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_support.webp') !important}
+html body #growth-overlay .growth-dir--minions .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_minions.webp') !important}
+html body #growth-overlay .growth-dir--movement .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_movement.webp') !important}
+/* 節點：鐵環框（未解鎖／可點亮／已點亮），中間放方向徽記 */
+html body #growth-overlay button.growth-node,html body #growth-overlay button.growth-node.locked,html body #growth-overlay button.growth-node.available,html body #growth-overlay button.growth-node.lit{width:40px !important;height:40px !important;border:0 !important;border-radius:50% !important;box-shadow:none !important;background:url('../assets/ui/growth-v5/tal_node_lock.webp') center/contain no-repeat !important;color:#cbbd9a !important}
+html body #growth-overlay button.growth-node.available{background-image:url('../assets/ui/growth-v5/tal_node_open.webp') !important}
+html body #growth-overlay button.growth-node.lit{background-image:url('../assets/ui/growth-v5/tal_node_on.webp') !important;color:#2a1d10 !important;filter:drop-shadow(0 0 6px #e0a64a90) !important}
+html body #growth-overlay button.growth-node.notable{width:48px !important;height:48px !important;background-image:url('../assets/ui/growth-v5/tal_notable_lock.webp') !important}
+html body #growth-overlay button.growth-node.notable.available{background-image:url('../assets/ui/growth-v5/tal_notable_open.webp') !important}
+html body #growth-overlay button.growth-node.notable.lit{background-image:url('../assets/ui/growth-v5/tal_notable_on.webp') !important}
+html body #growth-overlay button.growth-node.keystone,html body #growth-overlay button.growth-node.keystone.lit{width:70px !important;height:70px !important;box-shadow:none !important;background-image:url('../assets/ui/growth-v5/tal_key_lock.webp') !important}
+html body #growth-overlay button.growth-node.keystone.available{background-image:url('../assets/ui/growth-v5/tal_key_open.webp') !important}
+html body #growth-overlay button.growth-node.keystone.lit{background-image:url('../assets/ui/growth-v5/tal_key_on.webp') !important;filter:drop-shadow(0 0 10px #f0b04caa) !important}
+html body #growth-overlay .growth-node:after{display:none !important}
+html body #growth-overlay .growth-node-emblem{width:22px !important;height:22px}#growth-overlay .notable .growth-node-emblem{width:26px !important;height:26px}#growth-overlay .keystone .growth-node-emblem{width:36px !important;height:36px !important}
+html body #growth-overlay .growth-wire{stroke:#5a4630 !important;opacity:.75 !important;stroke-width:2.4 !important}
+html body #growth-overlay .growth-wire.available{stroke:#9b7a45 !important;opacity:.9 !important}
+html body #growth-overlay .growth-wire.lit{stroke:#f0c66e !important;stroke-width:3 !important;filter:drop-shadow(0 0 4px #e6a443) !important}
+/* 方向徽記 */
+html body #growth-overlay .growth-emblem--melee{background-image:url('../assets/ui/growth-v5/tal_icon_melee.webp') !important}
+html body #growth-overlay .growth-emblem--ranged{background-image:url('../assets/ui/growth-v5/tal_icon_ranged.webp') !important}
+html body #growth-overlay .growth-emblem--magic{background-image:url('../assets/ui/growth-v5/tal_icon_magic.webp') !important}
+html body #growth-overlay .growth-emblem--defense{background-image:url('../assets/ui/growth-v5/tal_icon_defense.webp') !important}
+html body #growth-overlay .growth-emblem--support{background-image:url('../assets/ui/growth-v5/tal_icon_support.webp') !important}
+html body #growth-overlay .growth-emblem--minions{background-image:url('../assets/ui/growth-v5/tal_icon_minions.webp') !important}
+html body #growth-overlay .growth-emblem--movement{background-image:url('../assets/ui/growth-v5/tal_icon_movement.webp') !important}
+/* 巔峰：十種屬性圖示、等級徽章 */
+html body #growth-overlay .growth-para--movement{background-image:url('../assets/ui/growth-v5/para_move.webp') !important}
+html body #growth-overlay .growth-para--trueDamage{background-image:url('../assets/ui/growth-v5/para_truedmg.webp') !important}
+html body #growth-overlay .growth-para--trueDefense{background-image:url('../assets/ui/growth-v5/para_truedef.webp') !important}
+html body #growth-overlay .growth-para--hp{background-image:url('../assets/ui/growth-v5/para_tough.webp') !important}
+html body #growth-overlay .growth-para--mp{background-image:url('../assets/ui/growth-v5/para_mind.webp') !important}
+html body #growth-overlay .growth-para--physical{background-image:url('../assets/ui/growth-v5/para_valor.webp') !important}
+html body #growth-overlay .growth-para--magic{background-image:url('../assets/ui/growth-v5/para_arcane.webp') !important}
+html body #growth-overlay .growth-para--companions{background-image:url('../assets/ui/growth-v5/para_bond.webp') !important}
+html body #growth-overlay .growth-para--healing{background-image:url('../assets/ui/growth-v5/para_pray.webp') !important}
+html body #growth-overlay .growth-para--curse{background-image:url('../assets/ui/growth-v5/para_ward.webp') !important}
+html body #growth-overlay .growth-stat-title i{width:46px !important;height:46px !important;padding:0 !important;border:0 !important;border-radius:0 !important;background:none !important;box-shadow:none !important}
+html body #growth-overlay .growth-rank-seal{background:url('../assets/ui/growth-v5/paragon_medal.webp') center/contain no-repeat !important}
+/* 秘境與遠征：橫幅、目的地小圖 */
+html body #growth-overlay .growth-banner{position:relative !important;height:clamp(84px,14vw,150px) !important;margin:6px 0 10px !important;display:flex !important;align-items:center !important;padding:0 18px !important;background:center/cover no-repeat !important;border:1px solid #5b4325 !important;box-shadow:inset 0 0 30px #000 !important}
+html body #growth-overlay .growth-banner h3{margin:0 !important;font-size:clamp(18px,3vw,26px) !important;color:#f1d9a6 !important;text-shadow:0 2px 4px #000,0 0 12px #000 !important}
+html body #growth-overlay .growth-banner--mushroom{background-image:linear-gradient(90deg,#000a,#0000 55%),url('../assets/ui/growth-v5/exp_banner_mushroom.webp') !important}
+html body #growth-overlay .growth-banner--dream{background-image:linear-gradient(90deg,#000a,#0000 55%),url('../assets/ui/growth-v5/exp_banner_dream.webp') !important}
+html body #growth-overlay .growth-banner--rift{background-image:linear-gradient(90deg,#000a,#0000 55%),url('../assets/ui/growth-v5/exp_banner_rift.webp') !important}
+html body #growth-overlay .growth-queue label{align-items:center !important}
+html body #growth-overlay .growth-thumb{flex:none !important;width:96px !important;height:54px !important;background-color:#111 !important;background-position:center !important;background-size:cover !important;background-repeat:no-repeat !important;border:1px solid #5b4325 !important;box-shadow:0 1px 3px #000 !important}
+html body #growth-overlay .growth-thumb--card{background-size:contain !important;background-color:#0d0b10 !important}
+@media(max-width:440px){html body #growth-overlay>section{border-width:14px !important;border-image-width:14px !important}html body #growth-overlay .growth-thumb{width:72px !important;height:40px !important}}
+html body #growth-overlay .growth-star-panel,html body #growth-overlay .growth-inspector,html body #growth-overlay .growth-path,html body #growth-overlay .growth-stat,html body #growth-overlay .growth-paragon-rank,html body #growth-overlay .growth-ultimate{background:linear-gradient(135deg,#1d1714f2,#0e0b0bf5) !important;border-color:#5b4325 !important}
+html body #growth-overlay .growth-path.selected{background:linear-gradient(120deg,#3a2a19f2,#140f0cf5) !important;border-color:#c39a55 !important}
+html body #growth-overlay .growth-tree-scroll{background:#060505 !important}
+@media(max-width:820px){html body #growth-overlay button.growth-node,html body #growth-overlay button.growth-node.locked,html body #growth-overlay button.growth-node.available,html body #growth-overlay button.growth-node.lit{width:28px !important;height:28px !important;min-height:28px !important}html body #growth-overlay button.growth-node.notable{width:33px !important;height:33px !important}html body #growth-overlay button.growth-node.keystone,html body #growth-overlay button.growth-node.keystone.lit{width:48px !important;height:48px !important}html body #growth-overlay .growth-node-emblem{width:16px !important;height:16px !important}html body #growth-overlay .notable .growth-node-emblem{width:19px !important;height:19px !important}html body #growth-overlay .keystone .growth-node-emblem{width:26px !important;height:26px !important}html body #growth-overlay .growth-stat p,html body #growth-overlay .growth-stat-meter{grid-row:auto !important}}
+html body #growth-overlay .growth-bottom{background:linear-gradient(#120e0cf2,#0a0808f7) !important;border-color:#5b4325 !important}

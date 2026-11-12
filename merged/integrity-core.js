@@ -35,9 +35,20 @@
  }
  function plan(l,before,changes,kind='repair'){
   const base=absorb(l,before,{tolerateInvalid:true}),after={...before};for(const c of changes){if((own(before,c.key)?before[c.key]:null)!==c.before)fail('資料已變更，請重新操作');if(c.after===null)delete after[c.key];else after[c.key]=c.after;}
-  if(kind==='import'){const rb=roles(before,true);for(const [id,{p}] of Object.entries(roles(after)))if(!own(rb,id)&&own(base.seen,id)){const last=dict(base.seq)?Number(base.seq[id])||0:0;if(!(saveSeq(p)>last))fail('這個角色曾經在這台裝置上出現過，而這份存檔不比上次的進度新；為了防止重複匯入舊裝備，只能匯入比較新的進度（請在原本的裝置上繼續玩、存檔後再匯出）');}}
+  const rb=roles(before,true),ra=roles(after),okKeys=new Set(Object.values(rb).map(x=>x.key)),bad=new Set(B.roleKeys(before).filter(k=>!okKeys.has(k)));
+  const last=id=>Math.max(own(rb,id)?saveSeq(rb[id].p):0,dict(base.seq)?Number(base.seq[id])||0:0);
+  if(kind==='import')for(const [id,{p}] of Object.entries(ra))if(!own(rb,id)&&own(base.seen,id)&&!(saveSeq(p)>last(id)))fail('這個角色曾經在這台裝置上出現過，而這份存檔不比上次的進度新；為了防止重複匯入舊裝備，只能匯入比較新的進度（請在原本的裝置上繼續玩、存檔後再匯出）');
   // 11-11 21:37 同一個角色讀回自己的舊存檔（覆蓋原位置）：角色名單必須完全不變；封魂、魂魄消耗、職業路線照樣由 absorb 擋
-  if(kind==='reload'){const b=Object.keys(roles(before,true)).sort().join('\n'),a2=Object.keys(roles(after)).sort().join('\n');if(b!==a2)fail('只能讀回同一個角色自己的舊存檔');}
+  // 11-12 女神挑戰紀錄點（checkpoint）同樣只能是同一個角色
+  if(kind==='reload'||kind==='checkpoint'){const b=Object.keys(rb).sort().join('\n'),a2=Object.keys(ra).sort().join('\n');if(b!==a2)fail('只能讀回同一個角色自己的舊存檔');}
+  // 11-12 讀舊檔＝重：任何寫入（匯入、讀回、還原、修復）都不能讓角色的存檔序號倒退；
+  //   例外：女神挑戰紀錄點、目前那份存檔已經壞掉讀不出來（只能靠備份救回）
+  if(kind!=='checkpoint')for(const [id,{key,p}] of Object.entries(ra)){if(bad.has(key))continue;const n=last(id);if(saveSeq(p)<n)fail('不能讀回比較舊的進度（這份存檔第 '+saveSeq(p)+' 次存檔，這台裝置上已經到第 '+n+' 次）。女神戰打輸請用「回到挑戰前」。');}
+  // 11-12 帳本跟著存檔移動：把存檔帶來的帳本摘要（其他角色的序號、已消耗的角色）併進這台裝置的帳本
+  const seeds=new Set(Object.values(ra).map(x=>seed(x.p)));
+  for(const [id,{p}] of Object.entries(ra)){const a=p&&p._acct;if(!dict(a))continue;
+   if(dict(a.seq))for(const [k,v] of Object.entries(a.seq)){if(own(ra,k))continue;const n=Number(v);if(Number.isSafeInteger(n)&&n>0){if(!dict(base.seq))base.seq=Object.create(null);if(!(Number(base.seq[k])>=n))base.seq[k]=n;}}
+   if(Array.isArray(a.retired))for(const x of a.retired)if(typeof x==='string'&&x&&!seeds.has(x))base.retired[x]=true;}
   const next=absorb(base,after,{advance:kind==='class'});next.revision=l.revision+1;return next;
  }
  return Object.freeze({fresh,valid,seed,identity,roles,vault,absorb,plan,path,saveSeq});

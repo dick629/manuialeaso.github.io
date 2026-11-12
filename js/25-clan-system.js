@@ -1612,9 +1612,10 @@ function clanOnRoleDeleted(oldPlayer) {
     let result = _clanWithLock(st => {
         let info = st.modes[mode];
         if (info && info.leaderId === id) {
-            st.modes[mode] = null;
-            Object.keys(st.members).forEach(mid => { if (st.members[mid] && st.members[mid].mode === mode) delete st.members[mid]; });
-            return { dissolved:true };
+            // 🔌 加掛版補丁（Ping 11-12）：血盟不能解散——盟主刪角後血盟、貢獻、城堡都保留，盟主空缺，下一個王族可以免費接任
+            info.leaderId = 'vacant:' + id;
+            delete st.members[id];
+            return { vacant:true };
         }
         delete st.members[id];
         return {};
@@ -1628,6 +1629,18 @@ function clanCreateFromInput() {
     // Another royal is a member, never a replacement founder. Keep the locked
     // check below as well: another tab may create a clan after this read.
     let existing = clanGetModeInfo(player);
+    if (existing && /^vacant:/.test(existing.leaderId || '')) {   // 🔌 11-12：盟主空缺 → 這個王族直接接任（免費、名稱與城堡照舊）
+        let mode0 = clanModeKey(player), me = clanRoleId(player);
+        let r0 = _clanWithLock(st => { let inf = st.modes[mode0]; if (!inf || !/^vacant:/.test(inf.leaderId || '')) return { commit:false, error:'血盟盟主已經有人了。' }; inf.leaderId = me; if (!st.members[me]) st.members[me] = { mode:mode0, contribution:0, buffOn:false, buffAt:0 }; return {}; });
+        if (!r0.ok) { alert(r0.error || '接任盟主失敗。'); return; }
+        player.bloodPledge = existing.faction; player.clanName = existing.name;
+        _clanScanCache.at = 0;
+        if (typeof saveGame === 'function') saveGame();
+        if (typeof logSys === 'function') logSys(`<span class="text-amber-300 font-bold">你接任了血盟「${clanEsc(existing.name)}」的盟主。</span>`);
+        if (typeof updateUI === 'function') updateUI();
+        renderClanTab();
+        return;
+    }
     if (existing) {
         clanSyncCurrentPlayer();
         alert('此模式已有主要血盟「' + existing.name + '」，其他王族共用此血盟；原盟主、城堡與貢獻維持不變。');
@@ -1817,7 +1830,7 @@ function clanToggleBuff(on) {
 
 // 👑 v3.6.01 血盟改名（用戶需求）：僅創立血盟的王族盟主本人可改；只動共用狀態的 name，貢獻/經驗/城堡不變。
 function clanRenameFromInput() {
-    if (!player || player.cls !== 'royal') { alert('只有王族盟主可以更改血盟名稱。'); return; }
+    if (!player || !player.cls) return;   // 🔌 11-12：血盟可以隨意改名（任何成員）
     let input = document.getElementById('clan-rename-input');
     let name = String(input ? input.value : '').trim();
     if (!name || name.length > 20) { alert('血盟名稱需為 1 至 20 個字。'); return; }
@@ -1825,7 +1838,6 @@ function clanRenameFromInput() {
     let result = _clanWithLock(st => {
         let info = st.modes[mode];
         if (!info) return { commit:false, error:'你尚未加入血盟。' };
-        if (info.leaderId !== id) return { commit:false, error:'只有創立血盟的盟主可以改名。' };
         if (info.name === name) return { commit:false, error:'新名稱與目前名稱相同。' };
         let oldName = info.name;
         info.name = name;
@@ -1952,6 +1964,7 @@ function renderClanTab() {
             <div class="flex flex-col gap-4 p-2">
                 <div class="border-b border-slate-600 pb-3">
                     <div class="text-amber-200 font-bold text-lg">你尚未加入血盟</div>
+                    <div class="text-xs text-slate-400 mt-1">血盟編號：${clanEsc((window.__afkAccount && __afkAccount.id()) || '—')}（還沒創立血盟也有；搬家、匯入存檔時用來核對同一個帳號）</div>
                     <div class="text-sm text-slate-400 mt-1">此模式由一名王族創立主要血盟，其他角色（包含王族）共用同一血盟。</div>
                 </div>
                 ${player.cls === 'royal' ? `
@@ -2040,14 +2053,16 @@ function renderClanTab() {
                 <div class="text-slate-100 font-bold mb-1">血盟成員</div>
                 ${memberRows || '<div class="text-slate-400 py-2">目前沒有可顯示的成員。</div>'}
             </div>
-            ${(player.cls === 'royal' && id === info.leaderId) ? `
+            ${true ? `
             <div class="border-t border-slate-700 pt-3">
-                <div class="text-slate-100 font-bold mb-2">血盟改名（限盟主）</div>
+                <div class="text-slate-100 font-bold mb-2">血盟改名</div>
                 <div class="flex gap-2">
                     <input id="clan-rename-input" maxlength="20" value="${clanEsc(info.name)}" class="min-w-0 flex-1 bg-slate-900 border border-slate-600 text-white px-2 py-2 rounded">
                     <button class="btn px-3 py-2 font-bold bg-amber-800 border-amber-500 text-amber-100" onclick="clanRenameFromInput()">改名</button>
                 </div>
             </div>` : ''}
+            ${(player.cls === 'royal' && /^vacant:/.test(info.leaderId || '')) ? '<button class="btn py-3 font-bold bg-amber-800 border-amber-500 text-amber-100" onclick="clanCreateFromInput()">盟主空缺：接任盟主（免費）</button>' : ''}
+            <div class="text-xs text-slate-500">血盟編號：${clanEsc((window.__afkAccount && __afkAccount.id()) || '—')}・血盟不會解散</div>
             ${player.cls === 'royal' ? '<button class="btn py-3 font-bold bg-red-900 border-red-600 text-red-100" onclick="clanOpenSiegePanel()">攻城</button>' : ''}
         </div>`;
 }

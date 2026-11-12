@@ -82,7 +82,7 @@
       var r = oRe.apply(this, arguments);
       try {
         var p = P(), k = curK(p);
-        if (p && p.d && k && STD) {
+        if (p && p.d && k && STD && !(W.__afkNoFloor && W.__afkNoFloor())) {   // GD之子的期待：保底不生效
           var std = (STD[store(p).st[k]] || {})[p.cls], d = p.d;
           if (std) { d.dr = Math.max(Number(d.dr) || 0, std[1]); d.mr = Math.max(Number(d.mr) || 0, std[2]); d.ac = Math.min(Number(d.ac) || 0, std[3]); d.er = Math.max(Number(d.er) || 0, std[4]); d.extraDmg = Math.max(Number(d.extraDmg) || 0, std[5]); d.extraHit = Math.max(Number(d.extraHit) || 0, std[6]); }
         }
@@ -92,7 +92,7 @@
     try { (0, eval)('recomputeStats = window.recomputeStats'); } catch (e) {}
   }
   if (W.__afkMaxAdd && W.__afkMaxAdd.add) W.__afkMaxAdd.add(function (p) {
-    if (!p || p !== P() || !STD) return; var k = curK(p); if (!k) return;
+    if (!p || p !== P() || !STD || (W.__afkNoFloor && W.__afkNoFloor())) return; var k = curK(p); if (!k) return;
     var std = (STD[store(p).st[k]] || {})[p.cls]; if (std) p.mhp = Math.max(p.mhp || 0, std[0]);
   });
   // 水瓶：侵蝕扣血（afk-dimrift 讀 __afkErodeCut）

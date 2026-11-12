@@ -18,6 +18,16 @@
   fail(e){const r=trace.end(false,e&&e.message||e);return '匯入已停止：'+(e&&e.message||e)+(r?'\n\n【除錯】卡在第 '+r.steps.length+' 步「'+r.failStep+'」'+(r.steps.length?'：'+r.steps[r.steps.length-1].d:'')+'\n詳細紀錄：存檔與修復 →「匯入紀錄」。':'');}
  };
  window.LineageImportDebug={key:DBG_KEY,list(){try{return JSON.parse(localStorage.getItem(DBG_KEY)||'[]');}catch(e){return [];}},clear(){try{localStorage.removeItem(DBG_KEY);}catch(e){}}};
+ // 11-12（Ping）：共用資料（倉庫、寵物、龍鑽布告欄、血盟、魂魄簿）沒有存檔次數 → 每台裝置逐項記下這些資料的「變動紀錄」（內容雜湊），
+ //   合併還原時逐項判斷：備份那份是不是從這台目前的狀態接著動下去的（是＝新的蓋舊的；兩邊都動過＝保留這台的）。
+ //   收集冊（布林聯集）不用比：兩邊合起來。
+ const SHARED=/^(lineage_idle_warehouse(_classic)?|fb5_pet_roster(_classic)?|fb5_pandora_relic_market_v1|fb5_clan_state_v1|lineage_character_souls_v1)$/,DEX=/^lineage_idle_(card|equip|misc|relic)dex(_classic)?$/,CHAIN='lineage_shared_chain_v2';
+ const SHARED_N=k=>/warehouse/.test(k)?'倉庫':/pet_roster/.test(k)?'寵物':/pandora/.test(k)?'龍之鑽石與布告欄':/clan/.test(k)?'血盟':/souls/.test(k)?'魂魄簿':k;
+ const fnv=t=>{t=String(t==null?'':t);let h=0x811c9dc5,g=0x01000193;for(let i=0;i<t.length;i++){const c=t.charCodeAt(i);h^=c;h=Math.imul(h,16777619)>>>0;g=(Math.imul(g^c,2654435761)>>>0);}return h.toString(36)+g.toString(36)+t.length.toString(36);};
+ const chainOf=keys=>{try{const c=JSON.parse(keys[CHAIN]||'null');return c&&c.keys&&typeof c.keys==='object'?c:{keys:{}};}catch(e){return {keys:{}};}};
+ const unionDex=(a,b)=>{try{const x=JSON.parse(a),y=JSON.parse(b);if(!x||!y||typeof x!=='object'||typeof y!=='object'||Array.isArray(x)||Array.isArray(y))return null;const flat=o=>Object.values(o).every(v=>v===true||v===false||typeof v==='number');if(!flat(x)||!flat(y))return null;const o={...x};for(const k of Object.keys(y))if(y[k]&&!o[k])o[k]=y[k];return JSON.stringify(o);}catch(e){return null;}};
+ window.LineageSharedChain={SHARED,DEX,KEY:CHAIN,hash:fnv,chainOf,name:SHARED_N,
+  record(){try{const c=chainOf({[CHAIN]:localStorage.getItem(CHAIN)});let changed=false;for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!SHARED.test(k))continue;const h=fnv(localStorage.getItem(k)),L=c.keys[k]||(c.keys[k]=[]);if(L[L.length-1]!==h){L.push(h);if(L.length>60)L.splice(0,L.length-60);changed=true;}}if(changed)localStorage.setItem(CHAIN,JSON.stringify({v:2,keys:c.keys}));return changed;}catch(e){return false;}}};
  window.LineageSaveGate={
   async importRole(raw,slot){
    trace.start(raw,slot);
@@ -47,6 +57,7 @@
      const change={key,before:cur,after:LineageLegacyCodec.wrap(JSON.stringify(doc)),reason:reload?'ROLE_RELOAD':'ROLE_IMPORT'};
      await R.transact(localStorage,[change],s=>LineageBackups.save({...s,originalImport:raw,slot},reload?'role-reload':'role-import'),{integrity:reload?'reload':'import',canWrite:()=>!(typeof state!=='undefined'&&state.running)&&R.scan(R.capture(localStorage)).canRepair});
      if(reload&&window.__afkReloadLedger)window.__afkReloadLedger.bump(doc.p);
+     try{const IC=window.LineageIntegrityCore,q=Object.assign({},doc.p);q.enSeed=IC.seed(doc.p);const m=JSON.parse(localStorage.getItem('lineage_uid_imported_v1')||'{}');m[IC.identity(q)]=Date.now();localStorage.setItem('lineage_uid_imported_v1',JSON.stringify(m));}catch(e){}
     };
     trace.step('寫入存檔（保護交易）','先自動備份再寫入');
     await (navigator.locks?navigator.locks.request('lineage-merged-save-write',{mode:'exclusive'},apply):apply());
@@ -97,7 +108,7 @@
     const after=R.capture(localStorage);
     if(!R.scan(after).canRepair)throw Error('備份期間有其他遊戲分頁啟動，請關閉後重新匯入。');
     // Session registry heartbeats may change harmlessly; every other source key must remain stable.
-    const stable=k=>k!=='fb5_active_role_sessions_v1'&&k!=='afk_diag_hb';
+    const stable=k=>k!=='fb5_active_role_sessions_v1'&&!/^afk_diag_/.test(k);
     for(const k of new Set([...Object.keys(keys),...Object.keys(after)]))if(stable(k)&&keys[k]!==after[k]){trace.step('備份期間資料變動','變動的資料：'+k);throw Error('備份期間資料已變更，請重新匯入。');}
     if(own)trace.end(true,'檢查通過');
     return true;
@@ -120,10 +131,48 @@
     const c=B.analyzeCompatibility(role,profile(role.p));if(!c.ok)throw Error(key+' '+(c.blockers[0].location||'')+'：'+c.blockers[0].message);
    }
    const soulKey=window.LineageClasses?.KEY;if(soulKey&&data.keys[soulKey]&&!LineageClassCore.validVault(JSON.parse(data.keys[soulKey])))throw Error('備份中的魂魄簿無法驗證');
+   // 11-12（Ping）：已經在玩的裝置 → 合併還原：每格角色留比較新的；共用資料只有「備份是從這台接著動下去的」才用備份的
+   const cur0=R.capture(localStorage),curRoles=B.roleKeys(cur0);let report=null;
+   if(curRoles.length){
+    const IC=window.LineageIntegrityCore,seqOf=p=>IC.saveSeq?IC.saveSeq(p):(Number(p&&p._saveSeq)||0),idOf=p=>{const q=Object.assign({},p);q.enSeed=IC.seed(p);return IC.identity(q);};
+    const dec=raw=>{try{return B.decode(raw).value.p;}catch(e){return null;}};
+    let led=null;try{led=(await window.LineageIntegrityStore.read()).ledger;}catch(e){}
+    const mine={};for(const k of curRoles){const p=dec(cur0[k]);if(p)mine[idOf(p)]={key:k,p};}
+    const impIds={};const out={...cur0};report={replaced:[],kept:[],added:[],skipped:[],shared:''};
+    const name=p=>(p&&p.name)||'?',slotN=k=>Number(String(k).replace(/\D+/g,''))||k;
+    for(const k of B.roleKeys(data.keys)){
+     const p=dec(data.keys[k]);if(!p)continue;const id=idOf(p),m=mine[id];
+     if(m){if(seqOf(p)>seqOf(m.p)){out[m.key]=data.keys[k];impIds[id]=Date.now();report.replaced.push('第 '+slotN(m.key)+' 格「'+name(p)+'」');}else report.kept.push('第 '+slotN(m.key)+' 格「'+name(m.p)+'」');continue;}
+     const last=led&&led.seq?Number(led.seq[id])||0:0,seen=!!(led&&led.seen&&Object.prototype.hasOwnProperty.call(led.seen,id));
+     if(seen&&seqOf(p)<=last){report.skipped.push('「'+name(p)+'」（這台以前有過、這份比較舊）');continue;}
+     let dest=Object.prototype.hasOwnProperty.call(out,k)?null:k;
+     if(!dest)for(let n=1;n<=(typeof SAVE_SLOT_MAX!=='undefined'?SAVE_SLOT_MAX:40);n++){const kk='lineage_idle_save_'+n;if(!Object.prototype.hasOwnProperty.call(out,kk)){dest=kk;break;}}
+     if(!dest){report.skipped.push('「'+name(p)+'」（沒有空的存檔位置）');continue;}
+     out[dest]=data.keys[k];impIds[id]=Date.now();report.added.push('第 '+slotN(dest)+' 格「'+name(p)+'」');
+    }
+    // 共用資料逐項比：備份是從這台目前的狀態接著動下去的 → 用備份的；這台比較新或兩邊都動過 → 保留這台的
+    const cB=chainOf(data.keys),cD=chainOf(cur0),sh={};
+    for(const k of new Set([...Object.keys(cur0),...Object.keys(data.keys)])){
+     if(DEX.test(k)){if(Object.prototype.hasOwnProperty.call(data.keys,k)){if(!Object.prototype.hasOwnProperty.call(cur0,k))out[k]=data.keys[k];else{const u=unionDex(cur0[k],data.keys[k]);if(u!=null)out[k]=u;}}continue;}
+     if(!SHARED.test(k))continue;
+     const inB=Object.prototype.hasOwnProperty.call(data.keys,k),inD=Object.prototype.hasOwnProperty.call(cur0,k);if(!inB)continue;
+     const hB=fnv(data.keys[k]),hD=inD?fnv(cur0[k]):null,histB=cB.keys[k]||[],histD=cD.keys[k]||[];let r;
+     if(!inD){out[k]=data.keys[k];r='backup';}
+     else if(hB===hD)r='same';
+     else if(histB.includes(hD)){out[k]=data.keys[k];r='backup';const L=histD.slice();for(const h of histB)if(!L.includes(h))L.push(h);cD.keys[k]=L.slice(-60);}
+     else r=histD.includes(hB)?'device-newer':'both';
+     sh[SHARED_N(k)]=r;
+    }
+    out[CHAIN]=JSON.stringify({v:2,keys:cD.keys});report.shared=sh;
+    try{const m=JSON.parse(out['lineage_uid_imported_v1']||'{}');Object.assign(m,impIds);out['lineage_uid_imported_v1']=JSON.stringify(m);}catch(e){}
+    data.keys=out;
+   }
    // 11-11 14:13：電腦上的角色存檔有時是沒壓縮的明文（一格 180 萬字），手機寫不進去 → 角色與倉庫在寫入前先壓縮（遊戲讀取本來就會自動解壓）
    if(typeof LZString!=='undefined'){data.keys={...data.keys};for(const k of Object.keys(data.keys)){const v=data.keys[k];if((/^lineage_idle_save(?:_\d+)?$/.test(k)||/^lineage_idle_warehouse(?:_[a-z]+)*$/.test(k))&&typeof v==='string'&&v.length>20000&&v.slice(0,4)!=='LZ1:'){try{const z='LZ1:'+LZString.compressToUTF16(v);if(LZString.decompressFromUTF16(z.slice(4))===v)data.keys[k]=z;}catch{}}}}
    const apply=()=>{if(typeof _lzWorkerRev!=='undefined')for(const k of new Set([...Object.keys(data.keys),...Object.keys(R.capture(localStorage))]))_lzWorkerRev[k]=(_lzWorkerRev[k]||0)+1;return R.transact(localStorage,R.fullRestorePlan(data.keys,R.capture(localStorage)),snapshot=>LineageBackups.save(snapshot,'full-restore'),{canWrite:()=>R.scan(R.capture(localStorage)).canRepair});};
-   return navigator.locks?navigator.locks.request('lineage-merged-save-write',{mode:'exclusive'},apply):apply();
+   const res=await (navigator.locks?navigator.locks.request('lineage-merged-save-write',{mode:'exclusive'},apply):apply());
+   if(report)try{sessionStorage.setItem('lineage_merge_report',JSON.stringify(report));}catch(e){}
+   return Object.assign({},res,{merge:report});
   }
  };
 })();
