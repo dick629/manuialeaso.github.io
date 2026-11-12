@@ -202,8 +202,11 @@
   var MQ = '(max-width: 768px), (max-height: 520px) and (pointer: coarse)';
   var mobileGeom = function () { try { return document.body.classList.contains('m-unified') || (document.body.classList.contains('m-mobile') && W.matchMedia(MQ).matches); } catch (e) { return false; } };
   var lastHtml = '';
+  // 流派自動施放 8 格（Ping 11-13 03:22）：有流派時熱鍵變四組，第三、四組是流派專用（merged/class-ui 的 hotbarPages 給內容、處理點擊與冷卻）
+  var clsPages = function () { try { var U = W.LineageClassUI; return U && U.hotbarPages ? U.hotbarPages() : null; } catch (e) { return null; } };
+  var nPages = function () { return clsPages() ? 4 : 2; };
   var pageTo=function(index){
-    pageIndex=Math.max(0,Math.min(1,index));
+    pageIndex=Math.max(0,Math.min(nPages()-1,index));
     var host=document.getElementById('afk-hotbar'),pages=host&&host.querySelector('.hb-pages');
     if(pages)pages.scrollLeft=pageIndex*pages.clientWidth;
     if(host)host.querySelectorAll('[data-hb-page]').forEach(function(b){b.setAttribute('aria-selected',String(Number(b.dataset.hbPage)===pageIndex));});
@@ -219,13 +222,14 @@
       host.addEventListener('click', function (ev) {
         if(Date.now()<suppressClickUntil){ev.preventDefault();return;}
         var pg=ev.target.closest('[data-hb-page]');if(pg){pageTo(Number(pg.dataset.hbPage));return;}
+        if (ev.target.closest('.hb-cls')) return;   // 流派格：class-ui 自己處理
         if (ev.target.closest('.hb-moon')) { if (W.AFK_SCREEN) W.AFK_SCREEN.start(); return; }
         if (ev.target.closest('.hb-lock')) { var cp = P(); if (!cp) return; cp._afkHotbarLock = !cp._afkHotbarLock; render(); save(); return; }   // 用「現在」的角色（玩家 2026-10-27：換角色後鎖頭按了沒反應＝改到上一個角色身上）
         var s = ev.target.closest('.hb-slot'); if (!s) return; fire(Number(s.getAttribute('data-i')));
       });
-      host.addEventListener('contextmenu', function (ev) { var s = ev.target.closest('.hb-slot'); if (!s) return; ev.preventDefault(); pick(Number(s.getAttribute('data-i'))); });
+      host.addEventListener('contextmenu', function (ev) { if (ev.target.closest('.hb-cls')) return; var s = ev.target.closest('.hb-slot'); if (!s) return; ev.preventDefault(); pick(Number(s.getAttribute('data-i'))); });
       var pressT = null, pressI = -1;
-      host.addEventListener('touchstart', function (ev) { var s = ev.target.closest('.hb-slot'); if (!s) return;touchBusy=true; pressI = Number(s.getAttribute('data-i')); pressT = setTimeout(function () { pressT = null;suppressClickUntil=Date.now()+700; pick(pressI); }, 550); }, { passive: true });
+      host.addEventListener('touchstart', function (ev) { if (ev.target.closest('.hb-cls')) return; var s = ev.target.closest('.hb-slot'); if (!s) return;touchBusy=true; pressI = Number(s.getAttribute('data-i')); pressT = setTimeout(function () { pressT = null;suppressClickUntil=Date.now()+700; pick(pressI); }, 550); }, { passive: true });
       ['touchend', 'touchmove', 'touchcancel'].forEach(function (t) { host.addEventListener(t, function () { if (pressT) { clearTimeout(pressT); pressT = null; } }, { passive: true }); });
       ['touchend','touchcancel'].forEach(function(t){host.addEventListener(t,function(){touchBusy=false;schedule();},{passive:true});});
       var pointer=null;
@@ -233,7 +237,7 @@
       W.addEventListener('pointermove',function(ev){if(!pointer)return;var dx=ev.clientX-pointer.x;if(Math.abs(dx)>10){dragging=true;suppressClickUntil=Date.now()+700;if(pressT){clearTimeout(pressT);pressT=null;}}if(dragging&&pointer.type==='mouse'){pointer.pages.scrollLeft=pointer.left-dx;ev.preventDefault();}},{passive:false});
       var endDrag=function(){if(!pointer)return;var was=dragging,type=pointer.type,left=pointer.pages.scrollLeft,width=pointer.pages.clientWidth;pointer=null;dragging=false;if(was){suppressClickUntil=Date.now()+400;if(type==='mouse')pageTo(Math.round(left/Math.max(1,width)));}schedule();};
       W.addEventListener('pointerup',endDrag);W.addEventListener('pointercancel',endDrag);
-      host.addEventListener('wheel',function(ev){if(!ev.target.closest('.hb-pages')||ev.ctrlKey)return;var delta=Math.abs(ev.deltaX)>Math.abs(ev.deltaY)?ev.deltaX:ev.deltaY;if(Math.abs(delta)<8)return;var next=Math.max(0,Math.min(1,pageIndex+(delta>0?1:-1)));if(next!==pageIndex){ev.preventDefault();pageTo(next);}},{passive:false});
+      host.addEventListener('wheel',function(ev){if(!ev.target.closest('.hb-pages')||ev.ctrlKey)return;var delta=Math.abs(ev.deltaX)>Math.abs(ev.deltaY)?ev.deltaX:ev.deltaY;if(Math.abs(delta)<8)return;var next=Math.max(0,Math.min(nPages()-1,pageIndex+(delta>0?1:-1)));if(next!==pageIndex){ev.preventDefault();pageTo(next);}},{passive:false});
     }
     host.style.display = '';
     // 手機（玩家 2026-10-27）：放到戰鬥畫面正下方那塊空白，戰鬥時一眼看到藥水等道具還剩多少；桌機照舊在左欄最底下
@@ -241,7 +245,8 @@
     if (want && host.parentElement !== want) { want.appendChild(host); host.classList.toggle('hb-mobile', want.id === 'col-center'); }
     try { var cc = document.getElementById('col-center'); if (cc) cc.classList.toggle('hb-host', host.parentElement === cc); } catch (e) {}
     var b = bar(), lk = locked();
-    var h = '<div class="hb-top">' + (W.AFK_SCREEN ? '<button type="button" class="hb-moon" aria-label="休眠掛網" title="休眠掛網">☾</button>' : '<div style="width:22px"></div>') + '<div class="hb-pager" role="tablist" aria-label="左右滑動切換熱鍵"><button type="button" role="tab" data-hb-page="0" aria-label="第一組熱鍵 F5 至 F8" title="第一組 F5–F8" aria-selected="'+(pageIndex===0)+'"></button><button type="button" role="tab" data-hb-page="1" aria-label="第二組熱鍵 F9 至 F12" title="第二組 F9–F12" aria-selected="'+(pageIndex===1)+'"></button></div><button type="button" aria-label="鎖定熱鍵配置" aria-pressed="' + lk + '" class="hb-lock' + (lk ? ' on' : '') + '" title="' + (lk ? '已鎖住：F5～F12 交還瀏覽器；仍可點格子使用及滑動，但不能換內容。' : '右鍵或長按格子可配置；點鎖頭避免誤改。') + '">' + (lk ? '🔒' : '🔓') + '</button></div><div class="hb-pages"><div class="hb-page" aria-label="第一組 F5 至 F8"><div class="hb-row">';
+    var cp = clsPages(); if (!cp && pageIndex > 1) pageIndex = 0;
+    var h = '<div class="hb-top">' + (W.AFK_SCREEN ? '<button type="button" class="hb-moon" aria-label="休眠掛網" title="休眠掛網">☾</button>' : '<div style="width:22px"></div>') + '<div class="hb-pager" role="tablist" aria-label="左右滑動切換熱鍵"><button type="button" role="tab" data-hb-page="0" aria-label="第一組熱鍵 F5 至 F8" title="第一組 F5–F8" aria-selected="'+(pageIndex===0)+'"></button><button type="button" role="tab" data-hb-page="1" aria-label="第二組熱鍵 F9 至 F12" title="第二組 F9–F12" aria-selected="'+(pageIndex===1)+'"></button>'+(cp?'<button type="button" role="tab" data-hb-page="2" aria-label="流派自動施放 1 至 4" title="流派 1–4" aria-selected="'+(pageIndex===2)+'"></button><button type="button" role="tab" data-hb-page="3" aria-label="流派自動施放 5 至 8" title="流派 5–8" aria-selected="'+(pageIndex===3)+'"></button>':'')+'</div><button type="button" aria-label="鎖定熱鍵配置" aria-pressed="' + lk + '" class="hb-lock' + (lk ? ' on' : '') + '" title="' + (lk ? '已鎖住：F5～F12 交還瀏覽器；仍可點格子使用及滑動，但不能換內容。' : '右鍵或長按格子可配置；點鎖頭避免誤改。') + '">' + (lk ? '🔒' : '🔓') + '</button></div><div class="hb-pages"><div class="hb-page" aria-label="第一組 F5 至 F8"><div class="hb-row">';
     for (var i = 0; i < N; i++) {
       if(i===4)h+='</div><div class="hb-names">'+b.slice(0,4).map(function(id){var d=id&&(skOf(id)||DB.items[id]);return '<span>'+(d?esc(d.n):'')+'</span>';}).join('')+'</div></div><div class="hb-page" aria-label="第二組 F9 至 F12"><div class="hb-row">';
       var id = b[i], skd = skOf(id);
@@ -257,7 +262,7 @@
       var ia=autoArr()[i]&&itemAuto(id);
       h += '<div class="hb-slot' + (none ? ' none' : '') + (ws ? ' worn' : '') + '" data-i="' + i + '" title="' + esc(d.n) + (ia?'（自動使用）':ws ? '（裝備中，按一下卸下）' : (isEquip(d) ? '（按一下裝備）' : '')) + '"><span class="hb-key">F' + (5 + i) + '</span>'+(ia?'<span class="hb-auto">AUTO</span>':'')+'<img src="' + esc(getIconUrl(d)) + '" alt="" onerror="this.style.visibility=\'hidden\'">' + (isEquip(d) ? '' : '<span class="hb-cnt">' + cnt + '</span>') + '</div>';
     }
-    h += '</div><div class="hb-names">' + b.slice(4,8).map(function (id) { var dd = id && (skOf(id) || DB.items[id]); return '<span>' + (dd ? esc(dd.n) : '') + '</span>'; }).join('') + '</div></div></div>';
+    h += '</div><div class="hb-names">' + b.slice(4,8).map(function (id) { var dd = id && (skOf(id) || DB.items[id]); return '<span>' + (dd ? esc(dd.n) : '') + '</span>'; }).join('') + '</div></div>' + (cp ? cp.pages.map(function (ph, k) { return '<div class="hb-page hb-cls-page" aria-label="流派自動施放第 ' + (k + 1) + ' 組"><div class="hb-row">' + ph + '</div><div class="hb-names">' + cp.names[k].map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '</div></div>'; }).join('') : '') + '</div>';
     if (h !== lastHtml) { host.innerHTML = h; lastHtml = h;
       host.querySelector('.hb-pages').addEventListener('scroll',function(){if(!this.clientWidth)return;pageIndex=Math.round(this.scrollLeft/this.clientWidth);host.querySelectorAll('[data-hb-page]').forEach(function(b){b.setAttribute('aria-selected',String(Number(b.dataset.hbPage)===pageIndex));});},{passive:true});
       pageTo(pageIndex);

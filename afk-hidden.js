@@ -28,6 +28,7 @@
  *   十三、幻術士的攻擊魔法（sk_illu_ 開頭的攻擊技能：幻想、混亂、恐慌、粉碎能量…）傷害 −30%（玩家 2026-11-02 02:56；玩家與傭兵；走 __afkSpellRoll）。
  *   十四、妖精的連射也會觸發幻影箭，但連射觸發的幻影箭傷害 −50%（afk-mech1031 問 __afkRapidPhantom）。
  *   十五、殷海薩眷屬：你每次一般攻擊，出戰的寵物、召喚物（含屬性精靈）也追加攻擊一次，5 秒冷卻。
+ *   十六、越打越痛＋魔裂；十七、共鳴魔擊（玩家 2026-11-13 03:02，見下面程式）。
  *   都不寫在任何說明裡（小百科只寫「有隱藏條件」）。
  *   開關：隱藏規則全部合併成一個開關 hiddenbonus「隱藏規則」（玩家 2026-10-30：以後新的隱藏規則也放進來；命運 afk-fate 也看這個開關）。
  * ========================================================================== */
@@ -225,10 +226,51 @@
     if (runeCrit(a)) { r.critAdd = 100; t._afkFireMarkUntil = Date.now() + 5000; }
     if (sk && sk.ele === 'fire' && (t._afkFireMarkUntil || 0) > Date.now()) r.mult *= 1.5;
     if (illuSk(sk)) r.mult *= ILLU_CUT;   // 十三
+    // 十六、越打越痛（Ping 11-13 03:02）：一轉後的法師（你與法師傭兵），法術每打中同一隻怪一下 +10%（×1 → ×2 封頂），每個施法者各自算，
+    //   怪死了（新生成的怪是新物件）就歸零。疊到 ×2 那一下觸發「魔裂」：該怪魔防 −100（最低 0）、四屬性抗性 −100（地水火風傷害 +10%，同 class-combat eleRes/1000），直到死亡。
+    if (a.cls === 'mage' && (a.rebirth || 0) > 0) {
+      var pk = ally ? ('a:' + (a._allyName || a.name || '?')) : 'P', pm = t._afkPain || (t._afkPain = {}), pn = pm[pk] = (pm[pk] || 0) + 1;
+      var pain = Math.min(PAIN_MAX, 1 + PAIN_STEP * (pn - 1)); r.mult *= pain; r.pain = pain;
+      if (pain >= PAIN_MAX && !t._afkMagicRift) { t._afkMagicRift = 1; t.mr = Math.max(0, (Number(t.mr) || 0) - RIFT_MR); try { if (typeof logCombat === 'function') logCombat('<span class="font-bold" style="color:#c084fc">【魔裂】</span>' + (t.n || '') + ' 的魔力護壁裂開了。', 'magic'); } catch (e) {} }
+    }
+    if (t._afkMagicRift && sk && ELE4[sk.ele]) r.mult *= 1 + RIFT_ELE / 1000;
     return r;
   };
+  var PAIN_STEP = 0.1, PAIN_MAX = 2, RIFT_MR = 100, RIFT_ELE = 100, ELE4 = { fire: 1, water: 1, wind: 1, earth: 1 };
   // 範圍魔法冷卻長度（afk-balance1101、afk-hotbar 問這裡）：規則開著 3.5 秒，沒開回傳 0＝照原本
   W.__afkHiddenAoeCd = function (sk, a) { return (hOn(a || P()) && isAoeSk(sk)) ? AOE_CD_HIDDEN : 0; };
+
+  // ── 十七、共鳴魔擊（Ping 11-13 03:02）：法師（你與法師傭兵）有魔擊精通、拿共鳴武器時，
+  //   共鳴光箭（智力÷60）與魔擊（力量÷60）各自判定、可以同時發動；任一個發動後可以再追擊一輪（兩個再各自判定），最多追擊 5 輪。
+  var RESO_CHAIN = 5;
+  var resoMage = function (a, isAlly) { if (!a || a.cls !== 'mage' || a.classicMode || !hOn(a)) return false; var w = a.eq && a.eq.wpn; if (!w || typeof isResonanceWeapon !== 'function' || !isResonanceWeapon(w.id)) return false; return a.mastery === 'm_strike'; };
+  var pickT = function (t) { if (t && t.curHp > 0 && !t._dead) return t; var al = ((typeof mapState !== 'undefined' && mapState.mobs) || []).filter(function (m) { return m && m.curHp > 0 && !m._dead; }); return al.length ? al[Math.floor(Math.random() * al.length)] : null; };
+  wrapG('wandLightArrowProc', function (o) { return function (target) {
+    var p = P(); if (!resoMage(p)) return o.apply(this, arguments);
+    var d = p.d || {};
+    for (var round = 0; round <= RESO_CHAIN; round++) {
+      var fired = false, t;
+      if (Math.random() < (d.int || 0) / 60 && (t = pickT(target))) { procLightArrow(t); fired = true; }
+      if (Math.random() < (d.str || 0) / 60 && (t = pickT(target))) { procMagicStrike(t); fired = true; }
+      if (!fired || p.dead) break;
+    }
+  }; });
+  var strikeMark = 0;
+  wrapG('_allyMagicStrikeHit', function (o) { return function () { strikeMark++; return o.apply(this, arguments); }; });
+  wrapG('allyWeaponProcs', function (o) { return function (ally, target) {
+    if (!resoMage(ally, true)) return o.apply(this, arguments);
+    var m0 = strikeMark, r = o.apply(this, arguments), d = ally.d || {}, t, wi = ally.eq.wpn, w = DB.items[wi.id];
+    try {
+      var fired = strikeMark > m0;   // 原本這一輪的魔擊（力量÷60）
+      if (Math.random() < (d.int || 0) / 60 && (t = pickT(target))) { allyProcLightArrow(ally, t); fired = true; }   // 同時：共鳴光箭
+      for (var round = 1; fired && round <= RESO_CHAIN; round++) {
+        fired = false;
+        if (Math.random() < (d.int || 0) / 60 && (t = pickT(target))) { allyProcLightArrow(ally, t); fired = true; }
+        if (Math.random() < (d.str || 0) / 60 && (t = pickT(target))) { _allyMagicStrikeHit(ally, t, wi, w); fired = true; }
+      }
+    } catch (e) {}
+    return r;
+  }; });
 
   // ── 十一、雅典娜之杖 ──
   var ATHENA = 'ttmi_5413', ATH_DEALT = 1.15, ATH_TAKEN = 0.7;

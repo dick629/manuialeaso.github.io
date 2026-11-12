@@ -58,39 +58,55 @@ await A.release(s.id)
    const b=(text,act)=>'<button type="button" data-cls-act="'+esc(act)+'">'+esc(text)+'</button>'
    const ctl=s.type==='被動'?'<span class="class-tabskills-note">常駐生效</span>':s.type==='光環'?b((v.auras||[]).includes(s.id)?'停用光環':'啟用光環','aura:'+s.id):(dual?b('雙刀姿態','dual:'+s.id)+b('鋼爪姿態','claw:'+s.id):b('施放','cast:'+s.id))+b((v.auto||[]).includes(s.id)?'移出自動':'加入自動','auto:'+s.id)
    return '<div class="class-tabskill">'+(ico?'<img src="'+ico+'" alt="" loading="lazy" onerror="this.remove()">':'')+'<div class="class-tabskill-body"><b>'+esc(s.name)+'</b><small>'+esc(s.type+(s.type==='被動'?'':s.type==='光環'?' · 啟用 3% MP，每 5 秒 1% MP':' · MP '+cost.mp+(cost.hp?' · HP '+cost.hp:'')+' · 冷卻 '+s.plan.cd+' 秒'))+'</small><p>'+esc(C.description(s))+'</p></div><div class="class-tabskill-ctl">'+ctl+'</div></div>'}).join('')+'</section>'}
- // Ping 11-13 02:35：技能視窗下面空白處列出自動施放的 8 格（點「移出」拿掉；冷卻每秒更新）
- function autoBar(win){const p=player,v=p&&C.get(p),t=p&&C.tree(p);let bar=document.getElementById('class-autobar');
-  if(!v||!t){if(bar)bar.remove();return}
-  if(!bar){bar=document.createElement('section');bar.id='class-autobar';bar.addEventListener('click',async ev=>{const el=ev.target.closest('[data-auto-rm]');if(!el)return;ev.preventDefault();ev.stopPropagation();el.disabled=true;try{await A.configure(el.dataset.autoRm,'auto');tabSkills()}catch(e){el.disabled=false;try{W.alert(e.message)}catch(x){}}})}if(bar.previousElementSibling!==win)win.insertAdjacentElement('afterend',bar)
-  const ids=(v.auto||[]).filter(id=>C.skills.get(id)),cell=[]
-  for(let i=0;i<8;i++){const id=ids[i],s=id&&C.skills.get(id);if(!s){cell.push('<div class="class-auto-slot empty"><span>空格</span></div>');continue}const ico=icoOf(t,s)
-   cell.push('<div class="class-auto-slot" data-auto-id="'+esc(id)+'">'+(ico?'<img src="'+ico+'" alt="" loading="lazy" onerror="this.remove()">':'')+'<b>'+esc(s.shortName||String(s.name).replace(/^.*?・/,''))+'</b><i class="class-auto-cd"></i><button type="button" data-auto-rm="'+esc(id)+'">移出</button></div>')}
-  bar.innerHTML='<h4>自動施放 <small>'+ids.length+' / 8</small></h4><div class="class-auto-grid">'+cell.join('')+'</div>';autoTick()
-  if(!autoBar.timer)autoBar.timer=setInterval(()=>{if(!document.getElementById('class-autobar')?.offsetParent)return;autoTick()},1000)}
- function autoTick(){const bar=document.getElementById('class-autobar');if(!bar||!player)return;bar.querySelectorAll('[data-auto-id]').forEach(el=>{const s=C.skills.get(el.dataset.autoId);let left=0;try{left=Math.ceil(W.LineageClassCombat.cooldown(player,s))}catch(e){}const i=el.querySelector('.class-auto-cd');i.textContent=left>0?left+' 秒':'可施放';el.classList.toggle('ready',!(left>0))})}
+ // 自動施放 8 格（Ping 11-13 02:35 列出；03:17 改放熱鍵列旁邊）：點一下＝立刻施放，× 移出，滑鼠移上去／長按看說明；
+ //   冷卻中灰色遮罩從上往下慢慢退，露出原本的顏色。熱鍵列關掉時退回技能頁下面。
+ const tipBox=()=>{let t=document.getElementById('class-tabskill-tip');if(!t){t=document.createElement('div');t.id='class-tabskill-tip';document.body.appendChild(t)}return t}
+ const tipHide=()=>{const t=document.getElementById('class-tabskill-tip');if(t)t.style.display='none'}
+ function tipShow(row){const t=tipBox();if(row.dataset.tipName!==undefined)t.innerHTML='<b>'+esc(row.dataset.tipName)+'</b><small>'+esc(row.dataset.tipMeta)+'</small><p>'+esc(row.dataset.tipDesc)+'</p>';else{const b=row.querySelector('.class-tabskill-body');if(!b)return;t.innerHTML='<b>'+b.querySelector('b').innerHTML+'</b><small>'+b.querySelector('small').innerHTML+'</small><p>'+b.querySelector('p').innerHTML+'</p>'}t.style.display='block'
+  const r=row.getBoundingClientRect(),w=Math.min(320,innerWidth-16);t.style.width=w+'px';const h=t.offsetHeight;let x,y=r.top;if(r.right+8+w<=innerWidth-8)x=r.right+8;else if(r.left-w-8>=8)x=r.left-w-8;else{x=Math.max(8,Math.min(innerWidth-w-8,r.left));y=r.bottom+4;if(y+h>innerHeight-8)y=r.top-h-4}y=Math.max(8,Math.min(y,innerHeight-h-8));t.style.left=x+'px';t.style.top=y+'px'}
+ const autoIds=()=>{const p=player,v=p&&C.get(p),t=p&&C.tree(p);if(!v||!t)return null;return {p,t,ids:(v.auto||[]).filter(id=>C.skills.get(id))}}
+ const slotHtml=(o,i,hb)=>{const id=o.ids[i],s=id&&C.skills.get(id),key=hb?'<span class="hb-key">流'+(i+1)+'</span>':'';if(!s)return '<div class="'+(hb?'hb-slot hb-cls ':'')+'cab-slot empty">'+key+'</div>';const ico=icoOf(o.t,s),cost=W.LineageClassCombat.cost(o.p,s)
+  return '<div class="'+(hb?'hb-slot hb-cls ':'')+'cab-slot" data-auto-id="'+esc(id)+'" data-tip-name="'+esc(s.name)+'" data-tip-meta="'+esc(s.type+' · MP '+cost.mp+(cost.hp?' · HP '+cost.hp:'')+' · 冷卻 '+s.plan.cd+' 秒')+'" data-tip-desc="'+esc(C.description(s))+'">'+key+(ico?'<img src="'+ico+'" alt="" draggable="false" onerror="this.remove()">':'<span class="cab-txt">'+esc(s.shortName||'')+'</span>')+'<i class="cab-cd"></i><em class="cab-left"></em><button type="button" data-auto-rm="'+esc(id)+'" aria-label="移出自動" title="移出自動">×</button></div>'}
+ // 熱鍵列第三、四組（afk-hotbar 問這裡）：有流派才有
+ function hotbarPages(){const o=autoIds();if(!o)return null;const pg=[0,1].map(k=>[0,1,2,3].map(i=>slotHtml(o,k*4+i,true)).join(''));const names=[0,1].map(k=>[0,1,2,3].map(i=>{const s=C.skills.get(o.ids[k*4+i]);return s?(s.shortName||String(s.name).replace(/^.*?・/,'')):''}));return {pages:pg,names}}
+ let slotsBound=false
+ function bindSlots(){if(slotsBound)return;slotsBound=true;let noClick=0,lp=null
+  const inScope=el=>el&&el.closest('#class-autobar,#afk-hotbar')
+  document.addEventListener('click',async ev=>{const rm=ev.target.closest('[data-auto-rm]'),slot=ev.target.closest('[data-auto-id]');if(!inScope(rm||slot))return;ev.preventDefault();ev.stopPropagation();if(Date.now()<noClick)return;tipHide()
+   if(rm){rm.disabled=true;try{await A.configure(rm.dataset.autoRm,'auto');autoBar.sig='';autoBar();tabSkills();try{W.renderTabs&&W.renderTabs()}catch(e){}}catch(e){rm.disabled=false;try{W.alert(e.message)}catch(x){}}return}
+   const r=W.LineageClassCombat.cast(slot.dataset.autoId,null,null);if(!r.ok&&r.reason)try{logSys('<span class="text-amber-300">'+esc(r.reason)+'</span>')}catch(e){}autoTick()},true)
+  document.addEventListener('mouseover',ev=>{if(ev.pointerType==='touch')return;const s=ev.target.closest('[data-auto-id]');if(s&&inScope(s)&&!ev.target.closest('button'))tipShow(s);else if(ev.target.closest&&ev.target.closest('#class-autobar,#afk-hotbar .hb-cls-page'))tipHide()})
+  document.addEventListener('mouseout',ev=>{const s=ev.target.closest&&ev.target.closest('[data-auto-id]');if(s&&inScope(s)&&!(ev.relatedTarget&&s.contains(ev.relatedTarget)))tipHide()})
+  document.addEventListener('touchstart',ev=>{const s=ev.target.closest('[data-auto-id]');if(!s||!inScope(s)||ev.target.closest('button'))return;lp=setTimeout(()=>{lp=null;noClick=Date.now()+600;tipShow(s);setTimeout(tipHide,3000)},500)},{passive:true})
+  ;['touchend','touchmove','touchcancel'].forEach(k=>document.addEventListener(k,()=>{if(lp){clearTimeout(lp);lp=null}},{passive:true}))}
+ // 熱鍵列關掉時：退回技能頁的技能視窗下面
+ function autoBar(){bindSlots();const o=autoIds();let bar=document.getElementById('class-autobar');const hb=document.getElementById('afk-hotbar'),onHb=!!(hb&&hb.style.display!=='none'&&hb.parentElement)
+  if(!o||onHb){if(bar)bar.remove();autoBar.sig=''}else{
+   if(!bar){bar=document.createElement('section');bar.id='class-autobar'}const win=document.querySelector('#tab-skill .classic-skill-window');if(win&&bar.previousElementSibling!==win)win.insertAdjacentElement('afterend',bar)
+   const sig=o.ids.join(',')+'|'+o.t.id;if(autoBar.sig!==sig||!bar.firstChild){autoBar.sig=sig;bar.innerHTML='<div class="cab-head">自動施放 <small>'+o.ids.length+'/8</small></div><div class="cab-row">'+[0,1,2,3,4,5,6,7].map(i=>slotHtml(o,i,false)).join('')+'</div>'}}
+  autoTick()
+  if(!autoBar.timer)autoBar.timer=setInterval(()=>{try{if(!player||!C.get(player))return;autoBar()}catch(e){}},250)}
+ function autoTick(){if(!player)return;document.querySelectorAll('#class-autobar [data-auto-id],#afk-hotbar [data-auto-id]').forEach(el=>{const s=C.skills.get(el.dataset.autoId);if(!s)return;let left=0;try{left=W.LineageClassCombat.cooldown(player,s)}catch(e){}
+  const tot=left>0?Math.max(Number(el.dataset.tot)||0,left,s.plan.cd||0):0;el.dataset.tot=tot;const f=tot>0?Math.min(1,left/tot):0,cd=el.querySelector('.cab-cd'),lf=el.querySelector('.cab-left');if(cd)cd.style.height=(f*100).toFixed(1)+'%';if(lf)lf.textContent=left>0?Math.ceil(left):'';el.classList.toggle('cooling',left>0)})}
  let clsMode=false   // 技能分頁的「流派」頁籤（跟核心的 一般／職業／裝備 並排）
- function tabSkills(){try{const host=document.getElementById('tab-skill');if(!host)return;const win=host.querySelector('.classic-skill-window'),modes=win&&win.querySelector('.classic-skill-mode');if(!win||!modes)return
-  autoBar(win)
+ function tabSkills(){try{autoBar()}catch(e){}try{const host=document.getElementById('tab-skill');if(!host)return;const win=host.querySelector('.classic-skill-window'),modes=win&&win.querySelector('.classic-skill-mode');if(!win||!modes)return
+  if(!host.dataset.clsTip){host.dataset.clsTip='1'   // Ping 11-12 17:49：滑鼠移上去（手機點圖示／名稱）顯示技能說明
+   const hide=tipHide,show=tipShow
+   host.addEventListener('mouseover',ev=>{if(ev.pointerType==='touch')return;const row=ev.target.closest('.class-tabmode .class-tabskill');if(row&&!ev.target.closest('button'))show(row);else if(!row)hide()})
+   host.addEventListener('mouseleave',hide);host.addEventListener('scroll',hide,true)
+   host.addEventListener('click',ev=>{const row=ev.target.closest('.class-tabmode .class-tabskill');if(!row||ev.target.closest('button'))return hide();show(row)})
+   document.addEventListener('click',ev=>{if(!host.contains(ev.target))hide()},true)}
   const html=tabSkillsHtml();if(!html){clsMode=false;return}
   if(!modes.querySelector('[data-cls-mode]')){const b=document.createElement('button');b.type='button';b.dataset.clsMode='1';b.textContent='流派';modes.appendChild(b)
    modes.addEventListener('click',ev=>{const x=ev.target.closest('button');if(!x)return;if(x.dataset.clsMode){ev.preventDefault();ev.stopPropagation();clsMode=true;tabSkills();return}clsMode=false},true)}
   const mb=modes.querySelector('[data-cls-mode]');mb.classList.toggle('active',clsMode);if(clsMode)modes.querySelectorAll('button:not([data-cls-mode])').forEach(x=>x.classList.remove('active'))
   win.classList.toggle('class-tabmode',clsMode);if(!clsMode)return
   const head=win.querySelector('.classic-skill-heading');if(head)head.textContent=C.tree(player)?.name||'流派'
-  const grid=win.querySelector('.classic-skill-grid-scroll');if(grid){grid.removeAttribute('onscroll');grid.innerHTML=html}
-  if(!host.dataset.clsTip){host.dataset.clsTip='1'   // Ping 11-12 17:49：滑鼠移上去（手機點圖示／名稱）顯示技能說明
-   const box=()=>{let t=document.getElementById('class-tabskill-tip');if(!t){t=document.createElement('div');t.id='class-tabskill-tip';document.body.appendChild(t)}return t}
-   const hide=()=>{const t=document.getElementById('class-tabskill-tip');if(t)t.style.display='none'}
-   const show=row=>{const t=box(),b=row.querySelector('.class-tabskill-body');if(!b)return;t.innerHTML='<b>'+b.querySelector('b').innerHTML+'</b><small>'+b.querySelector('small').innerHTML+'</small><p>'+b.querySelector('p').innerHTML+'</p>';t.style.display='block'
-    const r=row.getBoundingClientRect(),w=Math.min(320,innerWidth-16);t.style.width=w+'px';const h=t.offsetHeight;let x,y=r.top;if(r.right+8+w<=innerWidth-8)x=r.right+8;else if(r.left-w-8>=8)x=r.left-w-8;else{x=Math.max(8,Math.min(innerWidth-w-8,r.left));y=r.bottom+4;if(y+h>innerHeight-8)y=r.top-h-4}y=Math.max(8,Math.min(y,innerHeight-h-8));t.style.left=x+'px';t.style.top=y+'px'}
-   host.addEventListener('mouseover',ev=>{if(ev.pointerType==='touch')return;const row=ev.target.closest('.class-tabmode .class-tabskill');if(row&&!ev.target.closest('button'))show(row);else if(!row)hide()})
-   host.addEventListener('mouseleave',hide);host.addEventListener('scroll',hide,true)
-   host.addEventListener('click',ev=>{const row=ev.target.closest('.class-tabmode .class-tabskill');if(!row||ev.target.closest('button'))return hide();show(row)})
-   document.addEventListener('click',ev=>{if(!host.contains(ev.target))hide()},true)}
+  const grid=win.querySelector('.classic-skill-grid-scroll');if(grid){grid.removeAttribute('onscroll');const mine=!!grid.querySelector(':scope>.class-tabskills'),y=mine?grid.scrollTop:0;if(!mine||grid.dataset.clsHtml!==html){grid.innerHTML=html;grid.dataset.clsHtml=html}grid.scrollTop=y}   /* Ping 11-13 03:12：重畫時保留捲動位置，內容沒變就不重畫 */
   if(!host.dataset.clsBound){host.dataset.clsBound='1';host.addEventListener('click',async ev=>{const el=ev.target.closest('[data-cls-act]');if(!el)return;ev.preventDefault();ev.stopPropagation()
    const [cmd,id]=String(el.dataset.clsAct).split(/:(.*)/);try{if(cmd==='cast'||cmd==='dual'||cmd==='claw'){const r=W.LineageClassCombat.cast(id,null,cmd==='cast'?null:{style:cmd});if(!r.ok&&r.reason)try{logSys('<span class="text-amber-300">'+esc(r.reason)+'</span>')}catch(e){}return}
     el.disabled=true;await A.configure(id,cmd==='aura'?'aura':'auto');tabSkills()}catch(e){el.disabled=false;try{W.alert(e.message)}catch(x){}}})}}catch(e){console.warn('[class-ui] 技能分頁',e)}}
  if(typeof W.renderTabs==='function'){const oRT=W.renderTabs;W.renderTabs=function(){const r=oRT.apply(this,arguments);tabSkills();return r};try{(0,eval)('renderTabs = window.renderTabs')}catch(e){}}
- W.LineageClassUI={open,close,render,mount,tabSkills};W.addEventListener('load',mount);mount();
+ W.LineageClassUI={open,close,render,mount,tabSkills,hotbarPages};W.addEventListener('load',mount);mount();
 })(window);
 

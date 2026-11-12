@@ -24,7 +24,7 @@
  function mark(p,t){const s=st(p);if(!t)return {};let m=s.marks.get(t);if(!m){m={stack:0,mark:0,casts:new Set(),last:0};s.marks.set(t,m);}if(now()-m.last>12){m.stack=0;m.casts.clear();}return m;}
  function putMark(p,t,sec,stack){if(!live(t))return;const m=mark(p,t);m.mark=now()+sec+value(p,'markDuration');m.last=now();if(stack)m.stack=Math.min(3,N(m.stack)+1);}
  function usable(p,id){return !!(live(p)&&!p.classicMode&&C.valid(p)&&C.canUse(p,id));}
- function cooldown(p,s){const cds=p.classPath?.cooldowns||{},key=s.type==='大絕'?'ult':s.type==='龍魔法'?'dragon:'+s.plan.dragonFamily:s.id;return Math.max(0,(N(cds[key])-Date.now())/1000,s.type==='龍魔法'?(N(cds.dragonGlobal)-Date.now())/1000:0);}
+ function cooldown(p,s){const cds=p.classPath?.cooldowns||{},key=s.type==='大絕'?'ult':s.type==='龍魔法'?'dragon:'+s.id:s.id;return Math.max(0,(N(cds[key])-Date.now())/1000,s.type==='龍魔法'?(N(cds.dragonGlobal)-Date.now())/1000:0);}
  function cost(p,s){let mp=s.plan.mp*N(p.mmp);mp*=1-Math.min(.6,value(p,'cost'));if(s.type==='法術'&&W.LineageSherine)mp*=W.LineageSherine.costMultiplier(p);const t=C.tree(p);if(t?.tradeoff&&/成本\+15%/.test(t.tradeoff))mp*=1.15;return {mp:Math.ceil(mp),hp:Math.ceil(s.plan.hp*maxhp(p))};}
  function controls(p){const z=p.statuses||p.st||{};return ['stun','freeze','stone','sleep','paralysis','paralyze','silence','magicseal'].some(k=>z[k]>0&&!(k==='silence'&&W.LineageSherine?.ignoreSilence(p)))||p._timeSealed||p._afkLockUntil>state.ticks;}
  function resource(p,t,key){const a=st(p),m=mark(p,t);if(key==='silenced')return (p.statuses?.magicseal||p.statuses?.silence||0)>0?1:0;if(key==='elements')return a.elementHistory.size;if(key==='distinct')return m.casts.size;if(key==='absorbed')return a.absorbed>0?1:0;if(key==='corpse')return a.resources.corpse;if(key==='stack')return now()-m.last<=12?m.stack:0;if(key==='mark')return m.mark>now()?1:0;if(key==='poison')return a.dots.some(x=>x.target===t&&x.poison&&x.until>now())?1:0;const z=(key==='dual'||key==='third')?m[key]:a.resources[key];return z&&z.until>now()&&!z.used?1:0;}
@@ -59,7 +59,7 @@
  // 敵人受到的傷害 +%：大絕來源先相加，合計最多 +300%（B5）
  function vulnOf(attacker,t,ctx={}){if(!t)return 0;const k=ctx.kind;let n=dv(t,'vulnerability')+dv(t,'bloodVuln');
   if(k==='melee'||k==='ranged'||k==='phys')n+=dv(t,'physVuln');if(k==='magic')n+=dv(t,'magicVuln');
-  const e=ctx.element;if(e&&e!=='none'){n+=dv(t,'eleVuln')+dv(t,'eleRes')/1000+(ELE4[e]?dv(t,'eleRes_'+e)/1000:0);if(e==='light')n+=dv(t,'lightVuln');}
+  const e=ctx.element;if(e&&e!=='none'){n+=dv(t,'eleVuln')+dv(t,'eleRes')/1000+(ELE4[e]?dv(t,'eleRes_'+e)/1000+(t._afkMagicRift?.1:0):0);if(e==='light')n+=dv(t,'lightVuln');}
   if(ctx.crit)n+=dv(t,'critVuln');if(ctx.extra)n+=dv(t,'comboVuln');if(k==='ranged')n+=dv(t,'rangedVuln');
   if(attacker&&!attacker.cls){n+=dv(t,'petVuln');if(isGuard(attacker))n+=dv(t,'guardVuln');}
   if(attacker&&attacker!==player)n+=dv(t,'allyVuln');
@@ -183,7 +183,7 @@
   if(useful&&live(target)&&(!s.plan.ops.some(o=>o.kind==='hit')||actual>0)&&C.tree(p)?.requiresFusionTransfer){const m=mark(p,target);if(s.number===1)m.first=now()+8;if(s.number===5&&m.first>now())m.dual={until:now()+8,used:false};}
   if(useful||actual>0){triggerPassives(p,'cast');if(s.type==='法術')W.LineageSherine?.signal(p,'cast',target,{id:s.id});}R.recalc(p);return {actual,useful};
  }
- function cast(id,target,selected,p=player){const s=C.skills.get(id);target=target||enemies()[0];const why=reason(p,s,target);if(why)return {ok:false,reason:why};if(s.type==='光環')return {ok:false,reason:'請在光環頁啟用'};const c=cost(p,s);spendCharged(p,'cost');p.mp-=c.mp;p[hpKey(p)]-=c.hp;if(c.hp>0)W.LineageSherine?.signal(p,'blood',target,{amount:c.hp});W.LineageSherine?.consumeSilence(p);const cds=p.classPath.cooldowns||(p.classPath.cooldowns={}),key=s.type==='大絕'?'ult':s.type==='龍魔法'?'dragon:'+s.plan.dragonFamily:s.id;cds[key]=Date.now()+s.plan.cd*1000*(s.type==='大絕'?1:st(p).spellDelay||1);if(s.type==='龍魔法')cds.dragonGlobal=Date.now()+5000;
+ function cast(id,target,selected,p=player){const s=C.skills.get(id);target=target||enemies()[0];const why=reason(p,s,target);if(why)return {ok:false,reason:why};if(s.type==='光環')return {ok:false,reason:'請在光環頁啟用'};const c=cost(p,s);spendCharged(p,'cost');p.mp-=c.mp;p[hpKey(p)]-=c.hp;if(c.hp>0)W.LineageSherine?.signal(p,'blood',target,{amount:c.hp});W.LineageSherine?.consumeSilence(p);const cds=p.classPath.cooldowns||(p.classPath.cooldowns={}),key=s.type==='大絕'?'ult':s.type==='龍魔法'?'dragon:'+s.id:s.id;cds[key]=Date.now()+s.plan.cd*1000*(s.type==='大絕'?1:st(p).spellDelay||1);if(s.type==='龍魔法')cds.dragonGlobal=Date.now()+5000;
   if(s.plan.castTime){st(p).casting={at:now()+s.plan.castTime,s,target,selected};return {ok:true,charging:true};}const result=perform(p,s,target,selected);if(!state.ff&&typeof logCombat==='function')logCombat('<span style="color:#d8c58d">'+s.name+'</span>','magic');return {ok:true,...result};
  }
  function debuff(t,source,key,value,seconds){if(!t)return;const m=ms(t),old=m.debuffs[source];if(old&&!VIRTUAL.has(old.key))t[old.key]-=old.value;m.debuffs[source]={key,value,until:now()+seconds};if(!VIRTUAL.has(key))t[key]=N(t[key])+value;}

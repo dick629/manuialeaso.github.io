@@ -17,7 +17,7 @@
   // 2026-11-02 02:56（玩家）：幻刃 ×2（減傷 15%、吸血 2%）、織命 ×2（吸血 2%）、四元素主宰一般攻擊 ×8、殷海薩一般攻擊 ×5；16 人減半改成同一門技藝的人數懲罰（artPen）
   // 2026-10-28 八職業平衡（冷門職業加強，數值集中在這裡）：騎士傷害 ×3、幻刃 ×5、織命 ×4、四元素主宰 ×15、殷海薩 ×17、魔血 +50%；
   //   （第二輪 2026-10-29 的新數值見 docs/class-balance.md）減傷：萬兵之道 30%、魔血咒者 20%、幻刃術士 30%；吸血：萬兵之道／魔血咒者／幻術士兩門 5%、時流暗殺者 1%（2026-10-28 晚 3% → 1%）。依據見 docs/class-balance.md
-  var W = window; W.__afkArtTune = W.__afkArtTune || { knight: 3.5, arms: 2.5, sorc: 1, life: 1, ruler: 7, god: 4, ein: 6, classOut: { mage: 1 }, classPet: { mage: 1.2 }, dmag: 2.5, fuse: 3, minionMage: 0.8, athAttr: 2, athMag: 50, fafPanel: 0.5, fafAxe: 0.7, kdark: 3, kdoom: 0.3, dtime: 1.6, armsDr: 0.3, timeDr: 0, darkDr: 0.2, sorcDr: 0.15, leech: 0.05, illuLeech: 0.02, timeLeech: 0.01 };
+  var W = window; W.__afkArtTune = W.__afkArtTune || { knight: 3.5, arms: 2.5, sorc: 1, life: 1, ruler: 7, god: 4, ein: 6, classOut: { mage: 1 }, classPet: { mage: 1.2 }, dmag: 2.5, fuse: 4.5, minionMage: 0.8, athAttr: 2, athMag: 50, fafPanel: 0.5, fafAxe: 0.7, kdark: 3, kdoom: 0.3, dtime: 1.6, armsDr: 0.3, timeDr: 0, darkDr: 0.2, sorcDr: 0.15, leech: 0.05, illuLeech: 0.02, timeLeech: 0.01 };
   // 職業平衡係數（2026-10-29）：該職業的魔法基礎傷害與召喚物／夥伴傷害再乘上這個倍率（取整）；法師 ×0.72
   var clsOfStats = function (d) { try { if (typeof player !== 'undefined' && player && player.d === d) return player.cls; var a = (player && player.allies || []).find(function (x) { return x && x.d === d; }); return a ? a.cls : null; } catch (e) { return null; } };
   var classK = function (cls) { var t = W.__afkArtTune.classOut; return (cls && t && t[cls]) || 1; };
@@ -27,10 +27,27 @@
     var oMBD = W.magicBaseDamage;
     W.magicBaseDamage = function (rolled, dStats) { var v = oMBD.apply(this, arguments); try { var k = classK(clsOfStats(dStats)); if (k !== 1 && v > 0) v = Math.max(1, Math.floor(v * k)); } catch (e) {} return v; };
   }
+  // 法師面板分給寵物、召喚物（Ping 11-13 03:02／03:11 換算定案）：s＝你自己是法師 60%（隊長）、法師傭兵 30%
+  //   每次攻擊 +s×(魔法傷害＋額外傷害＋力量＋智力)；命中 +s×(魔法命中＋敏捷)；爆擊率 s×魔法爆擊%，爆擊 ×(1＋s×魔法爆擊傷害%)；
+  //   寵物最大 HP +s×體質×10；寵物 MP 恢復 +s×精神÷10；魅力不算。
+  var PANEL_LEAD = 0.6, PANEL_ALLY = 0.3;
+  var panelS = function (owner) { if (!owner || owner.cls !== 'mage' || owner.classicMode) return 0; var p = (typeof player !== 'undefined') ? player : null; return owner === p ? PANEL_LEAD : PANEL_ALLY; };
+  var N0 = function (x) { return Number(x) || 0; };
+  var panelHit = function (owner, v) {
+    var k = panelS(owner); if (!k) return v; var d = owner.d || {};
+    v += k * (N0(d.magicDmg) + N0(d.extraDmg) + N0(d.str) + N0(d.int));
+    if (Math.random() * 100 < k * N0(d.magicCrit)) v *= 1 + k * N0(d.magicCritDmg) / 100;
+    return Math.max(1, Math.floor(v));
+  };
+  var panelHitBonus = function (owner) { var k = panelS(owner), d = (owner && owner.d) || {}; return k ? Math.floor(k * (N0(d.magicHit) + N0(d.dex))) : 0; };
+  var wrapFn = function (name, mk) { if (typeof W[name] !== 'function' || W[name]._afkPanel) return; var f = mk(W[name]); f._afkPanel = true; W[name] = f; try { (0, eval)(name + ' = window.' + name); } catch (e) {} };
+  wrapFn('petDerive', function (o) { return function () { var r = o.apply(this, arguments); try { var pl = P(); if (r && panelS(pl)) { var d = pl.d || {}, k = panelS(pl); r.hit = (r.hit || 0) + panelHitBonus(pl); r.mpRegBonus = (r.mpRegBonus || 0) + Math.floor(k * N0(d.wis) / 10); } } catch (e) {} return r; }; });
+  wrapFn('petMhpEff', function (o) { return function () { var v = o.apply(this, arguments); try { var pl = P(), k = panelS(pl); if (k) v += Math.floor(k * N0(pl.d && pl.d.con) * 10); } catch (e) {} return v; }; });
+  ['_sumDerive', '_zmbDerive'].forEach(function (fn) { wrapFn(fn, function (o) { return function (x, owner) { var r = o.apply(this, arguments); try { var ow = owner || P(); if (r && panelS(ow)) r = Object.assign({}, r, { hit: (r.hit || 0) + panelHitBonus(ow) }); } catch (e) {} return r; }; }); });
   var hookCompanion = function () {   // 召喚術（v2）、寵物等夥伴的傷害走 AFK_RELIC_RUNTIME.companionDamage
     var R = W.AFK_RELIC_RUNTIME; if (!R || typeof R.companionDamage !== 'function' || R.companionDamage._afkCls) return;
     var o = R.companionDamage;
-    R.companionDamage = function (owner, s, t, dmg) { var v = o.apply(this, arguments); try { var k = classPetK(owner && owner.cls); if (k !== 1 && v > 0) v = Math.max(1, Math.floor(v * k)); } catch (e) {} return v; };
+    R.companionDamage = function (owner, s, t, dmg) { var v = o.apply(this, arguments); try { if (v > 0) v = panelHit(owner, v); } catch (e) {} try { var k = classPetK(owner && owner.cls); if (k !== 1 && v > 0) v = Math.max(1, Math.floor(v * k)); } catch (e) {} return v; };
     R.companionDamage._afkCls = true;
   };
   try { hookCompanion(); document.addEventListener('DOMContentLoaded', hookCompanion); } catch (e) {}
@@ -54,8 +71,8 @@
     r_rally:     { cls: 'royal',    n: '王者號令',   d: '你每次一般攻擊，自己追加 1 次，寵物與召喚物各追加 1 次攻擊。號令之下，全隊（玩家、傭兵、寵物、召喚物、護衛）受到的物理傷害 −50%（可與聖結界疊加，合計上限 75%，屬性傷害不算）。發號令的王者本人在所有減傷算完後再 −50%。' },
     w_fate:      { cls: 'knight',   n: '命運迴響',   d: '造成的傷害 ×4.5。所有回復 +100%、HP 自然恢復 ×10 且每 4 秒一次、HP +5000、傷害減免 +50、五種屬性抗性 +200；每 5 秒一次，受到的傷害減半（真傷、物理、魔法、屬性都算）。HP<50% 觸發不屈命運：HP 全滿、效果 ×2；HP<30% 觸發絕望身軀：HP 全滿、效果 ×3，並獲得每場戰鬥一次的免死。騎士挺身在前：敵人優先攻擊你，你額外減傷 10%，之後再扣 500 點最終減傷（真實減傷）。身為傭兵時，代為承受其他傭兵受到的攻擊與魔法傷害 50%（王的 10% 真實傷害不轉；最多扛到自己剩 1 HP）。領域：對頭目的傷害 +10%。' },
     w_arms:      { cls: 'knight',   n: '萬兵之道',   d: '造成的傷害 ×3.5。百戰之軀：受到的傷害 −30%，一般攻擊造成傷害的 5% 轉為 HP。破甲：無視目標的硬皮。龍的一擊（屠龍劍的力量）：一般攻擊 80% 機率對全場敵人造成 3D(力量)+30 必中固定傷害。粉身碎骨：目標沒有硬皮時，重擊傷害 ×2。致命創傷：命中後目標 5 秒內受到的物理傷害 +20%；近距離命中 +50。首擊：對每個敵人的第一擊，武器骰改用最大值 ×10（跟神話變身的首擊加成各算各的）；穿雙子座聖衣時，首擊變成前五擊傷害 ×30；穿金牛座聖衣 AC −100、魔防 +100、五屬性抗性 +100、傷害減免 +10。領域：一般攻擊傷害 +15%。' },
-    m_shilen:    { cls: 'mage',     n: '席琳眷屬',   d: '召喚術數量上限 20；寵物與召喚物的命中、魔防、每次攻擊的傷害、每次受擊的減免都 +(WIS+INT)×0.8，而且不會死亡（HP 最低 1）。召滿 20 隻時融合成一隻融合魔獸（傷害 ×3），每 3 秒隨機施放雷霆風暴／龍捲風／極光雷電／燃燒的火球（傷害照法師魔法計算）。領域：在席琳夢域鏡造成的傷害 +15%；寵物與召喚物的傷害 +10%。' },
-    m_atheist:   { cls: 'mage',     n: '背神者',   d: '背神狀態中：無法一般攻擊、魔法傷害 +50、魔法命中 +100，每 5 秒自動施放一次屬性魔法武器效果（四屬性輪流，威力 ×2，不耗 MP；傭兵 10 秒一次、效果減半）。進入戰鬥 1 分鐘時否定諸神：所有敵人扣最大 HP 20%（死亡女神席琳只扣 5%），之後陷入虛弱（回到一般狀態、可以攻擊），5 分鐘後再次進入背神狀態。領域：魔法傷害 +30%；自己施放時 MP 消耗 +50%，範圍攻擊魔法沒有 3 秒冷卻。' },
+    m_shilen:    { cls: 'mage',     n: '席琳眷屬',   d: '召喚術數量上限 20；寵物與召喚物的命中、魔防、每次攻擊的傷害、每次受擊的減免都 +(WIS+INT)×0.8，而且不會死亡（HP 最低 1）。召滿 20 隻時融合成一隻融合魔獸（傷害 ×4.5），每 3 秒隨機施放雷霆風暴／龍捲風／極光雷電／燃燒的火球（傷害照法師魔法計算）。領域：在席琳夢域鏡造成的傷害 +15%；寵物與召喚物的傷害 +15%。' },
+    m_atheist:   { cls: 'mage',     n: '背神者',   d: '背神狀態中：魔法傷害 +50、魔法命中 +100，每 5 秒自動施放一次屬性魔法武器效果（四屬性輪流，威力 ×2，不耗 MP；傭兵 10 秒一次、效果 ×0.8）。進入戰鬥 1 分鐘時否定諸神：所有敵人扣最大 HP 20%（死亡女神席琳只扣 5%），之後陷入虛弱（回到一般狀態、可以攻擊），5 分鐘後再次進入背神狀態。領域：魔法傷害 +30%；自己施放時 MP 消耗 +50%，範圍攻擊魔法沒有 3 秒冷卻。' },
     e_einhasad:  { cls: 'elf',      n: '殷海薩眷屬', d: '寵物、召喚物與屬性精靈的命中、魔防、每次攻擊的傷害、每次受擊的減免都 +(WIS+INT)×1.2，而且不會死亡（HP 最低 1）；屬性精靈化為元素神：傷害與 HP ×5。殷海薩的光芒：一般攻擊傷害 ×7。領域：寵物與召喚物的傷害 +25%。' },
     e_ruler:     { cls: 'elf',      n: '四元素主宰',     d: '自動學會四種屬性的精靈魔法（換掉這門技藝也不會遺忘，只是不同屬性的不能施放）；四元素融合：全部精靈魔法增益加總 ×3 常駐。HP<50% 觸發不屈命運（HP 全滿）。面板能力 +50、近／遠／魔法爆擊 +15%；每次一般攻擊以近戰＋遠攻＋魔法三種一起計算，再受四元素加持（傷害 ×8）。' },
     d_time:      { cls: 'dark',     n: '時流暗殺者',     d: '會心一擊的 HP／MP 消耗減半；一般攻擊再多算 1.6 倍必定爆擊的傷害（傷害 ×2.6）。爆擊傷害 +50%、近距離爆擊率 +50%。HP<30% 觸發絕望身軀（HP 全滿）。一般攻擊造成傷害的 1% 轉為 HP。' },
@@ -522,7 +539,7 @@
   //   織命術士：治療 +25%；幻刃術士：自己以外的隊友、寵物、守護者受到的傷害 −10%
   var mirrorOn = function () { try { return !!(W.__afkDreamHell && W.__afkDreamHell.on()); } catch (e) { return false; } };   // 席琳夢域鏡
   var DOMAIN = W.__afkArtDomain = {
-    arms: 0.15, fate: 0.10, ein: 0.25, shilenDream: 0.15, shilenMinion: 0.10, athMag: 0.30, athMp: 0.5, life: 0.25, sorcAura: 0.10,
+    arms: 0.15, fate: 0.10, ein: 0.25, shilenDream: 0.15, shilenMinion: 0.15, athMag: 0.30, athMp: 0.5, life: 0.25, sorcAura: 0.10,
     out: function (a, f, kind, m) {
       var v = 0;
       if (a === 'w_arms' && kind === 'atk') v += DOMAIN.arms;
@@ -666,9 +683,9 @@
   }
   // 無神論者：無法一般攻擊；命定絕望者在暗夢星迴 5 分鐘後也不能攻擊
   var oPA = window.playerAttack;
-  window.playerAttack = function () { var p = P(); if (p && (athActive(p) || doomDead(p))) return; return oPA.apply(this, arguments); };
+  window.playerAttack = function () { var p = P(); if (p && doomDead(p)) return;   /* 背神者可以一般攻擊（Ping 11-13 03:02） */ return oPA.apply(this, arguments); };
   var oAA = window.allyAttackOnce;
-  window.allyAttackOnce = function (ally) { if (ally && (athActive(ally) || doomDead(ally))) return; return oAA.apply(this, arguments); };
+  window.allyAttackOnce = function (ally) { if (ally && doomDead(ally)) return; return oAA.apply(this, arguments); };
   wrapOut('playerAttack', 'atk', me);
   wrapOut('dualWieldOffhandAttack', 'atk', me);
   wrapOut('allyAttackOnce', 'atk', function (a) { return a; });
@@ -832,7 +849,7 @@
         } finally { window.__afkSpellMult = pv; }
       });
     } else {
-      var d = actor.d || {}, base = ((Number(d.int) || 0) + (Number(d.wis) || 0) + (Number(d.magicDmg) || 0)) * 8 * 1.5 * mult * 0.5 * F(actor) * classK(actor.cls);
+      var d = actor.d || {}, base = ((Number(d.int) || 0) + (Number(d.wis) || 0) + (Number(d.magicDmg) || 0)) * 8 * 1.5 * mult * 0.8 * F(actor) * classK(actor.cls);   /* 傭兵：0.5→0.8（Ping 11-13 03:02） */
       ms.mobs.forEach(function (m) { if (m && m.curHp > 0 && !m._dead) hurtMob(m, base * 3 * eles.length * (typeof mrMult === 'function' ? mrMult(m.mr || 0) : 1), actor) /* card-combat:arts-ally-spell */; });
     }
     reap();
