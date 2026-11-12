@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-3e08861c91ec",
+  "build": "merge-0.4-bb910d4babc2",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -1584,7 +1584,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "a76c49fd23f58d5695c4fce7cfd93add7d73829cb429ebe222c796eca1914d79",
+      "sha256": "768de09bfe8f7daf6e02717bec40951ab7773f4ac2a57ee960dfe8a721d9498c",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1683,8 +1683,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/19-equipment-window.js?v=37937a951006",
-      "sha256": "37937a95100609a607a8bfc39d120713abd771f4a51ff5f92d29725af6a3d1fe",
+      "url": "js/19-equipment-window.js?v=2bf2f931c483",
+      "sha256": "2bf2f931c483ee21c0545ecd20a906852f5831930ec46fb319a0f997fc3d73fc",
       "type": "text/javascript; charset=utf-8"
     },
     {
