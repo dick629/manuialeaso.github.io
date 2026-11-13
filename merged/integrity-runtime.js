@@ -1,6 +1,6 @@
 (function(W){'use strict';
  const C=W.LineageIntegrityCore,S=W.LineageIntegrityStore,R=W.LineageRecovery;let busy=false;
- async function observe(){return S.edit(s=>{if(s.pending)throw Error('上次保存尚未結束，請到「存檔與修復」完成保護交易');s.ledger=C.absorb(s.ledger,R.capture(localStorage),{tolerateInvalid:true});s.ledger.revision++;return s;});}
+ async function observe(){return S.edit(s=>{if(s.pending)throw Error('上次保存尚未結束，請到「存檔與修復」完成保護交易');s.ledger=C.absorb(s.ledger,R.capture(localStorage),{tolerateInvalid:true,allowDup:true});/* 11-13：已經重複的角色也要能進「刪除」流程 */s.ledger.revision++;return s;});}
  async function transact(store,changes,backup,options={}){
   if(store!==localStorage)throw Error('保護交易必須使用本機正式儲存區');if(busy)throw Error('已有保存操作進行中');busy=true;let token=null,applied=false;
   try{

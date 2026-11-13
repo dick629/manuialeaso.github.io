@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-39a7092dcada",
+  "build": "merge-0.4-4670aac0da3c",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -1624,7 +1624,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "6bfcd62939b54bf8362c1fecf8b852cf7bb1e5bbf1b3a8175d8d11d358eebca3",
+      "sha256": "d5c44a31f836b45ce75f0a0bea42daf8e89b22ed82aafd8784b25fd6c68a4aa8",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1958,13 +1958,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/integrity-core.js?v=3acdc2104742",
-      "sha256": "3acdc21047422c3b4b3b1643693d7c4a7fa16ac29e0a7d3345b319c7108c892d",
+      "url": "merged/integrity-core.js?v=7246e2fd7659",
+      "sha256": "7246e2fd76593d813783f4c515edc37f77aa4c3288690264244d6a836222603c",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/integrity-runtime.js?v=0db7761d06ea",
-      "sha256": "0db7761d06eace56d9d21d500a0687e8d6687913d412ac9670f8a97487df70f5",
+      "url": "merged/integrity-runtime.js?v=7852370293f7",
+      "sha256": "7852370293f72d0fdbdbc0058cf3ceb37a4eb5c371a51c3ec4dac1ed297f0ebe",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2129,7 +2129,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "b8d5a1f74ffc108333c1aeaf2c741a53d92b772a8049f8228089f94fbd50c1fc",
+      "sha256": "9596295d14237454ed225e7d2e56eeab1a650eaf0c88a4649a9a5b65c6a356e2",
       "type": "text/html; charset=utf-8"
     }
   ]
