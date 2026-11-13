@@ -24,7 +24,9 @@
     hp:{name:'堅韌',step:.4,cap:15},mp:{name:'心智',step:.4,cap:15},physical:{name:'武勇',step:.2,cap:8},magic:{name:'秘法',step:.2,cap:8},
     companions:{name:'羈絆',step:.3,cap:15},healing:{name:'祝禱',step:.2,cap:15},curse:{name:'抑咒',step:.5,cap:Infinity}
   };
-  const PMAX=1000;   // 巔峰等級上限（Ping 11-11 12:37：700 → 1000）
+  const PMAX=3000;   // 巔峰等級上限（Ping 11-11 12:37：700 → 1000；11-13 03:47：1000 → 3000）
+  // 每一級要的經驗倍數（Ping 11-13 03:47 甲案）：1～1000 ×1、1001～2000 ×2、2001～2500 ×6、2501～3000 ×24
+  function levelMult(lv){return lv<=1000?1:lv<=2000?2:lv<=2500?6:24;}
   const integer=n=>Number.isSafeInteger(n)&&n>=0;
   const copy=x=>JSON.parse(JSON.stringify(x));
   function fresh(level){return {v:1,maxLevel:Math.max(1,Math.min(200,Math.floor(Number(level)||1))),unlocked:false,talent:{order:[],nodes:[],j:false},paragon:{level:0,xp:0,points:{}}};}
@@ -54,15 +56,16 @@
     return Object.keys(p.points).every(k=>paragon[k]&&integer(p.points[k])&&p.points[k]<=Math.min(PMAX,Math.ceil(paragon[k].cap/paragon[k].step)))&&Object.values(p.points).reduce((a,b)=>a+b,0)<=p.level;
   }
   function value(g,k){const d=paragon[k];return d?Math.min(d.cap,(g.paragon.points[k]||0)*d.step):0;}
-  function xpCost(rebirth,e100){if(!Number.isSafeInteger(e100)||e100<=0)throw Error('E100 無效');return e100*(rebirth>=2?3:2);}
+  function xpCost(rebirth,e100,lv){if(!Number.isSafeInteger(e100)||e100<=0)throw Error('E100 無效');return e100*(rebirth>=2?3:2)*levelMult(lv||1);}
   function gain(g,amount,rebirth,level,e100){
     if(rebirth<1||level<100||g.paragon.level>=PMAX||!Number.isFinite(amount)||amount<=0)return 0;
-    const cost=xpCost(rebirth,e100),p=g.paragon;const total=p.xp+amount;
-    const n=Math.min(PMAX-p.level,Math.floor(total/cost));p.level+=n;p.xp=p.level===PMAX?0:total-n*cost;return n;
+    const p=g.paragon;let total=p.xp+amount,n=0;
+    while(p.level<PMAX){const cost=xpCost(rebirth,e100,p.level+1);if(total<cost)break;total-=cost;p.level++;n++;}
+    p.xp=p.level===PMAX?0:total;return n;
   }
   function trueAmount(weaponMax,primaryConverted,panelDamage,panelPrimary,rate){return Math.max(0,Math.floor((Math.max(0,weaponMax)+primaryConverted+(panelDamage-panelPrimary))*rate/100));}
   function movement(g){const t=g.talent,e=talentEffects(t),n=['movement.N3.1','movement.N3.2'].filter(id=>t.nodes.includes(id)).length;return {speed:(e.speed||0)+n*10+value(g,'movement'),weight:(e.weight||0)+n*3,shortcut:t.nodes.includes('movement.N3.3'),killSpeed:e.killSpeed||0,core:complete(t,'movement','K')};}
   function dayKey(now){return new Date(now+8*3600000).toISOString().slice(0,10);}
   function quota(saved,now){const day=dayKey(now);if(!saved)return {day,used:0};if(saved.day>day)throw Error('系統時間早於副本紀錄，請校正時間');if(saved.day!==day)return {day,used:0};if(!Number.isFinite(saved.used)||saved.used<0||saved.used>1800000)throw Error('副本時間紀錄異常');return {...saved};}
-  return {PMAX,directions,sections,paragon,fresh,earned,reconcile,node,spent,complete,canAdd,add,validTalent,valid,value,xpCost,gain,trueAmount,movement,dayKey,quota,copy,enhanced,nodeEffects,nodeDescription,talentEffects};
+  return {PMAX,levelMult,directions,sections,paragon,fresh,earned,reconcile,node,spent,complete,canAdd,add,validTalent,valid,value,xpCost,gain,trueAmount,movement,dayKey,quota,copy,enhanced,nodeEffects,nodeDescription,talentEffects};
 });

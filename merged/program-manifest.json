@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-28de6285a36d",
+  "build": "merge-0.4-b8a4854dd478",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -593,8 +593,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-game-guide.js?v=db5b7b51ad39",
-      "sha256": "db5b7b51ad3984e2da99080f10fd795658e0f023b39e08ae190d4382d205f391",
+      "url": "afk-game-guide.js?v=fe9604dad2e5",
+      "sha256": "fe9604dad2e51290207a6742476b09219f99b123fe9686e5edbae29e95d0c7a9",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -775,6 +775,11 @@
     {
       "url": "afk-kurt-hunt.js?v=39906efeaada",
       "sha256": "39906efeaada6fc4f3c4ebbb5d8f0ae3d62581efe65c76a99f1e1f0a145ba7f0",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-limitbreak.js?v=4764c9f97a97",
+      "sha256": "4764c9f97a971a6e5e1606b7a74a3482fef7c434af97be883b1b370e41b2a196",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1604,7 +1609,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "83bbc0c79143d56a55ddc33cbaf12f1a36315d749931d0f8791c87ede55ae88b",
+      "sha256": "92b1a8347d66a10b9023522edaf8c5c12fc83e1a08b87e3f78aa5b5f39dac880",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1898,13 +1903,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-core.js?v=a4a388a97365",
-      "sha256": "a4a388a973654a71c1f7f92f09d27bdaa1a9d97b4ca1aed657c9e0f6f7c5b774",
+      "url": "merged/growth-core.js?v=28f10443afd1",
+      "sha256": "28f10443afd114af242be9d5181eff626dcfdc28596e2b31f9c576a07c8d138a",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-dark.css?v=85a5fe7a4444",
-      "sha256": "85a5fe7a444413b9309860ea6ce6e91ee2201f94f6fcdb7acbbe10c3ccba7ccf",
+      "url": "merged/growth-dark.css?v=52a2236ba3d4",
+      "sha256": "52a2236ba3d4f2aceafc454c016a72b8abb5bbe1d9678c31e2a14aacac237672",
       "type": "text/css; charset=utf-8"
     },
     {
@@ -1918,8 +1923,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-views.js?v=8a0267e6232c",
-      "sha256": "8a0267e6232cf237212f5b8714256df31c7dcba1cb6f28308b2d0a3f18239261",
+      "url": "merged/growth-views.js?v=2237afb2c77d",
+      "sha256": "2237afb2c77d3acbf24bd9d899dc1897972421461b1aad4b896330617ff63734",
       "type": "text/javascript; charset=utf-8"
     },
     {
