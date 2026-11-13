@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-ccafa0c7d73d",
+  "build": "merge-0.4-51170b80de57",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -38,8 +38,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-antisl.js?v=40d44f9ebde9",
-      "sha256": "40d44f9ebde9e94836a39486d622ffad2bf882b7ec8a113ed29bcde56c71e156",
+      "url": "afk-antisl.js?v=92bdaa059a84",
+      "sha256": "92bdaa059a848d612c814593dec2720db04c4f83b549d8e75cb35c13c24f8640",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -498,6 +498,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-enemyx.js?v=d227114432ee",
+      "sha256": "d227114432ee72e2e4def8249034949c4b607b383e0243dd3ec9f323b7c11867",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-enhtarget.js?v=69f5c8ceb8a0",
       "sha256": "69f5c8ceb8a0eb50838fd45bb15645f3f59ceeda9289f3b01fd4a81e6c1942fd",
       "type": "text/javascript; charset=utf-8"
@@ -588,13 +593,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-fullsave.js?v=6ff886faa172",
-      "sha256": "6ff886faa172144ff7f14a7882027258d317165276c0b1c6522ccb12d0240109",
+      "url": "afk-fullsave.js?v=ca5a4a69f8dc",
+      "sha256": "ca5a4a69f8dc983fcdb904316ec0cd9895666dc9398cac284d17affdfdb8e2ab",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-game-guide.js?v=6146ee47a949",
-      "sha256": "6146ee47a949c6a792e86ec122466945ebeaef7da8309de996eeba31ffb2bcf7",
+      "url": "afk-game-guide.js?v=41e2a40c4ebe",
+      "sha256": "41e2a40c4ebeb313154a79127e021c3df1038756469b9f93254dcc7d7c088021",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1423,8 +1428,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-talent2.js?v=f4620e278a8a",
-      "sha256": "f4620e278a8a336e1a520da046b8da3adab46c924bf9cb35a380f9d2c562ed6d",
+      "url": "afk-talent2.js?v=5c05d2476a1a",
+      "sha256": "5c05d2476a1a80677935202ccd8ea18587182cff774acd7b2cff3b58a5d17968",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1619,7 +1624,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "32f42227bebabcbecd208342fa87528ed53fced65c1945ebc30177eb94cdcf60",
+      "sha256": "29e0ee30d0ad17179b8de38c6d08326ef062a3f4cf665e03baeed08bbc9f5df6",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2083,8 +2088,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/save-gate.js?v=3db834f292b2",
-      "sha256": "3db834f292b297a7ff719222970da0e0957958793cb88da67648386df0446515",
+      "url": "merged/save-gate.js?v=16fc1aafc15b",
+      "sha256": "16fc1aafc15b1d33e81007274fcda345e8f59812c8fa58810e8e691c551fae46",
       "type": "text/javascript; charset=utf-8"
     },
     {

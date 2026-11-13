@@ -33,7 +33,7 @@
     boss: { name: '征王', sub: '頭目', color: '#d9a441', A: five({ boss: .5 }, { boss: 2 }), B: five({ bossDef: .3 }, { bossDef: 1 }), N1: { bossCrit: .5 }, N2: { boss: 1 },
       N3: [{ bossLow: 5 }, { bossSkillDef: 3 }, { bossIgnore: 2 }], K: { bossK: 1 }, kName: '征王', kText: '10 秒內對同一隻頭目命中 20 次，接下來 10 秒你對它的傷害 +10%；冷卻 20 秒' },
     guard: { name: '壁壘', sub: '防守', color: '#7d8fa8', A: five({ finalDef: .2 }, { finalDef: 1 }), B: five({ hp: 1 }, { hp: 3 }), N1: { shield: 2 }, N2: { aoeDef: 1 },
-      N3: [{ critDef: 2 }, { dotDef: 5 }, { lowDef: 5 }], K: { guardK: 1 }, kName: '壁壘', kText: '單次受到超過最大 HP 30% 的傷害時，那一下減半；冷卻 20 秒' },
+      N3: [{ critDef: 5 }, { dotDef: 5 }, { lowDef: 5 }], K: { guardK: 1 }, kName: '壁壘', kText: '單次受到超過最大 HP 30% 的傷害時，那一下減半；冷卻 20 秒' },
     time: { name: '時律', sub: '冷卻', color: '#6cc6d9', A: five({ cdr: .2 }, { cdr: 1 }), B: five({ mpCut: .5 }, { mpCut: 2 }), N1: { buffDur: 2 }, N2: { castSpd: 1 },
       N3: [{ classCd: 3 }, { dragonCd: 3 }, { cdReset: 2 }], K: { timeK: 1 }, kName: '時律', kText: '每施放 5 次流派技能，下一次不進冷卻（大絕除外）' }
   };
@@ -43,7 +43,7 @@
     aspd: ['攻擊速度', '%'], chase: ['追擊機率', '%'], chaseDmg: ['追擊、連擊造成的傷害', '%'], chaseMp: ['追擊命中回 MP', ''],
     dot: ['中毒、流血、燃燒傷害', '%'], debuffDur: ['你施加的負面狀態持續時間', '%'], vsDebuff: ['對有負面狀態的目標傷害', '%'], debuffHit: ['負面狀態命中', '%'], dotSpread: ['目標死亡時，身上的中毒、流血傳給最近一隻怪', ''],
     boss: ['對頭目傷害', '%'], bossDef: ['受到頭目傷害', '%', true], bossCrit: ['對頭目爆擊傷害', '%'], bossLow: ['頭目 HP < 30% 時傷害', '%'], bossSkillDef: ['受到頭目的魔法傷害', '%', true], bossIgnore: ['對頭目無視傷害減免', '%'],
-    finalDef: ['最終減傷', '%'], hp: ['HP 上限', '%'], shield: ['自己產生的護盾量', '%'], aoeDef: ['受到的魔法（範圍）傷害', '%', true], critDef: ['受到的一般攻擊傷害', '%', true], dotDef: ['受到的持續傷害', '%', true], lowDef: ['HP < 30% 時減傷', '%'],
+    finalDef: ['最終減傷', '%'], hp: ['HP 上限', '%'], shield: ['自己產生的護盾量', '%'], aoeDef: ['受到的魔法（範圍）傷害', '%', true], critDef: ['受到的爆擊傷害', '%', true], dotDef: ['受到的持續傷害', '%', true], lowDef: ['HP < 30% 時減傷', '%'],
     cdr: ['施法冷卻', '%', true], mpCut: ['MP 消耗', '%', true], buffDur: ['自己施放的增益持續時間', '%'], castSpd: ['施法速度', '%'], classCd: ['流派技能冷卻', '%', true], dragonCd: ['龍語絕技冷卻', '%', true], cdReset: ['施放流派技能後重置該技能冷卻的機率', '%']
   };
   var COMBO = {
@@ -303,7 +303,7 @@
     var p = P(); if (!p || ent !== p) return 1; var e = eff(p); if (!e || !Object.keys(e).length) return 1;
     var S = st(p), cut = 0;
     if (mob && mob.boss) { cut += N(e.bossDef); if (kind === 'magic') cut += N(e.bossSkillDef); cut += live(S.stand) * N(e.stand); if (e.venomKing) cut += Math.min(5, hasDebuffN(mob)) * e.venomKing; if (e.reign && S.fight && S.fight.t === mob && now() - S.fight.at < 30000) cut += e.reign * 10 / 15; }
-    if (kind === 'magic') cut += N(e.aoeDef); else if (kind === 'dot') cut += N(e.dotDef); else cut += N(e.critDef);
+    if (kind === 'magic') cut += N(e.aoeDef); else if (kind === 'dot') cut += N(e.dotDef);
     if (N(p.hp) / mhp(p) < .3) cut += N(e.lowDef);
     cut += live(S.dance) * N(e.bladeDance);
     return Math.max(0, 1 - cut / 100);
@@ -388,5 +388,7 @@
     } catch (er) {}
   }, 10000);
 
+  // 受到的爆擊傷害（afk-enemyx 讀；敵人會爆擊了，Ping 11-13 13:39）
+  W.__afkEnemyCritDef = function (ent) { return ent && ent === P() ? E('critDef', ent) : 0; };
   W.LineageTalent2 = { DIRS: DIRS, COMBO: COMBO, data: data, eff: eff, spent: spent, earned: earned, pool: pool, canAdd: canAdd, addNode: addNode, starUp: starUp, wash: wash, comboKey: comboKey, nodeText: nodeText, MAXPTS: MAXPTS };
 })();
