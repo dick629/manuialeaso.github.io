@@ -34,7 +34,7 @@
  const DEV_KEY='lineage_device_id_v1';
  const devId=()=>{try{let d=localStorage.getItem(DEV_KEY);if(!d){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);localStorage.setItem(DEV_KEY,d);}return d;}catch(e){return 'd0';}};
  const roleRel=(pB,pD,rawB,rawD)=>{
-  if(rawB===rawD)return 'same';
+  if(rawB!=null&&rawB===rawD)return 'same';
   const sq=p=>{const n=Number(p&&p._saveSeq);return Number.isSafeInteger(n)&&n>0?n:0;};
   const mB=pB&&pB._devSeq&&typeof pB._devSeq==='object'?pB._devSeq:null,mD=pD&&pD._devSeq&&typeof pD._devSeq==='object'?pD._devSeq:null;
   if(mB&&mD&&Object.keys(mB).length&&Object.keys(mD).length){
@@ -69,13 +69,26 @@
     trace.step(reload?'讀回舊進度檢查':'匯入到空位置',reload?'倉庫存入次數：存檔 '+(Number(doc.p.afkWhPut)||0)+'／帳本 '+(window.__afkReloadLedger?window.__afkReloadLedger.wh(doc.p):'?'):'位置 '+slot);
     if(!reload){try{const IC=window.LineageIntegrityCore,q=Object.assign({},doc.p);q.enSeed=IC.seed(doc.p);const want=IC.identity(q);for(let n=1;n<=SAVE_SLOT_MAX;n++){if(n===slot)continue;const o=typeof _roleReadSavePlayer==='function'?_roleReadSavePlayer(n):null;if(!o)continue;const r=Object.assign({},o);r.enSeed=IC.seed(o);if(IC.identity(r)===want)throw Error('「'+(doc.p.name||'')+'」已經在第 '+n+' 格。要換成這份進度，請選第 '+n+' 格再匯入。');}}catch(e){if(/已經在第/.test(e.message))throw e;}}
     const curSeq=(()=>{try{return Number(B.decode(cur).value.p._saveSeq)||0;}catch(e){return 0;}})(),inSeq=Number(doc.p._saveSeq)||0,newer=inSeq>curSeq;
-    if(reload){const why=this.reloadWhy(doc.p,slot);if(why)throw Error(why);if(!confirm(newer?'這份是「'+(doc.p.name||'')+'」比較新的進度（第 '+inSeq+' 次存檔，這裡是第 '+curSeq+' 次）。\n要換成這份進度嗎？這個位置目前的進度會被蓋掉（會先自動備份一份）。':'這份是「'+(doc.p.name||'')+'」自己的舊存檔。\n要讀回這份舊進度嗎？這個位置目前的進度會被蓋掉（會先自動備份一份）。')){trace.step('玩家按了取消','');trace.end(false,'玩家取消');return false;}
+    // 11-13：單一角色匯入也用 roleRel 判斷——備份是接著玩下去的、或兩台各自玩過（換裝置）→ 不算讀舊檔，序號墊到這台之上；只有「這台自己的舊存檔」才走讀回舊進度
+    let rel2='device';
+    if(reload){try{const cp=_roleReadSavePlayer(slot);if(cp)rel2=roleRel(doc.p,cp,null,null);}catch(e){}}
+    if(reload&&(rel2==='backup'||rel2==='diverged')){
+     const why=this.reloadWhy(doc.p,slot);if(why)throw Error(why);
+     const cp=_roleReadSavePlayer(slot),IC=window.LineageIntegrityCore,q=Object.assign({},doc.p);q.enSeed=IC.seed(doc.p);let led=null;try{led=(await window.LineageIntegrityStore.read()).ledger;}catch(e){}
+     const S2=x=>{const r=roleSum(x);const t=r.at?new Date(r.at):null;return 'Lv'+r.lv+'・'+r.rb+' 轉，最後存檔 '+(t?(t.getMonth()+1)+'/'+t.getDate()+' '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2):'不明');};
+     const msg=rel2==='backup'?'這份是「'+(doc.p.name||'')+'」接著玩下去的進度。\n要換成這份進度嗎？這個位置目前的進度會被蓋掉（會先自動備份一份）。'
+      :'「'+(doc.p.name||'')+'」兩台各自玩過，分不出哪邊比較新：\n這台：'+S2(cp)+'\n這份：'+S2(doc.p)+'\n\n要換成這份嗎？這台這個角色目前的進度會被蓋掉（會先自動備份一份）。';
+     if(!confirm(msg)){trace.step('玩家按了取消','');trace.end(false,'玩家取消');return false;}
+     const last=Math.max(Number(cp._saveSeq)||0,led&&led.seq?Number(led.seq[IC.identity(q)])||0:0);if(!((Number(doc.p._saveSeq)||0)>last))doc.p._saveSeq=last+1;
+     trace.step('換裝置進度',rel2==='backup'?'接著玩下去的進度':'兩台各自玩過，玩家選這份');
+    }
+    else if(reload){const why=this.reloadWhy(doc.p,slot);if(why)throw Error(why);if(!confirm(newer?'這份是「'+(doc.p.name||'')+'」比較新的進度（第 '+inSeq+' 次存檔，這裡是第 '+curSeq+' 次）。\n要換成這份進度嗎？這個位置目前的進度會被蓋掉（會先自動備份一份）。':'這份是「'+(doc.p.name||'')+'」自己的舊存檔。\n要讀回這份舊進度嗎？這個位置目前的進度會被蓋掉（會先自動備份一份）。')){trace.step('玩家按了取消','');trace.end(false,'玩家取消');return false;}
      const RL=window.__afkReloadLedger;if(RL)doc.p.afkReloadN=RL.count(doc.p)+1;}
     const apply=async()=>{
      if(localStorage.getItem(key)!==cur)throw Error('目的位置的資料已變更，請重新操作');
      const change={key,before:cur,after:LineageLegacyCodec.wrap(JSON.stringify(doc)),reason:reload?'ROLE_RELOAD':'ROLE_IMPORT'};
      await R.transact(localStorage,[change],s=>LineageBackups.save({...s,originalImport:raw,slot},reload?'role-reload':'role-import'),{integrity:reload?'reload':'import',canWrite:()=>!(typeof state!=='undefined'&&state.running)&&R.scan(R.capture(localStorage)).canRepair});
-     if(reload&&window.__afkReloadLedger)window.__afkReloadLedger.bump(doc.p);
+     if(reload&&rel2==='device'&&window.__afkReloadLedger)window.__afkReloadLedger.bump(doc.p);
      try{const IC=window.LineageIntegrityCore,q=Object.assign({},doc.p);q.enSeed=IC.seed(doc.p);const m=JSON.parse(localStorage.getItem('lineage_uid_imported_v1')||'{}');m[IC.identity(q)]=Date.now();localStorage.setItem('lineage_uid_imported_v1',JSON.stringify(m));}catch(e){}
     };
     trace.step('寫入存檔（保護交易）','先自動備份再寫入');
