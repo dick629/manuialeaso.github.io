@@ -88,3 +88,20 @@ html body #growth-overlay .growth-para--finalDef{background-image:url('../assets
 html body #growth-overlay .growth-para--finalDmg{background-image:url('../assets/ui/growth-v5/para_valor.webp') !important}
 html body #growth-overlay .growth-para--leech{background-image:url('../assets/ui/growth-v5/para_bond.webp') !important}
 .growth-para-sec{grid-column:1/-1;margin:14px 0 2px;color:#e5c07b;font-size:15px;letter-spacing:.08em;border-bottom:1px solid #4b3a22;padding-bottom:4px}.growth-para-sec small{color:#9a8a70;margin-left:8px;font-size:12px}.growth-stat.is-locked{opacity:.45;filter:grayscale(.6)}
+/* 極意（afk-talent2，Ping 11-13） */
+.t2-note{color:#b9ab92;font-size:13px;margin:6px 0 10px}
+.t2-dirs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.t2-dirs button{display:flex;flex-direction:column;align-items:center;padding:8px 4px;border:1px solid #4b3a22;border-radius:4px;background:#15100b;color:#d8c9a8;cursor:pointer}
+.t2-dirs button b{color:var(--c);font-size:15px}.t2-dirs button small{font-size:11px;color:#9a8a70}
+.t2-dirs button[aria-pressed="true"]{border-color:var(--c);box-shadow:0 0 0 1px var(--c) inset;background:#21170e}
+.t2-tree{border:1px solid #3d2f1c;border-radius:4px;padding:8px;background:#0e0b08}
+.t2-sec{display:grid;grid-template-columns:70px 1fr;gap:8px;align-items:start;padding:6px 0;border-bottom:1px dashed #2e2416}
+.t2-sec:last-child{border-bottom:0}.t2-sec-name{color:var(--c);font-weight:bold;font-size:14px;display:flex;flex-direction:column}.t2-sec-name small{color:#8f826c;font-weight:normal;font-size:11px}
+.t2-nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.t2-node{min-height:52px;padding:6px 8px;text-align:left;font-size:12px;line-height:1.4;border:1px solid #3a2e1e;border-radius:4px;background:#17120c;color:#7d705c;cursor:default}
+.t2-node.can,html body #growth-overlay .t2-node.can{opacity:1;border-color:var(--c);color:#e7dbc2;cursor:pointer;background:#1f170e}.t2-node.can:hover{background:#2a1f12}
+.t2-node.on,html body #growth-overlay .t2-node.on{opacity:1;border-color:var(--c);color:#fff3d6;background:linear-gradient(135deg,#3a2a14,#1c140b);box-shadow:0 0 6px -2px var(--c)}
+.t2-node.k{grid-column:1/-1}
+.t2-fuse{display:flex;flex-direction:column;gap:4px;margin-top:10px;padding:10px 12px;border:1px solid #6b5636;border-radius:4px;background:linear-gradient(90deg,#24160c,#120d0a)}
+.t2-fuse b{color:#f0c674;font-size:15px}.t2-fuse small{color:#cbbfa8;font-size:12px;line-height:1.5}.t2-fuse button{align-self:flex-start;margin-top:4px}
+@media (max-width:700px){.t2-dirs{grid-template-columns:repeat(3,minmax(0,1fr))}.t2-sec{grid-template-columns:1fr}}

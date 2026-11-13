@@ -104,7 +104,7 @@
     var oAtk = W.playerAttack;
     var fAtk = function () {
       var r = oAtk.apply(this, arguments);
-      try { var p = P(), x; if (!chasing && p && !p.dead && (x = pct(p, 'chase')) && Math.random() * 100 < x) { chasing = true; try { oAtk.apply(this, arguments); } finally { chasing = false; } } } catch (e) { chasing = false; }
+      try { var p = P(), x; if (!W.__afkChasing && p && !p.dead && (x = pct(p, 'chase')) && Math.random() * 100 < x) { W.__afkChasing = true; try { oAtk.apply(this, arguments); } finally { W.__afkChasing = false; } } } catch (e) { W.__afkChasing = false; }
       return r;
     };
     fAtk.__afkP2 = true; W.playerAttack = fAtk;

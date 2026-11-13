@@ -12,11 +12,14 @@
       const inspect=e=>{const b=e.target.closest('[data-node]');if(!b||!panel||inspected===b.dataset.node)return;inspected=b.dataset.node;selected=inspected;const host=panel.querySelector('.growth-inspector');if(host)host.innerHTML=V.inspect(G.read(player),draft,b.dataset.node,player.rebirth||0);};panel.addEventListener('mouseover',inspect);panel.addEventListener('focusin',inspect);panel.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const els=[...panel.querySelectorAll('button:not(:disabled),input,select')],first=els[0],last=els[els.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});document.body.appendChild(panel);}render();panel.querySelector('.growth-body').scrollTop=0;panel.querySelector('header button').focus();}
   function close(){if(pgTimer)commitPg();if(panel){panel.remove();panel=null;}document.querySelector('#growth-launch button')?.focus();}
   function render(){if(!panel)return;inspected=null;panel.dataset.page=tab;const g=G.read(player);if(!g)return;
-    panel.querySelector('nav').innerHTML=[['talent','天賦'],['paragon','巔峰'],['activities','秘境與遠征']].map(x=>'<button type="button" data-growth="tab:'+x[0]+'" aria-current="'+(tab===x[0]?'page':'false')+'">'+x[1]+'</button>').join('');
+    const XT=W.LineageGrowthExtraTabs||{},xt=Object.keys(XT).filter(k=>{try{return XT[k].visible();}catch(e){return false;}}).sort((a,b)=>(XT[a].order||9)-(XT[b].order||9));if(XT[tab]&&xt.indexOf(tab)<0)tab='talent';
+    panel.querySelector('nav').innerHTML=[['talent','天賦'],['paragon','巔峰']].concat(xt.map(k=>[k,XT[k].name]),[['activities','秘境與遠征']]).map(x=>'<button type="button" data-growth="tab:'+x[0]+'" aria-current="'+(tab===x[0]?'page':'false')+'">'+x[1]+'</button>').join('');
     let h='';if(tab==='talent'){
       h=V.talent(g,draft,direction,selected,player.rebirth||0);
     }else if(tab==='paragon'){
       h=V.paragon(g,pg,player.rebirth||0,getExpReq(100));
+    }else if(XT[tab]){
+      h=XT[tab].view();
     }else{
       let left;try{left=Math.ceil(A.remaining()/1000);}catch(e){left=0;}
       h='<div class="growth-banner growth-banner--mushroom"><h3>蘑菇秘境</h3></div><p>每天共 30 分鐘 · 今日剩餘 '+Math.floor(left/60)+' 分 '+left%60+' 秒</p><p>只出現蘑菇。基礎經驗 17 → 850,000（能進次元裂縫的角色 1,700,000）；每日台灣時間 00:00 重置。此副本不計離線戰鬥。帶進去的傭兵（你的其他角色）也一起扣時間，當傭兵進去過的角色，自己再進來時時間一樣算在內。</p>'+button('進入蘑菇秘境','mushroom',left<=0);
@@ -36,6 +39,7 @@
   function commitPg(){clearTimeout(pgTimer);pgTimer=null;try{G.commitParagon(pg);}catch(err){error(err);}pg=C.copy(G.read(player).paragon.points);const g=G.read(player);if(panel&&g)V.updateParagon(panel,g,pg);}
   function commitPgSoon(){clearTimeout(pgTimer);pgTimer=setTimeout(commitPg,400);}
   function click(e){const b=e.target.closest('[data-growth]');if(!b||b.disabled)return;const [cmd,arg]=b.dataset.growth.split(':');try{
+    if(cmd==='ext'){const a=String(b.dataset.growth.slice(4)).split('|'),X=(W.LineageGrowthExtraTabs||{})[a[0]];if(X){const r=X.click(a[1],a.slice(2).join('|'));if(r&&typeof r.then==='function')r.then(()=>{render();error('已洗點，點數全部退還');},err=>error(err));}render();return;}
     if(cmd==='backup'){G.downloadBackup();return;}if(cmd==='close'){close();return;}if(cmd==='tab'){tab=arg;panel.querySelector('.growth-body').scrollTop=0;}if(cmd==='direction'){direction=arg;selected=arg+'.A.1';}if(cmd==='jobGroup')jobGroup=arg;
     if(cmd==='node'){selected=arg;if(V.state(G.read(player),draft,arg,player.rebirth||0)==='available'){draft=C.add(draft,arg);commitT();}}if(cmd==='j'&&G.read(player).unlocked&&!draft.j&&draft.order.length===3&&draft.order.every(d=>C.complete(draft,d,'K'))&&C.spent(draft)+3<=C.earned(G.read(player),player.rebirth||0)){draft.j=true;commitT();}
     if(cmd==='clearTalent')draft=C.copy(G.read(player).talent);if(cmd==='clearParagon')pg=C.copy(G.read(player).paragon.points);

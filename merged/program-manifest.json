@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-0fff38bcfd80",
+  "build": "merge-0.4-ccafa0c7d73d",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -983,8 +983,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-paragon2.js?v=0ea208977d54",
-      "sha256": "0ea208977d54aa19bdb42a2410bb8c6a441f71a754a1107bee33ca42b51e3660",
+      "url": "afk-paragon2.js?v=df0639d15b28",
+      "sha256": "df0639d15b289c1a27e0274adf8b8c8eb899518f11d30766cffaa561652351cd",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1423,6 +1423,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-talent2.js?v=f4620e278a8a",
+      "sha256": "f4620e278a8a336e1a520da046b8da3adab46c924bf9cb35a380f9d2c562ed6d",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-timeroom.js?v=0c66693ced64",
       "sha256": "0c66693ced645349ecf3433b110998834043356d6592ee1122d7ad828816bf7c",
       "type": "text/javascript; charset=utf-8"
@@ -1614,7 +1619,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "675b193f8efef2cb7f6af968f1034ddce302ad88f61c24f29551a070c9e6d9c3",
+      "sha256": "32f42227bebabcbecd208342fa87528ed53fced65c1945ebc30177eb94cdcf60",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1913,8 +1918,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-dark.css?v=3b8f6dacf21c",
-      "sha256": "3b8f6dacf21c079944017495546c7e5c2b0c51a86ecad6031a11351c27dd4b29",
+      "url": "merged/growth-dark.css?v=c57df8f4cb8a",
+      "sha256": "c57df8f4cb8a6313c71ce37c1cee49b263ab5972b86c7fe36cf3c5ae10517c20",
       "type": "text/css; charset=utf-8"
     },
     {
@@ -1923,8 +1928,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-ui.js?v=44ddfb451123",
-      "sha256": "44ddfb451123ae7349954589d7e2ee25d97d24d375915b7c10c4d3164156b2f9",
+      "url": "merged/growth-ui.js?v=bdde7c763b2c",
+      "sha256": "bdde7c763b2c0524e172eb451bbc5050a602f5811252da7150b6042896bd829f",
       "type": "text/javascript; charset=utf-8"
     },
     {
