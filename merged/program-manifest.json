@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-51170b80de57",
+  "build": "merge-0.4-39a7092dcada",
   "files": [
     {
       "url": "afk-aden-quests.js?v=2914274d1613",
@@ -1428,8 +1428,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-talent2.js?v=5c05d2476a1a",
-      "sha256": "5c05d2476a1a80677935202ccd8ea18587182cff774acd7b2cff3b58a5d17968",
+      "url": "afk-talent2.js?v=23a322e5006a",
+      "sha256": "23a322e5006a7e8fd880ae1702705e800ac009caa53af85aeebbbffb0ba378fb",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1624,7 +1624,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "29e0ee30d0ad17179b8de38c6d08326ef062a3f4cf665e03baeed08bbc9f5df6",
+      "sha256": "6bfcd62939b54bf8362c1fecf8b852cf7bb1e5bbf1b3a8175d8d11d358eebca3",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1923,8 +1923,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-dark.css?v=c57df8f4cb8a",
-      "sha256": "c57df8f4cb8a6313c71ce37c1cee49b263ab5972b86c7fe36cf3c5ae10517c20",
+      "url": "merged/growth-dark.css?v=f017dc64813c",
+      "sha256": "f017dc64813c82fa805200e5012358f2e097a982018daaf8375f8132d532c304",
       "type": "text/css; charset=utf-8"
     },
     {
@@ -1938,8 +1938,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-views.js?v=99149ef956a5",
-      "sha256": "99149ef956a5b116622bd0ae3f13d586465ac66b8895c5dc960c1fff732de2ba",
+      "url": "merged/growth-views.js?v=2c4275056258",
+      "sha256": "2c427505625880d58303ec54896a942229e42833100ef5f474d1eb46e436ca98",
       "type": "text/javascript; charset=utf-8"
     },
     {

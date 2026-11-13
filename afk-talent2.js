@@ -133,9 +133,9 @@
     var lv = paragonLv(p), pts = earned(p), used = spent(t), open = lv >= 500;
     var h = '<div class="growth-heading"><div><span class="growth-eyebrow">MASTERY</span><h3>極意</h3></div><div class="growth-balance"><b>' + Math.max(0, pts - used) + '</b><span>可用極意點<small>已配置 ' + used + ' / ' + pts + '（最多 ' + MAXPTS + '）</small></span></div></div>';
     h += '<p class="t2-note">' + (open ? '巔峰 500 等以後每 3 等得到 1 點（目前 P' + lv + '）。六系選三系依序點滿；三系核心都點了可以點「融會」，再升星。點了就鎖定，洗點 50,000 血龍鑽。' : '巔峰 500 等開放（目前 P' + lv + '）。') + '</p>';
-    h += '<div class="t2-dirs">' + ORDER.map(function (d) { var D = DIRS[d], i = t.o.indexOf(d); return '<button type="button" data-growth="ext:t2|dir|' + d + '" aria-pressed="' + (view.dir === d) + '" style="--c:' + D.color + '"><b>' + D.name + '</b><small>' + D.sub + (i >= 0 ? ' · 第 ' + (i + 1) + ' 系' : '') + '</small></button>'; }).join('') + '</div>';
+    h += '<div class="t2-dirs">' + ORDER.map(function (d) { var D = DIRS[d], i = t.o.indexOf(d); return '<button type="button" data-growth="ext:t2|dir|' + d + '" aria-pressed="' + (view.dir === d) + '" style="--c:' + D.color + '"><i style="background-image:url(assets/ui/growth-v5/tal2/tal2_icon_' + d + '.webp)"></i><b>' + D.name + '</b><small>' + D.sub + (i >= 0 ? ' · 第 ' + (i + 1) + ' 系' : '') + '</small></button>'; }).join('') + '</div>';
     var d = view.dir, D = DIRS[d];
-    h += '<div class="t2-tree" style="--c:' + D.color + '">';
+    h += '<div class="t2-tree" style="--c:' + D.color + ';background:linear-gradient(rgba(10,8,6,.82),rgba(10,8,6,.88)),url(assets/ui/growth-v5/tal2/tal2_bg_' + d + '.webp)">';
     SEC.forEach(function (sx) {
       h += '<div class="t2-sec"><span class="t2-sec-name">' + SECNAME[sx[0]] + '<small>每顆 ' + sx[2] + ' 點</small></span><div class="t2-nodes">';
       for (var i = 1; i <= sx[1]; i++) {
