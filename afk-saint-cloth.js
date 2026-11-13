@@ -82,7 +82,7 @@
     var row = nameSet[m]; if (!row || !actor) return null;
     var cl = actor.cardAscension && actor.cardAscension.cloth && actor.cardAscension.cloth[row.id];
     if (!(cl && cl.ex) || A.sealed(row.id, actor) || inDungeon()) return null;
-    var hm = m + '・神';
+    var hm = cl.special === 'blood' ? '血魔聖衣' : cl.special === 'iron' ? '鐵聖衣' : m + '・神';   // 11-13 血魔聖衣、鐵聖衣（GPT 圖）
     return { key: 'morph:' + hm + sfx, domKey: 'morph:' + hm, base: 'assets/morphanim/' + encodeURIComponent(hm + sfx) + '/', wpn: wpn || null };
   };
   // GPT 新美術（afk-art-v3）蓋在最外層：它先問這裡，神聖衣就用新圖

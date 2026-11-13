@@ -95,10 +95,10 @@
     if(!enabled()||!actor||!actor.cls||!enemy(target)||!(amount>0)||!Number.isFinite(Number(amount))||actor===target||reflected(opt)||immune(target,opt))return amount;
     var s=memory(actor),identity=targetIdentity(target),first=!s.seen.has(identity);
     var row0=active(actor),zs=special(row0,actor);
-    if(zs&&!(opt.dotCapped)){var base=Number(amount);amount=Math.floor(zodiacHit(actor,target,base,zs,opt));if(amount!==base)noteSettlement(actor,target,base,amount,opt);}
+    if(zs&&!(opt.dotCapped)){var base=Number(amount);amount=Math.floor(zodiacHit(actor,target,base,zs,opt));if(amount!==base){if(typeof W.__afkZodiacProc==='function')amount=Math.floor(W.__afkZodiacProc(actor,target,base,amount,zs)||amount);noteSettlement(actor,target,base,amount,opt);}}
     // 雙子座（玩家 2026-10-23）：自己的 50 秒冷卻，冷卻好後的下一擊 ×30；優先於首擊加倍（不疊乘），也不影響首擊加倍的冷卻
     if(zs==='gemini'&&!opt.dotCapped&&!opt.inherited&&ticks()>=(s.gemAt||0)){
-      s.gemAt=ticks()+500;var v2=Math.floor(Number(amount)*30);noteSettlement(actor,target,Number(amount),v2,opt);return v2;
+      s.gemAt=ticks()+500;var v2=Math.floor(Number(amount)*30);if(typeof W.__afkZodiacProc==='function')v2=Math.floor(W.__afkZodiacProc(actor,target,Number(amount),v2,zs)||v2);noteSettlement(actor,target,Number(amount),v2,opt);return v2;
     }
     if(!first)return amount;
     // Mark only a real, positive settlement. An ordinary-form first hit also

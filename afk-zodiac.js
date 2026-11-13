@@ -313,7 +313,7 @@
     if (!div) return; K.css();
     div.innerHTML = '<div class="afk-ax"><div class="ax-lore">「雅典娜的星座之力散落在十二宮。把砂帶回來，我替你把聖衣鍛回它該有的樣子。」</div></div>';
     var box = document.createElement('div'); box.className = 'afk-ax'; box.id = 'afk-zd-elena'; div.appendChild(box); paint(div);
-    if (!div.__afkZdBound) { div.__afkZdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-star],button[data-zd]'); if (!b || b.disabled || !div.querySelector('#afk-zd-elena')) return; var k = b.getAttribute('data-star') || b.getAttribute('data-zd') || ''; if (/^zd:/.test(k)) enter(k.slice(3)); else if (/^ex:/.test(k)) forge(k.slice(3)); else if (/^star:/.test(k)) starUp(k.slice(5)); paint(div); }); }
+    if (!div.__afkZdBound) { div.__afkZdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-star],button[data-zd]'); if (!b || b.disabled || !div.querySelector('#afk-zd-elena')) return; var k = b.getAttribute('data-star') || b.getAttribute('data-zd') || ''; if (/^zd:/.test(k)) enter(k.slice(3)); else if (/^ex:/.test(k)) forge(k.slice(3)); else if (/^sp:/.test(k)) { var q2 = k.slice(3).split(':'); try { W.LineageClothProgression.specialForge(q2[0], q2[1]); } catch (e2) { sys('<span class="text-amber-300">' + esc(e2.message) + '</span>'); } } else if (/^star:/.test(k)) starUp(k.slice(5)); paint(div); }); }
   };
   K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: '星鑄師', type: 'quest', classicHide: true, d: '替聖衣鍛進星光的鑄匠。黃道十二宮的入口，也是神聖衣 的鑄造處。' });
   K.hookNpc(NPC_ID, NPC_N, '星鑄師', render);

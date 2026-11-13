@@ -9,7 +9,16 @@
   function cloth(actor,id){return actor?.cardAscension?.cloth?.[id]||{};}
   function pendingInBattle(actor,id){return actor===p()&&!!state._afkFinal&&state._afkShatter===id;}
   function stage(actor,id){const c=cloth(actor,id);if(c.ex)return 'divine';if(c.broken||c.recoveryPending&&!pendingInBattle(actor,id))return 'broken';if(c.grade&&!tiers[c.grade])return 'unknown';return c.grade||'gold';}
-  function label(actor,id){const s=stage(actor,id);return s==='broken'?'碎裂聖衣・待回收':s==='unknown'?'聖衣資料待確認':tiers[s].name;}
+  // 11-13（Ping 12:23／12:41）：血咒派、守護派的碎裂聖衣可以不修復，直接換成血魔聖衣／鐵聖衣（黃金修復之砂 ×5；略強於神聖衣）
+  const IRON=new Set(['守護騎士','守誓君主','不屈戰衛','龍鱗守護者','王盾統帥','森林盾衛','符甲賢者','暗誓衛','鐵壁破陣者','龍盾守望','鏡盾騎士','聖騎士','光輝君主','四季詠者','星輝導師','龍語祭司']);
+  const SPN={blood:'血魔聖衣',iron:'鐵聖衣'},SP_COST=5;
+  function specialKind(actor){try{const C=W.LineageClassCore,v=actor&&actor.classPath,t=v&&C&&C.trees.get(v.route);if(!t)return null;if(t.category==='血咒派')return 'blood';if(IRON.has(t.name))return 'iron';}catch(e){}return null;}
+  function specialForge(id,kind){const actor=p();if(!actor||actor.dead)throw Error('請先復活');if(!/^town_/.test(mapState.current||'')||state._afkFinal)throw Error('請先回村，再找星鑄師');
+    if(!A.owned(id,actor))throw Error('尚未持有這件聖衣');if(stage(actor,id)!=='broken')throw Error('只有碎裂的聖衣可以換成新聖衣');const k=specialKind(actor);if(!k||k!==kind)throw Error('目前的流派不能選這件聖衣');
+    if(questCountId(Z.SAND)<SP_COST)throw Error('材料不足：'+DB.items[Z.SAND].n+' ×'+SP_COST);
+    G.transaction('換成'+SPN[k],()=>{const before=questCountId(Z.SAND);questConsumeId(Z.SAND,SP_COST);if(questCountId(Z.SAND)!==before-SP_COST)throw Error('材料扣除未完成');const s=actor.cardAscension;s.cloth=s.cloth||{};const c=s.cloth[id]=s.cloth[id]||{};Object.assign(c,{grade:'divine',broken:false,recoveryPending:false,ex:true,special:k,dim:false,uses:0,recoveredAt:Date.now()});});
+    logSys('<span class="text-amber-200">星鑄師把碎裂的聖衣重新鍛成了 '+esc(SPN[k])+'。原有收藏與星數保留。</span>');}
+  function label(actor,id){const s=stage(actor,id),sp=cloth(actor,id).special;if(sp&&SPN[sp])return SPN[sp];return s==='broken'?'碎裂聖衣・待回收':s==='unknown'?'聖衣資料待確認':tiers[s].name;}
   function canWear(id,actor){if(!rows().some(r=>r.id===id))return true;return !['broken','unknown'].includes(stage(actor,id));}
   function scale(id,actor,rule){if(!rows().some(r=>r.id===id))return rule;const factor=tiers[stage(actor,id)]?.scale??0;if(factor===1)return rule;const r={...rule};for(const k of Object.keys(r))if(typeof r[k]==='number')r[k]*=factor;return r;}
   function quote(id,actor){actor=actor||p();const rs=rows(),i=rs.findIndex(r=>r.id===id);if(i<0||!A.owned(id,actor))throw Error('尚未持有這件聖衣');const s=stage(actor,id);
@@ -33,11 +42,10 @@
     for(const row of rows()){if(!A.owned(row.id,actor))continue;const s=stage(actor,row.id),stars=actor.cardAscension.clothStars?.[row.id]||0;let desc='',buttons=[];
       if(s==='divine'){desc='已完成修練；升 ★4 需光輝碎片 ×4、黃金修復之砂 ×1。';buttons=[['star:'+row.id,'升 ★4',stars===3]];}
       else if(s==='unknown')desc='保留資料，請先備份並檢查。';
-      else{const q=quote(row.id,actor),cost=q.req.map(x=>DB.items[x.id].n+' ×'+x.count).join('＋')||'不消耗材料';desc='下一階：'+q.name+'；'+cost;buttons=[['ex:'+row.id,s==='broken'?'回收為青銅':'升為'+q.name,true]];}
+      else{const q=quote(row.id,actor),cost=q.req.map(x=>DB.items[x.id].n+' ×'+x.count).join('＋')||'不消耗材料';desc='下一階：'+q.name+'；'+cost;buttons=[['ex:'+row.id,s==='broken'?'回收為青銅':'升為'+q.name,true]];const sk=s==='broken'&&specialKind(actor);if(sk){desc+='；或不修復，換成 '+SPN[sk]+'（黃金修復之砂 ×'+SP_COST+'）';buttons.push(['sp:'+row.id+':'+sk,'換成'+SPN[sk],true]);}}
       h+=K.rowHtml({key:row.id,name:row.n+' · '+label(actor,row.id)+' ★'+stars,color:s==='broken'?'#d89488':s==='divine'?'#e7d497':s==='bronze'?'#c8a173':s==='silver'?'#bdcbd8':'#d9bc7d',desc,why:'',btns:buttons},'data-zd');
     }
-    h+='<div class="ax-h">職業進化專屬聖衣（尚未開放）</div><div class="ax-note">需對應職業進化流派才能變身。八大職業流派尚待設計，目前均不能取得或穿戴。</div>';
-    for(const x of special)h+=K.rowHtml({key:x.id,name:x.name,color:'#948c82',desc:x.id==='blood_demon'?'預留魔劍士／血劍士流派；解鎖段數待定。':'對應流派與解鎖段數待定。',why:'尚未開放',btns:[]},'data-zd');return h;
+    h+='<div class="ax-h">流派專屬聖衣</div><div class="ax-note">血咒派可以把碎裂的聖衣直接換成「血魔聖衣」（真實傷害 +5%），守護派（承傷、支援流派）換成「鐵聖衣」（真實減傷 +5%），各要黃金修復之砂 ×5；數值略強於神聖衣，之後一樣能升 ★4。「匣之聖衣」在第三套天賦「匣之」開啟後，所有神聖衣、血魔聖衣、鐵聖衣自動升上去。</div>';return h;
   }
-  W.LineageClothProgression={tiers,special,stage,label,canWear,scale,quote,upgrade,renderNpc,canUseSpecial:()=>false};
+  W.LineageClothProgression={tiers,special,stage,label,canWear,scale,quote,upgrade,renderNpc,canUseSpecial:()=>false,specialKind,specialForge,SPN,SP_COST};
 })(window);
