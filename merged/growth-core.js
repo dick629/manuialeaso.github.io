@@ -22,7 +22,13 @@
   const paragon={
     movement:{name:'移動',step:1.5,cap:150},trueDamage:{name:'真實傷害',step:.2,cap:15},trueDefense:{name:'真實減傷',step:.2,cap:15},
     hp:{name:'堅韌',step:.4,cap:15},mp:{name:'心智',step:.4,cap:15},physical:{name:'武勇',step:.2,cap:8},magic:{name:'秘法',step:.2,cap:8},
-    companions:{name:'羈絆',step:.3,cap:15},healing:{name:'祝禱',step:.2,cap:15},curse:{name:'抑咒',step:.5,cap:Infinity}
+    companions:{name:'羈絆',step:.3,cap:15},healing:{name:'祝禱',step:.2,cap:15},curse:{name:'抑咒',step:.5,cap:Infinity},
+    // 巔峰 1000 等開放（Ping 11-13 03:42）
+    spread:{name:'傷害擴散',step:.1,cap:15,need:1000},debuff:{name:'對負面狀態',step:.1,cap:15,need:1000},dot:{name:'對流血中毒',step:.1,cap:15,need:1000},weak:{name:'對屬性弱點',step:.1,cap:15,need:1000},
+    boss:{name:'對頭目',step:.1,cap:15,need:1000},bossDef:{name:'頭目減傷',step:.1,cap:15,need:1000,neg:true},stats:{name:'六項能力',step:1,cap:50,need:1000,unit:' 點'},cdr1:{name:'施法冷卻 Ⅰ',step:.1,cap:5,need:1000,neg:true},
+    // 巔峰 2000 等開放
+    lbUp:{name:'限界解放提升',step:.1,cap:15,need:2000},chase:{name:'追擊',step:.1,cap:15,need:2000},critDmg:{name:'爆擊傷害',step:.1,cap:50,need:2000},cdr2:{name:'施法冷卻 Ⅱ',step:.1,cap:5,need:2000,neg:true},
+    finalDef:{name:'最終減傷',step:.1,cap:5,need:2000,neg:true},finalDmg:{name:'最終傷害',step:.1,cap:5,need:2000},leech:{name:'傷害轉換 HP',step:.1,cap:5,need:2000}
   };
   const PMAX=3000;   // 巔峰等級上限（Ping 11-11 12:37：700 → 1000；11-13 03:47：1000 → 3000）
   // 每一級要的經驗倍數（Ping 11-13 03:47 甲案）：1～1000 ×1、1001～2000 ×2、2001～2500 ×6、2501～3000 ×24
@@ -53,9 +59,9 @@
   function valid(g,rebirth){
     if(!g||g.v!==1||!integer(g.maxLevel)||g.maxLevel<1||g.maxLevel>200||!validTalent(g.talent)||spent(g.talent)>earned(g,rebirth))return false;
     const p=g.paragon;if(!p||!integer(p.level)||p.level>PMAX||!Number.isFinite(p.xp)||p.xp<0||!p.points||Array.isArray(p.points))return false;
-    return Object.keys(p.points).every(k=>paragon[k]&&integer(p.points[k])&&p.points[k]<=Math.min(PMAX,Math.ceil(paragon[k].cap/paragon[k].step)))&&Object.values(p.points).reduce((a,b)=>a+b,0)<=p.level;
+    return Object.keys(p.points).every(k=>paragon[k]&&integer(p.points[k])&&p.points[k]<=Math.min(PMAX,Math.ceil(paragon[k].cap/paragon[k].step))&&(!p.points[k]||!paragon[k].need||p.level>=paragon[k].need))&&Object.values(p.points).reduce((a,b)=>a+b,0)<=p.level;
   }
-  function value(g,k){const d=paragon[k];return d?Math.min(d.cap,(g.paragon.points[k]||0)*d.step):0;}
+  function value(g,k){const d=paragon[k];if(!d||d.need&&g.paragon.level<d.need)return 0;return Math.min(d.cap,Math.round((g.paragon.points[k]||0)*d.step*1000)/1000);}
   function xpCost(rebirth,e100,lv){if(!Number.isSafeInteger(e100)||e100<=0)throw Error('E100 無效');return e100*(rebirth>=2?3:2)*levelMult(lv||1);}
   function gain(g,amount,rebirth,level,e100){
     if(rebirth<1||level<100||g.paragon.level>=PMAX||!Number.isFinite(amount)||amount<=0)return 0;

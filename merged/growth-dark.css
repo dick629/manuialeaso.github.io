@@ -71,3 +71,20 @@ html body #growth-overlay .growth-tree-scroll{background:#060505 !important}
 html body #growth-overlay .growth-bottom{background:linear-gradient(#120e0cf2,#0a0808f7) !important;border-color:#5b4325 !important}
 /* 限界解放（Ping 11-13） */
 .growth-lb{display:flex;flex-direction:column;gap:2px;margin:8px 0;padding:8px 12px;border:1px solid #6b5636;border-radius:4px;background:linear-gradient(90deg,#2a160e,#120d0a)}.growth-lb b{color:#f0c674;font-size:15px}.growth-lb small{color:#cbbfa8;font-size:12px;line-height:1.5}.growth-lb em{font-style:normal;color:#8fd18a;font-size:13px}
+/* 巔峰新能力（Ping 11-13；GPT 圖到之前借用舊圖示） */
+html body #growth-overlay .growth-para--spread{background-image:url('../assets/ui/growth-v5/para_valor.webp') !important}
+html body #growth-overlay .growth-para--debuff{background-image:url('../assets/ui/growth-v5/para_ward.webp') !important}
+html body #growth-overlay .growth-para--dot{background-image:url('../assets/ui/growth-v5/para_ward.webp') !important}
+html body #growth-overlay .growth-para--weak{background-image:url('../assets/ui/growth-v5/para_arcane.webp') !important}
+html body #growth-overlay .growth-para--boss{background-image:url('../assets/ui/growth-v5/para_truedmg.webp') !important}
+html body #growth-overlay .growth-para--bossDef{background-image:url('../assets/ui/growth-v5/para_truedef.webp') !important}
+html body #growth-overlay .growth-para--stats{background-image:url('../assets/ui/growth-v5/para_tough.webp') !important}
+html body #growth-overlay .growth-para--cdr1{background-image:url('../assets/ui/growth-v5/para_mind.webp') !important}
+html body #growth-overlay .growth-para--lbUp{background-image:url('../assets/ui/growth-v5/para_valor.webp') !important}
+html body #growth-overlay .growth-para--chase{background-image:url('../assets/ui/growth-v5/para_valor.webp') !important}
+html body #growth-overlay .growth-para--critDmg{background-image:url('../assets/ui/growth-v5/para_truedmg.webp') !important}
+html body #growth-overlay .growth-para--cdr2{background-image:url('../assets/ui/growth-v5/para_mind.webp') !important}
+html body #growth-overlay .growth-para--finalDef{background-image:url('../assets/ui/growth-v5/para_truedef.webp') !important}
+html body #growth-overlay .growth-para--finalDmg{background-image:url('../assets/ui/growth-v5/para_valor.webp') !important}
+html body #growth-overlay .growth-para--leech{background-image:url('../assets/ui/growth-v5/para_bond.webp') !important}
+.growth-para-sec{grid-column:1/-1;margin:14px 0 2px;color:#e5c07b;font-size:15px;letter-spacing:.08em;border-bottom:1px solid #4b3a22;padding-bottom:4px}.growth-para-sec small{color:#9a8a70;margin-left:8px;font-size:12px}.growth-stat.is-locked{opacity:.45;filter:grayscale(.6)}
