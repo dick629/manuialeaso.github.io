@@ -1132,10 +1132,12 @@ function doCraft(npcId, recipeIdx, sherine) {   // 🔮 sherine 參數保留簽�
     let _isPetGear = !!(DB.items[recipe.result] && ['petwpn', 'petarm'].includes(DB.items[recipe.result].slot));   // 🦴 寵物裝備（之牙 petwpn／防具 petarm）＝白板
     _noAffixCtx = _isPetGear;   // 🦴 寵物裝備＝白板：擋詞綴/套裝效果
     try {
-        for (let k = 0; k < makeCount; k++) {
+        let _cfRd = DB.items[recipe.result] || {}, _cfStack = !/^(wpn|arm|acc)$/.test(_cfRd.type) && !_cfRd.slot && !sherine;   /* 11-15：疊加型成品一次給齊 */
+        if (_cfStack) gainItem(recipe.result, (recipe.yield || 1) * makeCount, true, false, false, true, null, 0.10);
+        else for (let k = 0; k < makeCount; k++) {
             _forceSherineSet = !!sherine;   // 🔮 席琳製作：每件成品必定附帶隨機一種席琳套裝效果（寵物裝備 slot 非席琳適用部位，gainItem 自然不附）
             _forceBless = (k < _craftBlessCount);   // 🔧 消耗幾件祝福裝備材料→前幾件成品必定祝福（其餘照製作 10% 擲）
-            gainItem(recipe.result, recipe.yield || 1, true, false, false, false, null, 0.10);   // 🦴 寵物裝備仍由 _noAffixCtx 維持白板
+            gainItem(recipe.result, recipe.yield || 1, true, false, false, true, null, 0.10);   /* 11-15：製作中不逐件重繪背包 */   // 🦴 寵物裝備仍由 _noAffixCtx 維持白板
             _forceSherineSet = false; _forceBless = false;
         }
     } finally { _tradLootCtx = false; _forceSherineSet = false; _noAffixCtx = false; _forceBless = false; }   // try/finally：例外也必清旗標，杜絕殘留洩漏

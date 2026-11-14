@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-ecc5e6e91f4f",
+  "build": "merge-0.4-ca547cb90152",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -1654,7 +1654,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "6bea24794e14e5850646a0b3ba5034712b33dddc1ca2f8734389cdbbe4a00fcf",
+      "sha256": "3c270f61708630deba4fbb7aad44708e1b234dc76b14e35043ba4970f5e03ae9",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1728,8 +1728,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/14-craft-pandora.js?v=369c3e83de29",
-      "sha256": "369c3e83de297eb66f205c77bfe5bc991153d2f2bd4286c38f3982029d84bdc3",
+      "url": "js/14-craft-pandora.js?v=eb8cd190b61a",
+      "sha256": "eb8cd190b61a8705cbb10fe1a3fd13783771ef2218462807eccbd60667a29327",
       "type": "text/javascript; charset=utf-8"
     },
     {
