@@ -349,6 +349,8 @@
   }
 
   // 目標死亡：毒、流血傳給最近一隻
+  // 保險：任何來源把出血疊超過上限（最多 200 層）就砍回上限，避免陣列無限長大拖垮網頁
+  setInterval(function () { try { (mapState.mobs || []).forEach(function (m) { if (m && m.bleeds && m.bleeds.length > 200) { var c = Math.min(200, Math.max(5, N(m._bleedCap) || 50)); m.bleeds = m.bleeds.slice(m.bleeds.length - c); } }); } catch (e) {} }, 1000);
   if (typeof W.killMob === 'function') {
     var oKill = W.killMob;
     W.killMob = function (i) {
@@ -356,7 +358,7 @@
         var p = P(), e = p && eff(p), t = mapState.mobs[i];
         if (e && e.dotSpread && t && hasDot(t)) {
           var o2 = (mapState.mobs || []).filter(function (x) { return x && x !== t && x.curHp > 0 && !x._dead; })[0];
-          if (o2) { o2.st = o2.st || newMobStatus(); if (t.st && t.st.poison > 0) { o2.st.poison = Math.max(N(o2.st.poison), t.st.poison); o2.st.poisonDmg = Math.max(N(o2.st.poisonDmg), N(t.st.poisonDmg)); } if (t.bleeds && t.bleeds.length) o2.bleeds = (o2.bleeds || []).concat(t.bleeds.map(function (b) { return Object.assign({}, b); })); }
+          if (o2) { o2.st = o2.st || newMobStatus(); if (t.st && t.st.poison > 0) { o2.st.poison = Math.max(N(o2.st.poison), t.st.poison); o2.st.poisonDmg = Math.max(N(o2.st.poisonDmg), N(t.st.poisonDmg)); } if (t.bleeds && t.bleeds.length) { var cap2 = Math.max(N(o2._bleedCap), N(t._bleedCap), 5); o2.bleeds = (o2.bleeds || []).concat(t.bleeds.map(function (b) { return Object.assign({}, b); })); if (o2.bleeds.length > cap2) o2.bleeds = o2.bleeds.slice(o2.bleeds.length - cap2); o2._bleedCap = cap2; } }   // 11-15 修正：轉移出血要照層數上限，不然長時間打王會一直疊（Ping 回報 250 萬層、網頁崩潰）
         }
       } catch (er) {}
       return oKill.apply(this, arguments);
