@@ -96,6 +96,8 @@
     try { if (typeof calcStats === 'function') calcStats(); } catch (e) {}
     return true;
   }
+  // 11-16（Ping）：卡冊裡的聖衣寫出現在是哪一級（神聖衣／匣之聖衣／血魔聖衣／鐵聖衣／黃金…／碎裂），不再一律寫「已解除封印」
+  function clothTierName(id) { try { var CP = window.LineageClothProgression, t = CP && CP.label ? CP.label(player, id) : '已解除封印'; if (/^(神聖衣|血魔聖衣|鐵聖衣)$/.test(t) && window.__afkT3Opened && window.__afkT3Opened(player)) t = '匣之聖衣（' + t + '）'; return t; } catch (e) { return '已解除封印'; } }
   function sealed(id, actor) { return owned(id, actor) && !!(data(actor).sealed || {})[id]; }
   function rateOf(tier, actor) { var b = tier === 'spacetime' ? Math.max(0, Number((data(actor).bonus || {}).spacetime) || 0) : 0; return Math.min(tier === 'spacetime' ? ST_CAP : 1, RULES[tier].rate + b); }
   function listOwned(actor) { return TIERS.reduce(function (out,t) { return out.concat(catalog[t].filter(function (r) { return owned(r.id,actor); })); },[]); }
@@ -692,7 +694,7 @@
   function drawCollection(){
     var host=document.getElementById('afk-card-ascension-collection');if(!host)return;host.innerHTML='';
     TIERS.forEach(function(t){var h=document.createElement('h3');h.textContent=RULES[t].n+'卡';h.style.color=RULES[t].color;host.appendChild(h);
-      catalog[t].forEach(function(row){var el=document.createElement('div');el.className='afk-ca-tier';el.innerHTML='<strong>'+escape(row.n)+' · '+(!owned(row.id,player)?'未點亮':sealed(row.id,player)?'封印中':t==='samsara'?'已解除封印':'★'+starsOf(row.id,player)+'/7')+'</strong><small>'+escape(row.desc)+'</small>';host.appendChild(el);});
+      catalog[t].forEach(function(row){var el=document.createElement('div');el.className='afk-ca-tier';el.innerHTML='<strong>'+escape(row.n)+' · '+(!owned(row.id,player)?'未點亮':sealed(row.id,player)?'封印中':t==='samsara'?clothTierName(row.id):'★'+starsOf(row.id,player)+'/7')+'</strong><small>'+escape(row.desc)+'</small>';host.appendChild(el);});
     });
   }
   function openCollection(){
