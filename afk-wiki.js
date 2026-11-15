@@ -1231,9 +1231,13 @@
     allBtn.className = 'm-wiki-clsbtn m-wiki-clsbtn-all'; allBtn.setAttribute('data-cls', 'all'); allBtn.textContent = '全職業';
     allBtn.addEventListener('click', function () { state.cls = 'all'; render(); });
     clsRow.appendChild(allBtn);
+    // 覺醒職業（afk-awaken）：只在「職業專精」「轉生技藝」顯示（Ping 11-15：精通、技藝看各自的分頁）
+    var AWK_CLS = (window.__afkAwaken && window.__afkAwaken.CLS) ? ['berserker', 'thunder', 'paladin', 'darkknight', 'runeblade'].filter(function (k) { return __afkAwaken.CLS[k]; }).map(function (k) { return { k: k, n: __afkAwaken.CLS[k].n, awk: true }; }) : [];
+    AWK_CLS.forEach(function (c) { if (!CLASSES.some(function (x) { return x.k === c.k; })) CLASSES.push(c); });
+    _clsSet = null;
     CLASSES.forEach(function (c) {
       var b = document.createElement('button');
-      b.className = 'm-wiki-clsbtn'; b.setAttribute('data-cls', c.k); b.textContent = c.n;
+      b.className = 'm-wiki-clsbtn' + (c.awk ? ' m-wiki-clsbtn-awk' : ''); b.setAttribute('data-cls', c.k); b.textContent = c.n;
       b.addEventListener('click', function () { state.cls = c.k; render(); });
       clsRow.appendChild(b);
     });
@@ -1940,6 +1944,9 @@
     var showCls = (state.tab === 'mastery' || state.tab === 'quest' || state.tab === 'rebirtharts' || state.tab === 'classevolution' || state.tab === 'classtransfer');
     clsRow.style.display = showCls ? 'flex' : 'none';
     var _allBtn = clsRow.querySelector('.m-wiki-clsbtn-all'); if (_allBtn) _allBtn.style.display = (state.tab === 'quest') ? '' : 'none';   // 全職業鈕只在任務分頁
+    var _awkOn = (state.tab === 'mastery' || state.tab === 'rebirtharts');
+    clsRow.querySelectorAll('.m-wiki-clsbtn-awk').forEach(function (b) { b.style.display = _awkOn ? '' : 'none'; });
+    if (!_awkOn && window.__afkAwaken && __afkAwaken.CLS && __afkAwaken.CLS[state.cls]) state.cls = __afkAwaken.CLS[state.cls].base || 'royal';   // 其他分頁沒有覺醒職業：退回本職
     document.querySelectorAll('#m-wiki-cls .m-wiki-clsbtn').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-cls') === state.cls); });
     body.innerHTML = linkifyTabs((state.tab === 'magic') ? renderMagic(state.magicCls) : tabHTML(state.tab, state.cls), state.tab);
   }

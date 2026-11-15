@@ -32,10 +32,7 @@
       + li('覺醒導師「神話法術書」分頁：覺醒職業 神話法術書碎片 ×100 → 失去光芒的覺醒職業 神話法術書 ×1；失去光芒的法術書 ×10＋神話技能秘笈（或傳說技能秘笈）×1 → 自己職業的一本神話（或傳說）法術書。')
       + li('碎片、傳說技能秘笈：單人副本（夢域鏡難度）的王各 0.1%。失去光芒的法術書 0.01%、神話技能秘笈 0.1%：單人副本（次元裂縫難度）的王、次元裂縫的多人副本王。'));
 
-    // 職業精通
-    if (A.MAST) h += card('職業精通（Lv50 打飛龍後，威頓村 漢，四選一）', tbl(['職業', '精通', '效果'], [].concat.apply([], cls.map(function (c) { var m = A.MAST[c] || {}; return Object.keys(m).map(function (k) { return [esc(CLS[c].n), esc(m[k][0]), esc(m[k][2])]; }); }))) + li('跟本職一樣，可以花錢改選。'));
-    // 技藝
-    if (E && E.ARTS) h += card('技藝精通（1 轉後，燃柳村 奧拉奇里亞，二選一）', tbl(['職業', '技藝', '效果'], cls.map(function (c) { return Object.keys(E.ARTS).filter(function (k) { return E.ARTS[k].cls === c; }).map(function (k) { return [esc(CLS[c].n), '<b>' + esc(E.ARTS[k].n) + '</b>', esc(E.ARTS[k].d)]; }); }).reduce(function (a, b) { return a.concat(b); }, [])));
+    h += card('職業精通、技藝精通', li('職業精通（Lv50 打飛龍後，威頓村 漢，四選一）看「<b>職業專精</b>」分頁；技藝精通（1 轉後，燃柳村 奧拉奇里亞，二選一）看「<b>轉生技藝</b>」分頁。兩個分頁上面都可以選覺醒職業。'));
     // 技能強化
     if (E && E.SIGS) h += card('技能強化（席琳神殿 薇爾娜「技能強化」）', li('薇爾娜的三階段強化對覺醒技能也有效。每個覺醒職業另有 3 個招牌技能，每階段傷害再 +15%／+30%／+50%，第三階段招牌主動技能冷卻 −20%。')
       + tbl(['職業', '招牌技能'], cls.map(function (c) { var s = E.SIGS[c] || []; return [esc(CLS[c].n), esc(s.slice(3).join('、'))]; })));

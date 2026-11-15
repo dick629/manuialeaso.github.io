@@ -166,8 +166,8 @@
   function arts(only){
     var X=W.__afkArts;if(!X||!X.ARTS)return note('請開啟「轉生技藝」外掛後重新載入遊戲。');
     var CN={royal:'王族',knight:'騎士',mage:'法師',elf:'妖精',dark:'黑暗妖精',illusion:'幻術士',dragon:'龍騎士',warrior:'戰士'},by={};
-    Object.keys(X.ARTS).forEach(function(id){var a=X.ARTS[id];(by[a.cls]=by[a.cls]||[]).push([id,a]);});
-    var h=note('轉生後到<b>燃柳村・奧拉奇里亞</b>免費修習；每個職業兩門技藝擇一，可隨時回來改選。同一門技藝全隊最多 4 人生效（你優先，再依傭兵招募順序），第 5 人起沒有技藝效果。卡片下方金框是實際數據。');
+    Object.keys(X.ARTS).forEach(function(id){var a=X.ARTS[id];(by[a.cls]=by[a.cls]||[]).push([id,a]);});var AWC=(W.__afkAwaken&&W.__afkAwaken.CLS)||{};Object.keys(AWC).forEach(function(k){CN[k]=AWC[k].n;});
+    var h=note('轉生後到<b>燃柳村・奧拉奇里亞</b>免費修習；每個職業兩門技藝擇一，可隨時回來改選。同一門技藝全隊最多 4 人生效（你優先，再依傭兵招募順序），第 5 人起沒有技藝效果。卡片下方金框是實際數據。')+(only&&AWC[only]?note('覺醒職業：1 轉後到燃柳村・奧拉奇里亞二選一。'):'');
     Object.keys(by).forEach(function(c){
       if(only&&CN[only]&&c!==only)return;
       h+='<div class="m-wiki-note" style="margin-top:10px;"><b>'+(CN[c]||c)+'</b></div>';
