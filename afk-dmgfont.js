@@ -234,8 +234,7 @@
       tabs.innerHTML = '<button type="button" role="tab" data-pdt="market" aria-pressed="' + (tab === 'market') + '">商品</button>';
       if (title && title.nextSibling) panel.insertBefore(tabs, title.nextSibling); else panel.insertBefore(tabs, panel.firstChild);
     }
-    var bx = document.createElement('button'); bx.type = 'button'; bx.setAttribute('role', 'tab'); bx.setAttribute('data-pdt', 'trade'); bx.textContent = '交易所';
-    tabs.appendChild(bx);
+    // 11-16：「交易所」改由 afk-trade 提供（寄賣攤，掛在 afk-blooddia 的分頁列），這裡不再放「準備中」的空分頁
     var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('data-pdt', 'font'); b.textContent = '字體販賣所';
     tabs.appendChild(b);
     tabs.addEventListener('click', function (ev) {   // 按到血龍鑽那邊的分頁 → 我們退回「不是字體頁」
@@ -243,14 +242,7 @@
       if (t.hasAttribute('data-bdtab')) { tab = 'market'; return; }
       ev.stopPropagation(); tab = t.getAttribute('data-pdt'); msg = ''; rerender(div);
     }, true);
-    if (tab === 'trade') {   // 交易所：先開分頁，內容之後補（玩家寄賣交易，見設計稿 trade-design）
-      Array.prototype.forEach.call(tabs.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === bx)); });
-      Array.prototype.forEach.call(panel.children, function (c) { if (c !== title && c !== tabs) c.style.display = 'none'; });
-      var tb = document.createElement('div'); tb.className = 'dmgf-shop';
-      tb.innerHTML = '<div class="dmgf-card" style="text-align:center;padding:22px 10px"><div style="font-size:30px">🏮</div><b style="color:#f5d0fe;font-size:16px">交易所準備中</b><div style="font-size:12.5px;color:#cbd5e1;margin-top:6px;line-height:1.6">之後可以在這裡跟其他冒險者買賣裝備、遺物、卡片。<br>開放時會在世界頻道公告。</div></div>';
-      panel.appendChild(tb);
-      bx.setAttribute('aria-pressed', 'true'); b.setAttribute('aria-pressed', 'false');
-    } else if (tab === 'font') {
+    if (tab === 'font') {
       Array.prototype.forEach.call(tabs.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
       Array.prototype.forEach.call(panel.children, function (c) { if (c !== title && c !== tabs) c.style.display = 'none'; });
       var box = document.createElement('div'); box.innerHTML = shopHtml(); var pg = box.firstChild; panel.appendChild(pg);
@@ -264,7 +256,7 @@
         }
         if (a[0] === 'use') { LS(K_USE, a[1] || ''); apply(); msg = a[1] ? '換上「' + FBY[a[1]].n + '」。' : '換回經典字體。'; rerender(div); }
       });
-    } else { b.setAttribute('aria-pressed', 'false'); bx.setAttribute('aria-pressed', 'false'); }
+    } else { b.setAttribute('aria-pressed', 'false'); }
   }
   function rerender(div) { try { W.pandoraRenderMarket(div); } catch (e) { console.warn('[AFK-dmgfont]', e); } }
   function hookMarket() {

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-ca192bf3aed4",
+  "build": "merge-0.4-08a07d394f4d",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -183,8 +183,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-blooddia.js?v=ef49f710b58e",
-      "sha256": "ef49f710b58ed17dbf1f720bccbfd4518bc468331f29c520561e3818ae53ac70",
+      "url": "afk-blooddia.js?v=f4ff9acc0ed0",
+      "sha256": "f4ff9acc0ed0fc4609dbefc1a168fd5a36a976cb0edb4f4dea42c5723c2f025f",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -448,8 +448,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dmgfont.js?v=8e05869c0bef",
-      "sha256": "8e05869c0bef893640bfe775a5c9dba59e5ba481348cfb5f95a2ab9695611f16",
+      "url": "afk-dmgfont.js?v=1df01ab317ff",
+      "sha256": "1df01ab317ff714c3dc4ebc2fd66fd1c4664a7d14cb022ad668b269a60ce8810",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -633,8 +633,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-fullsave.js?v=ca5a4a69f8dc",
-      "sha256": "ca5a4a69f8dc983fcdb904316ec0cd9895666dc9398cac284d17affdfdb8e2ab",
+      "url": "afk-fullsave.js?v=a020d296ba3b",
+      "sha256": "a020d296ba3bd0ff892dd45433f1079ebc781db0f6f85eb6196bd2ab29f1f7e9",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -723,8 +723,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-heartbeat.js?v=047eefb02b0f",
-      "sha256": "047eefb02b0f8768a2a231d722bffbf756e7c44235d836a0c29cb9277b199b90",
+      "url": "afk-heartbeat.js?v=bef0f69d7dac",
+      "sha256": "bef0f69d7dac5a842652a8ab55fa35c760e0b2eb170ba62a5d8e88dfa0a4f8f3",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1553,6 +1553,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-trade.js?v=18ede11ebf49",
+      "sha256": "18ede11ebf496f97c5f659e621b03f4ffb6256865fe0b4fbacabe63da0940dd3",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-traditional.js?v=f05bb4d27e13",
       "sha256": "f05bb4d27e1335f7d0cf566497e28e90a09e476d0ecd06e5a32c0b69ec57fabd",
       "type": "text/javascript; charset=utf-8"
@@ -1704,7 +1709,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "11c1cc026e2ba04b8dda308ed818e38c6a37eb1f449e35c10d5b9949a9427eab",
+      "sha256": "02d4f99b0a9372f4fa6a5286235f891823d53d6e624c95d715e6d4edbd740552",
       "type": "text/html; charset=utf-8"
     },
     {

@@ -31,6 +31,7 @@
  *      不會發生「遊戲中還原完,記憶體裡的舊 player 又被 saveGame 寫回去」。
  *
  * 🔑 轉移碼(2026-08-01 加·子開關 fullsavecode):同一包資料改用「六碼」搬,免存檔案。
+ *   ⚠ 2026-11-16 起優先走自己的旅人伺服器（/xfer/*，8 碼、24 小時、最多下載 3 次，見下方 srvUpload）；伺服器連不上才用 Litterbox。
  *   A 按「產生轉移碼」→ 整包上傳到 Litterbox → 拿它回傳的六碼;B 輸入六碼 → 抓回來 → 走上面同一條還原流程。
  *   打包/驗證/寫入完全共用,轉移碼只是換一個「把那包交出去」的管道。
  *
@@ -65,7 +66,7 @@
 
   if (window.AFK_TOGGLES) AFK_TOGGLES.register({
     id: 'fullsavecode', parent: 'fullsave', name: '用轉移碼搬家', group: '系統與其他', def: true,
-    desc: '用六碼把資料搬到另一台裝置；資料會暫存在網路上，24 小時後自動刪除'
+    desc: '用轉移碼把資料搬到另一台裝置；資料會暫存在網路上，24 小時後自動刪除'
   });
   function codeOn() { try { return !window.AFK_TOGGLES || AFK_TOGGLES.enabled('fullsavecode'); } catch (e) { return true; } }
 
@@ -165,10 +166,56 @@
     return t.replace(/\.json$/, '').trim();
   }
 
+  // ── 11-16：轉移碼改走自己的旅人伺服器（backend/heartbeat 的 /xfer/*，檔案放 R2）──
+  //   碼＝8 個字（不含 0/O、1/I/L），大小寫都可以；24 小時有效、最多下載 3 次。上傳前用 gzip 壓縮（瀏覽器支援的話）。
+  //   伺服器連不上（或還沒開存檔空間）才退回 Litterbox 的六碼。
+  var SRV_RE = /^[A-HJ-NP-Z2-9]{8}$/;
+  function srvApi() { try { var h = window.AFK_HEARTBEAT; return h && h.api && h.ensureId ? h.api() : ''; } catch (e) { return ''; } }
+  function srvNorm(s) { return String(s || '').toUpperCase().replace(/[\s-]/g, ''); }
+  function gz(text) {
+    if (typeof CompressionStream === 'undefined') return Promise.resolve(new Blob([text], { type: 'application/json' }));
+    return new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).blob();
+  }
+  function ungz(buf) {
+    var u = new Uint8Array(buf);
+    if (u[0] === 0x1f && u[1] === 0x8b) {
+      if (typeof DecompressionStream === 'undefined') return Promise.reject(new Error('這個瀏覽器太舊，解不開壓縮過的存檔，請更新瀏覽器'));
+      return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+    }
+    return Promise.resolve(new TextDecoder().decode(u));
+  }
+  function srvUpload(text) {
+    var base = srvApi();
+    return window.AFK_HEARTBEAT.ensureId().then(function (id) {
+      return gz(text).then(function (blob) {
+        return fetch(base + '/xfer/put', { method: 'POST', headers: { 'content-type': 'application/octet-stream', 'x-hb-uid': id.uid, 'x-hb-token': id.token }, body: blob });
+      });
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) {
+        if (!r.ok) { var e = new Error(d.error || ('上傳失敗（' + r.status + '）')); e.status = r.status; throw e; }
+        return d.code.slice(0, 4) + '-' + d.code.slice(4);
+      });
+    });
+  }
+  function srvDownload(code) {
+    return fetch(srvApi() + '/xfer/get?code=' + encodeURIComponent(code), { cache: 'no-store' }).then(function (r) {
+      if (r.status === 404) throw new Error('NOTFOUND8');
+      if (!r.ok) return r.json().catch(function () { return {}; }).then(function (d) { throw new Error(d.error || ('讀取失敗（' + r.status + '）')); });
+      return r.arrayBuffer().then(ungz);
+    });
+  }
+
   function uploadPack() {
     var text;
     try { text = JSON.stringify(buildPack()); }
     catch (e) { return Promise.reject(new Error('打包失敗：' + (e && e.message || e))); }
+    if (srvApi()) return srvUpload(text).catch(function (e) {
+      if (e && e.status && e.status !== 503 && e.status < 500) throw e;   // 伺服器明確拒絕（例如今天次數用完）→ 直接告訴玩家
+      return lbUpload(text);                                                // 連不上／還沒開存檔空間 → 退回 Litterbox
+    });
+    return lbUpload(text);
+  }
+  function lbUpload(text) {
     var fd = new FormData();
     fd.append('reqtype', 'fileupload');
     fd.append('time', LB_EXPIRY);
@@ -331,6 +378,7 @@
       if (!window.LineageSaveGate) { note('存檔保護工具尚未載入，請重新開啟合併版。', true); return; }
       note('正在備份目前資料並還原…');
       window.LineageSaveGate.restoreFull(pack, opt).then(function () {
+        try { localStorage.setItem('afk_mkt_restore', String(Date.now())); } catch (e) {}   // 交易所：還原後 24 小時不能上架、購買（afk-trade）
         note('✅ 已還原，操作前資料已保留，重新載入中…');
         setTimeout(function () { location.reload(); }, 900);
       }).catch(function (e) { note('❌ 還原未完成：' + String(e.message || '').replace(/。$/, '') + (e.causeCode ? '（' + ({ QuotaExceededError: '這台裝置的瀏覽器空間不夠', 22: '這台裝置的瀏覽器空間不夠', VERIFY: '寫入後讀回不一致', CONFLICT: '還原時資料被其他分頁改動' }[e.causeCode] || e.causeCode) + (e.failKey ? '；卡在 ' + e.failKey + '，' + Math.round((e.failSize || 0) / 1024) + 'K 字' : '') + (e.used ? '；目前已用 ' + Math.round(e.used / 1024) + 'K 字' : '') + '）' : '') + '。' + (VER ? '（程式版本 ' + VER.slice(0, 6) + '）' : '') + '可到「存檔與修復」查看操作前備份。', true); });
@@ -342,6 +390,7 @@
       note('❌ 還原沒有完成（' + r.err + '）。這台裝置的資料現在是不完整的，請重新匯入一次備份檔，或改用空間比較夠的裝置。', true);
       return;
     }
+    try { localStorage.setItem('afk_mkt_restore', String(Date.now())); } catch (e) {}   // 交易所：還原後 24 小時不能上架、購買（afk-trade）
     note('✅ 已還原，重新載入中…');
     setTimeout(function () { try { location.reload(); } catch (e) {} }, 900);
   }
@@ -370,13 +419,13 @@
       + '<button id="m-fsv-imp" class="fsv-b fsv-danger">📥 還原備份</button>'
       + '</div>'
       + (codeOn() ? ('<div class="fsv-sep">或用轉移碼，不存檔案</div>'
-        + '<div class="fsv-desc">在這台按「產生轉移碼」，到另一台輸入那六碼就搬過去了；資料暫存在網路上，24 小時後自動刪除。</div>'
+        + '<div class="fsv-desc">在這台按「產生轉移碼」，到另一台輸入那組碼就搬過去了；資料暫存在網路上，24 小時後自動刪除（同一組碼最多用 3 次）。</div>'
         + '<div class="fsv-btns">'
         + '<button id="m-fsv-gen" class="fsv-b fsv-go">🔑 產生轉移碼</button>'
         + '<div id="m-fsv-codebox" class="fsv-codebox"><span id="m-fsv-code" class="fsv-code"></span>'
         + '<button id="m-fsv-copy" class="fsv-b fsv-mini">📋 複製</button></div>'
         + '<div class="fsv-row"><input id="m-fsv-in" class="fsv-input" maxlength="64" autocomplete="off" '
-        + 'autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入六碼">'
+        + 'autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入轉移碼">'
         + '<button id="m-fsv-use" class="fsv-b fsv-danger fsv-mini">搬過來</button></div>'
         + '</div>') : '')
       + '<div id="m-fsv-note" class="fsv-note"></div>';
@@ -400,7 +449,7 @@
       var box = document.getElementById('m-fsv-codebox'), el = document.getElementById('m-fsv-code');
       if (el) el.textContent = code;
       if (box) box.classList.add('show');
-      note('✅ 到另一台裝置輸入這六碼就搬過去了（24 小時內有效）。');
+      note('✅ 到另一台裝置輸入這組碼就搬過去了（24 小時內有效' + (/-/.test(code) ? '，最多用 3 次' : '') + '）。');
     }).catch(function (e) {
       // 丟出來的 Error 自己就寫清楚是哪一步壞了(上傳失敗（500）/打包失敗：…)→ 直接用,不要再包一層
       note('❌ ' + (netErrMsg(e) || ((e && e.message || '產生轉移碼失敗') + '。'))
@@ -413,19 +462,20 @@
   // 輸入轉移碼:抓回來 → 走與檔案還原完全相同的驗證與確認流程
   function doUseCode() {
     var input = document.getElementById('m-fsv-in');
-    var code = normalizeCode(input && input.value);
-    if (!CODE_RE.test(code)) { note('❌ 請輸入六碼（英文小寫或數字）。', true); return; }
+    var raw = input && input.value, s8 = srvNorm(raw), code = normalizeCode(raw), useSrv = SRV_RE.test(s8) && !!srvApi();
+    if (!useSrv && !CODE_RE.test(code)) { note('❌ 請輸入轉移碼（8 個字，例如 ABCD-EFGH；舊的六碼也可以）。', true); return; }
     var btn = document.getElementById('m-fsv-use');
     if (btn) btn.disabled = true;
     note('讀取中…');
-    downloadByCode(code).then(function (text) {
+    (useSrv ? srvDownload(s8) : downloadByCode(code)).then(function (text) {
       var v = validate(text);
       if (!v.ok) { note('❌ ' + v.err, true); return; }
       note('');
       confirmAndApply(v);
     }).catch(function (e) {
       // 🚨 只講「可能看錯」,不要自己拿相近字元重試——那可能抓到別人的存檔並覆蓋玩家進度
-      if (e && e.message === 'NOTFOUND') note('❌ 找不到這組轉移碼。可能是打錯了（注意 0 和 o、1 和 l），或是已經超過 24 小時。', true);
+      if (e && e.message === 'NOTFOUND8') note('❌ 找不到這組轉移碼。可能是打錯了、已經超過 24 小時，或已經用過 3 次。', true);
+      else if (e && e.message === 'NOTFOUND') note('❌ 找不到這組轉移碼。可能是打錯了（注意 0 和 o、1 和 l），或是已經超過 24 小時。', true);
       else note('❌ ' + (netErrMsg(e) || ((e && e.message || '讀取失敗') + '。'))
         + '\n可以改請對方用「匯出備份」存成檔案傳給你。', true);
     }).then(function () { if (btn) btn.disabled = false; });

@@ -80,12 +80,23 @@
     css(); lastDiv = div;
     var title = panel.querySelector('.pandora-market-title');
     var tabs = document.createElement('div'); tabs.className = 'afk-bd-tabs'; tabs.setAttribute('role', 'tablist');
+    // 其他外掛的分頁（afk-trade 寄賣攤）：W.__afkMarketTabs = [{ id, label, show(), render(box) }]
+    var extra = (W.__afkMarketTabs || []).filter(function (x) { try { return !x.show || x.show(); } catch (e) { return false; } });
+    if (ui.page !== 'market' && ui.page !== 'blood' && !extra.some(function (x) { return x.id === ui.page; })) ui.page = 'market';
     tabs.innerHTML = '<button type="button" role="tab" data-bdtab="market" aria-pressed="' + (ui.page === 'market') + '">商品</button>'
-      + '<button type="button" role="tab" data-bdtab="blood" aria-pressed="' + (ui.page === 'blood') + '">血龍鑽兌換</button>';
+      + '<button type="button" role="tab" data-bdtab="blood" aria-pressed="' + (ui.page === 'blood') + '">血龍鑽兌換</button>'
+      + extra.map(function (x) { return '<button type="button" role="tab" data-bdtab="' + esc(x.id) + '" aria-pressed="' + (ui.page === x.id) + '">' + esc(x.label) + '</button>'; }).join('');
     if (title && title.nextSibling) panel.insertBefore(tabs, title.nextSibling); else panel.insertBefore(tabs, panel.firstChild);
     if (ui.page === 'blood') {
       Array.prototype.forEach.call(panel.children, function (c) { if (c !== title && c !== tabs) c.style.display = 'none'; });
       var box = document.createElement('div'); box.innerHTML = pageHtml(); panel.appendChild(box.firstChild);
+    } else if (ui.page !== 'market') {
+      Array.prototype.forEach.call(panel.children, function (c) { if (c !== title && c !== tabs) c.style.display = 'none'; });
+      var xb = document.createElement('div'); xb.style.cssText = 'display:flex;flex-direction:column;min-height:0;flex:1;overflow:auto'; panel.appendChild(xb);
+      var tab = extra.filter(function (x) { return x.id === ui.page; })[0];
+      try { tab.render(xb); } catch (e) { xb.textContent = '分頁載入失敗：' + e.message; console.warn('[AFK-blooddia] 分頁', e); }
+      tabs.onclick = function (ev) { var b = ev.target.closest('[data-bdtab]'); if (!b) return; ui.page = b.getAttribute('data-bdtab'); ui.ask = false; ui.err = ''; ui.msg = ''; rerender(); };
+      return;
     }
     tabs.onclick = function (ev) { var b = ev.target.closest('[data-bdtab]'); if (!b) return; ui.page = b.getAttribute('data-bdtab'); ui.ask = false; ui.err = ''; ui.msg = ''; rerender(); };
     var pg = panel.querySelector('#afk-bd-page'); if (!pg) return;
@@ -106,7 +117,7 @@
       rerender();
     });
   };
-  var rerender = function () { try { if (lastDiv && typeof W.pandoraRenderMarket === 'function') W.pandoraRenderMarket(lastDiv); } catch (e) { console.warn('[AFK-blooddia]', e); } };
+  var rerender = W.__afkBloodDia.rerender = function () { try { if (lastDiv && typeof W.pandoraRenderMarket === 'function') W.pandoraRenderMarket(lastDiv); } catch (e) { console.warn('[AFK-blooddia]', e); } };
   if (typeof W.pandoraRenderMarket === 'function') {
     var oR = W.pandoraRenderMarket;
     W.pandoraRenderMarket = function (div) { var r = oR.apply(this, arguments); try { decorate(div); } catch (e) { console.warn('[AFK-blooddia] 黑市分頁', e); } return r; };

@@ -213,5 +213,5 @@
 
   var boot = function () { btn(); if (joined()) setTimeout(startBeat, 10000); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
-  W.AFK_HEARTBEAT = { open: open, close: close, beat: beat, feed: feed, state: st, api: api };
+  W.AFK_HEARTBEAT = { open: open, close: close, beat: beat, feed: feed, state: st, api: api, ident: ident, ensureId: ensureId };   // 寄賣攤、存檔轉移碼共用同一個旅人身分（afk-trade、afk-fullsave）
 })();
