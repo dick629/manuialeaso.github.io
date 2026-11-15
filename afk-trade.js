@@ -72,12 +72,38 @@
     return '';
   };
 
+  // ── 物品資料只留認得的欄位（11-16 資安：跟伺服器 market.mjs cleanItem 同一套）──
+  //   遺物的能力一律由物品編號重建（__afkRelicData.ensure 會檢查 +15／昇華 5／進化 9 的上限），不吃物品身上夾帶的數值。
+  var ANC = { eternal: 1, immortal: 1, primordial: 1, ancient: 1 };
+  var int = function (v, lo, hi) { var n = Number(v); return Number.isSafeInteger(n) && n >= lo && n <= hi ? n : NaN; };
+  var cleanItem = function (it) {
+    try {
+      if (!it || typeof it !== 'object' || typeof it.id !== 'string' || it.id.length > 160) return null;
+      var id = it.id;
+      if (id.indexOf('~') >= 0) { if (!(W.__afkRelicData && W.__afkRelicData.ensure && W.__afkRelicData.ensure(id))) return null; }
+      var d = DB.items[id]; if (!d || d.gmOnly || d.noTrade) return null;
+      var o = { id: id, uid: String(it.uid || ''), cnt: int(it.cnt == null ? 1 : it.cnt, 1, 10), en: int(it.en == null ? 0 : it.en, -20, 15) };
+      if (isNaN(o.cnt) || isNaN(o.en)) return null;
+      if (it.bless != null && it.bless !== false) { if (it.bless === true || it.bless === 'cursed') o.bless = it.bless; else return null; }
+      if (it.anc != null && it.anc !== false) { if (it.anc === true || ANC[it.anc]) o.anc = it.anc; else return null; }
+      if (it.attr != null && it.attr !== false) { if (/^(fr|wa|wi|ea)[1-5]$/.test(String(it.attr))) o.attr = it.attr; else return null; }
+      if (it.attrMagic != null && it.attrMagic !== false) { if (typeof it.attrMagic === 'string' && DB.skills && DB.skills[it.attrMagic]) o.attrMagic = it.attrMagic; else return null; }
+      if (it.attrMagicStar != null) { o.attrMagicStar = int(it.attrMagicStar, 1, 5); if (isNaN(o.attrMagicStar)) return null; }
+      if (it.seteff != null && it.seteff !== false) { if (/^[\u3400-\u9fff]{2,3}$/.test(String(it.seteff))) o.seteff = it.seteff; else return null; }
+      ['ancLv', 'blessLv'].forEach(function (k) { if (it[k] != null) o[k] = int(it[k], 0, 5); });
+      if (it.rbLv != null) o.rbLv = int(it.rbLv, 0, 50);
+      if (['ancLv', 'blessLv', 'rbLv'].some(function (k) { return k in o && isNaN(o[k]); })) return null;
+      if (it.gw != null) { if (Array.isArray(it.gw) && it.gw.length <= 3 && it.gw.every(function (x) { return /^[a-z]{2,4}\d{1,2}$/.test(String(x)); })) o.gw = it.gw.slice(); else return null; }
+      if (!catOf(o)) return null;
+      return o;
+    } catch (e) { return null; }
+  };
+
   // ── 物品進背包（交貨）──
   var addItem = function (src) {
     var p = P(); if (!p) throw new Error('沒有角色');
-    var o = JSON.parse(JSON.stringify(src)); delete o.lock; delete o.junk; delete o._ruleJunk; delete o._userKeep; delete o.junkSince;
-    try { if (!DB.items[o.id] && W.__afkRelicData && W.__afkRelicData.ensure) W.__afkRelicData.ensure(o.id); } catch (e) {}
-    if (!DB.items[o.id]) throw new Error('這個版本找不到「' + o.id + '」');
+    var o = cleanItem(src);
+    if (!o) throw new Error('物品資料不正確（' + String(src && src.id || '?').slice(0, 40) + '）');
     o.cnt = Math.max(1, Math.floor(Number(o.cnt) || 1)); o.uid = typeof uid === 'function' ? uid() : Math.random().toString(36).slice(2, 11); o.lock = false; o.junk = false;
     try { if (typeof registerEquipObtained === 'function') registerEquipObtained(o.id); if (typeof registerMiscObtained === 'function') registerMiscObtained(o.id); if (typeof registerRelicObtained === 'function') registerRelicObtained(o.id); } catch (e) {}
     var ex = !o.gw && typeof sameItemSig === 'function' ? p.inv.find(function (i) { return i && !i.gw && !i.lock && sameItemSig(i, o); }) : null;
@@ -180,8 +206,9 @@
     var fee = Math.ceil(price * RULE.postFee);
     if (blood() < fee) return note('血龍鑽不夠付上架費（' + fmt(fee) + ' 顆）。', true);
     var before = Number(it.cnt) || 1;
-    var snap = JSON.parse(JSON.stringify(it)); snap.cnt = k; snap.uid = before > 1 ? it.uid + ':' + before : it.uid;
-    delete snap.lock; delete snap.junk; delete snap._ruleJunk; delete snap._userKeep; delete snap.junkSince;
+    var snap = cleanItem(Object.assign({}, it, { cnt: k }));
+    if (!snap) return note('這件物品的資料不正確，不能上架。', true);
+    snap.uid = before > 1 ? it.uid + ':' + before : it.uid;
     var name = nameOf(it), op = opId();
     var a = jr(); a.push({ t: 'post', op: op, item: snap, fee: fee, name: name, at: Date.now(), slot: currentSlotSafe() }); jrSet(a);
     it.cnt = before - k; if (it.cnt <= 0) p.inv.splice(p.inv.indexOf(it), 1);
@@ -293,11 +320,11 @@
     var mineIds = S.mine ? (S.mine.listings || []).map(function (l) { return l.id; }) : [];
     S.list.forEach(function (r) {
       var own = mineIds.indexOf(r.id) >= 0, asking = S.ask && S.ask.t === 'buy' && S.ask.id === r.id;
-      var full; try { full = getItemFullName(r.item); } catch (e) { full = esc(r.name); }
-      h += '<div class="row">' + ico(r.item.id) + '<div class="main"><div class="nm">' + full + (r.cnt > 1 ? ' ×' + r.cnt : '') + '</div><div class="sub">' + (CAT_N[r.cat] || '') + '・賣家 ' + esc(r.seller) + '・剩 ' + tleft(r.exp) + '</div>'
+      var ci = cleanItem(r.item), full; try { full = ci ? getItemFullName(ci) : esc(r.name) + ' <span class="red">（資料異常，不能買）</span>'; } catch (e) { full = esc(r.name); }
+      h += '<div class="row">' + ico(ci ? ci.id : '') + '<div class="main"><div class="nm">' + full + (r.cnt > 1 ? ' ×' + r.cnt : '') + '</div><div class="sub">' + (CAT_N[r.cat] || '') + '・賣家 ' + esc(r.seller) + '・剩 ' + tleft(r.exp) + '</div>'
         + (asking ? '<div class="bar" style="margin-top:4px"><span class="ok">確定用 ' + fmt(r.price) + ' 顆血龍鑽買？</span><button type="button" class="go" data-tr="buyok:' + r.id + '">確定</button><button type="button" data-tr="no">取消</button></div>' : '') + '</div>'
         + '<div class="pr">' + fmt(r.price) + ' 🩸</div>'
-        + (own ? '<span class="dim">自己的</span>' : '<button type="button" data-tr="buy:' + r.id + '"' + (canTrade() && blood() >= r.price && !S.busy ? '' : ' disabled') + '>購買</button>') + '</div>';
+        + (own ? '<span class="dim">自己的</span>' : '<button type="button" data-tr="buy:' + r.id + '"' + (ci && canTrade() && blood() >= r.price && !S.busy ? '' : ' disabled') + '>購買</button>') + '</div>';
     });
     h += '<div class="bar">' + (S.page > 1 ? '<button type="button" data-tr="page:-1">上一頁</button>' : '') + '<span class="dim">第 ' + S.page + ' 頁</span>' + (S.more ? '<button type="button" data-tr="page:1">下一頁</button>' : '') + '</div>';
     return h;
@@ -397,7 +424,7 @@
     show: function () { var p = P(); return on() && !!p && !p.classicMode; },
     render: function (box) { css(); box.innerHTML = html(); bind(box); if (!S.loadedAt && !S.busy) load(); else if (Date.now() - S.loadedAt > 60000 && !S.busy) load(); }
   });
-  W.__afkTrade.catOf = catOf; W.__afkTrade.sync = sync; W.__afkTrade.load = load;
+  W.__afkTrade.catOf = catOf; W.__afkTrade.cleanItem = cleanItem; W.__afkTrade.sync = sync; W.__afkTrade.load = load;
 
   // 還原存檔／匯入角色後 24 小時不能交易
   var hookGate = function () {

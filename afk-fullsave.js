@@ -97,9 +97,12 @@
     if (!/^lineage_idle_save(?:_\d+)?$/.test(k) && !/^lineage_idle_warehouse(?:_[a-z]+)*$/.test(k)) return v;
     try { var z = 'LZ1:' + LZString.compressToUTF16(v); return LZString.decompressFromUTF16(z.slice(4)) === v ? z : v; } catch (e) { return v; }
   }
-  function buildPack() {
+  // 11-16 資安（Ping 選 A）：轉移碼不帶旅人身分與交易所帳本——轉移碼外流時，拿到的人冒用不了你的交易所身分。
+  //   新裝置會自己領一個新身分（72 小時後才能上架）；舊裝置沒領的交易所東西要回舊裝置領。檔案備份照舊整包。
+  var CODE_SKIP = { afk_hb_id: 1, afk_mkt_jr: 1, afk_mkt_done: 1 };
+  function buildPack(forCode) {
     var keys = {}, n = 0;
-    lsKeys().forEach(function (k) { if (k === 'lineage_growth_transaction_backup_v1') return; var v = localStorage.getItem(k); if (v != null) { keys[k] = packVal(k, v); n++; } });   // 11-11：舊版交易備份（約 5MB）不打包
+    lsKeys().forEach(function (k) { if (k === 'lineage_growth_transaction_backup_v1') return; if (forCode && CODE_SKIP[k]) return; var v = localStorage.getItem(k); if (v != null) { keys[k] = packVal(k, v); n++; } });   // 11-11：舊版交易備份（約 5MB）不打包
     return { format: FORMAT, schema: SCHEMA, exportedAt: new Date().toISOString(), keyCount: n, keys: keys };
   }
 
@@ -207,7 +210,7 @@
 
   function uploadPack() {
     var text;
-    try { text = JSON.stringify(buildPack()); }
+    try { text = JSON.stringify(buildPack(true)); }
     catch (e) { return Promise.reject(new Error('打包失敗：' + (e && e.message || e))); }
     if (srvApi()) return srvUpload(text).catch(function (e) {
       if (e && e.status && e.status !== 503 && e.status < 500) throw e;   // 伺服器明確拒絕（例如今天次數用完）→ 直接告訴玩家
@@ -419,7 +422,7 @@
       + '<button id="m-fsv-imp" class="fsv-b fsv-danger">📥 還原備份</button>'
       + '</div>'
       + (codeOn() ? ('<div class="fsv-sep">或用轉移碼，不存檔案</div>'
-        + '<div class="fsv-desc">在這台按「產生轉移碼」，到另一台輸入那組碼就搬過去了；資料暫存在網路上，24 小時後自動刪除（同一組碼最多用 3 次）。</div>'
+        + '<div class="fsv-desc">在這台按「產生轉移碼」，到另一台輸入那組碼就搬過去了；資料暫存在網路上，24 小時後自動刪除（同一組碼最多用 3 次）。轉移碼等於你的存檔，不要貼給別人。交易所的身分不會跟著搬（新裝置 72 小時後才能上架），舊裝置還沒領的交易所東西請先領完。</div>'
         + '<div class="fsv-btns">'
         + '<button id="m-fsv-gen" class="fsv-b fsv-go">🔑 產生轉移碼</button>'
         + '<div id="m-fsv-codebox" class="fsv-codebox"><span id="m-fsv-code" class="fsv-code"></span>'
