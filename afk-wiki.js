@@ -6115,7 +6115,7 @@
   function magicSpellHTML(id, sk, lvLabel, learnedSet) {
     var eleReq = sk.reqEle ? '※需' + (ELE_REQ[sk.reqEle] || sk.reqEle) + '屬性' : (sk.reqEleAny ? '※需先選定屬性' : '');
     var learnCls = learnedSet ? (learnedSet.has(id) ? ' is-learned' : ' is-unlearned') : '';
-    var icon = '<img class="m-wiki-spell-ic" src="assets/icons/skills/' + esc(sk.n) + '.png" alt="" loading="lazy" onerror="this.style.display=\'none\'">';
+    var icon = '<img class="m-wiki-spell-ic" src="' + esc(sk.awCls && sk.img ? sk.img : 'assets/icons/skills/' + sk.n + '.png') + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">';   // 覺醒職業的技能圖在 assets/icons/awaken/（sk.img）
     return '<div class="m-wiki-spell' + learnCls + '">' + icon +
       '<div class="m-wiki-spell-main">' +
         '<div class="m-wiki-spell-top"><span class="m-wiki-spell-n">' + wDexLink(sk.n) + '</span></div>' +   // 🔗 魔法名可點→掉落查詢搜尋(找該魔法的技能書怎麼取得)

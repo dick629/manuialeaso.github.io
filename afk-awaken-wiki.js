@@ -8,7 +8,6 @@
   var li = function (x) { return '<div class="m-wiki-desc" style="margin-top:4px;">・' + x + '</div>'; };
   var BASE_N = { knight: '騎士', mage: '法師', elf: '妖精', dark: '黑暗妖精', illusion: '幻術士', dragon: '龍騎士', warrior: '戰士', royal: '王族' };
   var WEAPONS = { berserker: '雙手鈍器、雙手矛、單手鈍器、雙斧（拿這些也能帶盾）', thunder: '單手劍、單手矛、雙手矛', paladin: '單手劍、雙手劍', darkknight: '單手劍、雙手劍', runeblade: '單手劍（任何單手劍都算符石劍）' };
-  var K_N = { act: '主動', pas: '被動', buf: '增益' };
   var ORDER = ['berserker', 'thunder', 'paladin', 'darkknight', 'runeblade'];
 
   W.__afkAwakenWiki = function (H) {
@@ -29,26 +28,7 @@
     h += card('五個覺醒職業', tbl(['本職', '覺醒職業', '主要能力', '另外能拿的武器'], cls.map(function (c) { return [esc(BASE_N[CLS[c].base] || CLS[c].base), '<b>' + esc(CLS[c].n) + '</b>', esc(CLS[c].main || ''), esc(WEAPONS[c] || '')]; }))
       + li('魔劍士的 LFE（生命）＝體質＋等級÷5，很多技能的傷害跟它有關。雷神拿矛時鎖鏈閃光多打 1 隻。'));
 
-    // 技能書來源
-    var HD = A.HERO_DROP || {}, LD = A.LEG_DROP || {};
-    var src = function (s) {
-      var b = s.book && DB.items[s.book];
-      if (s.tier === '一般') return '覺醒導師販售' + (b && b.p ? '（' + Number(b.p).toLocaleString() + ' 金幣）' : '');
-      if (s.tier === '英雄') return HD[s.cls] && HD[s.cls][s.key] ? esc(HD[s.cls][s.key]) + ' 2%' : '王掉落';
-      if (s.tier === '傳說') return (LD[s.cls] && LD[s.cls][s.key] ? esc(LD[s.cls][s.key]) + ' 1%' : '王掉落') + '；學習另扣時空材料六種各 300';
-      if (s.tier === '神話') return '次元裂縫難度的副本（王 1%、一般 0.01%）；學習另扣次元結晶 500、裂縫碎光 100';
-      return '';
-    };
-    var TIER_O = { 一般: 0, 英雄: 1, 傳說: 2, 神話: 3 };
-    cls.forEach(function (c) {
-      var list = Object.keys(A.SK).map(function (id) { return A.SK[id]; }).filter(function (s) { return s.cls === c; })
-        .sort(function (a, b) { return (TIER_O[a.tier] - TIER_O[b.tier]) || (a.lv - b.lv); });
-      h += card(CLS[c].n + '的技能（' + list.length + '）', tbl(['技能', '分級', '學習', '類型', '效果', '技能書來源'], list.map(function (s) {
-        var extra = s.k === 'act' ? '（MP ' + (s.mp || 0) + '，冷卻 ' + (s.cd || 0) + ' 秒，自動施放）' : s.k === 'buf' ? '（MP ' + (s.mp || 0) + '，自動維持）' : '';
-        return [esc(s.n), esc(s.tier), 'Lv' + s.lv, K_N[s.k] || '', esc(s.desc || '') + extra, src(s)];
-      })));
-    });
-    h += card('技能書', li('一般：覺醒導師用金幣買。英雄：Lv50～80 的王 2%。傳說：Lv80 以上的王 1%（Lv80 學）。神話：次元裂縫難度的副本（次元裂縫的多人副本、單人副本的次元裂縫難度），覺醒職業掉自己職業的書（Lv90 學）。')
+    h += card('技能與技能書', li('每個覺醒職業的技能（效果、學習等級、技能書怎麼取得）在「<b>職業魔法</b>」分頁，選上面的職業就看得到。') + li('一般：覺醒導師用金幣買。英雄：Lv50～80 的王 2%。傳說：Lv80 以上的王 1%（Lv80 學）。神話：次元裂縫難度的副本（次元裂縫的多人副本、單人副本的次元裂縫難度），覺醒職業掉自己職業的書（Lv90 學）。')
       + li('覺醒導師「神話法術書」分頁：覺醒職業 神話法術書碎片 ×100 → 失去光芒的覺醒職業 神話法術書 ×1；失去光芒的法術書 ×10＋神話技能秘笈（或傳說技能秘笈）×1 → 自己職業的一本神話（或傳說）法術書。')
       + li('碎片、傳說技能秘笈：單人副本（夢域鏡難度）的王各 0.1%。失去光芒的法術書 0.01%、神話技能秘笈 0.1%：單人副本（次元裂縫難度）的王、次元裂縫的多人副本王。'));
 
