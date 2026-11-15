@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-32f0b202ae09",
+  "build": "merge-0.4-953bf25873aa",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -1699,7 +1699,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "497e58431b32ac5ca789985d14b2ccf289e1eb29d815cfb97233a2b5a7fd6784",
+      "sha256": "63611f192f055a05b18c9323e8c263a01ad5c03040664c787be8dc2291269852",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2033,8 +2033,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/integrity-core.js?v=7246e2fd7659",
-      "sha256": "7246e2fd76593d813783f4c515edc37f77aa4c3288690264244d6a836222603c",
+      "url": "merged/integrity-core.js?v=4e639c0822a4",
+      "sha256": "4e639c0822a4e704e3435a9d3421bb8c179cae0b390dc7222a285ca60681f75a",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2204,7 +2204,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "5a61b68fe759c4c123677dacc4b00ceda8f75dff67bf7602dc7e5f931b46488e",
+      "sha256": "c93340c8fabe332322bd6d22ad6a77d6868dfc6945d05f0c6a61f82e22cd4418",
       "type": "text/html; charset=utf-8"
     }
   ]

@@ -13,7 +13,8 @@
  // 11-12：存檔序號（js/13 saveGame 每存一次 +1）。曾經存在過的角色，只准匯入「比這台裝置上最後見過的還新」的進度（讀舊檔＝重：不准）
  function saveSeq(p){const n=Number(p&&p._saveSeq);return Number.isSafeInteger(n)&&n>0?n:0;}
  function path(p){return p.classPath?{route:p.classPath.route,stage:p.classPath.stage,ultimates:copy(p.classPath.ultimates||{})}:null;}
- function pathCheck(old,p,advance){const n=path(p);if(!old)return;if(!n||n.route!==old.route||n.stage<old.stage)fail('不能用舊存檔回退或更換永久職業路線');for(const [k,v] of Object.entries(old.ultimates))if(n.ultimates[k]!==v)fail('不能用舊存檔更換已選定的大絕');if(!advance&&(n.stage!==old.stage||Object.keys(n.ultimates).length!==Object.keys(old.ultimates).length))fail('職業進階與大絕必須由導師完成');}
+ // 11-15：覺醒（afk-awaken，p.awkFrom）會把本職的職業路線清掉、改成新職業，路線是 null 才是對的，不算回退
+ function pathCheck(old,p,advance){const n=path(p);if(!old)return;if(!n&&p&&p.awkFrom)return;if(!n||n.route!==old.route||n.stage<old.stage)fail('不能用舊存檔回退或更換永久職業路線（角色：'+(p.name||'?')+'）');for(const [k,v] of Object.entries(old.ultimates))if(n.ultimates[k]!==v)fail('不能用舊存檔更換已選定的大絕');if(!advance&&(n.stage!==old.stage||Object.keys(n.ultimates).length!==Object.keys(old.ultimates).length))fail('職業進階與大絕必須由導師完成');}
  function vault(keys){if(!own(keys,V))return C().freshVault();const v=B.parse(keys[V]);if(!C().validVault(v))fail('魂魄簿異常，未重建或刪除原資料');return v;}
  function absorb(l,keys,{advance=false,tolerateInvalid=false,allowDup=null}={}){
   if(!valid(l))fail('本機保護帳本異常，請保留資料');const out=copy(l),rs=roles(keys,tolerateInvalid,allowDup);let v,used=[];
@@ -22,7 +23,7 @@
   try{v=vault(keys);}catch(e){if(!tolerateInvalid)throw e;}
   try{used=own(keys,S)?B.parse(keys[S]):[];if(!Array.isArray(used)||used.some(x=>typeof x!=='string'))fail('舊制魂魄消耗紀錄異常');}catch(e){if(!tolerateInvalid)throw e;used=[];}
   for(const k of ['seen','sealed','spent','paths','retired'])Object.setPrototypeOf(out[k],null);
-  for(const [id,{p}] of Object.entries(rs)){if(own(l.sealed,id)||own(l.retired,seed(p)))fail('備份含已封魂或已消耗的角色，不能恢復成可使用角色');if(!C().valid(p))fail('職業資料無法驗證');pathCheck(l.paths[id],p,advance);out.seen[id]=true;{const q=saveSeq(p);if(q>0){if(!dict(out.seq))out.seq=Object.create(null);if(!(Number(out.seq[id])>=q))out.seq[id]=q;}}if(path(p))out.paths[id]=path(p);}
+  for(const [id,{p}] of Object.entries(rs)){if(own(l.sealed,id)||own(l.retired,seed(p)))fail('備份含已封魂或已消耗的角色，不能恢復成可使用角色');if(!C().valid(p))fail('職業資料無法驗證');pathCheck(l.paths[id],p,advance);out.seen[id]=true;{const q=saveSeq(p);if(q>0){if(!dict(out.seq))out.seq=Object.create(null);if(!(Number(out.seq[id])>=q))out.seq[id]=q;}}if(path(p))out.paths[id]=path(p);else if(p.awkFrom)delete out.paths[id];}
   if(v){
   for(const [id,sid] of Object.entries(l.sealed))if(v.sealed[id]!==sid)fail('還原會回退封魂紀錄，已停止');
   for(const [sid,receipt] of Object.entries(l.spent))if(!own(v.spent,sid)||JSON.stringify(v.spent[sid])!==JSON.stringify(receipt))fail('還原會回退魂魄消耗紀錄，已停止');
