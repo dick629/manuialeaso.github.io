@@ -34,6 +34,7 @@
   // 11-14：匣之改成「極意融會 ★3」而且「巔峰 1500 等」才開放
   var pLv = function (p) { try { var g = G() && G().read(p); return g && g.paragon ? N(g.paragon.level) : -1; } catch (e) { return -1; } };   // 讀不到回 -1（不能當成 0 去退點）
   var opened = function (p) { try { var t = T2() && T2().data(p); return !!(t && t.j >= 3) && pLv(p) >= OPEN_LV; } catch (e) { return false; } };
+  W.__afkT3Opened = opened;   // 11-16：選擇變身的聖衣標籤用（匣之開啟後神聖衣／血魔／鐵聖衣都算匣之聖衣）
   // 穿著那件聖衣的等級：casket（匣之）／blood／iron／divine／null
   var clothTier = function (p) {
     var id = clothOn(p); if (!id) return null; var c = clothRec(p, id); if (!c || !c.ex) return null;

@@ -548,11 +548,19 @@
     if(!pickTab||!cnt[pickTab])pickTab=cur?cur.group:(PICK_GROUPS.find(function(g){return use[g[0]];})||PICK_GROUPS.find(function(g){return cnt[g[0]];})||PICK_GROUPS[0])[0];
     function btn(x){var b=document.createElement('button');b.type='button';b.className='btn afk-ca-form';b.dataset.cardForm=x.form.n;
       var lvTxt=(x.form.lv>1&&x.group!=='mythic'&&x.group!=='celestial'&&x.group!=='spacetime'&&x.group!=='samsara'?' <small class="afk-ca-lv">Lv'+escape(x.form.lv)+'</small>':'');
+      // 11-16（Ping）：聖衣標出目前是哪一級（神聖衣／血魔聖衣／鐵聖衣／黃金…／封印／碎裂），縮圖用那一級自己的圖
+      var clTag='',clThumb='';
+      if(x.group==='samsara'&&!x.off){try{var cr=rowFor(x.form),CP=window.LineageClothProgression,tag=cr&&sealed(cr.id,player)?'封印':(cr&&CP&&CP.label?CP.label(player,cr.id):'');
+        if(/^(神聖衣|血魔聖衣|鐵聖衣)$/.test(tag)&&window.__afkT3Opened&&window.__afkT3Opened(player))tag='匣之聖衣';
+        if(tag)clTag='<small class="afk-ca-lv" style="color:'+(/神聖衣|血魔|鐵聖衣|匣之/.test(tag)?'#fde68a':/碎裂|待/.test(tag)?'#fca5a5':'#cbd5e1')+'">'+escape(tag)+'</small>';
+        var hf=window.__afkHolyClothForm&&window.__afkHolyClothForm({cardAscension:player.cardAscension,_faceD:5,cls:player.cls},x.form.n);
+        if(hf&&hf.base)clThumb='<span class="afk-v3-thumb" style="display:flex;width:100%;height:112px;overflow:hidden;align-items:flex-end;justify-content:center"><img loading="lazy" alt="" src="'+escape(hf.base+'idle_0.png')+'" style="max-height:112px;max-width:100%;image-rendering:pixelated" onerror="this.style.visibility=\'hidden\'"></span>';
+      }catch(e){}}
       if(iconView()){   // 圖示模式（玩家 2026-10-30「有圖案、有名稱，點選變身」）：圖＋名稱，說明放在長按／滑鼠提示
         b.className='btn afk-ca-form afk-ca-tile'+(cur&&cur.form.n===x.form.n?' afk-ca-cur':'');b.title=x.form.n+(x.off?'（'+x.off+'）':'')+'\n'+polyFormDesc(x.form);
-        b.innerHTML=(window.__afkFormThumb?window.__afkFormThumb(x.form.n,true).replace('<img ','<img loading="lazy" '):'')+'<strong class="'+escape(x.color)+'">'+escape(x.form.n)+'</strong>'+(lvTxt?'<small class="afk-ca-lv">'+lvTxt.replace(/<[^>]+>/g,'').trim()+'</small>':'')+(x.off?'<b class="afk-ca-off">'+escape(x.off)+'</b>':'');
+        b.innerHTML=(clThumb||(window.__afkFormThumb?window.__afkFormThumb(x.form.n,true).replace('<img ','<img loading="lazy" '):''))+'<strong class="'+escape(x.color)+'">'+escape(x.form.n)+'</strong>'+(lvTxt?'<small class="afk-ca-lv">'+lvTxt.replace(/<[^>]+>/g,'').trim()+'</small>':'')+clTag+(x.off?'<b class="afk-ca-off">'+escape(x.off)+'</b>':'');
       } else
-      b.innerHTML='<strong class="'+escape(x.color)+'">'+escape(x.form.n)+lvTxt+'</strong><span>'+(x.off?'<b class="afk-ca-off">'+escape(x.off)+'</b>・':'')+escape(polyFormDesc(x.form))+'</span>';
+      b.innerHTML='<strong class="'+escape(x.color)+'">'+escape(x.form.n)+lvTxt+clTag+'</strong><span>'+(x.off?'<b class="afk-ca-off">'+escape(x.off)+'</b>・':'')+escape(polyFormDesc(x.form))+'</span>';
       if(x.off){b.disabled=true;b.classList.add('afk-ca-dim');b.dataset.off=x.off;}else b.onclick=function(){confirmPolySelect(uid,x.form.n);};return b;}
     function head(t){var h=document.createElement('div');h.className='afk-ca-sub';h.textContent=t;return h;}
     function draw(){var q=search.value.trim();list.innerHTML='';tabs.innerHTML='';

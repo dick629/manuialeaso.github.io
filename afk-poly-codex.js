@@ -175,7 +175,7 @@
     try {
       var pl = typeof player !== 'undefined' ? player : null, fd = typeof findPolyForm === 'function' ? findPolyForm(name) : null, form = fd && fd.form || { n: name };
       if (pl && typeof _actorBattleForm === 'function') {
-        var bf = _actorBattleForm({ avatar: pl.avatar, cls: pl.cls, eq: pl.eq, _faceD: 5, buffs: { poly: 1 }, poly: form }, false);
+        var bf = _actorBattleForm({ avatar: pl.avatar, cls: pl.cls, eq: pl.eq, _faceD: 5, buffs: { poly: 1 }, poly: form, cardAscension: pl.cardAscension }, false);   // 11-16：帶上聖衣紀錄，神聖衣／血魔／鐵聖衣的縮圖用它自己的圖
         if (bf && bf.base && (!/^class:/.test(bf.key || '') || form.classMorph || form.n === '夏納')) { if (bf.wpn) pre.push(bf.base + bf.wpn + '_idle_0.png'); pre.push(bf.base + 'idle_0.png'); }
       }
     } catch (e) {}

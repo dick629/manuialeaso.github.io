@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-3949d8732f25",
+  "build": "merge-0.4-a696f0d84b6d",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -298,8 +298,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-card-ascension.js?v=ec18a0a6b522",
-      "sha256": "ec18a0a6b5227955b4c356eed2e430ddb72182903314b5a4b8ccb1e4541d546d",
+      "url": "afk-card-ascension.js?v=5383677565ae",
+      "sha256": "5383677565ae4d1876f71a8d0393898d8b04dfdb395ba889cc0b5d76447bae53",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1083,8 +1083,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-poly-codex.js?v=dde17e0a9223",
-      "sha256": "dde17e0a92239206c32ef57aed806db8c7a2f0351903cfdc11c3a37b209c2cee",
+      "url": "afk-poly-codex.js?v=2c1021ba7f34",
+      "sha256": "2c1021ba7f34a25fdbb934f45e304b1a5d8ce46b04eb14091b096c5e27898c2d",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1508,8 +1508,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-talent3.js?v=3a1dd0d0a9a9",
-      "sha256": "3a1dd0d0a9a9ae85dd68f4f97cf5bd193607f65dfe01224d1293ca8688fdbf72",
+      "url": "afk-talent3.js?v=2fdba0faf74b",
+      "sha256": "2fdba0faf74bfa8740b7be72eafe7723220f078d85a5c5c221341e82c16d325b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1709,7 +1709,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "2beff919fc07d6f41ccc46c2a729fe56c32cb3d5c9e2b96e88b19f337e7c2d75",
+      "sha256": "e719a8be452d3073c5744139612298b5e8c45ab94ad0ed877a8832afee4bc5b7",
       "type": "text/html; charset=utf-8"
     },
     {
