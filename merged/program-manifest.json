@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-75dbe7a53b60",
+  "build": "merge-0.4-2afbc95525e0",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -233,8 +233,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-bossrelic.js?v=bb5ad05d5c94",
-      "sha256": "bb5ad05d5c94b572b305e5aff26da1ddfa304d715d6e0c8b96ea25579de61612",
+      "url": "afk-bossrelic.js?v=aa4545738200",
+      "sha256": "aa4545738200728078c66ef9f376f2bc3e8d41eb0f5272aa14a01c1ed8c40509",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -573,8 +573,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-fastlz.js?v=4f488376176c",
-      "sha256": "4f488376176cd3692861926f12fc76cf826fb160f86562bc4a25b7729f17c0f2",
+      "url": "afk-fastlz.js?v=c206796e71ae",
+      "sha256": "c206796e71ae5e4490155b8b4499352c7e6e6fc670cb9cf607052f5a3d7c59fa",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1704,7 +1704,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "97d91854430eaa8c01af10c7b063f1ba72ab93f6098d1e03802d2b57768ad4af",
+      "sha256": "8c40c6aabb2d62f9edcb50f0fe3758168d2b6fc6dbb96fb2835e7581548e3933",
       "type": "text/html; charset=utf-8"
     },
     {

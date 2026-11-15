@@ -441,7 +441,9 @@
   var note = function (key, h) { try { var x = X(); if (x) x.note('br_' + key, h); } catch (e) {} };
   var popFx = function (key, txt) { try { var x = X(); if (x) x.pop('br_' + key, '', txt, '#fcd34d'); } catch (e) {} };
 
-  var teamSum = function (k) { var n = 0; party().forEach(function (a) { var f = fx(a); if (f && f[k]) n += N(f[k].p); }); return n; };
+  // 全隊加總（寵物光環、全隊增傷…）：每次傷害都會問，改成同一拍只算一次（11-15 效能）
+  var TS = { t: -1, g: -1, v: {} };
+  var teamSum = function (k) { var t = tk(); if (TS.t !== t || TS.g !== GEN) { TS.t = t; TS.g = GEN; TS.v = {}; } var c = TS.v[k]; if (c !== undefined) return c; var n = 0; party().forEach(function (a) { var f = fx(a); if (f && f[k]) n += N(f[k].p); }); TS.v[k] = n; return n; };
 
   // ── 造成傷害 ──
   var dealt = function (actor, tgt, v, opt) {
