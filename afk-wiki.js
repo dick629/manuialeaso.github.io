@@ -1134,6 +1134,7 @@
     { k: 'skillupgrade', n: '技能強化' },
     { k: 'classevolution', n: '職業進化' },
     { k: 'classtransfer', n: '職業轉職' },
+    { k: 'awaken', n: '職業覺醒' },
     { k: 'charactersouls', n: '角色魂魄' },
     { k: 'versionrules', n: '冒險規則' },
     { k: 'lore', n: '世界觀' },
@@ -1217,7 +1218,8 @@
     document.body.appendChild(m);
     var tabs = document.getElementById('m-wiki-tabs');
     TABS.forEach(function (t) {
-      if (t.k === 'newzones' && !(window.__afkNewZones && window.__afkNewZones.wiki)) return;   // 新地區沒開就不顯示
+      if (t.k === 'newzones' && !(window.__afkNewZones && window.__afkNewZones.wiki)) return;
+      if (t.k === 'awaken' && !(window.__afkAwakenWiki && window.__afkAwaken)) return;   // 覺醒職業沒開就不顯示   // 新地區沒開就不顯示
       var b = document.createElement('button');
       b.className = 'm-wiki-tab'; b.setAttribute('data-tab', t.k); b.textContent = t.n;
       b.addEventListener('click', function () { state.tab = t.k; render(); });
@@ -1398,6 +1400,7 @@
     if (key === 'sunrise') return renderSunrise();
     if (key === 'kingroom') return renderKingroom();
     if (key === 'antharas') return renderAntharas();
+    if (key === 'awaken') return (window.__afkAwakenWiki && window.__afkAwaken) ? window.__afkAwakenWiki({ tbl: wTbl }) : '<div class="m-wiki-note">還沒開放。</div>';   // 職業覺醒（afk-awaken-wiki 產生）
     if (key === 'newzones') return (window.__afkNewZones && window.__afkNewZones.wiki) ? window.__afkNewZones.wiki({ tbl: wTbl }) : '<div class="m-wiki-note">還沒開放。</div>';   // 新地區副本（afk-newzones 產生）
     if (key === 'load') return renderLoad();
     if (key === 'pledge') return renderPledge();
@@ -1446,6 +1449,7 @@
     { key: 'skillupgrade', cls: false, label: '技能強化' },
     { key: 'classevolution', cls: false, label: '職業進化', search:function(terms,max){return window.AFK_GAME_GUIDE?AFK_GAME_GUIDE.searchClasses(false,terms,max):[];} },
     { key: 'classtransfer', cls: false, label: '職業轉職', search:function(terms,max){return window.AFK_GAME_GUIDE?AFK_GAME_GUIDE.searchClasses(true,terms,max):[];} },
+    { key: 'awaken', cls: false, label: '職業覺醒' },
     { key: 'charactersouls', cls: false, label: '角色魂魄' },
     { key: 'versionrules', cls: false, label: '冒險規則' },
     { key: 'lore', cls: false, label: '世界觀' },
