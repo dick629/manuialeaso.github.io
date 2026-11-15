@@ -129,20 +129,38 @@
   var LS_VIEW = 'afk_view_scale', VIEWS = [1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7], viewBase = null;
   function viewOk() { try { return matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 600; } catch (e) { return false; } }
   function getView() { var v = parseFloat(lsGet(LS_VIEW)); if (!(v > 0)) return 1; return Math.min(1, Math.max(0.7, v)); }
+  // 直向／橫向看「螢幕本身」的方向，不看 innerWidth：viewport 被設成固定寬度後，轉回直向那一刻 innerWidth 還是橫向的寬度，
+  //   會被誤判成橫向、整個畫面跑掉要重登（Ping 11-15 14:04）
+  function portrait() {
+    try { var t = screen.orientation && screen.orientation.type; if (t) return t.indexOf('portrait') === 0; } catch (e) {}
+    try { if (typeof window.orientation === 'number') return window.orientation === 0 || window.orientation === 180; } catch (e) {}
+    try { return matchMedia('(orientation: portrait)').matches; } catch (e) { return innerWidth <= innerHeight; }
+  }
   function applyView() {
     var m = document.querySelector('meta[name="viewport"]'); if (!m) return;
     if (viewBase == null) viewBase = m.getAttribute('content') || 'width=device-width, initial-scale=1.0, viewport-fit=cover';
     var v = getView(), c = viewBase;
     if (viewOk() && v < 0.999) {
-      var sw = Math.min(screen.width, screen.height), sh = Math.max(screen.width, screen.height), w;
-      if (innerWidth <= innerHeight) w = Math.min(760, Math.round(sw / v));
-      else w = Math.round(sh / Math.max(v, sw / 515));
-      c = 'width=' + w + ', viewport-fit=cover';
+      var sw = Math.min(screen.width, screen.height), sh = Math.max(screen.width, screen.height), w, scr;
+      if (portrait()) { w = Math.min(760, Math.round(sw / v)); scr = sw; }
+      else { w = Math.round(sh / Math.max(v, sw / 515)); scr = sh; }
+      c = 'width=' + w + ', initial-scale=' + (Math.round(scr / w * 1000) / 1000) + ', viewport-fit=cover';   // 明寫縮放比例：瀏覽器轉向後才不會沿用舊的放大倍率
     }
     if (m.getAttribute('content') !== c) m.setAttribute('content', c);
   }
+  // 轉向：先還原成裝置寬度讓瀏覽器重算，再套上縮放；最後補發 resize 讓各介面重新量尺寸
+  function reorient() {
+    var m = document.querySelector('meta[name="viewport"]');
+    if (m && viewBase != null && viewOk() && getView() < 0.999) m.setAttribute('content', viewBase);
+    setTimeout(function () { applyView(); try { window.scrollTo(0, 0); } catch (e) {} }, 120);
+    setTimeout(function () { try { window.dispatchEvent(new Event('resize')); } catch (e) {} }, 450);
+  }
   function setView(v) { lsSet(LS_VIEW, String(Math.min(1, Math.max(0.7, Number(v) || 1)))); applyView(); }
-  function watchView() { var t = 0, f = function () { clearTimeout(t); t = setTimeout(applyView, 250); }; window.addEventListener('orientationchange', f); window.addEventListener('resize', f); }
+  function watchView() {
+    var t = 0, last = null, f = function () { clearTimeout(t); t = setTimeout(function () { var pt = portrait(); if (last !== null && pt !== last) { last = pt; reorient(); return; } last = pt; applyView(); }, 250); };
+    window.addEventListener('orientationchange', f); window.addEventListener('resize', f);
+    try { if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', f); } catch (e) {}
+  }
   function setLite(onOff) { lsSet(LS_LITE, onOff ? '1' : '0'); applyScale(); }
   function applyScale() {
     var root = document.documentElement;
