@@ -735,13 +735,20 @@
     var take = function (id, n) { try { questConsumeId(id, n); return true; } catch (e) { return false; } };
     var books = function (p, tier) { return Object.keys(AW.SK).map(function (k) { return AW.SK[k]; }).filter(function (s) { return s.tier === tier && s.cls === p.cls; }).map(function (s) { return { bk: 'bk_aw_' + s.cls + '_' + s.key, n: s.n }; }).filter(function (b) { return DB.items[b.bk]; }); };
     AW.tabs.push({ id: 'mythbook', label: '神話法術書', show: function () { return true; }, render: function (p) {
-      var h = '<div class="ax-desc">覺醒職業 神話法術書碎片 ×100 → 失去光芒的覺醒職業 神話法術書 ×1。</div>'
-        + '<div class="ax-desc">持有：碎片 ' + cnt('afk_aw_myth_frag') + '、失去光芒的法術書 ' + cnt('afk_aw_myth_lost') + '、神話技能秘笈 ' + cnt('afk_myth_codex') + '、傳說技能秘笈 ' + cnt('afk_legend_codex') + '</div>'
-        + '<div style="margin:6px 0"><button type="button" data-aw-x="mbfuse"' + (cnt('afk_aw_myth_frag') < 100 ? ' disabled' : '') + '>合成 1 本</button></div>';
-      if (!AW.isAw(p)) return h + '<div class="ax-note">覺醒之後才能兌換自己職業的法術書。</div>';
+      // 11-15：改成跟其他 NPC 面板同一套樣式（標題、材料列、卡片列、按鈕）
+      var K = W.__afkNpcKit, ico = function (id) { return K && K.itemIco ? K.itemIco(id) : ''; };
+      var row = function (id, name, desc, btn) { return '<div class="ax-row"><div class="ax-main">' + ico(id) + '<div><div class="ax-name">' + name + '</div><div class="ax-desc">' + desc + '</div></div></div><div class="ax-act">' + btn + '</div></div>'; };
+      var fr = cnt('afk_aw_myth_frag'), lost = cnt('afk_aw_myth_lost');
+      var h = '<div class="ax-h">神話法術書</div><div class="ax-note">碎片合成失去光芒的法術書，再加上技能秘笈兌換自己職業的神話或傳說法術書。學習時另外需要原本的學習材料。</div>';
+      if (K && K.matBar) h += '<div style="margin:6px 0 10px">' + K.matBar(['afk_aw_myth_frag', 'afk_aw_myth_lost', 'afk_myth_codex', 'afk_legend_codex']) + '</div>';
+      h += row('afk_aw_myth_lost', esc(DB.items.afk_aw_myth_lost.n), '覺醒職業 神話法術書碎片 ×100 → 1 本　<span class="ax-req"><span class="' + (fr >= 100 ? 'ok' : 'no') + '">' + fr + '</span>/100</span>',
+        '<button type="button" data-aw-x="mbfuse"' + (fr < 100 ? ' disabled' : '') + '>合成 1 本</button>');
+      if (!AW.isAw(p)) return h + '<div class="ax-note" style="margin-top:8px">覺醒之後才能兌換自己職業的法術書。</div>';
       [['神話', 'afk_myth_codex'], ['傳說', 'afk_legend_codex']].forEach(function (t) {
-        h += '<div class="ax-name" style="margin-top:8px">' + t[0] + '法術書（失去光芒的法術書 ×10＋' + DB.items[t[1]].n + ' ×1；學習時另需原本的學習材料）</div>';
-        books(p, t[0]).forEach(function (b) { var ok = cnt('afk_aw_myth_lost') >= 10 && cnt(t[1]) >= 1; h += '<div class="ax-row" style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><span>' + esc(b.n) + '</span><button type="button" data-aw-x="mbswap" data-aw-arg="' + b.bk + '|' + t[1] + '"' + (ok ? '' : ' disabled') + '>兌換</button></div>'; });
+        var ok = lost >= 10 && cnt(t[1]) >= 1;
+        h += '<div class="ax-h" style="margin-top:12px">' + t[0] + '法術書</div><div class="ax-note">失去光芒的法術書 ×10＋' + esc(DB.items[t[1]].n) + ' ×1 換一本（自己選）。</div>';
+        books(p, t[0]).forEach(function (b) { h += row(b.bk, esc(b.n), '失去光芒的法術書 <span class="' + (lost >= 10 ? 'ok' : 'no') + '">' + lost + '</span>/10、' + esc(DB.items[t[1]].n) + ' <span class="' + (cnt(t[1]) >= 1 ? 'ok' : 'no') + '">' + cnt(t[1]) + '</span>/1',
+          '<button type="button" data-aw-x="mbswap" data-aw-arg="' + b.bk + '|' + t[1] + '"' + (ok ? '' : ' disabled') + '>兌換</button>'); });
       });
       return h;
     }, click: function (x, arg) {
