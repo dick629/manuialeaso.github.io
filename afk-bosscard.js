@@ -190,7 +190,7 @@
     list.forEach(function (b) {
       var t = tierOf(b.id), s = score(b.id), seen = t > 0 || !!d.k[b.id], x = TIERS[t - 1];
       h += '<div class="bc-card t' + t + (ui.sel === b.id ? ' sel' : '') + '" data-bc="' + b.id + '"><span class="bc-tag">' + typeN(b) + '</span>'
-        + '<div class="bc-pic"><img src="' + (b.card || ('assets/bosscard/' + b.id + '.png')) + '" alt="" loading="lazy"' + (seen ? '' : ' class="sil"') + '></div>'
+        + '<div class="bc-pic"><img src="' + ((!seen && b.sil) || b.card || ('assets/bosscard/' + b.id + '.png')) + '" alt="" loading="lazy"' + (seen ? '' : ' class="sil"') + '></div>'
         + '<div class="bc-nm">' + (seen ? esc(b.n) : '？？？') + '</div>'
         + '<div class="bc-tr ' + (x ? x.col : 'text-slate-500') + '">' + (x ? x.n : (d.k[b.id] ? '已打倒、未登錄' : '未遇見')) + '</div>'
         + (t < 3 ? '<div class="bc-bar"><i style="width:' + s + '%"></i></div>' : '') + '</div>';

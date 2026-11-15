@@ -753,7 +753,7 @@
   // ── 王者卡冊：新地區 19 隻王（第三個分頁「王者・新地區」；卡面先用 GPT 動畫的待機圖）──
   var NZ_CARD = {}, NZ_WHERE = { deos: '信念之塔 1 樓', belial: '信念之塔 2 樓', isabe: '信念之塔 3 樓', lazel: '信念之塔 4 樓', klein: '破滅的奇岩地監 1 樓', talos: '破滅的奇岩地監 2 樓', gorogus: '破滅的奇岩地監 3 樓', dektos: '破滅的奇岩地監 4 樓',
     leo1: '火龍巢穴 第一區', leo2: '火龍巢穴 第二區', leo3: '火龍巢穴 第三區', dreamlord: '中央寺院', s_gate: '屍魂塔 第一層', s_exec: '屍魂塔 第二層', s_chaos: '屍魂塔 第三層', s_mammon: '屍魂塔 隱藏房間（30%）', s_beast: '屍魂塔 第四層', s_andrea: '屍魂塔 頂端', nemesis: '古代兵器涅默西斯駐紮地（跟地圖王一樣的出現規則）' };
-  Object.keys(BOSS).forEach(function (k) { NZ_CARD[BOSS[k][0]] = { id: 'nz_' + k, n: BOSS[k][0], type: 'nz', maps: [], where: NZ_WHERE[k] || '', card: 'assets/bosscard/nz_' + k + '.png' }; });
+  Object.keys(BOSS).forEach(function (k) { NZ_CARD[BOSS[k][0]] = { id: 'nz_' + k, n: BOSS[k][0], type: 'nz', maps: [], where: NZ_WHERE[k] || '', card: 'assets/bosscard/nz_' + k + '.png', sil: 'assets/bosscard/nz_' + k + '_sil.png' }; });   // sil：未遇見時的剪影（卡面是不透明底，直接變黑會整張黑）
   try { if (W.__afkBossCard && W.__afkBossCard.register) W.__afkBossCard.register(Object.keys(NZ_CARD).map(function (n) { return NZ_CARD[n]; })); } catch (e) {}
   if (typeof W.killMob === 'function') {
     var oKillBc = W.killMob;
