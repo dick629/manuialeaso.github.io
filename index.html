@@ -566,7 +566,7 @@
     })();
     </script>
 
-    <script src="js/anim-manifest.js?v=493976b39e5a"></script>
+    <script src="js/anim-manifest.js?v=8ccc1994cddc"></script>
     <script src="js/00-data.js?v=579471450eea"></script>
 <script src="js/01-drops-config.js?v=287d6f0e5cdc"></script>
 <script src="js/02-stats-recompute.js?v=8cefe7e46f92"></script>
@@ -637,7 +637,7 @@
     <!-- 存檔解壓快取：必須排在所有會讀 localStorage 的外掛之前（核心每殺一隻怪都重解壓一次血盟狀態） -->
     <script src="afk-lzcache.js?v=c466838d97c0"></script>
     <!-- afk-perf：卡頓修正（日誌批次寫入／背包分頁按需重建）。必須排在 afk-toast（包 logSys）與 afk-itemsearch（包 renderTabs）之前 -->
-    <script src="afk-perf.js?v=3738c61b93da"></script>
+    <script src="afk-perf.js?v=aaa0a36c70ba"></script>
     <script src="afk-display.js?v=d126f73ab790"></script>
     <!-- afk-mapsync：地圖下拉自我校正（回城／出發後地區/地圖下拉與所在地不符時自動校正） -->
     <script src="afk-mapsync.js?v=3349ebbc7cc1"></script>
@@ -706,7 +706,7 @@
     <!-- afk-illufix：幻術士修補（疼痛的歡愉 −50%、反彈、蝕刻印記；立方：燃燒 每 2 秒 5～50 火傷、灼熱印記、吸血回魔；立方：和諧回 MP 5 → 15，原 afk-classtweak）；排在 afk-wiki 之前（小百科說明跟著改）；需核心補丁 69 -->
     <script src="afk-illufix.js?v=d4806c4f9e9b"></script>
     <!-- 小百科：用到才載入（afk-lazy.js，Ping 11-13） -->
-    <script>window.__AFK_LAZY_SRC={wiki:["afk-game-guide.js?v=62427f704f","afk-wiki.js?v=83a08ce9e8"]};</script>
+    <script>window.__AFK_LAZY_SRC={wiki:["afk-game-guide.js?v=931f330c1b","afk-wiki.js?v=0866122a4e"]};</script>
     <script src="afk-lazy.js?v=f24c307989d7"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=a2831ae70fbf"></script>
@@ -746,10 +746,11 @@
     <!-- afk-relicfx：遺物特效隨強化成長（玩家的遺物特殊效果清單；需核心補丁 35；必須排在 afk-relicplus 之前） -->
     <script src="afk-relicfx.js?v=a00443d4e88f"></script>
     <!-- 完整遺物階段與事件規則；資料與設定先於遺物合成載入。 -->
-    <script src="afk-relic-catalog.js?v=3a8001402ad9"></script>
+    <script src="afk-relic-catalog.js?v=347a231cb7e3"></script>
     <script src="afk-relic-weapons.js?v=cff2a350921a"></script>
-    <script src="afk-relic-defense.js?v=7542cbb66223"></script>
+    <script src="afk-relic-defense.js?v=86c0ec7fc393"></script>
     <script src="afk-relic-runtime.js?v=bbfa5ec8e833"></script>
+    <script src="afk-summoncloth.js?v=37c7d6f1b60c"></script>
     <!-- afk-npc-kit：NPC 服務面板共用外觀（哈瑪大師、艾格尼絲、佐爾頓、艾彼迪爾）；排在這些 NPC 外掛之前 -->
     <script src="afk-npc-kit.js?v=d22d6d56d5e9"></script>
     <!-- afk-runedata：符文石 32 顆、失去光芒的符文石、哀石系列、瘴骸·破材料與解命石的物品資料（不是開關）；排在 afk-dex-extra、afk-runes、afk-rift2 之前 -->
@@ -768,7 +769,7 @@
     <!-- afk-ancient：古代藥水系列（天堂透視鏡古代體力恢復劑）、席琳夢域鏡藥水基礎補量 ×3 -->
     <script src="afk-ancient.js?v=5e9d66436878"></script>
     <!-- afk-arts：轉生技藝（奧拉奇里亞；需 afk-rebirth，排在它之後） -->
-    <script src="afk-arts.js?v=16a9df6567a1"></script>
+    <script src="afk-arts.js?v=8441c1f49e7d"></script>
     <!-- afk-knight-shock：轉生騎士的衝擊之暈打全畫面（力量加傷害、敏捷加暈眩率，頭目也會暈） -->
     <script src="afk-knight-shock.js?v=18dd1bdb485f"></script>
     <!-- afk-uifix：切換地區優先飛到村莊 -->
@@ -877,7 +878,7 @@
     <script src="afk-junkquest.js?v=c067a103c8d1"></script>
     <!-- 遺物戰鬥掛接、同伴與固定終階 GM 測試道具。 -->
     <script src="afk-relic-weapon-bridge.js?v=c49e41d407f6"></script>
-    <script src="afk-relic-companions.js?v=b9273b0c76e2"></script>
+    <script src="afk-relic-companions.js?v=eac51f612324"></script>
     <script src="afk-relic-defense-bridge.js?v=bbec977d32fe"></script>
     <script src="afk-relic-gm.js?v=12fc55e4da8f"></script>
     <!-- afk-gm-skills：魔改版裝備 GM 專屬武器自動學會全部魔法與技能（卸下也不會遺忘） -->
@@ -906,7 +907,7 @@
     <!-- afk-debuff-rules：負面效果一律計算抵抗、頭目不再免疫；污濁之水全體 15 秒、冷卻 30 秒（冷卻中改三重矢） -->
     <script src="afk-debuff-rules.js?v=855fffbc4678"></script>
     <!-- afk-finalboss：世界最終頭目「死亡女神 席琳」（死亡之海・席琳的沉沒神殿；瘋狂席琳＋席琳夢域鏡、每角色一次；挑戰後才能冥王域轉生；需 afk-dreamhell、afk-dreamstar、afk-rebirth） -->
-    <script src="afk-finalboss.js?v=aa3ff45ccf67"></script>
+    <script src="afk-finalboss.js?v=6e11524c9efd"></script>
     <!-- afk-rebirth2：二轉決戰（席琳方傷害 +5%）、次元突破者／封印輪迴光環、第二次轉生（需 afk-finalboss、afk-dreamstar） -->
     <script src="afk-rebirth2.js?v=3e5fea3d0593"></script>
     <!-- afk-affix-plus：詞綴擴充（祝福／遠古三階只能打怪取得；燃柳村龍紋師艾格尼絲「龍紋賦予」：不屈者意志、龍的印記／傷痕、神樹者的讚禮、闇龍的抵抗者） -->
@@ -1020,7 +1021,7 @@
     <!-- afk-runefx：符文石與符文之語的效果（減傷、藥水、寵物、套裝、攻擊、補助）；排在 afk-runes、afk-rift2、afk-caps、afk-sherine-dream 之後 -->
     <script src="afk-runefx.js?v=c9e2a4183c9d"></script>
     <!-- afk-finaltiers：終焉三階層（席琳夢境／席琳幻影 ×1.25／席琳伴身 ×1.5625 只能一次）；需 afk-finalboss -->
-    <script src="afk-finaltiers.js?v=735452a2bce1"></script>
+    <script src="afk-finaltiers.js?v=12515128a5f0"></script>
     <!-- afk-caps：轉生雙持的副手武器固定加成計入能力；爆擊率上限 80%（包 recomputeStats 最外層，必須最後載入）；迴避上限見核心補丁 patchEvadeCap -->
     <script src="afk-caps.js?v=8fab74fdc330"></script>
     <!-- afk-overflow：命中／迴避溢出（命中超過上限每 50 點多 5 點真實傷害、迴避超過 200 每 50 點最終減傷 +5）；包 AFK_CARD_COMBAT.damage／finalDR 最外層，排在 afk-caps 之後 -->
@@ -1066,15 +1067,15 @@
     <!-- afk-mio：密奧之卡（22 張塔羅牌，夢域鏡掉密奧碎片；偉特→托特→馬賽；裝備視窗第二頁刻印下面那格）；要在 afk-rebirth（__afkMaxAdd）之後 -->
     <!-- afk-craftlock：暫停用到次元裂縫材料的製作（Ping 11-12 22:30） -->
     <script src="afk-craftlock.js?v=17e57cf563b2"></script>
-    <script src="afk-mio.js?v=75d2fe376fa9"></script>
+    <script src="afk-mio.js?v=23008f1f95a4"></script>
     <!-- afk-sigil：聖紋（25 個字母，Lv40～70 頭目與怪物掉；裝備視窗第二頁項鍊的位置，只能裝一個） -->
     <script src="afk-sigil.js?v=d8c0873c9f89"></script>
     <!-- afk-scarab：成長型遺物「日輪聖甲蟲」（說話之島莉娜給；聖物格；Lv1～100、三型態）；要在 afk-questweapon、afk-expedition、afk-procfx 之後 -->
-    <script src="afk-scarab.js?v=03a3de910fb8"></script>
+    <script src="afk-scarab.js?v=274050f21bcf"></script>
     <!-- afk-balance1102：11/02 戰鬥平衡（夢域鏡三重矢遞減、幻影箭連發遞減、新手保障 Lv1～49、9 人以上怪物 HP 與傷害 +7%/人）；要在 afk-mech1031、afk-procfx 之後 -->
     <script src="afk-balance1102.js?v=61fd8da0cb65"></script>
     <!-- afk-goddess3：女神與夢域鏡四龍的新機制（永久雙免疫＋汙濁之水／粉碎能量解除 30 秒、女神斬殺、二轉女神幽影與狂暴、次元裂縫龍之護甲）；要在 afk-finalboss、afk-finaltiers、afk-corrupt、afk-debuff-rules、afk-illufix、afk-hidden 之後 -->
-    <script src="afk-goddess3.js?v=12fdcdacb5b9"></script>
+    <script src="afk-goddess3.js?v=c7069b0e1ebd"></script>
     <!-- afk-village：村長與地區聲望（王都傳令 米恩、懸殊、霸主出現率、商店 5 折）＋隱藏稱號；要在 afk-region-boss、afk-special-collection、afk-procfx 之後 -->
     <script src="afk-village.js?v=7834bc917847"></script>
     <!-- afk-starroad：副本「星途遠征」（席琳神殿 喬斯達）與純白的萬能藥水 -->
@@ -1145,15 +1146,15 @@
     <!-- afk-bosswatch：頭目卡住保險（HP 0 卻沒倒下 3 秒→走正常 killMob；鎖定的頭目 60 秒 HP 沒變→清掉過期的免疫屏障）；要在所有包 tick、killMob 的外掛之後，afk-intdmg 之前 -->
     <script src="afk-bosswatch.js?v=e2a6fb63a45f"></script>
     <!-- afk-skillup：技能強化（席琳神殿 技藝導師 薇爾娜）；要在 afk-hidden、afk-callally、afk-card-combat 之後，afk-intdmg 之前 -->
-    <script src="afk-skillup.js?v=921ff7035292"></script>
+    <script src="afk-skillup.js?v=639a82c8ce89"></script>
     <!-- afk-dreamquest：夢域鏡任務線「水面下的證詞」7 章（伊奧、扎爾、喬、迷幻森林之母、奧拉奇里亞、無名的說書人）；要在 afk-lore-kit、afk-hardin、afk-rift2、afk-soulstone 之後 -->
     <script src="afk-dreamquest.js?v=4d351737a271"></script>
     <!-- afk-evolve：職業進化（席琳神殿 技藝導師 薇爾娜；第一批召喚、寵物、爆發流派＋意志）；要在 afk-skillup、afk-relic-runtime、afk-card-combat 之後 -->
     <script src="afk-evolve.js?v=c8346a9cb965"></script>
     <!-- afk-mapboss：地圖王（野外打倒 300 隻）、副本王（地監待滿 10 分鐘）、王之徽章；要在 afk-lore-kit、afk-region-boss 之後 -->
     <script src="afk-mapboss.js?v=75ea645c2095"></script>
-    <script src="afk-bosscard.js?v=6d0e79cedaf9"></script>
-    <script src="afk-bossrelic.js?v=691baf3695da"></script>
+    <script src="afk-bosscard.js?v=de3e161aefae"></script>
+    <script src="afk-bossrelic.js?v=bb5ad05d5c94"></script>
     <script src="afk-relicevo.js?v=3c76afd7296e"></script>
 <script src="afk-timeroom.js?v=0c66693ced64"></script>
 <script src="afk-avatar.js?v=645fd5dff69f"></script>
@@ -1167,9 +1168,11 @@
     <!-- afk-dollrift：魔法娃娃 7～10 階（次元裂縫 32 隻；魔法娃娃商人）；要在 afk-cardplus、afk-dollaffix、afk-bosscard、afk-dimrift、afk-procfx 之後 -->
     <script src="afk-dollrift.js?v=e824e4767bcd"></script>
     <!-- afk-riftdungeons：次元裂縫的副本（席琳神殿 裂縫之門）；要在 afk-dimrift、afk-lore-kit、afk-npc-kit 之後 -->
-    <script src="afk-riftdungeons.js?v=02f0c9413a2b"></script>
+    <script src="afk-riftdungeons.js?v=5bb2a26c31ba"></script>
     <!-- afk-dimrelic：次元遺物 180 件與四龍專屬的次元時空武器（席琳神殿 次元的鍛造師）；要在 afk-relic-*、afk-dimrift、afk-riftdungeons 之後 -->
-    <script src="afk-dimrelic.js?v=a0882e7e3fba"></script>
+    <!-- afk-relic-newfx：遺物新特效（嫉妒、昏迷命中、施法速度、信念、近／遠距離減傷、猜忌；Ping 11-15）；次元遺物會用到，要在 afk-dimrelic 之前 -->
+    <script src="afk-relic-newfx.js?v=e48daa16f4e8"></script>
+    <script src="afk-dimrelic.js?v=049cd88bd162"></script>
     <!-- afk-breakskills：粉碎能量魔防 −150、污濁之水 AC +150 -->
     <script src="afk-breakskills.js?v=fe1fcac566b0"></script>
     <script src="afk-riftlock.js?v=c2ead4d5c2ce"></script>
@@ -1181,7 +1184,7 @@
 <!-- Unified save boundary: mandatory infrastructure, independent of optional feature toggles. -->
 <script src="merged/doll-policy.js?v=78965e06c4ed"></script>
 <script src="merged/legacy-codec.js?v=fe92258855d8"></script>
-<script src="merged/save-bridge.js?v=0501fc14f4ba"></script>
+<script src="merged/save-bridge.js?v=b237467a4efe"></script>
 <script src="merged/recovery-core.js?v=cc0034aba24d"></script>
 <script src="merged/backup-store.js?v=f40a03e26107"></script>
 <script src="merged/integrity-core.js?v=7246e2fd7659"></script>
@@ -1195,22 +1198,26 @@
 <script src="afk-bodyflags.js?v=5aec880878c0"></script>
 <link rel="stylesheet" href="merged/growth.css?v=9606e5dc40fc">
 <script src="merged/dragon-workshop.js?v=a556ae60cf54"></script>
-<script src="merged/growth-core.js?v=d6404743583a"></script>
-<script src="merged/growth-runtime.js?v=2d2d5cd89f68"></script>
+<script src="merged/growth-core.js?v=870f41d55cbd"></script>
+<script src="merged/growth-runtime.js?v=e9f02ccc1b37"></script>
 <script src="merged/clan-rewards.js?v=eb51d8cf2b4c"></script>
 <link rel="stylesheet" href="merged/medieval-frame.css?v=3153c149b11a">
 <script src="merged/cloth-progression.js?v=999530321897"></script>
 <script src="merged/talent-catalog.js?v=7f642b81f4cb"></script>
 <script src="merged/talents.js?v=85c87fc7c5c7"></script>
 <script src="merged/activities.js?v=c62b60775945"></script>
-<script src="merged/growth-views.js?v=9f5797dc4eeb"></script>
-<script src="merged/growth-ui.js?v=2d4edba429e9"></script>
+<script src="merged/growth-views.js?v=8f2b6cfb2730"></script>
+<script src="merged/growth-ui.js?v=ada7442ac005"></script>
 <script src="afk-shroomboost.js?v=86ad3d357b99"></script>
 <script src="afk-mercparagon.js?v=d576ddc81f85"></script>
+<script src="afk-awaken.js?v=0edf4de98d4d"></script>
+<script src="afk-awaken-ext.js?v=28668fb71ec0"></script>
+<script src="afk-awaken-transfer.js?v=b349ad374eac"></script>
+<script src="afk-newzones.js?v=d7b7f1108bc5"></script>
 <link rel="stylesheet" href="merged/class-ui.css?v=0e105ef7eeb9">
 <link rel="stylesheet" href="merged/progression-desktop.css?v=80ff2924c507" media="(min-width: 821px)">
 <link rel="stylesheet" href="merged/progression-mobile.css?v=df9be8980291" media="(max-width: 820px)">
-<link rel="stylesheet" href="merged/growth-dark.css?v=f017dc64813c">
+<link rel="stylesheet" href="merged/growth-dark.css?v=eed013bcbdfd">
 <script src="merged/class-catalog.js?v=a65731deed9a"></script>
 <script src="merged/class-core.js?v=4f8213178c10"></script>
 <script src="merged/class-runtime.js?v=a5a280840f02"></script>
@@ -1245,14 +1252,19 @@
     <script src="afk-antisl.js?v=92bdaa059a84"></script>
     <!-- afk-limitbreak：限界解放（二轉後八職業各一個被動；Ping 11-13）；要在 afk-hidden、afk-arts、afk-affix-plus、afk-card-combat 之後 -->
     <!-- afk-paragon2：巔峰 1000／2000 等的新能力（Ping 11-13）；要在 afk-limitbreak 之前（提供 __afkLimitBreakBoost）也可以，之後也可以 -->
-    <script src="afk-paragon2.js?v=df0639d15b28"></script>
+    <script src="afk-paragon2.js?v=a241ada40e53"></script>
     <script src="afk-limitbreak.js?v=4764c9f97a97"></script>
     <!-- afk-talent2：第二套天賦「極意」（巔峰 500 等開放；Ping 11-13）；要在 afk-paragon2、afk-limitbreak 之後 -->
-    <script src="afk-talent2.js?v=56befcab6a42"></script>
+    <script src="afk-talent2.js?v=b57bf73da735"></script>
     <!-- afk-enemyx：敵人爆擊、重擊、追加攻擊、共鳴魔擊、王的即死、小怪回血（Ping 11-13）；要在 afk-talent2 之後 -->
-    <script src="afk-enemyx.js?v=d227114432ee"></script>
+    <script src="afk-enemyx.js?v=89824e29319c"></script>
     <!-- afk-talent3：第三套天賦「匣之」＋匣之聖衣／血魔聖衣／鐵聖衣的數值（Ping 11-13）；要在 afk-talent2、afk-zodiac 之後 -->
-    <script src="afk-talent3.js?v=19ae23860660"></script>
+    <script src="afk-talent3.js?v=3a1dd0d0a9a9"></script>
+    <!-- afk-talent4：天賦「神聖衣」（巔峰 2000 等開放，變身中生效；Ping 11-14）；要在 afk-talent3 之後 -->
+    <script src="afk-talent4.js?v=2a20b883609f"></script>
+    <!-- afk-bloodline：巔峰「命脈」職業血脈＋「繼承繁星」（Ping 11-15）；要在 afk-talent4 之後 -->
+    <script src="afk-bloodline.js?v=490b60ce28c4"></script>
+    <script src="afk-nemesis.js?v=a9ef3f802e3b"></script>
     <!-- afk-abnforce：次元裂縫／GD之子的期待的強制異常（隱藏規則，Ping 11-13）；要在 afk-carve、afk-guardring 之後 -->
     <script src="afk-abnforce.js?v=75f657efeabc"></script>
     <!-- afk-allygear：傭兵公會圖形換裝畫面、隊伍名單點名字的即時視窗（Ping 11-13） -->

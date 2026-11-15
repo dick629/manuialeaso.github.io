@@ -67,7 +67,7 @@
     {"id":186,"key":"relic_guard_towershield","name":"鎧衛隊的漆黑塔盾","lore":"鎧衛隊的漆黑塔盾，厚重如壁、堅不可摧。","description":["格檔 60%（重擊時依此機率減半傷害；一般攻擊為上述機率的 30%）；傷害減免 +5","格擋（受到物理普通攻擊時，重擊 75%、一般攻擊 22.5% 機率格擋，格擋時該次傷害減半）；傷害減免 +15","格擋（受到物理普通攻擊時，重擊 90%、一般攻擊 27% 機率格擋，格擋時該次傷害減半）；傷害減免 +35","格擋（受到物理普通攻擊時，重擊 100%、一般攻擊 60% 機率格擋，格擋時該次傷害減半）；傷害減免 +35；【黑壁衛隊】其他隊員受到的直接傷害，20% 轉由你承受（以真實傷害計）。","格擋（受到物理普通攻擊時，重擊與一般攻擊皆必定格擋，格擋時該次傷害減半）；傷害減免 +35；【黑壁衛隊】其他隊員受到的直接傷害降低 40%，其中原傷害的 20% 轉由你承受（以真實傷害計），其餘由塔盾消解；轉移發生時恢復你 100 生命（本件治療冷卻 5 秒）。"]},
     {"id":187,"key":"relic_elder_obsidian_orb","name":"長老的黑曜水晶球","lore":"黑長者懷中的黑曜水晶球，球心封存著一整場風暴。","description":["格檔 10%（重擊時依此機率減半傷害；一般攻擊為上述機率的 30%）；智力 +3；魔力恢復 +10","格擋（受到物理普通攻擊時，重擊 25%、一般攻擊 7.5% 機率格擋，格擋時該次傷害減半）；智力 +3；魔力恢復 +25","格擋（受到物理普通攻擊時，重擊 40%、一般攻擊 12% 機率格擋，格擋時該次傷害減半）；智力 +3；魔力恢復 +50","格擋（受到物理普通攻擊時，重擊 40%、一般攻擊 12% 機率格擋，格擋時該次傷害減半）；智力 +3；魔力恢復 +50；【黑曜折光】受到直接魔法傷害時，50% 機率發動魔法格擋，減少該次傷害 50%，並恢復「避免傷害量 10%」的魔力。","格擋（受到物理普通攻擊時，重擊 40%、一般攻擊 12% 機率格擋，格擋時該次傷害減半）；智力 +3；魔力恢復 +50；【黑曜折光】受到直接魔法傷害時必定發動魔法格擋，減少該次傷害 75%，並恢復「避免傷害量 10%」的魔力；每次魔法格擋額外免費對攻擊者施放目前設定的自動攻擊法術 1 次，傷害 ×1.5。"]},
     {"id":188,"key":"relic_tamer_dogclub","name":"馴獸師的訓狗棒","lore":"馴獸師調教猛獸的短棒，號令之下獸性盡出。","description":["寵物技能傷害 ×1.5；傷害減免 +3","寵物技能傷害 ×2；傷害減免 +10","寵物技能傷害 ×2.5；傷害減免 +10；寵物技能消耗魔力降低 25%。","寵物技能傷害 ×3；傷害減免 +10；寵物技能消耗魔力降低 25%；【群犬號令】每隻寵物每累積 3 次自己正常施放技能的命中，將其下一次技能行動的剩餘等待時間縮短 50%，然後清空計數；每次技能行動最多計 1 次。","寵物技能傷害 ×5；傷害減免 +10；寵物技能不消耗魔力；【群犬號令】每隻寵物每累積 3 次自己正常施放技能的命中，將其下一次技能行動的剩餘等待時間縮短 50%，然後清空計數；每次技能行動最多計 1 次；每 5 秒命令每隻存活寵物，照牠平常選技能的方式免費額外施放一個技能。"]},
-    {"id":189,"key":"relic_summon_cloth","name":"召喚儀式的魔術布","lore":"布面描繪著層層召喚契約，纏上雙脛後，異界眷屬的低語便清晰可辨。","description":["召喚控制（可指定召喚物；28～48 級召喚上限 6 隻）；精神 +1","召喚控制（可指定召喚物；28～48 級召喚上限 7 隻）；召喚法術消耗魔力降低 25%；精神 +1","召喚控制（可指定召喚物；28～48 級召喚上限 8 隻）；召喚法術消耗魔力降低 50%；精神 +1","召喚控制（可指定召喚物）；精神 +1；召喚法術不消耗魔力；【軍團召喚陣】所有可召喚等級適用：召喚術的召喚上限額外 +3，且至少為 8 隻；召喚術召喚物最大生命 ×1.5。","召喚控制（可指定召喚物）；精神 +1；召喚法術不消耗魔力；【軍團召喚陣】所有可召喚等級適用：召喚術的召喚上限額外 +6，且至少為 11 隻；召喚術召喚物最大生命 ×2、直接傷害 ×1.5；戰鬥中每 5 秒啟動一次 3 秒軍團修復，所有存活的召喚術召喚物每秒恢復最大生命 1%，共 3 次。"]},
+    {"id":189,"key":"relic_summon_cloth","name":"召喚儀式的魔術布","lore":"布面描繪著層層召喚契約，纏上雙脛後，異界眷屬的低語便清晰可辨。","description":["召喚上限 +1（所有召喚等級；妖精：屬性精靈 +1 隻）；召喚物與屬性精靈最大生命 +20%；精神 +1","召喚上限 +1（妖精：屬性精靈 +1 隻）；召喚物與屬性精靈最大生命 +30%；召喚法術消耗魔力降低 25%；精神 +1","召喚上限 +2（妖精：屬性精靈 +1 隻）；召喚物與屬性精靈最大生命 +40%、造成的傷害 +10%；召喚法術消耗魔力降低 50%；精神 +1","精神 +1；召喚法術不消耗魔力；【軍團召喚陣】召喚上限 +3，且至少為 8 隻（妖精：屬性精靈 +2 隻）；召喚物與屬性精靈最大生命 ×1.5。","精神 +1；召喚法術不消耗魔力；【軍團召喚陣】召喚上限 +6，且至少為 11 隻（妖精：屬性精靈 +2 隻）；召喚物與屬性精靈最大生命 ×2、直接傷害 ×1.5；戰鬥中每 5 秒啟動一次 3 秒軍團修復，所有存活的召喚物與屬性精靈每秒恢復最大生命 1%，共 3 次。"]},
     {"id":190,"key":"relic_orc_loincloth","name":"妖魔的兜襠布","lore":"那魯加妖魔僅存的遮羞布，卻莫名擅長卸去重擊之力。","description":["重擊防護（受到重擊傷害-20%）","重擊防護（受到重擊傷害 −40%）","重擊防護（受到重擊傷害 −60%）；每次承受重擊後，下一次普通攻擊傷害 ×1.5。","【打不垮的蠻勇】受到的重擊直接傷害降為 0；成功化解重擊後，下一次普通攻擊傷害 ×2。","【打不垮的蠻勇】受到的重擊直接傷害降為 0，受到的其他物理普通攻擊傷害降低 30%；成功化解重擊後，下一次普通攻擊傷害 ×3，命中時恢復自身最大生命 10%（本件治療冷卻 5 秒；化解與強化攻擊本身不受這個冷卻限制）。"]},
     {"id":191,"key":"relic_thorn_curse","name":"荊棘纏身的詛咒","lore":"荊棘纏身的詛咒附於脛甲，觸之者反受其傷。","description":["受擊反傷（反彈 30 點傷害）","受擊反傷（受到直接攻擊時，對攻擊者造成 100 點物理傷害）","受擊反傷（受到直接攻擊時，對攻擊者造成 300 點物理傷害）；反傷命中後附加 1 層流血，每層每秒 30 點，持續 8 秒。","【血棘纏身】受擊反傷（受到直接攻擊時，對攻擊者造成 500 點真實傷害）；反傷命中後附加 3 層流血，每層每秒 100 點，持續 8 秒。","【血棘纏身】受擊反傷（受到直接攻擊時，對攻擊者造成 1000 點真實傷害）；反傷命中後附加 5 層流血，每層每秒 200 點，持續至該敵人死亡，對首領有效。"]},
     {"id":192,"key":"relic_icefang_armguard","name":"冰牙虎臂甲","lore":"冷酷冰原老虎的獠牙磨成的臂甲，握武器的手穩得像結了冰。","description":["臂甲（裝於副手，可與雙手武器並用）；敏捷 +2；額外命中 +5","臂甲（裝於副手，可與雙手武器並用）；敏捷 +2；額外命中 +15；普通攻擊命中後有 5% 機率冰凍目標 1 秒。","臂甲（裝於副手，可與雙手武器並用）；敏捷 +2；額外命中 +30；普通攻擊命中後有 15% 機率冰凍目標 1.5 秒。","臂甲（裝於副手，可與雙手武器並用）；敏捷 +2；額外命中 +30；普通攻擊命中後有 15% 機率冰凍目標 1.5 秒；【冰原撲殺】普通攻擊命中冰凍或緩速中的目標時，追加 2 次冰牙攻擊，每次造成這一下普通攻擊傷害 50% 的水屬性傷害；攻擊免疫冰凍的首領時，直接傷害增加 30%。","臂甲（裝於副手，可與雙手武器並用）；敏捷 +2；額外命中 +30；普通攻擊命中後有 30% 機率冰凍目標 2 秒；【冰原撲殺】普通攻擊命中冰凍或緩速中的目標時，追加 4 次冰牙攻擊，每次造成這一下普通攻擊傷害 75% 的水屬性傷害；攻擊免疫冰凍的首領時，直接傷害增加 60%。"]},
@@ -257,6 +257,9 @@
         var poison = Math.max(0,Number(c.damage)||0); c.damage = 0;
         api.heal(p,poison*.5,{owner:p,source:src,cd:10});
       }
+      // 召喚儀式的魔術布 0 階（11-15）：召喚上限 +1、召喚物與屬性精靈生命 +20%
+      if (id === 189 && event === 'summonLimit') c.value += 1;
+      if (id === 189 && event === 'onCompanionStats' && (c.companionKind === 'spirit' || c.companionKind === 'summon' && c.companion && c.companion.skId === 'sk_summon')) c.maxHpMult = (c.maxHpMult || 1) * 1.2;
       return;
     }
     if (ACTS && !actsOn(event, id)) return;   // 這個事件底下沒有任何一段會用到這件遺物：不必建下面五十個閉包
@@ -611,7 +614,7 @@
       case 176: if(asc&&cd('purifyPulse',a5?3:5))foes().filter(undead).forEach(function(x){trueHit(x,a5?3000:1000);});break;
       case 179: if(asc){if(still>=(a5?1:2)){timed('rootGrace',3,1);if(healReady()){st.movedSinceHot=false;hot(a5?team().concat(pets(),summons()):team(),function(x){return mhp(x)*(a5?.04:.02)+(x===p?100:0);},3,1,{requireStill:!a5});}}}break;
       case 188: if(a5&&cd('packSkills',5)&&api.companionAttack)api.pets().filter(living).forEach(function(x){api.companionAttack(p,x,c.target||foes()[0],{source:src,skill:true,free:true,mult:1,count:1});});break;
-      case 189: if(a5&&summons().some(function(x){return x.skId==='sk_summon';})&&healReady())hot(summons().filter(function(x){return x.skId==='sk_summon';}),function(x){return mhp(x)*.01;},3,1);break;
+      case 189: if(a5&&summons().some(function(x){return /^sk_(summon|elf_summon2?)$/.test(x.skId);})&&healReady())hot(summons().filter(function(x){return /^sk_(summon|elf_summon2?)$/.test(x.skId);}),function(x){return mhp(x)*.01;},3,1);break;
       case 203: if(moving){if(healReady()){st.movedSinceHot=false;hot(a5?team():[p],function(x){return mhp(x)*(x!==p?.02:pick(s,.01,.02,.03,.03));},3,1);}if(asc&&(c.movingFor||0)>=(a5?2:3)&&cd('pilgrimSeal',a5?2:3))st.pilgrimSeals=Math.min(a5?3:1,(st.pilgrimSeals||0)+1);}break;
       case 205: if(asc&&cd('phantomStep',10))st.guaranteedEvades=a5?3:1;break;
       case 207: if(asc&&(a5||still>=2)&&cd('manaArray',1))mp(p,(p.mmp||0)*(a5?.1:.05));break;
@@ -639,7 +642,7 @@
       var healing=c.skillType==='heal'||sk.type==='heal'||sk.type==='self_heal'||sk.type==='heal_allies'||!!sk.hot;
       switch(id){
       case 164: if(s>=2&&sk.type==='atk')c.mpCost*=.9;break;
-      case 189: if(sk.summon||c.summoning)c.mpCost*=asc?0:s>=2?.5:.75;break;
+      case 189: if(sk.summon||c.summoning)c.mpCost*=asc?0:s>=2?.5:s>=1?.75:1;break;
       case 196: if(c.skillId==='sk_zombie')c.mpCost=0;break;
       case 203: if(asc&&healing&&(st.pilgrimSeals||0)>0){c.healMult=(c.healMult||1)*(a5?3:2);c._pilgrimEmpowered=true;}break;
       case 207: c.mpCost*=a5?.5:s>=2?.8:.9;break;
@@ -691,7 +694,7 @@
     if(event==='onCompanionStats') {
       var pet=c.companion,petKind=c.companionKind,ds=c.stats||{};
       if(id===152&&asc){c.maxHpMult=(c.maxHpMult||1)*2;if(a5)c.directDamageMult=(c.directDamageMult||1)*1.5;}
-      if(id===189&&asc&&petKind==='summon'&&pet&&pet.skId==='sk_summon'){c.maxHpMult=(c.maxHpMult||1)*(a5?2:1.5);if(a5)c.directDamageMult=(c.directDamageMult||1)*1.5;}
+      if(id===189&&(petKind==='spirit'||petKind==='summon'&&pet&&pet.skId==='sk_summon')){if(asc){c.maxHpMult=(c.maxHpMult||1)*(a5?2:1.5);if(a5)c.directDamageMult=(c.directDamageMult||1)*1.5;}else{c.maxHpMult=(c.maxHpMult||1)*[1.2,1.3,1.4][s];if(s>=2)c.directDamageMult=(c.directDamageMult||1)*1.1;}}
       if(id===241&&a5&&petKind==='pet')ds.critChance=Math.min(1,(Number(ds.critChance)||0)+.3);
       if(id===245&&pet&&petKind==='pet'){
         var ps=sourceState(pet);
@@ -713,7 +716,7 @@
     }
     if(event==='summonLimit'&&id===189) {
       if(asc)c.value=Math.max(a5?11:8,c.value+(a5?6:3));
-      else if((p.lv||0)>=28&&(p.lv||0)<=48)c.value=s>=2?8:7;
+      else c.value+=[1,1,2][s];   // 11-15 Ping：所有召喚等級都加（召喚控制戒指放背包就有效，布不再給召喚控制）
     }
     if(event==='petSlots'&&id===230&&a5)c.value+=1;
     if(event==='trackingChance'&&id===231)c.value=asc?1:s>=2?.9:.8;

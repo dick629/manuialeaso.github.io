@@ -70,14 +70,16 @@
   }
   function commitParagon(points){const g=read(P());if(!g||!g.unlocked||N(P().rebirth)<1||N(P().lv)<100)throw Error('一轉 Lv100 開放');const candidate=C.copy(g);candidate.paragon.points=C.copy(points);if(!C.valid(candidate,N(P().rebirth)))throw Error('巔峰點數或上限不符');
     const changed=Object.keys(g.paragon.points).some(k=>N(points[k])<g.paragon.points[k]);
-    if(changed)throw Error('已保存的巔峰點數不能減少；要重新配點請按「洗點」（50,000 血龍鑽，全部點數退還）');
+    if(changed)throw Error('已保存的巔峰點數不能減少；要重新配點請按「洗點」（每 1000 等 5 萬血龍鑽，全部點數退還）');
     return transaction('巔峰配點',()=>{g.paragon.points=C.copy(points);});
   }
   // 玩家 11-11：保存後就鎖定；洗點＝花 50,000 血龍鑽把這一邊目前的點數全部退還
   const WASH=50000;
+  // 巔峰洗點分層收費（Ping 11-14 14:44）：5 萬 ×（巔峰等級 ÷ 1000，無條件進位），例 5000 等＝25 萬、2300 等＝15 萬
+  const paragonWash=g=>WASH*Math.max(1,Math.ceil(N(g&&g.paragon&&g.paragon.level)/1000));
   function respec(kind){const g=read(P());if(!g)throw Error('成長資料異常');if(!g.unlocked)throw Error('一轉 Lv100 開放');
     if(kind==='talent'){if(!g.talent.nodes.length&&!g.talent.j)throw Error('天賦還沒有配點');return transaction('天賦洗點',()=>{spendBlood(WASH);g.talent={order:[],nodes:[],j:false};g.supportBuffs={};W.LineageTalents?.reset(P());});}
-    if(kind==='paragon'){if(!Object.values(g.paragon.points).some(v=>N(v)>0))throw Error('巔峰還沒有配點');return transaction('巔峰洗點',()=>{spendBlood(WASH);g.paragon.points={};});}
+    if(kind==='paragon'){if(!Object.values(g.paragon.points).some(v=>N(v)>0))throw Error('巔峰還沒有配點');const cost=paragonWash(g);return transaction('巔峰洗點',()=>{spendBlood(cost);g.paragon.points={};});}
     throw Error('未知分類');}
   function statBase(p){const g=read(p);if(!g)return;const m=C.movement(g);p.d.moveSpeedPct=N(p.d.moveSpeedPct)+m.speed;}
   function weight(p,n){const g=read(p);return g?Math.floor(n*(1+C.movement(g).weight/100)):n;}
@@ -114,7 +116,7 @@
     if(t.curHp<=0&&!t._dead){const ix=mapState.mobs.indexOf(t);if(ix>=0)killMob(ix);}return amount;
   }
   function event(name,c){if(W.LineageTalents)W.LineageTalents.event(name,c);}
-  W.LineageGrowth={read,pct,sync,gainXP,gainOfflineXP,transaction,transactionAsync,blood,spendBlood,commitTalent,commitParagon,respec,WASH,statBase,statFinal,weight,finalDefense,trueBase,trueHit,event,absolute,secondaryHit,backupKey};
+  W.LineageGrowth={read,pct,sync,gainXP,gainOfflineXP,transaction,transactionAsync,blood,spendBlood,commitTalent,commitParagon,respec,WASH,paragonWash,statBase,statFinal,weight,finalDefense,trueBase,trueHit,event,absolute,secondaryHit,backupKey};
   function wrap(name,fn){const old=W[name];if(typeof old==='function')W[name]=function(){return fn.call(this,old,arguments);};}
   for(const name of ['playerAttack','castSkill'])wrap(name,function(old,args){const parent=action;action=parent||{actor:P(),used:false};if(name==='playerAttack'&&W.LineageTalents)W.LineageTalents.beforeAttack(P());try{return old.apply(this,args);}finally{action=parent;}});
   wrap('loadGame',function(old,args){const r=old.apply(this,args);sync();return r;});

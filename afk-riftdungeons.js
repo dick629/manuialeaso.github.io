@@ -96,6 +96,7 @@
   var roomDmg = function (run) {
     var ele = DRAGON_ELE[run.pick] || 'none';
     party().forEach(function (x) {
+      if (W.__afkBloodRoomImmune && W.__afkBloodRoomImmune(x)) return;   // 命脈：戰士「神聖光榮」不受四龍房間傷害
       var d = x.d || x, ph = Math.max(0, ROOM.phys - (Number(d.dr) || 0));
       var mg = ROOM.mag * (typeof mrMult === 'function' ? mrMult(Math.max(0, Number(d.mr) || 0)) : 1);
       var el = ROOM.ele * (1 - (typeof magicAttrDefense === 'function' ? magicAttrDefense(x, ele) : 0));

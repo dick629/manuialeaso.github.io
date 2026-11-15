@@ -102,7 +102,9 @@
   }
 
   // ── 成長 ──
-  var fire = function (text) { var p = P(); if (X && p) X.pop('scarab', 'assets/icons/items/afk_scarab_' + store(p).form + '.png', text, FORM[store(p).form].c); };
+  // 繼承繁星 1 階「太陽神拉」：莉娜介面、彈出提示也換成拉的圖（afk-bloodline）
+  var icon = function (p, form) { try { var B = W.LineageBloodline; if (B && B.ra && B.ra(p)) return 'assets/icons/items/afk_scarab_ra.png'; } catch (e) {} return 'assets/icons/items/afk_scarab_' + form + '.png'; };
+  var fire = function (text) { var p = P(); if (X && p) X.pop('scarab', icon(p, store(p).form), text, FORM[store(p).form].c); };
   var levelUp = function (p) {
     var s = store(p), up = 0;
     while (s.lv < FORM[s.form].max && s.exp >= need(s.lv)) { s.exp -= need(s.lv); s.lv++; up++; }
@@ -176,7 +178,7 @@
     var h = '<div id="afk-scarab-box" style="margin:10px 16px;padding:10px 12px;border:1px solid #8a6a2a;border-radius:8px;background:linear-gradient(135deg,rgba(120,80,20,.25),rgba(30,27,36,.9) 60%)">'
       + '<div style="font-weight:bold;color:#fde68a;margin-bottom:6px">🪲 日輪聖甲蟲（成長型遺物）</div>';
     if (!s.got || !owns(p)) return h + '<div class="text-sm text-slate-300">給新手用的成長型聖物：裝在聖物格（裝備視窗第二頁左下），打怪、完成任務會一起成長到 100 級。</div><div class="mt-2">' + btn('claim', s.got ? '再領一隻（原本的不見了）' : '領取日輪聖甲蟲', true) + '</div></div>';
-    h += '<div style="display:flex;gap:10px;align-items:center"><img src="assets/icons/items/afk_scarab_' + s.form + '.png" style="width:56px;height:56px;border-radius:10px">'
+    h += '<div style="display:flex;gap:10px;align-items:center"><img src="' + icon(P(), s.form) + '" style="width:56px;height:56px;border-radius:10px">'
       + '<div style="flex:1;min-width:0"><div style="font-weight:bold;color:' + f.c + '">' + f.n + '　Lv' + s.lv + (s.lv >= f.max && s.form < 3 ? '（可以進化）' : '') + '</div>'
       + '<div style="height:8px;border-radius:4px;background:#1f2937;overflow:hidden;margin-top:4px"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#b45309,#fbbf24)"></div></div>'
       + '<div class="text-xs text-slate-400 mt-1">' + (s.lv >= 100 ? '已經滿級' : '成長經驗 ' + Math.floor(s.exp).toLocaleString() + '／' + need(s.lv).toLocaleString()) + (equipped(p) ? '' : '　<span class="text-rose-300">（沒裝在聖物格，不會成長）</span>') + '</div></div></div>'

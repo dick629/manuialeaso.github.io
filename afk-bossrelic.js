@@ -157,7 +157,7 @@
   var SAVES = { invuln: 1, lastStand: 1, revive: 1 };
   var TXT = {
     regen: function (v) { return '每 10 秒恢復最大 HP ' + v.p + '%'; },
-    summon: function (v) { return '召喚「' + v.name + '」協戰：戰鬥中每 3 秒攻擊目標一次，造成你近 5 秒每秒傷害 ' + v.p + '%'; },
+    summon: function (v) { return '召喚「' + v.name + '」協戰：戰鬥中每 3 秒攻擊目標一次，造成你近 5 秒每秒傷害 ' + v.p + '%（算召喚物：寵物・召喚物・守衛的傷害加成都有效）'; },
     share: function (v) { return '受到的傷害 −' + v.p + '%（召喚物分擔）'; },
     entangle: function (v) { return '攻擊命中時 ' + v.c + '% 纏繞目標 5 秒：目標造成的傷害 −' + v.p + '%'; },
     web: function (v) { return '受到攻擊時 ' + v.c + '% 用絲網纏住攻擊者 5 秒：它造成的傷害 −' + v.p + '%'; },
@@ -321,6 +321,23 @@
   var mobs = function () { try { return (mapState.mobs || []).filter(alive); } catch (e) { return []; } };
   var target = function () { try { var t = typeof getTarget === 'function' ? getTarget() : null; return alive(t) ? t : mobs()[0] || null; } catch (e) { return null; } };
   var hit = function (m, n) { var x = X(); return x && n > 0 && alive(m) ? x.hitMob(m, n) : 0; };
+  // 遺物召喚出來的協戰者（奇古獸的影子、冰狼、骷髏兵…）算召喚物：吃寵物・召喚物・守衛的加成（Ping 11-15）
+  //   巔峰「寵物・召喚物・守衛 造成的傷害／追擊」、遺物的召喚物增傷都走 AFK_RELIC_RUNTIME.companionDamage；王者遺物自己的召喚物增傷、全隊增傷照 dealt 的算法
+  var SUMENT = new WeakMap();
+  var sumEnt = function (a, name) { var m = SUMENT.get(a); if (!m) { m = {}; SUMENT.set(a, m); } return m[name] || (m[name] = { skId: 'relic_summon', n: name, form: name, _relicSummon: 1 }); };
+  var sumHit = function (a, m, n, name) {
+    if (!(n > 0) || !alive(m)) return 0;
+    var R = W.AFK_RELIC_RUNTIME, f = fx(a), mult = 1;
+    try {
+      if (f) { if (f.allyDmg) mult += f.allyDmg.p / 100; if (f.petDmg) mult += f.petDmg.p / 100; if (f.summonDmg) mult += f.summonDmg.p / 100; }
+      mult += (Math.min(20, teamSum('teamDmg')) + Math.min(15, petAuraOn() ? teamSum('petAura') : 0)) / 100;
+      n = n * mult;
+      if (R && typeof R.companionDamage === 'function') n = R.companionDamage(a, sumEnt(a, name), m, n, { source: 'relic-summon' });
+    } catch (e) {}
+    var r = hit(m, n);
+    try { if (R && typeof R.flushCompanionHits === 'function') R.flushCompanionHits(a); } catch (e) {}
+    return r;
+  };
 
   // 身上的王者遺物 → 各種效果（同一種相加；保命只取階段最高的一件）
   var CACHE = new WeakMap(), GEN = 0;
@@ -566,7 +583,7 @@
       if (!fight) return;
       if (f.summon && t - s.sumAt >= 30) {
         s.sumAt = t; var tg = target(), pv = panel(a);
-        if (tg && pv > 0) f.summon.forEach(function (o) { hit(tg, pv * o.p / 100); });
+        if (tg && pv > 0) f.summon.forEach(function (o) { sumHit(a, tg, pv * o.p / 100, o.name); });
       }
       if (f.pulse) f.pulse.forEach(function (o, i) {
         var at = s.pulseAt[i] || 0; if (t - at < o.t * 10) return; s.pulseAt[i] = t;

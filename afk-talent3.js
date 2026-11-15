@@ -1,7 +1,7 @@
 /* ============================================================================
  * afk-talent3.js — 第三套天賦「匣之」＋匣之聖衣、血魔聖衣、鐵聖衣的數值（Ping 2026-11-13 04:26～12:41 定案；設計稿 docs/talent3-design.md）
  *
- *   開放：極意的融會 ★3。點數跟極意同一條來源（巔峰 500 等以後每 3 等 1 點），極意 170 點之後接著算，最多 500 點（巔峰 2510 等拿滿）。
+ *   開放：極意的融會 ★3＋巔峰 1500 等（11-14 改）。點數：巔峰 1500 等以後每 4 等 1 點，最多 500 點（3500 等拿滿）；不到 1500 的人原本的配點全部退回。
  *   點法照極意：六系選三系；A／B 5 顆×3 點、N1／N2 5 顆×7 點、N3 3 顆×10 點、K 24 點（一系 154 點）；融會 3 點＋升星 10／10／15 點。
  *   效果只在「穿著聖衣」（聖衣變身中、不是碎裂）時有效。紀錄：player.afkTal3 = { o, n, j }。只有你自己。
  *
@@ -9,7 +9,7 @@
  *     神聖衣（原本）六項能力 +100、五屬性抗性 +300、爆擊傷害 +120%
  *     血魔聖衣 +110／+300／+130%，真實傷害 +5%；鐵聖衣 +110／+350／+120%，真實減傷 +5%（換法在 merged/cloth-progression）
  *     匣之聖衣（開啟匣之後，神聖衣、血魔、鐵聖衣都升上去）+150／+400／+200%，真實傷害 +10%、真實減傷 +10%
- *     真實傷害、真實減傷跟巔峰那兩項相加，各自最多 25%。
+ *     真實傷害、真實減傷跟巔峰那兩項相加，各自最多 30%（11-14：25% → 30%）。
  *   近似做法見 docs/formulas.md「匣之」。
  * ========================================================================== */
 (function () {
@@ -31,7 +31,9 @@
   var wearing = function (p) {   // 聖衣變身中（不是碎裂、沒有封印）
     try { var A = CA(); if (!A || !p || p.classicMode) return false; var r = A.active(p); if (!r || r.tier !== 'samsara') return false; if (A.sealed && A.sealed(r.id, p)) return false; var c = clothRec(p, r.id); return !(c && (c.broken || c.recoveryPending)); } catch (e) { return false; }
   };
-  var opened = function (p) { try { var t = T2() && T2().data(p); return !!(t && t.j >= 3); } catch (e) { return false; } };
+  // 11-14：匣之改成「極意融會 ★3」而且「巔峰 1500 等」才開放
+  var pLv = function (p) { try { var g = G() && G().read(p); return g && g.paragon ? N(g.paragon.level) : -1; } catch (e) { return -1; } };   // 讀不到回 -1（不能當成 0 去退點）
+  var opened = function (p) { try { var t = T2() && T2().data(p); return !!(t && t.j >= 3) && pLv(p) >= OPEN_LV; } catch (e) { return false; } };
   // 穿著那件聖衣的等級：casket（匣之）／blood／iron／divine／null
   var clothTier = function (p) {
     var id = clothOn(p); if (!id) return null; var c = clothRec(p, id); if (!c || !c.ex) return null;
@@ -42,7 +44,7 @@
   // ── 樹的資料 ──
   var SEC = [['A', 5, 3], ['B', 5, 3], ['N1', 5, 7], ['N2', 5, 7], ['N3', 3, 10], ['K', 1, 24]];
   var SECNAME = { A: 'A', B: 'B', N1: 'N1', N2: 'N2', N3: 'N3', K: '核心' };
-  var STAR_COST = [3, 10, 10, 15], STAR_MULT = [1, 1.2, 1.8, 2], MAXPTS = 500, BEFORE = 170;
+  var STAR_COST = [3, 10, 10, 15], STAR_MULT = [1, 1.2, 1.8, 2], MAXPTS = 500, OPEN_LV = 1500, PER = 4;   // 11-15：巔峰 1500 等以後每 4 等 1 點，3500 等拿滿 500 點
   var five = function (a, b) { return [a, a, a, a, b]; };
   var DIRS = {
     glory: { name: '星輝', sub: '基本加成', color: '#f5e6b8', A: five({ st: 2 }, { st: 5 }), B: five({ res: 10 }, { res: 25 }), N1: { ccd: 4 }, N2: { hp: 1 },
@@ -94,10 +96,15 @@
   // ── 規則（同極意）──
   var parse = function (id) { var m = /^(\w+)\.(A|B|N1|N2|N3|K)\.(\d)$/.exec(id || ''); if (!m || !DIRS[m[1]]) return null; var s = SEC.filter(function (x) { return x[0] === m[2]; })[0]; if (+m[3] < 1 || +m[3] > s[1]) return null; return { d: m[1], s: m[2], i: +m[3], cost: s[2] }; };
   var fresh = function () { return { o: [], n: [], j: -1 }; };
-  var data = function (p) { p = p || P(); if (!p) return null; var t = p.afkTal3; if (!t || typeof t !== 'object' || !Array.isArray(t.o) || !Array.isArray(t.n)) t = p.afkTal3 = fresh(); if (t.j == null) t.j = -1; return t; };
+  var data = function (p) {
+    p = p || P(); if (!p) return null; var t = p.afkTal3; if (!t || typeof t !== 'object' || !Array.isArray(t.o) || !Array.isArray(t.n)) t = p.afkTal3 = fresh(); if (t.j == null) t.j = -1;
+    // 11-14 Ping 選 B：已經開了匣之、但巔峰不到 1500 的角色，匣之點數全部退回（清掉配點），到 1500 等再點
+    var lv0 = pLv(p); if ((t.n.length || t.j >= 0) && lv0 >= 0 && lv0 < OPEN_LV) { t = p.afkTal3 = fresh(); try { if (typeof logSys === 'function') logSys('<span style="color:#f5e6b8">匣之改成巔峰 1500 等開放，你的匣之點數已經全部退回，到 1500 等再重新配點。</span>'); } catch (e) {} }
+    return t;
+  };
   var complete = function (t, d, s) { var n = SEC.filter(function (x) { return x[0] === s; })[0][1]; for (var i = 1; i <= n; i++) if (t.n.indexOf(d + '.' + s + '.' + i) < 0) return false; return true; };
   var spent = function (t) { var s = 0; t.n.forEach(function (id) { var x = parse(id); s += x ? x.cost : 0; }); for (var k = 0; k <= t.j; k++) s += STAR_COST[k]; return s; };
-  var earned = function (p) { try { return opened(p) ? Math.max(0, Math.min(MAXPTS, T2().pool(p) - BEFORE)) : 0; } catch (e) { return 0; } };
+  var earned = function (p) { try { return opened(p) ? Math.max(0, Math.min(MAXPTS, Math.floor((pLv(p) - OPEN_LV) / PER))) : 0; } catch (e) { return 0; } };
   var canAdd = function (t, id) {
     var x = parse(id); if (!x || t.n.indexOf(id) >= 0) return false;
     var pos = t.o.indexOf(x.d);
@@ -125,7 +132,7 @@
   // ── 操作 ──
   var save = function () { try { if (typeof saveGame === 'function') saveGame(); } catch (e) {} try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {} };
   var addNode = function (id) {
-    var p = P(), t = data(p); if (!p || !t) throw Error('沒有角色'); if (!opened(p)) throw Error('極意的融會 ★3 開放');
+    var p = P(), t = data(p); if (!p || !t) throw Error('沒有角色'); if (!opened(p)) throw Error('極意的融會 ★3、巔峰 1500 等開放');
     var x = parse(id); if (!x || !canAdd(t, id)) throw Error('還沒滿足前置節點'); if (spent(t) + x.cost > earned(p)) throw Error('匣之點數不夠');
     if (t.o.indexOf(x.d) < 0) t.o.push(x.d); t.n.push(id); sig = ''; save();
   };
@@ -154,7 +161,7 @@
     var p = P(), t = data(p); if (!p || !t) return '';
     var op = opened(p), pts = earned(p), used = spent(t), tier = clothTier(p), w = wearing(p);
     var h = '<div class="growth-heading"><div><span class="growth-eyebrow">CASKET</span><h3>匣之</h3></div><div class="growth-balance"><b>' + Math.max(0, pts - used) + '</b><span>可用匣之點<small>已配置 ' + used + ' / ' + pts + '（最多 ' + MAXPTS + '）</small></span></div></div>';
-    h += '<p class="t2-note">' + (op ? '極意 170 點之後，巔峰每 3 等再得到 1 點。全部效果只在穿著聖衣（聖衣變身中）時有效。' : '極意的融會升到 ★3 後開放。') + '</p>';
+    h += '<p class="t2-note">' + (op ? '巔峰 1500 等以後每 4 等得到 1 點，3500 等拿滿 500 點。全部效果只在穿著聖衣（聖衣變身中）時有效。' : '極意的融會升到 ★3、而且巔峰 1500 等後開放。') + '</p>';
     var TV = TIER[tier || 'divine'];
     h += '<div class="t2-fuse"><span class="growth-eyebrow">SAINT CLOTH</span><b>' + (tier ? TIERNAME[tier] : '目前穿的不是神聖衣') + (w ? '' : '（現在沒有聖衣變身，效果不生效）') + '</b><small>' + (tier ? '六項能力 +' + TV.st + '、五屬性抗性 +' + TV.res + '、爆擊傷害 +' + TV.cd + '%' + (TV.td ? '、真實傷害 +' + TV.td + '%' : '') + (TV.tf ? '、真實減傷 +' + TV.tf + '%' : '') : '神聖衣、血魔聖衣、鐵聖衣在開啟匣之後會升成匣之聖衣：六項能力 +150、五屬性抗性 +400、爆擊傷害 +200%、真實傷害 +10%、真實減傷 +10%。') + '</small></div>';
     h += xTree(t, pts, used, opened(P()));
@@ -162,7 +169,7 @@
     h += '<div class="t2-fuse"><span class="growth-eyebrow">FUSION</span><b>融會' + (ck ? '・' + esc(ck[0]) : '') + (t.j >= 0 ? ' ' + (t.j ? '★'.repeat(t.j) : '☆') : '') + '</b>';
     if (!ck) h += '<small>選滿三系後才知道是哪一種融會（六系選三共 20 種）。</small>';
     else { h += '<small>' + esc(ck[1]) + '</small><small>倍率：☆ ×1、★1 ×1.2、★2 ×1.8、★3 ×2（★3 另外最終傷害 +2%）；目前 ' + (t.j >= 0 ? '×' + STAR_MULT[t.j] : '未點') + '</small>'; var nx = t.j + 1, c2 = allK(t) && nx <= 3 && used + STAR_COST[nx] <= pts; if (nx <= 3) h += '<button type="button" class="growth-primary" data-growth="ext:t3|star|1" ' + (c2 ? '' : 'disabled') + '>' + (nx === 0 ? '點亮融會（3 點）' : '升到 ★' + nx + '（' + STAR_COST[nx] + ' 點）') + '</button>'; }
-    h += '</div><div class="growth-bottom"><p class="growth-note">匣之跟極意用同一條點數來源，但分開配點、分開洗點。</p><div class="growth-actions"><button type="button" class="growth-primary" data-growth="ext:t3|wash|1">洗點（50,000 血龍鑽）</button></div></div>';
+    h += '</div><div class="growth-bottom"><p class="growth-note">匣之的點數來自巔峰 1500 等以後的等級，跟極意分開配點、分開洗點。</p><div class="growth-actions"><button type="button" class="growth-primary" data-growth="ext:t3|wash|1">洗點（50,000 血龍鑽）</button></div></div>';
     return h;
   };
   var click = function (cmd, arg) { if (cmd === 'dir') { view.dir = arg; view.sel = arg + '.A.1'; return; } if (cmd === 'node') { view.sel = arg; var p0 = P(), t0 = data(p0); if (xState(t0, earned(p0), spent(t0), opened(P()), arg) === 'available') addNode(arg); return; } if (cmd === 'star') { starUp(); return; } if (cmd === 'wash') { if (!confirm('花 50,000 血龍鑽洗掉匣之目前的全部點數？\n點數會全部退還，讓你重新配一次。')) return; return wash(); } };
@@ -191,7 +198,7 @@
   // 真實傷害、真實減傷（跟巔峰相加，各自最多 25%）
   var hookPct = function () {
     var g = G(); if (!g || g.__afkT3Pct) return; var o = g.pct;
-    g.pct = function (p, k) { var v = o.apply(this, arguments); try { if ((k === 'trueDamage' || k === 'trueDefense') && p && p === P() && wearing(p)) { var tier = clothTier(p); if (tier) { var add = k === 'trueDamage' ? TIER[tier].td : TIER[tier].tf; if (add) v = Math.min(25, N(v) + add); } } } catch (e) {} return v; };
+    g.pct = function (p, k) { var v = o.apply(this, arguments); try { if ((k === 'trueDamage' || k === 'trueDefense') && p && p === P() && wearing(p)) { var tier = clothTier(p); if (tier) { var add = k === 'trueDamage' ? TIER[tier].td : TIER[tier].tf; if (add) v = Math.min(30, N(v) + add); } } } catch (e) {} return v; };
     g.__afkT3Pct = true;
   };
   hookPct(); W.addEventListener('load', hookPct);

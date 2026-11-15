@@ -13,7 +13,7 @@
   function close(){if(pgTimer)commitPg();if(panel){panel.remove();panel=null;}document.querySelector('#growth-launch button')?.focus();}
   function render(){if(!panel)return;inspected=null;panel.dataset.page=tab;const g=G.read(player);if(!g)return;
     const XT=W.LineageGrowthExtraTabs||{},xt=Object.keys(XT).filter(k=>{try{return XT[k].visible();}catch(e){return false;}}).sort((a,b)=>(XT[a].order||9)-(XT[b].order||9));if(XT[tab]&&xt.indexOf(tab)<0)tab='talent';
-    panel.querySelector('nav').innerHTML=[['talent','天賦'],['paragon','巔峰']].concat(xt.map(k=>[k,XT[k].name]),[['activities','秘境與遠征']]).map(x=>'<button type="button" data-growth="tab:'+x[0]+'" aria-current="'+(tab===x[0]?'page':'false')+'">'+x[1]+'</button>').join('');
+    panel.querySelector('nav').innerHTML=[['talent','天賦']].concat(xt.filter(k=>(XT[k].order||9)<2).map(k=>[k,XT[k].name]),[['paragon','巔峰']],xt.filter(k=>(XT[k].order||9)>=2).map(k=>[k,XT[k].name]),[['activities','秘境與遠征']]).map(x=>'<button type="button" data-growth="tab:'+x[0]+'" aria-current="'+(tab===x[0]?'page':'false')+'">'+x[1]+'</button>').join('');
     let h='';if(tab==='talent'){
       h=V.talent(g,draft,direction,selected,player.rebirth||0);
     }else if(tab==='paragon'){
@@ -43,7 +43,7 @@
     if(cmd==='backup'){G.downloadBackup();return;}if(cmd==='close'){close();return;}if(cmd==='tab'){tab=arg;panel.querySelector('.growth-body').scrollTop=0;}if(cmd==='direction'){direction=arg;selected=arg+'.A.1';}if(cmd==='jobGroup')jobGroup=arg;
     if(cmd==='node'){selected=arg;if(V.state(G.read(player),draft,arg,player.rebirth||0)==='available'){draft=C.add(draft,arg);commitT();}}if(cmd==='j'&&G.read(player).unlocked&&!draft.j&&draft.order.length===3&&draft.order.every(d=>C.complete(draft,d,'K'))&&C.spent(draft)+3<=C.earned(G.read(player),player.rebirth||0)){draft.j=true;commitT();}
     if(cmd==='clearTalent')draft=C.copy(G.read(player).talent);if(cmd==='clearParagon')pg=C.copy(G.read(player).paragon.points);
-    if(cmd==='wash'){const nm=arg==='talent'?'天賦':'巔峰';if(!confirm('花 50,000 血龍鑽洗掉'+nm+'目前的全部點數？\n點數會全部退還，讓你重新配一次。'))return;G.respec(arg);draft=C.copy(G.read(player).talent);pg=C.copy(G.read(player).paragon.points);render();error(nm+'已洗點，點數全部退還');return;}
+    if(cmd==='wash'){const nm=arg==='talent'?'天賦':'巔峰',wc=arg==='talent'?G.WASH:(G.paragonWash?G.paragonWash(G.read(player)):G.WASH);if(!confirm('花 '+wc.toLocaleString()+' 血龍鑽洗掉'+nm+'目前的全部點數？\n點數會全部退還，讓你重新配一次。'))return;G.respec(arg);draft=C.copy(G.read(player).talent);pg=C.copy(G.read(player).paragon.points);render();error(nm+'已洗點，點數全部退還');return;}
     if(cmd==='pg+'||cmd==='pg-'){const g=G.read(player),d=C.paragon[arg];if(!g||!d)return;const used=Object.values(pg).reduce((a,b)=>a+b,0),n=pg[arg]||0;if(cmd==='pg+'&&g.unlocked&&used<g.paragon.level&&!(d.need&&g.paragon.level<d.need)&&n<Math.min(C.PMAX||1000,Math.ceil(d.cap/d.step))){pg[arg]=n+1;commitPgSoon();}else if(cmd==='pg-')pg[arg]=Math.max(N0(g.paragon.points[arg]),n-1);V.updateParagon(panel,g,pg);return;}
     if(cmd==='saveTalent'){G.commitTalent(draft);draft=C.copy(G.read(player).talent);}if(cmd==='saveParagon'){G.commitParagon(pg);pg=C.copy(G.read(player).paragon.points);}
     if(cmd==='mushroom'){A.enterMushroom();close();W.LineageMobile?.go('adventure');return;}

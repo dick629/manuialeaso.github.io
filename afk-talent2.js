@@ -165,7 +165,7 @@
     if (cmd === 'star') { starUp(); return; }
     if (cmd === 'wash') { if (!confirm('花 50,000 血龍鑽洗掉極意目前的全部點數？\n點數會全部退還，讓你重新配一次。')) return; return wash(); }
   };
-  (W.LineageGrowthExtraTabs = W.LineageGrowthExtraTabs || {}).t2 = { name: '極意', order: 3, visible: function () { var p = P(); return !!(p && !p.classicMode && N(p.rebirth) >= 1); }, view: render, click: click, inspect: xInspect };
+  (W.LineageGrowthExtraTabs = W.LineageGrowthExtraTabs || {}).t2 = { name: '極意', order: 1, visible: function () { var p = P(); return !!(p && !p.classicMode && N(p.rebirth) >= 1); }, view: render, click: click, inspect: xInspect };
 
   // ════════ 效果 ════════
   var ticks = function () { return (typeof state !== 'undefined' && state) ? N(state.ticks) : 0; };
@@ -391,6 +391,7 @@
   }, 10000);
 
   // 受到的爆擊傷害（afk-enemyx 讀；敵人會爆擊了，Ping 11-13 13:39）
-  W.__afkEnemyCritDef = function (ent) { return ent && ent === P() ? E('critDef', ent) : 0; };
+  var oCritT2 = W.__afkEnemyCritDef;   // 接在巔峰（afk-paragon2）之後
+  W.__afkEnemyCritDef = function (ent) { var v = typeof oCritT2 === 'function' ? N(oCritT2(ent)) : 0; return ent && ent === P() ? v + E('critDef', ent) : v; };
   W.LineageTalent2 = { DIRS: DIRS, COMBO: COMBO, data: data, eff: eff, spent: spent, earned: earned, pool: pool, canAdd: canAdd, addNode: addNode, starUp: starUp, wash: wash, comboKey: comboKey, nodeText: nodeText, MAXPTS: MAXPTS };
 })();

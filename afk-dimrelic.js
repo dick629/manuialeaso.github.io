@@ -56,33 +56,33 @@
       [['受到的傷害 −2%', ['taken', 0.02, '']], ['單次受到超過最大 HP 20% 的傷害時，該次 −30%（20 秒冷卻）', ['bigHit', 0.2, 0.3, 20]]],
       [['命中時追加 30 真實傷害', ['flat', 30]], ['每次攻擊追加目標最大 HP 0.3% 的真實傷害（頭目 0.03%）', ['pctTrue', 0.003, 0.0003]]]],
     boss: [[['對頭目傷害 +4%', ['out', 0.04, 'boss']], ['頭目 HP 低於 50% 時對它傷害 +15%', ['out', 0.15, 'bossLow']]],
-      [['受到頭目的傷害 −3%', ['taken', 0.03, 'boss']], ['受到頭目的傷害 −8%、魔防 +15', ['taken', 0.08, 'boss'], ['stat', 'mr', 15]]],
+      [['受到頭目的傷害 −3%', ['taken', 0.03, 'boss']], ['受到頭目的傷害 −8%、魔防 +15；「信念」受到攻擊時 3% 機率，3 秒內受到的傷害 −30%', ['taken', 0.08, 'boss'], ['stat', 'mr', 15], ['faith', 0.03, 0.3]]],
       [['對頭目傷害 +3%', ['out', 0.03, 'boss']], ['對頭目傷害 +5%、受到頭目的傷害 −6%', ['out', 0.05, 'boss'], ['taken', 0.06, 'boss']]]],
     stack: [[['同一隻目標每打 10 下傷害 +1%（最多 +10%）', ['same', 0.10]], ['同一目標的加成上限 +10%', ['same', 0.10]]],
       [['戰鬥中每 30 秒受到的傷害 −1%（最多 −8%，回村或倒下清除）', ['timeTaken', 0.08]], ['上面的上限再 −4%', ['timeTaken', 0.04]]],
       [['戰鬥中每分鐘造成的傷害 +1%（最多 +8%）', ['timeOut', 0.08]], ['上面的上限再 +8%', ['timeOut', 0.08]]]],
     mirror: [[['命中時 3% 機率複製該次傷害一次', ['copy', 0.03]], ['複製出的那一擊 50% 機率再複製一次', ['copyChain', 0.5]]],
-      [['迴避 +3', ['stat', 'er', 3]], ['受到的傷害反彈 8%（真實傷害）', ['reflect', 0.08]]],
+      [['迴避 +3；「猜忌」受到攻擊時 2% 機率，攻擊者 2 秒內無法攻擊（頭目 0.5 秒）', ['stat', 'er', 3], ['doubt', 0.02]], ['受到的傷害反彈 8%（真實傷害）', ['reflect', 0.08]]],
       [['受到的傷害反彈 3%', ['reflect', 0.03]], ['受到的傷害反彈 5%、受到的傷害 −5%', ['reflect', 0.05], ['taken', 0.05, '']]]],
     fire: [[['命中時 5% 機率點燃（每秒該次傷害 20%，5 秒）', ['burn', 0.05, 0.2, 5]], ['點燃最多疊 3 層', ['burnStack', 3]]],
       [['火屬性抗性 +40', ['stat', 'resFire', 40]], ['被攻擊時 10% 機率讓攻擊者燃燒（每秒最大 HP 0.3%，頭目 0.05%，5 秒）', ['thorn', 0.1, 0.003, 0.0005, 5]]],
       [['對燃燒中的目標傷害 +5%', ['out', 0.05, 'burn']], ['對燃燒中的目標傷害 +12%', ['out', 0.12, 'burn']]]],
     ink: [[['命中 +5', ['stat', 'hit', 5]], ['命中時 4% 機率「墨汁」：目標造成的傷害 −30%、5 秒', ['ink', 0.04, 5]]],
       [['魔防 +10', ['stat', 'mr', 10]], ['受到中了墨汁的敵人傷害時，再 −15%', ['inkTaken', 0.15]]],
-      [['命中 +3', ['stat', 'hit', 3]], ['對有減益（墨汁、燃燒、暈眩）的目標傷害 +8%', ['out', 0.08, 'debuff']]]],
-    speed: [[['每 20 秒下一擊傷害 ×2', ['cdHit', 20, 2]], ['上面那一擊改成 ×4，並暈眩目標 1 秒（頭目無效）', ['cdHit', 20, 2], ['cdStun', 1]]],
+      [['命中 +3', ['stat', 'hit', 3]], ['對有減益（墨汁、燃燒、暈眩、嫉妒）的目標傷害 +8%；「嫉妒」命中時 3% 機率，目標 5 秒內受到的傷害 +10%', ['out', 0.08, 'debuff'], ['envy', 0.03, 0.10]]]],
+    speed: [[['每 20 秒下一擊傷害 ×2', ['cdHit', 20, 2]], ['上面那一擊改成 ×4，並暈眩目標 2 秒（頭目無效）；昏迷命中 +5', ['cdHit', 20, 2], ['cdStun', 2], ['stunHit', 5]]],
       [['暈眩、凍結的時間 −20%', ['cc', 0.2]], ['暈眩、凍結的時間再 −20%（含時間停止）', ['cc', 0.2]]],
-      [['每 30 秒回復 5% MP', ['mp', 0.05, 30]], ['每 30 秒再回復 10% MP', ['mp', 0.10, 30]]]]
+      [['每 30 秒回復 5% MP、施法間隔 −3%', ['mp', 0.05, 30], ['cast', 0.03]], ['每 30 秒再回復 10% MP', ['mp', 0.10, 30]]]]
   };
   // 部位特性（+2）
   var WT = [['匕首', 6, '牙', ['對 HP 低於 30% 的目標傷害 +10%', ['out', 0.10, 'low30']]], ['單手劍', 6, '劍', ['傷害減免 +8', ['stat', 'dr', 8]]], ['雙手劍', 6, '大劍', ['造成的傷害 +4%', ['out', 0.04, '']]],
-    ['武士刀', 6, '刃', ['爆擊傷害 +12%', ['stat', 'critDmg', 12]]], ['單手鈍器', 6, '錘', ['命中時 3% 機率暈眩目標 1 秒（頭目無效）', ['stun', 0.03, 1]]], ['雙手鈍器', 6, '巨錘', ['對頭目傷害 +5%', ['out', 0.05, 'boss']]],
-    ['矛', 6, '長矛', ['一般攻擊波及另一個目標 30%', ['splash', 0.3]]], ['弓', 6, '弓', ['遠距離傷害 +6%', ['out', 0.06, 'ranged']]], ['魔杖', 6, '杖', ['魔法傷害 +6%', ['out', 0.06, 'magic']]],
-    ['奇古獸', 6, '靈', ['魔法爆擊傷害 +15%', ['stat', 'magicCritDmg', 15]]], ['十字弓', 5, '弩', ['命中時 5% 機率再射一次', ['copy', 0.05]]], ['鋼爪', 5, '爪', ['吸血 2%', ['leech', 0.02]]],
+    ['武士刀', 6, '刃', ['爆擊傷害 +12%', ['stat', 'critDmg', 12]]], ['單手鈍器', 6, '錘', ['命中時 3% 機率暈眩目標 1 秒（頭目無效）、昏迷命中 +3', ['stun', 0.03, 1], ['stunHit', 3]]], ['雙手鈍器', 6, '巨錘', ['對頭目傷害 +5%', ['out', 0.05, 'boss']]],
+    ['矛', 6, '長矛', ['一般攻擊波及另一個目標 30%', ['splash', 0.3]]], ['弓', 6, '弓', ['遠距離傷害 +6%', ['out', 0.06, 'ranged']]], ['魔杖', 6, '杖', ['魔法傷害 +6%、施法間隔 −5%', ['out', 0.06, 'magic'], ['cast', 0.05]]],
+    ['奇古獸', 6, '靈', ['魔法爆擊傷害 +15%、施法間隔 −5%', ['stat', 'magicCritDmg', 15], ['cast', 0.05]]], ['十字弓', 5, '弩', ['命中時 5% 機率再射一次', ['copy', 0.05]]], ['鋼爪', 5, '爪', ['吸血 2%', ['leech', 0.02]]],
     ['雙刀', 5, '雙刃', ['命中時 5% 機率追加一擊', ['copy', 0.05]]], ['鎖鏈劍', 5, '鎖鏈劍', ['對有減益的目標傷害 +6%', ['out', 0.06, 'debuff']]]];
-  var AS = [['頭盔', 'helm', '面具', ['魔防 +10', ['stat', 'mr', 10]]], ['盔甲', 'armor', '甲殼', ['最大 HP +4%', ['stat', 'mhpPct', 4]]], ['內衣', 'tshirt', '內襯', ['五屬性抗性 +20', ['stat', 'res5', 20]]], ['斗篷', 'cloak', '羽翼', ['迴避 +2', ['stat', 'er', 2]]],
-    ['手套', 'gloves', '手', ['命中 +4', ['stat', 'hit', 4]]], ['長靴', 'boots', '足', ['暈眩、凍結的時間 −10%', ['cc', 0.1]]], ['脛甲', 'shin', '脛骨', ['傷害減免 +6', ['stat', 'dr', 6]]], ['盾牌', 'shield', '鱗盾', ['受到的傷害 −3%', ['taken', 0.03, '']]]];
-  var CS = [['戒指', 'ring', 6, '指環', ['造成的傷害 +2%', ['out', 0.02, '']]], ['項鍊', 'amulet', 5, '核心', ['最大 HP +3%', ['stat', 'mhpPct', 3]]], ['耳環', 'ear', 4, '耳語', ['魔防 +8', ['stat', 'mr', 8]]], ['腰帶', 'belt', 5, '束帶', ['受到的傷害 −2%', ['taken', 0.02, '']]]];
+  var AS = [['頭盔', 'helm', '面具', ['魔防 +10', ['stat', 'mr', 10]]], ['盔甲', 'armor', '甲殼', ['最大 HP +4%', ['stat', 'mhpPct', 4]]], ['內衣', 'tshirt', '內襯', ['五屬性抗性 +20', ['stat', 'res5', 20]]], ['斗篷', 'cloak', '羽翼', ['迴避 +2、受到的遠距離傷害 −5%', ['stat', 'er', 2], ['rDR', 0.05]]],
+    ['手套', 'gloves', '手', ['命中 +4', ['stat', 'hit', 4]]], ['長靴', 'boots', '足', ['暈眩、凍結的時間 −10%', ['cc', 0.1]]], ['脛甲', 'shin', '脛骨', ['傷害減免 +6、受到的近距離傷害 −5%', ['stat', 'dr', 6], ['mDR', 0.05]]], ['盾牌', 'shield', '鱗盾', ['受到的傷害 −3%；「信念」受到攻擊時 2% 機率，3 秒內受到的傷害 −30%', ['taken', 0.03, ''], ['faith', 0.02, 0.3]]]];
+  var CS = [['戒指', 'ring', 6, '指環', ['造成的傷害 +2%', ['out', 0.02, '']]], ['項鍊', 'amulet', 5, '核心', ['最大 HP +3%', ['stat', 'mhpPct', 3]]], ['耳環', 'ear', 4, '耳語', ['魔防 +8；「嫉妒」命中時 3% 機率，目標 5 秒內受到的傷害 +10%', ['stat', 'mr', 8], ['envy', 0.03, 0.10]]], ['腰帶', 'belt', 5, '束帶', ['受到的傷害 −2%', ['taken', 0.02, '']]]];
   var CATALOG_SLOT = { '匕首': '匕首', '單手劍': '單手劍', '雙手劍': '雙手劍', '武士刀': '武士刀', '單手鈍器': '單手鈍器', '雙手鈍器': '雙手鈍器', '矛': '矛', '弓': '弓', '魔杖': '魔杖', '奇古獸': '奇古獸', '十字弓': '十字弓', '鋼爪': '鋼爪', '雙刀': '雙刀', '鎖鏈劍': '鎖鏈劍', '頭盔': '頭盔', '盔甲': '盔甲', '內衣': '內衣', '斗篷': '斗篷', '手套': '手套', '長靴': '長靴', '脛甲': '脛甲', '盾牌': '盾牌|臂甲', '戒指': '戒指', '項鍊': '項鍊', '耳環': '耳環', '腰帶': '腰帶' };
 
   // ── 套裝（+3 抽） ──
@@ -98,6 +98,9 @@
     { k: 'ink', n: '深淵墨', piece: ['命中 +2', ['stat', 'hit', 2]], core: { n: '墨潮', cd: 20, d: '每 20 秒讓全體敵人中墨汁 5 秒（造成的傷害 −30%）' }, six: ['對有減益的目標傷害 +10%', ['out', 0.10, 'debuff']], nine: ['墨汁改為造成的傷害 −50%', ['inkX', 0.2]] },
     { k: 'pendulum', n: '鐘擺', piece: ['暈眩、凍結的時間 −5%', ['cc', 0.05]], core: { n: '停擺', cd: 30, d: '每 30 秒讓全體敵人暈眩 2 秒（頭目 0.5 秒）' }, six: ['每 20 秒下一擊傷害 ×3', ['cdHit', 20, 3]], nine: ['不會被暈眩、凍結（含時間停止）', ['cc', 1]] }
   ];
+  SETS.push({ k: 'belief', n: '信念之塔', piece: ['受到的近距離、遠距離傷害各 −1%', ['rDR', 0.01], ['mDR', 0.01]], core: { n: '信念之盾', cd: 30, d: '每 30 秒，6 秒內受到的傷害 −40%' },
+    six: ['「嫉妒」命中時 4% 機率，目標 5 秒內受到的傷害 +15%；「猜忌」受到攻擊時 3% 機率，攻擊者 2 秒內無法攻擊', ['envy', 0.04, 0.15], ['doubt', 0.03]],
+    nine: ['受到的傷害超過最大 HP 15% 時，接下來 3 秒受到的傷害 −30%（10 秒冷卻）', ['faithBig', 0.15, 0.3, 3, 10]] });   // Ping 11-15 05:48
   var SETK = {}; SETS.forEach(function (s) { SETK[s.k] = s; });
   // ── 遺物絕技（+5 抽，同類） ──
   var ULT = {
@@ -106,17 +109,20 @@
       { k: 'stop', n: '時停', cd: 90, off: true, d: '每 90 秒讓全體敵人暈眩 3 秒（頭目 1 秒），8 秒內造成的傷害 +50%' },
       { k: 'tentacle', n: '深淵觸腕', cd: 40, off: true, d: '每 40 秒放出 8 道真實傷害，每道＝你最近一擊，隨機打在敵人身上' },
       { k: 'meteor', n: '星墜', cd: 75, off: true, d: '每 75 秒對全體敵人造成你最大 HP ×3 的真實傷害（頭目 ×1）' },
-      { k: 'drill', n: '熔岩鑽頭', cd: 50, off: true, d: '每 50 秒讓目標燃燒 10 秒，每秒＝你最近一擊' }],
+      { k: 'drill', n: '熔岩鑽頭', cd: 50, off: true, d: '每 50 秒讓目標燃燒 10 秒，每秒＝你最近一擊' },
+      { k: 'envyblade', n: '嫉妒之刃', cd: 45, off: true, d: '每 45 秒，全體敵人 8 秒內受到的傷害 +25%' }],
     a: [{ k: 'mirrorwall', n: '鏡面', cd: 60, d: '每 60 秒（有敵人時）4 秒內受到的傷害 −100%' },
       { k: 'song', n: '潮汐之歌', cd: 45, d: '每 45 秒（HP 低於 70% 時）全隊回復 40% HP' },
       { k: 'stitch', n: '縫合', cd: 120, d: 'HP 低於 30% 時自動回到 70%（120 秒冷卻）' },
       { k: 'nolight', n: '無光', cd: 60, d: '每 60 秒（有光蝕時）清除光蝕，6 秒內受到的傷害 −50%' },
       { k: 'death', n: '借來的死亡', cd: 300, d: '受到致命傷害時留下 1 HP、3 秒無敵（300 秒冷卻）' },
-      { k: 'scale', n: '龍鱗', cd: 50, d: '每 50 秒（有敵人時）8 秒內受到的傷害 −40%、反彈 20%' }],
+      { k: 'scale', n: '龍鱗', cd: 50, d: '每 50 秒（有敵人時）8 秒內受到的傷害 −40%、反彈 20%' },
+      { k: 'faithwall', n: '不屈信念', cd: 40, d: '每 40 秒（有敵人時）6 秒內受到的近距離、遠距離傷害 −60%' }],
     c: [{ k: 'agent', n: '代理之人', cd: 120, off: true, d: '每 120 秒，15 秒內造成的傷害 +40%' },
       { k: 'horn', n: '號角', cd: 60, off: true, d: '每 60 秒，10 秒內全隊造成的傷害 +30%' },
       { k: 'stars', n: '群星', cd: 90, off: true, d: '每 90 秒，12 秒內爆擊的傷害再 ×1.5' },
-      { k: 'sand', n: '時之沙', cd: 120, d: '每 120 秒（侵蝕超過 100 時）清除侵蝕的 AC、魔防、抗性扣減' }]
+      { k: 'sand', n: '時之沙', cd: 120, d: '每 120 秒（侵蝕超過 100 時）清除侵蝕的 AC、魔防、抗性扣減' },
+      { k: 'quickcast', n: '疾詠', cd: 60, off: true, d: '每 60 秒，10 秒內施法間隔 −30%、昏迷命中 +10' }]
   };
   var ULTK = {}; ['w', 'a', 'c'].forEach(function (c) { ULT[c].forEach(function (u) { u.c = c; ULTK[u.k] = u; }); });
 
@@ -206,6 +212,9 @@
     return f;
   };
   var fx = function () { return FX || (FX = build(P())); };
+  var NEWK = { envy: 1, stunHit: 1, cast: 1, faith: 1, rDR: 1, mDR: 1, doubt: 1 };
+  var regNew = function () { if (regNew.done || !W.__afkNewFx) return; regNew.done = true; W.__afkNewFx.add(function (ent) { if (ent !== P()) return []; var l = fx().list.filter(function (e) { return NEWK[e[0]]; }); if (buffOn('quickcast')) l = l.concat([['cast', 0.30], ['stunHit', 10]]); return l; }); };
+  regNew(); W.addEventListener('load', regNew);
   var dirty = function () { FX = null; };
 
   // ── 數值 ──
@@ -235,7 +244,7 @@
   var B = { hits: 0, lastHit: 0, tgt: null, same: 0, combatAt: 0, lastFight: 0, buffs: {}, cd: {}, next: [], tideUntil: 0, hurtCd: 0, bigCd: 0, reviveCd: 0 };
   var now = function () { return tk(); };
   var inRift = function () { try { return !!(W.__afkDimRiftOn && W.__afkDimRiftOn()); } catch (e) { return false; } };
-  var hasDebuff = function (m) { var t = now(); return !!(m && ((m._dimInk || 0) > t || (m._dimBurn && m._dimBurn.until > t) || (m.st && ((m.st.stun || 0) > 0 || (m.st.freeze || 0) > 0)))); };
+  var hasDebuff = function (m) { var t = now(); return !!(m && ((m._afkEnvy && m._afkEnvy.u > Date.now()) || (m._dimInk || 0) > t || (m._dimBurn && m._dimBurn.until > t) || (m.st && ((m.st.stun || 0) > 0 || (m.st.freeze || 0) > 0)))); };
   var burning = function (m) { return !!(m && m._dimBurn && m._dimBurn.until > now()); };
   var condOk = function (c, m, opt, crit) {
     switch (c) {
@@ -286,7 +295,7 @@
           if (normal) {
             B.hits++;
             if (f.sum('everyN').length) f.sum('everyN').forEach(function (e) { if (B.hits % e[1] === 0) mul *= e[2]; });
-            f.sum('cdHit').forEach(function (e, i) { var key = 'cdh' + i; if (t >= (B.cd[key] || 0)) { B.cd[key] = t + e[1] * 10; mul *= e[2]; if (i === 0 && f.sum('cdStun').length && !target.boss) stunMob(target, 1); } });
+            f.sum('cdHit').forEach(function (e, i) { var key = 'cdh' + i; if (t >= (B.cd[key] || 0)) { B.cd[key] = t + e[1] * 10; mul *= e[2]; if (i === 0 && f.sum('cdStun').length && !target.boss) stunMob(target, f.sum('cdStun')[0][1] || 1); } });
             if (B.critNext) { mul *= B.critNext; B.critNext = 0; }
             if (B.next.length) mul *= B.next.shift();
             if (crit) f.sum('critNext').forEach(function (e) { if (Math.random() < e[1]) B.critNext = e[2]; });
@@ -333,6 +342,7 @@
     if (mob && (mob._dimInk || 0) > t) k -= (mob._dimInkK || 0.3) + f.v('inkTaken');
     if (f.v('partyTaken')) k -= f.v('partyTaken');
     if (buffOn('mirrorwall')) k = 0; if (buffOn('nolight')) k *= 0.5; if (buffOn('scale')) k *= 0.6; if (buffOn('invuln')) k = 0;
+    if (buffOn('beliefShield')) k *= 0.6; if (buffOn('faithwall')) k *= 0.4; if (B.faithBig > t) k *= 1 - B.faithBigP;
     if (f.v('dodge') && Math.random() < f.v('dodge')) k = 0;
     return Math.max(0, k);
   });
@@ -344,6 +354,7 @@
       try {
         var p = P(); if (p && target === p && typeof out === 'number' && out > 0) {
           var f = fx(), t = now();
+          var fb = f.sum('faithBig')[0]; if (fb && out > p.mhp * fb[1] && t >= (B.faithBigCd || 0)) { B.faithBig = t + fb[3] * 10; B.faithBigP = fb[2]; B.faithBigCd = t + fb[4] * 10; }
           if (f.sum('bigHit').length && out > p.mhp * 0.2 && t >= B.bigCd) { var bh = f.sum('bigHit')[0]; out *= 1 - bh[2]; B.bigCd = t + bh[3] * 10; }
           var refl = f.v('reflect') + (buffOn('scale') ? 0.2 : 0) + (buffOn('mirrorback') ? 0.5 : 0);
           if (attacker && attacker !== p && refl > 0 && attacker.curHp > 0 && !attacker.isAlly && mobs().indexOf(attacker) >= 0) hurtMob(attacker, out * refl);
@@ -396,6 +407,9 @@
       case 'nolight': var r = drec(); if (!r || !(r.light > 0)) return false; r.light = 0; B.buffs.nolight = t + 60; try { calcStats(); } catch (e) {} break;
       case 'death': return false;
       case 'scale': if (!ms.length) return false; B.buffs.scale = t + 80; break;
+      case 'envyblade': if (!ms.length) return false; ms.forEach(function (m) { var e0 = m._afkEnvy && m._afkEnvy.u > Date.now() ? m._afkEnvy.p : 0; m._afkEnvy = { u: Date.now() + 8000, p: Math.max(e0, 0.25) }; }); break;
+      case 'faithwall': if (!ms.length) return false; B.buffs.faithwall = t + 60; break;
+      case 'quickcast': if (!ms.length) return false; B.buffs.quickcast = t + 100; break;
       case 'agent': if (!ms.length) return false; B.buffs.agent = t + 150; break;
       case 'horn': if (!ms.length) return false; B.buffs.horn = t + 100; break;
       case 'stars': if (!ms.length) return false; B.buffs.stars = t + 120; break;
@@ -419,6 +433,7 @@
       case '鏡返': if (ms.length) B.buffs.mirrorback = t + 30; else ok = false; break;
       case '燎原': if (ms.length) ms.forEach(function (m) { m._dimBurn = { n: 1, per: last * 0.3, until: t + 50 }; }); else ok = false; break;
       case '墨潮': if (ms.length) ms.forEach(function (m) { m._dimInk = t + 50; m._dimInkK = 0.3 + fx().v('inkX'); }); else ok = false; break;
+      case '信念之盾': if (ms.length) B.buffs.beliefShield = t + 60; else ok = false; break;
       case '停擺': if (ms.length) ms.forEach(function (m) { stunMob(m, m.boss ? 0.5 : 2); }); else ok = false; break;
     }
     if (ok) B.cd[key] = t + c.cd * 10;

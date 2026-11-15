@@ -122,11 +122,13 @@
   var mode = function () { return S()._afkFinalMode || 'first'; };
   // 2026-10-29 晚：終焉三階層——'first'＝第一階層「席琳夢境」、'tier2'＝第二階層「席琳幻影」（HP、傷害 ×1.25）、'tier3'＝第三階層「席琳伴身」（×1.5625，只能挑戰一次）
   // 2026-11-04 03:14（玩家）：第二階層的席琳 HP 再 ×0.70（hpK；傷害照 ×1.25，使徒 HP 照 ×1.25）→ 席琳 HP 合計 ×0.875
-  var TIER = { first: { n: '席琳夢境', k: 1 }, tier2: { n: '席琳幻影', k: 1.25, hpK: 0.70 }, tier3: { n: '席琳伴身', k: 1.30 } };
+  var TIER = { first: { n: '席琳夢境', k: 1 }, tier2: { n: '席琳幻影', k: 1.25, hpK: 0.70 }, tier3: { n: '席琳伴身', k: 1.30, dk: 1.45 } };   // dk：席琳與使徒造成的傷害倍率（Ping 11-15：第三階層傷害 ×1.30 → ×1.45，HP 不變）
+  // 防禦（Ping 11-15）：第二階層、第三階層、單人試煉各自的 AC／減傷／魔防／四屬性抗性；單人試煉 HP 4 億
+  var TDEF = { tier2: { ac: -200, dr: 50, mr: 700, res: 500 }, tier3: { ac: -300, dr: 80, mr: 800, res: 500 }, solo: { ac: -100, dr: 30, mr: 500, res: 400, hp: 400000000 } };
   var tierK = function () { var t = TIER[mode()]; return t ? t.k : 1; };
   var tierHpK = function () { var t = TIER[mode()]; return t ? t.k * (t.hpK || 1) : 1; };   // 只用在席琳本人的 HP
   var novice = function () { return mode() === 'first' && !!S()._afkFinalNovice; };
-  var modeMult = function () { var m = mode(); return m === 'solo' ? 0 : m === 'second' ? 1.05 : tierK() * (novice() ? noviceDmg() : 1); };
+  var modeMult = function () { var m = mode(); return m === 'solo' ? 0 : m === 'second' ? 1.05 : ((TIER[m] && TIER[m].dk) || tierK()) * (novice() ? noviceDmg() : 1); };
   // 初次輪迴的傷害也看人數（玩家 2026-10-29：8 人也要打得過）：×(0.5＋0.5×人數÷16)；16 人＝FB.novice.dmg、8 人 ×0.75、4 人 ×0.625
   var noviceDmg = function () { var sc = Math.min(1, Math.max(0, Number(S()._afkFinalScale) || 1)); return FB.novice.dmg * (0.5 + 0.5 * sc); };
   (window.__afkTakenMods = window.__afkTakenMods || []).push(function (ent, mob) { return (on() && mob && (mob._afkFinal || mob._afkApostle)) ? modeMult() : 1; });
@@ -176,7 +178,8 @@
     m._noBossRegen = true; m.regenHp = 0; m._dreamRegen = 0; m.exp = 0; m.goldMin = 0; m.goldMax = 0; m.noGold = true;
     m._fbRage = m.rageDmgMult || 1;
     if (TIER[mode()]) m.n = TIER[mode()].n + ' ' + BOSS_NAME;
-    if (mode() === 'solo') { m.ac = Math.round(FB.ac * 0.5); m.dr = FB.dr * 0.5; m.mr = FB.mr * 0.5; ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (k) { m[k] = FB.res * 0.5; }); }
+    var td = TDEF[mode()];
+    if (td) { m.ac = td.ac; m.dr = td.dr; m.mr = td.mr; ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (k) { m[k] = td.res; }); if (td.hp) m.hp = m.curHp = td.hp; }
     S()._afkFinalSpawned = true;
     if (novice()) sys('<span class="font-bold" style="color:#fde68a">✨ 由於 玩家巴黎 獻上祝福，女神血量微微增加。</span>');
     if (novice()) sys('<span class="text-cyan-200">初次輪迴：席琳還沒認真看待你——她的 HP 只有平常的一半左右，造成的傷害也比較低（隊伍人數越少，她的傷害越低）。</span>');

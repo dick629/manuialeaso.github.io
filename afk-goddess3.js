@@ -16,7 +16,8 @@
  *   ‧二轉二階段（終焉第二階層「席琳幻影」）：低於 50% → 1 HP，1 秒內要回到 60%。
  *   ‧二轉三階段（終焉第三階層「席琳伴身」）：低於 60% → 1 HP，1 秒內要回到 70%。
  *
- * 三、幽影與狂暴（子選項 g3shadow；只有二轉一階段）
+ * 三、幽影與狂暴（子選項 g3shadow；二轉一階段、終焉第三階層「席琳伴身」（Ping 11-15））
+ *   ‧第三階層另外：冥界的使徒倒下時全隊暈眩 3 秒；只有免疫（暈眩免疫、異常免疫）擋得住、異常狀態持續時間縮短有效，抵抗機率沒用。
  *   ‧席琳 HP 降到 70%／40%／10% 時進入「幽影」：不受任何傷害、每秒回復最大 HP 0.2%（CFG.shadow.regen）；
  *     每秒吸走每名隊員最大 HP 5%，並讓他五屬性抗性 −10、魔防 −10、AC +10、命中 −10（幽影期間每秒疊加，幽影結束就恢復）。
  *     身上帶著雅典娜之杖（背包或裝備）的人不受吸取與降能力；席琳照樣回血。
@@ -43,7 +44,7 @@
     T.register({ id: 'g3execute', parent: 'goddess3', name: '女神斬殺', group: '遊戲玩法', seal: true,
       desc: '一轉女神：HP 低於 30% 斬殺（每分鐘一次）；二轉女神：HP 低於 40／50／60% 變成 1，1 秒內沒補到 50／60／70% 就斬殺' });
     T.register({ id: 'g3shadow', parent: 'goddess3', name: '二轉女神的幽影與狂暴', group: '遊戲玩法', seal: true,
-      desc: '女神 70／40／10% 進入幽影（無敵、回血、每秒吸血降能力，召喚時空四龍）；最後 10% 狂暴' });
+      desc: '二轉決戰與終焉第三階層：女神 70／40／10% 進入幽影（無敵、回血、每秒吸血降能力，召喚時空四龍）；最後 10% 狂暴；第三階層使徒倒下時全隊暈眩' });
     // 次元裂縫（g3rift）：玩家 2026-11-03——是之後才會有的「夢域鏡之上」難度，現在還不存在 → 不登錄開關、不給玩家看；
     //   只有 window.__afkG3Rift = true（測試／之後做難度時）才會作用。
   }
@@ -173,7 +174,7 @@
 
   // ── 傷害掛點：免疫、幽影無敵、龍之護甲（包在最外層；別人後來再包也只算一次）──
   var busy = 0;
-  var shadowOn = function (m) { return !!(m && m._afkFinal && F.sh && F.sh.on && on('g3shadow') && stage() === 'r2a'); };
+  var shadowOn = function (m) { return !!(m && m._afkFinal && F.sh && F.sh.on && on('g3shadow') && (stage() === 'r2a' || stage() === 'r2c')); };
   var armorOn = function (m) { return !!(m && m._afkDragonStage && (!!W.__afkG3Rift && on('goddess3')) && dragonDungeon() && tk() < (A.until || 0)); };
   (W.LineageAbsoluteDamageGates=W.LineageAbsoluteDamageGates||[]).push(function(actor,target,amount,kind){
     var k=KIND[kind];return shadowOn(target)||(k&&immTarget(target)&&immOn(k)&&!(W.LineageClassCombat&&W.LineageClassCombat.broken(target,k)))?0:amount;
@@ -355,6 +356,29 @@
     }
     if (sh.rage && (t - sh.rageAt) % 10 === 0 && t > sh.rageAt) drain(true);
   };
+  // 第三階層：使徒倒下 → 全隊暈眩 3 秒（Ping 11-15：只有免疫擋得住；抵抗機率不擲骰，持續時間縮短照算）
+  var APO_STUN = 30;
+  var apostleStun = function () {
+    var B = W.AFK_RELIC_DEFENSE_BRIDGE, hit = 0, list = [];
+    if (!player.dead) list.push(player);
+    (player.allies || []).forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) list.push(x); });
+    list.forEach(function (x) {
+      var st = x.statuses || (x.statuses = {}), before = Number(st.stun) || 0, v;
+      if (B && typeof B.setStatus === 'function') v = B.setStatus(x, 'stun', APO_STUN, null);
+      else { var dd = x.d || {}, imm = !!dd.immStun; try { (x.eq ? Object.keys(x.eq) : []).forEach(function (k) { var e = x.eq[k], d = e && DB.items[e.id]; if (d && d.immStun) imm = true; }); } catch (e) {} if (!imm) st.stun = Math.max(before, APO_STUN); v = st.stun; }
+      if ((Number(st.stun) || 0) > before || (v > 0 && v !== before)) hit++;
+    });
+    log(tag('冥界的震懾', '#f43f5e') + '使徒倒下的瞬間，冥界的震波掃過全隊——' + (hit ? hit + ' 人暈眩 3 秒。' : '全隊都擋住了。'));
+  };
+  if (typeof W.killMob === 'function') {
+    var oKM0 = W.killMob;
+    W.killMob = function (idx) {
+      var ap = mapState.mobs && mapState.mobs[idx], was = !!(ap && ap._afkApostle && !ap._dead);
+      var r = oKM0.apply(this, arguments);
+      try { if (was && ap._dead && on('g3shadow') && stage() === 'r2c') apostleStun(); } catch (e) {}
+      return r;
+    };
+  }
   // 幽影中任何路徑打到 0 都不算倒下
   if (typeof W.killMob === 'function') {
     var oKM = W.killMob;
@@ -391,7 +415,7 @@
       var m = bossOf();
       if (m && F.born !== m._fbBorn) newFight(m);
       if (st !== 'solo') execStep(st);
-      if (m && st === 'r2a') shadowStep(m);
+      if (m && (st === 'r2a' || st === 'r2c')) shadowStep(m);   // Ping 11-15：第三階層「席琳伴身」也有幽影與狂暴
     }
     if (dd) armorStep();
   };

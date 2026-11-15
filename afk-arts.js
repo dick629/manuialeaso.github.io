@@ -71,7 +71,7 @@
     r_rally:     { cls: 'royal',    n: '王者號令',   d: '你每次一般攻擊，自己追加 1 次，寵物與召喚物各追加 1 次攻擊。號令之下，全隊（玩家、傭兵、寵物、召喚物、護衛）受到的物理傷害 −50%（可與聖結界疊加，合計上限 75%，屬性傷害不算）。發號令的王者本人在所有減傷算完後再 −50%。' },
     w_fate:      { cls: 'knight',   n: '命運迴響',   d: '造成的傷害 ×4.5。所有回復 +100%、HP 自然恢復 ×10 且每 4 秒一次、HP +5000、傷害減免 +50、五種屬性抗性 +200；每 5 秒一次，受到的傷害減半（真傷、物理、魔法、屬性都算）。HP<50% 觸發不屈命運：HP 全滿、效果 ×2；HP<30% 觸發絕望身軀：HP 全滿、效果 ×3，並獲得每場戰鬥一次的免死。騎士挺身在前：敵人優先攻擊你，你額外減傷 10%，之後再扣 500 點最終減傷（真實減傷）。身為傭兵時，代為承受其他傭兵受到的攻擊與魔法傷害 50%（王的 10% 真實傷害不轉；最多扛到自己剩 1 HP）。領域：對頭目的傷害 +10%。' },
     w_arms:      { cls: 'knight',   n: '萬兵之道',   d: '造成的傷害 ×3.5。百戰之軀：受到的傷害 −30%，一般攻擊造成傷害的 5% 轉為 HP。破甲：無視目標的硬皮。龍的一擊（屠龍劍的力量）：一般攻擊 80% 機率對全場敵人造成 3D(力量)+30 必中固定傷害。粉身碎骨：目標沒有硬皮時，重擊傷害 ×2。致命創傷：命中後目標 5 秒內受到的物理傷害 +20%；近距離命中 +50。首擊：對每個敵人的第一擊，武器骰改用最大值 ×10（跟神話變身的首擊加成各算各的）；穿雙子座聖衣時，首擊變成前五擊傷害 ×30；穿金牛座聖衣 AC −100、魔防 +100、五屬性抗性 +100、傷害減免 +10。領域：一般攻擊傷害 +15%。' },
-    m_shilen:    { cls: 'mage',     n: '席琳眷屬',   d: '召喚術數量上限 20；寵物與召喚物的命中、魔防、每次攻擊的傷害、每次受擊的減免都 +(WIS+INT)×0.8，而且不會死亡（HP 最低 1）。召滿 20 隻時融合成一隻融合魔獸（傷害 ×4.5），每 3 秒隨機施放雷霆風暴／龍捲風／極光雷電／燃燒的火球（傷害照法師魔法計算）。領域：在席琳夢域鏡造成的傷害 +15%；寵物與召喚物的傷害 +15%。' },
+    m_shilen:    { cls: 'mage',     n: '席琳眷屬',   d: '召喚術一口氣召喚 20 隻（召喚儀式的魔術布的召喚上限加成另外加上去）；寵物與召喚物的命中、魔防、每次攻擊的傷害、每次受擊的減免都 +(WIS+INT)×0.8，而且不會死亡（HP 最低 1）。召喚後立刻融合成一隻融合魔獸（生命是全部加總，傷害 ×4.5；超過 20 隻時傷害再照隻數 ÷ 20 提高），每 3 秒隨機施放雷霆風暴／龍捲風／極光雷電／燃燒的火球（傷害照法師魔法計算）。領域：在席琳夢域鏡造成的傷害 +15%；寵物與召喚物的傷害 +15%。' },
     m_atheist:   { cls: 'mage',     n: '背神者',   d: '背神狀態中：魔法傷害 +50、魔法命中 +100，每 5 秒自動施放一次屬性魔法武器效果（四屬性輪流，威力 ×2，不耗 MP；傭兵 10 秒一次、效果 ×0.8）。進入戰鬥 1 分鐘時否定諸神：所有敵人扣最大 HP 20%（死亡女神席琳只扣 5%），之後陷入虛弱（回到一般狀態、可以攻擊），5 分鐘後再次進入背神狀態。領域：魔法傷害 +30%；自己施放時 MP 消耗 +50%，範圍攻擊魔法沒有 3 秒冷卻。' },
     e_einhasad:  { cls: 'elf',      n: '殷海薩眷屬', d: '寵物、召喚物與屬性精靈的命中、魔防、每次攻擊的傷害、每次受擊的減免都 +(WIS+INT)×1.2，而且不會死亡（HP 最低 1）；屬性精靈化為元素神：傷害與 HP ×5。殷海薩的光芒：一般攻擊傷害 ×7。領域：寵物與召喚物的傷害 +25%。' },
     e_ruler:     { cls: 'elf',      n: '四元素主宰',     d: '自動學會四種屬性的精靈魔法（換掉這門技藝也不會遺忘，只是不同屬性的不能施放）；四元素融合：全部精靈魔法增益加總 ×3 常駐。HP<50% 觸發不屈命運（HP 全滿）。面板能力 +50、近／遠／魔法爆擊 +15%；每次一般攻擊以近戰＋遠攻＋魔法三種一起計算，再受四元素加持（傷害 ×8）。' },
@@ -104,6 +104,10 @@
     return !capSeen.has(p);   // 不在隊伍裡（例如招募前的預覽）不受限
   };
   var art = function (p) { var a = rawArt(p); return a && artAllowed(p) ? a : null; };
+  W.__afkArtOf = art;
+  // 命脈：狂戰士血脈「戰術精通」直接擁有血怒狂斧（與自己的技藝並存，副作用 ×2；afk-bloodline）
+  var bx2 = function (p) { try { return art(p) !== 'n_fafurion' && !!(W.__afkBloodFaf && W.__afkBloodFaf(p)); } catch (e) { return false; } };
+  var bfaf = function (p) { return art(p) === 'n_fafurion' || bx2(p); };
   var recompAlly = function () { return typeof _recomputingAlly !== 'undefined' && _recomputingAlly; };
   var isAllyObj = function (p) { return !!p && (p._slot !== undefined || (p === P() && recompAlly())); };
   var partyN = 1;
@@ -129,7 +133,7 @@
   // 兇亂滅斧（玩家 2026-10-26）
   var AXE_TAGS = ['單手鈍器', '雙手鈍器'];
   var axeOf = function (p) { var e = p && p.eq && p.eq.wpn, d = e && DB.items[e.id]; if (!d) return false; var tg = (typeof getWeaponTags === 'function') ? getWeaponTags(e.id) : []; return AXE_TAGS.some(function (x) { return tg.indexOf(x) >= 0; }) || /斧/.test(d.n || ''); };
-  var ragey = function (p) { return art(p) === 'n_fafurion' && inBattle(); };
+  var ragey = function (p) { return bfaf(p) && inBattle(); };
   var leaderReborn = function () { var p = P(); return !!(p && p.rebirth > 0); };
   var kings = function () { if (!leaderReborn()) return 0; return Math.min(5, Math.floor(partyN / 4) + (partyN >= 16 ? 1 : 0)); };
   var aliveAllies = function () { var p = P(); return ((p && p.allies) || []).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0; }); };
@@ -212,7 +216,7 @@
       var p = P(); if (p && !p._afkEleRepair1 && p.cls === 'elf' && p.rebirth > 0 && p.elfEle) { p._afkEleRepair1 = true; repairEle(p); }
       // 主宰者學過的全屬性魔法永久留在技能表（玩家 2026-10-25）：換掉主宰者後不會遺忘，只是屬性不符時不能施放（核心的屬性檢查會把它反灰）
       if (p && Array.isArray(p._afkRulerLearned)) { p.skills = p.skills || []; p._afkRulerLearned.forEach(function (k) { if (DB.skills[k] && p.skills.indexOf(k) < 0) p.skills.push(k); }); }
-      var a = art(p); if (!a || !p.d) return r;
+      var a = art(p); if ((!a && !bx2(p)) || !p.d) return r;
       var d = p.d, f = F(p), s = st(p);
       if (a === 'm_atheist' && typeof d.getMpCost === 'function' && !d.getMpCost._afkAth) {   // 背神者：MP 消耗 +50%（2026-11-02）
         var oG = d.getMpCost; d.getMpCost = function () { var c = oG.apply(this, arguments); return c > 0 ? Math.ceil(c * (1 + DOMAIN.athMp * F(P()))) : c; }; d.getMpCost._afkAth = true;
@@ -244,11 +248,12 @@
         if (dreamOn()) { var rb = (s.fate ? 100 : 0) + (s.desp ? 200 : 0); if (rb) RES4.forEach(function (k) { add(d, k, rb * f); }); }
       }
       else if (a === 'n_heine' && inHeine()) { add(d, 'ac', -1000 * f); add(d, 'mr', 1000 * f); }
-      else if (a === 'n_fafurion') {   // 兇亂滅斧：面板 ×2（近距離爆擊率不變），爆傷 +100%，抗性 +100、MR +100、AC +200
+      if (bfaf(p)) {   // 兇亂滅斧：面板 ×2（近距離爆擊率不變），爆傷 +100%，抗性 +100、MR +100、AC +200
         ['meleeDmg', 'meleeHit', 'rangedDmg', 'rangedHit', 'magicDmg', 'magicHit', 'extraDmg', 'extraHit'].forEach(function (k) { var v = Number(d[k]) || 0; if (v > 0) d[k] = Math.round(v * (1 + W.__afkArtTune.fafPanel * f)); });
         add(d, 'meleeCritDmg', 100 * f);
         RES4.concat(['resNone']).forEach(function (k) { add(d, k, 100 * f); });
-        add(d, 'mr', 100 * f); add(d, 'ac', 200);
+        add(d, 'mr', 100 * f); add(d, 'ac', bx2(p) ? 300 : 200);
+        if (bx2(p)) { add(d, 'mr', -500); RES4.forEach(function (k) { add(d, k, -500); }); }   // 命脈・戰術精通：魔防 −500、四屬性抗性 −500（Ping 11-15 04:53）
         if (ragey(p)) { var mh = Number(d.meleeHit) || 0; if (mh > 0) d.meleeHit = Math.round(mh * (1 + 0.2 * f)); }   // 王的狂暴：近距離命中 +20%
       }
     } catch (e) {}
@@ -267,7 +272,7 @@
 
   // ── 治療倍率 ──
   var healMult = function (p, regen) {
-    var a = art(p); if (!a) return 1;
+    var a = art(p); if (bx2(p)) return regen ? 0 : 1; if (!a) return 1;
     var f = F(p), s = st(p);
     if (a === 'w_fate') return 1 + (regen ? 9 : 1) * s.mode * f;   // 自然恢復 ×10（不屈／絕望再 ×2／×3），其他回復 +100%
     if (a === 'k_doom') return 1 + 5 * f;
@@ -301,7 +306,7 @@
   var hookRegen = function () {
     var R = window.AFK_RELIC_COMPANIONS; if (!R || typeof R.regenAmount !== 'function' || R._afkArtsRegen) return;
     var o = R.regenAmount; R._afkArtsRegen = true;
-    R.regenAmount = function (owner, value, kind) { if (kind === 'hp' && art(owner) === 'n_fafurion') return 0; return o.apply(this, arguments); };
+    R.regenAmount = function (owner, value, kind) { if (kind === 'hp' && bfaf(owner)) return 0; return o.apply(this, arguments); };
   };
   hookRegen(); window.addEventListener('load', hookRegen);
   var HEAL_POT = function (id) { return !!id && (id.indexOf('potion_heal') >= 0 || id === 'potion_strong' || id === 'potion_ult' || id === 'new_item_141'); };
@@ -311,7 +316,7 @@
       var p = P(); if (!p || !art(p)) return oUse.apply(this, arguments);
       var it = (p.inv || []).find(function (i) { return i.uid === u; });
       if (!it || !HEAL_POT(it.id)) return oUse.apply(this, arguments);
-      if (art(p) === 'n_fafurion') { potNote(p); return; }   // 兇亂滅斧：藥水無效（不消耗）
+      if (bfaf(p)) { potNote(p); return; }   // 兇亂滅斧：藥水無效（不消耗）
       var h0 = p.hp, r = oUse.apply(this, arguments), g = p.hp - h0;
       try { if (g > 0) { var m = healMult(p, false); if (m !== 1) p.hp = Math.max(1, Math.min(p.mhp, h0 + Math.floor(g * m))); } } catch (e) {}
       return r;
@@ -321,7 +326,7 @@
     var oAp = window.allyTryPotion;
     window.allyTryPotion = function (ally) {
       if (!art(ally)) return oAp.apply(this, arguments);
-      if (art(ally) === 'n_fafurion') return;   // 兇亂滅斧：藥水無效（不喝）
+      if (bfaf(ally)) return;   // 兇亂滅斧：藥水無效（不喝）
       var h0 = ally.curHp, r = oAp.apply(this, arguments), g = (ally.curHp || 0) - h0;
       try { if (g > 0) { var m = healMult(ally, false); if (m !== 1) ally.curHp = Math.max(1, Math.min(ally.mhp, h0 + Math.floor(g * m))); } } catch (e) {}
       return r;
@@ -569,8 +574,8 @@
       mArt = mult;
       if (kind === 'sum') {
         var g = minionArtOf(actor);
-        if (g) { mult *= 1 + DOMAIN.minion(g, actor); extra += minionBonusOf(actor); if (g === 'e_einhasad' && ent && (ent.skId === 'sk_elf_summon' || ent.skId === 'sk_elf_summon2')) mult *= 1 + W.__afkArtTune.god * F(actor); if (ent && ent._afkFuse) mult *= W.__afkArtTune.fuse; }   // 融合魔獸傷害 ×5（玩家 2026-10-27：×20→×10；2026-10-28：→×5）
-      } else if (a) {
+        if (g) { mult *= 1 + DOMAIN.minion(g, actor); extra += minionBonusOf(actor); if (g === 'e_einhasad' && ent && (ent.skId === 'sk_elf_summon' || ent.skId === 'sk_elf_summon2')) mult *= 1 + W.__afkArtTune.god * F(actor); if (ent && ent._afkFuse) mult *= W.__afkArtTune.fuse * Math.max(1, ent._afkFuse) / 20; }   // 融合魔獸傷害 ×5（玩家 2026-10-27：×20→×10；2026-10-28：→×5）
+      } else if (a || bx2(actor)) {
         if (a === 'k_doom') mult *= 1 + W.__afkArtTune.kdoom * f;
         if (a === 'k_dark') { mult *= 1 + W.__afkArtTune.kdark * f; if (isDragon(m)) mult *= 1 + 0.5 * f; }
         if (a === 'i_sorc') mult *= 1 + W.__afkArtTune.sorc * f;
@@ -579,7 +584,7 @@
         if (a === 'w_arms' || a === 'w_fate') mult *= 1 + (a === 'w_arms' ? (W.__afkArtTune.arms != null ? W.__afkArtTune.arms : 2.5) : W.__afkArtTune.knight) * f;   // 2026-11-02 16:41：萬兵之道 ×4.5 → ×3.5（命運迴響照舊 ×4.5）
         mult *= 1 + DOMAIN.out(a, f, kind, m);   // 技藝的領域強化（玩家 2026-11-02 15:20）   // 萬兵之道、命運迴響：傷害倍率（2026-10-28 平衡：×2 → ×3）
         if (a === 'n_heine' && inHeine()) mult *= (1 + f) * (normal ? 1 + f : 1);
-        if (a === 'n_fafurion') {   // 兇亂滅斧：基礎傷害 +50%、王的狂暴 +20%、斧系一般攻擊多一輪左右手（×2）
+        if (bfaf(actor)) {   // 兇亂滅斧：基礎傷害 +50%、王的狂暴 +20%、斧系一般攻擊多一輪左右手（×2）
           mult *= 1 + 0.5 * f;
           if (ragey(actor)) mult *= 1 + 0.2 * f;
           if (normal && axeOf(actor)) mult *= 1 + W.__afkArtTune.fafAxe * f;
@@ -614,8 +619,9 @@
       if (k > 0) { var kv = wpnMax(actor) * k * 5; hurtMob(prim, kv, actor) /* card-combat:arts-flat */; }   // 玩家 2026-10-24：四大天王傷害 ×5
       if (a && actor.cls === 'royal' && prim.curHp > 0 && !prim._dead) hurtMob(prim, pl, actor) /* card-combat:arts-royal */;   // 王族技藝：一般攻擊追加 1 次（同主目標那一擊的傷害）
       if (a === 'n_heine' && inHeine() && prim.curHp > 0 && Math.random() < 0.5 * f) { prim.curHp = 0; log(tag('海音守望者', '#38bdf8') + nm(actor) + '喚來海音的潮聲，' + (prim.n || '敵人') + ' 被一擊吞沒。'); }
-      if (a === 'n_fafurion' && normal) {   // 兇亂滅斧：一般攻擊傷害 5% 吸血（玩家 2026-10-28：移除全畫面波及傷害）
-        heal(actor, total * 0.05 * f);
+      if (bfaf(actor) && normal) {   // 兇亂滅斧：一般攻擊傷害 5% 吸血（玩家 2026-10-28：移除全畫面波及傷害）
+        heal(actor, total * (bx2(actor) ? 0.10 : 0.05) * f);   // 命脈・戰術精通：吸血再 +5%
+        if (bx2(actor) && prim && pl > 0) { try { (mapState.mobs || []).forEach(function (m2) { if (m2 && m2 !== prim && !m2._dead && m2.curHp > 0 && !m2._isAlly && !m2._allyName) hurtMob(m2, pl * 0.1, actor); }); } catch (e) {} }   // 攻擊濺射 10%
       }
       if (a === 'r_sword') heal(actor, total * 0.3 * f);
       { var T2 = W.__afkArtTune, lv = (a === 'd_time' && normal) ? T2.timeLeech : (a === 'w_arms' && normal) || a === 'd_magic' ? T2.leech : (a === 'i_sorc' || a === 'i_life') ? (T2.illuLeech != null ? T2.illuLeech : T2.leech) : 0; if (lv > 0) heal(actor, total * lv * f); }   // 2026-10-28 平衡：冷門技藝的吸血
@@ -857,7 +863,7 @@
 
   // ── 每 tick ──
   var actorTick = function (p, isLeader) {
-    var a = art(p); if (!a) return;
+    var a = art(p); if (!a && !bx2(p)) return;
     var s = st(p), t = tk();
     // 暗夢星迴計時（命定絕望者）
     if (a === 'k_doom') {
@@ -881,9 +887,9 @@
     // 闇龍追隨者：每秒 −100 HP（真實傷害，不會因此死亡）
     if (a === 'k_dark' && t % 10 === 0 && inBattle()) setHp(p, Math.max(1, (hpOf(p) || 0) - 100));
     // 兇亂滅斧：戰鬥開始進入王的狂暴；每 10 秒失去最大 HP 20%（真實傷害，最低剩 1；玩家 2026-10-26：10%→20%）
-    if (a === 'n_fafurion' && inBattle()) {
+    if (bfaf(p) && inBattle()) {
       if (s.furyB !== B.id) { s.furyB = B.id; s.furyAt = t; log(tag('血怒狂斧', '#ef4444') + nm(p) + '陷入王的狂暴——傷害與命中提升，生命卻一點一點燒盡。', 'enemy'); }
-      else if (t - s.furyAt >= 100) { s.furyAt = t; setHp(p, Math.max(1, (hpOf(p) || 0) - Math.floor((p.mhp || 0) * 0.2))); }
+      else if (t - s.furyAt >= 100) { s.furyAt = t; setHp(p, Math.max(1, (hpOf(p) || 0) - Math.floor((p.mhp || 0) * (bx2(p) ? 0.3 : 0.2)))); }
     }
     // 無神論者
     if (a === 'm_atheist' && inBattle()) {
@@ -914,7 +920,7 @@
           var p = P();
           if (p) {
             partyN = 1 + ((p.allies || []).length);
-            active = !!(art(p) || kings() > 0 || (p.allies || []).some(function (a) { return a && art(a); }));
+            active = !!(bfaf(p) || kings() > 0 || (p.allies || []).some(function (a) { return a && bfaf(a); }));
             (p.allies || []).forEach(allyRegenTwice);
             if (active) {
               battleTick();

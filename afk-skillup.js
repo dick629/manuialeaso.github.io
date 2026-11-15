@@ -841,7 +841,7 @@
   var SIG_NOTE = ['召喚強力屬性精靈：只做傷害 +20%（HP 沒加）；三改成「全體法術傷害 +30%」', '立方三：改成「效果 +30%」（立方本來就能同時展開）', '魔法屏障三：改成「自動重新展開」（傭兵沒有屏障的擋招判定）',
     '泰坦三：改成「每次反射回 HP 1%」（子彈的迴避 +50 寫死在核心）', '只有你本人有：冰雪颶風每 3 秒、泰坦門檻與反射、暗隱術迴避後必爆、鏡像反擊、三重矢最後一箭必爆、狂暴攻速、呼喚盟友三（寵物等一起出手）',
     '勇猛意志：修習「血誓王劍」的人維持原本的觸發（技藝那一段另外擲），不換成強化後的數值'];
-  W.__afkSkillUp = { dmgOk: dmgOk, stageOf: stageOf, pctOf: pctOf, upgrade: upgrade, SIG: SIG, SIG_NOTE: SIG_NOTE, COST: COST, patchFor: patchFor, NPC_ID: NPC_ID,
+  W.__afkSkillUp = { CLS_TXT: CLS_TXT, dmgOk: dmgOk, stageOf: stageOf, pctOf: pctOf, upgrade: upgrade, SIG: SIG, SIG_NOTE: SIG_NOTE, COST: COST, patchFor: patchFor, NPC_ID: NPC_ID,
     _set: function (n) { var p = P(); if (p) { p.afkSkillUp = Math.max(0, Math.min(3, n | 0)); try { calcStats(); } catch (e) {} } } };
   console.log('[AFK] 已啟用：技能強化（席琳神殿 技藝導師 薇爾娜）');
 })();

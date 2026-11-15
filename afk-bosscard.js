@@ -58,10 +58,11 @@
   var score = function (code) { return Math.min(100, Number(load().s[code]) || 0); };
   var tierOf = function (code) { var s = score(code), x = Number(load().x[code]) || 0; var t = s >= 100 ? 3 : s >= 10 ? 2 : s >= 1 ? 1 : 0; return Math.max(t, x); };
   var tabTier = function (k) { var m = 5, any = false; LIST.forEach(function (b) { if (b.type !== k) return; any = true; m = Math.min(m, tierOf(b.id)); }); return any ? m : 0; };
-  var allGold = function () { return LIST.every(function (b) { return tierOf(b.id) >= 3; }); };
+  var allGold = function () { return LIST.every(function (b) { return b.type === 'nz' || tierOf(b.id) >= 3; }); };   // 「王者收藏家」只算原本的 79 隻
   var bonus = function () {
     var out = 0, inn = 0, f = tabTier('field'), d = tabTier('dungeon');
     if (f > 0) out += TABS[0].vals[f - 1]; if (d > 0) inn += TABS[1].vals[d - 1];
+    if (TABS[2]) { var z = tabTier('nz'); if (z > 0) out += TABS[2].vals[z - 1]; }   // 新地區的王（afk-newzones 登錄）
     if (allGold()) out += 2;
     return { out: out / 100, inn: inn / 100 };
   };
@@ -86,13 +87,21 @@
   css.textContent += '@media (max-width:640px){.afk-bcw .bc-grid{grid-template-columns:repeat(3,1fr);gap:6px}.afk-bcw .bc-nm{font-size:11px;min-height:28px}.afk-bcw .bc-h{font-size:20px}}';
   document.head.appendChild(css);
 
-  LIST.forEach(function (b) {
+  var typeN = function (b) { return b.type === 'field' ? '野外' : b.type === 'nz' ? '新地區' : '地監'; };
+  var mkItems = function (b) {
     TIERS.forEach(function (x) {
       var id = cid(b.id, x.t);
       DB.items[id] = { n: b.n + ' 的' + x.n, type: 'misc', c: x.col, img: x.img, p: x.price, gachaWeight: 0, noTrade: false, bossCard: b.id, bossCardTier: x.t,
-        d: '王者卡片（' + (b.type === 'field' ? '野外' : '地監') + '王）。這隻王在卡片收集冊的王者分頁已經登錄到這一階以上，多的卡留著收藏或賣掉；之後可以拿來兌換魔法娃娃。' };
+        d: '王者卡片（' + typeN(b) + '王）。這隻王在卡片收集冊的王者分頁已經登錄到這一階以上，多的卡留著收藏或賣掉；之後可以拿來兌換魔法娃娃。' };
     });
-  });
+  };
+  LIST.forEach(mkItems);
+  // 其他外掛登錄的王（afk-newzones：新地區的 19 隻王，第三個分頁「王者・新地區」）
+  var register = function (arr) {
+    (arr || []).forEach(function (b) { if (!b || !b.id || BY[b.id]) return; LIST.push(b); BY[b.id] = b; mkItems(b); });
+    if (!TABS.some(function (t) { return t.k === 'nz'; })) TABS.push({ k: 'nz', n: '新地區', stat: '對頭目造成的傷害', vals: [1, 2, 3, 4, 5], sign: '+' });
+    refresh();
+  };
 
   // ── 取得卡片（自動登錄或進背包） ──
   var acquire = function (code, t, n, why) {
@@ -166,7 +175,7 @@
 
   // ── 介面：放在「收藏 → 怪物」卡片收集冊裡，多兩個分頁「王者・野外」「王者・地監」（Ping 11-11 16:15） ──
   var ui = { sel: null };
-  var curTab = function () { try { var r = (0, eval)('_cardBookRegion'); return r === 'boss_field' ? 'field' : r === 'boss_dungeon' ? 'dungeon' : null; } catch (e) { return null; } };
+  var curTab = function () { try { var r = String((0, eval)('_cardBookRegion') || ''); if (r.indexOf('boss_') !== 0) return null; r = r.slice(5); return TABS.some(function (t) { return t.k === r; }) ? r : null; } catch (e) { return null; } };
   var isOpen = function () { var el = document.getElementById('card-book'); return !!(el && !el.classList.contains('hidden') && curTab()); };
   var mapName = function (k) { try { return (typeof _cardMapName === 'function' && _cardMapName(k)) || k; } catch (e) { return k; } };
   var bodyHtml = function (tk) {
@@ -180,8 +189,8 @@
     h += '<div class="bc-grid">';
     list.forEach(function (b) {
       var t = tierOf(b.id), s = score(b.id), seen = t > 0 || !!d.k[b.id], x = TIERS[t - 1];
-      h += '<div class="bc-card t' + t + (ui.sel === b.id ? ' sel' : '') + '" data-bc="' + b.id + '"><span class="bc-tag">' + (b.type === 'field' ? '野外' : '地監') + '</span>'
-        + '<div class="bc-pic"><img src="assets/bosscard/' + b.id + '.png" alt="" loading="lazy"' + (seen ? '' : ' class="sil"') + '></div>'
+      h += '<div class="bc-card t' + t + (ui.sel === b.id ? ' sel' : '') + '" data-bc="' + b.id + '"><span class="bc-tag">' + typeN(b) + '</span>'
+        + '<div class="bc-pic"><img src="' + (b.card || ('assets/bosscard/' + b.id + '.png')) + '" alt="" loading="lazy"' + (seen ? '' : ' class="sil"') + '></div>'
         + '<div class="bc-nm">' + (seen ? esc(b.n) : '？？？') + '</div>'
         + '<div class="bc-tr ' + (x ? x.col : 'text-slate-500') + '">' + (x ? x.n : (d.k[b.id] ? '已打倒、未登錄' : '未遇見')) + '</div>'
         + (t < 3 ? '<div class="bc-bar"><i style="width:' + s + '%"></i></div>' : '') + '</div>';
@@ -191,7 +200,7 @@
     if (sb && sb.type === tk) {
       var st = tierOf(sb.id), killed = !!d.k[sb.id];
       h += '<div class="bc-det"><b style="color:#fbbf24;font-size:16px">' + esc(sb.n) + '</b>　' + (st ? '<span class="' + TIERS[st - 1].col + '">' + TIERS[st - 1].n + '</span>' : '未登錄') + '　積分 ' + score(sb.id) + '/100'
-        + '<br>出沒：' + sb.maps.map(mapName).map(esc).join('、') + (sb.type === 'field' ? '（在那張地圖打倒一般怪會遇到）' : '（在那一層打倒一般怪會遇到）')
+        + '<br>出沒：' + (sb.where ? esc(sb.where) : sb.maps.map(mapName).map(esc).join('、') + (sb.type === 'field' ? '（在那張地圖打倒一般怪會遇到）' : '（在那一層打倒一般怪會遇到）'))
         + (killed ? '' : '<br><span style="color:#fca5a5">還沒打倒過這隻王，打倒一次後才能用王之徽章兌換。</span>')
         + '<br>' + EX.map(function (e) { var x = TIERS[e.t - 1]; return '<button type="button" data-ex="' + e.t + '"' + (killed && badges() >= e.cost ? '' : ' disabled') + '>王之徽章 ×' + e.cost + ' → ' + x.n + '</button>'; }).join('')
         + '</div>';
@@ -223,5 +232,5 @@
   var close = function () { try { if (typeof closeCardBook === 'function') closeCardBook(); } catch (e) {} };
 
   refresh();
-  W.__afkBossCard = { TIERS: TIERS, TABS: TABS, EX: EX, LIST: LIST, open: open, close: close, acquire: acquire, exchange: exchange, tierOf: tierOf, score: score, tabTier: tabTier, bonus: function () { return BON; }, load: load, cid: cid };
+  W.__afkBossCard = { register: register, TIERS: TIERS, TABS: TABS, EX: EX, LIST: LIST, open: open, close: close, acquire: acquire, exchange: exchange, tierOf: tierOf, score: score, tabTier: tabTier, bonus: function () { return BON; }, load: load, cid: cid };
 })();

@@ -504,6 +504,18 @@
         return r ? { left: r.left, top: r.top, width: r.width, height: r.height } : null;
       };
     }
+    // 隊伍成員的特效錨點（治療、增益特效疊在誰身上）：同一幀內同一個人只量一次（11-15）
+    if (typeof window._partyMemberRect === 'function' && !window._partyMemberRect.__afkPerf) {
+      var oPmr = window._partyMemberRect, pmrCache = null;
+      window._partyMemberRect = function (who) {
+        if (!who || typeof who !== 'object') return oPmr.apply(this, arguments);
+        if (!pmrCache) { pmrCache = new Map(); raf(function () { pmrCache = null; }); }
+        if (!pmrCache.has(who)) { var r0 = oPmr.apply(this, arguments); pmrCache.set(who, r0 ? { left: r0.left, top: r0.top, width: r0.width, height: r0.height, right: r0.right, bottom: r0.bottom, x: r0.x, y: r0.y } : null); }
+        var r = pmrCache.get(who); return r ? { left: r.left, top: r.top, width: r.width, height: r.height, right: r.right, bottom: r.bottom, x: r.x, y: r.y } : null;
+      };
+      window._partyMemberRect.__afkPerf = true;
+      try { (0, eval)('_partyMemberRect = window._partyMemberRect'); } catch (e) {}
+    }
     // 角色朝向：原版每一幀每個角色都量自己與目標的位置（8 人隊伍＝每幀 8 次強制排版）；改成同一目標 0.2 秒內沿用上次朝向
     if (typeof window._classFacing8 === 'function') {
       var oFace = window._classFacing8, faceMemo = new WeakMap();   // WeakMap：不在角色物件上加欄位（不會進存檔）

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-2eae971d610a",
+  "build": "merge-0.4-449792d83d41",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -78,8 +78,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-arts.js?v=16a9df6567a1",
-      "sha256": "16a9df6567a1a4b5f9c172d7623da4ae7e5aee66b7ab6e647a4da1d5da48dc35",
+      "url": "afk-arts.js?v=8441c1f49e7d",
+      "sha256": "8441c1f49e7d05b5d1b3b1218255f509be9bdcdfb9a2a6b2dd29c169d1eb71a8",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -115,6 +115,21 @@
     {
       "url": "afk-avatar.js?v=645fd5dff69f",
       "sha256": "645fd5dff69fc53a7e9acc3aaa76029c843a69360315d1615586c61882a33ccf",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-awaken-ext.js?v=28668fb71ec0",
+      "sha256": "28668fb71ec03e742c1571287bbd74425c079387444ac7661e29f0e5e4c0d9d5",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-awaken-transfer.js?v=b349ad374eac",
+      "sha256": "b349ad374eac5fac196f8e02985e2bdf14e6dd9c177d28080f3fea9262bb1171",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-awaken.js?v=0edf4de98d4d",
+      "sha256": "0edf4de98d4db252cf5d2e9f59bd6b2401b596db52cb761ffd48a89c21fedd3e",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -168,6 +183,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-bloodline.js?v=490b60ce28c4",
+      "sha256": "490b60ce28c4625c51b765085956732ffcdc7e1741ac5b796d4b8707cdaa7f0c",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-bmprice.js?v=e9aaaa067777",
       "sha256": "e9aaaa06777776dee37dcbbac4127b2cebedf77319c2160f20f34461c144674a",
       "type": "text/javascript; charset=utf-8"
@@ -188,8 +208,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-bosscard.js?v=6d0e79cedaf9",
-      "sha256": "6d0e79cedaf981203e6cf1842a0a0e73afe0898552816f14529ca964fb33775b",
+      "url": "afk-bosscard.js?v=de3e161aefae",
+      "sha256": "de3e161aefaebfdb728fde541af6786832086506f883e67505cca4df0311a942",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -208,8 +228,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-bossrelic.js?v=691baf3695da",
-      "sha256": "691baf3695dac8a64e524e4a959eb5fcfbb0ad2e0fb92a66e0c22bb69acca080",
+      "url": "afk-bossrelic.js?v=bb5ad05d5c94",
+      "sha256": "bb5ad05d5c94b572b305e5aff26da1ddfa304d715d6e0c8b96ea25579de61612",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -408,8 +428,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dimrelic.js?v=a0882e7e3fba",
-      "sha256": "a0882e7e3fba909891be790db04b3da0b0f1f409a17a631703b01c75d27055b4",
+      "url": "afk-dimrelic.js?v=049cd88bd162",
+      "sha256": "049cd88bd162e3e0f87571160dbfc7cad082d6859b6417fc20c5d7468780a070",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -513,8 +533,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-enemyx.js?v=d227114432ee",
-      "sha256": "d227114432ee72e2e4def8249034949c4b607b383e0243dd3ec9f323b7c11867",
+      "url": "afk-enemyx.js?v=89824e29319c",
+      "sha256": "89824e29319cd9c606c04c2c50b7ab19ba2dab0b3b0b62c2c3a195adf9cf0caa",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -563,13 +583,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-finalboss.js?v=aa3ff45ccf67",
-      "sha256": "aa3ff45ccf6746084b24d3ecbb79287a529e44e50fd73807744af53f24eb94ef",
+      "url": "afk-finalboss.js?v=6e11524c9efd",
+      "sha256": "6e11524c9efdc55b255e600230f786e05bd5a06f4bb9539828e5d2d38682a05b",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-finaltiers.js?v=735452a2bce1",
-      "sha256": "735452a2bce12feb5a58355b3623246cd053024870c5c94e904485637b5161a0",
+      "url": "afk-finaltiers.js?v=12515128a5f0",
+      "sha256": "12515128a5f087975c3b1c6d89e8a1fc0ab929996422c3e301e355d9574dc5c1",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -643,8 +663,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-goddess3.js?v=12fdcdacb5b9",
-      "sha256": "12fdcdacb5b931ae5032f586e9255df2f8fd5808d7bfa7a592a5489a4f46d698",
+      "url": "afk-goddess3.js?v=c7069b0e1ebd",
+      "sha256": "c7069b0e1ebd3c46d580e3e86e6ed15897437d20de8382a7a8a44c34bf45ee6b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -903,8 +923,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-mio.js?v=75d2fe376fa9",
-      "sha256": "75d2fe376fa979fd1d4e87a7678f9cfd76556c7f0c7d116cf1ae2f6c8ba1dc26",
+      "url": "afk-mio.js?v=23008f1f95a4",
+      "sha256": "23008f1f95a4b64d48c38f817e17456e91c96c90b8a4dcd591d1666baad37e15",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -925,6 +945,16 @@
     {
       "url": "afk-mobname.js?v=807ec4cd7482",
       "sha256": "807ec4cd7482338532c668a4c2ffa57abf1ecd1711e17490a3bfd57e3d117826",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-nemesis.js?v=a9ef3f802e3b",
+      "sha256": "a9ef3f802e3b1fe77a6281594f8ee0c85690fbf703b12aad3604b97fe4d35470",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-newzones.js?v=d7b7f1108bc5",
+      "sha256": "d7b7f1108bc50bc9a31e98de0fa39a13e72a0f0ad9c3d25d0e99aad7dd9bd209",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1008,8 +1038,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-paragon2.js?v=df0639d15b28",
-      "sha256": "df0639d15b289c1a27e0274adf8b8c8eb899518f11d30766cffaa561652351cd",
+      "url": "afk-paragon2.js?v=a241ada40e53",
+      "sha256": "a241ada40e53b37fc7abe4eedfe3d26d672bd07a312d96ea8a4ae935fee576ca",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1018,8 +1048,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-perf.js?v=3738c61b93da",
-      "sha256": "3738c61b93da2c7462b01190123c329195a49e6198d481726de83f5495fca4d4",
+      "url": "afk-perf.js?v=aaa0a36c70ba",
+      "sha256": "aaa0a36c70ba80de52d6d221b4cd95a0c2567b76f864320817a2e3edad3b6c78",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1143,13 +1173,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-relic-catalog.js?v=3a8001402ad9",
-      "sha256": "3a8001402ad9728111fd2460a9497d790538c69e607e1ec586ec84c5f92addda",
+      "url": "afk-relic-catalog.js?v=347a231cb7e3",
+      "sha256": "347a231cb7e3da20ee160be6276a17ebfb4e0c9daf6c4f31cb0b9230418639e8",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-relic-companions.js?v=b9273b0c76e2",
-      "sha256": "b9273b0c76e24973354c108498498bc8c6be6bf70450b70ec5859e14c09fba10",
+      "url": "afk-relic-companions.js?v=eac51f612324",
+      "sha256": "eac51f612324ebb8aef865bdf221fb41d44bd0d644c2b9961314ced8f179aa3e",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1158,8 +1188,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-relic-defense.js?v=7542cbb66223",
-      "sha256": "7542cbb662238c4996b37f8bbfd87de159a1f62a0d09aae3a894a16a7085cdcf",
+      "url": "afk-relic-defense.js?v=86c0ec7fc393",
+      "sha256": "86c0ec7fc393359bafafbb29f4adb896b9d8d87aeb9830c8f834bae801dc9d14",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1170,6 +1200,11 @@
     {
       "url": "afk-relic-integration.js?v=5038689031fe",
       "sha256": "5038689031fefb94cd7c11c2cc4a440a9484bf69a2476efe1e03746e2073c174",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-relic-newfx.js?v=e48daa16f4e8",
+      "sha256": "e48daa16f4e8bb936b53a7ee4468b3f6965edb6b53cb5b6aa1d7d21872941ceb",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1273,8 +1308,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftdungeons.js?v=02f0c9413a2b",
-      "sha256": "02f0c9413a2b9b491331a05a69c5390ce2a3afa3b58adbd26962d0be04eaf77b",
+      "url": "afk-riftdungeons.js?v=5bb2a26c31ba",
+      "sha256": "5bb2a26c31ba47fbdd659b2a9b3890f372c6903001fa1f16158daecd0319a681",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1323,8 +1358,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-scarab.js?v=03a3de910fb8",
-      "sha256": "03a3de910fb8c19ba53f149bdd84a01626d1aef91a9aad6c8193c663ff9c60a7",
+      "url": "afk-scarab.js?v=274050f21bcf",
+      "sha256": "274050f21bcfdcab58b56fd03865a83bccd10a8b7ed058ce1f6d1b334b0a0e1e",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1368,8 +1403,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-skillup.js?v=921ff7035292",
-      "sha256": "921ff7035292f03a9d1ee2ce40a1e612fbc4b75654ff34c2aa01acafe3f5303d",
+      "url": "afk-skillup.js?v=639a82c8ce89",
+      "sha256": "639a82c8ce898bf7ec6043fc074bfa9086cdf46f1f41ea52112142de39c1d5d5",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1443,6 +1478,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-summoncloth.js?v=37c7d6f1b60c",
+      "sha256": "37c7d6f1b60c0f4c4c3eea53389cda6dc2bd1593bcade26bde3283d66d0f2bd7",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-sw.js?v=6a1669d3ffff",
       "sha256": "6a1669d3ffffd6655fd1ea546103b8708af067cfb4262578b3264e77d8b51462",
       "type": "text/javascript; charset=utf-8"
@@ -1458,13 +1498,18 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-talent2.js?v=56befcab6a42",
-      "sha256": "56befcab6a42219c66a7e0529ca2e0434b1825d4457e2a2f9dbeef875e431adf",
+      "url": "afk-talent2.js?v=b57bf73da735",
+      "sha256": "b57bf73da735792e4d56e0a5230f133dd28f70a5f9f46181b271306113646b90",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-talent3.js?v=19ae23860660",
-      "sha256": "19ae238606607b97f7cbdb012f70556004ea31b3200880be09c4d1fe0b2f482f",
+      "url": "afk-talent3.js?v=3a1dd0d0a9a9",
+      "sha256": "3a1dd0d0a9a9ae85dd68f4f97cf5bd193607f65dfe01224d1293ca8688fdbf72",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-talent4.js?v=2a20b883609f",
+      "sha256": "2a20b883609f6dd2f4bbcd08eab7bfe08b8db619d2050dab8fd55b6a65cc254f",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1654,7 +1699,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "5f78ac0b190c378b226b01f1ca079168b3e46ec2dced50cbca4bad7c2474007c",
+      "sha256": "a78f31bf9ebab5e1640cf1318913035667bf3c6dbb380a310d8257625cbc6d5d",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1818,8 +1863,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/anim-manifest.js?v=493976b39e5a",
-      "sha256": "493976b39e5a33021a669c668ee580f5bbcfc179e302c4837fa061d745e3b01e",
+      "url": "js/anim-manifest.js?v=8ccc1994cddc",
+      "sha256": "8ccc1994cddc2551beb6061da84eecbd4697e019acbd67d014e79d95fb971b73",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1948,28 +1993,28 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-core.js?v=d6404743583a",
-      "sha256": "d6404743583a213b3babd9634a5a2fc7e4f8a38bc461918ac606a0d734d7d467",
+      "url": "merged/growth-core.js?v=870f41d55cbd",
+      "sha256": "870f41d55cbd4688a6e7171605583fc94d0ce2b5e92edffa7d7397e9fe338e72",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-dark.css?v=f017dc64813c",
-      "sha256": "f017dc64813c82fa805200e5012358f2e097a982018daaf8375f8132d532c304",
+      "url": "merged/growth-dark.css?v=eed013bcbdfd",
+      "sha256": "eed013bcbdfd71888fe21165d919a510e6fbc761b67f0f405cbdb41fc851872b",
       "type": "text/css; charset=utf-8"
     },
     {
-      "url": "merged/growth-runtime.js?v=2d2d5cd89f68",
-      "sha256": "2d2d5cd89f68d721a450d261fd5f1a9d4291ccef8deac0c73e647332f4fe5a01",
+      "url": "merged/growth-runtime.js?v=e9f02ccc1b37",
+      "sha256": "e9f02ccc1b370c7705cff0e5f9ca5a3fc80dad59b3912de7278e4b1ca43003c3",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-ui.js?v=2d4edba429e9",
-      "sha256": "2d4edba429e9425b1042bf697683420e9c2f4c9dc747ef3904c82d4806a708ca",
+      "url": "merged/growth-ui.js?v=ada7442ac005",
+      "sha256": "ada7442ac005a7790cd72a7c6129b93ba08662839f69fb86ba3737803be5a227",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-views.js?v=9f5797dc4eeb",
-      "sha256": "9f5797dc4eebe586aa4fd48fd04409bf6363f1e1dcded7fe725d2ee786a095c6",
+      "url": "merged/growth-views.js?v=8f2b6cfb2730",
+      "sha256": "8f2b6cfb2730c524e9d77beea666fe3c99cb8dfd25173e177e3f0dcdd2bf0276",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2113,8 +2158,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/save-bridge.js?v=0501fc14f4ba",
-      "sha256": "0501fc14f4baaac682828f7dcf39c4a3bb20b621a7a95b8788f2314313b7bd28",
+      "url": "merged/save-bridge.js?v=b237467a4efe",
+      "sha256": "b237467a4efe3a91ff3ef3778c49079fe5a17cae7eb03096a968ec1f618f7665",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2159,7 +2204,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "9596295d14237454ed225e7d2e56eeab1a650eaf0c88a4649a9a5b65c6a356e2",
+      "sha256": "5a61b68fe759c4c123677dacc4b00ceda8f75dff67bf7602dc7e5f931b46488e",
       "type": "text/html; charset=utf-8"
     }
   ]

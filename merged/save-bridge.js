@@ -46,7 +46,7 @@
  function validateRole(value){
   if(!record(value)||!record(value.p)||typeof value.p.cls!=='string'||!value.p.cls)fail('ROLE','找不到完整角色資料。');
   if(!Array.isArray(value.p.inv)||!record(value.p.eq)||!record(value.ms))fail('ROLE','角色背包、裝備或地圖資料不完整，未修改存檔。');
-  if(!['knight','mage','elf','dark','illusion','dragon','warrior','royal'].includes(value.p.cls))fail('NEW_CLASS','這個職業尚未驗證，請先更新合併版。');
+  if(!['knight','mage','elf','dark','illusion','dragon','warrior','royal','berserker','thunder','paladin','darkknight','runeblade'].includes(value.p.cls))fail('NEW_CLASS','這個職業尚未驗證，請先更新合併版。');
   return value;
  }
  function inspect(input){

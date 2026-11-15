@@ -87,6 +87,27 @@ html body #growth-overlay .growth-para--cdr2{background-image:url('../assets/ui/
 html body #growth-overlay .growth-para--finalDef{background-image:url('../assets/ui/growth-v5/para3_finaldef.webp') !important}
 html body #growth-overlay .growth-para--finalDmg{background-image:url('../assets/ui/growth-v5/para3_finaldmg.webp') !important}
 html body #growth-overlay .growth-para--leech{background-image:url('../assets/ui/growth-v5/para3_leech.webp') !important}
+/* 巔峰 3000／4000、命脈、繼承繁星（GPT 圖 11-15） */
+html body #growth-overlay .growth-para--abnDur{background-image:url('../assets/ui/growth-v5/para4_abndur.webp') !important}
+html body #growth-overlay .growth-para--abnRes{background-image:url('../assets/ui/growth-v5/para4_abnres.webp') !important}
+html body #growth-overlay .growth-para--dmgAll{background-image:url('../assets/ui/growth-v5/para4_dmgall.webp') !important}
+html body #growth-overlay .growth-para--finalDmg2{background-image:url('../assets/ui/growth-v5/para4_finaldmg2.webp') !important}
+html body #growth-overlay .growth-para--minDef{background-image:url('../assets/ui/growth-v5/para4_mindef.webp') !important}
+html body #growth-overlay .growth-para--minDmg{background-image:url('../assets/ui/growth-v5/para4_mindmg.webp') !important}
+html body #growth-overlay .growth-para--minChase{background-image:url('../assets/ui/growth-v5/para4_minchase.webp') !important}
+html body #growth-overlay .growth-para--minRecast{background-image:url('../assets/ui/growth-v5/para4_minrecast.webp') !important}
+html body #growth-overlay .growth-para--minFinalDef{background-image:url('../assets/ui/growth-v5/para4_minfinaldef.webp') !important}
+html body #growth-overlay .growth-para--dmgTaken{background-image:url('../assets/ui/growth-v5/para5_dmgtaken.webp') !important}
+html body #growth-overlay .growth-para--antiCrit{background-image:url('../assets/ui/growth-v5/para5_anticrit.webp') !important}
+html body #growth-overlay .growth-para--heavyDef{background-image:url('../assets/ui/growth-v5/para5_heavydef.webp') !important}
+html body #growth-overlay .growth-para--critDef{background-image:url('../assets/ui/growth-v5/para5_critdef.webp') !important}
+html body #growth-overlay .growth-para--finalDef2{background-image:url('../assets/ui/growth-v5/para5_finaldef2.webp') !important}
+html body #growth-overlay .growth-para--minHeavyDef{background-image:url('../assets/ui/growth-v5/para5_minheavydef.webp') !important}
+html body #growth-overlay .growth-para--minCritDef{background-image:url('../assets/ui/growth-v5/para5_mincritdef.webp') !important}
+html body #growth-overlay .growth-para--minAntiCrit{background-image:url('../assets/ui/growth-v5/para5_minanticrit.webp') !important}
+html body #growth-overlay .growth-para--cdr3{background-image:url('../assets/ui/growth-v5/para5_cdr3.webp') !important}
+html body #growth-overlay .growth-para--bloodline{background-image:url('../assets/ui/growth-v5/para_bloodline.webp') !important}
+html body #growth-overlay .growth-para--starInherit{background-image:url('../assets/ui/growth-v5/para_starinherit.webp') !important}
 .growth-para-sec{grid-column:1/-1;margin:14px 0 2px;color:#e5c07b;font-size:15px;letter-spacing:.08em;border-bottom:1px solid #4b3a22;padding-bottom:4px}.growth-para-sec small{color:#9a8a70;margin-left:8px;font-size:12px}.growth-stat.is-locked{opacity:.45;filter:grayscale(.6)}
 /* 極意（afk-talent2，Ping 11-13） */
 .t2-note{color:#b9ab92;font-size:13px;margin:6px 0 10px}

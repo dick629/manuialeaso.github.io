@@ -13,7 +13,7 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'finaltiers', name: '終焉三階層', group: '遊戲玩法',
-    desc: '打贏最終決戰（席琳夢境）後開放第二階層「席琳幻影」（HP ×0.875、傷害 ×1.25，可重複挑戰到贏）與第三階層「席琳伴身」（×1.30，只能挑戰一次）' });
+    desc: '打贏最終決戰（席琳夢境）後開放第二階層「席琳幻影」（HP ×0.875、傷害 ×1.25，可重複挑戰到贏）與第三階層「席琳伴身」（HP ×1.3、傷害 ×1.45，只能挑戰一次）' });
   if (T && !T.enabled('finaltiers')) return;
   var FB = W.__afkFinalBoss;
   if (!FB || typeof FB.startMode !== 'function') { console.warn('[AFK-finaltiers] 找不到最終決戰，略過'); return; }
@@ -23,7 +23,7 @@
   var rec = function (p) { p = p || P(); if (!p) return {}; if (!p.afkFinalTier || typeof p.afkFinalTier !== 'object') p.afkFinalTier = { t2: null, t3: null, pending: null }; return p.afkFinalTier; };
   var REWARD = { tier2: ['afk_runebox_3', 1], tier3: ['afk_fate_unlock', 1] };
   // 強度說明：第二階層的席琳 HP 另外 ×0.70（2026-11-04），HP 與傷害倍率不同時分開寫
-  var powTxt = function (md) { var t = FB.TIER[md], hp = Math.round(t.k * (t.hpK || 1) * 1000) / 1000; return hp === t.k ? 'HP 與傷害 ×' + t.k : 'HP ×' + hp + '、傷害 ×' + t.k; };
+  var powTxt = function (md) { var t = FB.TIER[md], hp = Math.round(t.k * (t.hpK || 1) * 1000) / 1000, dk = t.dk || t.k; return hp === dk ? 'HP 與傷害 ×' + dk : 'HP ×' + hp + '、傷害 ×' + dk; };
   // 玩家 2026-10-29：先做好、先不開放（獎勵留到做旅人時一起討論）。開放時把 API.OPEN 改成 true。
   var API = { OPEN: true };   // 玩家 2026-11-07 23:37：開放第二、三階層
   var can = function (t) {
@@ -112,7 +112,7 @@
             + (ok ? '🌑 終焉第' + (t === 2 ? '二' : '三') + '階層：' + FB.TIER[md].n + '（' + powTxt(md) + '）' : '終焉第' + (t === 2 ? '二' : '三') + '階層：' + why) + (res === 'win' ? '（已通關）' : '') + '</button>';
         };
         box.insertAdjacentHTML('beforeend', '<div class="bg-slate-950/80 border border-fuchsia-700 rounded p-3 text-sm leading-relaxed"><div class="font-bold mb-1 text-fuchsia-300">🌑 終焉階層</div>'
-          + '<div class="text-slate-200 text-xs">第一階層「席琳夢境」就是最終決戰。打贏後開放第二階層「席琳幻影」（' + powTxt('tier2') + '，可重複挑戰到贏），再開放第三階層「席琳伴身」（×1.30，只能挑戰一次）。打贏一層後不能回頭打前一層。第三階層的入場資格：統一伺服器（七座城都是你的），而且隊伍裡每個角色的特殊收藏都要全滿。</div></div>'
+          + '<div class="text-slate-200 text-xs">第一階層「席琳夢境」就是最終決戰。打贏後開放第二階層「席琳幻影」（' + powTxt('tier2') + '，可重複挑戰到贏），再開放第三階層「席琳伴身」（' + powTxt('tier3') + '，只能挑戰一次）。打贏一層後不能回頭打前一層。第三階層的入場資格：統一伺服器（七座城都是你的），而且隊伍裡每個角色的特殊收藏都要全滿。</div></div>'
           + row(2) + row(3));
       } catch (e) {}
       return r;

@@ -205,6 +205,9 @@
   }
   // 某職業到幾級可學此技能(規則同遊戲 skillReqLv);學不到回 undefined
   function reqLvForClass(cls, id, sk) {
+    var AWK = { berserker: 1, thunder: 1, paladin: 1, darkknight: 1, runeblade: 1 };   // 覺醒職業（afk-awaken）：只學自己的覺醒技能＋日光術、迷魅術
+    if (sk && sk.awCls) return sk.awCls === cls ? sk.awLv : undefined;
+    if (AWK[cls]) return id === 'sk_sunlight' ? 1 : id === 'sk_charm' ? 20 : undefined;
     if (id === 'sk_charm' && window.__afkCharm && __afkCharm.ruleOn()) return __afkCharm.reqLv(cls);   // 迷魅術改版：所有職業都能學
     if (cls === 'dark') {
       if (sk.reqD !== undefined) return sk.reqD;
@@ -1166,6 +1169,7 @@
     { k: 'sunrise', n: '日出之國' },
     { k: 'kingroom', n: '軍王之室' },
     { k: 'antharas', n: '副本' },
+    { k: 'newzones', n: '新地區副本' },
     { k: 'worldev', n: '世界事件與地區霸主' },
     { k: 'adventurer', n: '冒險者' },
     { k: 'starroad', n: '星途遠征' },
@@ -1213,6 +1217,7 @@
     document.body.appendChild(m);
     var tabs = document.getElementById('m-wiki-tabs');
     TABS.forEach(function (t) {
+      if (t.k === 'newzones' && !(window.__afkNewZones && window.__afkNewZones.wiki)) return;   // 新地區沒開就不顯示
       var b = document.createElement('button');
       b.className = 'm-wiki-tab'; b.setAttribute('data-tab', t.k); b.textContent = t.n;
       b.addEventListener('click', function () { state.tab = t.k; render(); });
@@ -1393,6 +1398,7 @@
     if (key === 'sunrise') return renderSunrise();
     if (key === 'kingroom') return renderKingroom();
     if (key === 'antharas') return renderAntharas();
+    if (key === 'newzones') return (window.__afkNewZones && window.__afkNewZones.wiki) ? window.__afkNewZones.wiki({ tbl: wTbl }) : '<div class="m-wiki-note">還沒開放。</div>';   // 新地區副本（afk-newzones 產生）
     if (key === 'load') return renderLoad();
     if (key === 'pledge') return renderPledge();
     if (key === 'relicmarket') return renderRelicMarket();
@@ -1469,6 +1475,7 @@
     { key: 'sunrise', cls: false, label: '日出之國' },
     { key: 'kingroom', cls: false, label: '軍王之室' },
     { key: 'antharas', cls: false, label: '副本' },
+    { key: 'newzones', cls: false, label: '新地區副本' },
     { key: 'worldev', cls: false, label: '世界事件與地區霸主' },
     { key: 'adventurer', cls: false, label: '冒險者' },
     { key: 'starroad', cls: false, label: '星途遠征' },
@@ -4415,11 +4422,12 @@
     }
     if (which === 'goddess' && en('g3shadow')) {
       var sh = C.shadow || {};
-      rows.push(['幽影（二轉決戰、終焉第一階層）', '席琳 HP 到 ' + (sh.at || [0.7, 0.4, 0.1]).map(pc).join('／') + ' 時沉入幽影：<b>不受任何傷害</b>、每秒回最大 HP ' + ((sh.regen || 0.002) * 100) + '%，'
+      rows.push(['幽影（二轉決戰、終焉第一階層、終焉第三階層）', '席琳 HP 到 ' + (sh.at || [0.7, 0.4, 0.1]).map(pc).join('／') + ' 時沉入幽影：<b>不受任何傷害</b>、每秒回最大 HP ' + ((sh.regen || 0.002) * 100) + '%，'
         + '並喚出「被侵蝕的時空四龍」4 隻（場上最多 2 隻）。四隻都打倒，幽影才結束；幽影中會自動改打時空四龍。時空四龍沒有免疫，也沒有經驗、金幣、掉落。'],
         ['幽影的吸取', '幽影期間每秒吸走每名隊員最大 HP ' + pc(sh.drain || 0.05) + '，並疊加：五屬性抗性 −' + (sh.res || 10) + '、魔防 −' + (sh.mr || 10) + '、AC +' + (sh.ac || 10) + '、命中 −' + (sh.hit || 10) + '（幽影結束就恢復）。'],
         ['雅典娜之杖', '帶著（背包或裝備都算）的人<b>不受幽影的吸取與降能力</b>；傭兵要自己帶。'],
-        ['狂暴', '三次幽影都結束後，席琳再降到 ' + pc(sh.rage || 0.1) + ' → 狂暴直到戰鬥結束：每秒吸走全隊 ' + pc(sh.drain || 0.05) + ' 生命並降能力，<b>雅典娜之杖也擋不住</b>。']);
+        ['狂暴', '三次幽影都結束後，席琳再降到 ' + pc(sh.rage || 0.1) + ' → 狂暴直到戰鬥結束：每秒吸走全隊 ' + pc(sh.drain || 0.05) + ' 生命並降能力，<b>雅典娜之杖也擋不住</b>。'],
+        ['冥界的震懾（終焉第三階層）', '冥界的使徒倒下時，全隊暈眩 3 秒。<b>只有暈眩免疫、異常狀態免疫擋得住</b>；異常狀態抵抗機率沒用，受到的異常狀態持續時間縮短照算。']);
     }
     if (!rows.length) return '';
     return wCard(which === 'dragon' ? '🐉 席琳夢域鏡的四龍：永久免疫' : '👁 死亡女神 席琳：免疫、斬殺、幽影', wTbl(['規則', '說明'], rows));
@@ -6124,13 +6132,16 @@
     '</div>';
   }
   var MAGIC_FILTERS = [['all', '全部'], ['royal', '王族'], ['knight', '騎士'], ['mage', '法師'], ['elf', '妖精'], ['dark', '黑暗妖精'], ['illusion', '幻術士'], ['dragon', '龍騎士'], ['warrior', '戰士']];   // 順序＝全部＋創角職業序(同 CLASSES)
+  if (window.__afkAwaken) [['berserker', '狂戰士'], ['thunder', '雷神'], ['paladin', '神聖劍士'], ['darkknight', '暗黑騎士'], ['runeblade', '魔劍士']].forEach(function (x) { MAGIC_FILTERS.push(x); });   // 覺醒職業
   function magicFilterRow(sel) {
     return '<div class="m-wiki-mfilter">' + MAGIC_FILTERS.map(function (f) {
       return '<button type="button" class="m-wiki-mfbtn' + (f[0] === sel ? ' on' : '') + '" data-magiccls="' + f[0] + '">' + f[1] + '</button>';
     }).join('') + '</div>';
   }
   // 特殊技能職業的「技能書怎麼取得」說明(本檔維護;來源以 code 為準:WARRIOR_EX/甘特/拉比安尼兌換、SHOP_LISTS、各掉落表、gachaWeight)
+  var AWK_NOTE = '✨ <b>覺醒職業</b>：一般技能書在<b>席琳神殿的覺醒導師 伊瑟拉</b>用金幣買；英雄技能書由 Lv60～80 的王掉落；傳說技能書由 Lv80 以上的王掉落，學的時候另外消耗轉生用時空材料六種各 300；神話技能書只有次元裂縫會掉，學的時候另外消耗次元結晶 500、裂縫碎光 100。';
   var SKILL_SOURCE_NOTE = {
+    berserker: AWK_NOTE, thunder: AWK_NOTE, paladin: AWK_NOTE, darkknight: AWK_NOTE, runeblade: AWK_NOTE,
     warrior: '⚔️ <b>技能印記怎麼拿</b>：「迅猛雙斧」「咆哮」可在<b>海音的多文</b>試煉兌換（材料見「任務」分頁）。其餘印記（粉碎／護甲身軀／狂暴／泰坦系列／戰斧投擲／體能強化／亡命之徒）<b>由特定怪掉落</b>——把印記名丟「掉落查詢」就能看是哪些怪掉、機率多少（例：護甲身軀＝高崙系列、戰斧投擲＝骷髏弓箭手／巨大兵蟻、體能強化＝巨人系列）。',
     royal: '👑 <b>王族魔法書怎麼拿</b>：「精準目標」「呼喚盟友」在<b>說話之島的甘特</b>試煉兌換；「灼熱武器／勇猛意志／閃亮之盾／王者加護」在<b>說話之島的拉比安尼</b>用 飛龍之心＋高崙之心＋冰之女王之心＋不死鳥之心 製作。',
     illusion: '🔮 <b>記憶水晶怎麼拿</b>：部分商店有賣，部分由<b>希蓮恩（歐瑞·希培利亞村莊）</b>試煉兌換（見「任務」分頁）；想找某個就把書名丟「掉落查詢」看來源。',
@@ -6159,7 +6170,7 @@
         rows.push({ id: id, sk: sk, lv: lv, needMastery: needMastery });
       }
       rows.sort(function (a, b) { return (a.lv - b.lv) || ((a.sk.tier || 0) - (b.sk.tier || 0)) || a.sk.n.localeCompare(b.sk.n); });
-      var clsName = (CLASSES.filter(function (c) { return c.k === magicCls; })[0] || {}).n || '';
+      var clsName = (CLASSES.filter(function (c) { return c.k === magicCls; })[0] || {}).n || (window.__awkName && window.__awkName(magicCls)) || '';
       html += '<div class="m-wiki-note">' + esc(clsName) + '學得到的魔法，依可學等級排序（含可學的法師魔法）。</div>';
       if (SKILL_SOURCE_NOTE[magicCls]) html += '<div class="m-wiki-note">' + SKILL_SOURCE_NOTE[magicCls] + '</div>';   // ⚔️👑🔮🐉 技能書取得方式
       if (!rows.length) html += '<div class="m-wiki-hint">這個職業沒有可學的魔法。</div>';

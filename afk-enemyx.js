@@ -13,6 +13,7 @@
  *   GD之子的期待：機率跟次元裂縫一樣，敵人的傷害再 +100%（×2）。
  *   對象：所有敵人打你和你的傭兵；經典模式不套用。
  *   你的「受到的爆擊傷害 −x%」：W.__afkEnemyCritDef(ent) 回傳百分比（極意壁壘 N3 第一顆）。
+ *   抗暴：W.__afkEnemyCritRateDef(ent) 回傳百分點，從敵人爆擊率扣掉；受到的重擊傷害 −x%：W.__afkEnemyHeavyDef(ent)，只減重擊多出來的部分（巔峰 4000、神聖衣星守）。
  * ========================================================================== */
 (function () {
   'use strict';
@@ -47,8 +48,9 @@
         if (c.dmgX) m *= c.dmgX;
         if (mob.boss) m *= BOSS_X;
         if (magicX && kind === 'magic') { m *= MAGIC_X; txt.push('魔擊'); }
-        if (Math.random() < c.crit) { var cx = c.critX; try { var cd = N(W.__afkEnemyCritDef && W.__afkEnemyCritDef(ent)); if (cd) cx = cx * (1 - cd / 100); } catch (e) {} m *= cx; txt.push('爆擊'); }
-        if (kind !== 'magic' && Math.random() < c.heavy) { m *= c.heavyX; txt.push('重擊'); }
+        var crR = c.crit; try { var ad = N(W.__afkEnemyCritRateDef && W.__afkEnemyCritRateDef(ent)); if (ad) crR = Math.max(0, crR - ad / 100); } catch (e) {}
+        if (Math.random() < crR) { var cx = c.critX; try { var cd = N(W.__afkEnemyCritDef && W.__afkEnemyCritDef(ent)); if (cd) cx = cx * (1 - cd / 100); } catch (e) {} m *= cx; txt.push('爆擊'); }
+        if (kind !== 'magic' && Math.random() < c.heavy) { var hx = c.heavyX; try { var hd = N(W.__afkEnemyHeavyDef && W.__afkEnemyHeavyDef(ent)); if (hd) hx = 1 + (hx - 1) * (1 - Math.min(100, hd) / 100); } catch (e) {} m *= hx; txt.push('重擊'); }
         if (c.pierce && kind !== 'magic' && ent.d) { var dr = N(ent.d.dr) + N(ent.d.dmgReduc); if (dr > 0) v += Math.floor(dr * c.pierce); }
         v = Math.max(1, Math.floor(v * m));
         if (mob.boss && basic && kind !== 'magic' && Math.random() < BOSS_KILL) {
@@ -61,6 +63,32 @@
     };
   };
   hookTaken(); W.addEventListener('load', hookTaken);
+
+  // ── 寵物、召喚物、守衛也會被爆擊、重擊（Ping 11-15：要讓牠們容易死）──
+  //   這三種受傷都會乘 teamDmgReduceMult(true)；在敵人打牠們的那幾個函式裡記下「誰打誰」，乘的時候順便判定爆擊、重擊。
+  //   減免：W.__afkMinionCritRateDef／__afkMinionCritDef／__afkMinionHeavyDef（巔峰 4000）
+  var mctx = null;
+  ['enemyAttackPet', 'applyMobMagicToPet', 'enemyAttackSummon', 'applyMobMagicToSummon', 'enemyAttackGuard', 'applyMobMagicToGuard'].forEach(function (fn) {
+    var o = W[fn]; if (typeof o !== 'function' || o.__afkEx) return;
+    var w = function (mob) { var prev = mctx; mctx = { mob: mob, kind: /Magic/.test(fn) ? 'magic' : 'phys', used: false }; try { return o.apply(this, arguments); } finally { mctx = prev; } };
+    w.__afkEx = true; W[fn] = w;
+  });
+  if (typeof W.teamDmgReduceMult === 'function') {
+    var oTdrX = W.teamDmgReduceMult;
+    W.teamDmgReduceMult = function (forMinion) {
+      var m = oTdrX.apply(this, arguments);
+      try {
+        if (!forMinion || !mctx || mctx.used || !on() || !enemy(mctx.mob)) return m;
+        mctx.used = true;
+        var c = cfg(), x = 1;
+        var crR = c.crit - N(W.__afkMinionCritRateDef && W.__afkMinionCritRateDef()) / 100;
+        if (Math.random() < Math.max(0, crR)) x *= c.critX * (1 - Math.min(100, N(W.__afkMinionCritDef && W.__afkMinionCritDef())) / 100);
+        if (mctx.kind !== 'magic' && Math.random() < c.heavy) x *= 1 + (c.heavyX - 1) * (1 - Math.min(100, N(W.__afkMinionHeavyDef && W.__afkMinionHeavyDef())) / 100);
+        m *= x;
+      } catch (e) {}
+      return m;
+    };
+  }
 
   // ── 追加攻擊（一般攻擊）──
   if (typeof W.enemyAttackChooseVictim === 'function') {

@@ -128,7 +128,10 @@
   var descOf = function (i, st, lib) { return st >= 5 ? ORIGIN[i][1](originVal(i, st)) : CARDS[i][2](rawVal(i, st, lib)); };
   var auraTxt = function (st, lib) { var a = lib ? AURA_LIB : AURA[st]; return a ? '五屬性抗性 +' + a.res + (a.abn ? '、異常狀態抵抗 +' + a.abn + '%' : '') + (a.dur ? '、受到的異常狀態持續時間 −' + a.dur + '%' : '') + (a.weight ? '、負重上限 +' + a.weight.toLocaleString() : '') + (a.ero ? '；次元裂縫的地圖侵蝕扣 AC、抗性最多扣到 −' + a.ero : '') : ''; };
   var stdKeyC = function (c) { return c.eqLib ? '95' : stdKey(c.eqSt); };
-  var auraC = function (c) { return c.eqLib ? AURA_LIB : AURA[c.eqSt]; };
+  var auraC = function (c) {   // 繼承繁星 0 階：光環 ×1.2（afk-bloodline）
+    var a = c.eqLib ? AURA_LIB : AURA[c.eqSt], k = 1; try { k = W.__afkMioAuraMult ? Number(W.__afkMioAuraMult()) || 1 : 1; } catch (e) {}
+    if (!a || k === 1) return a; var o = {}; Object.keys(a).forEach(function (x) { o[x] = (typeof a[x] === 'number' && x !== 'ero') ? Math.round(a[x] * k) : a[x]; }); return o;
+  };
   var stdKey = function (st) { return st >= 4 ? '80' : st >= 3 ? '75' : st >= 2 ? '65' : null; };
   var stdName = function (st) { return st >= 4 ? STAGE[Math.min(st, 4)] : st >= 3 ? '馬賽' : '托特'; };
   // 次元效果（淵源／起源／創世）：只在次元裂縫生效
