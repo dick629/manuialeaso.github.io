@@ -16,7 +16,7 @@
   if (T && T.register) T.register({ id: 'heartbeat', name: '旅人頻道（真人聊天）', desc: '世界頻道旁的「💬 旅人」按鈕：跟其他真人玩家聊天；要自己加入才會連線', group: '遊戲介面' });
   var on = function () { return !T || T.enabled('heartbeat'); };
 
-  var DEFAULT_API = '';   // 部署好 Worker 後可以把網址寫在這裡（所有人預設連這台）；也可以在視窗裡另外設定
+  var DEFAULT_API = 'https://lineage-heartbeat.manuialeaso.workers.dev';   // 部署好 Worker 後可以把網址寫在這裡（所有人預設連這台）；也可以在視窗裡另外設定
   var K = { api: 'afk_hb_api', id: 'afk_hb_id', join: 'afk_hb_join', seen: 'afk_hb_seen' };
   var BEAT_MS = 5 * 60 * 1000, FEED_MS = 15000;
   var CLS = { royal: ['王族', '#e8c48a'], knight: ['騎士', '#e57f6c'], elf: ['妖精', '#9bc48a'], mage: ['法師', '#8fb4e8'], dark: ['黑暗妖精', '#b59be0'], dragon: ['龍騎士', '#e09a5b'], illusion: ['幻術士', '#d38fc4'], warrior: ['戰士', '#c9b28a'] };
