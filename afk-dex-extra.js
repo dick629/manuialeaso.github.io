@@ -112,6 +112,61 @@
     X.acq(id, '所有頭目與名稱有「首領」的怪被打倒時固定 1%（不吃組隊、席琳、夢域等任何掉落倍率；攻城守軍與星迴試煉除外）。工匠薩克復原失去氣息的古物時使用。');
   });
 
+  // ── 劇情「水面下的證詞」（afk-dreamquest）的任務道具：任務進行到該章、在席琳夢域鏡世界打倒指定對象必定取得 ──
+  (function () {
+    var mn = function (id) { try { return (W.AFK_EXTRA && W.AFK_EXTRA.mapName) ? W.AFK_EXTRA.mapName(id) : id; } catch (e) { return id; } };
+    var HEAD = '劇情任務「水面下的證詞」進行到該章時，在席琳夢域鏡世界', TAIL = '必定取得，收齊為止。';
+    var byMap = function (id, map, who) { X.acq(id, function () { return HEAD + '的' + mn(map) + '打倒' + who + TAIL; }); };
+    var byMobs = function (id, mobs, note) { mobs.forEach(function (m) { X.drop(m, id, 100, '任務進行中', true); }); X.acq(id, HEAD + '打倒' + mobs.join('、') + TAIL + (note || '')); };
+    byMap('afk_dq_drop', 'eva_kingdom', '任一怪物');
+    byMap('afk_dq_grace', 'pride_91_100', '一般怪');
+    byMap('afk_dq_stair', 'pride_91_100', '一般怪');
+    byMap('afk_dq_plan', 'zone_41', '任一怪物');
+    byMap('afk_dq_dew', 'tikal_deep', '任一怪物');
+    byMobs('afk_dq_ledger', ['邪惡的鐮刀死神', '邪惡的鐮刀死神(支配)']);
+    byMobs('afk_dq_note', ['哈汀之影']);
+    byMobs('afk_dq_book', ['提卡爾杰弗雷庫(雄)', '提卡爾杰弗雷庫(雌)'], '雄、雌各算 2 本。');
+    byMobs('afk_dq_echo', ['真‧吉爾塔斯']);
+    byMobs('afk_dq_sutra', ['長老．琪娜', '長老．安迪斯', '長老．巴塔斯', '長老．巴洛斯', '長老．巴陸德', '長老．拉曼斯', '長老．泰瑪斯', '長老．艾迪爾'], '每位長老只算一次。');
+    X.acq('afk_dq_scar', HEAD + '打倒四龍（安塔瑞斯、法利昂、巴拉卡斯、林德拜爾）' + TAIL + '每條龍只算一次。');
+    X.acq('afk_dq_eye', HEAD + '打倒暗夢星迴的夢境者投影' + TAIL);
+    X.acq('afk_dq_wedge', '劇情任務「水面下的證詞」進行到該章時，在席琳夢域鏡的時空裂痕撐過 60 分鐘，結算時取得。');
+    X.acq('afk_dq_lens', '劇情任務「水面下的證詞」最後一章「監視之眼」第一次完成的獎勵（不會消耗）。');
+  })();
+  // ── 世界事件「克特的追殺令」（afk-kurt-hunt）──
+  X.acq('afk_kurt_order', '世界事件「克特的追殺令」：打倒前來追殺王族的克特必定取得 1 張。');
+
+  // ── 各系統的專屬道具：沒有登記過取得方式的，至少指到小百科講這個系統的分頁（全部外掛載入完才掃一次）──
+  var fillByPrefix = function () {
+    var see = function (tab) { return '取得方式與用途見小百科「' + tab + '」分頁。'; };
+    var RULES = [
+      [/^afk_qw40_/, '說話之島「新手指導員 莉娜」的新手任務獎勵：接下後打倒 30 隻怪物交回（Lv50 以下才能接，每個角色一把，可以用到 Lv40）。'],
+      [/^afk_qw60_/, '說話之島「新手指導員 莉娜」：完成 30 級職業試煉後領取，或用 5 枚狩獵徽章交換（每個角色一把，可以用到 Lv60）。'],
+      [/^afk_arw(bag)?_/, '歐瑞村莊的箭矢工匠「門蘇」製作。'],
+      [/^afk_(soul|dull|brace|abyss|will|yin)_/, see('靈魂石')],
+      [/^afk_rune_/, see('符文系統')],
+      [/^afk_(sigil|mio)_/, see('密奧與聖紋')],
+      [/^afk_(zd|rd|dim|cloth)_/, see('次元裂縫')],
+      [/^afk_blood_dia$/, '潘朵拉黑市用龍之鑽石兌換。用途見小百科「次元裂縫」分頁。'],
+      [/^afk_guard_/, see('守護者之戒')],
+      [/^afk_rift_/, see('時空裂痕')],
+      [/^afk_(rb|we)_/, see('世界事件與地區霸主')],
+      [/^afk_kurt_helm$/, see('世界事件與地區霸主')],
+      [/^afk_engrave_/, see('星途遠征')],
+      [/^afk_hunter_/, see('冒險者')],
+      [/^afk_set_/, see('套裝')],
+      [/^afk_(hp|hd)_/, see('劇情任務')]
+    ];
+    try {
+      Object.keys(DB.items).forEach(function (id) {
+        if (id.charCodeAt(0) !== 97 || id.indexOf('afk_') !== 0 || id.indexOf('~') >= 0 || X.acquire[id]) return;
+        for (var i = 0; i < RULES.length; i++) if (RULES[i][0].test(id)) { X.acquire[id] = RULES[i][1]; break; }
+      });
+      X.rev++;
+    } catch (e) {}
+  };
+  if (document.readyState === 'complete') setTimeout(fillByPrefix, 0); else W.addEventListener('load', function () { setTimeout(fillByPrefix, 0); });
+
   // ── 古代藥水（afk-ancient）：跟著終極治癒藥水一起賣 ──
   X.sellLike(Object.keys(DB.items).filter(function (id) { return /^potion_(heal_anc|anc_pack)/.test(id); }), 'potion_ult');
 })();

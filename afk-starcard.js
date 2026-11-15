@@ -190,7 +190,7 @@
   var npcHtml = function (p) {
     if (!on(p)) return '';
     var s = store(p), KT = W.__afkNpcKit, rift = inRift(), h = '<div class="ax-h" style="margin-top:10px">✦ 星卡格</div>';
-    h += '<div class="ax-note">星卡格一次放一張黃道星卡，不算裝備（不佔裝備欄、不算重量、不能強化）。守宮者偶爾留下自己那一宮的星卡；登錄要用掉 1 張，重複的拿來升級。放著的那張有保底：星卡 曲線 95、裂界 105、歸一 110。在次元裂縫裡效果 ×1.5' + (rift ? '（你現在在裂縫裡）' : '') + '。</div>';
+    h += '<div class="ax-note">星卡格一次放一張黃道星卡，不算裝備（不佔裝備欄、不算重量、不能強化）。守宮者偶爾留下自己那一宮的星卡；登錄要用掉 1 張，重複的拿來升級。放著的那張有保底：HP、傷害減免、魔防、AC、迴避不到下限時，直接補到下限（下限依職業而定；星卡、裂界、歸一一階比一階高）。在次元裂縫裡效果 ×1.5' + (rift ? '（你現在在裂縫裡）' : '') + '。</div>';
     var oldN = cnt(OLD);
     if (oldN > 0) h += '<div class="ax-note" style="color:#fde68a">你有 ' + oldN + ' 張還沒分宮的舊黃道星卡：在下面各宮按「換這宮」換一張。</div>';
     Z.H.forEach(function (x) {
