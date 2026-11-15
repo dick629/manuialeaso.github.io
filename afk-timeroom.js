@@ -2,17 +2,20 @@
  * afk-timeroom.js — 時光屋（Ping 11-11 01:14／01:16）
  *
  *   席琳神殿地區的新地圖「時光屋」：
- *     ‧怪物＝日出之國東之地、西之地、北之地的一般怪（不出王）。
- *     ‧怪物經驗 ×1.5；能進次元裂縫的角色 ×2。
- *     ‧不掉任何東西（包含地區霸主、世界事件、離線結算），只給金幣。
+ *     ‧怪物（Ping 11-15 22:44）＝全遊戲 Lv75 以上的一般怪：出現在野外／地監／時空裂痕／塔類地圖、經驗 > 0、不是王
+ *       （只在單人副本、封印地等特殊地圖出現的怪不算）。新地區的怪較晚載入，所以 load 時再算一次。
+ *       （舊版：日出之國東之地、西之地、北之地的一般怪）
+ *     ‧怪物經驗 ×2；能進次元裂縫的角色 ×2.2（Ping 11-15 22:44；原本 ×1.5／×2）。
+ *     ‧不掉任何東西（包含地區霸主、世界事件、離線結算、龍之鑽石），只給金幣。
+ *       例外（Ping 11-15 22:44）：次元材料（次元裂縫模式）與夢域鏡材料（夢域鏡模式）照常掉，見 KEEP。
  *     ‧地區霸主、世界事件出現率 ×2（冷卻照舊）。地區霸主從各地區霸主裡隨機挑一隻（日出之國所在的地區沒有霸主）。
- *     ‧經驗蘑菇（Ping 11-12）：每隻怪 1% 變成經驗蘑菇，經驗 1700 萬（再乘時光屋 ×1.5／×2 與一般的經驗倍率）；打倒牠 1% 下一隻又是經驗蘑菇。
+ *     ‧經驗蘑菇（Ping 11-12）：每隻怪 1% 變成經驗蘑菇，經驗 1700 萬（再乘時光屋 ×2／×2.2 與一般的經驗倍率）；打倒牠 1% 下一隻又是經驗蘑菇。
  *   經典模式沒有（席琳神殿地區本來就不開放經典模式）。
  * ========================================================================== */
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
-  if (T && T.register) T.register({ id: 'timeroom', name: '時光屋', group: '遊戲內容', desc: '席琳神殿地區的練功地圖：日出之國的怪、經驗加成、不掉落只給金幣。' });
+  if (T && T.register) T.register({ id: 'timeroom', name: '時光屋', group: '遊戲內容', desc: '席琳神殿地區的練功地圖：Lv75 以上的一般怪、經驗加成；只掉次元材料與夢域鏡材料，其他不掉。' });
   if (T && !T.enabled('timeroom')) return;
   if (typeof DB === 'undefined' || !DB.maps || typeof MAP_CATEGORIES === 'undefined' || typeof MAP_REGIONS === 'undefined') return;
   var MAP = 'time_room', SRC = ['sunrise_east', 'sunrise_west', 'sunrise_north'];
@@ -20,6 +23,18 @@
   SRC.forEach(function (m) { (DB.maps[m] || []).forEach(function (id) { var d = DB.mobs[id]; if (d && !d.boss && ids.indexOf(id) < 0) ids.push(id); }); });
   if (!ids.length) { console.warn('[AFK-timeroom] 找不到日出之國的怪物，略過'); return; }
   DB.maps[MAP] = ids;
+  // Ping 11-15 22:44：改成全遊戲 Lv75 以上的一般怪（22:32 先改 Lv60）
+  var MIN_LV = 75, CATS = ['wild', 'dungeon', 'rift', 'tower'];
+  var buildAll = function () {
+    try {
+      var ok = {}; CATS.forEach(function (c) { (MAP_CATEGORIES[c] || []).forEach(function (o) { if (o && o.v && o.v !== MAP) ok[o.v] = 1; }); });
+      var out = [];
+      Object.keys(ok).forEach(function (m) { (DB.maps[m] || []).forEach(function (id) { var d = DB.mobs[id]; if (d && !d.boss && (d.lv || 0) >= MIN_LV && (Number(d.exp) || 0) > 0 && out.indexOf(id) < 0) out.push(id); }); });
+      if (out.length) { ids = out; DB.maps[MAP] = out; if (W.__afkTimeRoom) W.__afkTimeRoom.mobs = out; }
+    } catch (e) { console.warn('[AFK-timeroom] buildAll', e); }
+  };
+  buildAll();
+  W.addEventListener('load', buildAll);
   (MAP_CATEGORIES.wild = MAP_CATEGORIES.wild || []).push({ v: MAP, t: '時光屋', c: '#fde68a', classicHide: true });
   var reg = MAP_REGIONS.filter(function (r) { return r.key === 'sherine'; })[0];
   if (reg) reg.maps.push({ v: MAP, t: '時光屋' });
@@ -28,7 +43,7 @@
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var here = function () { return typeof mapState !== 'undefined' && mapState && mapState.current === MAP; };
   var riftOK = function () { try { var p = P(), R = W.__afkDimRift; return !!(p && R && typeof R.canOpen === 'function' && !R.canOpen(p)); } catch (e) { return false; } };
-  var mult = function () { return riftOK() ? 2 : 1.5; };
+  var mult = function () { return riftOK() ? 2.2 : 2; };
 
   // ── 經驗蘑菇 ──
   var SHROOM = { n: '經驗蘑菇', exp: 17000000, rate: 0.01, again: 0.01, base: 'growth_mushroom_1000' };
@@ -61,6 +76,13 @@
 
   // 不掉落：擊殺結算（含地區霸主、世界事件）與離線結算時，道具與龍之鑽石都不給；金幣照給
   var killing = 0;
+  // 例外：次元材料、夢域鏡材料照常給（Ping 11-15 22:44）
+  var KEEP = {
+    afk_rift_shard: 1, afk_dim_crystal: 1, afk_star_dust: 1, afk_split_dust: 1, afk_star_core: 1,   // 次元：裂縫碎光、次元結晶、破碎星光塵埃、分裂的蔑視塵埃、星辰之核
+    afk_dream_crystal: 1, afk_hell_essence: 1, afk_contempt_shard: 1,                               // 夢域鏡：夢艷結晶、地獄精華、滅魔蔑視水晶碎片
+    afk_contempt_earth: 1, afk_contempt_water: 1, afk_contempt_wind: 1, afk_contempt_fire: 1,       //        四屬性滅魔蔑視水晶
+    afk_asc_stone_wpn: 1, afk_asc_stone_arm: 1, afk_asc_stone_acc: 1, afk_asc_shard: 1              //        昇華支配強化石、昇華支配碎片（白金卡全滿）
+  };
   var blocked = function () {
     if (!here()) return false;
     if (killing > 0) return true;
@@ -71,13 +93,20 @@
     W.killMob = function (idx) { var m = here() && mapState.mobs ? mapState.mobs[idx] : null, was = m && !m._dead; killing++; try { return oKill.apply(this, arguments); } finally { killing--; try { if (was && m._dead && m._afkShroom && Math.random() < SHROOM.again) shroomNext = true; } catch (e) {} } };
     try { (0, eval)('killMob = window.killMob'); } catch (e) {}
   }
+  // 外層再包一次（load 時）：之後才載入的外掛（次元裂縫、夢域鏡…）在擊殺後補發的掉落也算在擊殺結算裡
+  W.addEventListener('load', function () {
+    if (typeof W.killMob !== 'function' || W.killMob.__afkTrOuter) return;
+    var o2 = W.killMob, w2 = function () { if (!here()) return o2.apply(this, arguments); killing++; try { return o2.apply(this, arguments); } finally { killing--; } };
+    w2.__afkTrOuter = true; W.killMob = w2;
+    try { (0, eval)('killMob = window.killMob'); } catch (e) {}
+  });
   if (typeof W.gainItem === 'function') {
     var oGain = W.gainItem;
     // ⚠ 11-12 修：補跑／離線結算時「自動買藥水、卷軸」也走 gainItem(id, n, true, true)——以前一律擋掉，
     //   錢扣了卻拿不到東西（每一拍重買一次，4 分鐘扣掉 200 多億金幣），核心隨後讀不到那瓶藥水而丟例外、補跑中止。
     //   第 4 個參數 forceNormal=true 的是購買／補給，不算掉落 → 放行；擊殺結算中（killing>0）照擋。
     var buying = function (a) { return a && a[3] === true && killing <= 0; };
-    W.gainItem = function () { if (!buying(arguments) && blocked()) return undefined; return oGain.apply(this, arguments); };
+    W.gainItem = function () { if (!KEEP[arguments[0]] && !buying(arguments) && blocked()) return undefined; return oGain.apply(this, arguments); };
     try { (0, eval)('gainItem = window.gainItem'); } catch (e) {}
   }
   if (typeof W.pandoraAdjustSharedDiamonds === 'function') {
@@ -89,5 +118,5 @@
   W.__afkEventRateMult = function (mapId) { return mapId === MAP ? 2 : 1; };
   W.__afkRbRegionOf = function (mapId, keys) { return mapId === MAP && keys && keys.length ? keys[Math.floor(Math.random() * keys.length)] : null; };
 
-  W.__afkTimeRoom = { MAP: MAP, mobs: ids, mult: mult, blocked: blocked, SHROOM: SHROOM, forceShroom: function () { shroomNext = true; } };
+  W.__afkTimeRoom = { MAP: MAP, KEEP: KEEP, mobs: ids, rebuild: buildAll, MIN_LV: MIN_LV, mult: mult, blocked: blocked, SHROOM: SHROOM, forceShroom: function () { shroomNext = true; } };
 })();
