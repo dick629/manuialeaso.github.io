@@ -97,8 +97,9 @@
           var on = a.owned(row.id, p), se = on && a.sealed(row.id, p), nm = row.n.replace(/^[^・]+・/, '');
           var cp=window.LineageClothProgression,clothLabel=on?(cp?cp.label(p,row.id)+(cp.canWear(row.id,p)?'・'+(se?'封印中':'已解除封印'):''):(se?'封印中':'已解除封印')):'未取得';
           h += '<div class="afk-cb-tile samsara' + (on ? '' : ' off') + '" title="' + esc(row.n + '\n特殊能力：' + (row.special || '') + '（解除封印後生效；副本內回到封印型態、沒有特殊能力）') + '">'
-            + (window.__afkFormThumb ? window.__afkFormThumb(row.n, on) : '')
-            + '<b>' + esc(nm) + '</b><small style="color:' + (on ? (se ? '#fca5a5' : '#fde047') : '#7a7168') + '">' + esc(clothLabel) + '</small></div>';
+            + (window.__afkClothThumb ? window.__afkClothThumb(row.n, on && !se, p) : window.__afkFormThumb ? window.__afkFormThumb(row.n, on) : '')   // 11-16：神聖衣用自己的圖
+            + '<b>' + esc(nm) + '</b><small style="color:' + (on ? (se ? '#fca5a5' : '#fde047') : '#7a7168') + '">' + esc(clothLabel) + '</small>'
+            + (on && !se && window.__afkClothStarTxt ? '<small style="color:#fbbf24;letter-spacing:1px">' + window.__afkClothStarTxt(row.id, p) + '</small>' : '') + '</div>';   // 11-16（Ping）：聖衣升星 0～3
         });
         h += '</div>';
       }

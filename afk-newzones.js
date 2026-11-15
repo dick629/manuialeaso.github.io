@@ -698,19 +698,21 @@
     }
   } catch (e) {}
   // ── NPC ──
-  var art = function (f) { return f ? '<img src="assets/npc-art/' + encodeURIComponent(f) + '.webp" alt="" style="float:right;width:120px;max-height:180px;object-fit:contain;margin:0 0 6px 10px" onerror="this.remove()">' : ''; };
+  // 11-16（Ping）：跟其他 NPC 面板一樣只放一行台詞，不再在右邊放大立繪（立繪已經在村莊裡）
   var renderNpc = function (g) {
     return function (box) {
       if (!box) return; try { if (K && K.css) K.css(); } catch (e) {}
       var info = NPCS[g], p = P(), md = mode(), list = SOLO.filter(function (d) { return d.group === g; });
-      var h = '<div class="afk-ax">' + art(info[4]) + '<p class="ax-lore">' + esc(info[3]) + '</p>'
-        + '<div class="ax-desc">難度跟著目前的世界模式：<b>夢域鏡</b> 入場 1,000 龍鑽；<b>次元裂縫</b> 入場 500 血龍鑽。目前：' + (md ? '<b style="color:#fde68a">' + COST[md].n + '</b>' : '<span style="color:#fca5a5">沒有開啟夢域鏡或次元裂縫</span>') + '</div>'
-        + '<div class="ax-desc">單人副本：只有你自己進去，傭兵留在隊伍裡、離開副本就回來。死亡、換地圖就結束。每個副本（每層）每天一次。</div>';
+      var h = '<div class="afk-ax"><p class="ax-lore">' + esc(info[3]) + '</p>'
+        + '<div class="ax-h">入場</div>'
+        + '<div class="ax-note">難度跟著目前的世界模式：<b>夢域鏡</b> 入場 1,000 龍鑽；<b>次元裂縫</b> 入場 500 血龍鑽。目前：' + (md ? '<b style="color:#fde68a">' + COST[md].n + '</b>' : '<span class="no">沒有開啟夢域鏡或次元裂縫</span>') + '</div>'
+        + '<div class="ax-note">單人副本：只有你自己進去，傭兵留在隊伍裡、離開副本就回來。死亡、換地圖就結束。每個副本（每層）每天一次。</div>'
+        + '<div class="ax-h">副本</div>';
       list.forEach(function (d) {
         var why = soloWhy(d), flow = d.rooms.filter(function (r) { return !r.chance; }).length + ' 段';
         if (d.group === 'belief' || d.group === 'ruin') flow = '10 波 × 30 隻 → ' + esc((DB.mobs[d.finalIds && d.finalIds[0]] || {}).n || '王');
-        h += '<div class="ax-row" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px"><div><div class="ax-name">' + esc(d.n) + '</div><div class="ax-desc">' + (d.lv > 1 ? 'Lv' + d.lv + ' 以上　' : '') + flow + (why ? '　<span style="color:#fca5a5">' + esc(why) + '</span>' : '') + '</div></div><div style="display:flex;gap:6px">'
-          + (d.pick ? d.pick.map(function (x) { return '<button type="button" data-nz-go="' + d.id + '" data-nz-pick="' + x[0] + '"' + (why ? ' disabled' : '') + '>挑戰' + esc(x[1]) + '</button>'; }).join('') : '<button type="button" data-nz-go="' + d.id + '"' + (why ? ' disabled' : '') + '>進入</button>')
+        h += '<div class="ax-row"><div class="ax-main"><div><div class="ax-name">' + esc(d.n) + '</div><div class="ax-desc">' + (d.lv > 1 ? 'Lv' + d.lv + ' 以上　' : '') + flow + (why ? '　<span class="no">' + esc(why) + '</span>' : '') + '</div></div></div>'
+          + '<div class="ax-act">' + (d.pick ? d.pick.map(function (x) { return '<button type="button" data-nz-go="' + d.id + '" data-nz-pick="' + x[0] + '"' + (why ? ' disabled' : '') + '>挑戰' + esc(x[1]) + '</button>'; }).join('') : '<button type="button" data-nz-go="' + d.id + '"' + (why ? ' disabled' : '') + '>進入</button>')
           + '</div></div>';
       });
       box.innerHTML = h + '</div>';

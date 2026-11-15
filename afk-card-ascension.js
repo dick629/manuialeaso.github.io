@@ -98,6 +98,17 @@
   }
   // 11-16（Ping）：卡冊裡的聖衣寫出現在是哪一級（神聖衣／匣之聖衣／血魔聖衣／鐵聖衣／黃金…／碎裂），不再一律寫「已解除封印」
   function clothTierName(id) { try { var CP = window.LineageClothProgression, t = CP && CP.label ? CP.label(player, id) : '已解除封印'; if (/^(神聖衣|血魔聖衣|鐵聖衣)$/.test(t) && window.__afkT3Opened && window.__afkT3Opened(player)) t = '匣之聖衣（' + t + '）'; return t; } catch (e) { return '已解除封印'; } }
+  // 11-16（Ping）：神聖衣判斷、聖衣星數（0～3，afk-saint-cloth 的升星）與縮圖（神聖衣用自己的圖）
+  function holyCloth(id, actor) { var c = actor && actor.cardAscension && actor.cardAscension.cloth && actor.cardAscension.cloth[id]; return !!(c && c.ex) && owned(id, actor) && !sealed(id, actor); }
+  function clothStarsOf(id, actor) { var s = actor && actor.cardAscension && actor.cardAscension.clothStars; return Math.max(0, Math.min(3, Number(s && s[id]) || 0)); }
+  function starTxt(n) { var t = ''; for (var i = 0; i < 3; i++) t += i < n ? '★' : '☆'; return t; }
+  window.__afkClothStarTxt = function (id, actor) { return starTxt(clothStarsOf(id, actor || player)); };
+  window.__afkClothThumb = function (name, on, actor) {
+    actor = actor || player;
+    try { var hf = on && window.__afkHolyClothForm && window.__afkHolyClothForm({ cardAscension: actor.cardAscension, _faceD: 5, cls: actor.cls, lv: actor.lv, j: actor.j }, name);
+      if (hf && hf.base) return '<span class="afk-v3-thumb" style="display:flex;width:100%;height:112px;overflow:hidden;align-items:flex-end;justify-content:center"><img loading="lazy" alt="" src="' + escape(hf.base + 'idle_0.png') + '" style="max-height:112px;max-width:100%;image-rendering:pixelated" onerror="this.style.visibility=\'hidden\'"></span>'; } catch (e) {}
+    return window.__afkFormThumb ? window.__afkFormThumb(name, on) : '';
+  };
   function sealed(id, actor) { return owned(id, actor) && !!(data(actor).sealed || {})[id]; }
   function rateOf(tier, actor) { var b = tier === 'spacetime' ? Math.max(0, Number((data(actor).bonus || {}).spacetime) || 0) : 0; return Math.min(tier === 'spacetime' ? ST_CAP : 1, RULES[tier].rate + b); }
   function listOwned(actor) { return TIERS.reduce(function (out,t) { return out.concat(catalog[t].filter(function (r) { return owned(r.id,actor); })); },[]); }
@@ -490,7 +501,7 @@
   }
 
   // 玩家 2026-10-26：選單分區——一般變身（怪物型態、控制戒指專用）、等級變身（變形卷軸等級表），兩者屬變身卡冊；神話、天上、時空、聖衣各一區
-  var PICK_GROUPS=[['normal','一般變身'],['level','等級變身'],['mythic','神話'],['celestial','天上'],['spacetime','時空'],['samsara','聖衣']];
+  var PICK_GROUPS=[['normal','一般變身'],['level','等級變身'],['mythic','神話'],['celestial','天上'],['spacetime','時空'],['samsara','聖衣'],['holy','神聖衣']];   // 11-16（Ping）：神聖衣（含血魔、鐵、匣之）自己一個分頁
   // 玩家 2026-10-26（二）：沒點亮的變身也列出來但顯示灰色、不能選；點亮＝
   //   等級變身／控制戒指變身：變身收集冊登錄過（青銅卡以上）
   //   怪物型態：卡片收集冊登錄過該怪物（任一階）；鑽石卡登錄過的不看等級
@@ -513,7 +524,7 @@
     mons.map(function(n){return [n,nativeLv(n)];}).sort(function(a,b){return a[1]-b[1];}).forEach(function(x){
       var b=x[1]<10?[1,9]:x[1]<80?[Math.floor(x[1]/10)*10,Math.floor(x[1]/10)*10+9]:[80,999];
       add(monsterForm(x[0]),'c-card-diamond','normal','怪物型態 Lv'+b[0]+(b[1]>=999?'+':'～'+b[1]),!polyLit(x[0])?'未點亮':lv<x[1]?'需 Lv'+x[1]:'');});
-    TIERS.forEach(function(t){catalog[t].forEach(function(r){add(clone(r.form),'text-yellow-300',t,'',owned(r.id,player)?'':'未點亮');});});
+    TIERS.forEach(function(t){catalog[t].forEach(function(r){add(clone(r.form),'text-yellow-300',t==='samsara'&&holyCloth(r.id,player)?'holy':t,'',owned(r.id,player)?'':'未點亮');});});
     return out;
   }
   // 玩家 2026-10-26：變身說明一律列滿攻擊、施法、硬直、移動四項；逐武器攻速取目前武器（沒有這種武器的欄位就取它能用的武器）
@@ -549,14 +560,14 @@
     var cur=player.poly&&player.buffs&&player.buffs.poly>0&&avail.find(function(x){return x.form.n===player.poly.n;});
     if(!pickTab||!cnt[pickTab])pickTab=cur?cur.group:(PICK_GROUPS.find(function(g){return use[g[0]];})||PICK_GROUPS.find(function(g){return cnt[g[0]];})||PICK_GROUPS[0])[0];
     function btn(x){var b=document.createElement('button');b.type='button';b.className='btn afk-ca-form';b.dataset.cardForm=x.form.n;
-      var lvTxt=(x.form.lv>1&&x.group!=='mythic'&&x.group!=='celestial'&&x.group!=='spacetime'&&x.group!=='samsara'?' <small class="afk-ca-lv">Lv'+escape(x.form.lv)+'</small>':'');
+      var lvTxt=(x.form.lv>1&&x.group!=='mythic'&&x.group!=='celestial'&&x.group!=='spacetime'&&x.group!=='samsara'&&x.group!=='holy'?' <small class="afk-ca-lv">Lv'+escape(x.form.lv)+'</small>':'');
       // 11-16（Ping）：聖衣標出目前是哪一級（神聖衣／血魔聖衣／鐵聖衣／黃金…／封印／碎裂），縮圖用那一級自己的圖
       var clTag='',clThumb='';
-      if(x.group==='samsara'&&!x.off){try{var cr=rowFor(x.form),CP=window.LineageClothProgression,tag=cr&&sealed(cr.id,player)?'封印':(cr&&CP&&CP.label?CP.label(player,cr.id):'');
+      if((x.group==='samsara'||x.group==='holy')&&!x.off){try{var cr=rowFor(x.form),CP=window.LineageClothProgression,tag=cr&&sealed(cr.id,player)?'封印':(cr&&CP&&CP.label?CP.label(player,cr.id):'');
         if(/^(神聖衣|血魔聖衣|鐵聖衣)$/.test(tag)&&window.__afkT3Opened&&window.__afkT3Opened(player))tag='匣之聖衣';
+        var stN=cr&&!sealed(cr.id,player)?clothStarsOf(cr.id,player):-1;if(stN>=0)tag+=' '+starTxt(stN);
         if(tag)clTag='<small class="afk-ca-lv" style="color:'+(/神聖衣|血魔|鐵聖衣|匣之/.test(tag)?'#fde68a':/碎裂|待/.test(tag)?'#fca5a5':'#cbd5e1')+'">'+escape(tag)+'</small>';
-        var hf=window.__afkHolyClothForm&&window.__afkHolyClothForm({cardAscension:player.cardAscension,_faceD:5,cls:player.cls},x.form.n);
-        if(hf&&hf.base)clThumb='<span class="afk-v3-thumb" style="display:flex;width:100%;height:112px;overflow:hidden;align-items:flex-end;justify-content:center"><img loading="lazy" alt="" src="'+escape(hf.base+'idle_0.png')+'" style="max-height:112px;max-width:100%;image-rendering:pixelated" onerror="this.style.visibility=\'hidden\'"></span>';
+        if(cr&&holyCloth(cr.id,player))clThumb=window.__afkClothThumb(x.form.n,true,player);
       }catch(e){}}
       if(iconView()){   // 圖示模式（玩家 2026-10-30「有圖案、有名稱，點選變身」）：圖＋名稱，說明放在長按／滑鼠提示
         b.className='btn afk-ca-form afk-ca-tile'+(cur&&cur.form.n===x.form.n?' afk-ca-cur':'');b.title=x.form.n+(x.off?'（'+x.off+'）':'')+'\n'+polyFormDesc(x.form);
