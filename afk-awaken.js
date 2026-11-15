@@ -255,8 +255,8 @@
     run: function (p) { var S = st(p); Object.keys(S.cd).forEach(function (k) { var d = SK[k]; if (d && d.tier === '一般' && d.key !== 'time') S.cd[k] = 0; }); pop(p, 'time', '時間消除', '#a5f3fc'); return true; } });
   add('paladin', 'unity', { n: '團結', tier: '英雄', lv: 50, k: 'pas', desc: '自己和隊伍（含傭兵）經驗 +5%；每多 1 個隊員再 +1.75%，最多 +12%。' });
   add('paladin', 'protect', { n: '神聖保護', tier: '英雄', lv: 55, k: 'pas', desc: '受到的傷害 - 等級÷8。', taken: function (p, dmg) { return Math.max(0, dmg - Math.floor(LV(p) / 8) * (mast(p, 'awp_guard') ? 2 : 1)); } });
-  add('paladin', 'grace', { n: '神聖恩典', tier: '英雄', lv: 60, k: 'act', mp: 30, cd: 30, ctrl: true, desc: '立即回復 20% HP，之後 8 秒內藥水回復量 +30%；昏迷中也能用。',
-    can: function (p) { return N(p.hp) < N(p.mhp) * 0.6; }, run: function (p) { heal(p, N(p.mhp) * 0.2); st(p).buf.grace = now() + 8; return true; } });
+  add('paladin', 'grace', { n: '神聖恩典', tier: '英雄', lv: 60, k: 'act', mp: 30, cd: 30, ctrl: true, desc: '為隊伍中 HP 比例最低的成員（自己、隊長、傭兵、寵物、召喚物、守衛）立即回復最大 HP 20%，之後 8 秒內自己的藥水回復量 +30%；昏迷中也能用。',
+    can: function (p) { var t = healPick(p); return !!t && t.pct < 0.6; }, run: function (p) { var t = healPick(p); healAny(p, t ? t.m : p, 0.2); st(p).buf.grace = now() + 8; return true; } });
   add('paladin', 'cross', { n: '神聖十字架', tier: '英雄', lv: 65, k: 'pas', desc: '每 6 秒落下光之十字架，範圍 120%。盾 +0～4 落 1 個、+5～8 落 2 個、+9 以上落 3 個。',
     tick: function (p) { var S = st(p); if (N(S.cd.cross) > now()) return; var t = target(); if (!t) return; S.cd.cross = now() + 6; var e = Math.max(0, offEn(p)), n = !hasOff(p) ? 1 : e >= 9 ? 3 : e >= 5 ? 2 : 1; for (var i = 0; i < n; i++) near(t, 4).forEach(function (x) { deal(p, x, 1.2, { magic: true, src: 'cross', color: '#fef9c3', show: i === 0 }); }); } });
   add('paladin', 'stun2', { n: '絕世衝暈', tier: '英雄', lv: 70, k: 'pas', desc: '昏迷命中 +8；神聖衝暈昏迷 2 → 2.5 秒。' });
@@ -323,6 +323,16 @@
   add('berserker', 'body2', { n: '體能強化（上升）', tier: '英雄', lv: 70, k: 'pas', desc: '最大 HP +10%。' });
 
   // ============================================================ 第二期：傳說（王掉落書＋時空材料才能學）／第三期：神話（次元裂縫掉書＋次元材料）
+  // 單體治療也能補別人（Ping 11-15）：隊伍受益池（玩家、傭兵、出戰寵物、召喚物、傭兵召喚物、城堡守衛）裡 HP 比例最低的
+  var healPool = function (p) { try { if (typeof W.healBeneficiaries === 'function') { var a = W.healBeneficiaries(); if (a && a.length) return a; } } catch (e) {} return [p]; };
+  var hpOf = function (m) { return typeof W._supHp === 'function' ? W._supHp(m) : N(m.curHp != null ? m.curHp : m.hp); };
+  var mhpOf = function (m) { return typeof W._supMhp === 'function' ? W._supMhp(m) : N(m.mhp) || 1; };
+  var healPick = function (p) { var best = null; healPool(p).forEach(function (m) { var mx = mhpOf(m); if (!(mx > 0)) return; var pc = hpOf(m) / mx; if (!best || pc < best.pct) best = { m: m, pct: pc }; }); return best; };
+  var healAny = function (p, m, frac) {
+    var amt = mhpOf(m) * frac, P0 = P();
+    if (m === p || m === P0 || (P0 && (P0.allies || []).indexOf(m) >= 0)) return heal(m, amt);
+    var b = hpOf(m); if (typeof W._supHeal === 'function') W._supHeal(m, Math.floor(amt)); else m.hp = Math.min(mhpOf(m), N(m.hp) + Math.floor(amt)); return hpOf(m) - b;
+  };
   var areaHeal = function (p, frac) { [p].concat((p === P() ? (p.allies || []) : [])).forEach(function (a) { if (a && !a._downed && !a.dead) heal(a, N(a.mhp) * frac); }); };
   // 雷神
   add('thunder', 'plasma2', { n: '等離子電場', tier: '傳說', lv: 80, k: 'act', mp: 30, cd: 60, ctrl: true, desc: '解除自己的昏迷、凍結等控制，回復 20% HP，5 秒內受到的傷害 -50%；昏迷中也能放。',
