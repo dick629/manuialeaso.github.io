@@ -874,8 +874,10 @@
     if (!box) return; var K = W.__afkNpcKit; if (K && K.css) K.css();
     if (!document.getElementById('afk-awk-css')) { var cs = document.createElement('style'); cs.id = 'afk-awk-css'; cs.textContent = '#afk-awk .ax-filter button{cursor:pointer}#afk-awk .ax-filter button.on{background:#854d0e!important;border-color:#f59e0b!important;color:#fef3c7!important;font-weight:700}#afk-awk .ax-filter button:not(.on):hover{background:#334155}'; document.head.appendChild(cs); }
     // 11-15：跟其他 NPC 面板一樣只放一行台詞（立繪已經在村莊裡）
-    var p = P(), h = '<div class="afk-ax" id="afk-awk"><p class="ax-lore">「三段輪迴的魂魄疊在一起，就能讓一個職業醒來。」</p>';
-    h += '<div class="ax-filter">' + [['awaken', '職業覺醒'], ['books', '技能書']].concat(isAw(p) ? [['auto', '自動施放']] : []).concat(XT().filter(function (x) { return !x.show || x.show(p); }).map(function (x) { return [x.id, x.label]; })).concat(TEST ? [['gm', '測試工具']] : []).map(function (x) { return '<button type="button" data-aw-tab="' + x[0] + '"' + (ui.tab === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>';
+    var p = P();
+    if (!isAw(p) && (ui.tab === 'books' || ui.tab === 'auto')) ui.tab = 'awaken';   // 11-15：技能書分頁覺醒後才顯示
+    var h = '<div class="afk-ax" id="afk-awk"><p class="ax-lore">「三段輪迴的魂魄疊在一起，就能讓一個職業醒來。」</p>';
+    h += '<div class="ax-filter">' + [['awaken', '職業覺醒']].concat(isAw(p) ? [['books', '技能書'], ['auto', '自動施放']] : []).concat(XT().filter(function (x) { return !x.show || x.show(p); }).map(function (x) { return [x.id, x.label]; })).concat(TEST ? [['gm', '測試工具']] : []).map(function (x) { return '<button type="button" data-aw-tab="' + x[0] + '"' + (ui.tab === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>';
     if (ui.tab === 'awaken') {
       h += '<div class="ax-h">可以覺醒的職業</div>';
       Object.keys(CLS).forEach(function (k) { var c = CLS[k]; h += '<div class="ax-row' + (p && p.cls === c.base ? '' : ' off') + '"><div class="ax-main"><div><div class="ax-name">' + esc(BASE_N[c.base]) + ' → ' + esc(c.n) + '</div><div class="ax-desc">主要屬性：' + esc(c.main) + '；能拿：' + esc(WEAPONS[k].join('、')) + '、盾、臂甲（本職裝備也能穿）</div></div></div></div>'; });
