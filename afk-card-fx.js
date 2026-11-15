@@ -135,10 +135,17 @@
     if (!info) { clear(el); return; }
     if (!geometry) return;
     var bh = geometry.height / 1.35, w = Math.round(bh * 1.25), hgt = Math.round(bh * 1.5);
-    var key = f.n + '|' + w + 'x' + hgt;
+    // 11-16（Ping）：匣之聖衣多一層金色光環（腳下大金環＋往上飄的金色光點＋全身金光）
+    var casket = false; try { casket = tier === 'samsara' && !!(W.__afkT3Opened && W.__afkT3Opened(actor) && W.__afkHolyClothForm && W.__afkHolyClothForm(actor, f.n)); } catch (e) {}
+    var key = f.n + '|' + w + 'x' + hgt + (casket ? '|casket' : '');
     if (el.getAttribute('data-cfx') !== key) {
       clear(el); el.setAttribute('data-cfx', key);
       var k = kit(info);
+      if (casket) {
+        k.back = '<ellipse cx="50" cy="62" rx="44" ry="58" fill="url(#cfg-gold)" class="cf-pulse"/><ellipse cx="50" cy="62" rx="40" ry="54" fill="url(#cfg-gold)" class="cf-pulse" style="animation-delay:-1s"/>'
+          + '<g transform="translate(50 106) scale(1 .3)"><g class="cf-spin" style="animation-duration:11s;animation-direction:reverse"><circle r="44" fill="none" stroke="#fbbf24" stroke-width="2.4"/><circle r="40" fill="none" stroke="#fde68a" stroke-width=".8" stroke-dasharray="3 3"/></g></g>' + k.back;
+        for (var ci = 0; ci < 10; ci++) k.front += '<circle class="cf-float" style="animation-delay:' + (-ci * 0.45) + 's" cx="' + (22 + (ci * 37) % 56) + '" cy="' + (40 + (ci * 23) % 60) + '" r="' + (ci % 3 ? 1 : 1.6) + '" fill="#fde68a"/>';
+      }
       ['back', 'front'].forEach(function (layer) {
         if (!k[layer]) return;
         var span = document.createElement('span'); span.className = 'afk-cfx afk-cfx-' + layer; span.setAttribute('aria-hidden', 'true');

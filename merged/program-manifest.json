@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-13b6b9d9d6ee",
+  "build": "merge-0.4-5897a73d9dd0",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -318,8 +318,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-card-fx.js?v=0a1f93ae0cf8",
-      "sha256": "0a1f93ae0cf88d25ccbfd6d2fc47fe54477974cc719e582f4700d9d3f15fa8c0",
+      "url": "afk-card-fx.js?v=a58eaebc0bb7",
+      "sha256": "a58eaebc0bb7a44307a50a0eb37d3a64257a89d594584e67aa8d91823e007371",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1353,8 +1353,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-saint-cloth.js?v=dd38a6da3319",
-      "sha256": "dd38a6da331959425903a387b0ab8caee886e5c81c58ea0c06b5951cc86684f1",
+      "url": "afk-saint-cloth.js?v=69e435749a77",
+      "sha256": "69e435749a7743398c8bced16d75a6a3ac4d8180d8b3d9c689c2eb5f9b7989d4",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1709,7 +1709,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "ac7f2a66f3424c09787a0199003ef1e88917639d3fa77dd36e8a6d72ed07b833",
+      "sha256": "da431273224e348375491eef096b759e416d24ad5dc95cd1ba77cdeaa7fa76e4",
       "type": "text/html; charset=utf-8"
     },
     {
