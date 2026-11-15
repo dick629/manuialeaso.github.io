@@ -432,6 +432,17 @@
   try {
     if (typeof MOB_DROPS !== 'undefined') Object.keys(LEG_DROP).forEach(function (c) { Object.keys(LEG_DROP[c]).forEach(function (k) { var boss = LEG_DROP[c][k], bk = 'bk_aw_' + c + '_' + k; if (!DB.items[bk]) return; var row = MOB_DROPS[boss] || (MOB_DROPS[boss] = []); if (!row.some(function (e) { return e[0] === bk; })) row.push([bk, 1]); }); });
   } catch (e) {}
+  // 掉落查詢：一般技能書（覺醒導師賣）、神話技能書（程式發的）不在掉落表 → 登記取得方式（Ping 11-15 上線檢查）
+  var dexReg = function () {
+    var X = W.AFK_DEX_EXTRA; if (!X || !X.acq) return;
+    Object.keys(SK).forEach(function (id) {
+      var sk = SK[id], bk = sk.book; if (!bk || !DB.items[bk] || X.acquire[bk]) return;
+      if (sk.tier === '一般') X.acq(bk, '席琳神殿「覺醒導師 伊瑟拉」販售（' + (DB.items[bk].p || 0).toLocaleString() + ' 金幣）。');
+      else if (sk.tier === '神話') X.acq(bk, '次元裂縫難度的副本（次元裂縫的多人副本、單人副本的次元裂縫難度）：王 1%、一般怪 0.01%（覺醒職業掉自己職業的書）；也可以在覺醒導師用失去光芒的覺醒職業 神話法術書 10 本＋神話技能秘笈 1 本兌換。學習時另外消耗次元結晶 500、裂縫碎光 100。');
+      else if (sk.tier === '傳說') X.acq(bk, '由王掉落（見掉落查詢）；也可以在覺醒導師用失去光芒的覺醒職業 神話法術書 10 本＋傳說技能秘笈 1 本兌換。學習時另外消耗時空材料六種各 300。');
+    });
+  };
+  if (document.readyState === 'complete') setTimeout(dexReg, 0); else W.addEventListener('load', dexReg);
   // 神話技能書：只有次元裂縫的副本會掉（裂縫多人副本、單人副本的次元裂縫難度；王 1%、一般 0.01%）；覺醒職業掉自己職業的，其他人隨機（Ping 11-14 23:37：野外裂縫不再掉）
   var MYTH_BOOKS = Object.keys(SK).filter(function (id) { return SK[id].tier === '神話'; }).map(function (id) { return SK[id].book; });
   if (typeof W.killMob === 'function') {

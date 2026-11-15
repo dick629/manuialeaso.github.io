@@ -651,6 +651,35 @@
     add = add.filter(function (e) { return DB.items[e[0]]; });
     return add.length ? l.concat(add) : l;
   };
+  // 掉落查詢、小百科：這些是程式發的掉落（__afkDropListFilter），掉落表裡沒有 → 登記到 AFK_DEX_EXTRA（Ping 11-15 上線檢查）
+  var dexReg = function () {
+    var X = W.AFK_DEX_EXTRA; if (!X || !X.drop || X.__nz) return; X.__nz = true;
+    var nm = function (id) { return (DB.items[id] && DB.items[id].n) || id; };
+    var soloBoss = Object.keys(BOSS).filter(function (k) { return k !== 'nemesis'; }).map(function (k) { return BOSS[k][0]; }).concat(['伊弗利特', '不死鳥', '巴拉卡斯', '冰魔', '冰之女王']);
+    soloBoss.forEach(function (n) {
+      BOSS_DROP.dream.forEach(function (e) { X.drop(n, e[0], e[1], '單人副本・夢域鏡難度', true); });
+      BOSS_DROP.rift.forEach(function (e) { X.drop(n, e[0], e[1], '單人副本・次元裂縫難度', true); });
+      BOSS_DROP.all.forEach(function (e) { X.drop(n, e[0], e[1], '單人副本', true); });
+    });
+    Object.keys(SPECIAL).forEach(function (n) { SPECIAL[n].forEach(function (e) { X.drop(n, e[0], e[1], n === '封印的涅默西斯' ? '古代兵器涅默西斯駐紮地' : '單人副本', true); }); });
+    X.drop('冰魔', 'relic_icequeen_ear', 5, '冰之女王的宮殿', true);
+    var by = {};
+    var add = function (id, t) { (by[id] = by[id] || []).push(t); };
+    Object.keys(SPECIAL).forEach(function (n) { SPECIAL[n].forEach(function (e) { add(e[0], n + '（' + (n === '封印的涅默西斯' ? '古代兵器涅默西斯駐紮地的地圖王' : '單人副本的王') + '）' + e[1] + '%'); }); });
+    add('relic_icequeen_ear', '冰之女王的宮殿（單人副本）打倒冰魔 5%');
+    add('afk_aw_myth_frag', '單人副本（夢域鏡難度）的王 0.1%；100 片在覺醒導師合成失去光芒的覺醒職業 神話法術書');
+    add('afk_legend_codex', '單人副本（夢域鏡難度）的王 0.1%');
+    add('afk_aw_myth_lost', '單人副本（次元裂縫難度）的王、次元裂縫的多人副本王 0.01%；也可以在覺醒導師用碎片 100 片合成');
+    add('afk_myth_codex', '單人副本（次元裂縫難度）的王、次元裂縫的多人副本王 0.1%');
+    ['bk_dark_shadowstun', 'bk_elf_spiritstun'].forEach(function (id) { add(id, '單人副本的王、次元裂縫的多人副本王 1%'); });
+    Object.keys(DROPS).forEach(function (k) {
+      var zs = Object.keys(ZBY).filter(function (zid) { return ZBY[zid].drops === k; }).map(function (zid) { return ZBY[zid].n; });
+      if (!zs.length) return;
+      DROPS[k].forEach(function (e) { if (DB.items[e[0]] && !/^relic_|^afk_nz_|^bk_/.test(e[0]) ) return; add(e[0], zs.join('、') + '的怪 ' + e[1] + '%'); });
+    });
+    Object.keys(by).forEach(function (id) { if (DB.items[id] && !X.acquire[id]) X.acq(id, by[id].join('；') + '。'); });
+  };
+  if (document.readyState === 'complete') setTimeout(dexReg, 0); else W.addEventListener('load', dexReg);
   // 收藏圖鑑：新物品、地圖額外掉落登記為「可取得」
   try {
     var OM = GET('OBTAINABLE_MISC'), all = [];

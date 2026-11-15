@@ -128,5 +128,7 @@
   };
   if (!hookDrop()) W.addEventListener('load', hookDrop);
 
+  var dexReg = function () { var X = W.AFK_DEX_EXTRA; if (X && X.acq && !X.acquire[KEY]) X.acq(KEY, '次元裂縫「四龍副本・裂縫」：通關時 1%（整個副本只擲一次）。'); };
+  if (document.readyState === 'complete') setTimeout(dexReg, 0); else W.addEventListener('load', dexReg);
   W.__afkNemesis = { KEY: KEY, stageOf: stageOf, fxText: fxText };
 })(window);
