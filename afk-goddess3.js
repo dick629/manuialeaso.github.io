@@ -329,7 +329,7 @@
       sh.on = true; sh.floor = Math.max(m.curHp, Math.ceil(m.hp * at[sh.i])); m.curHp = sh.floor;
       sh.i++; sh.n = 0; sh.list = []; sh.killed = 0; sh.enterAt = t;
       ST.shadows.push({ at: Math.round(at[sh.i - 1] * 100), start: Math.round(age / 10), end: null, hpEnd: null });
-      log(tag('幽影', '#a855f7') + '席琳沉進自己的影子裡，喚出被侵蝕的時空四龍——幽影中她不受任何傷害、慢慢回血，每秒吸走全隊 5% 生命（雅典娜之杖擋得住）。');
+      log(tag('幽影', '#a855f7') + '席琳沉進自己的影子裡，喚出被侵蝕的時空四龍——幽影中她不受任何傷害、慢慢回血，每秒吸走全隊 5% 生命。');
     }
     if (sh.on) {
       m.curHp = Math.max(m.curHp, sh.floor);
@@ -352,7 +352,7 @@
     }
     if (!sh.rage && sh.i >= at.length && pct <= CFG.shadow.rage) {
       sh.rage = true; sh.rageAt = t; ST.berserkAt = Math.round(age / 10);
-      log(tag('狂暴', '#ef4444') + '席琳不再躲藏——每秒吸走全隊 5% 生命並削弱能力，直到戰鬥結束（雅典娜之杖也擋不住）。');
+      log(tag('狂暴', '#ef4444') + '席琳不再躲藏——每秒吸走全隊 5% 生命並削弱能力，直到戰鬥結束。');
     }
     if (sh.rage && (t - sh.rageAt) % 10 === 0 && t > sh.rageAt) drain(true);
   };

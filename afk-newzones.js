@@ -791,17 +791,16 @@
     // 野外與地監
     var rows = ZONES.map(function (z) {
       var gate = z.gate && z.gate.castle ? '要擁有' + ({ kent: '肯特城', orc_fortress: '妖魔堡', windwood: '風木城' }[z.gate.castle] || z.gate.castle) : '';
-      return [wEsc(z.n), z.cat === 'dungeon' ? '地監' : '野外', 'Lv' + z.lv, z.weak ? '弱' + (ELE_N[z.weak] || z.weak) : '—', wEsc(uniq(z.mobs.map(mobN)).join('、')), (z.drops && DROPS[z.drops] ? dropTxt(DROPS[z.drops]) : '—') + (gate ? '<br><b>' + gate + '</b>' : '')];
+      return [wEsc(z.n), z.cat === 'dungeon' ? '地監' : '野外', 'Lv' + z.lv, z.weak ? '弱' + (ELE_N[z.weak] || z.weak) : '—', wEsc(uniq(z.mobs.map(mobN)).join('、')), gate ? '<b>' + gate + '</b>' : '—'];   // 11-16（Ping）：掉落不寫在小百科
     });
-    h += wCard('地圖一覽', wTbl(['地圖', '類型', '怪物等級', '弱點', '怪物', '額外掉落／進入條件'], rows) + wLi('城堡地監沒有時數限制，要擁有那座城才能進去。') + wLi('「封印的涅默西斯」在古代兵器涅默西斯駐紮地：打倒 300 隻一般怪出現；累計 3,000 隻以後改成每 100 隻 1%。'));
+    h += wCard('地圖一覽', wTbl(['地圖', '類型', '怪物等級', '弱點', '怪物', '進入條件'], rows) + wLi('城堡地監沒有時數限制，要擁有那座城才能進去。') + wLi('「封印的涅默西斯」在古代兵器涅默西斯駐紮地：打倒 300 隻一般怪出現；累計 3,000 隻以後改成每 100 隻 1%。'));
     // 村莊
     h += wCard('村莊', wTbl(['村莊', 'NPC'], Object.keys(TOWNS).map(function (k) { var t = TOWNS[k]; return [wEsc(t.n), wEsc((t.npcs || []).map(function (n) { return n.n + (n.title ? '（' + n.title + '）' : ''); }).join('、'))]; })));
     // 單人副本共通
     h += wCard('單人副本：共通規則', [
       '難度跟著目前的世界模式：<b>夢域鏡</b>入場 ' + COST.dream.amt.toLocaleString() + ' 龍鑽、<b>次元裂縫</b>入場 ' + COST.rift.amt.toLocaleString() + ' 血龍鑽；兩種都沒開就不能進。',
       '每個副本每天一次；信念之塔、破滅的奇岩地監是每一層各一次。',
-      '傭兵不用解散：進副本時留在隊伍裡、暫時不出場，離開副本就回來。',
-      '副本的王一律掉：夢域鏡 ' + dropTxt(BOSS_DROP.dream) + '；次元裂縫 ' + dropTxt(BOSS_DROP.rift) + '；兩種都有 ' + dropTxt(BOSS_DROP.all) + '。'
+      '傭兵不用解散：進副本時留在隊伍裡、暫時不出場，離開副本就回來。'
     ].map(wLi).join(''));
     // 各副本
     var groups = {}; SOLO.forEach(function (d) { (groups[d.group] = groups[d.group] || []).push(d); });
@@ -819,11 +818,9 @@
       body += wTbl(['副本', '進度', '怪物', '王'], r2);
       h += wCard(info[2], body);
     });
-    // 王的個別掉落
-    h += wCard('王的個別掉落', wTbl(['王', '掉落'], Object.keys(SPECIAL).map(function (n) { return [wEsc(n), dropTxt(SPECIAL[n])]; })) + wLi('冰之女王的宮殿打倒冰魔：' + wEsc(itemN('relic_icequeen_ear')) + ' 5%。'));
-    // 新裝備
+    // 新裝備（11-16 Ping：掉落不寫、介紹縮短 → 只列名稱，詳細看物品說明）
     var eq = Object.keys(NEWI).filter(function (id) { var d = DB.items[id]; return d && /^(wpn|arm|acc)$/.test(d.type); });
-    h += wCard('新裝備與遺物', wTbl(['物品', '說明'], eq.map(function (id) { var d = DB.items[id]; return ['<b>' + wEsc(d.n) + '</b>', wEsc(d.d || '')]; })));
+    h += wCard('新裝備與遺物', '<div class="m-wiki-desc">' + uniq(eq.map(function (id) { return wEsc(DB.items[id].n); })).join('、') + '</div>' + wLi('能力請看物品說明。'));
     return h;
   };
 

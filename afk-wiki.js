@@ -269,8 +269,10 @@
   function effWpns(eff, fb) {
     try {
       var a = [];
-      for (var id in DB.items) { var d = DB.items[id]; if (d && d.type === 'wpn' && d.eff === eff) a.push(d.n); }
-      if (a.length) return a.join('、');
+      // 11-16（Ping）：只列前 8 把＋「等 N 把」；隱藏規則道具（雅典娜之杖）、GM 道具、殘缺／活動版不列
+      var HIDE = { ttmi_5413: 1 };
+      for (var id in DB.items) { var d = DB.items[id]; if (d && d.type === 'wpn' && d.eff === eff && !HIDE[id] && !d.gmOnly && !/^殘缺的|\(活動\)|\(特\)/.test(d.n || '') && a.indexOf(d.n) < 0) a.push(d.n); }
+      if (a.length) return a.slice(0, 8).join('、') + (a.length > 8 ? ' 等 ' + a.length + ' 把' : '');
     } catch (e) {}
     return fb || '';
   }
@@ -4436,8 +4438,7 @@
       rows.push(['幽影（二轉決戰、終焉第一階層、終焉第三階層）', '席琳 HP 到 ' + (sh.at || [0.7, 0.4, 0.1]).map(pc).join('／') + ' 時沉入幽影：<b>不受任何傷害</b>、每秒回最大 HP ' + ((sh.regen || 0.002) * 100) + '%，'
         + '並喚出「被侵蝕的時空四龍」4 隻（場上最多 2 隻）。四隻都打倒，幽影才結束；幽影中會自動改打時空四龍。時空四龍沒有免疫，也沒有經驗、金幣、掉落。'],
         ['幽影的吸取', '幽影期間每秒吸走每名隊員最大 HP ' + pc(sh.drain || 0.05) + '，並疊加：五屬性抗性 −' + (sh.res || 10) + '、魔防 −' + (sh.mr || 10) + '、AC +' + (sh.ac || 10) + '、命中 −' + (sh.hit || 10) + '（幽影結束就恢復）。'],
-        ['雅典娜之杖', '帶著（背包或裝備都算）的人<b>不受幽影的吸取與降能力</b>；傭兵要自己帶。'],
-        ['狂暴', '三次幽影都結束後，席琳再降到 ' + pc(sh.rage || 0.1) + ' → 狂暴直到戰鬥結束：每秒吸走全隊 ' + pc(sh.drain || 0.05) + ' 生命並降能力，<b>雅典娜之杖也擋不住</b>。'],
+        ['狂暴', '三次幽影都結束後，席琳再降到 ' + pc(sh.rage || 0.1) + ' → 狂暴直到戰鬥結束：每秒吸走全隊 ' + pc(sh.drain || 0.05) + ' 生命並降能力。'],
         ['冥界的震懾（終焉第三階層）', '冥界的使徒倒下時，全隊暈眩 3 秒。<b>只有暈眩免疫、異常狀態免疫擋得住</b>；異常狀態抵抗機率沒用，受到的異常狀態持續時間縮短照算。']);
     }
     if (!rows.length) return '';

@@ -298,6 +298,8 @@
     var c = 50 + Math.floor(Math.random() * 51); if (DB.items.sherine_crystal) { gainItem('sherine_crystal', c, true); got.push('席琳結晶 ×' + c); }
     if (DB.items.afk_asc_shard) { var k = 2 + Math.floor(Math.random() * 4); gainItem('afk_asc_shard', k, true); got.push('昇華支配碎片 ×' + k); }
     if (Math.random() < REWARD_RATE.sword) { var sid = rollSword(); if (sid) { gainItem(sid, 1, true); got.push('<span class="text-yellow-300 font-bold">' + DB.items[sid].n + '</span>'); } }
+    // 11-16（Ping）：真‧吉爾塔斯 0.1% 掉雅典娜之杖（隱藏規則道具：不寫在小百科、掉落查詢）
+    if (DB.items.ttmi_5413 && Math.random() < 0.001) { gainItem('ttmi_5413', 1, true); got.push('<span class="text-yellow-300 font-bold">' + DB.items.ttmi_5413.n + '</span>'); }
     var card = cardRow && cardRow.itemId;
     if (card && DB.items[card] && Math.random() < REWARD_RATE.card) { gainItem(card, 1, true); got.push('<span class="text-cyan-200 font-bold">' + DB.items[card].n + '</span>'); }
     sys('<span class="text-yellow-300 font-bold">🏆 真‧吉爾塔斯倒在祭壇上，時空的裂縫緩緩闔起。裂縫闔起前，你聽見夢的深處傳來四聲龍吟——被喚醒的四龍，正替她們的母親守著最後一道門。</span>你得到了：' + got.join('、') + '。今天的異界祭壇已通關。');
