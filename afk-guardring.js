@@ -258,7 +258,7 @@
     if (!g.used || typeof g.used !== 'object') g.used = {};
     return g;
   };
-  var stageOf = function (p, k) { var g = p && p.afkGuard; return g && g.k ? Math.max(0, Math.min(6, Math.floor(Number(g.k[k]) || 0))) : 0; };
+  var stageOf = function (p, k) { var g = p && p.afkGuard; var v = g && g.k ? Math.max(0, Math.min(6, Math.floor(Number(g.k[k]) || 0))) : 0; if (W.__afkTpGet) v = Math.max(0, Math.min(6, Math.floor(W.__afkTpGet(p, 'guard', k, v)))); return v; };
   var sysOn = function (p) { return !!(p && !p.classicMode && (Number(p.rebirth) || 0) > 0); };
   var mainOf = function (p) { var g = p && p.afkGuard; var k = g && g.main; return (k && KN[k] && stageOf(p, k) > 0) ? k : null; };
   var legacy = function (p) { return !!(p && hiddenOn() && sysOn(p) && p.cls === 'knight' && mainOf(p)); };

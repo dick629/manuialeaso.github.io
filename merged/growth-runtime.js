@@ -8,6 +8,8 @@
   const N=n=>Number(n)||0, P=()=>typeof player==='undefined'?null:player;
   function read(p){
     if(!p||!p.cls)return null;
+    // 11-16（隱藏規則）：天賦／巔峰資料被直接改過 → 實際計算當作沒有（面板、天賦視窗照常）
+    try{if(W.__afkTpBad&&W.__afkTpBad(p,'growth')){const ov=document.getElementById('growth-overlay');if(!(ov&&!ov.hidden&&!ov.classList.contains('hidden')))return null;}}catch(e){}
     if(!p.growth||Number(p.lv)>p.growth.maxLevel||Number(p.lv)>=100&&!p.growth.unlocked){const next=C.reconcile(p);if(!next)return null;p.growth=next;}
     const g=p.growth;if(!g||typeof g!=='object'||!g.paragon||!g.paragon.points)return null;const mark=checked.get(g);if(!mark||mark.t!==g.talent||mark.p!==g.paragon.points){if(!C.valid(g,N(p.rebirth)))return null;checked.set(g,{t:g.talent,p:g.paragon.points});}
     return g;
