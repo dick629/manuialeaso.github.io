@@ -27,6 +27,7 @@
   if (typeof DB === 'undefined' || !DB.items || !DB.mobs) return;
   var L = W.__afkLore, K = W.__afkNpcKit, X = W.__afkProc;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線走
   var S = function () { return (typeof state !== 'undefined' && state) ? state : {}; };
   var esc = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
@@ -615,7 +616,7 @@
   var qOf = function (p, k) { var g = store(p); var q = g && g.q[k]; if (!q || typeof q !== 'object') q = g.q[k] = { s: 0, n: 0 }; return q; };
   var questDone = function (p, k) { return !!(p && p.afkGuard && p.afkGuard.q && p.afkGuard.q[k] && p.afkGuard.q[k].s >= 3); };
   var redLionDone = function (p) {
-    try { var line = L && L.lines && L.lines.redlion; if (!line || typeof trialQStateFor !== 'function') return true; return trialQStateFor(p, L.keyOf(line, line.chapters.length - 1, p.cls)) === 2; } catch (e) { return true; }
+    try { var line = L && L.lines && L.lines.redlion; if (!line || typeof trialQStateFor !== 'function') return true; return trialQStateFor(p, L.keyOf(line, line.chapters.length - 1, QC(p))) === 2; } catch (e) { return true; }
   };
   var questWhy = function (p, k) {
     if (!sysOn(p)) return '轉生後才能接。';

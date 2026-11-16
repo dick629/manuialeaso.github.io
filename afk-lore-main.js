@@ -24,6 +24,7 @@
   if (T && !T.enabled('loremain')) return;
   if (!L) return;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線走
   var S = function () { return (typeof state !== 'undefined' && state) ? state : {}; };
   var tk = function () { return Number(S().ticks) || 0; };
   var IC = function (p) { return 'assets/icons/' + p + '.png'; };
@@ -93,14 +94,14 @@
   // ── 補發紅獅王的遺○：2026-11-01 05:20 以前就完成第 7 章的角色，讀檔時補一把（每個角色一次）──
   var lwBackfill = function () {
     var p = P(); if (!p || typeof trialQStateFor !== 'function') return;
-    var id = LW_CLS[p.cls], k = 'afkL_redlion_7_' + p.cls;
-    if (!id || !DB.items[id] || (p.afkLionWpn && p.afkLionWpn[p.cls]) || trialQStateFor(p, k) !== 2) return;
-    (p.afkLionWpn = p.afkLionWpn || {})[p.cls] = 1;
+    var id = LW_CLS[QC(p)], k = 'afkL_redlion_7_' + QC(p);
+    if (!id || !DB.items[id] || (p.afkLionWpn && p.afkLionWpn[QC(p)]) || trialQStateFor(p, k) !== 2) return;
+    (p.afkLionWpn = p.afkLionWpn || {})[QC(p)] = 1;
     try { gainItem(id, 1, true); L.sys('<span class="text-amber-300">📜 劇情「紅獅之誓」新增第 7 章獎勵：補發「' + L.esc(DB.items[id].n) + '」。</span>'); } catch (e) { console.warn('[AFK-lore-main] backfill', e); }
   };
   if (typeof W.trialQComplete === 'function') {   // 交付第 7 章時記號，之後讀檔不會再補
     var oDoneLW = W.trialQComplete;
-    W.trialQComplete = function (key) { var r = oDoneLW.apply(this, arguments); try { var p = P(); if (p && key === 'afkL_redlion_7_' + p.cls && trialQStateFor(p, key) === 2) (p.afkLionWpn = p.afkLionWpn || {})[p.cls] = 1; } catch (e) {} return r; };
+    W.trialQComplete = function (key) { var r = oDoneLW.apply(this, arguments); try { var p = P(); if (p && key === 'afkL_redlion_7_' + QC(p) && trialQStateFor(p, key) === 2) (p.afkLionWpn = p.afkLionWpn || {})[QC(p)] = 1; } catch (e) {} return r; };
     try { (0, eval)('trialQComplete = window.trialQComplete'); } catch (e) {}
   }
   if (typeof W.loadGame === 'function') {

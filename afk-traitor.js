@@ -27,6 +27,7 @@
   if (typeof DB === 'undefined' || !DB.mobs || !DB.maps || typeof MAP_REGIONS === 'undefined') return;
   var MAP = 'afk_traitor_whisper', NAME = '謀叛者的低語';
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線走
   var S = function () { return (typeof state !== 'undefined' && state) ? state : {}; };
   var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
 
@@ -103,7 +104,7 @@
   var dreamOn = function () { var p = P(); return !!(p && p.sherineDream && p.sherineMad); };
   // 玩家 2026-10-28：80 級的職業任務會帶到這裡 → 一般／席琳的世界／瘋狂席琳也開放（依模式弱化）；
   //   進入條件：完成 80 級的「亞丁的陰影」或本職業 80 級專屬劇情，或持有亞丁城＋統一七城
-  var questOk = function () { var p = P(); if (!p || typeof trialQStateFor !== 'function') return false; return trialQStateFor(p, 'aden80_' + p.cls) === 2 || trialQStateFor(p, 'saga80_' + p.cls) === 2; };
+  var questOk = function () { var p = P(); if (!p || typeof trialQStateFor !== 'function') return false; return trialQStateFor(p, 'aden80_' + QC(p)) === 2 || trialQStateFor(p, 'saga80_' + QC(p)) === 2; };
   var castleOk = function () { return ownsAden() && heldN() >= 7; };
   var unlocked = function () { var p = P(); return !!p && !p.classicMode && (questOk() || castleOk()); };
   // 依模式弱化（以席琳夢域鏡為完整版；各模式本身的怪物強化照舊套用）

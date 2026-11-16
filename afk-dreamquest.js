@@ -21,6 +21,7 @@
   var L = W.__afkLore;
   if (!L || typeof DB === 'undefined' || typeof TRIAL_Q === 'undefined') { console.warn('[AFK-dreamquest] 缺少 afk-lore-kit，略過'); return; }
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線走
   var esc = L.esc, sys = L.sys;
   var classic = function (p) { return !!(p && p.classicMode); };
   var dreamOn = function (p) { p = p || P(); return !!(p && p.sherineDream && p.sherineMad); };
@@ -105,12 +106,12 @@
     ]
   });
 
-  var keyOf = function (i, p) { return L.keyOf(line, i, (p || P() || {}).cls || ''); };
+  var keyOf = function (i, p) { return L.keyOf(line, i, QC(p || P() || {}) || ''); };
   var chIndexOfKey = function (key) { var m = /^afkL_dreamq_(\d+)_/.exec(String(key || '')); return m ? Number(m[1]) - 1 : -1; };
   var have = function (id) { return typeof questCountId === 'function' ? questCountId(id) : 0; };
   var state = function (p) { p.afkDreamQ = p.afkDreamQ && typeof p.afkDreamQ === 'object' ? p.afkDreamQ : {}; return p.afkDreamQ; };
   var soulRefined = function (p) { var e = p && p.eq && p.eq.rem_soul; return !!(e && typeof e.seteff === 'string' && e.seteff.charAt(e.seteff.length - 1) === '夢'); };
-  var hardinDone = function (p) { return trialQStateFor(p, 'afkL_hardin_7_' + p.cls) === 2; };
+  var hardinDone = function (p) { return trialQStateFor(p, 'afkL_hardin_7_' + QC(p)) === 2; };
   var tier2Won = function (p) { return !!(p.afkFinalTier && p.afkFinalTier.t2 === 'win'); };
 
   // 每一章額外的接取條件（回傳不能接的原因）

@@ -21,6 +21,7 @@
   var W = window;
   if (typeof DB === 'undefined' || !DB.items || !DB.towns || !DB.towns.town_aden || typeof TRIAL_Q === 'undefined') { console.warn('[AFK-aden-quests] 缺少任務系統，略過'); return; }
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線走
   var esc = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
   var CLASSES = ['knight', 'mage', 'elf', 'dark', 'illusion', 'warrior', 'dragon', 'royal'];
@@ -96,7 +97,7 @@
     try { if (typeof WH_NO_STORE !== 'undefined' && WH_NO_STORE.indexOf(q.item) < 0) WH_NO_STORE.push(q.item); } catch (e) {}
     try { if (typeof TRIAL_ITEM_CLASS !== 'undefined') TRIAL_ITEM_CLASS[q.item] = CLASSES.slice(); } catch (e) {}   // 掉落閘：接取中且未集滿才掉
   });
-  var keyOf = function (q, p) { return q.key + '_' + ((p || P() || {}).cls || ''); };
+  var keyOf = function (q, p) { return q.key + '_' + (QC(p || P() || {}) || ''); };
   var prevDone = function (i, p) { return i === 0 || trialQStateFor(p || P(), keyOf(QUESTS[i - 1], p)) === 2; };
   if (typeof W.trialQAccept === 'function') {
     var oAcc = W.trialQAccept;

@@ -28,6 +28,7 @@
  * ========================================================================== */
 (function () {
   'use strict';
+  var QCP = function () { return (typeof questCls === 'function') ? questCls(player) : player.cls; };   // 11-16：覺醒職業照本職的試煉
 
   if (window.AFK_TOGGLES) {
     AFK_TOGGLES.register({
@@ -94,7 +95,7 @@
     exQ: function (key, rr) {
       if (!on()) return;
       var c = TRIAL_Q[key];
-      if (!c || !player || !player.cls || player.cls !== c.cls) return;
+      if (!c || !player || !player.cls || QCP() !== c.cls) return;
       var sets = setsOfQ(c);
       if (sets < 1) { logSys('<span class="text-red-400 font-bold">材料不足，無法兌換。</span>'); return; }
       var n = qtyVal('afk-rt-qty-' + key, Math.min(sets, MAX_EX));
@@ -106,7 +107,7 @@
     },
     ex50: function () {
       if (!on() || !player || !player.cls) return;
-      var cfg = TRIAL_50_CFG[player.cls];
+      var cfg = TRIAL_50_CFG[QCP()];
       if (!cfg) return;
       var need = cfg.exMatCnt || 1, sets = Math.floor(questCountId(cfg.exMat) / need);
       if (sets < 1) { logSys('<span class="text-red-400 font-bold">材料不足，無法兌換。</span>'); return; }
@@ -142,10 +143,10 @@
       try {
         if (!player || !player.cls) return r;
         var ks = TRIAL_ITEM_Q[id];
-        if (ks) return ks.some(function (k) { return TRIAL_Q[k].cls === player.cls && trialQState(k) >= 1; });
+        if (ks) return ks.some(function (k) { return TRIAL_Q[k].cls === QCP() && trialQState(k) >= 1; });
         var t = TRIAL50_ITEM[id];
-        if (t && t.ex && player.cls === t.cls) {
-          var cfg = TRIAL_50_CFG[player.cls];
+        if (t && t.ex && QCP() === t.cls) {
+          var cfg = TRIAL_50_CFG[QCP()];
           return !!cfg && (player.trialStage || 0) >= cfg.stages.length + 1;
         }
       } catch (e) {}
@@ -171,7 +172,7 @@
       var out = orig50.apply(this, arguments);
       try {
         if (!on() || !player || !player.cls) return out;
-        var cfg = TRIAL_50_CFG[player.cls];
+        var cfg = TRIAL_50_CFG[QCP()];
         if (!cfg || cfg.npc !== npcName) return out;
         var st = player.trialStage || 0, nStages = cfg.stages.length;
         if (st < nStages + 1) return out;   // 還沒走到最終兌換階段：維持原版

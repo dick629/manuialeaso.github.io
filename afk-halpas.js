@@ -35,6 +35,7 @@
   if (T && !T.enabled('lorehalpas')) return;
   if (!L || !K || typeof DB === 'undefined' || !DB.maps) return;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線走
   var S = function () { return (typeof state !== 'undefined' && state) ? state : {}; };
   var tk = function () { return Number(S().ticks) || 0; };
   var IC = function (p) { return 'assets/icons/' + p + '.png'; };
@@ -134,7 +135,7 @@
         rewards: { all: ['afk_hp_armor'] }, first: [[SCALE, 10]] }
     ]
   });
-  var chState = function (i) { var p = P(); return p ? trialQStateFor(p, L.keyOf(line, i, p.cls)) : 0; };
+  var chState = function (i) { var p = P(); return p ? trialQStateFor(p, L.keyOf(line, i, QC(p))) : 0; };
 
   // ── 進場 ──
   var run = null, lastMap = null;

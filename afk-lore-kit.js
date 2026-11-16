@@ -19,6 +19,7 @@
   if (typeof DB === 'undefined' || !DB.items || !DB.mobs || typeof TRIAL_Q === 'undefined') { console.warn('[AFK-lore-kit] 缺少任務系統，略過'); return; }
   var CLASSES = ['knight', 'mage', 'elf', 'dark', 'illusion', 'warrior', 'dragon', 'royal'];
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線走
   var S = function () { return (typeof state !== 'undefined' && state) ? state : {}; };
   var esc = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
@@ -72,7 +73,7 @@
   // ── 劇情任務線 ──
   var LINES = {}, KEYS = {};   // KEYS[key] = { line, i }
   var keyOf = function (line, i, cls) { return 'afkL_' + line.id + '_' + (i + 1) + '_' + cls; };
-  var prevDone = function (line, i, p) { return i === 0 || trialQStateFor(p, keyOf(line, i - 1, p.cls)) === 2; };
+  var prevDone = function (line, i, p) { return i === 0 || trialQStateFor(p, keyOf(line, i - 1, QC(p))) === 2; };
   var defineLine = function (line) {
     LINES[line.id] = line;
     line.chapters.forEach(function (ch, i) {
@@ -181,11 +182,11 @@
   var html = function (line, p) {
     ensureCss();
     var rr = 'afkLoreRender_' + line.id, n = line.chapters.length;
-    var done = line.chapters.filter(function (ch, i) { return trialQStateFor(p, keyOf(line, i, p.cls)) === 2; }).length;
+    var done = line.chapters.filter(function (ch, i) { return trialQStateFor(p, keyOf(line, i, QC(p))) === 2; }).length;
     var h = '<div id="afk-lore-' + line.id + '" class="alq"><div class="alq-head"><span class="alq-title">📜 劇情「' + esc(line.name) + '」</span><span class="alq-sum">已完成 ' + done + '／' + n + ' 章</span></div>'
       + (line.intro ? '<div class="alq-intro">' + line.intro + '</div>' : '');
     line.chapters.forEach(function (ch, i) {
-      var k = keyOf(line, i, p.cls), st = trialQStateFor(p, k), c = TRIAL_Q[k] || { reqs: [], rewards: [] };
+      var k = keyOf(line, i, QC(p)), st = trialQStateFor(p, k), c = TRIAL_Q[k] || { reqs: [], rewards: [] };
       var reqs = c.reqs || [], have = function (id) { return typeof questCountId === 'function' ? questCountId(id) : 0; };
       var ok = reqs.every(function (r) { return have(r[0]) >= r[1]; });
       var s = st === 2 ? 'done' : !prevDone(line, i, p) ? 'lock' : (p.lv || 1) < ch.lv ? 'lv' : st === 0 ? 'new' : ok ? 'ready' : 'active';

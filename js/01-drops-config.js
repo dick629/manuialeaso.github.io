@@ -1073,7 +1073,8 @@ function trialDropBlocked(id) {
     if (typeof TRIAL_ITEM_CLASS === 'undefined') return false;
     let owner = TRIAL_ITEM_CLASS[id]; if (!owner) return false;
     if (typeof player === 'undefined') return false;
-    let mainClassOk = Array.isArray(owner) ? owner.indexOf(player.cls) !== -1 : player.cls === owner;
+    let _qc = (typeof questCls === 'function') ? questCls(player) : player.cls;   // 11-16：覺醒職業照本職
+    let mainClassOk = Array.isArray(owner) ? owner.indexOf(_qc) !== -1 : _qc === owner;
     // 🔥 接取制試煉：主玩家或任一參戰隊員符合職業、已接取且尚未集滿，才保留掉落判定。
     if (mainClassOk && (typeof trialItemActive !== 'function' || trialItemActive(id))) return false;
     if (typeof allyTrialItemActive === 'function' && allyTrialItemActive(id)) return false;

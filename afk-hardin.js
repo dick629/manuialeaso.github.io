@@ -39,6 +39,7 @@
   if (T && !T.enabled('lorehardin')) return;
   if (!L || !K || typeof DB === 'undefined' || !DB.maps) return;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線走
   var S = function () { return (typeof state !== 'undefined' && state) ? state : {}; };
   var tk = function () { return Number(S().ticks) || 0; };
   var IC = function (p) { return 'assets/icons/' + p + '.png'; };
@@ -157,7 +158,7 @@
         rewards: { all: ['afk_hd_tome'] }, first: [['gold', 500000]].concat(CRYSTAL ? [[CRYSTAL, 200]] : []) }
     ]
   });
-  var chState = function (i) { var p = P(); return p ? trialQStateFor(p, L.keyOf(line, i, p.cls)) : 0; };
+  var chState = function (i) { var p = P(); return p ? trialQStateFor(p, L.keyOf(line, i, QC(p))) : 0; };
 
   // ── 歐林：第 4 章完成後，每 30 分鐘在古魯丁地監 7 樓出現 ──
   var ORIN_MAP = 'zone_12', ORIN_EVERY = 30 * 60 * 1000;

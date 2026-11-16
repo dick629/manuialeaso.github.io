@@ -13,6 +13,7 @@
   'use strict';
   var W = window;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線
   var esc = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var stOf = function (p, key) { try { return typeof trialQStateFor === 'function' ? trialQStateFor(p, key) : ((p.trialQ || {})[key] || 0); } catch (e) { return 0; } };
   var CLS_N = { royal: '王族', knight: '騎士', mage: '法師', elf: '妖精', dark: '黑暗妖精', dragon: '龍騎士', illusion: '幻術士', warrior: '戰士' };
@@ -37,18 +38,18 @@
     var out = [], L = W.__afkLore;
     if (L && L.lines) Object.keys(L.lines).forEach(function (id) {
       var line = L.lines[id];
-      out.push({ n: '劇情「' + line.name + '」', host: line.hostN, ch: line.chapters.map(function (c, i) { return { lv: c.lv, t: c.title, done: stOf(p, L.keyOf(line, i, p.cls)) === 2 }; }) });
+      out.push({ n: '劇情「' + line.name + '」', host: line.hostN, ch: line.chapters.map(function (c, i) { return { lv: c.lv, t: c.title, done: stOf(p, L.keyOf(line, i, QC(p))) === 2 }; }) });
     });
     var S = W.AFK_CLASS_SAGA;
-    if (S && S.saga && S.saga[p.cls]) out.push({ n: CLS_N[p.cls] + '專屬劇情「' + S.saga[p.cls].arc + '」', host: S.saga[p.cls].hostN,
-      ch: S.chapters.filter(function (q) { return q.cls === p.cls; }).map(function (q) { return { lv: q.lv, t: q.title, done: stOf(p, q.key) === 2 }; }) });
+    if (S && S.saga && S.saga[QC(p)]) out.push({ n: CLS_N[QC(p)] + '專屬劇情「' + S.saga[QC(p)].arc + '」', host: S.saga[QC(p)].hostN,
+      ch: S.chapters.filter(function (q) { return q.cls === QC(p); }).map(function (q) { return { lv: q.lv, t: q.title, done: stOf(p, q.key) === 2 }; }) });
     var A = W.AFK_ADEN_QUESTS;
     if (A && A.quests) out.push({ n: '亞丁的陰影', host: '近衛隊長 雷歐', ch: A.quests.map(function (q) { return { lv: q.lv, t: q.title, done: stOf(p, A.keyOf(q, p)) === 2 }; }) });
     return out;
   };
   var questRows = function (p) {
     if (typeof TRIAL_Q === 'undefined') return [];
-    return Object.keys(TRIAL_Q).filter(function (k) { var q = TRIAL_Q[k]; return q && q.cls === p.cls && !q.afkLore && !q.afkSaga && !q.afkAden; })
+    return Object.keys(TRIAL_Q).filter(function (k) { var q = TRIAL_Q[k]; return q && q.cls === QC(p) && !q.afkLore && !q.afkSaga && !q.afkAden; })
       .map(function (k) { var q = TRIAL_Q[k]; return { lv: q.lv, npc: q.npc, rw: (q.rewards || []).map(function (id) { return DB.items[id] ? DB.items[id].n : id; }).join('、'), done: stOf(p, k) === 2, on: stOf(p, k) === 1 }; })
       .sort(function (a, b) { return a.lv - b.lv; });
   };

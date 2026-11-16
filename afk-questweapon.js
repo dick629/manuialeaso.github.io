@@ -16,6 +16,7 @@
   if (T && !T.enabled('questweapon')) return;
   if (typeof DB === 'undefined' || !DB.items) return;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線走
   var esc = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
   var NPC_ID = 'npc_afk_novice', NPC_N = '新手指導員 莉娜', TOWN = 'town_talking';
@@ -47,15 +48,15 @@
   Object.keys(BASE).forEach(function (c) { mk(40, c); mk(60, c); });
 
   var store = function (p) { p = p || P(); if (!p) return null; if (!p.afkNovQ || typeof p.afkNovQ !== 'object') p.afkNovQ = { st: 0, kills: 0, w40: false, w60: false }; return p.afkNovQ; };
-  var trial30 = function (p) { var k = p.cls + '30'; return !!(p.trialQ && p.trialQ[k] === 2); };
+  var trial30 = function (p) { var k = QC(p) + '30'; return !!(p.trialQ && p.trialQ[k] === 2); };
   var give = function (p, cap) {
-    var id = idOf(cap, p.cls); if (!DB.items[id]) return false;
+    var id = idOf(cap, QC(p)); if (!DB.items[id]) return false;
     var it = gainItem(id, 1, true, true); var got = (p.inv || []).filter(function (x) { return x && x.id === id; }).pop();
     if (got) got.en = EN;
     return !!(it || got);
   };
   // 玩家 11-11：Lv50 以下、身上（背包或裝備）沒有這把見習武器，就能再接一次
-  var has40 = function (p) { var id = idOf(40, p.cls), eq = p.eq || {}; return (p.inv || []).some(function (x) { return x && x.id === id; }) || Object.keys(eq).some(function (k) { return eq[k] && eq[k].id === id; }); };
+  var has40 = function (p) { var id = idOf(40, QC(p)), eq = p.eq || {}; return (p.inv || []).some(function (x) { return x && x.id === id; }) || Object.keys(eq).some(function (k) { return eq[k] && eq[k].id === id; }); };
   var again = function (p, q) { return q.st === 2 && (p.lv || 1) <= ACCEPT_MAX && !has40(p); };
   var accept = function () {
     var p = P(), q = store(p); if (!p || p.classicMode) return false;
@@ -68,7 +69,7 @@
     var p = P(), q = store(p); if (!p || q.st !== 1 || q.kills < KILLS) return false;
     if (!give(p, 40)) return false;
     q.st = 2; q.w40 = true;
-    sys('<span class="c-legend font-bold">' + NPC_N + '：新手任務完成！</span><span class="text-amber-200">你獲得了 ' + esc(DB.items[idOf(40, p.cls)].n) + ' +' + EN + '。</span>');
+    sys('<span class="c-legend font-bold">' + NPC_N + '：新手任務完成！</span><span class="text-amber-200">你獲得了 ' + esc(DB.items[idOf(40, QC(p))].n) + ' +' + EN + '。</span>');
     try { saveGame(); renderTabs(); } catch (e) {} return true;
   };
   var claim60 = function (how) {
@@ -81,7 +82,7 @@
     }
     if (!give(p, 60)) return false;
     q.w60 = true;
-    sys('<span class="c-legend font-bold">' + NPC_N + '：</span><span class="text-amber-200">你獲得了 ' + esc(DB.items[idOf(60, p.cls)].n) + ' +' + EN + '。</span>');
+    sys('<span class="c-legend font-bold">' + NPC_N + '：</span><span class="text-amber-200">你獲得了 ' + esc(DB.items[idOf(60, QC(p))].n) + ' +' + EN + '。</span>');
     try { saveGame(); renderTabs(); } catch (e) {} return true;
   };
   // 30 級職業試煉交付時直接發（還沒拿過的話）
@@ -137,7 +138,7 @@
   } catch (e) {}
   var render = function (div) {
     var p = P(); if (!p || !div) return;
-    var q = store(p), w40 = DB.items[idOf(40, p.cls)], w60 = DB.items[idOf(60, p.cls)], H = W.__afkHunter, badges = H && H.store ? (H.store(p).badges || 0) : 0;
+    var q = store(p), w40 = DB.items[idOf(40, QC(p))], w60 = DB.items[idOf(60, QC(p))], H = W.__afkHunter, badges = H && H.store ? (H.store(p).badges || 0) : 0;
     var box = function (title, body) { return '<div style="margin:10px 0;padding:10px 12px;border:1px solid #6b4e36;border-radius:6px;background:rgba(40,39,48,.6)"><div style="font-weight:bold;color:#e7d2a7;margin-bottom:6px">' + title + '</div>' + body + '</div>'; };
     var btn = function (act, label, ok) { return '<button class="btn ' + (ok ? 'bg-amber-800 hover:bg-amber-700' : 'bg-slate-700 opacity-60') + ' py-1.5 px-3 font-bold" data-afk-nq="' + act + '"' + (ok ? '' : ' disabled') + '>' + label + '</button>'; };
     if (p.classicMode) { div.innerHTML = '<div class="p-4 text-slate-300">' + NPC_N + '：經典模式不開放。</div>'; return; }

@@ -18,6 +18,7 @@
   var W = window;
   if (typeof DB === 'undefined' || !DB.items || typeof TRIAL_Q === 'undefined' || typeof W.trialQAccept !== 'function') { console.warn('[AFK-class-saga] 缺少試煉系統，略過'); return; }
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線走
   var esc = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
   var IC = function (n) { return 'assets/icons/items/' + n + '.png'; };
@@ -248,7 +249,7 @@
       var mine = ks.filter(function (k) { return byKey[k]; });
       if (mine.length && mine.length === ks.length) {
         var p = P(); if (!p) return false;
-        return mine.some(function (k) { var q = byKey[k]; return p.cls === q.cls && stOf(p, q) === 1 && (typeof questCountId === 'function' ? questCountId(id) : 0) < q.need; });
+        return mine.some(function (k) { var q = byKey[k]; return QC(p) === q.cls && stOf(p, q) === 1 && (typeof questCountId === 'function' ? questCountId(id) : 0) < q.need; });
       }
       return oAct.apply(this, arguments);
     };
@@ -350,9 +351,9 @@
   var row = function (lab, inner) { return inner ? '<div class="asg-row"><span class="asg-lab">' + lab + '</span><div class="asg-items">' + inner + '</div></div>' : ''; };
   var STN = { done: '已完成', ready: '可交付', active: '進行中', 'new': '未接取', lock: '未解鎖', lv: '等級不足' };
   function sectionHTML(p) {
-    var s = SAGA[p.cls]; if (!s) return '';
+    var s = SAGA[QC(p)]; if (!s) return '';
     ensureCss();
-    var chs = chOf(p.cls), done = chs.filter(function (q) { return stOf(p, q) === 2; }).length;
+    var chs = chOf(QC(p)), done = chs.filter(function (q) { return stOf(p, q) === 2; }).length;
     var h = '<div class="asg"><div class="asg-head"><span class="asg-title">📜 第二部・' + esc(s.arc) + '</span><span class="asg-tsub">（55～80 級專屬劇情）</span><span class="asg-sum">已完成 ' + done + '／' + chs.length + ' 章</span></div>'
       + '<div class="asg-intro">' + esc(s.now) + '</div>';
     chs.forEach(function (q) {
@@ -387,22 +388,22 @@
     var oNpc = W.interactNPC;
     W.interactNPC = function (npcId) {
       var r = oNpc.apply(this, arguments);
-      try { var p = P(), s = p && SAGA[p.cls]; if (s && npcId === s.host && (p.lv || 1) >= 50) { lastArgs = Array.prototype.slice.call(arguments); appendSection(); } } catch (e) { console.warn('[AFK-class-saga] ui', e); }
+      try { var p = P(), s = p && SAGA[QC(p)]; if (s && npcId === s.host && (p.lv || 1) >= 50) { lastArgs = Array.prototype.slice.call(arguments); appendSection(); } } catch (e) { console.warn('[AFK-class-saga] ui', e); }
       return r;
     };
   }
 
   // ── 補發傳承武器：2026-11-01 05:20 以前就完成第六章的角色，讀檔時補一把（每個角色一次）──
   var backfillWpn = function () {
-    var p = P(); if (!p || (p.afkSagaWpnGiven && p.afkSagaWpnGiven[p.cls])) return;
-    var w = SAGA_WPN[p.cls], q = chOf(p.cls)[5]; if (!w || !q || !DB.items[w.id]) return;
+    var p = P(); if (!p || (p.afkSagaWpnGiven && p.afkSagaWpnGiven[QC(p)])) return;
+    var w = SAGA_WPN[QC(p)], q = chOf(QC(p))[5]; if (!w || !q || !DB.items[w.id]) return;
     if (stOf(p, q) !== 2) return;
-    (p.afkSagaWpnGiven = p.afkSagaWpnGiven || {})[p.cls] = 1;
-    try { gainItem(w.id, 1, true); sys('<span class="text-amber-300">📜 職業劇情「' + esc(SAGA[p.cls].arc) + '」新增最終獎勵：補發「' + esc(w.n) + '」。</span>'); } catch (e) { console.warn('[AFK-class-saga] backfill', e); }
+    (p.afkSagaWpnGiven = p.afkSagaWpnGiven || {})[QC(p)] = 1;
+    try { gainItem(w.id, 1, true); sys('<span class="text-amber-300">📜 職業劇情「' + esc(SAGA[QC(p)].arc) + '」新增最終獎勵：補發「' + esc(w.n) + '」。</span>'); } catch (e) { console.warn('[AFK-class-saga] backfill', e); }
   };
   if (typeof W.trialQComplete === 'function') {   // 交付第六章時也記號，之後讀檔不會再補
     var oDone2 = W.trialQComplete;
-    W.trialQComplete = function (key) { var r = oDone2.apply(this, arguments); try { var p = P(), q = sagaOf(key); if (p && q && q.i === 5 && stOf(p, q) === 2) (p.afkSagaWpnGiven = p.afkSagaWpnGiven || {})[p.cls] = 1; } catch (e) {} return r; };
+    W.trialQComplete = function (key) { var r = oDone2.apply(this, arguments); try { var p = P(), q = sagaOf(key); if (p && q && q.i === 5 && stOf(p, q) === 2) (p.afkSagaWpnGiven = p.afkSagaWpnGiven || {})[QC(p)] = 1; } catch (e) {} return r; };
     try { (0, eval)('trialQComplete = window.trialQComplete'); } catch (e) {}
   }
   if (typeof W.loadGame === 'function') {

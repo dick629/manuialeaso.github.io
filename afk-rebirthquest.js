@@ -15,7 +15,8 @@
   var on = function () { return !!(T && T.enabled('rebirth-quest')); };
   if (typeof TRIAL_Q === 'undefined') { console.warn('[AFK-rebirthquest] 找不到 TRIAL_Q，略過'); return; }
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
-  var keysOf = function (p) { return Object.keys(TRIAL_Q).filter(function (k) { var q = TRIAL_Q[k]; return q && q.cls === p.cls && (Number(q.lv) || 0) <= 80; }); };
+  var QC = function (p) { return (typeof questCls === 'function') ? questCls(p) : (p && p.cls); };   // 11-16：覺醒職業照本職的任務線走
+  var keysOf = function (p) { return Object.keys(TRIAL_Q).filter(function (k) { var q = TRIAL_Q[k]; return q && q.cls === QC(p) && (Number(q.lv) || 0) <= 80; }); };
   var apply = function (p, quiet) {
     p = p || P();
     if (!on() || !p || p.classicMode || !(Number(p.rebirth) >= 1)) return 0;
