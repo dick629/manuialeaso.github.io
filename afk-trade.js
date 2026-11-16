@@ -69,7 +69,6 @@
     if (!catOf(it)) return '這類物品不能上架';
     if (it.lock) return '已上鎖（先解鎖）';
     if ((Number(it.en) || 0) > 15) return '強化超過 +15';
-    if (it._tq) return '這件物品不能上架';   // 11-16 afk-tamper（隱藏規則）
     return '';
   };
 
