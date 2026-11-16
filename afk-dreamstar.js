@@ -94,11 +94,16 @@
   };
 
   // ── 出怪：只在中央格、場上沒有活著的怪時才出一隻頭目 ──
+  var dsBoss = null;   // 這一場的試煉頭目（被移出場也找得到，才能補發掉落）
   var oSpawn = window.spawnRiftMob;
   window.spawnRiftMob = function (idx) {
     if (!on()) return oSpawn.apply(this, arguments);
     if (idx !== 1) return;
     if (S()._dsOver) return;   // 打倒後到離場前（0.3 秒）不再出新頭目
+    // 11-16：頭目已經倒下但掉落還沒發（例如被別的流程先標成死亡）→ 先發掉落、結束副本，不要再出一隻新的
+    var unpaid = (mapState.mobs || []).concat([dsBoss]).filter(function (x) { return deadBoss(x) && !x._dsPaid; });
+    if (unpaid.length) { unpaid.forEach(payLoot); finish(); return; }
+    if (dsBoss && !dsBoss._dsPaid && !dsBoss._dsBlast && mapState.mobs.indexOf(dsBoss) < 0) { payLoot(dsBoss); finish(); return; }   // 頭目被移出場（沒走擊殺流程）
     if (mapState.mobs.some(function (m) { return m && !m._dead && m.curHp > 0; })) return;
     var ids = pool(); if (!ids.length) return;
     var id = (window.__afkDsForceBoss && DB.mobs[window.__afkDsForceBoss]) ? window.__afkDsForceBoss : ids[Math.floor(Math.random() * ids.length)], base = DB.mobs[id];
@@ -115,6 +120,8 @@
     if (m.hard && typeof initHardSkin === 'function') initHardSkin(m);
     m.transformTo = null;   // 保險：試煉頭目不變身（變身會換成一隻沒有試煉標記的新怪，獎勵就不見了）
     m._dreamStar = true; m._dsName = NAME; m._dsBorn = S().ticks || 0; m._dsRage = m.rageDmgMult || 1;
+    m._dsLoot = rollLoot();   // 11-16：出場就先骰好掉落
+    dsBoss = m;
     // 星迴試煉（玩家 2026-10-24）：以「16 人、全身昇華支配 +5、時空變身」為基準，苦戰到 14 分 30 秒左右才打得倒
     // 玩家 2026-10-27：血量依上場人數縮放（你＋傭兵，16 人＝100%），再整體 ×0.55——8 人約 9,200 萬、16 人約 1.84 億（實測玩家存檔 8 人：×0.66 要 14 分 44 秒，改 0.55 對準約 12 分鐘）
     var party = 1 + ((player.allies || []).filter(function (a) { return a && !a._downed; }).length);
@@ -407,10 +414,53 @@
     }
     return null;
   };
+  // 11-16（Ping）：打太快會沒掉東西 → 頭目出場就先骰好掉落（m._dsLoot），倒下時照單發；
+  //   不管頭目是從哪條路倒下（別的模組先標了 _dead、同一刻多段傷害、離場前才發現死了），都會補發一次
+  var rollLoot = function () {
+    var L = [];
+    L.push(['item', TS[Math.floor(Math.random() * TS.length)], 1]);
+    L.push(['dia', 5000]);
+    L.push(['item', FATE_IDS[Math.floor(Math.random() * FATE_IDS.length)], 1]);
+    if (Math.random() < 0.5) { for (var q = 0; q < 3; q++) L.push(['item', pickW(MATS), 1]); }
+    if (Math.random() < 0.0001) L.push(['item', 'afk_card_pick', 1]);
+    return L;
+  };
+  var payLoot = function (m) {
+    if (!m || !m._dreamStar || m._dsPaid || m._dsBlast) return false;
+    m._dsPaid = true;
+    var info = (typeof _lootMobInfo !== 'undefined') ? _lootMobInfo : null;
+    try { _lootMobInfo = { n: NAME, lv: m.lv, boss: true }; } catch (e) {}
+    try {
+      var got = [];
+      (m._dsLoot || rollLoot()).forEach(function (x) {
+        if (x[0] === 'dia') { if (addDia(x[1])) got.push('龍之鑽石 ' + x[1]); return; }
+        if (DB.items[x[1]]) { gainItem(x[1], x[2]); got.push(DB.items[x[1]].n); }
+      });
+      sys('<span class="font-bold" style="color:#c084fc;">' + NAME + ' 化作星屑散去。</span>' + (got.length ? '<span class="text-fuchsia-200">它遺下了：' + got.join('、') + '</span>' : '<span class="text-slate-400">夢境什麼也沒有留下。</span>'));
+    } catch (e) { console.warn('[AFK-dreamstar] 掉落', e); }
+    finally { try { _lootMobInfo = info; } catch (e) {} }
+    return true;
+  };
+  var deadBoss = function (m) { return !!(m && m._dreamStar && !m._dsBlast && (m._dead || !(m.curHp > 0))); };
+  var finish = function () {
+    if (S()._dsOver) return;
+    S()._dsOver = true;
+    // 跟四龍副本一樣：打倒一隻頭目就結束，回到時空裂痕入口（擊殺流程跑完再走，避免在怪物迴圈中途換圖）
+    setTimeout(function () {
+      try {
+        if (!S().dreamStar || !S().riftRun) return;
+        riftEndRun(); setMapSelectors('town_rift'); changeMap(true); saveGame();
+      } catch (e) { console.warn('[AFK-dreamstar] 離開', e); }
+    }, 300);
+  };
+  var sweepDead = function () {   // 補發：場上有已經倒下但還沒發掉落的試煉頭目
+    if (!on() || typeof mapState === 'undefined' || !mapState.mobs) return;
+    mapState.mobs.concat(dsBoss ? [dsBoss] : []).forEach(function (m) { if (deadBoss(m) && !m._dsPaid && m._dsDeadSeen) { if (payLoot(m)) finish(); } else if (deadBoss(m)) m._dsDeadSeen = true; });
+  };
   var oKill = window.killMob;
   window.killMob = function (idx) {
     var m = (typeof mapState !== 'undefined' && mapState.mobs) ? mapState.mobs[idx] : null;
-    if (!m || !m._dreamStar || m._dead) return oKill.apply(this, arguments);
+    if (!m || !m._dreamStar) return oKill.apply(this, arguments);
     m._afkDreamPaid = true;                // 單機版不吃席琳夢域鏡的額外掉落
     var gI = window.gainItem, aC = window.acquireCard;
     window.gainItem = function () { return false; };
@@ -418,32 +468,14 @@
     var r;
     try { r = oKill.apply(this, arguments); }
     finally { window.gainItem = gI; if (typeof aC === 'function') window.acquireCard = aC; }
-    if (m._dead && !m._dsPaid && !m._dsBlast) {
-      m._dsPaid = true;
-      var info = (typeof _lootMobInfo !== 'undefined') ? _lootMobInfo : null;
-      try { _lootMobInfo = { n: NAME, lv: m.lv, boss: true }; } catch (e) {}
-      try {
-        var got = [];
-        var ts = TS[Math.floor(Math.random() * TS.length)];
-        if (DB.items[ts]) { gainItem(ts, 1); got.push(DB.items[ts].n); }
-        if (addDia(5000)) got.push('龍之鑽石 5000');
-        var fate = FATE_IDS[Math.floor(Math.random() * FATE_IDS.length)];
-        if (DB.items[fate]) { gainItem(fate, 1); got.push(DB.items[fate].n); }
-        if (Math.random() < 0.5) { for (var q = 0; q < 3; q++) { var mat = pickW(MATS); if (DB.items[mat]) { gainItem(mat, 1); got.push(DB.items[mat].n); } } }
-        if (Math.random() < 0.0001 && DB.items.afk_card_pick) { gainItem('afk_card_pick', 1); got.push(DB.items.afk_card_pick.n); }
-        sys('<span class="font-bold" style="color:#c084fc;">' + NAME + ' 化作星屑散去。</span>' + (got.length ? '<span class="text-fuchsia-200">它遺下了：' + got.join('、') + '</span>' : '<span class="text-slate-400">夢境什麼也沒有留下。</span>'));
-      } finally { try { _lootMobInfo = info; } catch (e) {} }
-      S()._dsOver = true;
-      // 跟四龍副本一樣：打倒一隻頭目就結束，回到時空裂痕入口（擊殺流程跑完再走，避免在怪物迴圈中途換圖）
-      setTimeout(function () {
-        try {
-          if (!S().dreamStar || !S().riftRun) return;
-          riftEndRun(); setMapSelectors('town_rift'); changeMap(true); saveGame();
-        } catch (e) { console.warn('[AFK-dreamstar] 離開', e); }
-      }, 300);
-    }
+    if (deadBoss(m) && payLoot(m)) finish();
     return r;
   };
+  if (typeof window.tick === 'function') {
+    var oTickL = window.tick;
+    window.tick = function () { var r = oTickL.apply(this, arguments); try { sweepDead(); } catch (e) {} return r; };
+    try { (0, eval)('tick = window.tick'); } catch (e) {}
+  }
 
   // ── 離開：不記排名、不給裂痕獎勵 ──
   var oRecord = window.riftRecord;
@@ -451,6 +483,7 @@
   var oEnd = window.riftEndRun;
   window.riftEndRun = function () {
     var ds = !!(S().dreamStar && S().riftRun);
+    if (ds) { try { (mapState.mobs || []).concat(dsBoss ? [dsBoss] : []).forEach(function (m) { if (deadBoss(m)) payLoot(m); }); } catch (e) {} dsBoss = null; }
     var keep = player.riftRewardMs;
     var r = oEnd.apply(this, arguments);
     if (ds) { player.riftRewardMs = keep; S().dreamStar = false; S()._dsOver = false; sys('<span class="text-fuchsia-300">你自夢境中醒轉，離開了暗夢星迴。</span>'); }
