@@ -73,7 +73,7 @@
     w_arms:      { cls: 'knight',   n: '萬兵之道',   d: '造成的傷害 ×3.5。百戰之軀：受到的傷害 −30%，一般攻擊造成傷害的 5% 轉為 HP。破甲：無視目標的硬皮。龍的一擊（屠龍劍的力量）：一般攻擊 80% 機率對全場敵人造成 3D(力量)+30 必中固定傷害。粉身碎骨：目標沒有硬皮時，重擊傷害 ×2。致命創傷：命中後目標 5 秒內受到的物理傷害 +20%；近距離命中 +50。首擊：對每個敵人的第一擊，武器骰改用最大值 ×10（跟神話變身的首擊加成各算各的）；穿雙子座聖衣時，首擊變成前五擊傷害 ×30；穿金牛座聖衣 AC −100、魔防 +100、五屬性抗性 +100、傷害減免 +10。領域：一般攻擊傷害 +15%。' },
     m_shilen:    { cls: 'mage',     n: '席琳眷屬',   d: '召喚術一口氣召喚 20 隻（召喚儀式的魔術布的召喚上限加成另外加上去）；寵物與召喚物的命中、魔防、每次攻擊的傷害、每次受擊的減免都 +(WIS+INT)×0.8，而且不會死亡（HP 最低 1）。召喚後立刻融合成一隻融合魔獸（生命是全部加總，傷害 ×4.5；超過 20 隻時傷害再照隻數 ÷ 20 提高），每 3 秒隨機施放雷霆風暴／龍捲風／極光雷電／燃燒的火球（傷害照法師魔法計算）。領域：在席琳夢域鏡造成的傷害 +15%；寵物與召喚物的傷害 +15%。' },
     m_atheist:   { cls: 'mage',     n: '背神者',   d: '背神狀態中：魔法傷害 +50、魔法命中 +100，每 5 秒自動施放一次屬性魔法武器效果（四屬性輪流，威力 ×2，不耗 MP；傭兵 10 秒一次、效果 ×0.8）。進入戰鬥 1 分鐘時否定諸神：所有敵人扣最大 HP 20%（死亡女神席琳只扣 5%），之後陷入虛弱 5 分鐘（沒有背神狀態的加成，造成的傷害 −15%），5 分鐘後再次進入背神狀態。領域：魔法傷害 +30%；自己施放時 MP 消耗 +50%，範圍攻擊魔法沒有 3 秒冷卻。' },
-    e_einhasad:  { cls: 'elf',      n: '殷海薩眷屬', d: '寵物、召喚物與屬性精靈的命中、魔防、每次攻擊的傷害、每次受擊的減免都 +(WIS+INT)×1.2，而且不會死亡（HP 最低 1）；屬性精靈化為元素神：傷害與 HP ×5。殷海薩的光芒：一般攻擊傷害 ×7。領域：寵物與召喚物的傷害 +25%。' },
+    e_einhasad:  { cls: 'elf',      n: '殷海薩眷屬', d: '寵物、召喚物與屬性精靈的命中、魔防、每次攻擊的傷害、每次受擊的減免都 +(WIS+INT)×1.2，而且不會死亡（HP 最低 1）；屬性精靈化為元素神：傷害與 HP ×5；穿召喚儀式的魔術布多召喚的屬性精靈會一起融合成一尊融合元素神（生命加總、傷害 ×隻數）。殷海薩的光芒：一般攻擊傷害 ×7。領域：寵物與召喚物的傷害 +25%。' },
     e_ruler:     { cls: 'elf',      n: '四元素主宰',     d: '自動學會四種屬性的精靈魔法（換掉這門技藝也不會遺忘，只是不同屬性的不能施放）；四元素融合：全部精靈魔法增益加總 ×3 常駐。HP<50% 觸發不屈命運（HP 全滿）。面板能力 +50、近／遠／魔法爆擊 +15%；每次一般攻擊以近戰＋遠攻＋魔法三種一起計算，再受四元素加持（傷害 ×8）。' },
     d_time:      { cls: 'dark',     n: '時流暗殺者',     d: '會心一擊的 HP／MP 消耗減半；一般攻擊再多算 1.6 倍必定爆擊的傷害（傷害 ×2.6）。爆擊傷害 +50%、近距離爆擊率 +50%。HP<30% 觸發絕望身軀（HP 全滿）。一般攻擊造成傷害的 1% 轉為 HP。' },
     d_magic:     { cls: 'dark',     n: '魔血咒者',     d: '學會十階魔法；施放攻擊魔法後，咒文的回音會免費再施放一次，每次額外 +(WIS+INT)×1.5 傷害。MP 自然恢復 ×6、MP 恢復 +50、MP +500；黑暗妖精魔法 MP 消耗減半。HP<30% 時自動施放一輪四屬性五階五星魔法（每場戰鬥一次）。魔血護身：造成的傷害 +250%、受到的傷害 −20%，造成傷害的 5% 轉為 HP。' },
@@ -583,7 +583,7 @@
       mArt = mult;
       if (kind === 'sum') {
         var g = minionArtOf(actor);
-        if (g) { mult *= 1 + DOMAIN.minion(g, actor); extra += minionBonusOf(actor); if (g === 'e_einhasad' && ent && (ent.skId === 'sk_elf_summon' || ent.skId === 'sk_elf_summon2')) mult *= 1 + W.__afkArtTune.god * F(actor); if (ent && ent._afkFuse) mult *= W.__afkArtTune.fuse * Math.max(1, ent._afkFuse) / 20; }   // 融合魔獸傷害 ×5（玩家 2026-10-27：×20→×10；2026-10-28：→×5）
+        if (g) { mult *= 1 + DOMAIN.minion(g, actor); extra += minionBonusOf(actor); if (g === 'e_einhasad' && ent && (ent.skId === 'sk_elf_summon' || ent.skId === 'sk_elf_summon2')) mult *= 1 + W.__afkArtTune.god * F(actor); if (ent && ent._afkFuse) mult *= W.__afkArtTune.fuse * Math.max(1, ent._afkFuse) / 20; if (ent && ent._afkFuseE) mult *= Math.max(1, ent._afkFuseE); }   // 融合魔獸傷害 ×5（玩家 2026-10-27：×20→×10；2026-10-28：→×5）
       } else if (a || bx2(actor)) {
         if (a === 'k_doom') mult *= 1 + W.__afkArtTune.kdoom * f;
         if (a === 'k_dark') { mult *= 1 + W.__afkArtTune.kdark * f; if (isDragon(m)) mult *= 1 + 0.5 * f; }
@@ -815,6 +815,14 @@
         if (r && a === 'e_einhasad' && (skId === 'sk_elf_summon' || skId === 'sk_elf_summon2')) {
           L.forEach(function (s) { s.hp = (s.hp || 0) * 5; s.mhp = (s.mhp || 0) * 5; s._afkGod = 1; });
           log(tag('元素神', '#fde047') + '殷海薩的光芒落下，精靈升格為元素神。');
+          // 11-16（Ping）：召喚儀式的魔術布多召喚的屬性精靈 → 融合成一隻融合元素神（生命加總、傷害 ×隻數）
+          if (L.length > 1 && W.__afkSummonCloth && W.__afkSummonCloth.extraSpirit(p) > 0) {
+            var ehp = 0; L.forEach(function (s) { ehp += s.mhp || s.hp || 0; });
+            var god = Object.assign({}, L[0], { hp: ehp, mhp: ehp, _afkFuseE: L.length, _afkGod: 1 });
+            p.summonsV2 = [god];
+            log(tag('融合元素神', '#fde047') + L.length + ' 隻元素神的光交融在一起，化為一尊融合元素神。');
+            try { if (typeof renderSummonPanel === 'function') renderSummonPanel(true); } catch (e) {}
+          }
         }
       } catch (e) {}
       return r;
