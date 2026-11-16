@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-6540baee174e",
+  "build": "merge-0.4-313a1f6065af",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -193,8 +193,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-bloodline.js?v=177fa99f9087",
-      "sha256": "177fa99f9087a460eb9e9d9af2ea573d2f0e7b30fe73bd8ed6167236d5a50a3e",
+      "url": "afk-bloodline.js?v=e3d94c53e62e",
+      "sha256": "e3d94c53e62e911fa43f3e4da8b06d0f0bdc66993fa27e1d88bf5c3866ba0824",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1368,8 +1368,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-scarab.js?v=81f27fa80dea",
-      "sha256": "81f27fa80dea646d6407bce8a2971aef9c911bbfaaa0215155047b810f199d81",
+      "url": "afk-scarab.js?v=64c3fbc98410",
+      "sha256": "64c3fbc98410f393dbf9876fd0b32ff27f5399b1d000ae82106361fe00819744",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1523,8 +1523,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-tamper.js?v=3af0f398e892",
-      "sha256": "3af0f398e8922d5b43b898e1f41226368889e9ce5b3ea890be336cb9fdef72a7",
+      "url": "afk-tamper.js?v=da8205c1da8c",
+      "sha256": "da8205c1da8c0696f7cee6b2aef028e0f96d6b1b600cd22854af59d1a6a984cd",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1719,7 +1719,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "2778327fc1d5e60308b7370333500f71d03a610dbb2ad162eb5c19c478b73665",
+      "sha256": "619276e2cace02434956ef4dc1f1c139e94dd0718ecc1de513e8a1a47cc537c1",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2033,8 +2033,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-views.js?v=8f2b6cfb2730",
-      "sha256": "8f2b6cfb2730c524e9d77beea666fe3c99cb8dfd25173e177e3f0dcdd2bf0276",
+      "url": "merged/growth-views.js?v=c083569ec606",
+      "sha256": "c083569ec6065e45cbd8d15dd9b5fce344708df4eb3d8a0f07fce8240ae62060",
       "type": "text/javascript; charset=utf-8"
     },
     {

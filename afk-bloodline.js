@@ -280,7 +280,7 @@
   W.__afkMioAuraMult = function () { return starLv() >= 0 ? 1.2 : 1; };
   // 1 階：拉
   var ra = function (p) {
-    try { var S = W.__afkScarab; if (!S || starLv() < 1 || !S.equipped(p)) return false; var s = S.store(p); return s.lv >= 100 && s.form >= 3 && !!((W.__afkDimRiftOn && W.__afkDimRiftOn()) || (p.afkDimRift && p.afkDimRift.khepriEver)); } catch (e) { return false; }
+    try { var S = W.__afkScarab; if (!S || starLv() < 1 || !S.equipped(p)) return false; var s = S.store(p); return s.lv >= 100 && s.form >= 3 && !!(s.kh || (p.afkDimRift && p.afkDimRift.khepriEver)); /* 11-16：凱布利改成回莉娜換 */ } catch (e) { return false; }
   };
   var raName = function () { var p = P(), S = W.__afkScarab; if (!p || !S || !ra(p)) return; var d = DB.items[S.ID]; if (d && /^太陽神凱布利/.test(d.n || '')) { d.n = d.n.replace('太陽神凱布利', '太陽神拉'); d.img = 'assets/icons/items/afk_scarab_ra.png'; d.d = (d.d || '') + '（繼承繁星：一般攻擊命中時 5% 施放炎爆術、火球術、流星雨或火風暴，傷害＝（智力＋精神）×1.5＋100）'; } };
   var RA_SP = [['炎爆術', false], ['火球術', false], ['流星雨', true], ['火風暴', true]];

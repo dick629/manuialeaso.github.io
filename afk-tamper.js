@@ -106,7 +106,7 @@
 
   // ── 第一次看到這個角色（已經在存檔裡的） ──
   var LEGACY_HOURS = false;
-  var FORM_MAX = [0, 39, 69, 100];
+  var FORM_MAX = [0, 49, 74, 100];   // 11-16 聖甲蟲新分段（舊的 39／69 也在這範圍內）
   var scarabExp = function (lv) { var S = W.__afkScarab, t = 0; if (!S || !S.need) return 0; for (var i = 1; i < lv; i++) t += S.need(i); return t; };
   var MIO_H = [0, 5, 15, 30, 60, 150, 300];
   var relicH = function (it) {

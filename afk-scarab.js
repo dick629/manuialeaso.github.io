@@ -3,12 +3,13 @@
  *
  *   一、取得：說話之島「新手指導員 莉娜」每個角色免費給一個；不能交易、賣、強化。
  *   二、欄位：裝備視窗第二頁的聖物格（有聖甲蟲就開；其他聖物還是要轉生）。只有裝著時才會成長、才有效果。
- *   三、等級 1～100，三個型態（等級到了在莉娜那裡免費進化；沒進化時等級停在 39／69，經驗先存著）：
- *       第一型態「沉睡的聖甲蟲」Lv1～39（銅）→ 第二型態「展翅的聖甲蟲」Lv40～69（銀）→ 第三型態「日輪聖甲蟲」Lv70～100（金）
+ *   三、等級 1～100，三個型態（等級到了在莉娜那裡免費進化；沒進化時等級停在 49／74，經驗先存著）：
+ *       第一型態「沉睡的聖甲蟲」Lv1～49（銅）→ 第二型態「展翅的聖甲蟲」Lv50～74（銀）→ 第三型態「日輪聖甲蟲」Lv75～100（金）
+ *       → Lv100 在莉娜那裡換成「太陽神凱布利」（11-16 Ping：原本是裝著進次元裂縫自動變，改成要回說話之島換；原本 39／69 改成 49／74）
  *   四、效果（照等級累計）：
  *       力量、敏捷、體質、智力、精神、魅力：每 10 級各 +1；火水風地抗性：每級 +0.3；最大 HP：每級 +5
- *       第二型態起：寵物與召喚物的傷害、命中＋（等級 − 39）× 0.2；寵物的傷害減免＋（等級 − 39）× 0.1
- *       第三型態起：異常狀態抵抗＋（等級 − 69）× 0.5%
+ *       第二型態起：寵物與召喚物的傷害、命中＋（等級 − 49）× 0.24；寵物的傷害減免＋（等級 − 49）× 0.12
+ *       第三型態起：異常狀態抵抗＋（等級 − 74）× 0.6%（11-16 跟著新分段重算，Lv100 的上限跟原本差不多）
  *   五、成長經驗：打倒怪物＝怪物等級（頭目 ×20；時空裂痕、攻城、木人場不算）；里程碑一次性（舊角色有紀錄的會補算）；
  *       升級需要 1,900 × 等級^1.2（Lv1→2 要 1,900、Lv99→100 要約 47 萬，滿級共約 2,140 萬）。
  *       校準：滿編隊伍在野外的擊殺速度上限約每小時 5,700 隻，最快大約 72 小時滿級；一般新手大約到 144 小時。
@@ -29,19 +30,20 @@
   var tk = function () { return (typeof state !== 'undefined' && state) ? (Number(state.ticks) || 0) : 0; };
 
   var ID = 'afk_scarab', NPC_ID = 'npc_afk_novice';
-  var FORM = [null, { n: '沉睡的聖甲蟲', max: 39, c: '#d97706' }, { n: '展翅的聖甲蟲', max: 69, c: '#cbd5e1' }, { n: '日輪聖甲蟲', max: 100, c: '#fbbf24' }];
+  var FORM = [null, { n: '沉睡的聖甲蟲', max: 49, c: '#d97706' }, { n: '展翅的聖甲蟲', max: 74, c: '#cbd5e1' }, { n: '日輪聖甲蟲', max: 100, c: '#fbbf24' }];
   var K = 1900, POW = 1.2, BOSS_X = 20;
   var MS = { novice: 12500, trial: 25000, story: 7500, mastery: 15000, rank: 20000, region: 15000, event: 3750, eventDay: 5 };
   var need = function (lv) { return Math.round(K * Math.pow(lv, POW)); };
   var STATS = ['str', 'dex', 'con', 'int', 'wis', 'cha'], RES4 = ['resFire', 'resWater', 'resWind', 'resEarth'];
   var fx = function (s) {
     var lv = s.lv, o = { stat: Math.floor(lv / 10), res: Math.round(lv * 0.3 * 10) / 10, mhp: lv * 5, pet: 0, petDr: 0, abn: 0 };
-    if (s.form >= 2) { o.pet = Math.round(Math.max(0, lv - 39) * 0.2 * 10) / 10; o.petDr = Math.floor(Math.max(0, lv - 39) * 0.1); }
-    if (s.form >= 3) o.abn = Math.round(Math.max(0, lv - 69) * 0.5 * 10) / 10;
+    if (s.form >= 2) { o.pet = Math.round(Math.max(0, lv - 49) * 0.24 * 10) / 10; o.petDr = Math.floor(Math.max(0, lv - 49) * 0.12); }
+    if (s.form >= 3) o.abn = Math.round(Math.max(0, lv - 74) * 0.6 * 10) / 10;
     return o;
   };
-  // 太陽神凱布利（decisions-1107）：滿等的日輪聖甲蟲裝著進入次元裂縫後自動進化，數值 ×1.2；之魂憶起＋凱布利一起取回力量 5%
-  var khepri = function (p, s) { try { return !!(p && s && s.lv >= 100 && s.form >= 3 && equipped(p) && ((W.__afkDimRiftOn && W.__afkDimRiftOn()) || (p.afkDimRift && p.afkDimRift.khepriEver))); } catch (e) { return false; } };
+  // 太陽神凱布利（decisions-1107）：數值 ×1.2；之魂憶起＋凱布利一起取回力量 5%
+  //   11-16（Ping）：不再自動變，滿等的日輪聖甲蟲要回說話之島莉娜那裡換（s.kh）；以前已經變過的（khepriEver）保留
+  var khepri = function (p, s) { try { return !!(p && s && s.lv >= 100 && s.form >= 3 && equipped(p) && (s.kh || (p.afkDimRift && p.afkDimRift.khepriEver))); } catch (e) { return false; } };
   var fxK = function (p, s) { var o = fx(s); if (!khepri(p, s)) return o; ['stat', 'res', 'mhp', 'pet', 'petDr', 'abn'].forEach(function (k) { o[k] = Math.round(o[k] * 1.2 * 10) / 10; }); o.stat = Math.floor(o.stat); o.mhp = Math.round(o.mhp); o.petDr = Math.floor(o.petDr); return o; };
   var fxText = function (o) {
     var t = ['力量、敏捷、體質、智力、精神、魅力各 +' + o.stat, '火水風地抗性各 +' + o.res, '最大 HP +' + o.mhp];
@@ -52,7 +54,7 @@
 
   // ── 道具 ──
   if (!DB.items[ID]) DB.items[ID] = { n: '日輪聖甲蟲', type: 'acc', slot: 'holy', req: 'all', safe: 0, p: 0, gachaWeight: 0, noEnhance: true, noTrade: true, noSell: true, noJunk: true, afkScarab: true,
-    c: 'text-amber-300', img: 'assets/icons/items/afk_scarab_1.png', d: '說話之島莉娜給的成長型遺物。裝在聖物格（裝備視窗第二頁左下），打倒怪物、完成任務會成長到 100 級；Lv40、Lv70 時在莉娜那裡免費進化。' };
+    c: 'text-amber-300', img: 'assets/icons/items/afk_scarab_1.png', d: '說話之島莉娜給的成長型遺物。裝在聖物格（裝備視窗第二頁左下），打倒怪物、完成任務會成長到 100 級；Lv49、Lv74 時在莉娜那裡免費進化，Lv100 在莉娜那裡換成太陽神凱布利。' };
   try { if (typeof ITEM_WEIGHTS !== 'undefined' && ITEM_WEIGHTS[DB.items[ID].n] == null) ITEM_WEIGHTS[DB.items[ID].n] = 0; } catch (e) {}
   try { if (typeof WEIGHT_COUNT_SLOTS !== 'undefined' && WEIGHT_COUNT_SLOTS.indexOf('holy') < 0) WEIGHT_COUNT_SLOTS.push('holy'); } catch (e) {}
 
@@ -78,7 +80,7 @@
     if (o.abn) d.abnormalResist = o.abn;
     d.img = 'assets/icons/items/afk_scarab_' + s.form + '.png';
     d.n = (kp ? '太陽神凱布利' : FORM[s.form].n) + ' Lv' + s.lv;
-    d.d = '成長型遺物。裝在聖物格（裝備視窗第二頁左下）才會成長、才有效果。目前：' + fxText(o) + '。' + (s.form < 3 ? 'Lv' + FORM[s.form].max + ' 時在說話之島莉娜那裡免費進化。' : '');
+    d.d = '成長型遺物。裝在聖物格（裝備視窗第二頁左下）才會成長、才有效果。目前：' + fxText(o) + '。' + (s.form < 3 ? 'Lv' + FORM[s.form].max + ' 時在說話之島莉娜那裡免費進化。' : (!kp && !s.kh ? 'Lv100 時在說話之島莉娜那裡換成太陽神凱布利。' : ''));
   };
   if (typeof W.recomputeStats === 'function') {
     var oRe = W.recomputeStats;
@@ -163,8 +165,15 @@
     checkMs(p); try { recomputeStats(); saveGame(); } catch (e) {}
     return true;
   };
+  var canKhepri = function (p, s) { return s.form >= 3 && s.lv >= 100 && !s.kh && !(p.afkDimRift && p.afkDimRift.khepriEver); };
   var evolve = function () {
     var p = P(); if (!on(p)) return false; var s = store(p);
+    if (canKhepri(p, s)) {   // 11-16：Lv100 回莉娜換成太陽神凱布利
+      s.kh = 1; fire('太陽神凱布利');
+      sys('<span style="color:#fbbf24;font-weight:bold">🪲 日輪聖甲蟲燃起金色的光——成為「太陽神凱布利」。</span>' + (equipped(p) ? '' : '<span class="text-amber-300">（要裝在聖物格才有效果）</span>'));
+      try { recomputeStats(); saveGame(); } catch (e) {}
+      return true;
+    }
     if (s.form >= 3 || s.lv < FORM[s.form].max) return false;
     s.form++; levelUp(p);
     fire(FORM[s.form].n);
@@ -187,7 +196,9 @@
       + '<div class="text-xs text-slate-400 mt-1">' + (s.lv >= 100 ? '已經滿級' : '成長經驗 ' + Math.floor(s.exp).toLocaleString() + '／' + need(s.lv).toLocaleString()) + (equipped(p) ? '' : '　<span class="text-rose-300">（沒裝在聖物格，不會成長）</span>') + '</div></div></div>'
       + '<div class="text-sm mt-2">目前：' + esc(fxText(o)) + '</div>'
       + (nx ? '<div class="text-xs text-slate-400 mt-1">進化後（Lv' + (FORM[s.form].max + 1) + '）：' + esc(fxText(nx)) + '</div>' : '')
-      + (s.form < 3 ? '<div class="mt-2">' + btn('evolve', '進化成「' + FORM[s.form + 1].n + '」', s.lv >= f.max) + '</div>' : '')
+      + (s.form < 3 ? '<div class="mt-2">' + btn('evolve', '進化成「' + FORM[s.form + 1].n + '」', s.lv >= f.max) + '</div>'
+        : (s.kh || (p.afkDimRift && p.afkDimRift.khepriEver) ? '<div class="text-sm mt-2" style="color:#fbbf24">已經成為太陽神凱布利（數值 ×1.2）。</div>'
+          : '<div class="mt-2">' + btn('evolve', '換成「太陽神凱布利」', s.lv >= 100) + '<span class="text-xs text-slate-400 ml-2">Lv100 才能換；數值 ×1.2</span></div>'))
       + '<div class="text-xs text-slate-300 mt-2">成長經驗：打倒怪物＝怪物等級（頭目 ×' + BOSS_X + '）。里程碑：新手任務 ' + (m.novice ? '✅' : '⬜') + '、職業試煉 ' + m.trial + ' 個、劇情 ' + m.story + ' 章、精通任務 ' + (m.mastery ? '✅' : '⬜') + '、冒險者等級 ' + m.rank + ' 級、地區霸主首殺 ' + m.region + ' 個地區、世界事件今天 ' + (s.weDay === today() ? s.weToday : 0) + '／' + MS.eventDay + ' 次。</div>'
       + '</div>';
     return h;

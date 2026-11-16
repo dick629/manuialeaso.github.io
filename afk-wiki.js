@@ -2043,16 +2043,17 @@
     return wCard('🪲 日輪聖甲蟲（新手的成長型遺物）',
       wDesc('說話之島「新手指導員 莉娜」每個角色免費給一隻。裝在<b>聖物格</b>（裝備視窗第二頁左下；有聖甲蟲就開，不用轉生），打倒怪物、完成任務會一起成長到 <b>100 級</b>。只有裝著時才會成長、才有效果。經典模式沒有。') +
       wTbl(['型態', '等級', '進化', 'Lv 上限時的效果'], [
-        ['沉睡的聖甲蟲（銅）', '1～39', '—', esc(row(39, 1))],
-        ['展翅的聖甲蟲（銀）', '40～69', 'Lv39 時找莉娜免費進化', esc(row(69, 2))],
-        ['日輪聖甲蟲（金）', '70～100', 'Lv69 時找莉娜免費進化', esc(row(100, 3))]
+        ['沉睡的聖甲蟲（銅）', '1～49', '—', esc(row(49, 1))],
+        ['展翅的聖甲蟲（銀）', '50～74', 'Lv49 時找莉娜免費進化', esc(row(74, 2))],
+        ['日輪聖甲蟲（金）', '75～100', 'Lv74 時找莉娜免費進化', esc(row(100, 3))],
+        ['太陽神凱布利', '100', 'Lv100 時找莉娜換', '日輪聖甲蟲 Lv100 的效果 ×1.2']
       ]) +
       wTbl(['成長經驗', '多少'], [
         ['打倒怪物', '怪物等級（頭目 ×' + S.BOSS_X + '）；時空裂痕、攻城、木人場不算'],
         ['新手任務', S.MS.novice.toLocaleString()], ['職業試煉（每一個）', S.MS.trial.toLocaleString()], ['劇情任務（每一章）', S.MS.story.toLocaleString()],
         ['精通任務', S.MS.mastery.toLocaleString()], ['冒險者等級（每升一級）', S.MS.rank.toLocaleString()], ['地區霸主（每個地區第一次打倒）', S.MS.region.toLocaleString()],
         ['世界事件（每次打倒事件目標）', S.MS.event.toLocaleString() + '（每天最多 ' + S.MS.eventDay + ' 次）'],
-        ['升一級需要', [1, 10, 39, 69, 99].map(function (lv) { return 'Lv' + lv + '→' + (lv + 1) + '：' + S.need(lv).toLocaleString(); }).join('、') + '；從 1 級升到 100 級共約 ' + (function () { var t = 0; for (var lv = 1; lv < 100; lv++) t += S.need(lv); return Math.round(t / 10000).toLocaleString(); })() + ' 萬']
+        ['升一級需要', [1, 10, 49, 74, 99].map(function (lv) { return 'Lv' + lv + '→' + (lv + 1) + '：' + S.need(lv).toLocaleString(); }).join('、') + '；從 1 級升到 100 級共約 ' + (function () { var t = 0; for (var lv = 1; lv < 100; lv++) t += S.need(lv); return Math.round(t / 10000).toLocaleString(); })() + ' 萬']
       ]) + wDesc('拿到聖甲蟲之前就完成的試煉、劇情任務等，也會算進成長經驗。'));
   }
 
