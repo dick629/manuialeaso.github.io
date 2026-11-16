@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-dd7106a3dd78",
+  "build": "merge-0.4-6b63e0592290",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -1709,7 +1709,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "46d15388e652d417dc50a1e4f2d5c7115a3bb52305307b0c0e9707269df1b0ff",
+      "sha256": "5631cbdce48beef2cd83cd31292b7638bb2ed821c9a4f93390ed1841cdc9ce2f",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1763,8 +1763,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/10-ui-tabs.js?v=b81ccc8049bd",
-      "sha256": "b81ccc8049bd61c28ccdef3a7a52f0d135ce38b80b4c4ec4cf3a33e8565653b4",
+      "url": "js/10-ui-tabs.js?v=93496c71eaa5",
+      "sha256": "93496c71eaa563a22eb5755b5dfb9fc52c2d15ca371aacd013bfb741f66bb320",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1963,8 +1963,8 @@
       "type": "text/css; charset=utf-8"
     },
     {
-      "url": "merged/class-ui.js?v=1f0dc5e6d8d9",
-      "sha256": "1f0dc5e6d8d960ea328d9e19fb1de4d068ca324e9b1a3a60aaedeb17ea7a7e86",
+      "url": "merged/class-ui.js?v=88b4933315ed",
+      "sha256": "88b4933315edcca87c3a8213f4060ac649068bc1ee34b4e9289e7ff7fa05b2b1",
       "type": "text/javascript; charset=utf-8"
     },
     {

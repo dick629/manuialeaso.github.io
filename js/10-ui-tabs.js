@@ -1,4 +1,4 @@
-let _tabPointerDown = false, _tabWheelActive = false, _tabWheelTimer = null, _tabRebuildPending = false, _tabThrottleTimer = null;
+let _tabForcePending = false, _tabPointerDown = false, _tabWheelActive = false, _tabWheelTimer = null, _tabRebuildPending = false, _tabThrottleTimer = null;
 const TAB_REBUILD_THROTTLE_MS = 250;
 const TAB_WHEEL_IDLE_MS = 180;
 const CLASSIC_GRID_COLUMNS = 4;
@@ -20,11 +20,26 @@ function _initTabGuard() {
             _tabWheelActive = false;
             if (_tabRebuildPending) {
                 _tabRebuildPending = false;
-                renderTabs();
+                var f = _tabForcePending; _tabForcePending = false;
+                renderTabs(f);
             }
         }, TAB_WHEEL_IDLE_MS);
     }, { passive:true, capture:true });
-    let _release = function(){ if (!_tabPointerDown) return; _tabPointerDown = false; if (_tabRebuildPending) { _tabRebuildPending = false; setTimeout(function(){ renderTabs(); }, 0); } };   // 放開後(讓 click 先觸發)再補一次重建
+    // 🩹 11-16（Ping）：手機用手指滑（含放手後的慣性滑動）不會有 wheel 事件，而且一開始滑就送 pointercancel，
+    //    原本會在滑到一半時重建分頁（掉寶、喝水都會觸發）→ 慣性中斷、捲動位置被拉回。
+    //    改成：分頁裡任何捲動都跟滾輪一樣，停下 250ms 後才補重建。（scroll 不會冒泡，所以在 document 用 capture 聽）
+    document.addEventListener('scroll', function(ev){
+        var t = ev.target;
+        if (!t || t === document || !t.closest || !t.closest('#tab-content-panel,[id^="tab-"],#game-screen')) return;   // 手機版背包等頁面是整個 #game-screen 在捲
+        _tabWheelActive = true;
+        if (_tabWheelTimer) clearTimeout(_tabWheelTimer);
+        _tabWheelTimer = setTimeout(function(){
+            _tabWheelTimer = null;
+            _tabWheelActive = false;
+            if (_tabRebuildPending) { _tabRebuildPending = false; var f = _tabForcePending; _tabForcePending = false; renderTabs(f); }
+        }, 250);
+    }, { passive:true, capture:true });
+    let _release = function(){ if (!_tabPointerDown) return; _tabPointerDown = false; if (_tabRebuildPending && !_tabWheelActive) { _tabRebuildPending = false; var f = _tabForcePending; _tabForcePending = false; setTimeout(function(){ renderTabs(f); }, 0); } };   // 放開後(讓 click 先觸發)再補一次重建
     document.addEventListener('pointerup', _release);
     document.addEventListener('pointercancel', _release);
 }
@@ -162,6 +177,8 @@ function renderTabs(force, visibleScope) {
     if(state.ff || (typeof catchupActive === 'function' && catchupActive())) return; // 補跑全部完成前不刷新畫面
     // 🚀 使用者正按住分頁面板(點擊中)：延後非強制重建到放開後，避免按鈕被重繪掉而點擊失效
     if(!force && (_tabPointerDown || _tabWheelActive)) { _tabRebuildPending = true; return; }
+    // 🩹 11-16（Ping）：正在捲動（滾輪或手指慣性滑動）時，連「強制重建」也延到停下來再做（背包自動整理每 10 秒一次 renderTabs(true)，會把滑到一半的清單拉回去）
+    if(force && _tabWheelActive) { _tabRebuildPending = true; _tabForcePending = true; return; }
     // 🚀 戰鬥 tick 內的高頻變動(扣箭/耗肉)：合併成一次重建(節流 250ms)，降低狩獵卡頓；使用者操作(非 tick)維持即時回饋
     if(!force && state.inTick) { if(!_tabThrottleTimer) _tabThrottleTimer = setTimeout(function(){ _tabThrottleTimer = null; renderTabs(); }, TAB_REBUILD_THROTTLE_MS); return; }
     if(_tabThrottleTimer) { clearTimeout(_tabThrottleTimer); _tabThrottleTimer = null; }
