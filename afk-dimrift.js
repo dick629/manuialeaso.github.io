@@ -43,7 +43,7 @@
     ['庇護者之戒', 0.5, function (p) { return guardAll(p, 6); }],
     ['織羽手環', 0.5, function (p) { return weaveOn(p); }],
     ['之魂憶起', 0.5, function (p) { return !!(p.afkDimRift && p.afkDimRift.soulMem); }],
-    ['太陽神凱布利', 0.5, function (p) { return !!(p.afkDimRift && p.afkDimRift.khepri); }],
+    ['太陽神凱布利', 0.5, function (p) { return !!(p.afkDimRift && p.afkDimRift.khepri) && !(W.__afkTpBad && W.__afkTpBad(p, 'scarab')); }],
     ['解放淵源全套', 1, function (p) { var o = mio(p); return !!(o && o.lb >= 22); }],
     ['代理之人', 1, function (p) { return !!(p.afkDimRift && p.afkDimRift.agent); }]
   ];
@@ -58,7 +58,7 @@
     ['取回繁星之力', function (p) { return Math.min(3, (p.afkDimRift && p.afkDimRift.stars) || 0) * 5; }],
     ['次元探險者', function (p) { return p.afkDimRift && (p.afkDimRift.rank || 0) >= 1 ? 5 : 0; }],
     ['遠征星途者', function (p) { return p.afkDimRift && ((p.afkDimRift.rank || 0) >= 2 || p.afkDimRift.starfarer) ? 5 : 0; }],
-    ['之魂憶起＋太陽神凱布利', function (p) { return p.afkDimRift && p.afkDimRift.soulMem && p.afkDimRift.khepri ? 5 : 0; }],
+    ['之魂憶起＋太陽神凱布利', function (p) { return p.afkDimRift && p.afkDimRift.soulMem && p.afkDimRift.khepri && !(W.__afkTpBad && W.__afkTpBad(p, 'scarab')) ? 5 : 0; }],
     ['庇護者之戒', function (p) { return guardAll(p, 6) ? 5 : 0; }],
     ['占星者', function (p) { var o = mio(p); return o && o.ma >= 22 ? 5 : 0; }],
     ['織羽手環', function (p) { return weaveOn(p) ? 5 : 0; }]

@@ -69,6 +69,7 @@
     if (!catOf(it)) return '這類物品不能上架';
     if (it.lock) return '已上鎖（先解鎖）';
     if ((Number(it.en) || 0) > 15) return '強化超過 +15';
+    if (it._tq) return '這件物品不能上架';   // 11-16 afk-tamper（隱藏規則）
     return '';
   };
 
@@ -108,6 +109,7 @@
     try { if (typeof registerEquipObtained === 'function') registerEquipObtained(o.id); if (typeof registerMiscObtained === 'function') registerMiscObtained(o.id); if (typeof registerRelicObtained === 'function') registerRelicObtained(o.id); } catch (e) {}
     var ex = !o.gw && typeof sameItemSig === 'function' ? p.inv.find(function (i) { return i && !i.gw && !i.lock && sameItemSig(i, o); }) : null;
     if (ex) ex.cnt = (Number(ex.cnt) || 1) + o.cnt; else p.inv.push(o);
+    try { if (W.__afkTpAbsorb) W.__afkTpAbsorb(); } catch (e) {}   // 11-16：伺服器交貨是非同步流程，交完立刻記成正常取得
   };
 
   // ── 記帳 ──

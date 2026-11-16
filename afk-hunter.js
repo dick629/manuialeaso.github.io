@@ -53,7 +53,7 @@
     var h = p.afkHunter; ['board', 'active'].forEach(function (k) { if (!Array.isArray(h[k])) h[k] = []; }); if (!h.kinds) h.kinds = {};
     return h;
   };
-  var rankIdx = function (p) { if (!p || classic(p)) return 0; var h = p.afkHunter, pts = (h && Number(h.pts)) || 0, r = 0; for (var i = 0; i < RANKS.length; i++) if (pts >= RANKS[i][1]) r = i; return r; };
+  var rankIdx = function (p) { if (!p || classic(p)) return 0; var h = p.afkHunter, pts = (h && Number(h.pts)) || 0, r = 0; if (W.__afkTpNum) pts = W.__afkTpNum(p, 'hunter', pts); for (var i = 0; i < RANKS.length; i++) if (pts >= RANKS[i][1]) r = i; return r; };
   var rankOf = function (p) { return RANKS[rankIdx(p)]; };
   var isS = function (p) { return !!p && !classic(p) && rankIdx(p) >= RANKS.length - 1; };
   var today = function () { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
@@ -378,7 +378,7 @@
   //   到 +1～+4：每次點數 100＋徽章 40；+5：200＋80；+6：300＋160（玩家 2026-10-30 14:55 更正）。
   //   冒險等級看「累積」點數，強化用掉的點數另外記（spent），所以強化不會讓等級掉下來。
   var ENH = { 1: [100, 40], 2: [100, 40], 3: [100, 40], 4: [100, 40], 5: [200, 80], 6: [300, 160] }, ENH_MAX = 6;   // 玩家 2026-10-30 14:55 更正
-  var availPts = function (p) { var h = p && p.afkHunter; return h ? Math.max(0, (Number(h.pts) || 0) - (Number(h.spent) || 0)) : 0; };
+  var availPts = function (p) { var h = p && p.afkHunter; if (!h) return 0; var pt = Number(h.pts) || 0; if (W.__afkTpNum) pt = W.__afkTpNum(p, 'hunter', pt); return Math.max(0, pt - (Number(h.spent) || 0)); };
   var owned = function (p, id) {
     var out = [];
     Object.keys((p && p.eq) || {}).forEach(function (k) { var it = p.eq[k]; if (it && it.id === id) out.push({ it: it, slot: k, key: 'eq:' + k }); });

@@ -59,6 +59,8 @@
   var store = function (p) { if (!p.afkScarab || typeof p.afkScarab !== 'object') p.afkScarab = { got: false, lv: 1, exp: 0, form: 1, ms: 0, weSeen: -1, weDay: '', weToday: 0 }; return p.afkScarab; };
   var owns = function (p) { if (!p) return false; if (p.eq && p.eq.holy && p.eq.holy.id === ID) return true; return (p.inv || []).some(function (i) { return i && i.id === ID; }); };
   var equipped = function (p) { return !!(p && on(p) && p.eq && p.eq.holy && p.eq.holy.id === ID); };
+  // 11-16 afk-tamper（Ping）：被標記的聖甲蟲照樣成長、照樣變凱布利／拉（看得到），但公式裡全部沒有效果
+  var active = function (p) { return equipped(p) && !(W.__afkTpBad && W.__afkTpBad(p, 'scarab')); };
   W.__afkScarabOwns = function (p) { return on(p) && owns(p); };   // 聖物格的判斷在 afk-expedition（__afkHolySlotOn）
 
   // 道具數值照「目前角色」的聖甲蟲填（重算前）
@@ -66,6 +68,7 @@
     var p = P(), d = DB.items[ID]; if (!d) return;
     STATS.concat(RES4, ['mhp', 'petDmgAll', 'petHitAll', 'summonDmg', 'summonHit', 'abnormalResist']).forEach(function (k) { delete d[k]; });
     if (!p || !on(p)) return;
+    if (W.__afkTpBad && W.__afkTpBad(p, 'scarab')) return;
     var s = store(p), o = fxK(p, s), kp = khepri(p, s);
     try { if (p.afkDimRift || kp) { (p.afkDimRift = p.afkDimRift || {}).khepri = kp; if (kp) p.afkDimRift.khepriEver = 1; } } catch (e) {}
     STATS.forEach(function (k) { if (o.stat) d[k] = o.stat; });
@@ -84,7 +87,7 @@
   }
   if (typeof W.petDerive === 'function') {
     var oPD = W.petDerive;
-    W.petDerive = function () { var r = oPD.apply(this, arguments); try { var p = P(); if (r && equipped(p)) { var o = fxK(p, store(p)); if (o.petDr) r.dr = (r.dr || 0) + o.petDr; } } catch (e) {} return r; };
+    W.petDerive = function () { var r = oPD.apply(this, arguments); try { var p = P(); if (r && active(p)) { var o = fxK(p, store(p)); if (o.petDr) r.dr = (r.dr || 0) + o.petDr; } } catch (e) {} return r; };
     // ⚡ 11-12 效能：同一個 tick 裡同一隻寵物（同主人、同等級、同型態）的能力只算一次（實測每 tick 被問 26 次，每次都穿過整串外掛重算）
     //    只在 tick 進行中快取；介面上換裝備、看寵物資料時照舊即時算。回傳複本，呼叫端改了也不影響快取。
     var oPDc = W.petDerive, pdC = new WeakMap(); W.__afkPdStat = { hit: 0, miss: 0 };
@@ -200,5 +203,5 @@
     var oNpc = W.interactNPC;
     W.interactNPC = function (npcId) { var r = oNpc.apply(this, arguments); try { if (npcId === NPC_ID) paint(); } catch (e) { console.warn('[AFK-scarab]', e); } return r; };
   }
-  W.__afkScarab = { ID: ID, FORM: FORM, MS: MS, K: K, POW: POW, BOSS_X: BOSS_X, need: need, fx: fx, fxText: fxText, store: store, owns: owns, equipped: equipped, claim: claim, evolve: evolve, addExp: addExp, msTotal: msTotal, checkMs: checkMs, sync: sync, paint: paint };
+  W.__afkScarab = { ID: ID, FORM: FORM, MS: MS, K: K, POW: POW, BOSS_X: BOSS_X, need: need, fx: fx, fxText: fxText, store: store, owns: owns, equipped: equipped, active: active, claim: claim, evolve: evolve, addExp: addExp, msTotal: msTotal, checkMs: checkMs, sync: sync, paint: paint };
 })();

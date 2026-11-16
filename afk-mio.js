@@ -179,7 +179,7 @@
 
   // ── 狀態 ──
   var store = function (p) { p.afkMio = p.afkMio || { cards: {} }; p.afkMio.cards = p.afkMio.cards || {}; return p.afkMio; };
-  var stageOf = function (p, i) { return Number(store(p).cards[i]) || 0; };
+  var stageOf = function (p, i) { var c = store(p).cards; if (W.__afkTpCards) c = W.__afkTpCards(p, c); return Number(c[i]) || 0; };   // 11-16 afk-tamper：被標記時實際用標記前的階段
   var libOf = function (p, i) { var s = store(p); return !!(s.lib && s.lib[i]) && stageOf(p, i) >= 4; };
   var count = function (id) { var p = P(); return p ? (p.inv || []).reduce(function (s, it) { return s + (it && it.id === id && !it.lock ? Math.max(1, Number(it.cnt) || 1) : 0); }, 0) : 0; };
   var take = function (id, n) {
@@ -197,7 +197,7 @@
     o.origin = eq >= 0 && o.eqSt >= 5 ? { i: eq, st: o.eqSt, v: originVal(eq, o.eqSt) } : null;
     var wSt = stageOf(p, K.world), wMult = wSt > 0 ? (o.origin && eq === K.world ? o.origin.v.mult : rawVal(K.world, eq === K.world ? wSt : 1, eq === K.world && o.eqLib).mult) : 1;
     CARDS.forEach(function (c, i) {
-      var st = Number(s.cards[i]) || 0; if (st <= 0) return;
+      var st = stageOf(p, i); if (st <= 0) return;
       o.lit++; if (st >= 2) o.th++; if (st >= 3) o.ma++; if (st >= 4) o.ab++; if (st >= 5) o.og++; if (st >= 6) o.cr++; if (libOf(p, i)) o.lb++;
       if (i === eq && st >= 5) return;   // 裝著的起源／創世卡：舊特效不再生效，改用起源規則（見下方 ORIGIN 區塊）
       var use = i === eq ? st : 1, v = rawVal(i, use, i === eq && o.eqLib);
@@ -210,15 +210,20 @@
     return o;
   };
   var cache = null;
-  var cur = function () { var p = P(); if (!cache || cache.p !== p) cache = { p: p, v: compute(p) }; return cache.v; };
+  var tpV = function () { return W.__afkTpCacheV ? W.__afkTpCacheV() : 0; };
+  var cur = function () { var p = P(), tv = tpV(); if (!cache || cache.p !== p || cache.tv !== tv) cache = { p: p, tv: tv, v: compute(p) }; return cache.v; };
+  W.__afkMioRefresh = function () { cache = null; };
   var A = function (k) { var a = cur().act[K[k]]; return a ? a.v : null; };
   var refresh = function () { cache = null; try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {} };
   var fire = function (k, extra) {
     var i = K[k]; if (!X) return;
     var img = (DB.items[idOf(i)] || {}).img;
     X.pop('mio' + i, img, CARDS[i][0] + (extra ? ' ' + extra : ''), '#f0abfc');
+    // 11-16（Ping：女皇一直跑出來）：喝水觸發的卡（女皇、節制）戰鬥日誌 60 秒最多一行，其他照舊 5 秒
+    if (QUIET[k]) { var t = (typeof state !== 'undefined' && state && Number(state.ticks)) || 0; if (quietAt[k] != null && t >= quietAt[k] && t - quietAt[k] < 600) return; quietAt[k] = t; }
     X.note('mio' + i, '<span style="color:#f0abfc">🃏【' + CARDS[i][0] + '】</span>' + esc(descOf(i, (cur().act[i] || {}).st || 1)));
   };
+  var QUIET = { empress: 1, temperance: 1 }, quietAt = {};
 
   // ── 數值類效果：重算時套用（保底、光環、收集、迴避）──
   var RES = ['resFire', 'resWater', 'resWind', 'resEarth', 'resNone'];

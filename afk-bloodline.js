@@ -290,7 +290,7 @@
       var r = o.apply(this, arguments);
       try {
         var p = P();
-        if (name === 'afterHit' && c && c.actor === p && c.target && !c.generated && ['normal', 'auto'].indexOf(c.origin || 'normal') >= 0 && ra(p) && Math.random() < .05) {
+        if (name === 'afterHit' && c && c.actor === p && c.target && !c.generated && ['normal', 'auto'].indexOf(c.origin || 'normal') >= 0 && ra(p) && !(W.__afkTpBad && W.__afkTpBad(p, 'scarab')) && Math.random() < .05) {
           var sp = RA_SP[Math.floor(Math.random() * RA_SP.length)], d = p.d || {}, base = (N(d.int) + N(d.wis)) * 1.5 + 100;
           var ts = sp[1] ? mobs() : [c.target];
           ts.forEach(function (t) { var v = base * (typeof elementCounterMult === 'function' ? elementCounterMult('fire', t.e) : 1); g.secondaryHit(p, t, Math.floor(v), 'magic'); });
