@@ -492,7 +492,8 @@
   var paint = function (div) {
     if (div.querySelector('#afk-rd-doom')) return paintDoom(div);
     var box = div.querySelector('#afk-rd-gate'); if (!box) return; var p = P(); if (!p) return;
-    var h = '<div class="ax-note">取回的力量：' + DR.recoverPct(p) + '%　血龍鑽：' + cnt(BLOOD).toLocaleString() + (DR.on() ? '' : '　<span class="no">次元裂縫沒有打開</span>') + '</div>';
+    var rp = DR.recoverPct(p), pf = DR.panelF ? Math.round(DR.panelF(p) * 100) : 50 + rp;   // 11-16（Ping）：寫出目前的力量（壓縮後 50%＋已取回）
+    var h = '<div class="ax-note">目前的力量：<b>' + pf + '%</b>（裂縫裡面板壓到 50%，已取回 ' + rp + '%／最多 40%）　血龍鑽：' + cnt(BLOOD).toLocaleString() + (DR.on() ? '' : '　<span class="no">次元裂縫沒有打開</span>') + '</div>';
     if (DR.RANKS) { var rk = DR.rec(p).rank || 0, nx = DR.RANKS[rk + 1], rw = DR.rankWhy(p); h += K.rowHtml({ key: 'drank', name: '遠征位階（裂縫）：' + DR.RANKS[rk].n, color: '#67e8f9', desc: nx ? '下一階「' + nx.n + '」：' + (nx.cur === 'exped' ? '遠征點數 ' : '裂縫點數 ') + nx.cost + '。' + nx.d : '已經是最高位階。', note: '裂縫點數 ' + (DR.rec(p).pts || 0) + '（每個副本最後頭目每天第一次 10 點，一天最多 60）', why: nx ? rw : '', btns: nx ? [['rank:', '升階', !rw]] : [] }, 'data-rd'); }
     TIERS.forEach(function (tr) {
       h += '<div class="ax-h" style="margin-top:8px">' + tr[1] + '</div>';
@@ -562,6 +563,12 @@
       drop.forEach(function (st) { if (st && st.delete) st.delete(n); });
       if (ylift && ylift[n] != null) delete ylift[n];
       if (bigS && bigS.add && GPT_BIG.indexOf(n) >= 0) bigS.add(n);
+    });
+    // 11-16（Ping：星墜的祭壇圖有問題）：四座墜星進場後改名「墜星（免疫…）」，名字變了就找不到「墜星」的動畫 → 借回「墜星」的資料夾
+    ['近距離', '遠距離', '魔法', '真實傷害以外'].forEach(function (k) {
+      var n = '墜星（免疫' + k + '）'; names.add(n); if (alias && alias[n] !== '墜星') { alias[n] = '墜星'; clearCache(n); }
+      drop.forEach(function (st) { if (st && st.delete) st.delete(n); });
+      if (bigS && bigS.add && bigS.has && bigS.has('墜星')) bigS.add(n);
     });
   };
   var anakinArt = function (f) {
