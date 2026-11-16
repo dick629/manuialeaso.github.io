@@ -83,11 +83,14 @@
   // 輪迴缺點（玩家 2026-10-23）：沒回安全區連續戰鬥 30 分鐘解除變身，冷卻 30 分鐘（存檔用真實時間）
   var SAMSARA_FIGHT = 18000, SAMSARA_CD = 30 * 60 * 1000;
   function samsaraCd(actor) { var s = data(actor); return Math.max(0, (Number(s && s.samsaraCdUntil) || 0) - Date.now()); }
+  // 11-16（Ping）：已經修復過的聖衣（星鑄師回收升階、神聖衣、血魔／鐵聖衣）沒有連續戰鬥 30 分鐘的限制，也不吃冷卻
+  function repairedCloth(id, actor) { var c = id && actor && actor.cardAscension && actor.cardAscension.cloth && actor.cardAscension.cloth[id]; return !!(c && (c.recoveredAt || c.grade || c.ex || c.special)); }
   function samsaraTick(actor, step, safe) {
     actor = actor || player; if (!actor || !actor.cardAscension) return false;
     var s = actor.cardAscension, f = actor.poly, on = !!(f && f.cardAscensionTier === 'samsara' && actor.buffs && actor.buffs.poly > 0);
     if (f && f.cardAscensionTier === 'samsara' && typeof f.n === 'string' && f.n.indexOf('輪迴・') === 0) f.n = f.n.slice(3);   // 舊名「輪迴・X聖衣」→「X聖衣」（玩家 2026-10-24 改名）
     if (safe || !on) { if (s.samsaraFight) s.samsaraFight = 0; return false; }
+    try { var rf = rowFor(f); if (rf && repairedCloth(rf.id, actor)) { if (s.samsaraFight) s.samsaraFight = 0; return false; } } catch (e) {}
     s.samsaraFight = (Number(s.samsaraFight) || 0) + step;
     if (s.samsaraFight < SAMSARA_FIGHT) return false;
     s.samsaraFight = 0; s.samsaraCdUntil = Date.now() + SAMSARA_CD;
@@ -105,7 +108,8 @@
   window.__afkClothStarTxt = function (id, actor) { return starTxt(clothStarsOf(id, actor || player)); };
   window.__afkClothThumb = function (name, on, actor) {
     actor = actor || player;
-    try { var hf = on && window.__afkHolyClothForm && window.__afkHolyClothForm({ cardAscension: actor.cardAscension, _faceD: 5, cls: actor.cls, lv: actor.lv, j: actor.j }, name);
+    try { var fa = Object.create(actor); fa._faceD = 5;   // 11-16：用角色本身判斷（匣之開啟後縮圖換匣之聖衣的圖）
+      var hf = on && window.__afkHolyClothForm && window.__afkHolyClothForm(fa, name);
       if (hf && hf.base) return '<span class="afk-v3-thumb" style="display:flex;width:100%;height:112px;overflow:hidden;align-items:flex-end;justify-content:center"><img loading="lazy" alt="" src="' + escape(hf.base + 'idle_0.png') + '" style="max-height:112px;max-width:100%;image-rendering:pixelated" onerror="this.style.visibility=\'hidden\'"></span>'; } catch (e) {}
     return window.__afkFormThumb ? window.__afkFormThumb(name, on) : '';
   };
@@ -402,7 +406,7 @@
       if(form.n&&form.n!==row.form.n)return false;
       // 神話擴到 32 種後不再限 Lv70 以上（玩家 2026-10-23）；等級資料被改過的變身仍不承認
       if(form.cardNativeLevel!=null&&Number(form.cardNativeLevel)!==Number(row.form.cardNativeLevel))return false;
-      if(row.tier==='samsara'&&((WCloth=window.LineageClothProgression)&&!WCloth.canWear(row.id,actor)||samsaraCd(actor)>0))return false;   // 輪迴冷卻中只能用其他變身
+      if(row.tier==='samsara'&&((WCloth=window.LineageClothProgression)&&!WCloth.canWear(row.id,actor)||samsaraCd(actor)>0&&!repairedCloth(row.id,actor)))return false;   // 輪迴冷卻中只能用其他變身
       return owned(row.id,actor);
     }
     var nm=form.cardMonster||form.n;if(isMonster(nm))return formOk(nm,actor);
@@ -577,7 +581,7 @@
       if(x.off){b.disabled=true;b.classList.add('afk-ca-dim');b.dataset.off=x.off;}else b.onclick=function(){confirmPolySelect(uid,x.form.n);};return b;}
     function head(t){var h=document.createElement('div');h.className='afk-ca-sub';h.textContent=t;return h;}
     function draw(){var q=search.value.trim();list.innerHTML='';tabs.innerHTML='';
-      PICK_GROUPS.forEach(function(g){var b=document.createElement('button');b.type='button';b.className='btn afk-ca-tab'+(g[0]===pickTab&&!q?' on':'');b.disabled=!cnt[g[0]];b.textContent=g[1]+' '+(use[g[0]]||0)+'/'+(cnt[g[0]]||0);b.onclick=function(){pickTab=g[0];search.value='';draw();};tabs.appendChild(b);});
+      PICK_GROUPS.forEach(function(g){var b=document.createElement('button');b.type='button';b.className='btn afk-ca-tab'+(g[0]===pickTab&&!q?' on':'');b.disabled=!cnt[g[0]];b.textContent=(g[0]==='holy'&&window.__afkT3Opened&&window.__afkT3Opened(player)?'匣之聖衣':g[1])+' '+(use[g[0]]||0)+'/'+(cnt[g[0]]||0);b.onclick=function(){pickTab=g[0];search.value='';draw();};tabs.appendChild(b);});
       var shownN=function(n){try{var kn=window.__afkKnightNames;return kn&&kn.poly&&kn.poly.text?kn.poly.text(n):n;}catch(e){return n;}};   // 譯名（afk-knightnames）：同時比形態 key 與畫面上的名字（伊詩蒂→伊席蘿蒂），key 不變
       var rows=avail.filter(function(x){return q?(x.form.n.indexOf(q)>=0||shownN(x.form.n).indexOf(q)>=0):x.group===pickTab;});
       // 玩家 2026-10-30 11:30：同一分區裡「有可用變身」的小節排前面、全灰的小節排後面並收起，免得一打開看到的全是灰色
