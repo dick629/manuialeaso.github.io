@@ -449,24 +449,24 @@ function killMob(idx) {
     }
 
     // === 🔥 50級試煉條件掉落 ===
-    { let main = player.cls === 'knight' && player.trialStage === 1 && mob.n === '黑暗妖精將軍' && !player.inv.some(i => i.id === 'item_dantes_letter');
+    { let main = questCls(player) === 'knight' && player.trialStage === 1 && mob.n === '黑暗妖精將軍' && !player.inv.some(i => i.id === 'item_dantes_letter');
       let ally = mob.n === '黑暗妖精將軍' && typeof allyStageQuestItemActive === 'function' && allyStageQuestItemActive('item_dantes_letter');
       if ((main || ally) && Math.random() < partyDropRate(0.01)) { let got = grantPartyStageQuestDrop('item_dantes_letter', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}取得了 丹特斯的召書。</span>`); } }
-    { let main = player.cls === 'elf' && player.trialStage === 1 && mob.n === '巨大兵蟻' && !player.inv.some(i => i.id === 'item_ancient_book');
+    { let main = questCls(player) === 'elf' && player.trialStage === 1 && mob.n === '巨大兵蟻' && !player.inv.some(i => i.id === 'item_ancient_book');
       let ally = mob.n === '巨大兵蟻' && typeof allyStageQuestItemActive === 'function' && allyStageQuestItemActive('item_ancient_book');
       if ((main || ally) && Math.random() < partyDropRate(0.05))   /* 🔌 加掛版補丁（玩家 11-11）1% → 5% */ { let got = grantPartyStageQuestDrop('item_ancient_book', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}取得了 古代黑妖之秘笈。</span>`); } }
-    { let main = player.cls === 'dark' && player.trialStage === 1 && mob.n === '黑暗棲林者' && !player.inv.some(i => i.id === 'item_chaos_key');
+    { let main = questCls(player) === 'dark' && player.trialStage === 1 && mob.n === '黑暗棲林者' && !player.inv.some(i => i.id === 'item_chaos_key');
       let ally = mob.n === '黑暗棲林者' && typeof allyStageQuestItemActive === 'function' && allyStageQuestItemActive('item_chaos_key');
       if ((main || ally) && Math.random() < partyDropRate(0.01)) { let got = grantPartyStageQuestDrop('item_chaos_key', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}取得了 混沌鑰匙。</span>`); } }
-    { let main = player.cls === 'royal' && player.trialStage === 1 && mob.n === '小惡魔' && !player.inv.some(i => i.id === 'item_royal_order');
+    { let main = questCls(player) === 'royal' && player.trialStage === 1 && mob.n === '小惡魔' && !player.inv.some(i => i.id === 'item_royal_order');
       let ally = mob.n === '小惡魔' && typeof allyStageQuestItemActive === 'function' && allyStageQuestItemActive('item_royal_order');
       if ((main || ally) && Math.random() < partyDropRate(0.01)) { let got = grantPartyStageQuestDrop('item_royal_order', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}取得了 調職命令書。</span>`); } }   // 👑 王族 50 級試煉（唯一，不受經典掉率影響，與其他職業一致）
-    { let main = player.cls === 'knight' && player.trialStage === 2 && mapState.current === 'elf_grave' && (player.inv || []).reduce((s, i) => s + (i.id === 'item_elf_whisper' ? (i.cnt || 0) : 0), 0) < 10;
+    { let main = questCls(player) === 'knight' && player.trialStage === 2 && mapState.current === 'elf_grave' && (player.inv || []).reduce((s, i) => s + (i.id === 'item_elf_whisper' ? (i.cnt || 0) : 0), 0) < 10;
       let ally = mapState.current === 'elf_grave' && typeof allyStageQuestItemActive === 'function' && allyStageQuestItemActive('item_elf_whisper');
       if ((main || ally) && Math.random() < partyDropRate(0.01)) { let got = grantPartyStageQuestDrop('item_elf_whisper', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}拾起了 精靈的私語。</span>`); } }   // 已持有 10 個則不再掉落（含鎖定件）
     if (mob.n === '魔族暗殺團') {
-        { let main = player.cls === 'elf' && player.trialStage === 2 && !player.inv.some(i => i.id === 'item_sealed_intel'); let ally = typeof allyStageQuestItemActive === 'function' && allyStageQuestItemActive('item_sealed_intel'); if (main || ally) { let got = grantPartyStageQuestDrop('item_sealed_intel', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}從魔族暗殺團身上取得了 密封的情報書。</span>`); } }
-        { let main = player.cls === 'mage' && player.trialStage === 1 && !player.inv.some(i => i.id === 'item_spy_report'); let ally = typeof allyStageQuestItemActive === 'function' && allyStageQuestItemActive('item_spy_report'); if (main || ally) { let got = grantPartyStageQuestDrop('item_spy_report', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}從魔族暗殺團身上取得了 間諜報告書。</span>`); } }
+        { let main = questCls(player) === 'elf' && player.trialStage === 2 && !player.inv.some(i => i.id === 'item_sealed_intel'); let ally = typeof allyStageQuestItemActive === 'function' && allyStageQuestItemActive('item_sealed_intel'); if (main || ally) { let got = grantPartyStageQuestDrop('item_sealed_intel', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}從魔族暗殺團身上取得了 密封的情報書。</span>`); } }
+        { let main = questCls(player) === 'mage' && player.trialStage === 1 && !player.inv.some(i => i.id === 'item_spy_report'); let ally = typeof allyStageQuestItemActive === 'function' && allyStageQuestItemActive('item_spy_report'); if (main || ally) { let got = grantPartyStageQuestDrop('item_spy_report', main); if (got.main || got.allies.length) logSys(`<span class="text-amber-300 font-bold">✦ ${partyQuestDropSubject(got)}從魔族暗殺團身上取得了 間諜報告書。</span>`); } }
     }
 
     // === 🔥 炎魔友好度（隱藏值）：於魔族神殿擊殺任意敵人 +1（用於解鎖炎魔謁見所；需先完成 50 級試煉才能進入魔族神殿） ===

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-3e99438dd9be",
+  "build": "merge-0.4-152e9990db3f",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -1709,7 +1709,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "6e0710a4fe8bae03b4cb87e58b4830474ea3e9e2e11a4ff3764d6fbeab53ef11",
+      "sha256": "eff2e10b0239332fbf2d99cf348cc3563f07becfa0ad1c755752bc7f6cd7e8c5",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1738,8 +1738,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/05-kill-progression.js?v=524cae4b0f1a",
-      "sha256": "524cae4b0f1ab8304b097ac9cd8c1ddd1b7007ed96d01a2a90ce75c8cf73d5e6",
+      "url": "js/05-kill-progression.js?v=b7f76890a787",
+      "sha256": "b7f76890a787f903eff42792df5a8ea2c09e281890abd160c07492f205487b05",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1773,8 +1773,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/12-npc-quests.js?v=317cf201e2f4",
-      "sha256": "317cf201e2f485b587939d74d5a69581338029ad9991821dd2c36414711160bd",
+      "url": "js/12-npc-quests.js?v=cdfb391b85a0",
+      "sha256": "cdfb391b85a0bba04d60b00276f3bc3deaf83f5dc5f1e6f0dafdd1bb83538a0a",
       "type": "text/javascript; charset=utf-8"
     },
     {

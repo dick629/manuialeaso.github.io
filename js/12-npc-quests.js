@@ -760,7 +760,7 @@ function questCountForOwner(owner, id, pending, assignedOnly) {
 // 主玩家沿用「背包實際持有」口徑；隊員則只看隊長端分配進度，避免來源角色背包阻擋掉落。
 function trialStageItemHeldActiveFor(owner, id, pending, assignedOnly) {
     if (!owner) return false;
-    let cfg = (typeof TRIAL_50_CFG !== 'undefined') && TRIAL_50_CFG[owner.cls];
+    let cfg = (typeof TRIAL_50_CFG !== 'undefined') && TRIAL_50_CFG[questCls(owner)];
     let st = Math.floor(Number(owner.trialStage) || 0);
     let stage = cfg && st >= 1 && st <= cfg.stages.length ? cfg.stages[st - 1] : null;
     if (!stage || stage.id !== id) return false;
@@ -773,26 +773,28 @@ function trialItemActiveFor(owner, id, pending, assignedOnly) {
     let ks = TRIAL_ITEM_Q[id];
     if (ks) return ks.some(k => {
         let c = TRIAL_Q[k];
-        if (owner.cls !== c.cls || trialQStateFor(owner, k) !== 1) return false;
+        if (questCls(owner) !== c.cls || trialQStateFor(owner, k) !== 1) return false;
         let r = c.reqs.find(p => p[0] === id);
         return questCountForOwner(owner, id, pending, assignedOnly) < r[1];
     });
     let t = TRIAL50_ITEM[id];
     if (t) {
-        if (owner.cls !== t.cls) return false;
-        let cfg = (typeof TRIAL_50_CFG !== 'undefined') && TRIAL_50_CFG[owner.cls]; if (!cfg) return false;
+        if (questCls(owner) !== t.cls) return false;
+        let cfg = (typeof TRIAL_50_CFG !== 'undefined') && TRIAL_50_CFG[questCls(owner)]; if (!cfg) return false;
         let st = owner.trialStage || 0, n = t.need || 1;
         if (t.ex) return st === cfg.stages.length + 1 && questCountForOwner(owner, id, pending, assignedOnly) < n;   // 最終兌換階段（未完成·未達量）
         return st === t.stage && questCountForOwner(owner, id, pending, assignedOnly) < n;                             // 指定收集階段
     }
     return true;   // 非管制道具
 }
+// 🩹 11-16（Ping）：覺醒職業（雷神、神聖劍士…）的職業試煉照「本職」算：轉職成雷神後，法師的試煉一樣可以接、可以交
+function questCls(p) { return (p && p.awkFrom && typeof p.awkFrom === 'string') ? p.awkFrom : (p && p.cls); }
 function trialItemActive(id) { return trialItemActiveFor(player, id, 0); }
 function trialForced100(id) { return !!(TRIAL_ITEM_Q[id] || TRIAL50_ITEM[id]); }   // 管制試煉道具通過閘門後 100% 掉落
 function _trialRerender(rr) { let _c = document.getElementById('interaction-content'); let f = rr && window[rr]; if (_c && typeof f === 'function') f(_c); else closeNpcInteraction(); }
 // 產生單一試煉區塊 HTML（rr＝重繪函式名）
 function trialQHTML(key, rr) {
-    let c = TRIAL_Q[key]; if (!c || player.cls !== c.cls) return '';
+    let c = TRIAL_Q[key]; if (!c || questCls(player) !== c.cls) return '';
     let st = trialQState(key);
     let h = `<div class="mb-2 p-3 bg-slate-800/60 rounded border border-slate-700"><div class="text-amber-300 font-bold text-sm">⚔️ ${c.lv} 級試煉</div>`;
     if (st === 2) return h + `<div class="text-emerald-400 text-sm mt-1">✅ 已完成（每個角色僅能完成一次）。</div></div>`;
@@ -812,7 +814,7 @@ function trialQHTML(key, rr) {
 }
 function trialQAccept(key, rr) {
     let c = TRIAL_Q[key];
-    if (!c || player.cls !== c.cls || (player.lv || 1) < c.lv || trialQState(key) !== 0) return;
+    if (!c || questCls(player) !== c.cls || (player.lv || 1) < c.lv || trialQState(key) !== 0) return;
     if (typeof currentRoleIsMercenary === 'function' && currentRoleIsMercenary()) { logSys('<span class="text-amber-300">此角色正在擔任傭兵，請由隊長在傭兵公會接取試煉。</span>'); return; }
     if (!player.trialQ || typeof player.trialQ !== 'object') player.trialQ = {};
     player.trialQ[key] = 1;
@@ -821,7 +823,7 @@ function trialQAccept(key, rr) {
 }
 function trialQComplete(key, rr) {   // 🚫 v3.2.16 移除席琳完成：原第 3 參 sherine（耗結晶必附套裝詞綴）廢止
     let c = TRIAL_Q[key];
-    if (!c || player.cls !== c.cls || trialQState(key) !== 1) return;
+    if (!c || questCls(player) !== c.cls || trialQState(key) !== 1) return;
     if (typeof currentRoleIsMercenary === 'function' && currentRoleIsMercenary()) { logSys('<span class="text-amber-300">此角色正在擔任傭兵，請由隊長在傭兵公會交付試煉道具並領取獎勵。</span>'); return; }
     if (!c.reqs.every(p => questCountId(p[0]) >= p[1])) { logSys('試煉道具尚未備齊。' + (typeof lockHintHtml === 'function' ? lockHintHtml(c.reqs.map(p => p[0])) : '')); return; }   // 🔒 v3.5.87 差額若在鎖定件·明講
     c.reqs.forEach(p => questConsumeId(p[0], p[1]));
@@ -835,11 +837,11 @@ function trialQComplete(key, rr) {   // 🚫 v3.2.16 移除席琳完成：原第
 }
 
 function renderRickyQuest(div) {
-    if (player.cls !== 'knight') { div.innerHTML = `<div class="p-6 text-red-400">瑞奇：這是專屬於騎士的榮耀試煉，請回吧。</div>`; return; }
+    if (questCls(player) !== 'knight') { div.innerHTML = `<div class="p-6 text-red-400">瑞奇：這是專屬於騎士的榮耀試煉，請回吧。</div>`; return; }
     div.innerHTML = `<div class="p-4 text-slate-300 leading-relaxed"><div class="text-amber-300 font-bold mb-3">🛡️ 瑞奇的試煉</div>` + trialQHTML('knight15', 'renderRickyQuest') + `</div>`;
 }
 function renderJamesQuest(div) {
-    if (player.cls !== 'mage') { div.innerHTML = `<div class="p-6 text-red-400">詹姆：這是不死族的黑暗試煉，只有法師能夠參與。</div>`; return; }
+    if (questCls(player) !== 'mage') { div.innerHTML = `<div class="p-6 text-red-400">詹姆：這是不死族的黑暗試煉，只有法師能夠參與。</div>`; return; }
     div.innerHTML = `<div class="p-4 text-slate-300 leading-relaxed"><div class="text-amber-300 font-bold mb-3">🔮 詹姆的試煉</div>` + trialQHTML('mage15', 'renderJamesQuest') + `</div>`;
 }
 
@@ -978,7 +980,7 @@ function renderDarkTrial(div, npcId) {
     let cfg = DARK_TRIAL_NPC[npcId];
     if (!cfg) return;
     _darkTrialNpc = npcId;
-    if (player.cls !== 'dark') {
+    if (questCls(player) !== 'dark') {
         div.innerHTML = `<div class="p-6 text-red-400">${cfg.npc}：這是黑暗妖精的試煉，外人不得參與。</div>`;
         return;
     }
@@ -1017,7 +1019,7 @@ const TRIAL_50_CFG = {
         exMat:'item_soulfire_ash', exMatNm:'靈魂之火灰燼', rewards:[{id:'wpn_chain_annihilator',nm:'消滅者鎖鏈劍'}] }
 };
 function build50TrialHTML(npcName) {
-    let cfg = TRIAL_50_CFG[player.cls];
+    let cfg = TRIAL_50_CFG[questCls(player)];
     if (!cfg || cfg.npc !== npcName) return `<div class="p-4 text-slate-400">${npcName}：這場試煉與你的職業無關。</div>`;
     if ((player.lv||1) < 50) return `<div class="p-4 text-red-400">${npcName}：等級達到 50 才能參加此試煉。</div>`;
     let st = player.trialStage || 0, nStages = cfg.stages.length;
@@ -1044,12 +1046,12 @@ function build50TrialHTML(npcName) {
     return h + `</div></div>`;
 }
 function renderDigallatin(div) {
-    let cfg = TRIAL_50_CFG[player.cls];
+    let cfg = TRIAL_50_CFG[questCls(player)];
     if (!cfg || cfg.npc !== '迪嘉勒廷') { div.innerHTML = `<div class="p-6 text-red-400">迪嘉勒廷：這場試煉只屬於騎士、妖精、法師與王族。</div>`; return; }
     div.innerHTML = build50TrialHTML('迪嘉勒廷');
 }
 function trial50Accept() {
-    let cfg = TRIAL_50_CFG[player.cls];
+    let cfg = TRIAL_50_CFG[questCls(player)];
     if (!cfg) return;
     if (typeof currentRoleIsMercenary === 'function' && currentRoleIsMercenary()) { logSys('<span class="text-amber-300">此角色正在擔任傭兵，請由隊長在傭兵公會接取試煉。</span>'); return; }
     if ((player.lv||1) < 50) { logSys('等級不足 50，無法接取試煉。'); return; }
@@ -1061,13 +1063,13 @@ function trial50Accept() {
 // 🔥 精靈的私語：騎士「交付精靈的私語」階段完成後（trialStage>2，即已通過第二階段交付）
 //   自動清除身上剩餘的精靈的私語（含載入舊存檔的補救、以及曾超收的情況）。回傳清除數量。
 function purgeCompletedElfWhisper() {
-    if (!player || player.cls !== 'knight' || (player.trialStage || 0) <= 2) return 0;
+    if (!player || questCls(player) !== 'knight' || (player.trialStage || 0) <= 2) return 0;
     let n = (player.inv || []).reduce((s, i) => s + (i.id === 'item_elf_whisper' ? (i.cnt || 0) : 0), 0);
     if (n > 0) player.inv = player.inv.filter(i => i.id !== 'item_elf_whisper');
     return n;
 }
 function trial50TurnIn() {
-    let cfg = TRIAL_50_CFG[player.cls];
+    let cfg = TRIAL_50_CFG[questCls(player)];
     if (!cfg) return;
     if (typeof currentRoleIsMercenary === 'function' && currentRoleIsMercenary()) { logSys('<span class="text-amber-300">此角色正在擔任傭兵，請由隊長在傭兵公會交付試煉道具。</span>'); return; }
     let st = player.trialStage || 0, nStages = cfg.stages.length;
@@ -1081,7 +1083,7 @@ function trial50TurnIn() {
     saveGame(); closeNpcInteraction();
 }
 function trial50Complete() {   // 🔥 v3.0.78 最終兌換一次性·全拿；🚫 v3.2.16 移除席琳完成（原參數 sherine 廢止）
-    let cfg = TRIAL_50_CFG[player.cls];
+    let cfg = TRIAL_50_CFG[questCls(player)];
     if (!cfg) return;
     if (typeof currentRoleIsMercenary === 'function' && currentRoleIsMercenary()) { logSys('<span class="text-amber-300">此角色正在擔任傭兵，請由隊長在傭兵公會完成試煉並領取獎勵。</span>'); return; }
     let nStages = cfg.stages.length, st = player.trialStage || 0;
@@ -1101,7 +1103,7 @@ function trial50Complete() {   // 🔥 v3.0.78 最終兌換一次性·全拿；�
 // 🔮 希蓮恩（希培利亞村莊）：幻術士的試煉道具兌換 + 50 級試煉（時空裂痕碎片→魔族神殿、翼龍之血→藍寶石奇古獸）
 // 🔮 希蓮恩（希培利亞村莊）：幻術士 15/30/45 級試煉（接取制）＋ 50 級試煉（統一走 TRIAL_50_CFG）
 function renderShenien(div) {
-    if (player.cls !== 'illusion') { div.innerHTML = `<div class="p-6 text-red-400">希蓮恩：這場試煉只屬於幻術士。</div>`; return; }
+    if (questCls(player) !== 'illusion') { div.innerHTML = `<div class="p-6 text-red-400">希蓮恩：這場試煉只屬於幻術士。</div>`; return; }
     let h = `<div class="p-4 text-slate-300 leading-relaxed"><div class="text-amber-300 font-bold mb-3">🔮 希蓮恩的試煉</div>`;
     h += trialQHTML('illusion15', 'renderShenien') + trialQHTML('illusion30', 'renderShenien') + trialQHTML('illusion45', 'renderShenien');
     h += `<div class="mt-3">` + build50TrialHTML('希蓮恩') + `</div></div>`;
@@ -1109,7 +1111,7 @@ function renderShenien(div) {
 }
 // ⚔️ 多文（海音）：戰士 15/30/45 級試煉（接取制）＋ 50 級試煉（統一走 TRIAL_50_CFG）
 function renderDuwen(div) {
-    if (player.cls !== 'warrior') { div.innerHTML = `<div class="p-6 text-red-400">多文：這場試煉只屬於戰士。</div>`; return; }
+    if (questCls(player) !== 'warrior') { div.innerHTML = `<div class="p-6 text-red-400">多文：這場試煉只屬於戰士。</div>`; return; }
     let h = `<div class="p-4 text-slate-300 leading-relaxed"><div class="text-amber-300 font-bold mb-3">⚔️ 多文的試煉</div>`;
     h += trialQHTML('warrior15', 'renderDuwen') + trialQHTML('warrior30', 'renderDuwen') + trialQHTML('warrior45', 'renderDuwen');
     h += `<div class="mt-3">` + build50TrialHTML('多文') + `</div></div>`;
@@ -1117,7 +1119,7 @@ function renderDuwen(div) {
 }
 // 🐉 普洛凱爾（貝希摩斯）：龍騎士 15/30/45 級試煉（接取制）＋ 50 級試煉（統一走 TRIAL_50_CFG）
 function renderProcel(div) {
-    if (player.cls !== 'dragon') { div.innerHTML = `<div class="p-6 text-red-400">普洛凱爾：這場試煉只屬於龍騎士。</div>`; return; }
+    if (questCls(player) !== 'dragon') { div.innerHTML = `<div class="p-6 text-red-400">普洛凱爾：這場試煉只屬於龍騎士。</div>`; return; }
     let h = `<div class="p-4 text-slate-300 leading-relaxed"><div class="text-amber-300 font-bold mb-3">🐉 普洛凱爾的試煉</div>`;
     h += trialQHTML('dragon15', 'renderProcel') + trialQHTML('dragon30', 'renderProcel') + trialQHTML('dragon45', 'renderProcel');
     h += `<div class="mt-3">` + build50TrialHTML('普洛凱爾') + `</div></div>`;
@@ -1125,20 +1127,20 @@ function renderProcel(div) {
 }
 // 🏹 歐斯：妖精 15 級試煉（接取制）
 function renderOsQuest(div) {
-    if (player.cls !== 'elf') { div.innerHTML = `<div class="p-6 text-red-400">歐斯：我有點事想找妖精幫忙，不相關者請離開。</div>`; return; }
+    if (questCls(player) !== 'elf') { div.innerHTML = `<div class="p-6 text-red-400">歐斯：我有點事想找妖精幫忙，不相關者請離開。</div>`; return; }
     div.innerHTML = `<div class="p-4 text-slate-300 leading-relaxed"><div class="text-amber-300 font-bold mb-3">🏹 歐斯的試煉</div>` + trialQHTML('elf15', 'renderOsQuest') + `</div>`;
 }
 // 🔮 塔拉斯（象牙塔）：法師 30/45 級試煉（接取制）
 function renderTarasQuest(div) {
-    if (player.cls !== 'mage') { div.innerHTML = `<div class="p-6 text-red-400">塔拉斯：亡者的學識只向法師敞開。</div>`; return; }
+    if (questCls(player) !== 'mage') { div.innerHTML = `<div class="p-6 text-red-400">塔拉斯：亡者的學識只向法師敞開。</div>`; return; }
     div.innerHTML = `<div class="p-4 text-slate-300 leading-relaxed"><div class="text-amber-300 font-bold mb-3">🔮 塔拉斯的試煉</div>`
         + trialQHTML('mage30', 'renderTarasQuest') + trialQHTML('mage45', 'renderTarasQuest') + `</div>`;
 }
 // 🛡️👑 甘特：騎士 30 級試煉／王族 15、30 級試煉（接取制）
 function renderGunterQuest(div) {
-    if (player.cls === 'knight') {
+    if (questCls(player) === 'knight') {
         div.innerHTML = `<div class="p-4 text-slate-300 leading-relaxed"><div class="text-amber-300 font-bold mb-3">🛡️ 甘特的試煉</div>` + trialQHTML('knight30', 'renderGunterQuest') + `</div>`;
-    } else if (player.cls === 'royal') {
+    } else if (questCls(player) === 'royal') {
         div.innerHTML = `<div class="p-4 text-slate-300 leading-relaxed"><div class="text-amber-300 font-bold mb-3">👑 甘特的試煉</div>`
             + trialQHTML('royal15', 'renderGunterQuest') + trialQHTML('royal30', 'renderGunterQuest') + `</div>`;
     } else {
@@ -1147,12 +1149,12 @@ function renderGunterQuest(div) {
 }
 // 🏹 迷幻森林之母：妖精 30 級試煉（接取制）
 function renderMotherQuest(div) {
-    if (player.cls !== 'elf') { div.innerHTML = `<div class="p-6 text-red-400">迷幻森林之母：只有妖精聽得見森林的低語。</div>`; return; }
+    if (questCls(player) !== 'elf') { div.innerHTML = `<div class="p-6 text-red-400">迷幻森林之母：只有妖精聽得見森林的低語。</div>`; return; }
     div.innerHTML = `<div class="p-4 text-slate-300 leading-relaxed"><div class="text-amber-300 font-bold mb-3">🏹 迷幻森林之母的試煉</div>` + trialQHTML('elf30', 'renderMotherQuest') + `</div>`;
 }
 // 🛡️🏹👑 馬沙（威頓村）：騎士 45／妖精 45／王族 45 級試煉（接取制）
 function renderMashaQuest(div) {
-    let key = player.cls === 'knight' ? 'knight45' : player.cls === 'elf' ? 'elf45' : player.cls === 'royal' ? 'royal45' : null;
+    let key = questCls(player) === 'knight' ? 'knight45' : questCls(player) === 'elf' ? 'elf45' : questCls(player) === 'royal' ? 'royal45' : null;
     if (!key) { div.innerHTML = `<div class="p-6 text-red-400">馬沙：這是騎士、妖精與王族的試煉。</div>`; return; }
     div.innerHTML = `<div class="p-4 text-slate-300 leading-relaxed"><div class="text-amber-300 font-bold mb-3">⚔️ 馬沙的試煉</div>` + trialQHTML(key, 'renderMashaQuest') + `</div>`;
 }
