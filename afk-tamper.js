@@ -234,14 +234,33 @@
     }
   };
   // 玩家真的點、按：開始前比對，結束後（含後面的非同步）記下
-  ['pointerdown', 'pointerup', 'click', 'keydown', 'keyup', 'change', 'input', 'touchend', 'submit'].forEach(function (ev) {
+  // 11-16：補上拖曳（裝備欄 ↕、倉庫）、雙擊、右鍵、觸控開始、滑鼠按下放開
+  ['pointerdown', 'pointerup', 'click', 'keydown', 'keyup', 'change', 'input', 'touchend', 'submit',
+   'mousedown', 'mouseup', 'dblclick', 'contextmenu', 'touchstart', 'dragstart', 'dragend', 'drop'].forEach(function (ev) {
     W.addEventListener(ev, function (e) {
       if (!e.isTrusted) return;
       try { if (!pending) check(); } catch (er) {}
-      pending = true;
-      oSetTimeout.call(W, function () { try { absorb(); } catch (er) {} pending = false; }, 0);
+      trustSoon();
     }, true);
   });
+  // 本站的非同步結果（伺服器回應、延後載入的腳本）：回來的那一刻起到下一個計時器之前的變化算正常（11-16）
+  var trustSoon = function () { pending = true; oSetTimeout.call(W, function () { try { absorb(); } catch (er) {} pending = false; }, 0); };
+  if (typeof W.fetch === 'function') {
+    var oFetch = W.fetch;
+    W.fetch = function () {
+      var r = oFetch.apply(this, arguments);
+      try { if (!external() && r && typeof r.then === 'function') r.then(trustSoon, trustSoon); } catch (e) {}
+      return r;
+    };
+  }
+  try {
+    var RP = W.Response && W.Response.prototype;
+    if (RP) ['json', 'text', 'arrayBuffer', 'blob'].forEach(function (k) {
+      var o = RP[k]; if (typeof o !== 'function') return;
+      RP[k] = function () { var r = o.apply(this, arguments); try { if (!external() && r && typeof r.then === 'function') r.then(trustSoon, trustSoon); } catch (e) {} return r; };
+    });
+  } catch (e) {}
+  W.addEventListener('load', function (e) { var el = e && e.target; if (e.isTrusted && el && el.tagName === 'SCRIPT') trustSoon(); }, true);
   // 本站排的計時器：開始前比對、結束後記下（主控台排的不算）
   var wrapTimer = function (orig, name) {
     W[name] = function (cb) {
@@ -256,7 +275,19 @@
   // gainItem 給的（已經擋掉主控台呼叫）＝正常
   var wrapGain = function () {
     var o = W.gainItem; if (typeof o !== 'function' || o.__afkTp) return;
-    var f = function () { var r = o.apply(this, arguments); try { if (r && typeof r === 'object' && !external()) { if (r.uid != null) seenGain[r.uid] = 1; r[SYM] = nfp(r); } } catch (e) {} return r; };
+    // 11-16：gainItem 回傳的是「這次拿到什麼」的說明，不是放進背包的那一件 → 改成直接找背包裡新放進去、還沒記過的那一件
+    var f = function () {
+      var p = P(), ext = external(), inv = p && p.inv, n0 = inv ? inv.length : 0;
+      var r = o.apply(this, arguments);
+      try {
+        if (!ext && p && p.inv) {
+          var L = p.inv, fresh = [];
+          for (var i = 0; i < L.length; i++) { var it = L[i]; if (it && typeof it === 'object' && it[SYM] === undefined) { fresh.push(it); if (fresh.length > 1) break; } }
+          if (fresh.length === 1 && L.length === n0 + 1) { var g = fresh[0]; if (g.uid != null) seenGain[g.uid] = 1; g[SYM] = nfp(g); }
+        }
+      } catch (e) {}
+      return r;
+    };
     f.__afkTp = true; W.gainItem = f;
     try { (0, eval)('gainItem = window.gainItem'); } catch (e) {}
   };
