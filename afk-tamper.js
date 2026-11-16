@@ -3,8 +3,8 @@
  *
  *   一、偵測（執行中）：遊戲自己的流程（遊戲迴圈、玩家真的點按鈕或按鍵、本站排的計時器、gainItem、讀檔）結束時記下「目前的樣子」，
  *       下一次遊戲流程開始時比對；中間被改掉的＝不是遊戲做的（主控台、書籤小程式、外部腳本）。
- *       追蹤（Ping 11-16 20:58 縮小範圍、21:02 加 S 級）：聖紋、聖物、守護者之戒、織羽手環、S 級裝備（GM、至高的支配、次元遺物）這幾類道具（身上與背包），密奧之卡各張階段，
- *       守護者之戒的升級階段，天賦、巔峰（點數與等級）。一般裝備、聖甲蟲、冒險點數不再追蹤，舊的標記讀檔時清掉。
+ *       追蹤（Ping 11-16 20:58 縮小範圍、21:02 加 S 級）：聖紋、聖物、守護者之戒、織羽手環、S 級裝備（GM、至高的支配、次元遺物）這幾類道具（身上與背包），聖甲蟲（等級、型態）、冒險點數，密奧之卡各張階段，
+ *       守護者之戒的升級階段，天賦、巔峰（點數與等級）。一般裝備不再追蹤，舊的標記讀檔時清掉（聖甲蟲、冒險點數 21:12 加回）。
  *   二、偵測（第一次看到這個角色時，已經在存檔裡的）：
  *       ‧不可能的狀態：聖甲蟲等級超過該型態上限（沉睡 39、展翅 69）或型態不對。
  *       ‧防作弊上線（11-11）後才建立的角色：聖甲蟲、密奧、冒險點數、遺物強化合理時數加總 > 帳號遊玩時數 × 3 ＋ 5 小時 → 從時數最大的開始標記，直到不超過。
@@ -40,14 +40,14 @@
   };
   var nfp = function (it) { var id = it.id; return (it.en | 0) + (it.dimEn | 0) * 1024 + (it.blessLv | 0) * 1048576 + (id ? id.length * 1073741824 : 0); };
   var sh = function (s) { s = String(s); var h = 0; for (var i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0; return h; };
-  var KINDS = ['mio', 'growth', 'guard'];
+  var KINDS = ['mio', 'growth', 'guard', 'scarab', 'hunter'];   // 21:12 聖甲蟲、冒險點數加回來
   var noXp = function (k, v) { return k === 'xp' ? undefined : v; };
   var stOf = function (p) {
-    var m = p.afkMio, g = p.growth, gd = p.afkGuard, mc = '', gs = '', ks, i;
+    var m = p.afkMio, g = p.growth, gd = p.afkGuard, sc = p.afkScarab, h = p.afkHunter, mc = '', gs = '', ks, i;
     if (m && m.cards && typeof m.cards === 'object') { ks = Object.keys(m.cards); for (i = 0; i < ks.length; i++) mc += ks[i] + ':' + N(m.cards[ks[i]]) + ','; }
     if (gd && gd.k && typeof gd.k === 'object') { ks = Object.keys(gd.k); for (i = 0; i < ks.length; i++) gs += ks[i] + ':' + N(gd.k[ks[i]]) + ','; }
     var gr = ''; try { gr = g && typeof g === 'object' ? String(sh(JSON.stringify(g, noXp))) : ''; } catch (e) {}
-    return { mio: mc, growth: gr, guard: gs };
+    return { mio: mc, growth: gr, guard: gs, scarab: sc && typeof sc === 'object' ? (sc.got ? 1 : 0) + ',' + N(sc.lv) + ',' + N(sc.form) + ',' + (sc.kh ? 1 : 0) : '', hunter: h && typeof h === 'object' ? String(N(h.pts)) : '' };
   };
   var each = function (p, fn, eqOnly) {
     var eq = p.eq || {}, ks = Object.keys(eq), i, it;
@@ -59,7 +59,7 @@
   // ── 標記紀錄（跟著角色存檔） ──
   var rec = function (p) { var r = p.afkTp; if (!r || typeof r !== 'object') r = p.afkTp = { v: 1, it: {}, k: {} }; r.it = r.it || {}; r.k = r.k || {}; return r; };
   var trusted = { };   // 目前角色最後一次正常的聖甲蟲／密奧／冒險點數
-  var parseSt = function (p) { var m = (p.afkMio && p.afkMio.cards) || {}, gk = (p.afkGuard && p.afkGuard.k) || {}; var mc = {}, gc = {}; Object.keys(m).forEach(function (k) { mc[k] = N(m[k]); }); Object.keys(gk).forEach(function (k) { gc[k] = N(gk[k]); }); return { mio: mc, guard: gc, growth: 1 }; };
+  var parseSt = function (p) { var m = (p.afkMio && p.afkMio.cards) || {}, gk = (p.afkGuard && p.afkGuard.k) || {}; var mc = {}, gc = {}; Object.keys(m).forEach(function (k) { mc[k] = N(m[k]); }); Object.keys(gk).forEach(function (k) { gc[k] = N(gk[k]); }); var s = p.afkScarab || {}, h = p.afkHunter || {}; return { mio: mc, guard: gc, growth: 1, scarab: { lv: N(s.lv), form: N(s.form) }, hunter: N(h.pts) }; };
   var flagItem = function (p, it, why) { if (it._tq) return; it._tq = 1; if (it.uid != null) rec(p).it[it.uid] = why || 1; changed(); };
   var flagKind = function (p, k, snap) { var r = rec(p); if (r.k[k]) return; r.k[k] = snap == null ? { none: 1 } : { v: snap }; changed(); };
   var isItemBad = function (p, it) { return !!(it && (it._tq || (p && p.afkTp && p.afkTp.it && it.uid != null && p.afkTp.it[it.uid]))); };
@@ -85,7 +85,7 @@
     each(p, setK, true);
     if (!light) { var inv = p.inv || [], it, v, id; for (var i = 0; i < inv.length; i++) { it = inv[i]; if (!it || typeof it !== 'object') continue; id = it.id; if (!TR(id)) continue; v = (it.en | 0) + (it.dimEn | 0) * 1024 + (it.blessLv | 0) * 1048576 + (id ? id.length * 1073741824 : 0); if (it[SYM] !== v) it[SYM] = v; } }
     var s = stOf(p);
-    if (s.mio !== lastSt.mio || s.growth !== lastSt.growth || s.guard !== lastSt.guard) {
+    if (s.mio !== lastSt.mio || s.growth !== lastSt.growth || s.guard !== lastSt.guard || s.scarab !== lastSt.scarab || s.hunter !== lastSt.hunter) {
       var ps = parseSt(p), r = p.afkTp;
       KINDS.forEach(function (k) { if (s[k] !== lastSt[k] && !(r && r.k && r.k[k])) trusted[k] = ps[k]; });
       lastSt = s;
@@ -138,6 +138,13 @@
     var all = function (fn) { var eq = p.eq || {}; Object.keys(eq).forEach(function (k) { var it = eq[k]; if (it && typeof it === 'object') fn(it); }); (p.inv || []).forEach(function (it) { if (it && typeof it === 'object') fn(it); }); };
     all(function (it) { if (TR(it.id)) { if (it.uid != null && r.it[it.uid]) keep[it.uid] = r.it[it.uid]; } else if (it._tq) delete it._tq; });
     r.it = keep; changed();
+  };
+  // 21:12：聖甲蟲加回來 → 再跑一次「不可能的狀態」（v2 遷移時清掉的）
+  var legacy3 = function (p) {
+    var r = rec(p); if (r.v3) return; r.v3 = 1;
+    if (W.__afkTpNoLegacy) return;
+    var s = p.afkScarab;
+    if (s && typeof s === 'object' && (N(s.form) < 1 || N(s.form) > 3 || N(s.lv) > FORM_MAX[Math.max(1, Math.min(3, N(s.form)))] || N(s.lv) > 100)) flagKind(p, 'scarab', null);
   };
 
   // ── 懲罰 ──
@@ -303,7 +310,7 @@
     var o = W.loadGame; if (typeof o !== 'function' || o.__afkTp) return;
     var f = function () {
       var r = o.apply(this, arguments);
-      try { var p = P(); disp = null; swap = null; if (p && !exempt(p)) { legacy(p); baseline(p); if (anyBad(p)) recomputeStats(); } else who = null; } catch (e) { console.warn('[AFK-tamper] load', e); }
+      try { var p = P(); disp = null; swap = null; if (p && !exempt(p)) { legacy(p); legacy3(p); baseline(p); if (anyBad(p)) recomputeStats(); } else who = null; } catch (e) { console.warn('[AFK-tamper] load', e); }
       return r;
     };
     f.__afkTp = true; W.loadGame = f;
@@ -326,7 +333,7 @@
     },
     clear: function (what) {
       if (!adminOk()) return false; var p = P(); if (!p) return false; var r = rec(p);
-      if (what === 'all' || what === 'mio' || what === 'growth' || what === 'guard') { (what === 'all' ? Object.keys(r.k) : [what]).forEach(function (k) { delete r.k[k]; }); }
+      if (what === 'all' || what === 'mio' || what === 'growth' || what === 'guard' || what === 'scarab' || what === 'hunter') { (what === 'all' ? Object.keys(r.k) : [what]).forEach(function (k) { delete r.k[k]; }); }
       if (what === 'all' || what === 'items') { each(p, function (it) { delete it._tq; }); r.it = {}; }
       changed(); baseline(p); try { recomputeStats(); updateUI(); saveGame(); } catch (e) {} return true;
     }
