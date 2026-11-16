@@ -719,11 +719,25 @@
   }
 
   // 新城堡的魔物追蹤 NPC：用核心奧貝勒的追蹤畫面
+  //   11-16：原本用 div.innerHTML 換名字 → 搜尋欄（afk-trackfind）的事件被洗掉，打字沒反應；
+  //   改成只換文字節點，而且每次重畫（選地圖、選魔物）都換，名字不會跳回奧貝勒
+  var trkNm = '';
+  var renameText = function (div) {
+    if (!trkNm || !div || !document.createTreeWalker) return;
+    var w = document.createTreeWalker(div, NodeFilter.SHOW_TEXT, null), n;
+    while ((n = w.nextNode())) if (n.nodeValue.indexOf('奧貝勒') >= 0) n.nodeValue = n.nodeValue.replace(/奧貝勒/g, trkNm);
+  };
+  if (typeof window.renderObelNPC === 'function') {
+    var oRO = window.renderObelNPC;
+    window.renderObelNPC = function (div) { var r = oRO.apply(this, arguments); try { renameText(div); } catch (e) {} return r; };
+  }
   if (typeof window.interactNPC === 'function') {
     var oNpcTrk = window.interactNPC;
     window.interactNPC = function (npcId) {
+      trkNm = '';
+      try { if (/^npc_track_/.test(String(npcId))) Object.keys(DB.towns).some(function (t) { return (DB.towns[t].npcs || []).some(function (x) { if (x.id === npcId) { trkNm = x.n; return true; } return false; }); }); } catch (e) {}
       var r = oNpcTrk.apply(this, arguments);
-      try { if (/^npc_track_/.test(String(npcId)) && typeof renderObelNPC === 'function') { var div = document.getElementById('interaction-content'); if (div) { renderObelNPC(div); var nm = ''; try { Object.keys(DB.towns).some(function (t) { return (DB.towns[t].npcs || []).some(function (x) { if (x.id === npcId) { nm = x.n; return true; } return false; }); }); } catch (e) {} if (nm) div.innerHTML = div.innerHTML.replace(/奧貝勒/g, nm); } } } catch (e) {}
+      try { if (/^npc_track_/.test(String(npcId)) && typeof renderObelNPC === 'function') { var div = document.getElementById('interaction-content'); if (div) renderObelNPC(div); } } catch (e) {}
       return r;
     };
   }

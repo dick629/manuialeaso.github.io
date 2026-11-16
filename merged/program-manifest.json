@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-8752da261047",
+  "build": "merge-0.4-f6248de0191f",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -343,8 +343,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-castlewar.js?v=2fe1b2e37911",
-      "sha256": "2fe1b2e37911110511bc82e060f73ec0901d77590dbd77239c04fb6a2d406f05",
+      "url": "afk-castlewar.js?v=18ff59fb4a45",
+      "sha256": "18ff59fb4a453a0c875a564d13ba9b83ae9ffcc50239ce7484e7752a49119ff5",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1719,7 +1719,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "0e18563db115107032a9804006f429516107d30ac0f57b3fb53c860f4e78c6ec",
+      "sha256": "e5328fa28c16a204c1cbc975ebf55c44dd7926bb280d81a94408f039a24d5285",
       "type": "text/html; charset=utf-8"
     },
     {
