@@ -51,6 +51,12 @@
     var f = function (name, owner) {
       var o = owner || P(), n = oC.apply(this, arguments);
       try { if (n > 0 && W.__afkArtOf && W.__afkArtOf(o) === 'm_shilen') return 20 + W.__afkSummonCloth.extraSummon(o); } catch (e) {}
+      // 11-16（Ping）：固定 1 隻的高階召喚（變形怪首領、巨大牛人、黑豹）只有席琳眷屬能突破上限；
+      //   其他人（布、職業進化 +1 等）照魅力：每 reqCha 點（黑豹 44）一隻
+      try {
+        var e = n > 1 && typeof W._sumTierOf === 'function' && W._sumTierOf(name);
+        if (e && e.tier.fixedCount && e.tier.reqCha) n = Math.min(n, Math.max(1, Math.floor(((o && o.d && o.d.cha) || 0) / e.tier.reqCha)));
+      } catch (e2) {}
       return n;
     };
     f.__cloth = 1; W._sumCountFor = f;
