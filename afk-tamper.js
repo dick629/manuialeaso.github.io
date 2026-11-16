@@ -3,7 +3,7 @@
  *
  *   一、偵測（執行中）：遊戲自己的流程（遊戲迴圈、玩家真的點按鈕或按鍵、本站排的計時器、gainItem、讀檔）結束時記下「目前的樣子」，
  *       下一次遊戲流程開始時比對；中間被改掉的＝不是遊戲做的（主控台、書籤小程式、外部腳本）。
- *       追蹤（Ping 11-16 20:58 縮小範圍）：聖紋、聖物、守護者之戒、織羽手環這幾類道具（身上與背包），密奧之卡各張階段，
+ *       追蹤（Ping 11-16 20:58 縮小範圍、21:02 加 S 級）：聖紋、聖物、守護者之戒、織羽手環、S 級裝備（GM、至高的支配、次元遺物）這幾類道具（身上與背包），密奧之卡各張階段，
  *       守護者之戒的升級階段，天賦、巔峰（點數與等級）。一般裝備、聖甲蟲、冒險點數不再追蹤，舊的標記讀檔時清掉。
  *   二、偵測（第一次看到這個角色時，已經在存檔裡的）：
  *       ‧不可能的狀態：聖甲蟲等級超過該型態上限（沉睡 39、展翅 69）或型態不對。
@@ -34,7 +34,8 @@
   var TR = function (id) {
     var r = TRC[id]; if (r !== undefined) return r;
     var d = DB.items[id], s = String(id || '');
-    r = TRC[id] = !!(d && (d.slot === 'sigil' || d.slot === 'holy' || d.slot === 'guard')) || /^afk_brace_weave/.test(s);
+    var sk = ''; try { var a = AC(); sk = a && a.sKind ? a.sKind(id) : ''; } catch (e) {}   // S 級：GM 道具、至高的支配、次元遺物（含次元時空）（Ping 11-16 21:02）
+    r = TRC[id] = !!(d && (d.slot === 'sigil' || d.slot === 'holy' || d.slot === 'guard')) || /^afk_brace_weave/.test(s) || !!sk;
     return r;
   };
   var nfp = function (it) { var id = it.id; return (it.en | 0) + (it.dimEn | 0) * 1024 + (it.blessLv | 0) * 1048576 + (id ? id.length * 1073741824 : 0); };
