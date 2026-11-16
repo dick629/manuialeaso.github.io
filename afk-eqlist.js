@@ -19,7 +19,8 @@
     var _orig = window.setEquipmentPanelEmbedded;
     // The unified phone character page uses the same native paper-doll as its preview.
     // Keep the saved desktop list preference without hiding the phone equipment page.
-    window.setEquipmentPanelEmbedded = function (visible) { return _orig.call(this, document.body.classList.contains('m-unified') ? visible : false); };
+    // 11-16 Ping：手機版也照「裝備條列式」設定（勾了就條列，取消勾選才是圖形）
+    window.setEquipmentPanelEmbedded = function (visible) { return _orig.call(this, false); };
 
     try { console.log('[AFK-eqlist] hooks OK — 裝備分頁條列式已啟用(外掛開關可關回圖形視窗)。'); } catch (e) {}
 })();

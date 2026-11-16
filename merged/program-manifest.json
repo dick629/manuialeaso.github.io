@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-51fc68cebf97",
+  "build": "merge-0.4-8752da261047",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -443,8 +443,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dimrift.js?v=c2542ab54ae7",
-      "sha256": "c2542ab54ae7767c233c580a663c13ce39d380744cbd8c5ec7ce4636c733dc5a",
+      "url": "afk-dimrift.js?v=2904e27bf019",
+      "sha256": "2904e27bf01995c57125e0d974115fa65e61d066b70bf6b51c35345807415668",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -553,8 +553,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-eqlist.js?v=071c486b3642",
-      "sha256": "071c486b364228021efb422332f15ae41257a30a78d9bd561a8e7536334c3191",
+      "url": "afk-eqlist.js?v=6daa597c1fcc",
+      "sha256": "6daa597c1fccdd9b5bda342d425898b609e4485d940d4d57250c5ff34433327b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1318,8 +1318,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftdungeons.js?v=e4e9e880d087",
-      "sha256": "e4e9e880d087310a891633a8c8ba55e554091233e0acb9b8bca5fdc8a41d9287",
+      "url": "afk-riftdungeons.js?v=04cf0594221b",
+      "sha256": "04cf0594221b1d2f4d89dc97e4d72c1574896c93eb976e1a55c525283f219d40",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1719,7 +1719,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "c2ee79f9498d10ce757603f33ba028a5a7ac97ec00d26e19ab2dfa670f11d741",
+      "sha256": "0e18563db115107032a9804006f429516107d30ac0f57b3fb53c860f4e78c6ec",
       "type": "text/html; charset=utf-8"
     },
     {

@@ -149,7 +149,8 @@
       if (L && L.boss) L.boss.hurt(x, dmg);
     });
     // AC、魔防、抗性
-    if ((r.ero || 0) < R.resMax) { var step = R.eroStep; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) step *= 2; } catch (e) {} r.ero = Math.min(R.resMax, (r.ero || 0) + step); try { calcStats(); } catch (e) {} }   // Ping 11-13 14:29：每秒 AC +5、魔防 −5、四屬性 −5；GD之子的期待 ×2
+    var endless = !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn());   // 11-16：無盡的裂縫沒有上限、沒有最低保留
+    if (endless || (r.ero || 0) < R.resMax) { var step = R.eroStep; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) step *= 2; } catch (e) {} r.ero = endless ? (r.ero || 0) + step : Math.min(R.resMax, (r.ero || 0) + step); try { calcStats(); } catch (e) {} }   // Ping 11-13 14:29：每秒 AC +5、魔防 −5、四屬性 −5；GD之子的期待 ×2
   }
   var L = W.__afkLore;
   function lightSecond() {
@@ -229,11 +230,11 @@
         // 侵蝕：AC 往上加（越高越差），魔防、抗性往下扣到最低保留
         var ero = Math.floor((rec(p).ero || 0) * (typeof W.__afkEroMult === 'function' ? (Number(W.__afkEroMult(p)) || 1) : 1));   // 龍息娃娃：侵蝕的下降打折
         if (ero) {
-          var keep = floorSum(p), wc = weightCut(p);
-          var eAc = Math.max(0,Math.min(ero, R.acMax)-(W.LineageSherine?.erosionBack(p)||0));
+          var keep = floorSum(p), wc = weightCut(p), noFloor = !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn());
+          var eAc = Math.max(0,Math.min(ero, noFloor ? Infinity : R.acMax)-(W.LineageSherine?.erosionBack(p)||0));
           d.ac = (d.ac || 0) + eAc;
-          var cut = function (k) { var v = Number(d[k]) || 0; if (v <= 0) return; var floor = Math.max(keep, Math.floor(v * wc)); var low = Math.min(v, floor); d[k] = Math.max(low, v - eAc); };
-          cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; var e2 = ero - rb, floor = Math.max(keep, Math.floor(v * wc)); var growthFloor = W.LineageGrowth ? W.LineageGrowth.pct(p, 'curse') : 0; d[k] = Math.max(Math.min(v,floor+growthFloor),v-e2); });
+          var cut = function (k) { var v = Number(d[k]) || 0; if (noFloor) { d[k] = v - eAc; return; } if (v <= 0) return; var floor = Math.max(keep, Math.floor(v * wc)); var low = Math.min(v, floor); d[k] = Math.max(low, v - eAc); };
+          cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; var e2 = ero - rb; if (noFloor) { d[k] = v - e2; return; } var floor = Math.max(keep, Math.floor(v * wc)); var growthFloor = W.LineageGrowth ? W.LineageGrowth.pct(p, 'curse') : 0; d[k] = Math.max(Math.min(v,floor+growthFloor),v-e2); });
         }
       } catch (e) { console.warn('[AFK-dimrift] stats', e); }
       return r;
@@ -328,8 +329,9 @@
       var b = a._dimBase, light = (rec(p).light || 0) * R.lightHp / 100 * (1 - lightCut(p));
       a.mhp = Math.max(1, Math.floor(b.mhp * f * (1 - light))); a.mmp = Math.floor((b.mmp || 0) * f);
       if (a.curHp > a.mhp) a.curHp = a.mhp; if (a.mp > a.mmp) a.mp = a.mmp;
-      Object.keys(b.d).forEach(function (k) { var v = b.d[k]; if (k === 'ac') a.d.ac = (v < 0 ? Math.ceil(v * f) : v) + Math.max(0,Math.min(ero, R.acMax)-(W.LineageSherine?.erosionBack(a)||0)); else a.d[k] = v > 0 ? Math.floor(v * f) : v; });
-      if (ero) ['mr'].concat(RES4).forEach(function (k) { var v = Number(a.d[k]) || 0; if (v <= 0) return; a.d[k] = Math.max(Math.min(v, keep), v - (k === 'mr' ? Math.max(0,Math.min(ero, R.acMax)-(W.LineageSherine?.erosionBack(a)||0)) : ero)); });
+      var nf = !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn()), acCap = nf ? Infinity : R.acMax;   // 無盡的裂縫：沒有上限、沒有最低保留
+      Object.keys(b.d).forEach(function (k) { var v = b.d[k]; if (k === 'ac') a.d.ac = (v < 0 ? Math.ceil(v * f) : v) + Math.max(0,Math.min(ero, acCap)-(W.LineageSherine?.erosionBack(a)||0)); else a.d[k] = v > 0 ? Math.floor(v * f) : v; });
+      if (ero) ['mr'].concat(RES4).forEach(function (k) { var v = Number(a.d[k]) || 0; var e = k === 'mr' ? Math.max(0,Math.min(ero, acCap)-(W.LineageSherine?.erosionBack(a)||0)) : ero; if (nf) { a.d[k] = v - e; return; } if (v <= 0) return; a.d[k] = Math.max(Math.min(v, keep), v - e); });
     });
   }
 
