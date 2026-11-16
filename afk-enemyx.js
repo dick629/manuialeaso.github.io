@@ -18,11 +18,13 @@
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
-  if (T && T.register) T.register({ id: 'enemyx', name: '敵人爆擊、重擊、追加攻擊', group: '遊戲玩法', desc: '敵人會爆擊、重擊、追加攻擊、共鳴魔擊；王的一般攻擊有機率即死；小怪會自我回血。次元裂縫裡更強' });
+  if (T && T.register) T.register({ id: 'enemyx', name: '敵人爆擊、重擊、追加攻擊', group: '遊戲玩法', desc: '（席琳夢域鏡以上）敵人會爆擊、重擊、追加攻擊、共鳴魔擊；王的一般攻擊有機率即死；小怪會自我回血。次元裂縫裡更強' });
   if (T && !T.enabled('enemyx')) return;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var N = function (x) { return Number(x) || 0; };
-  var on = function () { var p = P(); return !!(p && !p.classicMode); };
+  // 11-16（Ping）：敵人爆擊、重擊、追加攻擊、共鳴、王即死、小怪回血只在夢域鏡以上（次元裂縫開著時夢域鏡也開著）
+  var dreamUp = function () { try { return !!((W.__afkDreamHell && W.__afkDreamHell.on && W.__afkDreamHell.on()) || (W.__afkDimRiftOn && W.__afkDimRiftOn())); } catch (e) { return false; } };
+  var on = function () { var p = P(); return !!(p && !p.classicMode && dreamUp()); };
   var rift = function () { try { return typeof W.__afkDimRiftOn === 'function' && !!W.__afkDimRiftOn(); } catch (e) { return false; } };
   var R = {
     normal: { crit: .5, critX: 2.5, heavy: .3, heavyX: 1.5, chase: .3, chaseMax: 3, reso: .3, pierce: 0 },

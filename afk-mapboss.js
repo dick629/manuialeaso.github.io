@@ -169,9 +169,9 @@
     var s = S(); return !!(s.riftRun || s._afkFinal || s.antharas || s.prideClimb);
   };
   var onField = function (role) { return (mapState.mobs || []).map(function (m, i) { return [m, i]; }).filter(function (x) { var m = x[0]; return m && act && m._afkMb === act.id && !m._dead && m.curHp > 0 && (role === 'boss' ? m._mbBoss : role === 'minion' ? m._mbMinion : true); }); };
-  // 11-16（Ping）：怪物格擋只有夢域鏡以上才有；一般、瘋狂席琳不格擋
+  // 11-16（Ping）：地圖王、副本王的招式（含格擋）只有夢域鏡以上才有；一般、席琳、瘋狂席琳的王不放招式
   var dreamUp = function () { try { return !!((W.__afkDreamHell && W.__afkDreamHell.on && W.__afkDreamHell.on()) || riftOn()); } catch (e) { return false; } };
-  var has = function (k) { if (k === 'block' && !dreamUp()) return false; return act && (BY[act.id].mech.indexOf(k) >= 0 || act.extra === k); };
+  var has = function (k) { if (!dreamUp()) return false; return act && (BY[act.id].mech.indexOf(k) >= 0 || act.extra === k); };
   var ALL_MECH = ['summon', 'enrage', 'quake', 'regen', 'shieldM', 'shieldP', 'root', 'block', 'ambush', 'adds', 'poison', 'invuln', 'curse'];
   var riftOn = function () { try { return !!(W.__afkDimRiftOn && W.__afkDimRiftOn()); } catch (e) { return false; } };
   var slotFor = function () { var ms = mapState.mobs || [], i; for (i = 0; i < ms.length; i++) if (!ms[i] || ms[i]._dead) return i; for (i = 0; i < ms.length; i++) if (ms[i] && !ms[i].boss) return i; return -1; };
@@ -188,7 +188,7 @@
     stat(b.id).met++;
     try { if (typeof vfxBossEntrance === 'function' && !S().ff) vfxBossEntrance(mob); } catch (e) {}
     try { if (!S().ff) renderMobs(); } catch (e) {}
-    sys('<span class="font-bold" style="color:#fcd34d;text-shadow:0 0 8px #000">👑 ' + (b.type === 'field' ? '地圖王' : '副本王') + '「' + esc(b.n) + '」出現了！</span><span class="text-slate-300">（Lv' + Lv + '，' + b.mech.concat(act.extra ? [act.extra] : []).filter(function (k) { return k !== 'block' || dreamUp(); }).map(function (k) { return MECH_N[k]; }).join('、') + (act.extra ? '；次元裂縫：多了一種機制' : '') + '）</span>');
+    sys('<span class="font-bold" style="color:#fcd34d;text-shadow:0 0 8px #000">👑 ' + (b.type === 'field' ? '地圖王' : '副本王') + '「' + esc(b.n) + '」出現了！</span><span class="text-slate-300">（Lv' + Lv + (dreamUp() ? '，' + b.mech.concat(act.extra ? [act.extra] : []).map(function (k) { return MECH_N[k]; }).join('、') + (act.extra ? '；次元裂縫：多了一種機制' : '') : '') + '）</span>');
     return true;
   };
   var giveBack = function () { var p = P(); if (p && act && act.stolen > 0) { p.gold = (Number(p.gold) || 0) + act.stolen; sys('<span class="text-amber-200">拿回被偷走的金幣 ' + act.stolen.toLocaleString() + '。</span>'); act.stolen = 0; } };

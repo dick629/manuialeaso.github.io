@@ -1280,7 +1280,7 @@ function applySherineBuff(idx) {
         _m.goldMin = Math.floor((_m.goldMin || 0) * (_mad ? 10 : 5));   // 金錢×[5/10]
         _m.goldMax = Math.floor((_m.goldMax || 0) * (_mad ? 10 : 5));
         _m.hit = Math.floor((_m.hit || 0) * (_mad ? 2 : 1.5));          // 命中×[1.5/2]
-        _m.dr = (_m.dr || 0) + Math.floor((_m.lv || 1) / 3);            // 額外減傷：等級/3（兩者相同）
+        if (window.__afkDreamHell && window.__afkDreamHell.on && window.__afkDreamHell.on()) _m.dr = (_m.dr || 0) + Math.floor((_m.lv || 1) / 3);   // 額外減傷：等級/3（11-16 Ping：只有夢域鏡以上才有）
         _m._sherine = true;   // 一般攻擊傷害×[2/3]、技能最終傷害×[2/3]、掉落×[3/5]、掉落附帶席琳詞綴／套裝效果
         if (_mad) _m._sherineMad = true;   // 🔮 瘋狂旗標：供傷害/掉落/結晶/套裝效果倍率分流
     }
