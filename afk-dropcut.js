@@ -28,6 +28,8 @@
   //   失去氣息的死亡騎士的烈炎之劍（連同用它做死亡騎士的烈炎之劍的配方）
   var EXTRA = /^失去氣息的 ?(封印的傲慢之塔\d+樓傳送符|魔法書|技術書|戰士的印記|精靈水晶|黑暗精靈水晶|死亡騎士的烈炎之劍)/;
   var extra = []; Object.keys(DB.items).forEach(function (id) { var d = DB.items[id]; if (d && EXTRA.test(String(d.n || '')) && !DEL[id]) { DEL[id] = 1; extra.push(id); } });
+  // Ping 11-17 01:26：純白的沙：MR 也全部移除（STUN／HOLD 已經移除；舊存檔已有的保留）
+  Object.keys(DB.items).forEach(function (id) { var d = DB.items[id]; if (d && /^純白的沙：/.test(String(d.n || '')) && !DEL[id]) { DEL[id] = 1; extra.push(id); } });
   // 任務先建立、清理後執行：古物委託會快取材料排序。不可移除材料後仍留下無法交付的任務，
   // 也不可重排章節來替換舊進度。以實際任務依賴保護原 ID 與原掉落，涵蓋後續載入版本的新增需求。
   var QUEST_KEEP = Object.create(null);
