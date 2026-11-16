@@ -136,10 +136,13 @@
     const options=document.createElement('details');options.id='lm-log-options';
     options.innerHTML='<summary>戰鬥訊息篩選</summary><div class="lm-log-filter-buttons"></div>';
     const empty=document.createElement('div');empty.id='lm-log-empty';empty.innerHTML='<span>目前已隱藏全部戰鬥訊息</span><button type="button">顯示全部</button>';
+    const viewKeys=['hp','status'];   // 11-16（Ping）：手機版也要有「血量」「狀態」（怪物血量條、狀態徽章）
     const refresh=()=>{
+      for(const key of viewKeys){const src=$('cf-btn-'+key),btn=options.querySelector('[data-log-view="'+key+'"]');if(src&&btn)btn.setAttribute('aria-pressed',String(!src.classList.contains('cf-off')));}
       for(const key of filterKeys)options.querySelector('[data-log-filter="'+key+'"]').setAttribute('aria-pressed',String(!combatLog.classList.contains('cf-hide-'+key)));
       empty.hidden=!filterKeys.every(key=>combatLog.classList.contains('cf-hide-'+key));
     };
+    for(const key of viewKeys){const source=$('cf-btn-'+key);if(!source)continue;const button=document.createElement('button');button.type='button';button.dataset.logView=key;button.textContent=source.textContent;button.addEventListener('click',()=>{source.click();refresh();});options.lastElementChild.append(button);}
     for(const key of filterKeys){const source=$('cf-btn-'+key),button=document.createElement('button');button.type='button';button.dataset.logFilter=key;button.textContent=source?.textContent||key;button.addEventListener('click',()=>{source?.click();refresh();});options.lastElementChild.append(button);}
     empty.querySelector('button').addEventListener('click',()=>{for(const key of filterKeys)if(combatLog.classList.contains('cf-hide-'+key))$('cf-btn-'+key)?.click();refresh();});
     combatLog.before(options,empty);new MutationObserver(refresh).observe(combatLog,{attributes:true,attributeFilter:['class']});refresh();
