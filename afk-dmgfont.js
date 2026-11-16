@@ -27,28 +27,28 @@
   var GRAD = function (g) { return 'background:' + g + ';-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent!important;color:transparent!important;'; };
   // 每一款：id、n 名稱、d 說明、price 龍鑽、fam 字型、css(sel, crit) 回傳這款的樣式
   var FONTS = [
-    { id: 'honey', n: '蜜糖彈跳', d: '圓胖的橘黃糖果字，彈出來再往上飄；爆擊變粉紫色、抖一下。', price: 5000000, fam: 'honey', css: function (s, c) {
-      return s + '{font-family:"afkdmg-honey",sans-serif!important;' + GRAD('linear-gradient(#fff9c4,#ffd54f 45%,#ff8f00)') + '-webkit-text-stroke:2px #4e2a0c!important;text-shadow:none!important;filter:drop-shadow(0 2px 0 #4e2a0c) drop-shadow(0 0 2px #000);letter-spacing:1px;animation-name:dmgfPop!important}'
-        + c + '{' + GRAD('linear-gradient(#ffe4f7,#f472b6 50%,#a21caf)') + 'animation:dmgfShake .35s ease-out}' + TAG('honey', '#fde68a'); } },
-    { id: 'pixel', n: '古都像素', d: '白色像素字、粗黑框，直直往上升；爆擊變黃色。', price: 5000000, fam: 'pixel', css: function (s, c) {
-      return s + '{font-family:"afkdmg-pixel",monospace!important;color:#fff!important;-webkit-text-stroke:0!important;text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000,2px 2px #000,-2px -2px #000,2px -2px #000,-2px 2px #000!important;-webkit-font-smoothing:none;animation-name:dmgfRise!important;animation-timing-function:linear!important}'
-        + c + '{color:#ffe600!important}'; } },
-    { id: 'crystal', n: '水晶之章', d: '白字帶淡藍光，往下掉再小彈兩下；爆擊是金色。', price: 5000000, fam: 'crystal', css: function (s, c) {
-      return s + '{font-family:"afkdmg-crystal",monospace!important;font-size:15px!important;color:#fff!important;-webkit-text-stroke:0!important;text-shadow:2px 2px 0 #10204a,0 0 6px #7dd3fc!important;animation:dmgfDrop 1.05s ease-out forwards!important}'
+    { id: 'honey', n: '蜜糖彈跳', d: '圓胖的糖果字，奶黃、橘、蜜桃粉三色漸層，彈出來再往上飄；爆擊變粉紫藍漸層、抖一下。', price: 5000000, fam: 'honey', css: function (s, c) {
+      return s + '{font-family:"afkdmg-honey",sans-serif!important;' + GRAD('linear-gradient(#fffbd1,#ffd54f 35%,#ff9a3c 65%,#ff6f91)') + '-webkit-text-stroke:0!important;text-shadow:none!important;filter:drop-shadow(1px 0 0 #4e2a0c) drop-shadow(-1px 0 0 #4e2a0c) drop-shadow(0 1px 0 #4e2a0c) drop-shadow(0 -1px 0 #4e2a0c) drop-shadow(0 2px 0 #4e2a0c) drop-shadow(0 0 2px #000);animation-name:dmgfPop!important}'
+        + c + '{' + GRAD('linear-gradient(#ffe4f7,#f472b6 35%,#c026d3 65%,#818cf8)') + 'animation:dmgfShake .35s ease-out}' + TAG('honey', '#fde68a'); } },
+    { id: 'pixel', n: '古都像素', d: '像素字分成白、青、粉、黃四段色帶，粗黑框，直直往上升；爆擊變金橘紅色帶。', price: 5000000, fam: 'pixel', css: function (s, c) {
+      return s + '{font-family:"afkdmg-pixel",monospace!important;' + GRAD('linear-gradient(#ffffff 0 28%,#7df9ff 28% 52%,#ff7ad9 52% 76%,#ffe66b 76%)') + '-webkit-text-stroke:2px #000!important;text-shadow:none!important;filter:drop-shadow(2px 2px 0 #000);-webkit-font-smoothing:none;animation-name:dmgfRise!important;animation-timing-function:linear!important}'
+        + c + '{' + GRAD('linear-gradient(#fff8b0 0 28%,#ffd000 28% 52%,#ff8a00 52% 76%,#ff3d6e 76%)') + '}' + TAG('pixel', '#ffe600'); } },
+    { id: 'crystal', n: '水晶之章', d: '冰晶白、淡藍、薰衣草紫、粉紅的漸層字，帶淡藍光，往下掉再小彈兩下；爆擊是金黃到粉紅。', price: 5000000, fam: 'crystal', css: function (s, c) {
+      return s + '{font-family:"afkdmg-crystal",monospace!important;font-size:15px!important;' + GRAD('linear-gradient(170deg,#ffffff,#bae6fd 35%,#a5b4fc 65%,#f0abfc)') + '-webkit-text-stroke:1px #1e3a8a!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #7dd3fc) drop-shadow(2px 2px 0 #10204a);animation:dmgfDrop 1.05s ease-out forwards!important}'
         + 'body.dmgf-crystal #vfx-layer .vfx-dmg.vfx-crit,.dmgf-pv.dmgf-crystal .vfx-dmg.vfx-crit{font-size:22px!important}'
-        + c + '{color:#ffe066!important;text-shadow:2px 2px 0 #4a2a00,0 0 8px #facc15!important}'; } },
-    { id: 'horde', n: '部落榮光', d: '黃色的奇幻襯線字，往上飄、微微偏一邊；爆擊先爆大再縮回。', price: 5000000, fam: 'horde', css: function (s, c) {
-      return s + '{font-family:"afkdmg-horde",serif!important;color:#ffd100!important;-webkit-text-stroke:1.5px #000!important;text-shadow:0 2px 2px #000!important;animation-name:dmgfDrift!important}'
+        + c + '{' + GRAD('linear-gradient(170deg,#fffbe0,#fde68a 35%,#fbbf24 65%,#f472b6)') + 'filter:drop-shadow(0 0 6px #facc15)}' + TAG('crystal', '#fde68a'); } },
+    { id: 'horde', n: '部落榮光', d: '金黃、橘、珊瑚紅漸層的奇幻襯線字，往上飄、微微偏一邊；爆擊變橘紅紫漸層，先爆大再縮回。', price: 5000000, fam: 'horde', css: function (s, c) {
+      return s + '{font-family:"afkdmg-horde",serif!important;' + GRAD('linear-gradient(#fff3b0,#ffd100 40%,#ff9f1c 70%,#ff5d73)') + '-webkit-text-stroke:0!important;text-shadow:none!important;filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 2px 2px #000);animation-name:dmgfDrift!important}'   // 這款字很細，描邊會蓋掉漸層 → 用陰影描黑邊
         + 'body.dmgf-horde #vfx-layer .vfx-dmg.vfx-crit,.dmgf-pv.dmgf-horde .vfx-dmg.vfx-crit{animation:dmgfBurst 1.05s ease-out forwards!important}'
-        + c + '{color:#ff8a00!important}'; } },
-    { id: 'inferno', n: '地獄烈焰', d: '暗紅色的碑文字，慢慢往上飄；爆擊冒出橘色火光、會閃。', price: 5000000, fam: 'inferno', css: function (s, c) {
-      return s + '{font-family:"afkdmg-inferno",serif!important;color:#c81e1e!important;-webkit-text-stroke:1px #1a0000!important;text-shadow:0 0 4px #000,0 2px 3px #000!important;letter-spacing:1px}'
-        + c + '{color:#ffb020!important;text-shadow:0 0 6px #ff4d00,0 0 12px #ff2200,0 2px 2px #000!important;animation:dmgfFlicker .18s steps(2) 5}'; } },
-    { id: 'stellar', n: '恆星', d: '白色襯線字罩著紫色光暈，旁邊閃著星光；爆擊光暈更亮。', price: 5000000, fam: 'stellar', css: function (s, c) {
-      return s + '{font-family:"afkdmg-stellar",serif!important;color:#fff!important;-webkit-text-stroke:0!important;text-shadow:0 0 3px #fff,0 0 8px #c084fc,0 0 14px #7c3aed,0 2px 2px #2e1065!important}'
+        + c + '{' + GRAD('linear-gradient(#ffe0a3,#ff8a00 40%,#ff3d7f 75%,#c026d3)') + '}' + TAG('horde', '#ffb020'); } },
+    { id: 'inferno', n: '地獄烈焰', d: '熔岩金、橘、深紅、暗紫漸層的碑文字，慢慢往上飄；爆擊冒出橘色火光、會閃。', price: 5000000, fam: 'inferno', css: function (s, c) {
+      return s + '{font-family:"afkdmg-inferno",serif!important;' + GRAD('linear-gradient(#ffe08a,#ff7b2e 35%,#e11d48 70%,#7e22ce)') + '-webkit-text-stroke:0!important;text-shadow:none!important;filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 2px 3px #000);letter-spacing:1px}'
+        + c + '{' + GRAD('linear-gradient(#fff4b8,#ffb020 35%,#ff4d00 65%,#ff2a6d)') + 'filter:drop-shadow(0 0 6px #ff4d00) drop-shadow(0 0 12px #ff2200);animation:dmgfFlicker .18s steps(2) 5}' + TAG('inferno', '#ffb020'); } },
+    { id: 'stellar', n: '恆星', d: '白、淡紫、天藍、粉紅漸層的襯線字，罩著紫色光暈，旁邊閃著星光；爆擊光暈更亮。', price: 5000000, fam: 'stellar', css: function (s, c) {
+      return s + '{font-family:"afkdmg-stellar",serif!important;' + GRAD('linear-gradient(160deg,#ffffff,#e9d5ff 30%,#a5b4fc 60%,#f9a8d4)') + '-webkit-text-stroke:0!important;text-shadow:none!important;filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 4px #a855f7) drop-shadow(0 2px 2px #2e1065)}'
         + s + '::before,' + s + '::after{content:"✦";position:absolute;font-family:sans-serif;color:#fff;-webkit-text-fill-color:#fff;text-shadow:0 0 6px #e9d5ff;pointer-events:none;animation:dmgfTwinkle .5s ease-in-out infinite alternate}'
-        + s + '::before{left:-6px;top:-8px;font-size:.45em}' + s + '::after{right:-8px;bottom:-4px;font-size:.38em;animation-delay:.25s}'
-        + c + '{text-shadow:0 0 4px #fff,0 0 12px #e879f9,0 0 22px #9333ea!important}'; } },
+        + s + '::before{left:-8px;top:-6px;font-size:.5em}' + s + '::after{right:-8px;bottom:-2px;font-size:.4em;animation-delay:.25s}'
+        + c + '{' + GRAD('linear-gradient(160deg,#ffffff,#f5d0fe 25%,#e879f9 55%,#818cf8 85%)') + 'filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #e879f9) drop-shadow(0 0 10px #9333ea)}' + TAG('stellar', '#f5d0fe'); } },
     { id: 'nova', n: '新星世界', d: '粉紅到淡紫藍的漸層圓體字，白色描邊發光。', price: 5000000, fam: 'nova', css: function (s, c) {
       return s + '{font-family:"afkdmg-nova",sans-serif!important;' + GRAD('linear-gradient(170deg,#ff5fd2 10%,#d18bff 50%,#9cc8ff 90%)') + '-webkit-text-stroke:1.5px #fff!important;text-shadow:none!important;filter:drop-shadow(0 0 3px #f0abfc) drop-shadow(0 1px 1px #4c1d95)}'
         + c + '{' + GRAD('linear-gradient(170deg,#ff2fc1,#b26bff 50%,#6fb2ff)') + 'filter:drop-shadow(0 0 5px #fff)}' + TAG('nova', '#fff0fb'); } },
@@ -63,41 +63,41 @@
         + c + '{' + GRAD('linear-gradient(100deg,#ff8fc8,#ffe96b 20%,#7dffbf 40%,#7fd8ff 60%,#c49bff 80%,#ff8fc8)') + 'background-size:200% 100%!important;animation:dmgfShimmer 1s linear infinite}'
         + TAG('rainbow', '#fff0fb'); } },
     // ── 第二批（Ping 11-12 19:17）：只取風格、不搬原版，字型皆 OFL ──
-    { id: 'comic', two: true, n: '漫畫爆擊', d: '美式漫畫的粗體字，黃字粗黑框、微微歪斜，砰一下彈出；爆擊變紅、後面爆出放射狀的對話框。', price: 5000000, fam: 'comic', css: function (s, c) {
-      return s + '{font-family:"afkdmg-comic",sans-serif!important;color:#ffe100!important;-webkit-text-stroke:2px #000!important;text-shadow:3px 3px 0 #000!important;letter-spacing:1px;animation-name:dmgfComic!important}'
-        + 'body.dmgf-comic #vfx-layer .vfx-dmg.vfx-critical,.dmgf-pv.dmgf-comic .vfx-dmg.vfx-critical{padding:12px 26px;background:radial-gradient(ellipse closest-side,#fff 0 62%,#000 64% 70%,transparent 72%),repeating-conic-gradient(#ffd600cc 0 6deg,transparent 6deg 18deg);background-size:100% 100%,100% 100%;border-radius:50%}'
-        + CC('comic') + '{color:#ff2d55!important;-webkit-text-stroke:2px #000!important}' + TAG('comic', '#ff2d55'); } },
-    { id: 'mecha', two: true, n: '機甲終端', d: '白色的科技字，從側邊滑出、帶一點殘影；分三級顏色：重擊黃、爆擊橘、超大爆擊紅。', price: 5000000, fam: 'mecha', css: function (s, c) {
-      return s + '{font-family:"afkdmg-mecha",sans-serif!important;color:#f8fafc!important;-webkit-text-stroke:0!important;text-shadow:0 0 1px #000,1px 1px 0 #000,-3px 0 2px #38bdf855!important;letter-spacing:1px;animation-name:dmgfSlide!important}'
-        + 'body.dmgf-mecha #vfx-layer .vfx-dmg.vfx-heavy .vfx-dmg-value,.dmgf-pv.dmgf-mecha .vfx-dmg.vfx-heavy .vfx-dmg-value{color:#facc15!important}'
-        + CC('mecha') + '{color:#fb923c!important}'
-        + 'body.dmgf-mecha #vfx-layer .vfx-dmg.vfx-critical.dmgf-t3 .vfx-dmg-value,.dmgf-pv.dmgf-mecha .vfx-dmg.vfx-critical.dmgf-t3 .vfx-dmg-value{color:#ef4444!important;text-shadow:0 0 6px #ef4444,1px 1px 0 #000!important}' + TAG('mecha', '#e2e8f0'); } },
-    { id: 'ink', two: true, n: '墨韻武俠', d: '毛筆寫的黑墨數字，暈開淡淡的墨色後散去；爆擊變朱紅色，旁邊蓋一個「爆」字印章。', price: 5000000, fam: 'ink', css: function (s, c) {
-      return s + '{font-family:"afkdmg-ink",serif!important;color:#111!important;-webkit-text-stroke:0!important;text-shadow:0 0 2px #fff,0 0 4px #fff,0 0 8px #fafaf9,0 0 14px #d6d3d1!important;animation-name:dmgfInk!important}'
-        + CC('ink') + '{color:#b91c1c!important}'
+    { id: 'comic', two: true, n: '漫畫爆擊', d: '美式漫畫的粗體字，檸檬黃到橘的漸層、粗黑框、微微歪斜，砰一下彈出；爆擊變粉紅到洋紅、後面爆出放射狀的對話框。', price: 5000000, fam: 'comic', css: function (s, c) {
+      return s + '{font-family:"afkdmg-comic",sans-serif!important;' + GRAD('linear-gradient(#fffbb0,#ffe100 40%,#ffa600 75%,#ff6b35)') + '-webkit-text-stroke:0!important;text-shadow:none!important;filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(1px 1px 0 #000) drop-shadow(3px 3px 0 #000);letter-spacing:1px;animation-name:dmgfComic!important}'
+        + 'body.dmgf-comic #vfx-layer .vfx-dmg.vfx-critical,.dmgf-pv.dmgf-comic .vfx-dmg.vfx-critical{padding:12px 26px;background:radial-gradient(ellipse closest-side,#fff 0 62%,#000 64% 70%,transparent 72%),repeating-conic-gradient(#ffd600cc 0 6deg,transparent 6deg 18deg)!important;background-size:100% 100%,100% 100%!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;border-radius:50%;filter:none}'
+        + CC('comic') + '{' + GRAD('linear-gradient(#ffb3d1,#ff2d55 45%,#d6006b 75%,#8b5cf6)') + '-webkit-text-stroke:0!important;filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(2px 2px 0 #000)}' + TAG('comic', '#ff2d55'); } },
+    { id: 'mecha', two: true, n: '機甲終端', d: '白到冰藍漸層的科技字，從側邊滑出、帶一點殘影；分三級漸層：重擊黃橘、爆擊橘粉、超大爆擊紅紫。', price: 5000000, fam: 'mecha', css: function (s, c) {
+      return s + '{font-family:"afkdmg-mecha",sans-serif!important;' + GRAD('linear-gradient(#ffffff,#e2e8f0 40%,#7dd3fc 75%,#a5b4fc)') + '-webkit-text-stroke:0!important;text-shadow:none!important;filter:drop-shadow(1px 1px 0 #000) drop-shadow(-3px 0 2px #38bdf855);letter-spacing:1px;animation-name:dmgfSlide!important}'
+        + 'body.dmgf-mecha #vfx-layer .vfx-dmg.vfx-heavy .vfx-dmg-value,.dmgf-pv.dmgf-mecha .vfx-dmg.vfx-heavy .vfx-dmg-value' + '{' + GRAD('linear-gradient(#fef9c3,#facc15 45%,#f97316)') + '}'
+        + CC('mecha') + '{' + GRAD('linear-gradient(#fed7aa,#fb923c 45%,#f43f5e 85%)') + '}'
+        + 'body.dmgf-mecha #vfx-layer .vfx-dmg.vfx-critical.dmgf-t3 .vfx-dmg-value,.dmgf-pv.dmgf-mecha .vfx-dmg.vfx-critical.dmgf-t3 .vfx-dmg-value' + '{' + GRAD('linear-gradient(#fecaca,#ef4444 45%,#a21caf 85%)') + 'filter:drop-shadow(0 0 6px #ef4444)}' + TAG('mecha', '#e2e8f0'); } },
+    { id: 'ink', two: true, n: '墨韻武俠', d: '毛筆寫的數字，墨色從靛紫、墨黑暈到青綠，暈開淡淡的墨色後散去；爆擊變朱紅到深紅，旁邊蓋一個「爆」字印章。', price: 5000000, fam: 'ink', css: function (s, c) {
+      return s + '{font-family:"afkdmg-ink",serif!important;' + GRAD('linear-gradient(160deg,#4c1d95,#111827 45%,#065f46 85%)') + '-webkit-text-stroke:0!important;text-shadow:none!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #fff) drop-shadow(0 0 8px #d6d3d1);animation-name:dmgfInk!important}'
+        + CC('ink') + '{' + GRAD('linear-gradient(160deg,#f87171,#dc2626 40%,#991b1b 75%,#7c2d12)') + '}'
         + 'body.dmgf-ink #vfx-layer .vfx-dmg.vfx-critical::after,.dmgf-pv.dmgf-ink .vfx-dmg.vfx-critical::after{content:"爆";position:absolute;right:-24px;top:-6px;font-family:"afkdmg-ink",serif;font-size:.55em;line-height:1;color:#fff;-webkit-text-fill-color:#fff;background:#b91c1c;padding:3px;border-radius:3px;transform:rotate(12deg);text-shadow:none;box-shadow:0 0 0 2px #7f1d1d}'
         + 'body.dmgf-ink #vfx-layer .vfx-dmg.vfx-critical .vfx-dmg-tag,.dmgf-pv.dmgf-ink .vfx-dmg.vfx-critical .vfx-dmg-tag{display:none}' + TAG('ink', '#44403c'); } },
-    { id: 'element', two: true, n: '元素共鳴', d: '圓胖的粗體字，顏色跟著屬性走：火橘、水藍、風綠、地黃、魔法紫、無屬性白；爆擊外圈發白光。', price: 5000000, fam: 'element', css: function (s, c) {
-      var E = { fire: '#ff8a3d', water: '#38bdf8', wind: '#4ade80', earth: '#facc15', magic: '#c084fc', normal: '#f8fafc' };
-      var t = s + '{font-family:"afkdmg-element",sans-serif!important;-webkit-text-stroke:2px #1e1b2e!important;text-shadow:0 2px 0 #1e1b2e!important;animation-name:dmgfPop!important}';
-      Object.keys(E).forEach(function (k) { t += 'body.dmgf-element #vfx-layer .vfx-dmg.dmgf-e-' + k + ',body.dmgf-element #vfx-layer .vfx-dmg.dmgf-e-' + k + ' .vfx-dmg-value,.dmgf-pv.dmgf-element .vfx-dmg.dmgf-e-' + k + ',.dmgf-pv.dmgf-element .vfx-dmg.dmgf-e-' + k + ' .vfx-dmg-value{color:' + E[k] + '!important}'; });
+    { id: 'element', two: true, n: '元素共鳴', d: '圓胖的粗體字，漸層顏色跟著屬性走：火（金橘紅）、水（冰藍靛）、風（嫩綠青）、地（金黃琥珀）、魔法（粉紫藍）、無屬性（白銀紫）；爆擊外圈發白光。', price: 5000000, fam: 'element', css: function (s, c) {
+      var E = { fire: '#ffe08a,#ff8a3d 45%,#ff3d3d', water: '#e0f7ff,#38bdf8 45%,#6366f1', wind: '#eaffd0,#4ade80 45%,#14b8a6', earth: '#fff3b0,#facc15 45%,#d97706', magic: '#fbcfe8,#c084fc 45%,#6366f1', normal: '#ffffff,#e2e8f0 45%,#c4b5fd' };
+      var t = s + '{font-family:"afkdmg-element",sans-serif!important;-webkit-text-stroke:2px #1e1b2e!important;text-shadow:none!important;filter:drop-shadow(0 2px 0 #1e1b2e);animation-name:dmgfPop!important}';
+      Object.keys(E).forEach(function (k) { t += 'body.dmgf-element #vfx-layer .vfx-dmg.dmgf-e-' + k + ',body.dmgf-element #vfx-layer .vfx-dmg.dmgf-e-' + k + ' .vfx-dmg-value,.dmgf-pv.dmgf-element .vfx-dmg.dmgf-e-' + k + ',.dmgf-pv.dmgf-element .vfx-dmg.dmgf-e-' + k + ' .vfx-dmg-value{' + GRAD('linear-gradient(' + E[k] + ')') + '}'; });
       return t + c + '{filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 8px #fff8)}' + TAG('element', '#fff'); } },
-    { id: 'royal', two: true, n: '王者金字', d: '超粗的金屬金字，重重落下、震一下；爆擊變得巨大，後面炸開一圈金光。', price: 5000000, fam: 'royal', css: function (s, c) {
-      return s + '{font-family:"afkdmg-royal",sans-serif!important;' + GRAD('linear-gradient(#fffbea,#fde68a 30%,#d4a017 55%,#8a5a00 80%,#fcd34d)') + '-webkit-text-stroke:1.5px #3b2300!important;text-shadow:none!important;filter:drop-shadow(0 2px 1px #000);animation-name:dmgfSlam!important}'
+    { id: 'royal', two: true, n: '王者金字', d: '超粗的金屬字，香檳金、琥珀、玫瑰粉到淡紫的漸層，重重落下、震一下；爆擊變得巨大，後面炸開一圈金光。', price: 5000000, fam: 'royal', css: function (s, c) {
+      return s + '{font-family:"afkdmg-royal",sans-serif!important;' + GRAD('linear-gradient(#fffbea,#fde68a 25%,#f59e0b 50%,#f472b6 78%,#a78bfa)') + '-webkit-text-stroke:1.5px #3b2300!important;text-shadow:none!important;filter:drop-shadow(0 2px 1px #000);animation-name:dmgfSlam!important}'
         + 'body.dmgf-royal #vfx-layer .vfx-dmg.vfx-critical,.dmgf-pv.dmgf-royal .vfx-dmg.vfx-critical{font-size:40px!important;filter:drop-shadow(0 0 10px #fbbf24) drop-shadow(0 0 3px #fff7)}'
-        + c + '{' + GRAD('linear-gradient(#fff,#fef08a 25%,#f59e0b 60%,#b45309)') + '}' + TAG('royal', '#fde68a'); } },
-    { id: 'arcade', two: true, n: '街機連段', d: '方正的街機字，白字紅黑雙層框；連續打中會在下面數「12 HITS」；爆擊變黃色。', price: 5000000, fam: 'arcade', css: function (s, c) {
-      return s + '{font-family:"afkdmg-arcade",sans-serif!important;color:#fff!important;-webkit-text-stroke:1.5px #b91c1c!important;text-shadow:2px 2px 0 #000,-1px -1px 0 #000!important;animation-name:dmgfRise!important}'
-        + c + '{color:#ffe600!important}'
-        + '.dmgf-hits{display:none}body.dmgf-arcade #vfx-layer .dmgf-hits,.dmgf-pv.dmgf-arcade .dmgf-hits{display:block;font-size:.5em;color:#ffe600;-webkit-text-fill-color:#ffe600;-webkit-text-stroke:1px #000;letter-spacing:1px;text-align:center}' + TAG('arcade', '#fff'); } },
-    { id: 'neon', two: true, n: '霓虹賽博', d: '青色的霓虹燈字，有一點故障般的抖動；爆擊變洋紅色、會閃。', price: 5000000, fam: 'neon', css: function (s, c) {
-      return s + '{font-family:"afkdmg-neon",sans-serif!important;color:#e0fbff!important;-webkit-text-stroke:0!important;text-shadow:0 0 2px #fff,0 0 6px #22d3ee,0 0 12px #06b6d4,2px 0 0 #f0f5,-2px 0 0 #0ff5!important;animation-name:dmgfGlitch!important}'
-        + c + '{color:#ffe0fb!important;text-shadow:0 0 2px #fff,0 0 8px #e879f9,0 0 16px #d946ef!important;animation:dmgfFlicker .14s steps(2) 6}' + TAG('neon', '#a5f3fc'); } },
-    { id: 'tier', two: true, n: '暗黑分級', d: '碑文體字，用顏色分傷害等級：一般白、重擊藍、爆擊黃、超大爆擊橘。', price: 5000000, fam: 'inferno', css: function (s, c) {
-      return s + '{font-family:"afkdmg-inferno",serif!important;color:#f5f5f4!important;-webkit-text-stroke:1px #000!important;text-shadow:0 2px 3px #000!important;letter-spacing:1px}'
-        + 'body.dmgf-tier #vfx-layer .vfx-dmg.vfx-heavy .vfx-dmg-value,.dmgf-pv.dmgf-tier .vfx-dmg.vfx-heavy .vfx-dmg-value{color:#60a5fa!important}'
-        + CC('tier') + '{color:#facc15!important}'
-        + 'body.dmgf-tier #vfx-layer .vfx-dmg.vfx-critical.dmgf-t3 .vfx-dmg-value,.dmgf-pv.dmgf-tier .vfx-dmg.vfx-critical.dmgf-t3 .vfx-dmg-value{color:#fb923c!important;text-shadow:0 0 8px #ea580c,0 2px 3px #000!important}' + TAG('tier', '#e7e5e4'); } }
+        + c + '{' + GRAD('linear-gradient(#ffffff,#fef08a 20%,#fb923c 45%,#f43f5e 70%,#8b5cf6)') + '}' + TAG('royal', '#fde68a'); } },
+    { id: 'arcade', two: true, n: '街機連段', d: '方正的街機字，白、黃、橘紅到桃紅的漸層，紅黑雙層框；連續打中會在下面數「12 HITS」；爆擊變黃到青的漸層。', price: 5000000, fam: 'arcade', css: function (s, c) {
+      return s + '{font-family:"afkdmg-arcade",sans-serif!important;' + GRAD('linear-gradient(#ffffff,#ffe14d 40%,#ff6b6b 70%,#ff3cac)') + '-webkit-text-stroke:1.5px #b91c1c!important;text-shadow:none!important;filter:drop-shadow(2px 2px 0 #000) drop-shadow(-1px -1px 0 #000);animation-name:dmgfRise!important}'
+        + c + '{' + GRAD('linear-gradient(#fff8b0,#ffe600 40%,#7cff6b 70%,#00e5ff)') + '}'
+        + '.dmgf-hits{display:none}body.dmgf-arcade #vfx-layer .dmgf-hits,.dmgf-pv.dmgf-arcade .dmgf-hits{display:block;font-size:.5em;color:#ffe600;-webkit-text-fill-color:#ffe600;-webkit-text-stroke:1px #000;letter-spacing:1px;text-align:center}' + TAG('arcade', '#ffe600'); } },
+    { id: 'neon', two: true, n: '霓虹賽博', d: '霓虹燈字，青、藍紫到粉紫的漸層，有一點故障般的抖動；爆擊變粉紫到青的漸層、會閃。', price: 5000000, fam: 'neon', css: function (s, c) {
+      return s + '{font-family:"afkdmg-neon",sans-serif!important;' + GRAD('linear-gradient(100deg,#e0fbff,#67e8f9 35%,#a78bfa 70%,#f0abfc)') + '-webkit-text-stroke:0!important;text-shadow:none!important;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #22d3ee) drop-shadow(0 0 10px #a855f7);animation-name:dmgfGlitch!important}'
+        + c + '{' + GRAD('linear-gradient(100deg,#ffffff,#f0abfc 30%,#e879f9 60%,#22d3ee)') + 'filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 8px #e879f9) drop-shadow(0 0 16px #d946ef);animation:dmgfFlicker .14s steps(2) 6}' + TAG('neon', '#a5f3fc'); } },
+    { id: 'tier', two: true, n: '暗黑分級', d: '碑文體字，用漸層顏色分傷害等級：一般銀白、重擊天藍到靛、爆擊金黃到琥珀、超大爆擊橘到紅。', price: 5000000, fam: 'inferno', css: function (s, c) {
+      return s + '{font-family:"afkdmg-inferno",serif!important;' + GRAD('linear-gradient(#ffffff,#e0e7ff 50%,#c7d2fe)') + '-webkit-text-stroke:0!important;text-shadow:none!important;filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 2px 3px #000);letter-spacing:1px}'
+        + 'body.dmgf-tier #vfx-layer .vfx-dmg.vfx-heavy .vfx-dmg-value,.dmgf-pv.dmgf-tier .vfx-dmg.vfx-heavy .vfx-dmg-value' + '{' + GRAD('linear-gradient(#dbeafe,#60a5fa 45%,#6366f1)') + '}'
+        + CC('tier') + '{' + GRAD('linear-gradient(#fef9c3,#facc15 45%,#f59e0b)') + '}'
+        + 'body.dmgf-tier #vfx-layer .vfx-dmg.vfx-critical.dmgf-t3 .vfx-dmg-value,.dmgf-pv.dmgf-tier .vfx-dmg.vfx-critical.dmgf-t3 .vfx-dmg-value' + '{' + GRAD('linear-gradient(#fed7aa,#fb923c 45%,#ef4444)') + 'filter:drop-shadow(0 0 8px #ea580c)}' + TAG('tier', '#e7e5e4'); } }
   ];
   var FBY = {}; FONTS.forEach(function (f) { FBY[f.id] = f; });
 
