@@ -249,6 +249,8 @@
   Object.keys(old).forEach(function (k) { admin[k] = old[k]; });
   admin.unlock = function (pw) { unlocked = dg(SALT + String(pw == null ? '' : pw)) === PWH; return unlocked; };
   admin.lock = function () { unlocked = false; return true; };
+  // 11-17（Ping）：放行匯入一次——10 分鐘內的下一次「匯入進度」不擋舊進度（只限這台裝置上目前沒有的角色）
+  admin.allowImport = function () { if (!unlocked) return false; try { localStorage.setItem('lineage_import_allow_once', String(Date.now() + 600000)); } catch (e) { return false; } adminLog.push({ t: Date.now(), a: 'allowImport' }); return '已放行：10 分鐘內的下一次匯入不會被「舊進度」擋下（只放行一次）'; };
   admin.quarantine = function () { if (!unlocked) return []; var p = P(); return p ? store(p).q.map(function (x, i) { var d = DB.items[x.it.id]; return i + ': ' + (d ? d.n : x.it.id) + '（' + x.why + '）'; }) : []; };
   admin.restore = function (i) { if (!unlocked) return false; var p = P(); if (!p) return false; var a = store(p), x = a.q[i]; if (!x) return false; a.q.splice(i, 1); a.seen[x.it.uid] = costOf(x.it); p.inv.push(x.it); try { updateUI(); } catch (e) {} return true; };
   admin.playHours = function () { var p = P(); return p ? Math.round(hours(p) * 100) / 100 : 0; };

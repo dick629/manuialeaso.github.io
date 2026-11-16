@@ -149,6 +149,7 @@
       var act = t.getAttribute('data-hb');
       if (act === 'join') join();
       else if (act === 'leave') leave();
+      else if (act === 'diag') { if (typeof W.__afkDiagReport !== 'function') return; if (!confirm('把這個角色目前的狀態摘要（等級、裝備強化、面板數值、所在地圖、最近打怪的命中與傷害）送給管理員，用來查問題。不會送整份存檔。確定送出？')) return; t.disabled = true; W.__afkDiagReport().then(function (r) { st.err = ''; alert(r || '已送出，謝謝！'); }).catch(function (er) { st.err = '回報失敗：' + (er && er.message || er); paint(); }).then(function () { t.disabled = false; }); }
       else if (act === 'send') { var inp = document.getElementById('afk-hb-input'); var v = inp && inp.value.trim(); if (v) say(v); }
       else if (act === 'cfg') { st.cfg = !st.cfg; paint(); }
       else if (act === 'save') { var u = (document.getElementById('afk-hb-url') || {}).value || ''; u = u.trim(); if (u && !/^https:\/\/|^http:\/\/(localhost|127\.0\.0\.1)/.test(u)) { st.err = '網址要以 https:// 開頭。'; paint(); return; } set(K.api, u || null); set(K.id, null); st.cfg = false; st.msgs = []; st.lastId = 0; st.err = ''; startBeat(); if (u) feed(); paint(); }
@@ -196,7 +197,7 @@
       + '<div class="afk-hb-side"><h5>在線旅人</h5>' + (st.roster.length ? st.roster.map(function (r) { var c = CLS[r.cls] || ['', '#ddd8d2']; return '<div class="afk-hb-who"><span style="color:' + c[1] + '">' + esc(r.name) + '</span><em>Lv' + esc(r.lv) + '</em></div>'; }).join('') : '<div class="afk-hb-who" style="color:#7d756b">（等待心跳）</div>') + '</div></div>'
       + err
       + '<div class="afk-hb-foot"><input id="afk-hb-input" maxlength="80" autocomplete="off" placeholder="對旅人們說…（Enter 送出，最多 80 字）"><button type="button" class="go" data-hb="send"' + (st.sending ? ' disabled' : '') + '>送出</button>'
-      + '<button type="button" class="sub" data-hb="leave" title="不出現在名冊、不送心跳">隱身</button>' + (admin() ? '<button type="button" class="sub" data-hb="cfg">伺服器設定</button>' : '') + '</div>';
+      + '<button type="button" class="sub" data-hb="leave" title="不出現在名冊、不送心跳">隱身</button>' + (typeof W.__afkDiagReport === 'function' ? '<button type="button" class="sub" data-hb="diag" title="把角色狀態摘要送給管理員查問題">📮 回報狀態</button>' : '') + (admin() ? '<button type="button" class="sub" data-hb="cfg">伺服器設定</button>' : '') + '</div>';
     var inp = document.getElementById('afk-hb-input'); if (inp) { inp.value = draft; if (focus) inp.focus(); }
     var lg = document.getElementById('afk-hb-log'); if (lg && (scroll || atBottom)) lg.scrollTop = lg.scrollHeight;
   }

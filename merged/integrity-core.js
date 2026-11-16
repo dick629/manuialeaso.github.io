@@ -40,13 +40,15 @@
   const prevDup=dupIds(before),base=absorb(l,before,{tolerateInvalid:true,allowDup:true}),after={...before};for(const c of changes){if((own(before,c.key)?before[c.key]:null)!==c.before)fail('資料已變更，請重新操作');if(c.after===null)delete after[c.key];else after[c.key]=c.after;}
   const rb=roles(before,true,true),ra=roles(after,false,prevDup),okKeys=new Set(Object.values(rb).map(x=>x.key)),bad=new Set(B.roleKeys(before).filter(k=>!okKeys.has(k)));
   const last=id=>Math.max(own(rb,id)?saveSeq(rb[id].p):0,dict(base.seq)?Number(base.seq[id])||0:0);
-  if(kind==='import')for(const [id,{p}] of Object.entries(ra))if(!own(rb,id)&&own(base.seen,id)&&!(saveSeq(p)>last(id)))fail('這個角色曾經在這台裝置上出現過，而這份存檔不比上次的進度新；為了防止重複匯入舊裝備，只能匯入比較新的進度（請在原本的裝置上繼續玩、存檔後再匯出）');
+  // 11-17 管理員放行：LineageAdmin.allowImport() 後 10 分鐘內的下一次匯入，不擋「舊進度」（只放行這台裝置上目前沒有的角色）
+  let allowOnce=false;if(kind==='import'){try{const v=Number(localStorage.getItem('lineage_import_allow_once'))||0;if(v>Date.now()){allowOnce=true;localStorage.removeItem('lineage_import_allow_once');}}catch(e){}}
+  if(kind==='import'&&!allowOnce)for(const [id,{p}] of Object.entries(ra))if(!own(rb,id)&&own(base.seen,id)&&!(saveSeq(p)>last(id)))fail('這個角色曾經在這台裝置上出現過，而這份存檔不比上次的進度新；為了防止重複匯入舊裝備，只能匯入比較新的進度（請在原本的裝置上繼續玩、存檔後再匯出）');
   // 11-11 21:37 同一個角色讀回自己的舊存檔（覆蓋原位置）：角色名單必須完全不變；封魂、魂魄消耗、職業路線照樣由 absorb 擋
   // 11-12 女神挑戰紀錄點（checkpoint）同樣只能是同一個角色
   if(kind==='reload'||kind==='checkpoint'){const b=Object.keys(rb).sort().join('\n'),a2=Object.keys(ra).sort().join('\n');if(b!==a2)fail('只能讀回同一個角色自己的舊存檔');}
   // 11-12 讀舊檔＝重：任何寫入（匯入、讀回、還原、修復）都不能讓角色的存檔序號倒退；
   //   例外：女神挑戰紀錄點、目前那份存檔已經壞掉讀不出來（只能靠備份救回）
-  if(kind!=='checkpoint')for(const [id,{key,p}] of Object.entries(ra)){if(bad.has(key))continue;const n=last(id);if(saveSeq(p)<n)fail('不能讀回比較舊的進度（這份存檔第 '+saveSeq(p)+' 次存檔，這台裝置上已經到第 '+n+' 次）。女神戰打輸請用「回到挑戰前」。');}
+  if(kind!=='checkpoint')for(const [id,{key,p}] of Object.entries(ra)){if(bad.has(key))continue;if(allowOnce&&!own(rb,id))continue;const n=last(id);if(saveSeq(p)<n)fail('不能讀回比較舊的進度（這份存檔第 '+saveSeq(p)+' 次存檔，這台裝置上已經到第 '+n+' 次）。女神戰打輸請用「回到挑戰前」。');}
   // 11-12 帳本跟著存檔移動：把存檔帶來的帳本摘要（其他角色的序號、已消耗的角色）併進這台裝置的帳本
   const seeds=new Set(Object.values(ra).map(x=>seed(x.p)));
   for(const [id,{p}] of Object.entries(ra)){const a=p&&p._acct;if(!dict(a))continue;

@@ -16,10 +16,13 @@
   var on = function () { var p = P(); return (!T || T.enabled('bosslines')) && !!p && !p.classicMode; };
   var S = function () { return (typeof state !== 'undefined' && state) ? state : {}; };
   var D = W.__afkBossLinesData || { lines: {}, ids: {}, stages: [] };
+  // 11-17（Ping「分段讀取」）：台詞資料 290KB 不擋開遊戲——頁面載入完 3 秒後才在背景載入（afk-lazy 的 bosslines）；載入前頭目不說話
+  if (!W.__afkBossLinesData) W.addEventListener('load', function () { setTimeout(function () { try { if (!W.__afkBossLinesData && W.__afkLazy && W.__afkLazy.SRC && W.__afkLazy.SRC.bosslines) W.__afkLazy.load('bosslines'); } catch (e) {} }, 3000); });
   var extra = {};
   // 名字 → key；多階段頭目（四龍副本的最終龍、九尾狐）記下第一與最後階段的名字：登場只在第一階段說、倒下只在最後階段說，半血／四分之一同一場只說一次
   var NAMES = null, FIRST = {}, LAST = {}, STAGEKEY = {};
   var names = function () {
+    if (W.__afkBossLinesData && D !== W.__afkBossLinesData) { D = W.__afkBossLinesData; NAMES = null; FIRST = {}; LAST = {}; STAGEKEY = {}; }   // 11-17：台詞資料改成開遊戲後才載入
     if (NAMES) return NAMES;
     NAMES = {};
     try {
@@ -49,7 +52,8 @@
   var linesOf = function (m) {
     if (!m || !m.n) return null;
     if (extra[m.n]) return extra[m.n];
-    return (D.lines && D.lines[keyOf(m.n)]) || null;
+    var k = keyOf(m.n);
+    return (D.lines && D.lines[k]) || null;
   };
   var isBoss = function (m) { return !!(m && typeof m === 'object' && (m.boss || m._afkTrLayer || m._bossLines) && m.race !== '建築' && !m.trollPlayer && !m._pvpDuelFoe && !m.siegeEnemy); };
   var quiet = function () { var s = S(); return !!(s.ff || (typeof catchupActive === 'function' && catchupActive())); };
@@ -108,6 +112,6 @@
   W.__afkBossLines = {
     add: function (name, l) { if (name && l) extra[name] = l; },
     get: linesOf, scan: scan, data: function () { return D; },
-    count: function () { return Object.keys(D.lines || {}).length + Object.keys(extra).length; }
+    count: function () { names(); return Object.keys(D.lines || {}).length + Object.keys(extra).length; }
   };
 })();

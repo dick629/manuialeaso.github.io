@@ -137,7 +137,7 @@ function _sumDerive(mob, owner) {
     const mean = (squadDps / designCount) * (m.aspd / 10);
     const flat = Math.round(mean * 0.55);
     const dice = Math.max(1, Math.round((mean - flat) * 2));
-    const mastery = (owner.mastery === 'm_summon');   // 🧙 召喚精通沿用：傷害×1.2、命中+5
+    const mastery = ((typeof _afkM === 'function' ? _afkM(owner, 'm_summon') : owner.mastery === 'm_summon'));   // 🧙 召喚精通沿用：傷害×1.2、命中+5
     return {
         flat, dice, aspd: m.aspd,
         dmgMult: (mastery ? 1.2 : 1) * (1 + Math.min(12, Math.max(0, ((owner.d && owner.d.magicDmg) || 0) + _sumOwnerMdBonus(owner))) / 80),   // 🏺 v3.7.20 +summonMdmg
@@ -174,7 +174,7 @@ function _zmbDerive(s, owner) {
     const mean = dps * (ZOMBIE_ASPD / 10);
     const flat = Math.round(mean * 0.55);
     const dice = Math.max(1, Math.round((mean - flat) * 2));
-    const mastery = (owner.mastery === 'm_summon');   // 🧙 召喚精通沿用：造屍術隨從傷害×1.2、命中+5
+    const mastery = ((typeof _afkM === 'function' ? _afkM(owner, 'm_summon') : owner.mastery === 'm_summon'));   // 🧙 召喚精通沿用：造屍術隨從傷害×1.2、命中+5
     return {
         flat, dice, aspd: ZOMBIE_ASPD,
         dmgMult: (mastery ? 1.2 : 1) * (1 + Math.min(12, Math.max(0, ((owner.d && owner.d.magicDmg) || 0) + _sumOwnerMdBonus(owner))) / 80),   // 🏺 v3.7.20 +summonMdmg
@@ -255,7 +255,7 @@ function _necroSkeletonDerive(s, owner) {
     let mean = Math.max(1, dps * (NECRO_SKELETON_ASPD / 10));
     let flat = Math.round(mean * 0.55);
     let dice = Math.max(1, Math.round((mean - flat) * 2 - 1));
-    let mastery = owner && owner.mastery === 'm_summon';
+    let mastery = owner && (typeof _afkM === 'function' ? _afkM(owner, 'm_summon') : owner.mastery === 'm_summon');
     return {
         flat: flat, dice: dice, aspd: NECRO_SKELETON_ASPD, dmgMult: 1,
         hit: _sumScaledHit(tier.lv, Math.max(0, NECRO_SKELETON_TIERS.indexOf(tier)), mastery, owner) + NECRO_SKELETON_HIT_BONUS,

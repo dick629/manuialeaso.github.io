@@ -198,7 +198,7 @@
     store().cd[r] = Date.now() + CD_MS; store().gap = Date.now() + GAP_MS; stat(r).met++;
     try { if (typeof vfxBossEntrance === 'function' && !S().ff) vfxBossEntrance(mob); } catch (e) {}
     try { if (!S().ff) renderMobs(); } catch (e) {}
-    sys('<span class="font-bold" style="color:#fcd34d;text-shadow:0 0 8px #000">👑 ' + esc(b.label) + '的霸主「' + esc(b.n) + '」出現了！</span><span class="text-slate-300">（Lv' + Lv + '，' + b.mech.map(function (k) { return MECH_N[k]; }).join('、') + '；5 分鐘內打倒，換地圖它就回巢穴）</span>');
+    sys('<span class="font-bold" style="color:#fcd34d;text-shadow:0 0 8px #000">👑 ' + esc(b.label) + '的霸主「' + esc(b.n) + '」出現了！</span><span class="text-slate-300">（Lv' + Lv + '，' + (dreamUp() ? b.mech.map(function (k) { return MECH_N[k]; }).join('、') + '；' : '') + '5 分鐘內打倒，換地圖它就回巢穴）</span>');
     if (swarm) sys('<span class="font-bold" style="color:#fcd34d;text-shadow:0 0 8px #000">👑 霸主群！場上 ' + (swarm + 1) + ' 隻都是「' + esc(b.n) + '」！</span>');
     badge();
     return true;
@@ -227,7 +227,9 @@
   }
 
   // ── 招式 ──
-  var has = function (k) { return BY[act.r].mech.indexOf(k) >= 0; };
+  // 11-17（Ping）：地區霸主的招式只在夢域鏡以上（次元裂縫開著時夢域鏡也開著）
+  var dreamUp = function () { try { return !!((W.__afkDreamHell && W.__afkDreamHell.on && W.__afkDreamHell.on()) || (W.__afkDimRiftOn && W.__afkDimRiftOn())); } catch (e) { return false; } };
+  var has = function (k) { if (!dreamUp()) return false; return BY[act.r].mech.indexOf(k) >= 0; };
   var skills = function (m) {
     var t = tk(), b = BY[act.r];
     if (L.boss.halted(m)) { ['summonAt', 'quakeAt', 'regenAt', 'shieldAt'].forEach(function (k) { act[k]++; }); return; }

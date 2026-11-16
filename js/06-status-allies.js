@@ -903,7 +903,7 @@ function allyQiguAttack(ally, t, wpn) {
     if (typeof window.__afkQiguFlat === 'function') raw = window.__afkQiguFlat(raw, ally, wpn, t, ele);   /* 🔌 加掛版補丁:奇古獸額外傷害 */
     if(window.AFK_RELIC_WEAPON_BRIDGE)raw*=window.AFK_RELIC_WEAPON_BRIDGE.qiguCritMult(ally,t,wpn);
     let effMr = /* relic-weapon-bridge:qigu-critical-allyQiguAttack */ (t.st && t.st.mrhalf > 0) ? (t.mr / 2) : t.mr;
-    let ignoreMr = (ally.mastery === 'i_qigu' && wpn.qigu);
+    let ignoreMr = ((typeof _afkM === 'function' ? _afkM(ally, 'i_qigu') : ally.mastery === 'i_qigu') && wpn.qigu);
     let dmg = Math.max(1,Math.floor(raw*(ignoreMr?1:mrMult(window.AFK_RELIC_WEAPON_BRIDGE?window.AFK_RELIC_WEAPON_BRIDGE.spellMr(ally,wpn,'@qigu',effMr):effMr)))); /* relic-weapon-bridge:qigu-true-mr-allyQiguAttack */
     dmg = Math.max(1, Math.floor(dmg * wpnEnFinalMult(ally.eq.wpn)));
     dmg = Math.max(1, Math.floor(dmg * allyRlFuryMult(ally)));   // 🔴😡 v2.6.18 紅獅5×狂怒5造傷（奇古獸·原僅紅獅字面）
@@ -943,7 +943,7 @@ function allyAttackOnce(ally, _arrowDelay) {   // 🏹 v3.2.14 _arrowDelay(選�
     // 🔮 幻術士傭兵 奇古獸攻擊（公式同玩家，用傭兵自身衍生值；裝奇古獸或魔劍精通）
     if (ally.cls === 'illusion') {
         let _qw = (ally.eq && ally.eq.wpn) ? DB.items[ally.eq.wpn.id] : null;
-        if (_qw && !_qw.isBow && (_qw.qigu || (ally.mastery === 'i_magicsword' && !isWandWeapon(_qw)))) { allyQiguAttack(ally, t, _qw); return; }   // 🔮 魔劍精通：排除魔杖
+        if (_qw && !_qw.isBow && (_qw.qigu || ((typeof _afkM === 'function' ? _afkM(ally, 'i_magicsword') : ally.mastery === 'i_magicsword') && !isWandWeapon(_qw)))) { allyQiguAttack(ally, t, _qw); return; }   // 🔮 魔劍精通：排除魔杖
     }
     if (ally.cls === 'mage') {
         let effMr = (t.st && t.st.mrhalf > 0) ? (t.mr / 2) : t.mr;
@@ -2908,7 +2908,7 @@ function allyMaintainBuffs(ally) {
             if (sk.reqWpnMelee && (!w || w.isBow || w.ranged)) continue;
             if (sk.reqWpnBlunt && (!ally.eq.wpn || !(getWeaponTags(ally.eq.wpn.id).includes('單手鈍器') || getWeaponTags(ally.eq.wpn.id).includes('雙手鈍器')))) continue;
             if (sk.reqShield && !ally.eq.shield && !(ally.eq.wpn && getWeaponTags(ally.eq.wpn.id).includes('武士刀'))) continue;
-            if (sk.awaken && ally.mastery !== 'k_awaken' && _MERC_AWAKENS.some(a => (ally.buffs[a] || 0) > 0)) continue;   // 覺醒互斥（覺醒精通可同時三種）
+            if (sk.awaken && !(typeof _afkM === 'function' ? _afkM(ally, 'k_awaken') : ally.mastery === 'k_awaken') && _MERC_AWAKENS.some(a => (ally.buffs[a] || 0) > 0)) continue;   // 覺醒互斥（覺醒精通可同時三種）
             if (sk.haste && ((ally.buffs.haste || 0) > 0 || ally._equipHaste)) continue;
             let cost = (ally.d && typeof ally.d.getMpCost === 'function') ? ally.d.getMpCost(sk.mp, sk.tier) : (sk.mp || 0);
             if (ally._setIllusion3 && isSupportSkill(sk)) cost = Math.max(1, Math.ceil(cost / 2));   // 🔮 v3.1.77 幻覺3/5（傭兵）：輔助技能 MP 消耗 -50%（鏡像玩家 js/07:178/311）
@@ -2919,7 +2919,7 @@ function allyMaintainBuffs(ally) {
             ally.mp -= cost; allyManaMasteryRefund(ally, cost);
             if (_hpc > 0) ally.curHp = Math.max(1, (ally.curHp || 0) - _hpc);
             ally.buffs[sid] = sk.dur;
-            if (sk.awaken && ally.mastery !== 'k_awaken') _MERC_AWAKENS.forEach(_ak => { if (_ak !== sid) ally.buffs[_ak] = 0; });
+            if (sk.awaken && !(typeof _afkM === 'function' ? _afkM(ally, 'k_awaken') : ally.mastery === 'k_awaken')) _MERC_AWAKENS.forEach(_ak => { if (_ak !== sid) ally.buffs[_ak] = 0; });
             if (sk.haste) ally.buffs.haste = Math.max(ally.buffs.haste || 0, sk.dur);
             changed = true;
         }

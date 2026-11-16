@@ -33,8 +33,17 @@
  const pick=W._petPickTarget;if(pick)W._petPickTarget=function(pet){const target=pet?._classTarget&&(mapState.mobs||[]).find(m=>m&&m.uid===pet._classTarget&&!m._dead&&m.curHp>0);return target||pick.apply(this,arguments);};
  const attack=W.playerAttack;if(attack)W.playerAttack=function(){if(B.state(player).casting)return;return attack.apply(this,arguments);};
  const cards=W.AFK_CARD_COMBAT,settle=cards.damage,born=new WeakMap();
+ // 夢域鏡的次元格擋（Ping 11-17）：大約次元裂縫的 30% 難度＝格擋率 ×0.3（頭目 30%→最低 21%，小怪 21%→最低 15%），被擋下一樣只剩 70%
+ function dreamBlock(target){
+  if(W.__afkDimRiftOn?.()||!W.__afkDreamHell?.on?.()||!target||target._isAlly||target._allyName||target.race==='建築'||player?.classicMode)return 0;
+  const tick=num(state.ticks);if(!born.has(target))born.set(target,tick);
+  const elapsed=Math.max(0,tick-born.get(target))/600;
+  const gear=AFK_RELIC_RUNTIME.sources(player).reduce((n,s)=>Math.max(n,num(s.def.dimensionBlockSuppression)),0);
+  const suppression=B.blockSuppression?B.blockSuppression(target):0;
+  return .3*Math.max(target.boss?.7:.5,(target.boss?1:.7)-Math.floor(elapsed)*.05-Math.max(gear,suppression+(W.LineageSherine?.suppression(target)||0))/100);
+ }
  function blockRate(target){
-  if(!target?._dimRift||!W.__afkDimRiftOn?.())return 0;
+  if(!target?._dimRift||!W.__afkDimRiftOn?.())return dreamBlock(target);
   const tick=num(state.ticks);if(!born.has(target))born.set(target,tick);
   const elapsed=Math.max(0,tick-born.get(target))/600;
   // GD之子的期待（能進次元裂縫的角色）：次元格擋率固定 80%，不隨時間下降；破除、裝備的壓制照算，最低 60%（Ping 11-12 17:30）

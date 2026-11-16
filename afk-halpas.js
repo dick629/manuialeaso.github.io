@@ -284,7 +284,7 @@
           var p = P(), pp = null;
           if (p.buffs && p.buffs.sk_royal_precise > 0) pp = p;
           else (p.allies || []).forEach(function (a) { if (!pp && a && !a._downed && a.buffs && a.buffs.sk_royal_precise > 0) pp = a; });
-          if (pp) { var b = (1 + (pp.lv || 1) / (pp.mastery === 'k_royal_pledge' ? 10 : 15)) / 100; r = r / (1 + b) * (1 + b / 2); }
+          if (pp) { var b = (1 + (pp.lv || 1) / ((typeof _afkM === 'function' ? _afkM(pp, 'k_royal_pledge') : pp.mastery === 'k_royal_pledge') ? 10 : 15)) / 100; r = r / (1 + b) * (1 + b / 2); }
         }
       } catch (e) {}
       return r;

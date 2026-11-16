@@ -129,7 +129,9 @@
   var pctCut = function (p) { var t = sealTier(p); return t ? [0, 0.05, 0.10, 0.15][t] : 0; };   // 刻印石徽記：侵蝕扣血 −5／−10／−15%
   var BASE = 0.5;   // 裂縫面板保留比例（Ping 11-11 12:37：50% → 60%；11-13 16:53：改回 50%）
   // 面板保留比例：GD之子的期待裡最多 75%，取回力量到 90% 也壓回 75%（Ping 11-12 17:30 80%；11-13 16:53 改 75%）
-  var panelF = function (p) { var f = BASE + recoverPct(p) / 100; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) f = Math.min(f, 0.75); } catch (e) {} return f; };
+  // 無盡的裂縫（Ping 11-17）：面板再壓 25%（取回滿 90% → 65%）
+  var endlessOn = function () { try { return !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn()); } catch (e) { return false; } };
+  var panelF = function (p) { var f = BASE + recoverPct(p) / 100; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) f = Math.min(f, 0.75); } catch (e) {} if (endlessOn()) f = Math.max(0.1, f - 0.25); return f; };
   var recoverPct = function (p) { return Math.min(40, RECOVER.reduce(function (s, x) { return s + (Number(x[1](p)) || 0); }, 0)); };
   function clearErosion(p, all) { var r = rec(p); r.ero = 0; if (all) { /* 光蝕不因回村清除 */ } }
   var members = function () { var p = P(), out = []; if (!p) return out; if (!p.dead) out.push(p); (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); }); return out; };
@@ -144,7 +146,7 @@
     members().forEach(function (x) {
       var mx = x === p ? (rec(p).hp50 || Math.floor((p.mhp || 1) / (panelF(p)) * BASE)) : (x._dimBase ? Math.floor(x._dimBase.mhp * BASE) : (x.mhp || 1));
       if (net <= 0) { var heal = Math.floor(mx * (-net) / 100); if (heal > 0) { if (x === p) p.hp = Math.min(p.mhp, p.hp + heal); else x.curHp = Math.min(x.mhp || x.curHp, x.curHp + heal); } return; }
-      var dmg = mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p)) * (W.__afkErodeCuts || []).reduce(function (m, f) { try { return m * (1 - Math.max(0, Math.min(0.9, Number(f(p, x)) || 0))); } catch (e) { return m; } }, 1);   // 黃道星卡・水瓶、七階以上娃娃（堅壁、統御）
+      var dmg = (endlessOn() ? 2 : 1) * mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p)) * (W.__afkErodeCuts || []).reduce(function (m, f) { try { return m * (1 - Math.max(0, Math.min(0.9, Number(f(p, x)) || 0))); } catch (e) { return m; } }, 1);   // 黃道星卡・水瓶、七階以上娃娃（堅壁、統御）
       if (x === p) W.__afkDrainHit = (Number(W.__afkDrainHit) || 0) + dmg;   // 聖十字之盾（禁衛軍）在裂縫只擋一部分：見 afk-castle-guards
       if (L && L.boss) L.boss.hurt(x, dmg);
     });
@@ -158,7 +160,7 @@
     var t = tk(), boss = bossOnField();
     if (boss) {
       if (!r.lightAt || t >= r.lightAt) {
-        if (r.lightAt) { r.light = Math.min(R.lightMax, (r.light || 0) + 1); clog('<span class="font-bold" style="color:#fde68a">【光蝕】</span>頭目的光落在全隊身上——光蝕 ' + r.light + ' 層（最大 HP −' + (r.light * R.lightHp) + '%、受到的治療 −' + (r.light * R.lightHeal) + '%）。'); try { calcStats(); } catch (e) {} }
+        if (r.lightAt) { r.light = Math.min(R.lightMax, (r.light || 0) + (endlessOn() ? 2 : 1)); clog('<span class="font-bold" style="color:#fde68a">【光蝕】</span>頭目的光落在全隊身上——光蝕 ' + r.light + ' 層（最大 HP −' + (r.light * R.lightHp) + '%、受到的治療 −' + (r.light * R.lightHeal) + '%）。'); try { calcStats(); } catch (e) {} }
         r.lightAt = t + R.lightEvery;
       }
       if (!r.execAt || t >= r.execAt) {
@@ -281,7 +283,7 @@
       return r;
     };
   }
-  (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) { return mob && mob._dimRift && on() ? (mob.boss ? R.bossDmg : R.mobDmg) : 1; });
+  (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) { return mob && mob._dimRift && on() ? (mob.boss ? R.bossDmg * (endlessOn() ? 2 : 1) : R.mobDmg) : 1; });   // 無盡的裂縫：王的傷害 ×2
   // 造成的傷害 −30%
   var hooked = false;
   var hookDamage = function () {

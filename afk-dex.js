@@ -837,7 +837,7 @@
     var dmg = m.dmg ? (m.dmg[0] + '~' + m.dmg[1]) : '-';
     var gold = (m.goldMin != null) ? (fmt(m.goldMin) + '~' + fmt(m.goldMax)) : '-';
     var stats = '<div class="m-dex-stats">' +
-      st('等級', m.lv) + st('屬性', ELE[m.e] || m.e || '無') + st('種族', m.race || '-') + st('行為', m.beh || '-') +
+      st('等級', m.lv) + st('屬性', ELE[m.e] || m.e || '無') + st('種族', m.race || '-') + (window.LineageMobTags ? st('標籤', window.LineageMobTags.names(m).join('、') || '-') : '') + st('行為', m.beh || '-') +
       st('HP', fmt(m.hp)) + st('攻擊', dmg) + st('命中', m.hit != null ? m.hit : '-') +
       st('AC', m.ac != null ? m.ac : '-') + st('魔防', m.mr != null ? m.mr : '-') +
       st('經驗', fmt(m.exp)) + st('金幣', gold) + '</div>';

@@ -243,7 +243,7 @@
   // ── 十七、共鳴魔擊（Ping 11-13 03:02）：法師（你與法師傭兵）有魔擊精通、拿共鳴武器時，
   //   共鳴光箭（智力÷60）與魔擊（力量÷60）各自判定、可以同時發動；任一個發動後可以再追擊一輪（兩個再各自判定），最多追擊 5 輪。
   var RESO_CHAIN = 5;
-  var resoMage = function (a, isAlly) { if (!a || a.cls !== 'mage' || a.classicMode || !hOn(a)) return false; var w = a.eq && a.eq.wpn; if (!w || typeof isResonanceWeapon !== 'function' || !isResonanceWeapon(w.id)) return false; return a.mastery === 'm_strike'; };
+  var resoMage = function (a, isAlly) { if (!a || a.cls !== 'mage' || a.classicMode || !hOn(a)) return false; var w = a.eq && a.eq.wpn; if (!w || typeof isResonanceWeapon !== 'function' || !isResonanceWeapon(w.id)) return false; return typeof _afkM === 'function' ? !!_afkM(a, 'm_strike') : a.mastery === 'm_strike'; };   // 11-17：轉生後全部專精生效
   var pickT = function (t) { if (t && t.curHp > 0 && !t._dead) return t; var al = ((typeof mapState !== 'undefined' && mapState.mobs) || []).filter(function (m) { return m && m.curHp > 0 && !m._dead; }); return al.length ? al[Math.floor(Math.random() * al.length)] : null; };
   wrapG('wandLightArrowProc', function (o) { return function (target) {
     var p = P(); if (!resoMage(p)) return o.apply(this, arguments);
