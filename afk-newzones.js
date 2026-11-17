@@ -463,10 +463,10 @@
   var give = function (id, n) { if (n > 0 && DB.items[id]) { try { gainItem(id, n, true, true); } catch (e) {} return (DB.items[id].n || id) + (n > 1 ? ' ×' + n : ''); } return ''; };
   var nzRec = function (p) { p.afkNz = p.afkNz || {}; p.afkNz.day = p.afkNz.day || {}; return p.afkNz; };
   var doneToday = function (p, d) { return nzRec(p).day[d.id] === dayKey(); };
-  var soloWhy = function (d) {
+  var soloWhy = function (d, anyTown) {
     var p = P(); if (!p) return '沒有角色';
     if (p.classicMode) return '經典模式沒有這個副本';
-    if (cur() !== d.town) return '要在' + ((DB.towns[d.town] || {}).n || '村莊');
+    if (!anyTown && cur() !== d.town) return '要在' + ((DB.towns[d.town] || {}).n || '村莊');
     if (N(p.lv) < d.lv && N(p.rebirth) < 1) return '需要等級 ' + d.lv;
     if (doneToday(p, d)) return '今天已經挑戰過了（每天一次）';
     var md = mode(); if (!md) return '要先開啟夢域鏡或次元裂縫（難度跟著目前的世界模式）';
@@ -521,6 +521,7 @@
     setTimeout(function () { var p = P(); try { if (d && cur() === d.map) { setMapSelectors(d.town); changeMap(true); } } catch (e) {} if (p) restoreAllies(p); try { saveGame(); } catch (e) {} }, 1500);
   };
   var finish = function () {
+    try { var pc = nzRec(P()); pc.clears = pc.clears || {}; pc.clears[run.id] = N(pc.clears[run.id]) + 1; } catch (e) {}   // 遠征用：通關次數
     var d = run.D, got = (d.reward ? d.reward(run) : []).filter(Boolean);
     leave('<span class="font-bold" style="color:#93c5fd">🏆 「' + esc(d.n) + '」通關。</span>' + (got.length ? '<span class="text-amber-200">得到：' + got.map(esc).join('、') + '</span>' : ''));
   };
@@ -824,5 +825,14 @@
     return h;
   };
 
-  W.__afkNewZones = { soloWhy: soloWhy, leave: leave, wiki: wiki, NZ_CARD: NZ_CARD, ZONES: ZONES, ZBY: ZBY, TOWNS: TOWNS, SOLO: SOLO, SBY: SBY, DROPS: DROPS, BOSS_DROP: BOSS_DROP, BID: BID, clone: clone, sandOpen: sandOpen, mode: mode, enter: enter, run: function () { return run; }, nemRec: nemRec, holds: holds };
+  W.__afkNewZones = { soloWhy: soloWhy, leave: leave, wiki: wiki, NZ_CARD: NZ_CARD, ZONES: ZONES, ZBY: ZBY, TOWNS: TOWNS, SOLO: SOLO, SBY: SBY, DROPS: DROPS, BOSS_DROP: BOSS_DROP, BID: BID, clone: clone, sandOpen: sandOpen, mode: mode, enter: enter, run: function () { return run; }, nemRec: nemRec,
+    // 11-17（Ping）：遠征可以付費代打單人副本（每個副本照舊每天一次、入場費照舊另付）
+    exped: {
+      check: function (id, md) { var d = SBY[id]; if (!d) return '未知副本'; var m = mode(); if (m !== md) return md === 'rift' ? '需要開啟次元裂縫模式' : '需要開啟夢域鏡模式（不是次元裂縫）'; return soloWhy(d, !/^afk_solo_/.test(String(cur() || ''))); },
+      enter: function (id) { var d = SBY[id]; enter(id, d && d.pick ? d.pick[0][0] : null); },
+      clears: function (id) { var p = P(); return p ? N(((nzRec(p).clears) || {})[id]) : 0; },
+      growthCheckpoint: function () { if (!run) return null; var c = {}; Object.keys(run).forEach(function (k) { if (k !== 'D') c[k] = run[k]; }); return JSON.parse(JSON.stringify(c)); },
+      growthRestore: function (q) { if (!q) { run = null; uniShow(); return; } var d = SBY[q.id]; if (!d || cur() !== d.map) throw Error('單人副本進度不相容，請結束本輪'); run = JSON.parse(JSON.stringify(q)); run.D = d; uniShow(); },
+      run: function () { return run; }
+    }, holds: holds };
 })();

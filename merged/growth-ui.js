@@ -1,7 +1,7 @@
 (function(W){
   'use strict';const N0=n=>Number(n)||0;
   // 11-12：遠征目的地小圖（GPT 新圖；次元裂縫副本、黃道十二宮沿用已畫好的圖）
-  const expThumb=id=>{const m=/^gr:\w+:(\w+)$/.exec(id),z=/^zd:(\w+)$/.exec(id),r=/^rd:(\w+)$/.exec(id),u=m?'assets/ui/growth-v5/exp/gr_'+m[1]+'.webp':z?'assets/icons/zodiac/zd_card_'+z[1]+'.webp':r?(r[1]==='doom'?'assets/ui/growth-v5/exp/doom.webp':'assets/ui/growth-v5/exp/rd_'+r[1]+'.webp'):'assets/ui/growth-v5/exp/'+id+'.webp';return '<i class="growth-thumb'+(z?' growth-thumb--card':'')+'" style="background-image:url(\''+u+'\')" aria-hidden="true"></i>'};
+  const expThumb=id=>{const nzm=/^nz:\w+:(\w+)$/.exec(id),nzd=nzm&&window.__afkNewZones&&window.__afkNewZones.SBY[nzm[1]];if(nzd)return '<i class="growth-thumb" style="background-image:url(\''+encodeURI(nzd.bg||'')+'\')" aria-hidden="true"></i>';const m=/^gr:\w+:(\w+)$/.exec(id),z=/^zd:(\w+)$/.exec(id),r=/^rd:(\w+)$/.exec(id),u=m?'assets/ui/growth-v5/exp/gr_'+m[1]+'.webp':z?'assets/icons/zodiac/zd_card_'+z[1]+'.webp':r?(r[1]==='doom'?'assets/ui/growth-v5/exp/doom.webp':'assets/ui/growth-v5/exp/rd_'+r[1]+'.webp'):'assets/ui/growth-v5/exp/'+id+'.webp';return '<i class="growth-thumb'+(z?' growth-thumb--card':'')+'" style="background-image:url(\''+u+'\')" aria-hidden="true"></i>'};
   const G=W.LineageGrowth,C=W.LineageGrowthCore,T=W.LineageTalentCatalog,A=W.LineageActivities,V=W.LineageGrowthViews;
   let panel=null,tab='talent',draft=null,pg=null,direction='melee',selected='melee.A.1',jobGroup='dream',inspected=null;
   const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-7f75b3556a5b",
+  "build": "merge-0.4-ac4e26d045b9",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -133,13 +133,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-awaken-wiki.js?v=3aff5b9e58bd",
-      "sha256": "3aff5b9e58bd2dd00a7dc8319150f82f071b577848a301063eb5f283b0e5826b",
+      "url": "afk-awaken-wiki.js?v=f97a331d44d6",
+      "sha256": "f97a331d44d68f702234a8283a6752aecf164f6a2ede3122f1883f2025870fd3",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-awaken.js?v=cbf4bc57c926",
-      "sha256": "cbf4bc57c9263b9f73e1c2fa63e1abe08e0a3dab1e1b2fcc704166d441785674",
+      "url": "afk-awaken.js?v=cc6e11c02a24",
+      "sha256": "cc6e11c02a2498e628ebc506d8ac37e329c4f978f1fe83955b50aeb973a10ab0",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -350,6 +350,11 @@
     {
       "url": "afk-charm.js?v=eae8db4e4153",
       "sha256": "eae8db4e4153a8116836a40e12314ae2b75f83b4d00d0196c4262262caf2c27a",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-clanadmin.js?v=2dc642f1f4fe",
+      "sha256": "2dc642f1f4fe0e254865f4c61eb2992a223c5733ad797720cdac08229a9ff8f3",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -973,8 +978,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-newzones.js?v=263340ff399c",
-      "sha256": "263340ff399c3a532f053cb5fee3e5a55cd3e1c43680979735e570545e7cf681",
+      "url": "afk-newzones.js?v=76a1325ca6e9",
+      "sha256": "76a1325ca6e9ceefbf8415818fa1b7a43eb9693230ead3283b1b169fd74b54ad",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1739,7 +1744,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "5436ca3a2a05fa177e8e866a54221da123ee63f1351e2842f50a0a248e5a23ff",
+      "sha256": "525460d9d070057e3d3c68349d7472b43d62989245c952385a9f5e2a49aa9cd0",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1908,8 +1913,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/activities.js?v=c62b60775945",
-      "sha256": "c62b6077594578fcf686771df5d989e901fc377bad70927900a9f0537e260cd0",
+      "url": "merged/activities.js?v=74ac6f1e82e7",
+      "sha256": "74ac6f1e82e74ae5e22587347d3df64042cdf4f406ce446a76a2986d222fa5e8",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2048,8 +2053,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-ui.js?v=ada7442ac005",
-      "sha256": "ada7442ac005a7790cd72a7c6129b93ba08662839f69fb86ba3737803be5a227",
+      "url": "merged/growth-ui.js?v=d2e8e0792f38",
+      "sha256": "d2e8e0792f38a89b85562d707f8e45dd9b07a2e5f3923e545a2f232a712a061f",
       "type": "text/javascript; charset=utf-8"
     },
     {

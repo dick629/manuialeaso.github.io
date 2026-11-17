@@ -7,7 +7,7 @@
   var card = function (t, body) { return '<div class="m-wiki-card"><div class="m-wiki-name">' + esc(t) + '</div>' + body + '</div>'; };
   var li = function (x) { return '<div class="m-wiki-desc" style="margin-top:4px;">・' + x + '</div>'; };
   var BASE_N = { knight: '騎士', mage: '法師', elf: '妖精', dark: '黑暗妖精', illusion: '幻術士', dragon: '龍騎士', warrior: '戰士', royal: '王族' };
-  var WEAPONS = { berserker: '雙手鈍器、雙手矛、單手鈍器、雙斧（拿這些也能帶盾）', thunder: '單手劍、單手矛、雙手矛', paladin: '單手劍、雙手劍', darkknight: '單手劍、雙手劍', runeblade: '單手劍（任何單手劍都算符石劍）' };
+  var WEAPONS = { berserker: '雙手鈍器、雙手矛、單手鈍器、雙斧（拿這些也能帶盾）', thunder: '單手劍、單手矛、雙手矛', paladin: '單手劍、雙手劍', darkknight: '單手劍、雙手劍（不能拿雙刀、鋼爪）', runeblade: '單手劍（任何單手劍都算符石劍）' };
   var ORDER = ['berserker', 'thunder', 'paladin', 'darkknight', 'runeblade'];
 
   W.__afkAwakenWiki = function (H) {

@@ -541,6 +541,8 @@
     W.checkCanEquip = function (item) {
       var p = P(); if (!isAw(p) || !item) return oCan.apply(this, arguments);
       var self = this, args = arguments;
+      var d0 = DB.items[item.id];
+      if (p.cls === 'darkknight' && d0 && d0.type === 'wpn' && !d0.isArrow && /雙刀|鋼爪/.test(fam(item.id))) return false;   // Ping 11-17：暗黑騎士不能拿雙刀、鋼爪
       if (asBase(p, function () { return oCan.apply(self, args); })) return true;
       var d = DB.items[item.id]; if (!d) return false;
       if (d.reqAvatar && d.reqAvatar !== p.awkAvatar) return false;
@@ -549,6 +551,16 @@
       return false;
     };
   }
+  // 已經拿著雙刀、鋼爪的暗黑騎士：自動卸下放回背包（Ping 11-17）
+  setInterval(function () {
+    try {
+      var p = P(); if (!p || p.cls !== 'darkknight' || !p.eq || !p.eq.wpn) return;
+      if (!/雙刀|鋼爪/.test(fam(p.eq.wpn.id) || '')) return;
+      var n = (DB.items[p.eq.wpn.id] || {}).n || '';
+      if (typeof unequipItem === 'function') unequipItem('wpn');
+      if (typeof logSys === 'function') logSys('<span class="text-amber-300">暗黑騎士不能使用雙刀、鋼爪，' + n + ' 已卸下放回背包。</span>');
+    } catch (e) {}
+  }, 5000);
   if (typeof W.effTwoHanded === 'function') {
     var oTwo = W.effTwoHanded;
     W.effTwoHanded = function (d, id) {

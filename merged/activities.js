@@ -34,17 +34,21 @@
   function special(id){
     const [type,mode,key]=id.split(':'),g=W.__afkGuardRing,z=W.__afkZodiac;
     if(type==='gr'&&g?.KN[key]&&['dream','rift'].includes(mode))return{map:g.mapOf(key),api:g,check:()=>g.canEnter(key,mode)||'',enter:()=>g.enter(key,mode),clears:()=>N(player.afkGuard?.clears?.[key]),matches:q=>q?.k===key&&q.mode===mode};
+    const nz=W.__afkNewZones;
+    if(type==='nz'&&nz?.SBY[key]&&['dream','rift'].includes(mode)){const x=nz.exped;return{map:nz.SBY[key].map,api:{growthCheckpoint:x.growthCheckpoint,growthRestore:x.growthRestore,run:x.run},check:()=>x.check(key,mode)||'',enter:()=>x.enter(key),clears:()=>x.clears(key),matches:q=>q?.id===key};}
     if(type==='zd'&&z?.H.some(h=>h.k===mode))return{map:z.MAP,api:z,check:()=>z.canEnter(player)||(!z.today().some(h=>h.k===mode)?'今天未開放這一宮':''),enter:()=>z.enter(mode),clears:()=>N(player.afkZodiac?.clears?.[mode]),matches:q=>q?.k===mode};
     return null;
   }
   function activityTransaction(label,fn){
-    const native=[W.__afkGuardRing,W.__afkZodiac].filter(Boolean).map(api=>[api,api.growthCheckpoint()]);
+    const native=[W.__afkGuardRing,W.__afkZodiac,W.__afkNewZones&&W.__afkNewZones.exped].filter(Boolean).map(api=>[api,api.growthCheckpoint()]);
     try{return G.transaction(label,fn);}catch(e){for(const [api,q] of native){try{api.growthRestore(q);}catch{api.growthRestore(null);}}throw e;}
   }
   function rows(){
     const base=Object.keys(bosses).map(id=>({id,name:names[id],points:true,kind:'dream',fee:'原生入場條件'})).concat((W.__afkRiftDg?W.__afkRiftDg.D:[]).filter(d=>!d.endless&&!d.pick&&!d.pickChain).map(d=>({id:'rd:'+d.id,name:d.n,points:false,kind:d.noRift?'dream':'rift',fee:(d.fee.blood||0)+' 血龍鑽'+(d.fee.items||[]).map(x=>'、'+(DB.items[x[0]]||{}).n+' ×'+x[1]).join('')})));
     const g=W.__afkGuardRing,z=W.__afkZodiac;
     if(g)for(const kind of ['dream','rift'])for(const key of g.KEYS)base.push({id:'gr:'+kind+':'+key,name:'守護者之戒・'+g.DGK[key].map,points:false,kind,fee:'完成騎士劇情；每日 '+g.DG.daily[kind]+' 次，付一次費用打完今天剩下的次數'});
+    const nz=W.__afkNewZones;   // 11-17（Ping）：單人副本也能付費代打；每個副本每天一次、入場費（夢域鏡 1,000 龍鑽／次元裂縫 500 血龍鑽）另付
+    if(nz&&nz.exped)for(const kind of ['dream','rift'])for(const d of nz.SOLO)base.push({id:'nz:'+kind+':'+d.id,name:'單人副本・'+d.n+(d.pick?'（打'+d.pick[0][1]+'）':''),points:false,kind,fee:'每天一次；入場費 '+(kind==='rift'?'500 血龍鑽':'1,000 龍鑽')+'另付；要在'+((DB.towns[d.town]||{}).n||'村莊')+'出發（會自動移過去）'});
     if(z)for(const h of z.H)base.push({id:'zd:'+h.k,name:'黃道十二宮・'+h.n,points:false,kind:'dream',fee:'二轉後；每日開放三宮，選一宮挑戰一次'});
     return base;
   }
@@ -77,7 +81,7 @@
   }
   // 玩家 11-11：次元裂縫副本要在席琳神殿才進得去；上一項打完會回到別的村莊 → 下一項進不去、整輪卡在暫停。
   //   在村莊裡時先移到席琳神殿再進場。
-  function prep(id){if(String(id).startsWith('rd:')&&/^town_/.test(mapState.current||'')&&mapState.current!=='town_sherine'){try{setMapSelectors('town_sherine');changeMap(true);}catch(e){}}}
+  function prep(id){{const m=/^nz:\w+:(\w+)$/.exec(String(id)),d=m&&W.__afkNewZones&&W.__afkNewZones.SBY[m[1]];if(d&&/^town_/.test(mapState.current||'')&&mapState.current!==d.town){try{setMapSelectors(d.town);changeMap(true);}catch(e){}}}if(String(id).startsWith('rd:')&&/^town_/.test(mapState.current||'')&&mapState.current!=='town_sherine'){try{setMapSelectors('town_sherine');changeMap(true);}catch(e){}}}
   function enter(id){
     prep(id);const err=why(id);if(err)throw Error(err);const old=mapState.current,native=special(id),r=round();
     if(native){r.clearBefore=native.clears();native.enter();}
