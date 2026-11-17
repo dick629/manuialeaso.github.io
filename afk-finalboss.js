@@ -252,7 +252,7 @@
     log(tag('沉眠之海', '#0ea5e9') + BOSS_NAME + '沉入海底，傷害無法觸及她（' + left + ' 秒後浮上來）。海底傳來沉沒的歌聲……');
   };
   (window.LineageAbsoluteDamageGates = window.LineageAbsoluteDamageGates || []).push(function(actor,target,amount){
-    if(target&&target._afkFinal){var g=gateOf(target);if(g){var floorHp=Math.max(1,Math.ceil(target.hp*g[0]));amount=Math.min(amount,Math.max(0,target.curHp-floorHp));if(!amount)seal(target,g);}}return amount;
+    if(target&&target._afkFinal){var g=gateOf(target);if(g){var floorHp=Math.max(1,Math.ceil(target.hp*g[0]));amount=Math.min(amount,Math.max(0,target.curHp-floorHp));if(!amount){seal(target,g);try{if(window.__afkZeroMark)window.__afkZeroMark('沉眠之海，暫時打不到');}catch(e){}}}}return amount;
   });
   // ── 傷害：存活的使徒讓席琳受到的傷害 −20%／名 ──
   var hooked = false;

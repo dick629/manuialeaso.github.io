@@ -161,8 +161,8 @@
   var STAT_LABEL = {
     ac: '防禦', mr: '魔防', dr: '傷害減免', er: '迴避', str: '力量', dex: '敏捷',
     con: '體質', int: '智力', wis: '精神', cha: '魅力', mhp: 'HP上限', mmp: 'MP上限',
-    hpR: 'HP回復', mpR: 'MP回復', extraDmg: '額外傷害', extraHit: '額外命中', magicDmg: '魔法傷害',
-    meleeDmg: '近距離傷害', meleeHit: '近距離命中', rangedDmg: '遠距離傷害', rangedHit: '遠距離命中',
+    hpR: 'HP回復', mpR: 'MP回復', extraDmg: '〔通用〕額外傷害', extraHit: '額外命中', magicDmg: '〔魔法〕魔法傷害',
+    meleeDmg: '〔近戰〕近距離傷害', meleeHit: '近距離命中', rangedDmg: '〔遠程〕遠距離傷害', rangedHit: '遠距離命中',
     resFire: '火抗性', resWater: '水抗性', resWind: '風抗性', resEarth: '地抗性'
   };
   // 異常狀態中文：以遊戲自己的 STATUS_NAME 為主(新增狀態自動跟上、不會漏翻成 raw key)，本檔只留遊戲沒有或用詞更白話的覆寫。

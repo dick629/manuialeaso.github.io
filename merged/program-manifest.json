@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-e93271c5797d",
+  "build": "merge-0.4-30ca8b393514",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -468,6 +468,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-dmglabel.js?v=fb54b6328f50",
+      "sha256": "fb54b6328f500c3eca22a3e363636bd397039101702d109d33af8b055194121e",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-dograce.js?v=32b2ffd33c0d",
       "sha256": "32b2ffd33c0d4340d041818e5d539fefc143268fe2e0e258bd35d926e1f71657",
       "type": "text/javascript; charset=utf-8"
@@ -603,8 +608,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-finalboss.js?v=6e11524c9efd",
-      "sha256": "6e11524c9efdc55b255e600230f786e05bd5a06f4bb9539828e5d2d38682a05b",
+      "url": "afk-finalboss.js?v=072c328348c4",
+      "sha256": "072c328348c47119b779f20d76b332f0aa6f5e9823ccf2d29c10ca35f3be0eb0",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -683,8 +688,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-goddess3.js?v=a3bea992c400",
-      "sha256": "a3bea992c400254dc77919edb7146ca9e449fa2dbd327a7b9bfda187e6349641",
+      "url": "afk-goddess3.js?v=5f3f6dca145f",
+      "sha256": "5f3f6dca145fdd17f1194f7b784a6d74223961588f9e1d584a910e2ee1be5252",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1353,8 +1358,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftrules.js?v=549240fc2a0d",
-      "sha256": "549240fc2a0d4ec21fe9377003d058ab63d384f9c2893739da3ea66f2a605735",
+      "url": "afk-riftrules.js?v=9091ad9735d6",
+      "sha256": "9091ad9735d6eb9c0e32097a45ecc909b781a27a7dcac8b68e16fdf628039509",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1749,7 +1754,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "ba1c3374b559fc695d65b1e3b2b4f9f12c7dff95172d59fced8a58fa058b2c30",
+      "sha256": "4fb661d60999b68e20d7457f08b32a2e3770f7ed02d39f760d2ab8e444584052",
       "type": "text/html; charset=utf-8"
     },
     {
