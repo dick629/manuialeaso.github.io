@@ -18,7 +18,12 @@
 (function () {
   'use strict';
 
-  function on() { return !window.AFK_TOGGLES || AFK_TOGGLES.enabled('relicguard'); }
+  function on(type) {
+    if (window.AFK_TOGGLES && !AFK_TOGGLES.enabled('relicguard')) return false;
+    // 11-17（Ping）：快速廢品的「保護遺物」取消勾選時，全選也包含遺物（不再強制保護）
+    try { var f = player.qjFilter && type && player.qjFilter[type]; if (f && f.relic === false) return false; } catch (e) {}
+    return true;
+  }
 
   // 全選的作用範圍＝核心認定「可批次標記廢品」的物品扣掉遺物
   function selectable(type) {
@@ -35,7 +40,7 @@
 
     var origSelectAll = window.quickJunkSelectAll;
     window.quickJunkSelectAll = function (type, checked) {
-      if (!on()) return origSelectAll.apply(this, arguments);
+      if (!on(type)) return origSelectAll.apply(this, arguments);
       var st = quickJunk[type];
       selectable(type).forEach(function (i) { if (checked) st.sel[i.uid] = true; else delete st.sel[i.uid]; });
       renderTabs(true);
@@ -44,7 +49,7 @@
     var origHeader = window.buildQuickHeader;
     window.buildQuickHeader = function (type) {
       var hdr = origHeader.apply(this, arguments);
-      if (!on() || !quickJunk[type] || !quickJunk[type].active) return hdr;
+      if (!on(type) || !quickJunk[type] || !quickJunk[type].active) return hdr;
       try {
         var cb = hdr.querySelector('label input[type="checkbox"]');
         if (!cb) return hdr;

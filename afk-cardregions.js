@@ -26,7 +26,7 @@
     giran: ['afk_solo_ruin1', 'afk_solo_ruin2', 'afk_solo_ruin3', 'afk_solo_ruin4']
   };
   var NEW = [
-    { key: 'petra', name: '佩特拉', stat: 'dr', vals: [1, 2, 3], maps: ['petra_baobab', 'petra_oasis', 'petra_canyon', 'petra_dry', 'petra_bandit', 'petra_nemesis', 'petra_ruins', 'petra_sandhell'] }
+    { key: 'petra', name: '佩特拉', stat: 'dr', vals: [1, 2, 3, 4, 5], maps: ['petra_baobab', 'petra_oasis', 'petra_canyon', 'petra_dry', 'petra_bandit', 'petra_nemesis', 'petra_ruins', 'petra_sandhell'] }
   ];
   var NAMES = {
     snow_sanctum: '古龍的聖地', snow_lava: '凝固的熔岩地帶', snow_collapse: '崩塌的雪壁', afk_hardin_time: '哈汀的時空', afk_solo_ice: '冰之女王的宮殿（單人）',

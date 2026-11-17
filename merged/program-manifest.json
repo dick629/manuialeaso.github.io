@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-b7b85e8f42c6",
+  "build": "merge-0.4-ccac60ec1ec0",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -218,8 +218,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-bosscard.js?v=b2063d19e1ec",
-      "sha256": "b2063d19e1ec335cbdc62c7cb85ca1c4d8bbc86e97879fa330c8e1f856017b56",
+      "url": "afk-bosscard.js?v=5102bcf32e0a",
+      "sha256": "5102bcf32e0a8a36cfa11fe5a6f724f1a0a35f7a553db286c5bac3168d81672e",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -328,8 +328,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-cardregions.js?v=0ffa7bf0c1fb",
-      "sha256": "0ffa7bf0c1fb4c9890c985a56341d69a55bb1bdd5e1da72ab3ddadbba9400fc3",
+      "url": "afk-cardregions.js?v=4a398b3c1b29",
+      "sha256": "4a398b3c1b29ac265ea999ef0d041ed3a8eae99602bea0181d5baafb8e102cc9",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1133,8 +1133,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-quickjunk.js?v=3ca676b272a2",
-      "sha256": "3ca676b272a256e895f506812743079d83e975133953e0be8989c4b7ec9622fb",
+      "url": "afk-quickjunk.js?v=d2b9d69989e6",
+      "sha256": "d2b9d69989e614a812798aad23a17c8d0521265cba8c9c436662da7ed9c391cf",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1148,8 +1148,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-raid.js?v=0a064154fa78",
-      "sha256": "0a064154fa784eda4caa2c5a523dfe651cd47feab295379e9698141070b784e1",
+      "url": "afk-raid.js?v=00bdadfb1008",
+      "sha256": "00bdadfb10088581c943fb9a0d0308064f9ede2ecc302f5bda2913b9c9650f47",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1268,8 +1268,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-relicguard.js?v=ff25ab39c330",
-      "sha256": "ff25ab39c330f2174356b8839b48045bdeacfa78dce3542b1836c39baef5e99b",
+      "url": "afk-relicguard.js?v=a51667b886ce",
+      "sha256": "a51667b886ce41bc49acf2b23d888302cf73ee36531dbf3d0457ffc37fff80ed",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1739,7 +1739,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "3934081b024791a280f77825b00854b94330c0061794f9f78b319b64bd966d9c",
+      "sha256": "5f54a8592c77d70bf60204010821f9ec90983410beb7588fc36085bb578076e7",
       "type": "text/html; charset=utf-8"
     },
     {

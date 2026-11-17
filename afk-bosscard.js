@@ -1,7 +1,7 @@
 /* ============================================================================
  * afk-bosscard.js — 王者卡冊（地圖王、副本王專屬的卡片收集冊；設計稿 docs/boss-card-design.md，Ping 11-11 15:58 定案）
  *
- *   收錄：afk-mapboss.js 的 79 隻王，分「野外」「地監」兩頁；卡面是每隻王的專屬立繪（assets/bosscard/<代號>.png）。
+ *   收錄：afk-mapboss.js 的 79 隻王，分「野外」「地監」兩頁；卡面用每隻王的怪物圖（11-17 起；找不到才用 assets/bosscard/<代號>.png 立繪）。
  *   階級：普／銀／金／白金／鑽石。登錄規則同卡片收集冊：普 1 分、銀 10 分、金 100 分，滿 100 分＝金階；
  *         白金、鑽石直接登錄成該階。還沒到這一階就自動登錄，已經到了就以實體卡進背包。
  *   掉落（每次打倒王；乘隊伍人數，最多 ×8；不吃席琳、夢域鏡的掉落倍率）：
@@ -74,17 +74,18 @@
   css.textContent = '.c-card-plat{color:#e2e8f0;text-shadow:0 0 7px #94a3b8}.c-card-diamond{color:#67e8f9;text-shadow:0 0 8px #06b6d4}'
     + '.afk-bcw .bc-h{font-size:26px;font-weight:700;color:#fbbf24}.afk-bcw .bc-h small{font-size:15px;color:#94a3b8;font-weight:400;margin-left:10px}'
     + '.afk-bcw .bc-line{margin:8px 0;color:#e2e8f0;font-size:15px;line-height:1.7}.afk-bcw .bc-line b.ok{color:#fde68a}.afk-bcw .bc-line .dim{color:#64748b}'
-    + '.afk-bcw .bc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,160px));justify-content:center;gap:10px;margin-top:12px}'
-    + '.afk-bcw .bc-card{position:relative;border:2px solid #44403c;border-radius:10px;background:linear-gradient(#292524,#1c1917);padding:6px;text-align:center;cursor:pointer}'
+    + '.afk-bcw .bc-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:12px}'
+    + '.afk-bcw .bc-card{position:relative;width:136px;border:1px solid #334155;border-radius:8px;background:rgba(30,41,59,.7);padding:8px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}'
     + '.afk-bcw .bc-card.t1{border-color:#a8a29e}.afk-bcw .bc-card.t2{border-color:#cbd5e1}.afk-bcw .bc-card.t3{border-color:#f59e0b;box-shadow:0 0 8px rgba(245,158,11,.4)}'
     + '.afk-bcw .bc-card.t4{border-color:#e2e8f0;box-shadow:0 0 10px rgba(226,232,240,.5)}.afk-bcw .bc-card.t5{border-color:#67e8f9;box-shadow:0 0 12px rgba(6,182,212,.6)}'
     + '.afk-bcw .bc-card.sel{outline:3px solid #fbbf24}.afk-bcw .bc-pic{background:radial-gradient(#57534e,#1c1917);border-radius:6px}.afk-bcw .bc-card img{display:block;width:100%;height:120px;object-fit:contain}'
-    + '.afk-bcw .bc-card img.sil{filter:brightness(0) opacity(.75)}.afk-bcw .bc-nm{font-size:13px;font-weight:700;color:#f5f5f4;margin-top:4px;line-height:1.3;min-height:34px}'
-    + '.afk-bcw .bc-tag{position:absolute;top:8px;left:8px;font-size:11px;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,.7);color:#d6d3d1}'
+    + '.afk-bcw .bc-pic.mob{background:none;width:64px;height:64px;margin-top:14px;display:flex;align-items:center;justify-content:center}.afk-bcw .bc-pic.mob>*{transform:scale(.68);transform-origin:center bottom}.afk-bcw .bc-pic.mob img{width:64px;height:64px;object-fit:contain}'
+    + '.afk-bcw .bc-card img.sil{filter:brightness(0) opacity(.75)}.afk-bcw .bc-nm{font-size:14px;font-weight:700;color:#fff;line-height:1.3}.afk-bcw .bc-sub{font-size:11px;color:#94a3b8;line-height:1.35}.afk-bcw .bc-card .bc-bar{width:100%}'
+    + '.afk-bcw .bc-tag{position:absolute;top:4px;left:4px;font-size:10px;padding:0 4px;border-radius:4px;background:rgba(0,0,0,.5);color:#cbd5e1}.afk-bcw .bc-tb{position:absolute;top:4px;right:4px;font-size:10px;padding:0 4px;border-radius:4px;background:rgba(0,0,0,.5);font-weight:700}'
     + '.afk-bcw .bc-tr{font-size:12px;margin-top:2px}.afk-bcw .bc-bar{height:4px;background:#292524;border-radius:2px;margin-top:3px;overflow:hidden}.afk-bcw .bc-bar i{display:block;height:100%;background:#f59e0b}'
     + '.afk-bcw .bc-det{margin-top:12px;padding:12px;border:1px solid #57534e;border-radius:10px;background:#1c1917;color:#e7e5e4;font-size:14px;line-height:1.7}'
     + '.afk-bcw .bc-det button{margin:6px 8px 0 0;padding:8px 14px;border-radius:6px;border:1px solid #b45309;background:#78350f;color:#fde68a;font-weight:700}.afk-bcw .bc-det button:disabled{opacity:.4}'
-  css.textContent += '@media (max-width:640px){.afk-bcw .bc-grid{grid-template-columns:repeat(3,1fr);gap:6px}.afk-bcw .bc-nm{font-size:11px;min-height:28px}.afk-bcw .bc-h{font-size:20px}}';
+  css.textContent += '@media (max-width:640px){.afk-bcw .bc-card{width:31%}.afk-bcw .bc-nm{font-size:12px}.afk-bcw .bc-h{font-size:20px}}';
   document.head.appendChild(css);
 
   var typeN = function (b) { return b.type === 'field' ? '野外' : b.type === 'nz' ? '新地區' : '地監'; };
@@ -177,6 +178,24 @@
   var ui = { sel: null };
   var curTab = function () { try { var r = String((0, eval)('_cardBookRegion') || ''); if (r.indexOf('boss_') !== 0) return null; r = r.slice(5); return TABS.some(function (t) { return t.k === r; }) ? r : null; } catch (e) { return null; } };
   var isOpen = function () { var el = document.getElementById('card-book'); return !!(el && !el.classList.contains('hidden') && curTab()); };
+  // 11-17（Ping）：卡面改成跟其他卡冊一樣用怪物本身的圖（動畫第一張），不用立繪；找不到圖才退回立繪
+  var mobPic = function (b, seen) {
+    var portrait = b.card || ('assets/bosscard/' + b.id + '.png');
+    try {
+      var mob = (typeof DB !== 'undefined' && DB.mobs[b.mobId]) || {};
+      var mi = typeof mobStillImg === 'function' ? mobStillImg(b.n, mob.img, false) : { src: mob.img || portrait, fb: [] };
+      mi = { src: mi.src, fb: (mi.fb || []).concat([portrait]) };
+      if (typeof _codexMobThumbHtml === 'function') return _codexMobThumbHtml(b.n, mi, seen ? '' : ' sil');
+      return '<img src="' + mi.src + '" alt=""' + (seen ? '' : ' class="sil"') + '>';
+    } catch (e) { return '<img src="' + portrait + '" alt=""' + (seen ? '' : ' class="sil"') + '>'; }
+  };
+  var ELE = { earth: '地', fire: '火', water: '水', wind: '風' };
+  var subInfo = function (b, t) {   // 跟一般卡冊一樣：銀卡起看屬性與種族，金卡起看出沒
+    if (t < 2) return '';
+    var s = '<div class="bc-sub">屬性 ' + (ELE[b.e] || '無') + (b.race ? '・' + esc(b.race) : '') + '</div>';
+    if (t >= 3) { var ms = (b.maps || []).map(mapName).slice(0, 3).join('、'); if (ms) s += '<div class="bc-sub">出沒：' + esc(ms) + '</div>'; }
+    return s;
+  };
   var mapName = function (k) { try { return (typeof _cardMapName === 'function' && _cardMapName(k)) || k; } catch (e) { return k; } };
   var bodyHtml = function (tk) {
     var tab = TABS.filter(function (t) { return t.k === tk; })[0], list = LIST.filter(function (b) { return b.type === tk; });
@@ -190,8 +209,10 @@
     list.forEach(function (b) {
       var t = tierOf(b.id), s = score(b.id), seen = t > 0 || !!d.k[b.id], x = TIERS[t - 1];
       h += '<div class="bc-card t' + t + (ui.sel === b.id ? ' sel' : '') + '" data-bc="' + b.id + '"><span class="bc-tag">' + typeN(b) + '</span>'
-        + '<div class="bc-pic"><img src="' + ((!seen && b.sil) || b.card || ('assets/bosscard/' + b.id + '.png')) + '" alt="" loading="lazy"' + (seen ? '' : ' class="sil"') + '></div>'
+        + (x ? '<span class="bc-tb ' + x.col + '">' + x.n + '</span>' : '')
+        + '<div class="bc-pic mob">' + mobPic(b, seen) + '</div>'
         + '<div class="bc-nm">' + (seen ? esc(b.n) : '？？？') + '</div>'
+        + subInfo(b, t)
         + '<div class="bc-tr ' + (x ? x.col : 'text-slate-500') + '">' + (x ? x.n : (d.k[b.id] ? '已打倒、未登錄' : '未遇見')) + '</div>'
         + (t < 3 ? '<div class="bc-bar"><i style="width:' + s + '%"></i></div>' : '') + '</div>';
     });

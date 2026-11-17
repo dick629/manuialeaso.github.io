@@ -70,7 +70,8 @@
   };
   window.qjFilterSet = function (type, key, val) {
     var f = filt(type);
-    if (key === 'en') f.en = Number(val); else if (key === 'part') f.part = String(val); else if (key.indexOf('keep:') === 0) { f.keep[key.slice(5)] = !!val; keepOpen[type] = true; window.qjFilterApply(type, true); return; }   // 改保護＝立刻重勾（玩家 2026-10-27：勾了保護卻沒反應） else f[key] = !!val;
+    if (key === 'en') f.en = Number(val); else if (key === 'part') f.part = String(val); else if (key.indexOf('keep:') === 0) { f.keep[key.slice(5)] = !!val; keepOpen[type] = true; window.qjFilterApply(type, true); return; }   // 改保護＝立刻重勾（玩家 2026-10-27：勾了保護卻沒反應）
+    else f[key] = !!val;   // 11-17 修：這行原本被上一行的註解吃掉，「保護遺物」取消勾選沒作用（遺物永遠被保護）
     var n = _qjEligibleItems(type).filter(function (i) { return match(type, i); }).length;
     var el = document.getElementById('qjf-count-' + type); if (el) el.textContent = '符合 ' + n + ' 件';
   };

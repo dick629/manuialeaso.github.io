@@ -244,7 +244,12 @@
     };
   };
   K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: '多人討伐', type: 'quest', classicHide: true, d: '帶著次元討伐隊的女騎士。她把每天輪流上陣的冒險者編成三人一隊。' });
-  K.hookNpc(NPC_ID, NPC_N, '多人討伐', function (div) { st.err = ''; paint(div); refresh(div); });
+  // 11-17（Ping）：多人討伐先暫停，NPC 只顯示建設中（規劃好再打開：BUILDING 改 false）
+  var BUILDING = true;
+  K.hookNpc(NPC_ID, NPC_N, '多人討伐', function (div) {
+    if (BUILDING) { if (div) { K.css(); div.innerHTML = '<div class="afk-ax"><p class="ax-lore">「次元討伐隊還在整編，等人手到齊再找你。」</p><p style="font-size:15px;color:#fde68a;margin-top:10px">🚧 多人討伐建設中，敬請期待。</p></div>'; } return; }
+    st.err = ''; paint(div); refresh(div);
+  });
   W.__afkRaid = { enter: enter, finish: finish, run: run, TIERS: TIERS, REWARD: REWARD, MAP: MAP, BOSS: BOSS };
   try { console.log('[AFK-raid] 已啟用：多人討伐（奇岩 次元討伐隊長 薇拉）'); } catch (e) {}
 })();
