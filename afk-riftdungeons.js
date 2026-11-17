@@ -311,7 +311,8 @@
     run = { id: id, D: d, pick: pick, si: 0, wave: 0, pending: true, t0: tk(), st0: tk(), until: d.min ? Date.now() + d.min * 60000 : 0, lv: Math.max(80, Math.min(130, (Number(p.lv) || 100) + 5 * d.tier)), meter: 100, floor: 1, M: {}, SM: {}, deaths: 0 };
     if (d.onStart) d.onStart(run);
     backTown = id === 'doom' ? DOOM_TOWN : TOWN;
-    try { SPECIAL_AREA_BG[MAP] = 'assets/area/1920x1080/rift_' + id + '.jpg'; } catch (e) {}   // 11-12：每個副本自己的背景（GPT）
+    var DRAGON_BG = { '安塔瑞斯': '侵蝕的安塔瑞斯巢穴深處', '法利昂': '破滅的法利昂巢穴深處', '林德拜爾': '災厄的林德拜爾巢穴深處', '巴拉卡斯': '深淵的巴拉卡斯巢穴深處' };   // 11-17 Ping：四龍各用自己的巢穴背景
+    try { SPECIAL_AREA_BG[MAP] = (id === 'dragons' && DRAGON_BG[pick]) ? 'assets/area/1920x1080/' + DRAGON_BG[pick] + '.jpg' : 'assets/area/1920x1080/rift_' + id + '.jpg'; } catch (e) {}   // 11-12：每個副本自己的背景（GPT）
     lastMap = MAP;
     sys('<span class="font-bold" style="color:#67e8f9">🌀 你走進了「' + esc(d.n) + (pick && d.pick ? '・' + esc((d.pick.filter(function (x) { return x[0] === pick; })[0] || [])[1] || pick) : '') + '」。</span>');
     try {

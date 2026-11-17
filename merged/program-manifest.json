@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-796e078c4b6c",
+  "build": "merge-0.4-fbe62782c126",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -78,8 +78,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-arts.js?v=972abb8381c3",
-      "sha256": "972abb8381c38871f489ab1e5ed4ede38082a754c34e3d0c1fe520d191d27f5f",
+      "url": "afk-arts.js?v=70354b43f07c",
+      "sha256": "70354b43f07ca2054d90e4a09bd5aae160ff7f8446c8b314d6d5b0727d6b916c",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -193,8 +193,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-bloodline.js?v=e3d94c53e62e",
-      "sha256": "e3d94c53e62e911fa43f3e4da8b06d0f0bdc66993fa27e1d88bf5c3866ba0824",
+      "url": "afk-bloodline.js?v=57797f3b317e",
+      "sha256": "57797f3b317ea3315c820190a43c1219ff3f50756455392058065990aca8e9b2",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -443,8 +443,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-diagreport.js?v=186a891860ce",
-      "sha256": "186a891860cead64b8d997c53ee95adc34f5892bdb4761c6d9b4fb0b1f34f407",
+      "url": "afk-diagreport.js?v=b2aca66d08dd",
+      "sha256": "b2aca66d08dd7d719bc0daf9e9500c26f74625f98ec89224ca251a25c5afaa39",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -968,8 +968,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-mobtags.js?v=36bb6603f16f",
-      "sha256": "36bb6603f16f7b486b73db6dd281e4bae450b2a2443497bd02ced27c94f07eba",
+      "url": "afk-mobtags.js?v=793957dcb14e",
+      "sha256": "793957dcb14ea1544c4c9cb4e34040a157eba786c93af886912aaf34a8980397",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1338,8 +1338,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftdungeons.js?v=f1eb8429bdde",
-      "sha256": "f1eb8429bdde27d7f62ffe869fcee18f041b1e6df630a8a963d72cd2e064ec8c",
+      "url": "afk-riftdungeons.js?v=0fb05b698c83",
+      "sha256": "0fb05b698c8330b887e7d6efaa10b3d1e20136219f784456749ed706b9113d38",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1348,8 +1348,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftrules.js?v=08991ec2552d",
-      "sha256": "08991ec2552d8d59ee2d4ec66b10a910ee62ca81737abfcb2d01198f86160301",
+      "url": "afk-riftrules.js?v=a34e0642a5bb",
+      "sha256": "a34e0642a5bb042931826d00ab8d126edaf10ba4549c3ffd200bc39d0c2bbf11",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1744,7 +1744,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "7b09f5afcac5dfdd482ea18fda4f3d454b8a344adcbc56a5b6c82b82181a7618",
+      "sha256": "c1d85e3727eb8b4d0a87d8e76d63916c490830894246c5fbc038e9d26d540e3d",
       "type": "text/html; charset=utf-8"
     },
     {

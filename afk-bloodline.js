@@ -118,7 +118,7 @@
   var forceStun = function (t) { try { if (!t || t._dead) return; t.st = t.st || (typeof newMobStatus === 'function' ? newMobStatus() : {}); t.st.stun = Math.max(N(t.st.stun), 10); } catch (e) {} };
   var weakMult = function (t) { var n = Math.min(5, N(t && t.weakExpose)); return n > 0 ? 1 + .1 * n : 1; };
   var hookApi = function () {
-    var Rt = R(), api = Rt && Rt.api; if (!api || typeof api.damage !== 'function' || api.damage.__afkBlood) return;
+    var Rt = R(), api = Rt && Rt.api; if (!api || typeof api.damage !== 'function' || api.damage.__afkBlood || api.__hkBlood) return;   // 只包一次（11-17 修）
     var o = api.damage;
     var f = function (target, amount, opt) {
       try {
@@ -134,7 +134,7 @@
       } catch (e) {}
       return o.apply(this, arguments);
     };
-    f.__afkBlood = true; api.damage = f;
+    f.__afkBlood = true; api.damage = f; api.__hkBlood = true;
   };
   hookApi(); W.addEventListener('load', hookApi);
   // 核心技能（一般法術）：龍騎士弱點曝光、神聖劍士暈眩

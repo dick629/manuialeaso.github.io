@@ -62,7 +62,7 @@
     return s;
   };
   var hook = function () {
-    var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function' || C.damage.__afkTags) return;
+    var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function' || C.damage.__afkTags || C.__hkTags) return;   // 只包一次（11-17 修：之前 load 後會被重複包好幾層）
     var o = C.damage;
     var f = function (actor, target, amount, opt) {
       var v = o.apply(this, arguments);
@@ -75,7 +75,7 @@
       } catch (e) {}
       return v;
     };
-    f.__afkTags = true; C.damage = f;
+    f.__afkTags = true; C.damage = f; C.__hkTags = true;
   };
   hook(); W.addEventListener('load', function () { hook(); setTimeout(hook, 3000); });
   W.LineageMobTags = { TAGS: TAGS, RACE: RACE, of: of, has: has, name: name, isGod: function (m) { return has(m, 'god'); }, bonus: bonus, names: function (m) { return of(m).map(name); } };

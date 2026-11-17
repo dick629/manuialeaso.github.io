@@ -70,7 +70,7 @@
   }
   // ── 打到怪：王先減 5%／3%，再被護盾吸收 ──
   var hookDmg = function () {
-    var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function' || C.damage.__afkRR) return;
+    var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function' || C.damage.__afkRR || C.__hkRR) return;   // 只包一次（11-17 修：之前 load 後會被重複包好幾層）
     var o = C.damage;
     var f = function (actor, target, amount, opt) {
       var v = o.apply(this, arguments);
@@ -82,7 +82,7 @@
       } catch (e) {}
       return v;
     };
-    f.__afkRR = true; C.damage = f;
+    f.__afkRR = true; C.damage = f; C.__hkRR = true;
   };
   hookDmg(); W.addEventListener('load', function () { hookDmg(); setTimeout(hookDmg, 2000); });
   // ── 倒下時的傷害 ──

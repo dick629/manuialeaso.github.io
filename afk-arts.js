@@ -166,9 +166,9 @@
   // 背神者虛弱（否定諸神後的 5 分鐘）：造成的傷害 −15%（Ping 11-15 20:49）
   var athWeak = function (p) { return !!p && art(p) === 'm_atheist' && tk() < (Number(st(p).athOff) || 0); };
   var hookAthWeak = function () {
-    var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function' || C.damage.__afkAthWeak) return;
+    var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function' || C.damage.__afkAthWeak || C.__hkAthWeak) return;   // 只包一次（11-17 修）
     var o = C.damage, f = function (actor, target, amount, opt) { var r = o.apply(this, arguments); try { if (r > 0 && actor && actor.cls === 'mage' && athWeak(actor)) r = Math.floor(r * 0.85); } catch (e) {} return r; };
-    f.__afkAthWeak = true; C.damage = f;
+    f.__afkAthWeak = true; C.damage = f; C.__hkAthWeak = true;
   };
   hookAthWeak(); W.addEventListener('load', hookAthWeak);
   W.__afkAthWeak = athWeak; W.__afkArtSt = st;

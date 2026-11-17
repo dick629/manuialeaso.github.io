@@ -14,14 +14,14 @@
   // 最近 200 下打到怪的傷害（只記玩家自己）
   var hits = [];
   var hook = function () {
-    var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function' || C.damage.__afkDiag) return;
+    var C = W.AFK_CARD_COMBAT; if (!C || typeof C.damage !== 'function' || C.damage.__afkDiag || C.__hkDiag) return;   // 只包一次（11-17 修：之前 load 後會被重複包好幾層）
     var o = C.damage;
     var f = function (actor, target, amount, opt) {
       var v = o.apply(this, arguments);
       try { if (actor && actor === P() && v >= 0) { hits.push([Math.floor(N(v)), (opt && opt.kind) || '', target && target.n || '']); if (hits.length > 200) hits.shift(); } } catch (e) {}
       return v;
     };
-    f.__afkDiag = true; C.damage = f;
+    f.__afkDiag = true; C.damage = f; C.__hkDiag = true;
   };
   hook(); W.addEventListener('load', function () { hook(); setTimeout(hook, 4000); });
   var nm = function (it) { if (!it || typeof it !== 'object') return ''; var d = (typeof DB !== 'undefined' && DB.items[it.id]) || {}; return ((it.en ? '+' + it.en + ' ' : '') + (d.n || it.id)).slice(0, 30); };
