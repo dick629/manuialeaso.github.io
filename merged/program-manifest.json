@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-16a216025737",
+  "build": "merge-0.4-f52c64d9d5c4",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -1138,8 +1138,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-procfx.js?v=1712f0dfffe9",
-      "sha256": "1712f0dfffe91062d38ee7a92384e353aa4acc11905ed1e919c45762146c952f",
+      "url": "afk-procfx.js?v=87f7c33c579d",
+      "sha256": "87f7c33c579d41a61b3ff9f438d3ec3c3eb6b64db236f39be4424136db703ef6",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1178,8 +1178,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-rebirth-rules.js?v=3e2bc27ffd69",
-      "sha256": "3e2bc27ffd69bce905912f06cb35b4eadaf82cc205c3d7d988ab13e540944255",
+      "url": "afk-rebirth-rules.js?v=a1041bffcb0e",
+      "sha256": "a1041bffcb0e606e52beb863b54af2dd5ac3d748b98ce8b438b17e7f65fdbfc1",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1764,7 +1764,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "38020af909ce8115cfae011c080d3c905158e399043477cd33c6c0541ed59b77",
+      "sha256": "39e56f8b03e0c3463eaa14636af804f3baff44efc6207365db7fea12edaa1cef",
       "type": "text/html; charset=utf-8"
     },
     {

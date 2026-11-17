@@ -111,6 +111,22 @@
   });
   setInterval(function () { try { paintAll(); } catch (e) {} }, 500);
 
+  // 11-18（Ping）：有護盾要先扣護盾——包在所有受傷外掛的最外層（頁面載入完才包），你和傭兵都一樣
+  var absorbLast = function () {
+    var o = window.__afkTaken; if (typeof o !== 'function' || o.__afkShieldLast) return;
+    var f = function (ent, dmg, mob, kind) {
+      var v = o.apply(this, arguments);
+      try {
+        var sh = ent ? Number(ent._afkShield) || 0 : 0;
+        if (sh > 0 && v > 0) { var a = Math.min(Math.floor(sh), Math.floor(v)); ent._afkShield = sh - a; v = v - a; }
+      } catch (e) {}
+      return v;
+    };
+    f.__afkShieldLast = true; window.__afkTaken = f;
+  };
+  try { window.addEventListener('load', function () { setTimeout(absorbLast, 0); setTimeout(absorbLast, 3000); }); } catch (e) {}
+  setInterval(function () { var o = window.__afkTaken; if (typeof o === 'function' && !o.__afkShieldLast) absorbLast(); }, 5000);   // 之後有外掛再包一層時，重新包到最外面
+
   // ── 受到傷害：護盾吸收、敗者榮光的免疫轉回血 ──
   var depth = 0, pend = false;
   var snapParty = function () { return party().map(function (e) { return [e, hpOf(e) || 0]; }); };

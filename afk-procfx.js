@@ -103,7 +103,7 @@
         for (var i = 0; i < H.taken.length; i++) { var r = H.taken[i](ent, v, mob, kind); if (typeof r === 'number' && r >= 0 && isFinite(r)) v = r; }
         var p = P();
         v = whole(v);
-        if (ent === p && v > 0 && p._afkShield > 0) { var a = Math.min(Math.floor(p._afkShield), v); p._afkShield -= a; v -= a; }
+        // 11-18：護盾改在最外層吸收（afk-rebirth-rules 的 absorbLast），所有減傷算完、你和傭兵都先扣護盾
       } catch (e) { console.warn('[AFK-proc] taken', e); }
       return whole(v);
     };
