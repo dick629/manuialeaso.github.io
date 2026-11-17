@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-ccac60ec1ec0",
+  "build": "merge-0.4-7f75b3556a5b",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -138,8 +138,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-awaken.js?v=8af904be7982",
-      "sha256": "8af904be798222a3c244439968f1bb0932b7c9d29356390d1e3e25810245100f",
+      "url": "afk-awaken.js?v=cbf4bc57c926",
+      "sha256": "cbf4bc57c9263b9f73e1c2fa63e1abe08e0a3dab1e1b2fcc704166d441785674",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -988,8 +988,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-nosell.js?v=835e5528b34d",
-      "sha256": "835e5528b34d412304dbfdceb8274e8ec9b7e212a53cdcc6e7603d3af5f02169",
+      "url": "afk-nosell.js?v=8834f41e524a",
+      "sha256": "8834f41e524aa6efafa77eae898c3fde4609886a685c9d9167fd5a0f3ed2d606",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1448,8 +1448,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-soulstone.js?v=89052a31d7e6",
-      "sha256": "89052a31d7e6ce0936fb62e86695df7857c171c7228885e3853eb5e78f2b8982",
+      "url": "afk-soulstone.js?v=b1cbd3285da5",
+      "sha256": "b1cbd3285da5fb70c9399315fb3f5a3ff256cc26470163da100d0e9572ace010",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1739,7 +1739,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "5f54a8592c77d70bf60204010821f9ec90983410beb7588fc36085bb578076e7",
+      "sha256": "5436ca3a2a05fa177e8e866a54221da123ee63f1351e2842f50a0a248e5a23ff",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1973,8 +1973,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/class-core.js?v=4f8213178c10",
-      "sha256": "4f8213178c104e0fb36445667b8634b7ae51ef05b494c2b6c0a22474971662ef",
+      "url": "merged/class-core.js?v=25936e9dc6fd",
+      "sha256": "25936e9dc6fd1f5e64c489abdf42ce1a3916a72e7accb4644cd4498bf793c922",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1988,13 +1988,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/class-ui.css?v=0e105ef7eeb9",
-      "sha256": "0e105ef7eeb9abf728596a46c32f947d12ab44b12bd13655548112a664761c76",
+      "url": "merged/class-ui.css?v=13cc65dd10d2",
+      "sha256": "13cc65dd10d211a71d4e6f046bbcefb0023c240452aec1002b5418d7f15a0f80",
       "type": "text/css; charset=utf-8"
     },
     {
-      "url": "merged/class-ui.js?v=88b4933315ed",
-      "sha256": "88b4933315edcca87c3a8213f4060ac649068bc1ee34b4e9289e7ff7fa05b2b1",
+      "url": "merged/class-ui.js?v=00171722f4e4",
+      "sha256": "00171722f4e4a5fd32c11f2eca7d4a36533cf9717dc678c4bb03de3c8fb62962",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2244,7 +2244,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "f4753648c40f393c8528ca8c785bcdd8206e6337263a8f456ba9a6dccd66ea77",
+      "sha256": "6f18384d1a3ba33c1418bbb9d9f0e95865cd8a0c496f38d1d9e4795a84813d0e",
       "type": "text/html; charset=utf-8"
     }
   ]

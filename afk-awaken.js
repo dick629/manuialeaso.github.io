@@ -849,12 +849,12 @@
       (isAw(p) ? [0, 1, 2] : [0, 0, 0, 0, 0]).forEach(function (r, ix) {
         if (!isAw(p) && pickSouls({ cls: base, classicMode: p.classicMode }, v)[ix]) return;
         if (isAw(p) && (v.souls || []).some(function (x) { return x.cls === base && N(x.rebirth) === r; })) return;
-        if (v.souls.length >= 5) return;
+        if (v.souls.length >= 8) return;
         var id = 'gm-' + Date.now() + '-' + ix, idt = 'gm|' + id;
         v.sealed[idt] = id; v.souls.push({ id: id, identity: idt, name: '測試魂魄' + r + '轉', cls: base, level: 100, rebirth: r, classic: !!p.classicMode, sealedAt: Date.now(), sourceSlot: 0 }); n++;
       });
       v.revision = N(v.revision) + 1; localStorage.setItem(W.LineageClasses.KEY, JSON.stringify(v));
-      return '補了 ' + n + ' 顆測試魂魄（' + BASE_N[base] + '）。' + (v.souls.length >= 5 ? '魂魄簿滿了的話先解除一些。' : '');
+      return '補了 ' + n + ' 顆測試魂魄（' + BASE_N[base] + '）。' + (v.souls.length >= 8 ? '魂魄簿滿了的話先解除一些。' : '');
     }
     if (act === 'lv' || act === 'gold') {   // 等級、金幣要寫進存檔再重讀（直接改會在存檔時被還原）
       var lv = N(arg);

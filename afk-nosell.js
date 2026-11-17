@@ -12,6 +12,7 @@
  *       祝福賦予卷軸、失去光輝的碎片、次元鑰匙、意志精華、胤魂石、回夢、聖衣碎片、雅典娜祝福、特殊收藏、劇情道具、卡片自選券……）
  *     ‧其他：外掛定義（afk_ 開頭）、沒有售價（p 0）的材料或道具（etc／misc），變身卡除外
  *     ‧原本就標 noSell 的照舊不能賣
+ *   不算專屬（11-17 起）：任務道具（questItem、type quest、quest_／afk_q_／afk_aq_ 開頭），可標廢品、可賣。
  *   不算專屬：遺物（另有遺物整理換龍鑽的賣法）、有售價的外掛裝備（反王、闇龍獵人、冒險者套裝……）、地區霸主的戰利品。
  * ========================================================================== */
 (function () {
@@ -45,12 +46,16 @@
     'afk_bone_', 'afk_void_', 'afk_fate_', 'afk_asc_', 'afk_dmark_', 'afk_dres_', 'afk_bless_', 'afk_lost_', 'afk_gt_', 'afk_will_', 'afk_yin_',
     'afk_reverie_', 'afk_cloth_', 'afk_athena_', 'afk_cs_', 'afk_q_', 'afk_aq_', 'afk_card_', 'afk_kurt_order', 'afk_kurt_guard', 'afk_star_',
     'afk_cancel_', 'afk_matgift_', 'afk_guard_'];
+  // 11-17（Ping）：任務道具可以標成廢品、販賣（任務物品、劇情材料 afk_q_／afk_aq_、quest_ 開頭）
+  var isQuest = function (id, d) { var s = String(id); return !!(d && (d.questItem || d.type === 'quest' || /^(quest_|afk_q_|afk_aq_)/.test(s))); };
+  var openQuest = function () { var n = 0; Object.keys(DB.items).forEach(function (id) { var d = DB.items[id]; if (isQuest(id, d) && (d.noSell || d.noJunk) && !d.doll) { d.noSell = false; d.noJunk = false; d.afkQuestSell = true; n++; } }); return n; };
+  openQuest(); W.addEventListener('load', function () { openQuest(); setTimeout(openQuest, 3000); setTimeout(openQuest, 10000); });
   var cache = {};
   var classify = function (id) {
     if (cache[id] !== undefined) return cache[id];
     var d = DB.items[id], s = String(id), r = false;
     if (d) {
-      if (d.relic) r = false;
+      if (d.relic || isQuest(id, d)) r = false;
       else if (d.remains || SLOTS[d.slot] || /^rem_/.test(String(d.slot || ''))) r = true;
       else if (PREFIX.some(function (x) { return s.indexOf(x) === 0; })) r = true;
       else if (/^afk_/.test(s) && !/^afk_pcard_/.test(s) && !d.card && (d.type === 'etc' || d.type === 'misc') && !(Number(d.p) > 0)) r = true;
@@ -60,6 +65,7 @@
   };
   var unsellable = function (it) {
     var d = it && DB.items[it.id]; if (!d) return false;
+    if (isQuest(it.id, d) && !d.doll) { if (d.noSell || d.noJunk) { d.noSell = false; d.noJunk = false; } return false; }
     if (d.noSell) return true;   // 原本就不能賣的
     if (!on()) return false;
     var p = P(); if (p && p.classicMode) return false;
