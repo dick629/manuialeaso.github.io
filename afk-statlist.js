@@ -202,7 +202,7 @@
         var resp = false; try { resp = !!_respec; } catch (e) {}
         if (!resp && dir > 0 && (player.bonus || 0) > 0 && !player.classicMode && naturalOf(s) >= allocCap() && typeof logSys === 'function') {
           var now = Date.now(); if (!fAdj._t || now - fAdj._t > 800) { fAdj._t = now;
-            logSys('<span class="text-amber-300">' + capText(s, allocCap(), false) + (player.rebirth > 0 ? '' : '（轉生後上限 200）') + '，配不上去；剩下的 ' + player.bonus + ' 點可以配到其他能力。</span>'); }
+            logSys('<span class="text-amber-300">' + capText(s, allocCap(), false) + (allocCap() >= 200 ? '' : '（轉生後上限 200）') + '，配不上去；剩下的 ' + player.bonus + ' 點可以配到其他能力。</span>'); }
         }
       } catch (e) {}
       return oAdj.apply(this, arguments);

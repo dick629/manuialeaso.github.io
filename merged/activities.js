@@ -44,7 +44,7 @@
     try{return G.transaction(label,fn);}catch(e){for(const [api,q] of native){try{api.growthRestore(q);}catch{api.growthRestore(null);}}throw e;}
   }
   function rows(){
-    const base=Object.keys(bosses).map(id=>({id,name:names[id],points:true,kind:'dream',fee:'原生入場條件'})).concat((W.__afkRiftDg?W.__afkRiftDg.D:[]).filter(d=>!d.endless&&!d.pick&&!d.pickChain).map(d=>({id:'rd:'+d.id,name:d.n,points:false,kind:d.noRift?'dream':'rift',fee:(d.fee.blood||0)+' 血龍鑽'+(d.fee.items||[]).map(x=>'、'+(DB.items[x[0]]||{}).n+' ×'+x[1]).join('')})));
+    const base=Object.keys(bosses).map(id=>({id,name:names[id],points:true,kind:'dream',fee:'原生入場條件'})).concat((W.__afkRiftDg?W.__afkRiftDg.D:[]).filter(d=>!d.endless).flatMap(d=>(d.pick?d.pick.map(pk=>[':'+pk[0],'・'+pk[1]]):[['','']]).map(([ks,ns])=>({id:'rd:'+d.id+ks,name:d.n+ns,points:false,kind:d.noRift?'dream':'rift',fee:(d.fee.blood||0)+' 血龍鑽'+(d.fee.items||[]).map(x=>'、'+(DB.items[x[0]]||{}).n+' ×'+x[1]).join('')}))));   // 11-17 Ping：四龍、阿納金各形態也列入
     const g=W.__afkGuardRing,z=W.__afkZodiac;
     if(g)for(const kind of ['dream','rift'])for(const key of g.KEYS)base.push({id:'gr:'+kind+':'+key,name:'守護者之戒・'+g.DGK[key].map,points:false,kind,fee:'完成騎士劇情；每日 '+g.DG.daily[kind]+' 次，付一次費用打完今天剩下的次數'});
     const nz=W.__afkNewZones;   // 11-17（Ping）：單人副本也能付費代打；每個副本每天一次、入場費（夢域鏡 1,000 龍鑽／次元裂縫 500 血龍鑽）另付
@@ -74,18 +74,19 @@
     if(bosses[id]&&W.__afkExpedition?.store(player).got[bosses[id]])return '✓ 今天已打完（遠征點數已拿）';
     if(id==='hardin')return W.__afkHardin.canEnter()||'';
     if(id==='halpas')return W.__afkHalpas.canEnter('halpas')||'';
-    if(id.startsWith('rd:')){const d=W.__afkRiftDg.BYID[id.slice(3)];return d?W.__afkRiftDg.canEnter(d)||'':'未知副本';}
+    if(id.startsWith('rd:')){const [did,pk]=rdParts(id),d=W.__afkRiftDg.BYID[did];return d?W.__afkRiftDg.canEnter(d,pk)||'':'未知副本';}
     if(!bosses[id])return '未知副本';
     const used=id==='antharas'?antharasPartyUsedToday():W.__afkCorrupt.withCtx(id,()=>antharasPartyUsedToday());
     return used.length?'隊伍成員今天已通關此龍巢':'';
   }
   // 玩家 11-11：次元裂縫副本要在席琳神殿才進得去；上一項打完會回到別的村莊 → 下一項進不去、整輪卡在暫停。
   //   在村莊裡時先移到席琳神殿再進場。
+  function rdParts(id){const s=String(id).slice(3),i=s.indexOf(':');return i<0?[s,undefined]:[s.slice(0,i),s.slice(i+1)];}
   function prep(id){{const m=/^nz:\w+:(\w+)$/.exec(String(id)),d=m&&W.__afkNewZones&&W.__afkNewZones.SBY[m[1]];if(d&&/^town_/.test(mapState.current||'')&&mapState.current!==d.town){try{setMapSelectors(d.town);changeMap(true);}catch(e){}}}if(String(id).startsWith('rd:')&&/^town_/.test(mapState.current||'')&&mapState.current!=='town_sherine'){try{setMapSelectors('town_sherine');changeMap(true);}catch(e){}}}
   function enter(id){
     prep(id);const err=why(id);if(err)throw Error(err);const old=mapState.current,native=special(id),r=round();
     if(native){r.clearBefore=native.clears();native.enter();}
-    else if(id==='antharas')antharasEnter();else if(id==='hardin')W.__afkHardin.enter();else if(id==='halpas')W.__afkHalpas.enter('halpas');else if(id.startsWith('rd:'))W.__afkRiftDg.enter(id.slice(3));else afkCorruptEnter(id);
+    else if(id==='antharas')antharasEnter();else if(id==='hardin')W.__afkHardin.enter();else if(id==='halpas')W.__afkHalpas.enter('halpas');else if(id.startsWith('rd:')){const [did,pk]=rdParts(id);W.__afkRiftDg.enter(did,pk);}else afkCorruptEnter(id);
     if(mapState.current===old)throw Error('未成功進入 '+(names[id]||id));
     r.map=mapState.current;r.maps=id==='antharas'?['antharas_nest_1','antharas_nest_2','antharas_nest_3','antharas_lair']:W.__afkCorrupt.areasOf[id]||[mapState.current];r.status='running';r.reason='';state.running=true;
     checkpoint();
@@ -117,7 +118,7 @@
         Object.keys(mapState).forEach(k=>{if(!(k in cp.battlefield))delete mapState[k];});Object.assign(mapState,C.copy(cp.battlefield));native.api.growthRestore(cp.native);
         state.antharas=cp.antharas;state._afkDragon=cp.dragon;r.status='running';r.reason='';state.running=true;syncMapSelectors();applyAreaBackground();renderMobs();return;
       }
-      if(!native&&cp&&(mapState.current===cp.map||cp.rd&&cp.battlefield&&cp.map===W.__afkRiftDg.MAP&&cp.battlefield.current===cp.map&&cp.rd.id===id.slice(3))){
+      if(!native&&cp&&(mapState.current===cp.map||cp.rd&&cp.battlefield&&cp.map===W.__afkRiftDg.MAP&&cp.battlefield.current===cp.map&&cp.rd.id===rdParts(id)[0])){
         if(mapState.current!==cp.map){Object.keys(mapState).forEach(k=>{if(!(k in cp.battlefield))delete mapState[k];});Object.assign(mapState,C.copy(cp.battlefield));syncMapSelectors();applyAreaBackground();renderMobs();}
         state.antharas=cp.antharas;state._afkDragon=cp.dragon;
         if(cp.hardin)W.__afkHardin.growthRestore(cp.hardin);if(cp.halpas)W.__afkHalpas.growthRestore(cp.halpas);if(cp.rd)W.__afkRiftDg.growthRestore(cp.rd);
@@ -152,7 +153,7 @@
   const oKill=W.killMob;W.killMob=function(i){const m=mapState.mobs[i],d=W.__afkRiftDg&&W.__afkRiftDg.run(),before=d?{id:d.id,si:d.si,wave:d.wave}:null;
     const r=oKill.apply(this,arguments);if(m&&m._dead&&!seen.has(m)){seen.add(m);W.LineageTalents.killed(player,m);const q=round();if(q&&q.status==='running'){
       const id=q.queue[q.index],boss=bosses[id];if(boss&&(m.mobId===boss||m.n===(DB.mobs[boss]||{}).n))finishJob();
-      else if(id.startsWith('rd:')&&W.__afkRiftDg.store().clear[id.slice(3)]>=q.created)finishJob();
+      else if(id.startsWith('rd:')&&W.__afkRiftDg.store().clear[(()=>{const [did,pk]=rdParts(id),d=W.__afkRiftDg.BYID[did];return did+(d&&d.pickChain&&pk?pk:'');})()]>=q.created)finishJob();
       else {const native=special(id);if(native&&native.clears()>q.clearBefore)finishJob();}
     }if(before&&G.read(player))shortcut(before);}return r;
   };

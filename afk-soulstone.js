@@ -54,7 +54,9 @@
     'de_king_heruby', 'de_king_laia', 'de_king_baranka', 'de_king_slayer',
     'afk_traitor_ken', 'afk_traitor_senis', 'afk_traitor_dantes',
     'afk_hd_orin', 'afk_hd_senis', 'afk_hd_baph', 'afk_hd_hardin', 'afk_hp_flame', 'afk_hp_halpas'];
-  var eligible = function (id) { return ALLOW.indexOf(id) >= 0 && !!DB.mobs[id]; };
+  // 11-17（Ping：新王的靈魂石要怎麼取得）：王者系列（地圖王、副本王 afk_mb_*）也有自己的靈魂石——打倒牠時 5% 掉牠自己的那顆；隨機靈魂石的抽籤池不變
+  var MB = /^afk_mb_/;
+  var eligible = function (id) { return (ALLOW.indexOf(id) >= 0 || MB.test(id)) && !!DB.mobs[id]; };
   var BOSSES = [];
   var mkStone = function (id, legacy) {
     var m = DB.mobs[id], sid = PREFIX + id; if (DB.items[sid]) return;
@@ -77,7 +79,7 @@
   try { if (DB.items[SHARD]) DB.items[SHARD].d = '製作材料。席琳神殿的扎爾收 150 個，換一顆隨機的靈魂石。'; } catch (e) {}
   var isStone = function (id) { var d = id && DB.items[id]; return !!(d && d.eff === 'afk_soulstone' && d.soulBoss && !d.soulLegacy); };
   var isLegacy = function (id) { var d = id && DB.items[id]; return !!(d && d.eff === 'afk_soulstone' && d.soulLegacy); };
-  var randomStone = function () { return PREFIX + BOSSES[Math.floor(Math.random() * BOSSES.length)]; };
+  var randomStone = function () { var pool = BOSSES.filter(function (id) { return !MB.test(id); }); return PREFIX + pool[Math.floor(Math.random() * pool.length)]; };
 
   // ── 背包小工具 ──
   var countOf = function (id) { var p = P(); return p ? (p.inv || []).reduce(function (s, i) { return s + (i && i.id === id ? Math.max(1, Number(i.cnt) || 1) : 0); }, 0) : 0; };
@@ -130,6 +132,7 @@
   };
   var place = function (id) {
     var base = DB.mobs[id], B = W.__afkLore && W.__afkLore.boss;
+    try { if (MB.test(id) && W.__afkMapBoss && W.__afkMapBoss.scaledFor) base = W.__afkMapBoss.scaledFor(id) || base; } catch (e) {}
     var m;
     if (B && B.place) m = B.place(1, base, { mobId: id, _afkSoul: true });
     else {
@@ -287,7 +290,8 @@
     var cat = 'wild'; try { if (typeof mapCategoryOf === 'function') cat = mapCategoryOf(cur); } catch (e) {}
     if (m.boss) {
       if (BAD_CAT[cat] || m.siegeEnemy || m.noAttack || m.race === '建築') return;   // 2026-11-03：傲慢之塔的「往上層的樓梯」、遺忘之島傳送門算頭目，每層 5% 送靈魂石
-      if (Math.random() < RATE.boss) { var sid = randomStone(); give(sid, 1); sys(esc(m.n) + ' 的身上掉出了 ' + stoneLine(sid) + '！'); }
+      var mbId = m._afkMb ? 'afk_mb_' + m._afkMb : m.mobId, own = mbId && MB.test(mbId) && DB.items[PREFIX + mbId] ? PREFIX + mbId : null;   // 王者系列：掉牠自己的靈魂石
+      if (Math.random() < RATE.boss) { var sid = own || randomStone(); give(sid, 1); sys(esc(m.n) + ' 的身上掉出了 ' + stoneLine(sid) + '！'); }
       return;
     }
     if ((m.lv || 0) < RATE.minLv || BAD_CAT[cat] || m.race === '血盟' || m.trollPlayer) return;
@@ -426,10 +430,10 @@
         + '<button type="button" class="btn zs-go" data-zs="dull:10"' + (lg < COST.legend * 10 ? ' disabled' : '') + '>做 10 顆</button></div></div>';
     } else {
       h += '<div class="zs-card zs-note">'
-        + '‧遊戲原本的頭目（野外王、軍王、傲慢之塔與支配者、冰之女王、底比斯、提卡爾、日出之國…）與謀叛者的低語、哈汀的時空的頭目，各有一種靈魂石，共 <b>' + BOSSES.length + '</b> 種（四龍、世界事件、地區霸主沒有）。<br>'
+        + '‧遊戲原本的頭目（野外王、軍王、傲慢之塔與支配者、冰之女王、底比斯、提卡爾、日出之國…）與謀叛者的低語、哈汀的時空的頭目，以及王者系列（地圖王、副本王），各有一種靈魂石，共 <b>' + BOSSES.length + '</b> 種（四龍、世界事件、地區霸主沒有）。<br>'
         + '‧使用＝進入<b>' + ROOM_N + '</b>，自己一個人挑戰那隻頭目；傭兵留在外面，打完或離開就歸隊。頭目的能力、掉落物跟原本一樣（訓練所裡不會再掉靈魂石）。<br>'
         + '‧打倒後 3 秒回到原本的地方；倒下或自己換地圖＝挑戰結束。<br>'
-        + '‧取得：Lv' + RATE.minLv + ' 以上的怪物 ' + (RATE.stone * 100) + '% 掉隨機靈魂石、' + (RATE.shard * 100) + '% 掉靈魂石碎片；頭目 ' + (RATE.boss * 100) + '% 掉隨機靈魂石（攻城、時空裂痕、暗夢星迴不掉）。<br>'
+        + '‧取得：Lv' + RATE.minLv + ' 以上的怪物 ' + (RATE.stone * 100) + '% 掉隨機靈魂石、' + (RATE.shard * 100) + '% 掉靈魂石碎片；頭目 ' + (RATE.boss * 100) + '% 掉隨機靈魂石；王者系列（地圖王、副本王）' + (RATE.boss * 100) + '% 掉牠自己的靈魂石（攻城、時空裂痕、暗夢星迴不掉；隨機靈魂石抽不到王者系列）。<br>'
         + '‧製作：碎片 ×' + COST.shard + '，或失去光芒的傳說裝備 ×' + COST.legend + '，各換一顆隨機靈魂石（所有頭目平均抽）。'
         + (p.afkSoulStats ? '<br>‧你已經用過 ' + p.afkSoulStats.used + ' 顆，打倒 ' + p.afkSoulStats.won + ' 次。' : '') + '</div>';
     }

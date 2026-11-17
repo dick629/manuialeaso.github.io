@@ -859,6 +859,15 @@
     } catch (e) {}
   };
   setInterval(fixFinal, 3000);
+  // Ping 11-17 20:06（選 B）：覺醒角色本來就轉生過，配點上限、能力上限直接保留 200，不因覺醒歸零（女神挑戰照樣要重打）
+  var hookCaps = function () {
+    ['__afkAllocCap', '__afkAttrCap'].forEach(function (k) {
+      var o = W[k]; if (typeof o !== 'function' || o.__afkAwk) return;
+      var f = function () { var p = P(); if (p && isAw(p) && !p.classicMode) return Math.max(200, N(o.apply(this, arguments))); return o.apply(this, arguments); };
+      f.__afkAwk = true; W[k] = f;
+    });
+  };
+  hookCaps(); W.addEventListener('load', function () { hookCaps(); setTimeout(hookCaps, 2000); });
   W.__afkAwaken = { CLS: CLS, SK: SK, HERO_DROP: HERO_DROP, LEG_DROP: LEG_DROP, MAST: MAST, awaken: awaken, gate: gate, pickSouls: pickSouls, st: st, ms: ms, isAw: isAw, VULN: VULN,
     MODS: MODS, api: { deal: deal, stun: stun, heal: heal, near: near, target: target, has: has, learned: learned, base: base, buffOn: buffOn, deb: deb, debV: debV, now: now, pop: pop, LV: LV, LFE: LFE, mast: mast, alive: alive, wpnFam: wpnFam, offEn: offEn, hasOff: hasOff, mine: mine, areaHeal: areaHeal, invCount: invCount, invTake: invTake, need: need, BASE_N: BASE_N, P: P, esc: esc, sys: sys, render: function () { if (ui.box) render(ui.box); } },
     tabs: [] };

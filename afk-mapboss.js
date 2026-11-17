@@ -315,6 +315,13 @@
   }
 
   (W.LineageAbsoluteDamageGates=W.LineageAbsoluteDamageGates||[]).push(function(a,t,n){return t&&t._mbBoss&&act&&t._afkMb===act.id&&((act.invulnUntil||0)>tk()||(act.hideUntil||0)>tk())?0:n;});
-  W.__afkMapBoss = { LIST: K, BY: BY, BYMAP: BYMAP, MECH_N: MECH_N, MECH_D: MECH_D, KILLS: KILLS, active: function () { return act; }, store: store, stats: stat, start: function (id) { var b = BY[id]; return b ? start(b) : false; }, end: end, step: step };
+  // 11-17：靈魂石訓練所叫出地圖王／副本王時，照牠原本地圖的等級放大（跟在原地圖出現時一樣，單人＝不加傭兵倍率）
+  var scaledFor = function (mobId) {
+    var b = null; K.some(function (x) { if (x.mobId === mobId) { b = x; return true; } return false; });
+    if (!b || !DB.mobs[mobId]) return null;
+    var lv = 0; (b.maps || []).forEach(function (mp) { lv = Math.max(lv, mapMaxLv(mp)); });
+    return scale(DB.mobs[mobId], Math.max(10, Math.min(130, (lv || REF) + 5)), 1.5);
+  };
+  W.__afkMapBoss = { scaledFor: scaledFor, LIST: K, BY: BY, BYMAP: BYMAP, MECH_N: MECH_N, MECH_D: MECH_D, KILLS: KILLS, active: function () { return act; }, store: store, stats: stat, start: function (id) { var b = BY[id]; return b ? start(b) : false; }, end: end, step: step };
   try { console.log('[AFK-mapboss] 已載入：地圖王 ' + K.filter(function (x) { return x.type === 'field'; }).length + ' 隻、副本王 ' + K.filter(function (x) { return x.type === 'dungeon'; }).length + ' 隻'); } catch (e) {}
 })();
