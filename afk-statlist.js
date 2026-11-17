@@ -194,10 +194,25 @@
     });
   }
 
+  // 11-17：手機版的能力面板沒有灰化按鈕 → 直接包 adjAlloc：配點已達上限時一定說一次原因
+  if (typeof window.adjAlloc === 'function' && !window.adjAlloc.__afkCapMsg) {
+    var oAdj = window.adjAlloc;
+    var fAdj = function (s, dir) {
+      try {
+        var resp = false; try { resp = !!_respec; } catch (e) {}
+        if (!resp && dir > 0 && (player.bonus || 0) > 0 && !player.classicMode && naturalOf(s) >= allocCap() && typeof logSys === 'function') {
+          var now = Date.now(); if (!fAdj._t || now - fAdj._t > 800) { fAdj._t = now;
+            logSys('<span class="text-amber-300">' + capText(s, allocCap(), false) + (player.rebirth > 0 ? '' : '（轉生後上限 200）') + '，配不上去；剩下的 ' + player.bonus + ' 點可以配到其他能力。</span>'); }
+        }
+      } catch (e) {}
+      return oAdj.apply(this, arguments);
+    };
+    fAdj.__afkCapMsg = true; window.adjAlloc = fAdj;
+  }
   // 按到已滿的＋:核心什麼都不做,這裡在系統訊息說一次為什麼(不攔點擊,核心照樣自己擋)
   function onCapClick(e) {
     var b = e.target && e.target.closest && e.target.closest('.alloc-plus.afk-sl-cap');
-    if (!b || !b.title || typeof logSys !== 'function') return;
+    if (!b || !b.title || typeof logSys !== 'function' || (window.adjAlloc && window.adjAlloc.__afkCapMsg)) return;   // adjAlloc 已經說過
     try { logSys('<span class="text-amber-300">' + b.title + '。</span>'); } catch (err) {}
   }
 

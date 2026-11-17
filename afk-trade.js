@@ -351,7 +351,8 @@
       }
     }
     h += '<div class="bar"><select data-tr-in="pcat" aria-label="分類"><option value="">全部可賣的</option>' + Object.keys(CAT_N).map(function (k) { return '<option value="' + k + '"' + (S.pcat === k ? ' selected' : '') + '>' + CAT_N[k] + '</option>'; }).join('') + '</select><input data-tr-in="pq" placeholder="搜尋背包" value="' + esc(S.pq) + '" style="width:130px"><span class="dim">倉庫的東西要先取出來</span></div>';
-    var rows = (p.inv || []).filter(function (it) { var c = it && catOf(it); return c && (!S.pcat || c === S.pcat) && (!S.pq || nameOf(it).indexOf(S.pq) >= 0); });
+    var rows = (p.inv || []).filter(function (it) { var c = it && !it.lock && catOf(it); return c && (!S.pcat || c === S.pcat) && (!S.pq || nameOf(it).indexOf(S.pq) >= 0); });
+    h += '<div class="dim">上鎖的物品不會列在這裡（要賣先解鎖）。</div>';   // 11-17 Ping：上鎖的遺物太多會搞錯
     if (!rows.length) return h + '<div class="dim">背包裡沒有可以上架的東西。</div>';
     rows.slice(0, 120).forEach(function (it) {
       var bad = whyNot(it), full; try { full = getItemFullName(it); } catch (e) { full = esc(nameOf(it)); }

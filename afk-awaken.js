@@ -835,6 +835,7 @@
       var a = C.start; q.base = { str: a.str, dex: a.dex, con: a.con, int: a.int, wis: a.wis, cha: a.cha }; q.base[a.put] += a.pts;
       q.alloc = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 };
       q.lv = 1; q.exp = 0; q.rebirth = 0; q.rebirthHpKeep = 0; q.rebirthMpKeep = 0;
+      if (q.afkFinal) { q.afkFinalPreAwk = q.afkFinal; q.afkFinal = null; }   // Ping 11-17：覺醒後一轉女神挑戰重來（舊紀錄留在 afkFinalPreAwk）
       q.skills = (q.skills || []).filter(function (x) { return KEEP[x] != null; }); q.mastery = null; q.classPath = null; q.afkEvo = null; q.afkSkillUp = null; q.md = null; q.masteries = null;
       if (q.config) { q.config.selAtkSkill = ''; q.config.selHealSkill = ''; } q.elfEle = null; q.summon = null; q.buffs = q.buffs || {}; q.growth = null;   // 成長（天賦、巔峰）跟著轉生一起重來
       return { player: q, vault: v };
@@ -846,6 +847,18 @@
       return rec;
     });
   };
+  // 11-17 之前就覺醒的角色：一轉女神挑戰紀錄是覺醒前打的 → 清掉一次，重新挑戰（Ping：覺醒後應該重來）
+  var fixFinal = function () {
+    try {
+      var p = P(); if (!p || !isAw(p) || p.classicMode || N(p.rebirth) > 0) return;
+      var r = p.afkFinal; if (!r || typeof r !== 'object' || r.pending) return;
+      if (N(r.at) && N(p.awkAt) && N(r.at) > N(p.awkAt)) return;   // 覺醒後自己打的，保留
+      p.afkFinalPreAwk = r; p.afkFinal = null;
+      sys('<span class="text-amber-300">覺醒後重新開始：死亡女神的一轉挑戰要再打一次（覺醒前的紀錄已清除）。</span>');
+      try { calcStats(); updateUI(); saveGame(); } catch (e) {}
+    } catch (e) {}
+  };
+  setInterval(fixFinal, 3000);
   W.__afkAwaken = { CLS: CLS, SK: SK, HERO_DROP: HERO_DROP, LEG_DROP: LEG_DROP, MAST: MAST, awaken: awaken, gate: gate, pickSouls: pickSouls, st: st, ms: ms, isAw: isAw, VULN: VULN,
     MODS: MODS, api: { deal: deal, stun: stun, heal: heal, near: near, target: target, has: has, learned: learned, base: base, buffOn: buffOn, deb: deb, debV: debV, now: now, pop: pop, LV: LV, LFE: LFE, mast: mast, alive: alive, wpnFam: wpnFam, offEn: offEn, hasOff: hasOff, mine: mine, areaHeal: areaHeal, invCount: invCount, invTake: invTake, need: need, BASE_N: BASE_N, P: P, esc: esc, sys: sys, render: function () { if (ui.box) render(ui.box); } },
     tabs: [] };
