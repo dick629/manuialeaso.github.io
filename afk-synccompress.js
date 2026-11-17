@@ -1,5 +1,5 @@
 /* ============================================================================
- * afk-synccompress.js — 存檔即時壓縮（預設關）
+ * afk-synccompress.js — 存檔即時壓縮（11-17 起預設開，可在 🎚️ 介面 取消）
  *
  * 為什麼需要:上游 commit d8e583539(2026-07-11)把 _lzSet 從「同步壓縮」改成
  *   「先寫原文、背景 Worker 事後壓」以避免大存檔壓縮卡主線。立意雖好,卻引進一個空窗:
@@ -22,9 +22,11 @@
   'use strict';
 
   if (window.AFK_TOGGLES) AFK_TOGGLES.register({
-    id: 'synccompress', name: '存檔即時壓縮', group: '系統與其他', def: false,
-    desc: '避免存檔爆掉害角色或倉庫消失；代價是存檔時多花一點時間'
+    id: 'synccompress', name: '存檔即時壓縮', group: '系統與其他', def: true,
+    desc: '避免存檔爆掉害角色或倉庫消失；代價是存檔時多花一點時間（建議開著）'
   });
+  // 玩家 11-17：改成全部強制開一次——舊的「關」設定清掉一次（之後玩家在 🎚️ 介面 自己取消勾選才會關）
+  try { if (!localStorage.getItem('afk_synccompress_on1117')) { if (window.AFK_TOGGLES && AFK_TOGGLES.set) AFK_TOGGLES.set('synccompress', true); else localStorage.removeItem('afk_toggle_synccompress'); localStorage.setItem('afk_synccompress_on1117', '1'); } } catch (e) {}
 
   if (typeof _lzSet !== 'function' || typeof LZString === 'undefined' || typeof LZString.compressToUTF16 !== 'function') {
     console.warn('[AFK-synccompress] 找不到 _lzSet / LZString，停用（遊戲照常運作）。');

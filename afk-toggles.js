@@ -38,7 +38,7 @@
         '畫面': ['artfix', 'npclist', 'eqlist', 'invlist'],   // 玩家 11-11 18:52：背包條列式也開放（取消勾選＝舊版一格一格）   // 玩家 11-11 13:19：人物裝備條列式也開放勾選   // 玩家 11-11 10:58：村莊 NPC 條列式也開放勾選   // 玩家 11-10：圖檔修復版保留開關（預設關）
         '玩法選項': ['offlinechase', 'autoupdate', 'rebirth-quest', 'autocancel'],   // 玩家 11-12 15:05：相消術卷軸自動解控可以關；玩家 11-11 02:39：原本只列三個，其他融合
         '資訊顯示': ['statpts','notip','killlog','nobanner'],
-        '效能與省電': ['fpscap','lowend','autoreload']
+        '效能與省電': ['fpscap','lowend','autoreload','synccompress']   // 玩家 11-17：存檔即時壓縮開放勾選
     };
     Object.keys(UI_SECTIONS).forEach(function (group) { UI_SECTIONS[group].forEach(function (id) { UI_GROUPS[id] = group; }); });
     // These legacy strips have been replaced by the unified HUD, status icon and hotbar.
@@ -224,7 +224,7 @@
         { id: 'reissueid', name: '換發身分證', desc: '⚠️ 把複製出來的角色換成各自獨立的身分；會改寫全部存檔且無法復原', group: '存檔工具', parent: 'storage' },
         { id: 'pwa', name: '安裝成 App / 離線快取', desc: '把遊戲裝成手機／電腦上的 App，圖片存在本機不用每次重抓', group: '系統與其他' },
         { id: 'storage', name: '設定選單', desc: '首頁的 ⚙ 設定選單，可檢查存檔大小', group: '系統與其他' },
-        { id: 'synccompress', name: '存檔即時壓縮', desc: '避免存檔爆掉害角色或倉庫消失；代價是存檔時多花一點時間', group: '系統與其他', def: false },
+        { id: 'synccompress', name: '存檔即時壓縮', desc: '避免存檔爆掉害角色或倉庫消失；代價是存檔時多花一點時間（建議開著）', group: '系統與其他', def: true },   // 玩家 11-17：改成預設開、可勾選
         { id: 'powersave', name: '省電模式', desc: '提供完整效果、流暢顯示與極省電三種設定；也可分別關閉動畫、光暈、特效及聲音。', group: '系統與其他' },
         { id: 'skin', name: '首頁外掛入口/資訊', desc: '整理首頁的外掛入口，並顯示原作者連結與最後同步原版的時間', group: '系統與其他' },
         // 2026-11-01：手機預設開（橫幅在手機上吃掉一大塊畫面）——沒設過開關的手機玩家第一次進來會跳確認視窗（要讀過那句話、打「了解」才藏，取消就維持顯示、不再問）；電腦照舊預設關
