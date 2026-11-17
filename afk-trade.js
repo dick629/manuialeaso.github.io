@@ -8,7 +8,7 @@
  *     ‧上架 24 小時；同時最多 3 件；每天上架 3 次、購買 5 件（台灣時間 00:00 換日）
  *     ‧旅人身分建立 72 小時內不能上架（可以買）
  *     ‧同一件物品（物品編號）全服只能上架一次；買到、領回的物品會換新編號
- *   可以賣：可強化的武器／防具／飾品（+15 以下）、遺物、席琳遺骸、怪物卡片（一次 ≤10）、8 級以上的法術書（一次 ≤10）
+ *   可以賣：可強化的武器／防具／飾品（+15 以下）、遺物、席琳遺骸、怪物卡片（一次 ≤10）、8 級以上的法術書（一次 ≤10）、卷軸（一次 ≤100）
  *   不能賣：上鎖的、身上穿的、消耗品、材料、任務道具、寵物、魔法娃娃等
  *   只能在村莊上架、購買、領取（野外只能瀏覽）。
  *   用完整備份或轉移碼還原、或匯入角色後 24 小時內不能上架和購買。
@@ -24,12 +24,12 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'trade', name: '寄賣攤（潘朵拉黑市）', group: '遊戲內容', def: true,
-    desc: '潘朵拉黑市多一個分頁：跟其他玩家用血龍鑽一口價買賣裝備、遺物、遺骸、卡片、法術書（要連旅人伺服器）' });
+    desc: '潘朵拉黑市多一個分頁：跟其他玩家用血龍鑽一口價買賣裝備、遺物、遺骸、卡片、法術書、卷軸（要連旅人伺服器）' });
   if (typeof DB === 'undefined' || !DB.items) return;
   var on = function () { return !T || T.enabled('trade'); };
   var BLOOD = 'afk_blood_dia';
-  var RULE = { minPrice: 500, postFee: 0.02, saleFee: 0.05, listMs: 24 * 3600000, maxActive: 3, postPerDay: 3, buyPerDay: 5, cats: { equip: 1, relic: 1, remains: 1, card: 10, book: 10 } };
-  var CAT_N = { equip: '裝備', relic: '遺物', remains: '席琳遺骸', card: '卡片', book: '法術書' };
+  var RULE = { minPrice: 500, postFee: 0.02, saleFee: 0.05, listMs: 24 * 3600000, maxActive: 3, postPerDay: 3, buyPerDay: 5, cats: { equip: 1, relic: 1, remains: 1, card: 10, book: 10, scroll: 100 } };
+  var CAT_N = { equip: '裝備', relic: '遺物', remains: '席琳遺骸', card: '卡片', book: '法術書', scroll: '卷軸' };
   var COOL_MS = 24 * 3600000, K_JR = 'afk_mkt_jr', K_DONE = 'afk_mkt_done', K_RESTORE = 'afk_mkt_restore';
 
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
@@ -61,6 +61,7 @@
     if (/^card_[psg]_/.test(it.id)) return 'card';
     if (d.type === 'skillbk') { var s = DB.skills && DB.skills[d.sk]; return s && Number(s.tier) >= 8 ? 'book' : null; }
     if (d.slot && /^rem_/.test(d.slot)) return 'remains';
+    if (/卷軸/.test(d.n || '') && !d.relic && d.type !== 'wpn' && d.type !== 'arm' && d.type !== 'acc' && !d.quest && !d.questItem && d.type !== 'quest' && !/^(quest_|afk_q_|afk_aq_)/.test(it.id)) return 'scroll';   // 11-17：卷軸（一次 ≤100）
     if (d.relic || (typeof isRelic === 'function' && isRelic(d))) return 'relic';
     if (((d.type === 'wpn' && !d.isArrow) || d.type === 'arm' || d.type === 'acc') && !d.noEnhance && !/^(doll|mio|sigil|engrave|petarm|petwpn)$/.test(d.slot || '')) return 'equip';
     return null;
@@ -287,7 +288,7 @@
       + '‧用<b>血龍鑽</b>一口價買賣，從目前角色的背包扣、入帳。<br>'
       + '‧定價最少 ' + fmt(RULE.minPrice) + ' 顆；上架費 ' + Math.round(RULE.postFee * 100) + '%（按下上架就扣、不退）；賣出時扣成交手續費 ' + Math.round(RULE.saleFee * 100) + '%。<br>'
       + '‧上架 24 小時，沒賣掉自動退回；同時最多 ' + RULE.maxActive + ' 件；每天上架 ' + RULE.postPerDay + ' 次、購買 ' + RULE.buyPerDay + ' 件（台灣時間 00:00 換日）。<br>'
-      + '‧可以賣：武器、防具、飾品（+15 以下）、遺物、席琳遺骸、怪物卡片（一次最多 10 張）、8 級以上的法術書（一次最多 10 本）。上鎖的要先解鎖。<br>'
+      + '‧可以賣：武器、防具、飾品（+15 以下）、遺物、席琳遺骸、怪物卡片（一次最多 10 張）、8 級以上的法術書（一次最多 10 本）、卷軸（一次最多 100 張）。上鎖的要先解鎖。<br>'
       + '‧同一件物品只能上架一次；買到的物品可以再賣。<br>'
       + '‧新的旅人身分 72 小時內不能上架（可以買）。用備份、轉移碼還原或匯入角色後 24 小時內不能上架和購買。<br>'
       + '‧只能在村莊上架、購買、領取；野外可以瀏覽。賣出的血龍鑽、退回的物品在「我的攤位」領取，30 天內沒領會作廢。'

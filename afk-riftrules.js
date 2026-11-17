@@ -22,7 +22,9 @@
     rift: { barrier: 0.15, death: 0.10, deathFast: 0.15, bossDr: 0.05, mobDeath: 0.05, mobShield: 0.10 },
     dream: { barrier: 0.10, death: 0.05, deathFast: 0.08, bossDr: 0.03, mobDeath: 0.03, mobShield: 0.05 }
   };
-  var mode = function () { var p = P(); if (!p || p.classicMode) return null; return rift() ? CFG.rift : dream() ? CFG.dream : null; };
+  // 11-17（Ping）：女神單人試煉（次元突破者）不套屏障／護盾／反噬
+  var soloFb = function () { try { var F = W.__afkFinalBoss; return !!(F && F.mode && F.mode() === 'solo' && typeof state !== 'undefined' && state._afkFinalSpawned); } catch (e) { return false; } };
+  var mode = function () { var p = P(); if (!p || p.classicMode || soloFb()) return null; return rift() ? CFG.rift : dream() ? CFG.dream : null; };
   var enemy = function (m) { return !!(m && m.curHp != null && !m._isAlly && !m._allyName && m.race !== '建築' && m.race !== '血盟' && !m._dummy && !m.afkRaid); };   // 多人討伐的吞噬者不套
   var inTown = function () { try { return typeof mapState !== 'undefined' && /^town_/.test(String(mapState.current || '')); } catch (e) { return true; } };
   var log = function (h) { try { if (typeof logCombat === 'function' && !(typeof state !== 'undefined' && state.ff)) logCombat(h, 'enemy'); } catch (e) {} };
@@ -78,7 +80,11 @@
         var c = mode(); if (!c || !(v > 0) || !enemy(target)) return v;
         if (target.boss && !(opt && opt.kind === 'true')) v = Math.max(1, Math.floor(v * (1 - c.bossDr)));
         var s = shieldOf(target);
-        if (s > 0) { var a = Math.min(s, v); target._rrShield = s - a; v -= a; if (target._rrShield <= 0 && target.boss) log('<span style="color:#93c5fd">' + (target.n || '王') + ' 的屏障破了。</span>'); }
+        if (s > 0) {
+          var a = Math.min(s, v); target._rrShield = s - a; v -= a;
+          if (target._rrShield <= 0) { if (target.boss) log('<span style="color:#93c5fd">' + (target.n || '王') + ' 的屏障破了。</span>'); }
+          else if (tk() >= (target._rrAbsLog || 0)) { target._rrAbsLog = tk() + 50; log('<span style="color:#93c5fd">【' + (target.boss ? '魔法屏障' : '護盾') + '】' + (target.n || '怪物') + ' 的護盾吸收了傷害（還剩 ' + Math.ceil(target._rrShield).toLocaleString() + '）。</span>'); }   // 11-17：0 點傷害的原因要看得到（每 5 秒最多一行）
+        }
       } catch (e) {}
       return v;
     };

@@ -67,6 +67,7 @@
  }
  function itemDefinition(profile,id){
   if(own(profile.items,id))return profile.items[id];
+  {const g=String(id).split('~');if(g.length===6&&g[0]==='wpn_gt_sword'&&own(profile.items,g[0])&&g.slice(1).every(x=>/^(relic_|wpn_)[a-z0-9_]+$/.test(x)&&own(profile.items,x)))return profile.items[g[0]];}   // 11-17：真吉爾塔斯之劍（帶 5 個遺物詞條的衍生編號）
   if(profile.derivedRelics!==1)return null;
   const p=/^((?:relic_|wpn_)[a-z0-9_]+)~r(\d{1,2})(?:~((?:relic_|wpn_)[a-z0-9_]+))?(?:~a([0-5]))?(?:~e([0-9]))?(?:~g((?:relic_|wpn_)[a-z0-9_]+))?$/.exec(id);
   if(!p||!own(profile.items,p[1]))return null;

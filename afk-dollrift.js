@@ -115,6 +115,33 @@
     after();
   };
 
+  // 11-17：同階一次合成多次（×10／×20／×30／全部）；機率、保底每次照算，訊息只出一條總結
+  var askAll = 0;
+  var synthMany = function (t, n) {
+    t = +t; n = +n || 0; askAll = 0; if (!ok() || !RATE[t]) return;
+    if (tierCount(t) < 2) { sys('<span class="text-red-400">' + CN[t] + '魔法娃娃不足 2 隻（未鎖定、在背包）。</span>'); after(); return; }
+    var s = store(), done = 0, win = 0, sure = 0, got = {}, back = 0;
+    while ((n === 0 || done < n) && tierCount(t) >= 2 && done < 100000) {
+      var used = takeTier(t, 2); if (used.length < 2) { used.forEach(give); break; }
+      var pit = Number(s.pity[t]) || 0, sr = pit >= PITY - 1, w = sr || Math.random() * 100 < RATE[t];
+      done++;
+      if (w) { s.pity[t] = 0; win++; if (sr) sure++; var id = pick(t + 1); give(id); got[id] = (got[id] || 0) + 1; }
+      else { s.pity[t] = pit + 1; back++; give(used[Math.floor(Math.random() * used.length)]); }
+    }
+    var gl = Object.keys(got).map(function (id) { return nameHtml(id) + (got[id] > 1 ? '×' + got[id] : ''); }).join('、');
+    sys('<span class="text-amber-200 font-bold">🪆 ' + CN[t] + '合成 ×' + done + '：</span>成功 ' + win + ' 次' + (sure ? '（含保底 ' + sure + ' 次）' : '') + (gl ? '，得到 ' + gl : '') + '；失敗 ' + back + ' 次（退還 ' + back + ' 隻）。<span class="text-amber-300 text-xs">（' + CN[t] + '保底 ' + (Number(s.pity[t]) || 0) + '/' + (PITY - 1) + '）</span>');
+    after();
+  };
+  var askMany = function (t) { askAll = +t; after(); };
+  var noMany = function () { askAll = 0; after(); };
+  var manyBtns = function (t, n) {
+    var dis = n >= 2 ? '' : ' disabled';
+    if (askAll === t) return '<div class="afk-dr-row" style="justify-content:flex-end;gap:6px"><span class="text-amber-300">把可用的' + CN[t] + '全部拿去合成？</span><button type="button" onclick="__afkDollRift.synthMany(' + t + ',0)">確定</button><button type="button" onclick="__afkDollRift.noMany()">取消</button></div>';
+    return '<div class="afk-dr-row" style="justify-content:flex-end;gap:6px"><span class="text-slate-400 text-xs">一次合成</span>'
+      + [10, 20, 30].map(function (k) { return '<button type="button" onclick="__afkDollRift.synthMany(' + t + ',' + k + ')"' + dis + '>×' + k + '</button>'; }).join('')
+      + '<button type="button" onclick="__afkDollRift.askMany(' + t + ')"' + dis + '>全部</button></div>';
+  };
+
   // ── 面板（魔法娃娃商人） ──
   var panel = function () {
     if (!ok()) return '';
@@ -125,8 +152,9 @@
     [7, 8, 9].forEach(function (t) {
       var n = tierCount(t), p = Number(s.pity[t]) || 0;
       h += '<div class="afk-dr-row"><span>🪆 <span class="' + COL[t] + ' font-bold">' + CN[t] + '</span> 2 隻 → <span class="' + COL[t + 1] + ' font-bold">' + CN[t + 1] + '</span>（路線隨機）成功率 ' + RATE[t] + '%　可用 <b class="' + (n >= 2 ? 'text-green-400' : 'text-red-400') + '">' + n + '</b>　保底 ' + p + '/' + (PITY - 1) + '</span><button type="button" onclick="__afkDollRift.synth(' + t + ')"' + (n >= 2 ? '' : ' disabled') + '>合成</button></div>';
+      h += manyBtns(t, n);
     });
-    h += '<div class="afk-dr-note">失敗會吃掉 1 隻、退還 1 隻。同一階連續失敗 9 次，第 10 次必定成功（抽卡也一樣）。鎖定的、放在倉庫的娃娃不會被拿去合成。</div>';
+    h += '<div class="afk-dr-note">失敗會吃掉 1 隻、退還 1 隻。同一階連續失敗 9 次，第 10 次必定成功（抽卡也一樣）。「×10／×20／×30／全部」是同一階連續合成好幾次，每次機率、保底都照算，娃娃不夠就停。鎖定的、放在倉庫的娃娃不會被拿去合成。</div>';
     [7, 8, 9, 10].forEach(function (t) {
       h += '<div class="afk-dr-note" style="margin-top:8px"><span class="' + COL[t] + ' font-bold">' + CN[t] + '</span></div><div class="afk-dr-grid">';
       TIER_IDS[t].forEach(function (id) { var r = BY[id], have = s.seen[id] || tierHas(id); h += '<div class="afk-dr-cell' + (have ? '' : ' off') + '" title="' + esc(DB.items[id].d) + '"><img src="' + imgOf(t, r.k) + '" alt="" loading="lazy">' + esc(r.n) + '<b>' + r.r.n + '</b></div>'; });
@@ -215,7 +243,7 @@
     });
   }
 
-  W.__afkDollRift = { R: R, NAMES: NAMES, LIST: LIST, BY: BY, TIER_IDS: TIER_IDS, RATE: RATE, BADGE_N: BADGE_N, DRAW_N: DRAW_N, DRAW_RATE: DRAW_RATE, PITY: PITY, ACT: ACT, CN: CN, COL: COL, BASE: BASE,
+  W.__afkDollRift = { synthMany: synthMany, askMany: askMany, noMany: noMany, R: R, NAMES: NAMES, LIST: LIST, BY: BY, TIER_IDS: TIER_IDS, RATE: RATE, BADGE_N: BADGE_N, DRAW_N: DRAW_N, DRAW_RATE: DRAW_RATE, PITY: PITY, ACT: ACT, CN: CN, COL: COL, BASE: BASE,
     idOf: idOf, imgOf: imgOf, store: store, exchange: exchange, draw: draw, synth: synth, panel: panel, cur: cur, tierCount: tierCount };
   try { console.log('[AFK-dollrift] 已載入：魔法娃娃 7～10 階（32 隻）'); } catch (e) {}
 })();
