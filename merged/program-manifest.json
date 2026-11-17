@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-1fc3eaa0546c",
+  "build": "merge-0.4-a4244282cae4",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -133,8 +133,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-awaken-wiki.js?v=f97a331d44d6",
-      "sha256": "f97a331d44d68f702234a8283a6752aecf164f6a2ede3122f1883f2025870fd3",
+      "url": "afk-awaken-wiki.js?v=898eaff26408",
+      "sha256": "898eaff26408e84c3ca7c18da6da9e0178c78afd3d1085728b8fd6a3f480a538",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1759,7 +1759,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "8e4e63a1f05655c970649d5d0c0e105d2565a8cbd2f3fd98c57d4d9f9e4fea29",
+      "sha256": "87721a69e811310d2ae57bf16aeb31f7f7e259e8cae6271e1bc67c6e301efce4",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1993,8 +1993,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/class-core.js?v=25936e9dc6fd",
-      "sha256": "25936e9dc6fd1f5e64c489abdf42ce1a3916a72e7accb4644cd4498bf793c922",
+      "url": "merged/class-core.js?v=326f3b7d6bff",
+      "sha256": "326f3b7d6bff749b21834b16b0b971018e83f5fbb796ec24b656eb4844aeb83d",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2233,8 +2233,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/sherine-catalog.js?v=64255f8b16bd",
-      "sha256": "64255f8b16bde657bd729cb651e98b93e1167c9678e7f329a4293e70c5a831e6",
+      "url": "merged/sherine-catalog.js?v=0c410293e90b",
+      "sha256": "0c410293e90b1544780ab6a079a849355a117d7ac08c010e0ef16e5cb754fd23",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2243,8 +2243,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/sherine-forge.js?v=0de8f20dcb63",
-      "sha256": "0de8f20dcb6362de5831ea818825d2b34af67b50be1b9febd4927e0edfa750d8",
+      "url": "merged/sherine-forge.js?v=273c3fd1d4ed",
+      "sha256": "273c3fd1d4ed25b55b452ba8d37ca7050988a53c83abdc1c9f0662f4c80be5cd",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2264,7 +2264,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "d8317c74b3023917da1cea5c3ab5cc9b27169503aa8eb51cfdf10a14b49e87cc",
+      "sha256": "bc130ee3dd812a50038234d7ea5c9985c81e6236e859b8048c9bdacc30206c29",
       "type": "text/html; charset=utf-8"
     }
   ]
