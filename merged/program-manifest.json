@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-4bedcb108adb",
+  "build": "merge-0.4-16a216025737",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -138,8 +138,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-awaken.js?v=5d99c1906e0e",
-      "sha256": "5d99c1906e0ecdcff21f73cd269e856a3ae1d8d5512c956f05c606b0a8aaa5d2",
+      "url": "afk-awaken.js?v=f932f8159305",
+      "sha256": "f932f8159305e23f94925f5a1f7e9e8acc4f1b1706ca482284fa238df23acad4",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -778,8 +778,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-hybrid.js?v=c68ca572a395",
-      "sha256": "c68ca572a395df806fe21bb6130887fbedff7a631ba59029e929467fdcd3f6f8",
+      "url": "afk-hybrid.js?v=1d0951626af7",
+      "sha256": "1d0951626af7991942715df0f55bd544df7fc5b9aed1328d6f24b7a4e2342d1f",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1178,8 +1178,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-rebirth-rules.js?v=c90b49af09d4",
-      "sha256": "c90b49af09d43052b7c30b6dd585adc96f1eacde733f3a5d3f92a7d8c0c229a1",
+      "url": "afk-rebirth-rules.js?v=3e2bc27ffd69",
+      "sha256": "3e2bc27ffd69bce905912f06cb35b4eadaf82cc205c3d7d988ab13e540944255",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1368,8 +1368,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftrules.js?v=9091ad9735d6",
-      "sha256": "9091ad9735d6eb9c0e32097a45ecc909b781a27a7dcac8b68e16fdf628039509",
+      "url": "afk-riftrules.js?v=180f7ccfcb75",
+      "sha256": "180f7ccfcb75a66de20c7fd45660ac61eeb7e40401c8416d292eed6f19250200",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1764,7 +1764,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "a85e7d6c0fdc2bf36f54a75722bd66eb68740afcf35b06b3947afe156e3b147f",
+      "sha256": "38020af909ce8115cfae011c080d3c905158e399043477cd33c6c0541ed59b77",
       "type": "text/html; charset=utf-8"
     },
     {

@@ -954,7 +954,7 @@
       Object.keys(SK).filter(function (id) { return SK[id].cls === cls && SK[id].tier === '神話'; }).forEach(function (id) { var s = SK[id]; h += '<div class="ax-desc">' + esc(s.n) + '（Lv' + s.lv + '）：' + esc(s.desc) + (learned(p, id) ? ' <span class="ok">已學會</span>' : '') + '</div>'; });
     }
     h += '<div class="ax-err">' + esc(ui.err) + '</div><div class="ax-msg">' + esc(ui.msg) + '</div></div>';
-    box.innerHTML = h; ui.box = box;
+    box.innerHTML = (W.__afkDmgLabel && W.__afkDmgLabel.html ? W.__afkDmgLabel.html(h) : h); ui.box = box;   // 11-18：技能說明也標〔近戰〕〔魔法〕等
   };
   var hook = function () {
     var K = W.__afkNpcKit;

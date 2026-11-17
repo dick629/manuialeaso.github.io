@@ -140,7 +140,7 @@
   //   碎盾易傷：魔法相消術、破壞盔甲、粉碎能量、究極光裂術、弱化術命中（各 +20%，8 秒）；鈍器遺物一般攻擊命中 20% 機率（+20%，8 秒）。
   //            不同來源相加、同一來源只算一次，最多 +50%。
   //   穿透易傷：三重矢、奪命之雷、會心一擊命中；精準目標增益期間全隊命中；帶穿透或貫穿特效的遺物武器一般攻擊命中 → 5 秒。
-  //   你、傭兵施放都算。
+  //   你、傭兵施放都算；寵物的弱化／疾病技能成功給碎盾、技能追加的攻擊給穿透（11-18）。
   var BRK_SK = { sk_cancel: 1, sk_dark_armorbreak: 1, sk_illu_crush: 1, sk_disintegrate: 1, sk_weaken: 1 };
   var PEN_SK = { sk_elf_triple: 1, sk_dragon_deathlightning: 1, sk_dark_crit: 1 };
   var SV = {
@@ -163,14 +163,29 @@
   var wpnOf = function (a) { var w = a && a.eq && (a.eq.wpn || a.eq.weapon); return w && typeof DB !== 'undefined' ? DB.items[w.id] && { id: w.id, d: DB.items[w.id] } : null; };
   var bluntRelic = function (w) { if (!w || !w.d.relic) return false; try { return (getWeaponTags(w.id) || []).some(function (t) { return /鈍器/.test(t); }); } catch (e) { return false; } };
   var penRelic = function (w) { return !!(w && w.d.relic && (w.d.eff === 'pierce' || w.d.alsoPierce || w.d.ignHardSkin)); };
+  var petSrc = function () { try { return typeof _combatSrc !== 'undefined' && _combatSrc === 'pet'; } catch (e) { return false; } };
+  var petCasting = false;
   var onHit = function (actor, target, opt) {
     if (!enemy(target) || !party(actor)) return;
     if (preciseOn()) SV.addPen(target);
+    if (petSrc()) { if (petCasting) SV.addPen(target); return; }   // 寵物：技能追加的攻擊（撕咬、勾爪等）→ 穿透；不吃主人的武器
     var k = opt && opt.kind; if (k !== 'melee' && k !== 'ranged') return;
     var w = wpnOf(actor); if (!w) return;
     if (penRelic(w)) SV.addPen(target);
     if (bluntRelic(w) && Math.random() < 0.20) SV.addBrk(target, 'blunt');
   };
+  // 11-18（Ping）：寵物也會觸發——弱化術、疾病類技能成功 → 碎盾（寵物來源 +20%，8 秒）；技能追加的攻擊 → 穿透 5 秒
+  if (typeof W.petCastSkill === 'function' && !W.petCastSkill.__afkSV) {
+    var oPet = W.petCastSkill;
+    var fPet = function (p, d, target) {
+      var st = target && target.st, w0 = st ? Number(st.weaken) || 0 : 0, d0 = st ? Number(st.disease) || 0 : 0, r;
+      petCasting = true;
+      try { r = oPet.apply(this, arguments); } finally { petCasting = false; }
+      try { var s1 = target && target.st; if (s1 && enemy(target) && ((Number(s1.weaken) || 0) > w0 || (Number(s1.disease) || 0) > d0)) SV.addBrk(target, 'pet'); } catch (e) {}
+      return r;
+    };
+    fPet.__afkSV = true; W.petCastSkill = fPet; try { (0, eval)('petCastSkill = window.petCastSkill'); } catch (e) {}
+  }
   W.__afkShieldVuln = { SV: SV, BRK_SK: BRK_SK, PEN_SK: PEN_SK, onHit: onHit };
 
   // ── 11-17（Ping）：怪物血條下方顯示護盾（藍條＋剩餘量），被打時數字往下掉 ──

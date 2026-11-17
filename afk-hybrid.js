@@ -108,17 +108,21 @@
   //     hit 命中觸發 5～10%（身上遺物有第二詞綴 +2.5、第三詞綴 +2.5）；skill 技能 5～10%（技能強化 0～3 階：5／6.5／8／10）；
   //     relic 特定遺物 5～10%（+0 5%，每 +3 多 1%）；rune 符文之語 5～10%（★0～3：5／6.67／8.33／10）；scroll 屬性卷軸 5～8%（屬性階 1～5）；
   //     卡片（標籤卡）之後跟卡片系統一起做。
-  //   另計（不佔 50%）：寵物撕咬＝物理、魔法各 5%；元素怪對自己的屬性 5%。現有的脆弱、弱點曝光、遺物火易傷照舊另外算。
+  //   另計（不佔 50%）：寵物撕咬＝每層物理、魔法各 1%，基本上限 5 層（11-18）；元素怪對自己的屬性 5%。現有的脆弱、弱點曝光、遺物火易傷照舊另外算。
   //   持續 5 秒（再次觸發刷新）。
   var VULN = typeof WeakMap === 'function' ? new WeakMap() : null;
   var DUR = 50, CAP = 0.5, PET = 0.05, NAT = 0.05;
-  var vs = function (t) { if (!VULN || !t || typeof t !== 'object') return null; var s = VULN.get(t); if (!s) { s = { ph: {}, mg: {}, el: {}, pet: 0 }; VULN.set(t, s); } return s; };
+  var vs = function (t) { if (!VULN || !t || typeof t !== 'object') return null; var s = VULN.get(t); if (!s) { s = { ph: {}, mg: {}, el: {}, pet: 0, petN: 0 }; VULN.set(t, s); } return s; };
   var put = function (box, src, v) { if (!box) return; var c = box[src], t = now(); if (!c || c[1] <= t || c[0] <= v) box[src] = [v, t + DUR]; else c[1] = t + DUR; };
   var sum = function (box) { var t = now(), n = 0; for (var k in box) if (box[k][1] > t) n += box[k][0]; return Math.min(CAP, n); };
   var elBox = function (s, ele) { return s.el[ele] || (s.el[ele] = {}); };
+  // 寵物撕咬（Ping 11-18 04:28）：每咬一次疊 1 層，每層物理、魔法易傷各 +1%，基本上限 5 層，5 秒（咬到就刷新）。
+  //   標籤卡「寵物撕咬易傷層數上限 +5」→ 上限 10 層（之後卡片系統設 player._afkPetBiteCap）。
+  var petCap = function () { var p = P(); return 5 + Math.max(0, Math.floor(N(p && p._afkPetBiteCap))); };
+  var petV = function (s) { return s.pet > now() ? Math.min(s.petN || 0, petCap()) * 0.01 : 0; };
   var V = {
-    ph: function (t, s) { s = s || vs(t); return s ? sum(s.ph) + (s.pet > now() ? PET : 0) : 0; },
-    mg: function (t, s) { s = s || vs(t); return s ? sum(s.mg) + (s.pet > now() ? PET : 0) : 0; },
+    ph: function (t, s) { s = s || vs(t); return s ? sum(s.ph) + petV(s) : 0; },
+    mg: function (t, s) { s = s || vs(t); return s ? sum(s.mg) + petV(s) : 0; },
     el: function (t, ele, s) { s = s || vs(t); return (s ? sum(elBox(s, ele)) : 0) + (t && t.e === ele ? NAT : 0); }
   };
   var RESK = { fire: 'resFire', water: 'resWater', wind: 'resWind', earth: 'resEarth' };
@@ -221,7 +225,7 @@
     var R = W.AFK_RELIC_RUNTIME; if (!R || typeof R.companionDamage !== 'function' || R.__hkHybridPet) return; R.__hkHybridPet = true;
     var o = R.companionDamage;
     R.companionDamage = function (owner, pet, target, dmg, extra) {
-      try { if (!W.__afkHybridOff && extra && extra.kind === 'pet' && target && !target._isAlly) { var s = vs(target); if (s) s.pet = now() + DUR; } } catch (e) {}
+      try { if (!W.__afkHybridOff && extra && extra.kind === 'pet' && target && !target._isAlly) { var s = vs(target); if (s) { if (!(s.pet > now())) s.petN = 0; s.petN = Math.min(petCap(), (s.petN || 0) + 1); s.pet = now() + DUR; } } } catch (e) {}
       return o.apply(this, arguments);
     };
   };

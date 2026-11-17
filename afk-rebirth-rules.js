@@ -36,7 +36,7 @@
   // ── 護盾 ──
   var shieldCap = function (e) { return Math.floor((Number(e.mhp) || 0) * 0.4); };   // 溢補護盾上限：最大 HP 40%（玩家 2026-10-31 00:47；原本 20%）
   var addShield = function (e, over) {
-    if (!e || !reborn(e) || !(over > 0)) return;
+    if (!e || !(over > 0)) return;   // 11-18（Ping）：所有角色的治療都可以溢補（原本限轉生）
     e._afkShield = Math.min(shieldCap(e), (Number(e._afkShield) || 0) + Math.floor(over));
   };
   var healWithShield = function (e, v) {   // 回血；溢出的部分變護盾
@@ -51,7 +51,7 @@
     var oRHS = window.rollHealingSpell;
     window.rollHealingSpell = function (sk, dStats, caster, target) {
       var v = oRHS.apply(this, arguments);
-      try { if (target && v > 0 && reborn(target)) { var h = hpOf(target) || 0, mx = Number(target.mhp) || h; if (h + v > mx) addShield(target, h + v - mx); } } catch (e) {}
+      try { if (target && v > 0) { var h = hpOf(target) || 0, mx = Number(target.mhp) || h; if (h + v > mx) addShield(target, h + v - mx); } } catch (e) {}
       return v;
     };
   }
@@ -60,10 +60,56 @@
     var oPHB = window.potionHealBase;
     window.potionHealBase = function (d, owner) {
       var v = oPHB.apply(this, arguments);
-      try { if (owner && v > 0 && reborn(owner)) { var h = hpOf(owner) || 0, mx = Number(owner.mhp) || h; if (h + v > mx) addShield(owner, h + v - mx); } } catch (e) {}
+      try { if (owner && v > 0) { var h = hpOf(owner) || 0, mx = Number(owner.mhp) || h; if (h + v > mx) addShield(owner, h + v - mx); } } catch (e) {}
       return v;
     };
   }
+
+  // 11-18（Ping）：其他治療（全體治癒的持續回復、隊伍補血等走 _supHeal 的）也溢補
+  if (typeof window._supHeal === 'function' && !window._supHeal.__afkOH) {
+    var oSup = window._supHeal;
+    var fSup = function (m, amt) {
+      try { if (m && amt > 0) { var h = hpOf(m) || 0, mx = Number(m.mhp) || h; if (h + amt > mx) addShield(m, h + amt - mx); } } catch (e) {}
+      return oSup.apply(this, arguments);
+    };
+    fSup.__afkOH = true; window._supHeal = fSup; try { (0, eval)('_supHeal = window._supHeal'); } catch (e) {}
+  }
+  // 11-18（Ping）：溢補護盾顯示在血條上（跟怪物護盾一樣：藍條＋剩餘量）
+  var shCss = function () {
+    if (document.getElementById('afk-psh-css')) return;
+    var st = document.createElement('style'); st.id = 'afk-psh-css';
+    st.textContent = '.afk-psh{position:absolute;left:0;bottom:0;height:3px;background:#60a5fa;box-shadow:0 0 4px #60a5fa;pointer-events:none;z-index:3}';
+    document.head.appendChild(st);
+  };
+  var fmtK = function (n) { n = Math.ceil(n); return n >= 1e8 ? (Math.round(n / 1e7) / 10) + '億' : n >= 1e4 ? (Math.round(n / 1e3) / 10) + '萬' : n.toLocaleString(); };
+  // 藍線畫在 HP 條底部；數字接在 HP 文字後面（「13529/13529 🛡5,411」），不蓋住原本的字
+  var paintOne = function (barId, e) {
+    var fill = document.getElementById(barId); if (!fill || !fill.parentNode) return;
+    var box = fill.parentNode, sh = Math.max(0, Number(e && e._afkShield) || 0);
+    var bar = box.querySelector(':scope > .afk-psh');
+    if (!(sh > 0)) { if (bar) bar.remove(); return; }
+    if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
+    if (!bar) { bar = document.createElement('div'); bar.className = 'afk-psh'; box.appendChild(bar); }
+    bar.style.width = Math.min(100, sh / Math.max(1, Number(e.mhp) || 1) * 100) + '%';
+    box.title = '溢補護盾 ' + Math.ceil(sh).toLocaleString() + '（受傷時先扣護盾，最多最大 HP 的 40%）';
+  };
+  var tagTxt = function (id, e) {
+    var t = document.getElementById(id); if (!t) return;
+    var sh = Math.max(0, Number(e && e._afkShield) || 0), base = String(t.textContent || '').replace(/\s*🛡.*$/, '');
+    var want = sh > 0 ? base + ' 🛡' + fmtK(sh) : base;
+    if (t.textContent !== want) t.textContent = want;
+  };
+  var paintAll = function () {
+    var p = P(); if (!p) return; shCss();
+    paintOne('bar-hp', p); paintOne('mv-hp-fill', p); tagTxt('txt-hp', p); tagTxt('mv-hp-txt', p);
+    (p.allies || []).forEach(function (a) { if (a && a._slot != null) { paintOne('squad-hp-' + a._slot, a); tagTxt('squad-hp-txt-' + a._slot, a); } });
+  };
+  ['_updateUIImpl', 'renderSquadPanel'].forEach(function (nm) {
+    var o = window[nm]; if (typeof o !== 'function' || o.__afkOH) return;
+    var f = function () { var r = o.apply(this, arguments); try { paintAll(); } catch (e) {} return r; };
+    f.__afkOH = true; window[nm] = f; try { (0, eval)(nm + ' = window.' + nm); } catch (e) {}
+  });
+  setInterval(function () { try { paintAll(); } catch (e) {} }, 500);
 
   // ── 受到傷害：護盾吸收、敗者榮光的免疫轉回血 ──
   var depth = 0, pend = false;
