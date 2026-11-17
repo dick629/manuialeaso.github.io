@@ -4,14 +4,14 @@
  *   戰鬥日誌／系統日誌旁邊多一個「經驗日誌」分頁：每打倒一隻怪記一行
  *     「你獲得了經驗值 354。下次升級還差 12,345 經驗。」
  *   升級時另外記一行。一轉 Lv100 以後的巔峰經驗也一起顯示（離下一級巔峰還差多少）。
- *   外掛開關 explog（設定裡可以關掉，關掉就整個分頁不出現）。離線補跑、快轉期間不記。
+ *   外掛開關 explog（設定裡可以關掉，關掉就整個分頁不出現）。打太快（快轉／補跑）也照記不漏，先排隊再一次寫進畫面，最多留 200 行。
  * ========================================================================== */
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'explog', name: '經驗日誌分頁', group: '介面', desc: '戰鬥日誌、系統日誌旁邊多一個「經驗日誌」分頁：每次打倒怪物顯示得到多少經驗、離下次升級還差多少' });
   if (T && !T.enabled('explog')) return;
-  var MAX = 100;
+  var MAX = 200;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var fmt = function (n) { return Math.max(0, Math.floor(Number(n) || 0)).toLocaleString(); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -64,13 +64,23 @@
     W.switchLogTab = function () { if (on) { on = false; var box = document.getElementById('exp-log'), b = document.getElementById('logtab-btn-exp'); if (box) box.classList.add('hidden'); if (b) b.classList.remove('logtab-on'); document.body.classList.remove('afk-explog-on'); } return oSw.apply(this, arguments); };
     try { (0, eval)('switchLogTab = window.switchLogTab'); } catch (e) {}
   }
-  var add = function (html) {
-    if (!mount()) return;
+  // 11-18（Ping）：打太快時不能漏——補跑／前景跟不上（state.ff）也照記，先放佇列，下一個空檔一次寫進畫面（只留最後 MAX 行）
+  var Q = [], flushT = 0;
+  var flush = function () {
+    flushT = 0;
+    if (!Q.length || !mount()) { if (Q.length) flushT = setTimeout(flush, 1000); return; }
     var box = document.getElementById('exp-log');
     var atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
-    box.insertAdjacentHTML('beforeend', '<div class="log-entry text-slate-100">' + html + '</div>');
+    var list = Q.splice(0, Q.length);
+    if (list.length > MAX) list = list.slice(-MAX);
+    box.insertAdjacentHTML('beforeend', list.map(function (h) { return '<div class="log-entry text-slate-100">' + h + '</div>'; }).join(''));
     while (box.children.length > MAX) box.removeChild(box.firstChild);
     if (atBottom) box.scrollTop = box.scrollHeight;
+  };
+  var add = function (html) {
+    Q.push(html);
+    if (Q.length > MAX * 2) Q.splice(0, Q.length - MAX);
+    if (!flushT) flushT = setTimeout(flush, 120);
   };
 
   // ── 記錄：包 killMob，比對打倒前後的等級與經驗 ──
@@ -81,7 +91,7 @@
       try { m = mapState.mobs[idx]; if (p) { lv0 = Number(p.lv) || 1; ex0 = Number(p.exp) || 0; } } catch (e) {}
       var r = oKill.apply(this, arguments);
       try {
-        if (!p || p !== P() || (typeof state !== 'undefined' && state.ff) || !m) return r;
+        if (!p || p !== P() || !m) return r;
         var lv1 = Number(p.lv) || 1, ex1 = Number(p.exp) || 0, gain;
         if (lv1 === lv0) gain = ex1 - ex0;
         else { gain = Math.max(0, req(lv0) - ex0); for (var l = lv0 + 1; l < lv1; l++) gain += req(l); gain += ex1; }
