@@ -11,7 +11,7 @@
     adventure: {title:'冒險', icon:'swords', tabs:[]},
     character: {title:'角色', icon:'person', tabs:[['stats','能力'],['equip','裝備'],['skill','技能'],['team','隊伍']]},
     bag: {title:'背包', icon:'bag', tabs:[['items','道具'],['weapons','武器'],['armors','防具']]},
-    logs: {title:'日誌', icon:'log', tabs:[['combat','戰鬥'],['sys','系統'],['world','世界']]},
+    logs: {title:'日誌', icon:'log', tabs:[['combat','戰鬥'],['sys','系統'],['exp','經驗'],['world','世界']]},
     more: {title:'更多', icon:'grid', tabs:[]}
   };
   const paths = {
@@ -287,7 +287,7 @@
       if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
     }
     subnav.replaceChildren();
-    const entries=groups[id].tabs.length?groups[id].tabs:
+    const entries=groups[id].tabs.length?groups[id].tabs.filter(x=>x[0]!=='exp'||!!window.__afkExpLog):
       (id==='more'&&tab?[['','功能總覽'],[tab,menu.find(x=>x[2]===tab)?.[0]||'內容']]:[]);
     for(const [value,label] of entries){
       const b=document.createElement('button');b.type='button';b.textContent=label;
@@ -304,8 +304,9 @@
         window.renderSquadPanel?.();window.switchSquadTab?.('team');syncTeam();
       }
       if(page==='logs'){
-        if(typeof switchLogTab==='function' && tab!=='world')switchLogTab(tab==='sys'?'sys':'combat');
-        body.dataset.mobileLog=tab;
+        if(tab==='exp'&&window.__afkExpLog)window.__afkExpLog.show(true);
+        else if(typeof switchLogTab==='function' && tab!=='world')switchLogTab(tab==='sys'?'sys':'combat');
+        body.dataset.mobileLog=tab==='exp'?'combat':tab;
       }
     } finally {switching=false;}
     if(!fromBack)setMainLayer();
