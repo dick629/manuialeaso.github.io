@@ -56,7 +56,8 @@
     s.textContent = '.afk-rs{display:flex;flex-direction:column;gap:8px;padding:6px 2px;font-size:14px}.afk-rs .bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}'
       + '.afk-rs button{padding:5px 10px;border:1px solid #57534e;border-radius:4px;background:#292524;color:#e7e5e4}.afk-rs button[aria-pressed=true]{border-color:#c084fc;color:#f5d0fe;background:#3b0764}'
       + '.afk-rs button.go{border-color:#a855f7;background:#581c87;color:#fff}.afk-rs button:disabled{opacity:.45}.afk-rs input{background:#1c1917;border:1px solid #57534e;color:#fff;padding:5px 8px;border-radius:4px;min-width:0;flex:1}'
-      + '.afk-rs .row{display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #292524}.afk-rs .row .nm{flex:1;min-width:0}.afk-rs .dim{color:#a8a29e;font-size:12px}.afk-rs .err{color:#f87171}.afk-rs .ok{color:#86efac}';
+      + '.afk-rs .ax-ico{width:40px;height:40px;flex:0 0 40px;border:1px solid #475569;border-radius:6px;background:#0b1220;display:flex;align-items:center;justify-content:center;overflow:hidden}.afk-rs .ax-ico img{width:34px;height:34px;max-width:34px;max-height:34px;object-fit:contain;pointer-events:none}'   // 11-17：大張圖示（GPT 圖）不撐開
+      + '.afk-rs .row{display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #292524}.afk-rs .row .nm{flex:1;min-width:0;overflow-wrap:anywhere}.afk-rs .row button{flex:0 0 auto}.afk-rs .dim{color:#a8a29e;font-size:12px}.afk-rs .err{color:#f87171}.afk-rs .ok{color:#86efac}';
     document.head.appendChild(s);
   };
   var html = function () {

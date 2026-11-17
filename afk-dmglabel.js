@@ -9,7 +9,7 @@
  *     〔通用〕額外傷害（近戰、遠程、魔法都吃）、造成的傷害、對頭目傷害、最終傷害、爆擊傷害
  *   「受到的…傷害」「傷害減免」「反彈」「吸收」這類防禦字樣不標。
  *   作法：包 buildItemDescHTML（全遊戲的物品說明都走它：背包、裝備欄、倉庫、黑市、圖鑑、百科），
- *   只改標籤以外的文字，不動數值、不改資料。光環（團隊光環技能）的說明由百科的能力名稱表一起標。
+ *   只改標籤以外的文字，不動數值、不改資料。技能、光環：遊戲的浮動說明框（.game-tooltip）內容一變就補標；百科的能力名稱表一起標。
  *   標籤卡（卡片鑲嵌）之後跟卡片系統一起做。外掛開關 dmglabel。
  * ========================================================================== */
 (function () {
@@ -61,5 +61,19 @@
     try { (0, eval)('buildItemDescHTML = window.buildItemDescHTML'); } catch (e) {}
   };
   hook(); try { W.addEventListener('load', function () { hook(); setTimeout(hook, 2000); }); } catch (e) {}
+  // 11-17（Ping）：技能、光環的說明也標——遊戲的浮動說明框（技能頁滑鼠移上去那個）內容一變就補上標籤
+  var SEL = '.game-tooltip,#pandora-tooltip';
+  var watched = typeof WeakSet === 'function' ? new WeakSet() : null;
+  var fix = function (el) { try { var h = el.innerHTML, n = tagHtml(h); if (n !== h) el.innerHTML = n; } catch (e) {} };
+  var watch = function () {
+    if (!watched || typeof MutationObserver !== 'function') return;
+    document.querySelectorAll(SEL).forEach(function (el) {
+      if (watched.has(el)) return; watched.add(el);
+      var busy = false, mo = new MutationObserver(function () { if (busy) return; busy = true; fix(el); busy = false; mo.takeRecords(); });
+      mo.observe(el, { childList: true, subtree: true, characterData: true });
+      fix(el);
+    });
+  };
+  setInterval(watch, 1500);
   W.__afkDmgLabel = { text: function (s) { return tagText(String(s == null ? '' : s), false); }, html: tagHtml, NAME: NAME };
 })();
