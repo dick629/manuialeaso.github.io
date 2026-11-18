@@ -763,3 +763,23 @@
   W.__afkAffixPlus.NPC_ID = NPC_ID;
   console.log('[AFK-affix-plus] 已啟用：祝福／遠古三階（只能打怪取得）、龍紋師艾格尼絲：不屈者意志、龍的印記／傷痕、神樹者的讚禮、闇龍的抵抗者');
 })();
+
+/* ── 寵物裝備穿脫保留全部欄位（Ping 11-18 15:56：覺醒的／創世的寵物裝，裝上再拔下來變回遠古）──
+ *   核心 _petGearPack（js/22-pets.js）只抄 id／uid／en／bless／anc／attr／lock，遠古系階段 ancLv、遺物詞綴、印記等都被丟掉。
+ *   改成除了數量（cnt）以外全部照抄。 */
+(function () {
+  'use strict';
+  var W = window;
+  var fix = function () {
+    if (typeof W._petGearPack !== 'function' || W._petGearPack.__afkFull) return;
+    var f = function (it) {
+      var o = {};
+      Object.keys(it || {}).forEach(function (k) { if (k === 'cnt') return; var v = it[k]; if (v === undefined || v === null || v === false) return; o[k] = v; });
+      o.id = it.id; o.uid = it.uid; o.en = it.en || 0;
+      return o;
+    };
+    f.__afkFull = true; W._petGearPack = f;
+    try { (0, eval)('_petGearPack = window._petGearPack'); } catch (e) {}
+  };
+  fix(); W.addEventListener('load', fix);
+})();

@@ -696,6 +696,7 @@
     if (!e || e === player) return '你';
     return String(e.n || e.name || e.nick || '傭兵');
   }
+  function petLabel(pet) { var n = ''; try { n = typeof petDisplayName === 'function' ? petDisplayName(pet) : (pet && (pet.name || pet.n)) || ''; } catch (e) { n = ''; } return '寵物' + (n ? '：' + String(n).replace(/<[^>]+>/g, '') : ''); }
   function brkAdd(who, what, d, n) {
     var k = who + '\u0001' + what, r = brk.rows[k] || (brk.rows[k] = { who: who, what: what, dmg: 0, hits: 0 });
     r.dmg += d; r.hits += (n == null ? 1 : n);
@@ -874,14 +875,22 @@
   // 異常道具封印（merged/anticheat.js）：每一下被打掉的部分記在這裡，細項最下面另外列「少掉的傷害」（Ping 11-18 15:38）
   window.__afkSealTap = function (a, lost, t) {
     if (!brk || !(lost > 0) || !t || !t._train || !inTrain()) return;
-    var w = whoOf(a); brk.seal = brk.seal || {}; brk.seal[w] = (brk.seal[w] || 0) + lost;
+    var c = null, i; for (i = CTX.length - 1; i >= 0; i--) { if (CTX[i].sticky) { c = CTX[i]; break; } } if (!c) c = CTX[CTX.length - 1] || null;
+    var w = (a && !a.cls && a.eq) ? petLabel(a) : (c ? c.who : whoOf(a));   // 跟上面細項同一個「誰」（寵物、召喚物打的算牠們）
+    brk.seal = brk.seal || {}; brk.seal[w] = (brk.seal[w] || 0) + lost;
   };
   function sealHtml(elapsedSec, tot) {
-    var info = null; try { info = typeof window.__afkAcSealInfo === 'function' ? window.__afkAcSealInfo(player) : null; } catch (e) { /* ignore */ }
+    var infos = [], SI = window.__afkAcSealInfo;
+    if (typeof SI === 'function') try {
+      var add = function (e, nm, pet) { var v = SI(e); if (v) infos.push(nm + '身上 ' + v.n + ' 件封印中的道具：造成傷害 −' + Math.round(v.out * 100) + '%' + (pet ? '' : '、受到傷害 +' + Math.round(v.inn * 100) + '%')); };
+      add(player, '你');
+      (player.allies || []).forEach(function (a) { if (a) add(a, whoOf(a)); });
+      (typeof petsOutList === 'function' ? petsOutList() : []).forEach(function (pt) { if (pt) add(pt, petLabel(pt), true); });
+    } catch (e) { /* ignore */ }
     var S = (brk && brk.seal) || {}, ws = Object.keys(S).filter(function (w) { return S[w] > 0; });
-    if (!info && !ws.length) return '<div class="m-train-brk-seal ok">異常道具封印：無（輸出沒有被打折）</div>';
+    if (!infos.length && !ws.length) return '<div class="m-train-brk-seal ok">異常道具封印：無（輸出沒有被打折）</div>';
     var h = '<div class="m-train-brk-who seal"><span>⚠ 異常道具封印少掉的傷害</span><span></span></div>';
-    if (info) h += '<div class="m-train-brk-seal">你身上 ' + info.n + ' 件封印中的道具：造成傷害 −' + Math.round(info.out * 100) + '%、受到傷害 +' + Math.round(info.inn * 100) + '%</div>';
+    infos.forEach(function (t) { h += '<div class="m-train-brk-seal">' + esc(t) + '</div>'; });
     ws.sort(function (a, b) { return (a === '你' ? -1 : b === '你' ? 1 : 0) || S[b] - S[a]; }).forEach(function (w) {
       h += '<div class="m-train-brk-row seal" title="' + esc(w) + ' 被封印打掉的傷害：共 ' + fmt(S[w]) + '">'
         + '<span class="m-train-brk-n">' + esc(w) + '（少掉）</span>'

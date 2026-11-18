@@ -176,9 +176,9 @@
     Object.keys(actor.eq).forEach(function (k) {
       var it = actor.eq[k]; if (!it) return;
       if (k === 'mio') { var m = actor.afkMio, i = /^afk_mio_(\d\d)$/.exec(it.id || ''); if (m && i && Number((m.cards || {})[Number(i[1])]) >= 6 && !stampOk((m.acg || {})[Number(i[1])])) n++; return; }
-      if (it.afkDup) { n++; if (k === 'weapon') w = 1; var dd = DB.items[it.id]; keys[(dd && dd.relicBase) || String(it.id).split('~')[0]] = 1; return; }   // 11-12 道具身分證：同一個編號同時出現在兩處的複本（afk-antisl）
+      if (it.afkDup) { n++; if (k === 'weapon' || k === 'wpn') w = 1; var dd = DB.items[it.id]; keys[(dd && dd.relicBase) || String(it.id).split('~')[0]] = 1; return; }   // 11-12 道具身分證：同一個編號同時出現在兩處的複本（afk-antisl）
       if (!sKind(it.id) || stampOk(it.acs)) return;
-      n++; if (k === 'weapon') w = 1;
+      n++; if (k === 'weapon' || k === 'wpn') w = 1;   /* 11-18：武器欄的鍵是 wpn（原本寫 weapon，武器 −35% 從來沒生效） */
       var d = DB.items[it.id]; keys[(d && d.relicBase) || String(it.id).split('~')[0]] = 1;
     });
     var v = n ? { out: Math.min(0.8, 0.15 * (n - w) + 0.35 * w), inn: Math.min(0.8, 0.15 * n), keys: keys, n: n } : null;
@@ -194,7 +194,17 @@
     };
     C.__afkSeal = true;
   };
-  hookSeal(); W.addEventListener('load', hookSeal);
+  // 寵物：自己身上的封印道具另外打折（寵物攻擊結算的 actor 是主人，主人的封印照算；這裡再算寵物自己的）（Ping 11-18 15:56）
+  var hookPetSeal = function () {
+    var R = W.AFK_RELIC_RUNTIME; if (!R || typeof R.companionDamage !== 'function' || R.__afkSealPet) return; R.__afkSealPet = true;
+    var o = R.companionDamage;
+    R.companionDamage = function (owner, pet, target, dmg, extra) {
+      var r = o.apply(this, arguments);
+      try { if (r > 0 && pet && !pet.cls && pet.eq && target && !target._isAlly) { var v = sealOf(pet); if (v) { var r0 = r; r = Math.max(1, Math.floor(r * (1 - v.out))); if (typeof W.__afkSealTap === 'function') try { W.__afkSealTap(pet, r0 - r, target); } catch (e2) {} } } } catch (e) {}
+      return r;
+    };
+  };
+  hookSeal(); hookPetSeal(); W.addEventListener('load', function () { hookSeal(); hookPetSeal(); });
   (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent) { var v = ent && ent.cls ? sealOf(ent) : null; return v ? 1 + v.inn : 1; });
   W.__afkAcSealInfo = function (actor) { var v = sealOf(actor); return v ? { out: v.out, inn: v.inn, n: v.n } : null; };   // 木人場細項用
   W.__afkAcSealedOn = function (actor) { var v = sealOf(actor); return v ? v.n : 0; };   // 穿著幾件封印中的道具（女神台詞用）

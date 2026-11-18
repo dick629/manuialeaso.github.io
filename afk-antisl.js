@@ -259,13 +259,19 @@
     var d = it && DB.items[it.id]; if (!d || !it.uid) return false;
     return !!(d.relic || d.relicBase || d.dimRelic || d.dimDragon != null || d.relicEvo != null || d.gmOnly || String(it.id) === '99999' || String(it.id) === '99998');
   };
-  var itemsOf = function (p) { var out = []; (p.inv || []).forEach(function (it) { if (it) out.push(it); }); Object.keys(p.eq || {}).forEach(function (k) { if (p.eq[k] && typeof p.eq[k] === 'object') out.push(p.eq[k]); }); return out; };
+  var itemsOf = function (p) {
+    var out = [], eqOf = function (e) { Object.keys(e || {}).forEach(function (k) { if (e[k] && typeof e[k] === 'object' && e[k].id) out.push(e[k]); }); };
+    (p.inv || []).forEach(function (it) { if (it) out.push(it); }); eqOf(p.eq);
+    (p.allies || []).forEach(function (a) { if (a) eqOf(a.eq); });   // 11-18（Ping）：傭兵身上的也算
+    return out;
+  };
   var scanUids = function () {
     var p = P(); if (!p || typeof DB === 'undefined') return null;
     var locs = {}, objs = {};
     var add = function (it, loc, live) { if (!guarded(it)) return; var L = locs[it.uid] || (locs[it.uid] = []); if (L.indexOf(loc) < 0) L.push(loc); if (live) (objs[it.uid] = objs[it.uid] || []).push({ loc: loc, it: it }); };
     var me = 'r:' + ident(p);
     itemsOf(p).forEach(function (it) { add(it, me, true); });
+    try { if (typeof petRoster === 'function') (petRoster() || []).forEach(function (pt) { var e = pt && pt.eq; if (e) Object.keys(e).forEach(function (k) { if (e[k] && typeof e[k] === 'object') add(e[k], 'pets', true); }); }); } catch (e) {}   // 寵物裝備（全帳號共用的寵物桶）
     for (var n = 1; n <= 40; n++) {
       if (n === Number(currentSlot)) continue;
       var raw = null; try { raw = localStorage.getItem(slotKey(n)); } catch (e) {}
