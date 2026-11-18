@@ -178,7 +178,7 @@
     var oTick = W.tick;
     W.tick = function () {
       var t0 = tk(), r = oTick.apply(this, arguments);
-      try { if (on() && tk() !== t0 && tk() % 10 === 0) { var off = typeof W.__afkOfflineNow === 'function' && W.__afkOfflineNow(); if (!off) { erodeSecond(); lightSecond(); } bossRegen(); allyPanel(); sealDebuff(); } else if (!on() && tk() % 10 === 0) allyPanel(); } catch (e) { console.warn('[AFK-dimrift] tick', e); }
+      try { if (on() && tk() !== t0 && tk() % 10 === 0) { var off = typeof W.__afkOfflineNow === 'function' && W.__afkOfflineNow(); var trn = false; try { trn = !!(W.__afkTrainIn && W.__afkTrainIn()); } catch (e) {} if (!off && !trn) { erodeSecond(); lightSecond(); }   /* 木人場不算侵蝕、光蝕、斬殺線 */ bossRegen(); allyPanel(); sealDebuff(); } else if (!on() && tk() % 10 === 0) allyPanel(); } catch (e) { console.warn('[AFK-dimrift] tick', e); }
       return r;
     };
   }

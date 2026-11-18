@@ -64,7 +64,10 @@
   var SRC_COLOR = { player: '#38bdf8', ally: '#fbbf24', pet: '#4ade80', summon: '#c084fc', other: '#94a3b8' };
 
   var slots = [DEFAULT_MOB, null, null, null, null];   // 各格選的怪 id  （無 active 旗標：是否在木人場一律以 inTrain()＝map===TRAIN_MAP 判斷）
-  var worldMode = 'normal';              // 'normal' | 'sherine' | 'mad'（席琳／瘋狂席琳強度）
+  var worldMode = 'normal';              // 'normal' | 'sherine' | 'mad' | 'dream'（席琳夢域鏡）| 'dim'（次元裂縫）
+  var dreamImm = false;                  // 夢域鏡一般怪出生 10 秒隨機免疫（勾「照實戰」才套）
+  var DIMM_KEY = 'afk_training_dreamimm';
+  var okMode = function (v) { return (v === 'sherine' || v === 'mad' || v === 'dream' || v === 'dim'); };
   // MP 不消耗（玩家／傭兵／寵物一起，三者一致）。預設關＝測到的是真實消耗下的輸出；
   // 勾起來才是「無限藍」的爆發上限，適合純比裝備／比寵物。
   // ⚠ 核心沒有「擊殺回魔」這回事（查過 killMob：跟擊殺有關的回復只有遺物頭盔的 killHealHp，回 HP 不回 MP）。
@@ -111,6 +114,7 @@
 
   // 收尾木人場模式（不導頁）：清掉殘留的 _train 假怪、收 HUD。供「玩家自行離開木人場地圖」時自動呼叫。
   function deactivate() {
+    worldRestore();
     if (typeof mapState !== 'undefined' && mapState.mobs) {
       for (var i = 0; i < mapState.mobs.length; i++) { if (mapState.mobs[i] && mapState.mobs[i]._train) mapState.mobs[i] = null; }
     }
@@ -149,6 +153,7 @@
   window.tick = function () {
     // 玩家沒按「離開」、改用遊戲自身回村/地圖選單離開木人場 → 自動收尾（避免 HUD 殘留;假怪 changeMap 已清）
     if (!inTrain() && hudShown()) deactivate();
+    if (!inTrain() && player && player.afkTrainWorld) worldRestore();
     if (!inTrain()) { if (brkExt && brk) brkTick(); return _origTick.apply(this, arguments); }
     // 開拍前：把訓練怪補滿，記下基準（以 uid 為 key，避免死亡輸送帶換格錯亂）
     var before = {};
@@ -593,8 +598,40 @@
   //   原作函式讀 player.sherineWorld / player.sherineMad 旗標 → 呼叫前暫時設成所選模式、
   //   finally 立刻還原（同步執行、中間不可能存檔）。數值單一事實來源在原作，作者改倍率自動跟上。
   //   恩賜（applySherineGrace）是隨機 ×10 事件，量測要穩定 → 刻意不套。
+  // 夢域鏡／次元裂縫（Ping 11-18 16:48）：在木人場裡暫時把角色的世界換成所選的（怪物出生的強化、你這邊的面板與傷害懲罰都照真的算），
+  //   離開木人場（或重新整理後第一個不在木人場的時刻）換回原本的世界。地圖侵蝕、光蝕、王的斬殺線在木人場不算（afk-dimrift 看 __afkTrainIn）。
+  //   原本的世界存在 player.afkTrainWorld（存檔中途也帶著，之後一定換得回來）。
+  function worldSet() {
+    if (!player || (worldMode !== 'dream' && worldMode !== 'dim')) return;
+    if (!player.afkTrainWorld) player.afkTrainWorld = { sw: !!player.sherineWorld, sm: !!player.sherineMad, sd: !!player.sherineDream, dim: !!(player.afkDimRift && player.afkDimRift.on), hadDim: !!player.afkDimRift };
+    player.sherineWorld = true; player.sherineMad = true; player.sherineDream = true;
+    if (worldMode === 'dim') { if (!player.afkDimRift || typeof player.afkDimRift !== 'object') player.afkDimRift = { on: false }; player.afkDimRift.on = true; }
+    else if (player.afkDimRift) player.afkDimRift.on = false;
+    try { if (typeof window.calcStats === 'function') window.calcStats(); } catch (e) { /* ignore */ }
+  }
+  function worldRestore() {
+    var o = player && player.afkTrainWorld; if (!o) return;
+    delete player.afkTrainWorld;
+    player.sherineWorld = o.sw; player.sherineMad = o.sm; player.sherineDream = o.sd;
+    if (player.afkDimRift) { if (o.hadDim) player.afkDimRift.on = o.dim; else player.afkDimRift = { on: false }; }
+    try { if (typeof window.calcStats === 'function') window.calcStats(); } catch (e) { /* ignore */ }
+  }
+  window.__afkTrainIn = function () { return inTrain(); };
   function applyWorldMode() {
     if (worldMode === 'normal') return;
+    if (worldMode === 'dream' || worldMode === 'dim') {
+      if (typeof window.applySherineBuff !== 'function') return;
+      worldSet();
+      for (var j = 0; j < mapState.mobs.length; j++) {
+        var mm = mapState.mobs[j];
+        if (!mm || !mm._train) continue;
+        window.applySherineBuff(j);
+        mm = mapState.mobs[j];
+        if (!dreamImm) delete mm._reflectWall;   // 隨機免疫：勾「照實戰」才留
+        if (!hpDrop) { mm.hp = TRAIN_HP; mm.curHp = TRAIN_HP; } else mm.curHp = mm.hp;
+      }
+      return;
+    }
     if (typeof window.applySherineBuff !== 'function' || typeof player === 'undefined' || !player) return;
     var sw = player.sherineWorld, sm = player.sherineMad;
     player.sherineWorld = (worldMode === 'sherine');
@@ -616,7 +653,7 @@
     try { brkHook(); } catch (e) { /* ignore */ }
     if (!player || !player.cls) { alert('請先載入角色，再進木人場。'); return; }
     // 防重入：人已在木人場地圖上 → 只重擺怪+DPS歸零，絕不重抓 backup（避免把木人場狀態記成「進場前」）
-    if (inTrain()) { applySolo(); if (!skele) dismissExtraSkeletons(); refillTeam(); spawnTrainingMobs(); resetDps(); closePicker(); openHud(); refreshHud(); return; }
+    if (inTrain()) { if (worldMode !== 'dream' && worldMode !== 'dim') worldRestore(); applySolo(); if (!skele) dismissExtraSkeletons(); refillTeam(); spawnTrainingMobs(); resetDps(); closePicker(); openHud(); refreshHud(); return; }
     // 進場前：把整個 mapState 全鍵快照存起來（離場還原用，確保離開時換回真實狀態）
     var msSnap = {}; for (var bk in mapState) msSnap[bk] = mapState[bk];
     backup = { ms: msSnap };
@@ -1055,7 +1092,7 @@
     var winDmg = 0; for (var w = 0; w < dps.window.length; w++) winDmg += dps.window[w];
     var instTotal = winSec > 0 ? winDmg / winSec : 0;
 
-    var modeTag = (worldMode === 'mad') ? '<div class="m-train-mode-tag m-train-mode-mad">🔥 瘋狂的席琳世界</div>'
+    var modeTag = (worldMode === 'dim') ? '<div class="m-train-mode-tag m-train-mode-mad">🌀 次元裂縫</div>' : (worldMode === 'dream') ? '<div class="m-train-mode-tag">🌙 席琳夢域鏡</div>' : (worldMode === 'mad') ? '<div class="m-train-mode-tag m-train-mode-mad">🔥 瘋狂的席琳世界</div>'
       : (worldMode === 'sherine') ? '<div class="m-train-mode-tag">🔮 席琳的世界</div>' : '';
     if (noMp) modeTag += '<div class="m-train-mode-tag m-train-mode-nomp">💧 MP 不消耗</div>';
     if (solo) modeTag += '<div class="m-train-mode-tag m-train-mode-nomp">🧍 單人（傭兵不進場）</div>';
@@ -1147,7 +1184,11 @@
         '<option value="normal">一般（無強化）</option>' +
         '<option value="sherine">🔮 席琳的世界</option>' +
         '<option value="mad">🔥 瘋狂的席琳世界</option>' +
+        '<option value="dream">🌙 席琳夢域鏡</option>' +
+        '<option value="dim">🌀 次元裂縫</option>' +
         '</select></div>' +
+        '<label class="m-train-opt-row" title="夢域鏡、次元裂縫才有：一般怪出生時隨機免疫物理或魔法 10 秒。不勾＝不套，數字比較穩。">' +
+        '<input type="checkbox" id="m-train-dreamimm"><span>照實戰（夢域鏡一般怪出生 10 秒隨機免疫）</span></label>' +
         '<label class="m-train-opt-row" title="勾起來：玩家／傭兵／寵物的 MP 都不會見底，量的是無限藍的爆發上限。不勾＝真實消耗（想重來一輪按「重新計算」就會補滿）。">' +
         '<input type="checkbox" id="m-train-nomp"><span>MP 不消耗</span></label>' +
         '<label class="m-train-opt-row" title="木人場的怪不會死＝沒有擊殺，骷髏平常靠擊殺喚起。勾起來就直接補到滿，離開木人場時收回。">' +
@@ -1170,7 +1211,8 @@
         readSlotsFromUI();
         if (!slots.some(Boolean)) { alert('至少選 1 隻怪。'); return; }
         var msel = document.getElementById('m-train-mode');
-        if (msel) worldMode = (msel.value === 'sherine' || msel.value === 'mad') ? msel.value : 'normal';
+        if (msel) worldMode = okMode(msel.value) ? msel.value : 'normal';
+        var dik = document.getElementById('m-train-dreamimm'); if (dik) dreamImm = !!dik.checked;
         var nchk = document.getElementById('m-train-nomp');
         if (nchk) noMp = !!nchk.checked;
         var schk = document.getElementById('m-train-skele');
@@ -1190,6 +1232,7 @@
     if (schk0) schk0.checked = skele;
     var solk0 = document.getElementById('m-train-solo'); if (solk0) solk0.checked = solo;
     var hdk0 = document.getElementById('m-train-hpdrop'); if (hdk0) hdk0.checked = hpDrop;
+    var dik0 = document.getElementById('m-train-dreamimm'); if (dik0) dik0.checked = dreamImm;
     // 條件不足時勾了也不會有骷髏出現（核心的 necroBookOnKill 會直接 return）→ 直接說出要補什麼
     var shint = document.getElementById('m-train-skele-hint');
     if (shint) {
@@ -1264,7 +1307,7 @@
     } catch (e) { /* ignore */ }
     if (!slots.some(Boolean)) slots = [DEFAULT_MOB, null, null, null, null];
     worldMode = 'normal';
-    try { var m = localStorage.getItem(modeKey()); if (m === 'sherine' || m === 'mad') worldMode = m; } catch (e) { /* ignore */ }
+    try { var m = localStorage.getItem(modeKey()); if (okMode(m)) worldMode = m; dreamImm = localStorage.getItem(DIMM_KEY + '_' + ((typeof currentSlot !== 'undefined') ? currentSlot : 1)) === '1'; } catch (e) { /* ignore */ }
     noMp = false;
     try { noMp = localStorage.getItem(nompKey()) === '1'; } catch (e) { /* ignore */ }
     skele = false;
@@ -1273,7 +1316,7 @@
     solo = false; hpDrop = false;
     try { solo = localStorage.getItem(SOLO_KEY + '_' + sn) === '1'; hpDrop = localStorage.getItem(HPDROP_KEY + '_' + sn) === '1'; } catch (e) { /* ignore */ }
   }
-  function saveSlots() { try { localStorage.setItem(slotsKey(), JSON.stringify(slots)); localStorage.setItem(modeKey(), worldMode); localStorage.setItem(nompKey(), noMp ? '1' : '0'); localStorage.setItem(skeleKey(), skele ? '1' : '0'); var sn = (typeof currentSlot !== 'undefined') ? currentSlot : 1; localStorage.setItem(SOLO_KEY + '_' + sn, solo ? '1' : '0'); localStorage.setItem(HPDROP_KEY + '_' + sn, hpDrop ? '1' : '0'); } catch (e) { /* ignore */ } }
+  function saveSlots() { try { localStorage.setItem(DIMM_KEY + '_' + ((typeof currentSlot !== 'undefined') ? currentSlot : 1), dreamImm ? '1' : '0'); } catch (e) { /* ignore */ } try { localStorage.setItem(slotsKey(), JSON.stringify(slots)); localStorage.setItem(modeKey(), worldMode); localStorage.setItem(nompKey(), noMp ? '1' : '0'); localStorage.setItem(skeleKey(), skele ? '1' : '0'); var sn = (typeof currentSlot !== 'undefined') ? currentSlot : 1; localStorage.setItem(SOLO_KEY + '_' + sn, solo ? '1' : '0'); localStorage.setItem(HPDROP_KEY + '_' + sn, hpDrop ? '1' : '0'); } catch (e) { /* ignore */ } }
 
   // ---- 入口：自動化面板「🔌 外掛」列加一顆鈕（沿用 afk-dex 的共用列 id；木人場自成一列、不擠進查詢鈕排） ----
   function injectAutoNav() {
