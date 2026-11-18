@@ -101,7 +101,7 @@
       d.img = typeof getIconUrl === 'function' ? getIconUrl(s) : s.img;
       ['legend', 'relic', 'procSkill', 'procRate', 'procRateBase', 'procRatePerEn', 'spellProc', 'gachaWeight', 'set'].forEach(function (k) { delete d[k]; });
       Object.assign(d, { n: w.n, req: cls, safe: 0, p: 1000, gachaWeight: 0, noTrade: true, noSell: true, noEnhance: true, ttmiMaxLevel: 60, afkQuestWpn: 60, c: 'text-sky-300',
-        d: CLS[cls].n + '專用。覺醒之路第 1 章的獎勵，拿到時就是 +' + EN1 + '，不能強化；Lv60 以下才能裝備（等級超過會自動卸下）。' });
+        d: CLS[cls].n + '專用。覺醒之路第 1 章的獎勵，拿到時就是 +' + EN1 + '，不能強化；Lv60 以下才能裝備（等級超過會自動卸下）。不能賣，不需要時可以在背包裡刪除。' });
       d.hit = N(d.hit) + 4; d.dmgBonus = N(d.dmgBonus) + 4;
       if (w.cast) { d.mdmg = N(d.mdmg) + 4; d.magicHit = N(d.magicHit) + 3; }
       DB.items[id] = d;
@@ -111,7 +111,7 @@
     [[1, 3, 1, 0, '覺醒披風', '第 2 章'], [2, 5, 2, 300, '覺醒披風・真', '第 4 章（升級）']].forEach(function (t) {
       var cid = cloakId(cls, t[0]); if (DB.items[cid]) return;
       var o = { n: t[4], type: 'arm', slot: 'cloak', req: cls, safe: 4, p: 1000, gachaWeight: 0, noTrade: true, noSell: true, ac: t[1], c: t[0] === 2 ? 'text-amber-300' : 'text-sky-300', img: img1,
-        d: CLS[cls].n + '專用。覺醒之路' + t[5] + '的獎勵。AC −' + t[1] + '、' + r.mainN + ' +' + t[2] + (t[3] ? '、最大 HP +' + t[3] : '') + '。' };
+        d: CLS[cls].n + '專用。覺醒之路' + t[5] + '的獎勵。AC −' + t[1] + '、' + r.mainN + ' +' + t[2] + (t[3] ? '、最大 HP +' + t[3] : '') + '。不能賣，不需要時可以在背包裡刪除。' };
       o[r.main] = t[2]; if (t[3]) o.mhp = t[3];
       DB.items[cid] = o;
     });
@@ -533,5 +533,40 @@
   }, true);
 
   W.__afkAwakenRoad = { ROAD: ROAD, LV: LV, CH_N: CH_N, MAP: MAP, store: store, cur: cur, ready: ready, accept: accept, complete: complete, enterEcho: enterEcho, buildEcho: buildEcho, wpnId: wpnId, cloakId: cloakId, titled: titled, html: html };
+  // ── 新手獎勵可以刪除（Ping 11-18 14:07）：覺醒之路的見習武器、覺醒披風不能賣，背包裡的可以直接刪掉 ──
+  var CAN_DEL = /^afk_awq_(wpn|cloak)/;
+  W.__afkDelNovice = function (uid) {
+    var p = P(); if (!p) return;
+    var it = (p.inv || []).find(function (x) { return x && String(x.uid) === String(uid); }), d = it && DB.items[it.id];
+    if (!it || !CAN_DEL.test(it.id)) return;
+    if (it.lock) { try { logSys('<span class="text-amber-300">這件鎖定中，先解鎖才能刪除。</span>'); } catch (e) {} return; }
+    var go = function () {
+      p.inv = p.inv.filter(function (x) { return x !== it; });
+      try { if (typeof closeModal === 'function') closeModal(); } catch (e) {}
+      try { logSys('<span class="text-slate-300">刪除了「' + esc(d ? d.n : it.id) + '」。</span>'); } catch (e) {}
+      try { if (typeof updateUI === 'function') updateUI(); if (typeof renderTabs === 'function') renderTabs(true); } catch (e) {}
+      try { if (typeof saveGame === 'function') saveGame(); } catch (e) {}
+    };
+    var msg = '確定要刪除「' + (d ? d.n : it.id) + '」嗎？刪除後不會退回任何東西，也拿不回來。';
+    if (W.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '刪除道具', message: msg, okText: '刪除', cancelText: '取消', onOk: go }); else if (confirm(msg)) go();
+  };
+  if (typeof W.openModal === 'function' && !W.openModal.__afkDelNov) {
+    var oOpen = W.openModal;
+    W.openModal = function (item, isEq) {
+      var r = oOpen.apply(this, arguments);
+      try {
+        if (item && !isEq && CAN_DEL.test(item.id || '')) {
+          var box = document.getElementById('modal-actions');
+          if (box && !box.querySelector('[data-afk-delnov]')) {
+            box.insertAdjacentHTML('beforeend', '<button type="button" data-afk-delnov="' + esc(item.uid) + '" class="col-span-2 w-full btn border-rose-800 bg-rose-950 hover:bg-rose-900 py-2 text-base font-bold text-rose-200">🗑 刪除（不能賣的新手獎勵）</button>');
+          }
+        }
+      } catch (e) {}
+      return r;
+    };
+    W.openModal.__afkDelNov = true;
+    document.addEventListener('click', function (ev) { var b = ev.target && ev.target.closest && ev.target.closest('[data-afk-delnov]'); if (!b) return; ev.preventDefault(); W.__afkDelNovice(b.getAttribute('data-afk-delnov')); }, true);   // 用委派：別的外掛重畫按鈕列也不會掉
+    try { (0, eval)('openModal = window.openModal'); } catch (e) {}
+  }
   console.log('[AFK-awaken-road] 已啟用：覺醒之路（五個覺醒職業 × 5 章）');
 })();

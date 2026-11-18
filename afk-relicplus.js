@@ -872,8 +872,8 @@
     var it = relicWpnForAttr(); if (!it) return { ok: false, msg: '請先在武器欄裝備 +15 以上的遺物武器。' };
     if (typeof doBianAttr !== 'function') return { ok: false, msg: '找不到屬性卷軸功能。' };
     var d = DB.items[it.id];
-    // 3 星以上不再抽（玩家 2026-10-27：4、5 星改用固定張數升級），避免一張卷軸把 3 星以上的魔法洗掉
-    try { var ca = getAttrAffix(it.attr), cm = getAttrMagicProc(it); if (ca && ca.ele === ele && ca.tier >= 5 && cm && cm.star >= 3) return { ok: false, msg: cm.star >= starCap(it) ? '屬性魔法已經是最高星數。' : '3 星以上改用「升 1 星」：★3→★4 用 ' + STAR_UP[4].toLocaleString() + ' 張、★4→★5 用 ' + STAR_UP[5].toLocaleString() + ' 張同屬性卷軸，必定成功。' }; } catch (e) {}
+    // 3 星以上（只有昇華支配、至高的支配能到 4、5 星）：11-18 起改用洗的（washOne）
+    try { var ca = getAttrAffix(it.attr), cm = getAttrMagicProc(it); if (ca && ca.ele === ele && ca.tier >= 5 && cm && cm.star >= 3) return cm.star >= starCap(it) ? { ok: false, msg: '屬性魔法已經是最高星數。' } : washOne(it, ele); } catch (e) {}
     var oRel = window.isRelic, oTrig = window.weaponHasBaseTriggeredSkill, oRender = window.renderBianAttr;
     window.isRelic = function (x) { return x === d ? false : oRel.apply(this, arguments); };
     window.weaponHasBaseTriggeredSkill = function (x) { return x === d ? false : oTrig.apply(this, arguments); };
@@ -887,9 +887,31 @@
   //   抽到同一種 +1 星、抽到別種變成那種的 1 星。星數上限：昇華支配、至高的支配 5 星；+15 沒昇華 3 星。
   //   一次跑完才重算能力、存檔一次（不會一張一張刷新畫面）。
   var starCap = function (it) { var d = it && DB.items[it.id]; return d && d.relicAsc != null ? 5 : 3; };
-  // 星數規則（玩家 2026-10-27 改）：1～3 星照碧恩抽（每張 1%，同一種 +1 星、別種從 1 星重來）；
-  //   滿 3 星之後不再抽：★3→★4 固定用 3,000 張、★4→★5 固定用 5,000 張同屬性卷軸，必定成功（只有昇華支配、至高的支配能到 4、5 星）
-  var STAR_UP = { 4: 3000, 5: 5000 };
+  // 11-18（Ping 14:01）：3 星以上改用洗的——★3 每張 1%、★4 每張 0.5% 抽一種該屬性魔法：
+  //   抽到同一種 +1 星；抽到別種＝失敗：★3 維持 3 星但魔法換成抽到的那種，★4 跌回 3 星、魔法不換（4 星起鎖住魔法）。5 星不能再洗。
+  var WASH = { 3: 0.01, 4: 0.005 };
+  var washRoll = function (st, mg, pool) {   // 回傳 { star, mg, kind: 'up'|'change'|'fall'|null }
+    if (!(Math.random() < (WASH[st] || 0))) return { star: st, mg: mg, kind: null };
+    var pk = pool[Math.floor(Math.random() * pool.length)].skId;
+    if (pk === mg) return { star: st + 1, mg: mg, kind: 'up' };
+    if (st === 3) return { star: 3, mg: pk, kind: 'change' };
+    return { star: 3, mg: mg, kind: 'fall' };
+  };
+  function washOne(it, ele) {
+    var sc = ATTR_SCROLLS[ele], pool = ATTR_MAGIC_SKILLS[ele] || [], cm = getAttrMagicProc(it);
+    if (!sc || !pool.length || !cm) return { ok: false, msg: '找不到屬性卷軸功能。' };
+    if (cm.star >= starCap(it)) return { ok: false, msg: '屬性魔法已經是最高星數。' };
+    if (!takeId(sc.id, 1)) return { ok: false, msg: '沒有' + sc.n + '。' };
+    var r = washRoll(cm.star, cm.skId, pool), nm = function (id) { return (DB.skills[id] && DB.skills[id].n) || id; };
+    it.attrMagic = r.mg; it.attrMagicStar = r.star;
+    try { if (typeof calcStats === 'function') calcStats(); } catch (e) {}
+    saveOk();
+    var msg = r.kind === 'up' ? nm(r.mg) + ' 升為 ' + '★'.repeat(r.star) + '！' : r.kind === 'change' ? '洗到別種：魔法換成 ★★★ ' + nm(r.mg) + '。' : r.kind === 'fall' ? '洗到別種：' + nm(r.mg) + ' 跌回 ★★★。' : '沒有反應（' + '★'.repeat(cm.star) + ' ' + nm(cm.skId) + ' 不變）。';
+    try { logSys('<span class="' + (r.kind === 'up' ? 'text-yellow-300 font-bold' : r.kind ? 'text-amber-300' : 'text-slate-300') + '">碧恩用了 1 張' + esc(sc.n) + '：' + esc(msg) + '</span>'); } catch (e) {}
+    return { ok: true, msg: msg };
+  }
+  // 星數規則：1～3 星照碧恩抽（每張 1%，同一種 +1 星、別種從 1 星重來）；
+  //   3 星以上（只有昇華支配、至高的支配能到 4、5 星）11-18 起改用洗的：見 WASH／washRoll（原本固定 3,000／5,000 張必定成功）
   function autoAttr(target) {
     if (!enabled()) return disabled();
     var p = P(); if (!p) return { ok: false, msg: '請先進入遊戲。' };
@@ -903,11 +925,16 @@
     var mg0 = (typeof getAttrMagicProc === 'function') ? getAttrMagicProc(it) : null;
     if (cur.tier >= 5 && mg0 && mg0.star >= target) return { ok: false, msg: '已經是 ' + '★'.repeat(mg0.star) + '，不用再衝。' };
     var have = invCnt(sc.id); if (have < 1) return { ok: false, msg: '沒有' + sc.n + '。' };
-    var tier = cur.tier, mg = mg0 ? mg0.skId : null, star = mg0 ? mg0.star : 0, used = 0, tierUps = 0, hits = 0, resets = 0, bought = 0;
-    var tier0 = tier, mgStart = mg, star0 = star, rollTo = Math.min(3, target);
-    while (used < have && !(tier >= 5 && mg && star >= rollTo)) {
+    var tier = cur.tier, mg = mg0 ? mg0.skId : null, star = mg0 ? mg0.star : 0, used = 0, tierUps = 0, hits = 0, resets = 0, ups = 0, falls = 0, changes = 0;
+    var tier0 = tier, mgStart = mg, star0 = star;
+    while (used < have && !(tier >= 5 && mg && star >= target)) {
       used++;
       if (tier < 5) { if (Math.random() < 0.07) { tier++; tierUps++; } continue; }
+      if (mg && star >= 3) {   // 3 星以上：洗
+        var w = washRoll(star, mg, pool);
+        if (w.kind === 'up') ups++; else if (w.kind === 'fall') falls++; else if (w.kind === 'change') changes++;
+        star = w.star; mg = w.mg; continue;
+      }
       if (Math.random() < 0.01) {
         hits++;
         var pk = pool[Math.floor(Math.random() * pool.length)].skId;
@@ -915,12 +942,7 @@
       }
     }
     var short = 0;
-    while (tier >= 5 && mg && star >= 3 && star < target) {
-      var cost = STAR_UP[star + 1];
-      if (have - used < cost) { short = cost - (have - used); break; }
-      used += cost; star++; bought++;
-    }
-    if (!used) return { ok: false, msg: '卷軸不足：升到 ' + '★'.repeat(star + 1) + ' 需要 ' + STAR_UP[star + 1].toLocaleString() + ' 張' + sc.n + '（目前 ' + have.toLocaleString() + ' 張）。' };
+    if (!used) return { ok: false, msg: '沒有' + sc.n + '。' };
     if (!takeId(sc.id, used)) return { ok: false, msg: '背包資料變動，什麼都沒有改變。' };
     it.attr = ATTR_ELE_PREFIX[ele] + tier;
     if (mg) { it.attrMagic = mg; it.attrMagicStar = star; }
@@ -933,8 +955,8 @@
       + (tierUps ? '屬性第 ' + tier0 + ' 階 → 第 ' + tier + ' 階；' : '屬性第 ' + tier + ' 階；')
       + (mg ? (mgStart === mg && star0 ? skN(mg) + ' ' + '★'.repeat(star0) + ' → ' + '★'.repeat(star) : '屬性魔法 ' + skN(mg) + ' ' + '★'.repeat(star)) : '還沒抽到屬性魔法')
       + (hits ? '（刻印回應 ' + hits + ' 次' + (resets ? '，其中 ' + resets + ' 次換成別種魔法、星數重來' : '') + '）' : '')
-      + (bought ? '（3 星以上固定升星 ' + bought + ' 次）' : '')
-      + (done ? '。達成目標 ' + '★'.repeat(target) + '！' : short ? '。升下一星還差 ' + short.toLocaleString() + ' 張。' : '。卷軸用完了，還差一點。');
+      + (ups || falls || changes ? '（3 星以上：升星 ' + ups + ' 次' + (changes ? '、3 星換魔法 ' + changes + ' 次' : '') + (falls ? '、4 星跌回 3 星 ' + falls + ' 次' : '') + '）' : '')
+      + (done ? '。達成目標 ' + '★'.repeat(target) + '！' : '。卷軸用完了，目前 ' + '★'.repeat(star) + '。');
     try { logSys('<span class="' + (done ? 'text-yellow-300 font-bold' : 'text-slate-300') + '">' + esc(msg) + '</span>'); } catch (e) {}
     return { ok: true, done: done, used: used, tier: tier, magic: mg, star: star, msg: msg };
   }
@@ -944,7 +966,7 @@
     var sc = ATTR_SCROLLS[cur.ele], have = invCnt(sc.id);
     var msg = '用' + sc.n + '一鍵衝到 ' + '★'.repeat(target) + '（' + DB.items[it.id].n + '）。\n'
       + (cur.tier < 5 ? '會先把屬性衝到第 5 階（每張 7%），' : '') + '1～3 星每張 1% 抽一種屬性魔法（抽到同一種 +1 星、抽到別種從 1 星重來）'
-      + (target > 3 ? '；滿 3 星後 ★3→★4 固定 ' + STAR_UP[4].toLocaleString() + ' 張、★4→★5 固定 ' + STAR_UP[5].toLocaleString() + ' 張，必定成功' : '') + '。'
+      + (target > 3 ? '；3 星以上改用洗的：★3 每張 1%、★4 每張 0.5% 抽一種，抽到同一種 +1 星；抽到別種時 ★3 會換魔法（維持 3 星）、★4 會跌回 3 星（魔法不換）' : '') + '。'
       + '\n到達目標或卷軸用完就停；最多用掉全部 ' + have.toLocaleString() + ' 張。';
     var go = function () { var r = autoAttr(target); refreshAttr(); if (!r.ok) { try { logSys('<span class="text-red-400">' + esc(r.msg) + '</span>'); } catch (e) {} } };
     if (window.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '一鍵 ' + target + ' 星', message: msg, okText: '開始', cancelText: '取消', onOk: go });
@@ -971,7 +993,34 @@
         else alive.forEach(function (m) { procFreeMagicSkill(m, skId, 0, true, wpn); });
       });
     } finally { window.__afkSpellMult = prev; }
+    // 11-18（Ping）：5 星大招打到的敵人，該屬性易傷 +8%（5 秒；自成一類，跟其他來源合計仍受 50% 上限）
+    try { var H = window.LineageHybrid; if (H && H.addVuln) mapState.mobs.forEach(function (m) { if (m && m.curHp > 0 && !m._dead) H.addVuln(m, proc.ele, 'attr5', ATTR5_VULN); }); } catch (e) {}
   };
+  var ATTR5_VULN = 0.08;
+  window.__afkAttr5Text = function (ele) {
+    var c = ATTR5[ele]; if (!c) return '';
+    var nm = function (id) { return (DB.skills[id] && DB.skills[id].n) || id; };
+    return '★★★★★ 屬性附加魔法：攻擊時 25% 機率發動【' + c.n + '】（' + c.sk.map(nm).join('＋') + '連放 3 輪、傷害 ×1.5；打到的敵人' + ({ fire: '火', water: '水', wind: '風', earth: '地' })[ele] + '屬性易傷 +8%，5 秒）';
+  };
+  // 物品說明：5 星那一行改成大招（原本還寫抽到的魔法與 5 倍機率，跟實際不符）
+  (function () {
+    var hook = function () {
+      var o = window.buildItemDescHTML; if (typeof o !== 'function' || o.__afkAttr5) return;
+      var f = function (it) {
+        var r = o.apply(this, arguments);
+        try {
+          if (typeof r === 'string' && it && typeof it === 'object' && r.indexOf('★★★★★ 屬性附加魔法') >= 0) {
+            var mg = typeof getAttrMagicProc === 'function' ? getAttrMagicProc(it) : null;
+            if (mg && mg.star >= 5) r = r.replace(/★★★★★ 屬性附加魔法：[^<]*/, window.__afkAttr5Text(mg.ele));
+          }
+        } catch (e) {}
+        return r;
+      };
+      f.__afkAttr5 = true; f.__afkDL = o.__afkDL; window.buildItemDescHTML = f;
+      try { (0, eval)('buildItemDescHTML = window.buildItemDescHTML'); } catch (e) {}
+    };
+    hook(); try { window.addEventListener('load', function () { setTimeout(hook, 2500); }); } catch (e) {}
+  })();
 
   // ── 能力預覽 ──
   function statLine(d, base) {
@@ -1597,16 +1646,16 @@
     var cur = (typeof getAttrAffix === 'function') ? getAttrAffix(it.attr) : null, mg = (typeof getAttrMagicProc === 'function') ? getAttrMagicProc(it) : null;
     var cnt = function (id) { return invCnt(id); };
     var html = '<div class="rp-chips"><span>目前屬性 <b>' + (cur ? esc(cur.n) + '（第 ' + cur.tier + ' 階）' : '無') + '</b></span>'
-      + (mg ? '<span>屬性魔法 <b>' + '★'.repeat(mg.star) + ' ' + esc((DB.skills[mg.skId] || {}).n || mg.skId) + '</b></span>' : '') + '</div>';
+      + (mg ? '<span>屬性魔法 <b>' + '★'.repeat(mg.star) + ' ' + esc(mg.star >= 5 && ATTR5[mg.ele] ? ATTR5[mg.ele].n : ((DB.skills[mg.skId] || {}).n || mg.skId)) + '</b></span>' : '') + '</div>';
     var cap = starCap(it), sc0 = cur ? ATTR_SCROLLS[cur.ele] : null, h0 = sc0 ? cnt(sc0.id) : 0, st0 = mg ? mg.star : 0;
     html += '<div class="rp-kv"><span>一鍵衝星（沿用目前屬性，到目標或卷軸用完就停）</span></div><div class="rp-btns">'
-      + [[3, '一鍵 3 星'], [st0 >= 3 && st0 < 5 ? st0 + 1 : 4, '升 1 星'], [5, '一鍵 5 星']].map(function (x) {
-        var n = x[0], up = x[1] === '升 1 星', at5 = cur && cur.tier >= 5;
-        var why = !cur ? '先賦予屬性' : n > cap ? '要昇華支配' : (at5 && st0 >= n) ? '已達成' : (up && !(at5 && st0 >= 3)) ? '先滿 3 星' : !h0 ? '沒有卷軸' : (up && h0 < STAR_UP[n]) ? '卷軸不足' : '';
-        var sub = up ? (n <= 5 && STAR_UP[n] ? '★' + (n - 1) + '→★' + n + '・' + STAR_UP[n].toLocaleString() + ' 張' : '') : (sc0 ? esc(sc0.n.replace('武器強化卷軸', '')) + ' ' + h0.toLocaleString() : '');
+      + [[3, '一鍵 3 星'], [4, '洗到 4 星'], [5, '一鍵 5 星']].map(function (x) {
+        var n = x[0], up = n === 4, at5 = cur && cur.tier >= 5;
+        var why = !cur ? '先賦予屬性' : n > cap ? '要昇華支配' : (at5 && st0 >= n) ? '已達成' : !h0 ? '沒有卷軸' : '';
+        var sub = up ? '★3 每張 1%' : (sc0 ? esc(sc0.n.replace('武器強化卷軸', '')) + ' ' + h0.toLocaleString() : '');
         return '<button type="button" data-autostar="' + n + '"' + (why ? ' disabled title="' + why + '"' : '') + '>' + x[1] + '<small>' + (why ? why + (up && sub ? '・' + sub : '') : sub) + '</small></button>';
       }).join('') + '</div>'
-      + '<p class="rp-note">先衝到屬性第 5 階才開始加星。1～3 星每張 1% 抽（同一種 +1 星、別種從 1 星重來）；滿 3 星後 ★3→★4 固定 ' + STAR_UP[4].toLocaleString() + ' 張、★4→★5 固定 ' + STAR_UP[5].toLocaleString() + ' 張同屬性卷軸，必定成功。4、5 星只有昇華支配、至高的支配能升（+15 沒昇華最高 3 星）。昇華、進化時屬性階、星數與其他詞綴都會保留。</p>';
+      + '<p class="rp-note">先衝到屬性第 5 階才開始加星。1～3 星每張 1% 抽（同一種 +1 星、別種從 1 星重來）；3 星以上改用洗的：★3 每張 1%、★4 每張 0.5% 抽一種，抽到同一種 +1 星；抽到別種時 ★3 會換成那種魔法（維持 3 星），★4 跌回 3 星（4 星起魔法鎖住不換）。5 星把魔法換成該屬性的大招，不能再洗。4、5 星只有昇華支配、至高的支配能升（+15 沒昇華最高 3 星）。昇華、進化時屬性階、星數與其他詞綴都會保留。</p>';
     return html;
   }
   // 碧恩：裝備 +15 以上遺物武器時，上面原本的四顆屬性按鈕直接改走遺物規則；下面多一塊「遺物武器：一鍵衝星」

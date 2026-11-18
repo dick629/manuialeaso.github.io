@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-b96f734bc9dc",
+  "build": "merge-0.4-b86c4e88f5c1",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -123,8 +123,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-awaken-road.js?v=7e730603a128",
-      "sha256": "7e730603a12818286358cde62d8321308ecf43e128d1f4b958d05eb26483eb74",
+      "url": "afk-awaken-road.js?v=259f69830877",
+      "sha256": "259f69830877e7cce820e2789ad9f42546f6c83dba86af77b96fc6cecce93492",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -778,8 +778,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-hybrid.js?v=1d0951626af7",
-      "sha256": "1d0951626af7991942715df0f55bd544df7fc5b9aed1328d6f24b7a4e2342d1f",
+      "url": "afk-hybrid.js?v=9e564b3edc69",
+      "sha256": "9e564b3edc693cf3ab90208eca336079fab265ee87cf83289c867453564c2746",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1293,8 +1293,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-relicplus.js?v=d36113927658",
-      "sha256": "d36113927658e3396736f1bce8d95fcf19c446628e19e38231c0ee3684a9f6c3",
+      "url": "afk-relicplus.js?v=0c8c00c099ea",
+      "sha256": "0c8c00c099ea76701a677bac60859f4cebdf2280488b32ffeaa33750ac84f207",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1764,7 +1764,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "13a2511aa8e51df8d7d0dec3d0f7c89d27f2c011696eafe1a39d6a77f1a01176",
+      "sha256": "f88c3ecc8984c60961eda3b3ab10d5db8f299b36d0ec4cbfea23b8a889c26cdc",
       "type": "text/html; charset=utf-8"
     },
     {

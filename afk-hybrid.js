@@ -286,5 +286,6 @@
   hookAll(); W.addEventListener('load', function () { hookAll(); setTimeout(hookAll, 3000); });
   W.LineageHybrid = { LEGACY: LEGACY, AWAKEN: AWAKEN, legacy: legacy, isHybrid: isHybrid, isBlood: isBlood, routeKey: routeKey, stat: stat,
     V: V, relicKind: relicKind, gearOf: gearOf,
+    addVuln: function (t, k, src, v) { if (W.__afkHybridOff || !(v > 0)) return; var s = vs(t); if (!s) return; if (k === 'ph') put(s.ph, src, v); else if (k === 'mg') put(s.mg, src, v); else if (ELE4[k]) put(elBox(s, k), src, v); },
     vuln: function (t) { var s = vs(t); return s ? { ph: V.ph(t, s), mg: V.mg(t, s), el: { fire: V.el(t, 'fire', s), water: V.el(t, 'water', s), wind: V.el(t, 'wind', s), earth: V.el(t, 'earth', s) } } : null; } };
 })();
