@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-47986eb1e708",
+  "build": "merge-0.4-f8d6ab030e35",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -613,8 +613,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-finalboss.js?v=072c328348c4",
-      "sha256": "072c328348c47119b779f20d76b332f0aa6f5e9823ccf2d29c10ca35f3be0eb0",
+      "url": "afk-finalboss.js?v=7d9d8405215d",
+      "sha256": "7d9d8405215d44a8d6da8c4045f2d4f6727ce1812a131aa666d09927b3855a91",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -778,8 +778,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-hybrid.js?v=007a6dd94e77",
-      "sha256": "007a6dd94e776c389fb7a1600eca035f69350cfd65137c717e631139c17c475a",
+      "url": "afk-hybrid.js?v=8cb0848d33f9",
+      "sha256": "8cb0848d33f9a8f33a52594f29866c38bdbca414171c393cdcbad8bd200be737",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1368,8 +1368,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftrules.js?v=180f7ccfcb75",
-      "sha256": "180f7ccfcb75a66de20c7fd45660ac61eeb7e40401c8416d292eed6f19250200",
+      "url": "afk-riftrules.js?v=3902d67b50ad",
+      "sha256": "3902d67b50adae5a68e8befc5574deea0f7d5c5b0784160d8e24e7ab8c92d674",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1623,8 +1623,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-training.js?v=344f6eda706a",
-      "sha256": "344f6eda706ad9df5de807d00fca9448cfbaaa8384737828256b08588203fd41",
+      "url": "afk-training.js?v=f7f3b7760bcb",
+      "sha256": "f7f3b7760bcbd130c9caf1fa21cd3676bef75b5c3998de6816c86eee93d575c2",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1769,7 +1769,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "e56c4a9e67cde9a322ea9bd5b3b1a9fa6f9a5f5cb6e4bbc02d54f5a6aa9604d5",
+      "sha256": "12cba017a5ed21f8ecbee9dae98215bb44b703a73818a53d2241ac20ea62c257",
       "type": "text/html; charset=utf-8"
     },
     {

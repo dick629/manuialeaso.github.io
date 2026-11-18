@@ -149,7 +149,7 @@
   window.tick = function () {
     // 玩家沒按「離開」、改用遊戲自身回村/地圖選單離開木人場 → 自動收尾（避免 HUD 殘留;假怪 changeMap 已清）
     if (!inTrain() && hudShown()) deactivate();
-    if (!inTrain()) return _origTick.apply(this, arguments);
+    if (!inTrain()) { if (brkExt && brk) brkTick(); return _origTick.apply(this, arguments); }
     // 開拍前：把訓練怪補滿，記下基準（以 uid 為 key，避免死亡輸送帶換格錯亂）
     var before = {};
     var i, m, mobs = mapState.mobs;
@@ -690,7 +690,8 @@
   //   （普通攻擊、某個技能、共鳴、魔擊、觸發魔法、持續傷害、寵物、召喚物…，最內層優先；5 星大招這類「整段算一招」的鎖住不被內層蓋掉）。
   //   普通攻擊裡面夾帶的武器特效（雙擊、爆破…）沒有自己的函式：用同一段時間戰鬥訊息的【名稱】＋傷害數字對回去。
   //   各列相加＝木人實際掉的血（跟上面的總 DPS 同一個口徑）。
-  var brk = null, CTX = [];
+  var brk = null, CTX = [], brkExt = false;   // brkExt：木人場以外借用細項（女神單人練習，afk-finalboss）
+  function brkOn() { return inTrain() || brkExt; }
   function brkReset() { brk = { rows: {}, recent: [] }; }
   function whoOf(e) {
     if (!e || e === player) return '你';
@@ -703,7 +704,7 @@
     return r;
   }
   function brkHit(d) {
-    if (!brk || !(d > 0) || !inTrain()) return;
+    if (!brk || !(d > 0) || !brkOn()) return;
     var c = null;
     for (var i = CTX.length - 1; i >= 0; i--) { if (CTX[i].sticky) { c = CTX[i]; break; } }
     if (!c) c = CTX[CTX.length - 1] || null;
@@ -727,7 +728,7 @@
   function ctxWrap(name, fn) {
     var o = window[name]; if (typeof o !== 'function' || o.__brk) return;
     var f = function () {
-      if (!inTrain() || !brk) return o.apply(this, arguments);
+      if (!brkOn() || !brk) return o.apply(this, arguments);
       var c = fn.apply(null, arguments); if (!c) return o.apply(this, arguments);
       CTX.push(c);
       try { return o.apply(this, arguments); } finally { CTX.pop(); }
@@ -804,7 +805,7 @@
     var X = window.__afkProc;
     if (X && typeof X.hitMob === 'function' && !X.hitMob.__brk) {
       var oh = X.hitMob;
-      X.hitMob = function () { if (!inTrain() || !brk) return oh.apply(this, arguments); var top = CTX[CTX.length - 1]; CTX.push({ who: top ? top.who : '你', what: '裝備追加傷害' + (top ? '（' + top.what + '）' : '') }); try { return oh.apply(this, arguments); } finally { CTX.pop(); } };
+      X.hitMob = function () { if (!brkOn() || !brk) return oh.apply(this, arguments); var top = CTX[CTX.length - 1]; CTX.push({ who: top ? top.who : '你', what: '裝備追加傷害' + (top ? '（' + top.what + '）' : '') }); try { return oh.apply(this, arguments); } finally { CTX.pop(); } };
       X.hitMob.__brk = true;
     }
     // 遺物武器橋接（遺物特效）
@@ -815,7 +816,7 @@
       Object.keys(BN).forEach(function (k) {
         if (typeof B[k] !== 'function') return;
         var o = B[k];
-        B[k] = function () { if (!inTrain() || !brk) return o.apply(this, arguments); var top = CTX[CTX.length - 1]; CTX.push({ who: top ? top.who : '你', what: BN[k] }); try { return o.apply(this, arguments); } finally { CTX.pop(); } };
+        B[k] = function () { if (!brkOn() || !brk) return o.apply(this, arguments); var top = CTX[CTX.length - 1]; CTX.push({ who: top ? top.who : '你', what: BN[k] }); try { return o.apply(this, arguments); } finally { CTX.pop(); } };
       });
     }
     // 戰鬥訊息：普通攻擊裡夾帶的武器特效，用【名稱】＋數字對回去
@@ -823,7 +824,7 @@
     if (typeof oL === 'function' && !oL.__brk) {
       var fL = function (h) {
         try {
-          if (inTrain() && brk && brk.recent.length) {
+          if (brkOn() && brk && brk.recent.length) {
             var txt = String(h).replace(/<[^>]+>/g, '');
             var lab = (txt.match(/【([^】]{1,16})】/) || [])[1];
             if (lab) {
@@ -850,7 +851,7 @@
     if (!brk) return;
     brk.recent = [];
     var mobs = mapState.mobs || [];
-    for (var i = 0; i < mobs.length; i++) if (mobs[i] && mobs[i]._train) hookHp(mobs[i]);
+    for (var i = 0; i < mobs.length; i++) if (mobs[i] && (mobs[i]._train || (brkExt && mobs[i]._afkBrk))) hookHp(mobs[i]);
   }
   function brkRowsHtml(elapsedSec) {
     if (!brk) return '<div class="m-train-empty">尚無輸出</div>';
@@ -874,7 +875,7 @@
   }
   // 異常道具封印（merged/anticheat.js）：每一下被打掉的部分記在這裡，細項最下面另外列「少掉的傷害」（Ping 11-18 15:38）
   window.__afkSealTap = function (a, lost, t) {
-    if (!brk || !(lost > 0) || !t || !t._train || !inTrain()) return;
+    if (!brk || !(lost > 0) || !t || !(t._train || t._afkBrk) || !brkOn()) return;
     var c = null, i; for (i = CTX.length - 1; i >= 0; i--) { if (CTX[i].sticky) { c = CTX[i]; break; } } if (!c) c = CTX[CTX.length - 1] || null;
     var w = (a && !a.cls && a.eq) ? petLabel(a) : (c ? c.who : whoOf(a));   // 跟上面細項同一個「誰」（寵物、召喚物打的算牠們）
     brk.seal = brk.seal || {}; brk.seal[w] = (brk.seal[w] || 0) + lost;
@@ -900,6 +901,13 @@
     return h + '<div class="m-train-brk-note">「少掉」不算在上面的合計裡；百分比是跟木人實際掉的血相比。把封印中的道具換下來，這部分就會回來。</div>';
   }
   window.__afkTrainBreakdown = function () { return brk; };
+  // 女神單人練習借用（afk-finalboss）：目標要標 _afkBrk
+  window.__afkBrkExt = {
+    start: function () { try { brkHook(); } catch (e) { /* ignore */ } brkReset(); brkExt = true; },
+    stop: function () { brkExt = false; },
+    total: function () { var t = 0; if (brk) for (var k in brk.rows) if (brk.rows[k].dmg > 0) t += brk.rows[k].dmg; return t; },
+    html: function (sec) { return brkRowsHtml(sec); }
+  };
 
   function showBattleView() {
     var tv = document.getElementById('town-view');

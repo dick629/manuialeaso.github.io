@@ -23,7 +23,7 @@
     dream: { barrier: 0.10, death: 0.05, deathFast: 0.08, bossDr: 0.03, mobDeath: 0.03, mobShield: 0.05 }
   };
   // 11-17（Ping）：女神單人試煉（次元突破者）不套屏障／護盾／反噬
-  var soloFb = function () { try { var F = W.__afkFinalBoss; return !!(F && F.mode && F.mode() === 'solo' && typeof state !== 'undefined' && state._afkFinalSpawned); } catch (e) { return false; } };
+  var soloFb = function () { try { var F = W.__afkFinalBoss; return !!(F && F.mode && (F.mode() === 'solo' || F.mode() === 'practice') && typeof state !== 'undefined' && state._afkFinalSpawned); } catch (e) { return false; } };
   var mode = function () { var p = P(); if (!p || p.classicMode || soloFb()) return null; return rift() ? CFG.rift : dream() ? CFG.dream : null; };
   var enemy = function (m) { return !!(m && m.curHp != null && !m._isAlly && !m._allyName && m.race !== '建築' && m.race !== '血盟' && !m._dummy && !m.afkRaid); };   // 多人討伐的吞噬者不套
   var inTown = function () { try { return typeof mapState !== 'undefined' && /^town_/.test(String(mapState.current || '')); } catch (e) { return true; } };

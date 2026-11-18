@@ -7,7 +7,7 @@
  *      寵物撕咬（物理＋魔法各 5%）、元素怪自己的屬性 5% 另計。詳見下方「易傷」段。
  *   3. 妖精的遠距離一般攻擊＝70% 物理＋30% 魔法（兩種易傷都吃、兩種都疊）。
  *   4. 光環：職業進化（選了流派）或覺醒轉職的角色＝混傷角色，傭兵給的幻覺光環「額外傷害」也加魔法傷害、「魔法傷害」也加額外傷害。
- *   5. 傳承法術：流派固定給（下表）；用一般魔法書學，學習等級照書上原本的等級。非本職的攻擊法術效果 75%。
+ *   5. 傳承法術：流派固定給（下表）；選了流派就自動學會（Ping 11-18 16:29，原本要用魔法書學），等級要求照書上原本的等級。非本職的攻擊法術效果 75%。
  *      〔幻覺三件組〕＝幻覺：歐吉、幻覺：巫妖、幻覺：鑽石高崙一起學。
  *   6. 血咒派：吸血鬼之吻（含武器觸發）效果 ×2，同時附加一次寒冷戰慄（也 ×2）。
  * ========================================================================== */
@@ -346,7 +346,7 @@
           var status = !learned ? ('未學習・Lv' + (need == null ? '?' : need)) : (usable ? '已學習' : '需要 Lv' + need);
           var img = '<img src="' + (typeof getIconUrl === 'function' ? getIconUrl(sk, true) : '') + '" onerror="this.style.display=\'none\';" alt="' + esc(sk.n) + '">'
             + '<span class="classic-skill-name">' + esc(sk.n) + '</span><span class="classic-skill-status">' + status + '</span>';
-          var tip = ' data-tip-skill="' + id + '" title="' + esc(sk.n) + (learned ? '' : '（用一般魔法書學，Lv' + need + '）') + '"';
+          var tip = ' data-tip-skill="' + id + '" title="' + esc(sk.n) + (learned ? '' : '（到 Lv' + need + ' 就能用）') + '"';
           if (usable && sk.type === 'manual') return '<button class="classic-skill-cell tip-host' + dim + '"' + tip + ' onclick="manualCast(\'' + id + '\')">' + img + '</button>';
           return '<div class="classic-skill-cell tip-host' + dim + '"' + tip + '>' + img + (!learned ? '<span class="classic-skill-lock">◆</span>' : '') + '</div>';
         });
@@ -358,6 +358,18 @@
     };
     f.__afkHyBook = true; W.renderClassicSkillBook = f; try { (0, eval)('renderClassicSkillBook = window.renderClassicSkillBook'); } catch (e) {}
   };
+  // ── 傳承法術自動學會（Ping 11-18 16:29）：選了流派（或覺醒轉職）就加進已學技能；已經選過的角色讀檔後補上 ──
+  var grantLegacy = function () {
+    var p = P(); if (!p || W.__afkHybridOff || (typeof state !== 'undefined' && state && state.ff)) return;
+    var ids = legacy(p); if (!ids.length) return;
+    p.skills = p.skills || []; var add = [];
+    ids.forEach(function (id) { if (DB.skills[id] && p.skills.indexOf(id) < 0) { p.skills.push(id); add.push(DB.skills[id].n); } });
+    if (!add.length) return;
+    try { if (typeof renderTabs === 'function') renderTabs(true); if (typeof renderSkillSelects === 'function') renderSkillSelects(); } catch (e) {}
+    try { if (typeof logSys === 'function') logSys('<span class="text-cyan-300">流派的傳承法術：學會了 ' + add.join('、') + '。</span>'); } catch (e) {}
+  };
+  W.__afkGrantLegacy = grantLegacy;
+  setInterval(function () { try { grantLegacy(); } catch (e) {} }, 3000);
   var hookAll = function () { hookReq(); hookSpell(); hookDmg(); hookAura(); hookCast(); hookSkills(); hookPet(); hookLearn(); hookSelects(); hookBook(); };
   hookAll(); W.addEventListener('load', function () { hookAll(); setTimeout(hookAll, 3000); });
   W.LineageHybrid = { LEGACY: LEGACY, AWAKEN: AWAKEN, legacy: legacy, isHybrid: isHybrid, isBlood: isBlood, routeKey: routeKey, stat: stat,

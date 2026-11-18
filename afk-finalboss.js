@@ -124,11 +124,12 @@
   // 2026-11-04 03:14（玩家）：第二階層的席琳 HP 再 ×0.70（hpK；傷害照 ×1.25，使徒 HP 照 ×1.25）→ 席琳 HP 合計 ×0.875
   var TIER = { first: { n: '席琳夢境', k: 1 }, tier2: { n: '席琳幻影', k: 1.25, hpK: 0.70 }, tier3: { n: '席琳伴身', k: 1.30, dk: 1.45 } };   // dk：席琳與使徒造成的傷害倍率（Ping 11-15：第三階層傷害 ×1.30 → ×1.45，HP 不變）
   // 防禦（Ping 11-15）：第二階層、第三階層、單人試煉各自的 AC／減傷／魔防／四屬性抗性；單人試煉 HP 4 億
-  var TDEF = { tier2: { ac: -200, dr: 50, mr: 700, res: 500 }, tier3: { ac: -300, dr: 80, mr: 800, res: 500 }, solo: { ac: -100, dr: 30, mr: 500, res: 400, hp: 400000000 } };
+  var TDEF = { tier2: { ac: -200, dr: 50, mr: 700, res: 500 }, tier3: { ac: -300, dr: 80, mr: 800, res: 500 }, solo: { ac: -100, dr: 30, mr: 500, res: 400, hp: 400000000 },
+    practice: { ac: -100, dr: 30, mr: 500, res: 400, hp: 400000000 } };   // Ping 11-18 16:29：單人練習＝照單人試煉（A 案）
   var tierK = function () { var t = TIER[mode()]; return t ? t.k : 1; };
   var tierHpK = function () { var t = TIER[mode()]; return t ? t.k * (t.hpK || 1) : 1; };   // 只用在席琳本人的 HP
   var novice = function () { return mode() === 'first' && !!S()._afkFinalNovice; };
-  var modeMult = function () { var m = mode(); return m === 'solo' ? 0 : m === 'second' ? 1.05 : ((TIER[m] && TIER[m].dk) || tierK()) * (novice() ? noviceDmg() : 1); };
+  var modeMult = function () { var m = mode(); return (m === 'solo' || m === 'practice') ? 0 : m === 'second' ? 1.05 : ((TIER[m] && TIER[m].dk) || tierK()) * (novice() ? noviceDmg() : 1); };
   // 初次輪迴的傷害也看人數（玩家 2026-10-29：8 人也要打得過）：×(0.5＋0.5×人數÷16)；16 人＝FB.novice.dmg、8 人 ×0.75、4 人 ×0.625
   var noviceDmg = function () { var sc = Math.min(1, Math.max(0, Number(S()._afkFinalScale) || 1)); return FB.novice.dmg * (0.5 + 0.5 * sc); };
   (window.__afkTakenMods = window.__afkTakenMods || []).push(function (ent, mob) { return (on() && mob && (mob._afkFinal || mob._afkApostle)) ? modeMult() : 1; });
@@ -167,7 +168,7 @@
     try { applySherineBuff(idx); } catch (e) {}
     m = mapState.mobs[idx];
     m._afkFinal = true; m._fbBorn = S().ticks || 0; m._fbPhase = 1;
-    var n = partyN(); S()._afkFinalParty = n; S()._afkFinalScale = mode() === 'solo' ? 1 : hpScale(n);   // 單人試煉本來就是一個人打（席琳不出手），維持原本血量
+    var n = partyN(); S()._afkFinalParty = n; S()._afkFinalScale = (mode() === 'solo' || mode() === 'practice') ? 1 : hpScale(n);   // 單人試煉本來就是一個人打（席琳不出手），維持原本血量
     S()._afkFinalNovice = mode() === 'first' && !(player.rebirth > 0);
     var nv = novice() ? FB.novice : { hp: 1, def: 1 };
     m.hp = m.curHp = Math.round(FB.hp * S()._afkFinalScale * tierHpK() * nv.hp); m.ac = Math.round(FB.ac * nv.def); m.dr = FB.dr * nv.def; m.mr = Math.round(FB.mr * nv.def); m.hard = false; m.hardSkin = 0;
@@ -211,9 +212,9 @@
   // 倒數與逾時判定使用同一組戰鬥 ticks，不額外啟動計時器、不寫入存檔。
   var clockState = function () {
     if (!on() || !player || player.dead) return null;
-    var m = bossOf(), limit = Math.max(0, Number(FB.limit) || 0);
+    var m = bossOf(), limit = Math.max(0, Number(mode() === 'practice' ? (S()._afkPracSec || 300) : FB.limit) || 0);
     var left = Math.max(0, Math.ceil(limit - (m ? ageOf(m) / SEC : 0)));
-    var labels = { first: '女神夢境', tier2: '女神幻影', tier3: '女神伴身', second: '二轉決戰', solo: '單人試煉' };
+    var labels = { first: '女神夢境', tier2: '女神幻影', tier3: '女神伴身', second: '二轉決戰', solo: '單人試煉', practice: '單人練習' };
     return { seconds: left, text: String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0'),
       label: labels[mode()] || '女神決戰', waiting: !m, tone: left <= 60 ? 'danger' : left <= 180 ? 'warning' : 'normal' };
   };
@@ -240,7 +241,7 @@
   };
   document.addEventListener('visibilitychange', function () { if (!document.hidden) renderClock(); });
   var gateOf = function (m) {
-    if (window.__afkFbNoGate || mode() === 'solo') return null;
+    if (window.__afkFbNoGate || mode() === 'solo' || mode() === 'practice') return null;
     var age = ageOf(m);
     for (var i = 0; i < FB.gates.length; i++) { var g = FB.gates[i]; if (!(g[0] > 0)) continue; if (age < g[1] * SEC) return g; }   // 最後一道（倒下）不再等：打到 0 就算贏、當場離開（玩家 2026-10-31 14:11）
     return null;
@@ -310,8 +311,19 @@
     try { smokeTick(); } catch (e) {}
     if (!on() || player.dead) return;
     hookDamage();
+    if (mode() === 'practice' && S()._afkFinalSpawned && !bossOf()) { finish('win', '打倒席琳'); return; }   // 練習：席琳倒下就結算
     var m = bossOf(); if (!m) return;
     var t = S().ticks || 0, age = ageOf(m);
+    if (mode() === 'practice') {   // 單人練習：席琳不出手、不召喚、沒有時間封印；「照實戰」才有凝視
+      if (!m._afkBrk) { m._afkBrk = true; S()._afkPracT0 = t; }
+      if (S()._afkPracGaze && every(age, FB.gazeEvery)) {
+        var lt = age >= FB.gazeLateAt * SEC, gp0 = lt ? FB.gazeLate : FB.gaze, gs0 = lt ? FB.gazeLateSec : FB.gazeSec;
+        S()._afkGazeUntil = t + gs0 * SEC; S()._afkGazePct = gp0;
+        log(tag('席琳的凝視', '#e879f9') + '死亡女神的目光掃過神殿（造成的傷害 −' + Math.round(gp0 * 100) + '%，' + gs0 + ' 秒）。');
+      }
+      if (age >= (S()._afkPracSec || 300) * SEC) finish('time', '時間到');
+      return;
+    }
     var gt = gateOf(m);
     if (gt) { var fh = Math.max(1, Math.ceil(m.hp * gt[0])); if (m.curHp < fh) { m.curHp = fh; seal(m, gt); } }
     var sealed = gt && m._fbSealGate === gt[1] && m.curHp <= Math.max(1, Math.ceil(m.hp * gt[0]));
@@ -389,6 +401,7 @@
   var finish = function (result, why) {
     var s = S(); if (!s._afkFinal) return;
     var md = mode();
+    if (md === 'practice') { pracEnd(result, why); return; }
     if (md === 'tier2' || md === 'tier3') {
       s._afkFinal = false; s._afkFinalSpawned = false; s._afkFinalNovice = false; s.antharas = 0; s._antAdvance = false; s._afkFinalMode = null;
       renderClock();
@@ -496,6 +509,82 @@
     try { if (!document.getElementById('item-modal').classList.contains('hidden')) closeModal(); } catch (e) {}
     try { updateUI(); } catch (e) {}
   };
+
+  // ── 單人練習（Ping 11-18 16:16／16:29）：照單人試煉——HP 4 億、AC −100、減傷 30、魔防 500、四屬性抗性 400；
+  //    席琳不出手、不召喚使徒、沒有時間封印；傭兵、寵物、召喚物都能帶；任何角色都能進、次數不限。
+  //    「照實戰」勾了才有席琳的凝視。3／5／10 分鐘；沒有獎勵、不算挑戰紀錄；藥水與箭不消耗。結束列出傷害細項（借木人場的細項）。
+  var PRAC_SECS = [180, 300, 600];
+  var pracOn = function () { return on() && mode() === 'practice'; };
+  var pracArrow = null;
+  (function () {   // 不消耗：藥水（consume）與箭（consumeArrow）
+    var oc = window.consume;
+    if (typeof oc === 'function' && !oc.__afkPrac) {
+      var fc = function (item) { try { var d = item && DB.items[item.id]; if (pracOn() && d && (d.type === 'pot' || d.type === 'heal' || d.type === 'buff')) { try { renderTabs(); } catch (e) {} return; } } catch (e) {} return oc.apply(this, arguments); };
+      fc.__afkPrac = true; window.consume = fc; try { (0, eval)('consume = window.consume'); } catch (e) {}
+    }
+    var oa = window.consumeArrow;
+    if (typeof oa === 'function' && !oa.__afkPrac) {
+      var fa = function () {
+        if (!pracOn()) return oa.apply(this, arguments);
+        var a = player && player.eq && player.eq.arrow, keep = a ? a.cnt : null;
+        var r = oa.apply(this, arguments);
+        try { if (a && keep != null) { a.cnt = keep; if (!player.eq.arrow) player.eq.arrow = a; } } catch (e) {}
+        return r;
+      };
+      fa.__afkPrac = true; window.consumeArrow = fa; try { (0, eval)('consumeArrow = window.consumeArrow'); } catch (e) {}
+    }
+  })();
+  window.afkFinalPractice = function () {
+    if (!player) return;
+    if (S()._afkFinal || S().antharas || S().riftRun || S().prideClimb) { sys('<span class="text-amber-300">你正身在其他副本之中。</span>'); return; }
+    var sel = document.getElementById('afk-prac-sec'), gz = document.getElementById('afk-prac-gaze');
+    var sec = Number(sel && sel.value) || 300; if (PRAC_SECS.indexOf(sec) < 0) sec = 300;
+    var s = S(); s._afkPracSec = sec; s._afkPracGaze = !!(gz && gz.checked); s._afkPracT0 = null;
+    try { if (window.__afkBrkExt) window.__afkBrkExt.start(); } catch (e) {}
+    startMode('practice', '<span class="font-bold" style="color:#a5f3fc;">你沉入死亡之海練習。席琳只是看著你，沒有出手。</span><span class="text-cyan-200">單人練習 ' + (sec / 60) + ' 分鐘' + (s._afkPracGaze ? '（照實戰：有席琳的凝視）' : '') + '：沒有獎勵、不算挑戰紀錄，藥水與箭不消耗；打倒席琳、時間到或離開就結算。</span>');
+  };
+  var pracEnd = function (result, why) {
+    var s = S(), t = s.ticks || 0, m = (mapState.mobs || []).filter(function (x) { return x && x._afkFinal; })[0];
+    var sec = s._afkPracT0 != null ? Math.max(1, (t - s._afkPracT0) / SEC) : 1;
+    var X = window.__afkBrkExt, tot = X ? X.total() : (m ? m.hp - Math.max(0, m.curHp) : 0), html = X ? X.html(sec) : '';
+    try { if (X) X.stop(); } catch (e) {}
+    s._afkFinal = false; s._afkFinalSpawned = false; s._afkFinalNovice = false; s.antharas = 0; s._antAdvance = false; s._afkFinalMode = null; s._afkGazeUntil = 0;
+    renderClock();
+    var dps = tot / sec, fmt = function (v) { return Math.round(v).toLocaleString(); };
+    var hpSolo = Math.round(FB.hp / FB.base), t1 = dps > 0 ? hpSolo / dps : 0, t16 = dps > 0 ? FB.hp / dps : 0;
+    var mmss = function (x) { x = Math.round(x); return x >= 3600 ? '超過 1 小時' : Math.floor(x / 60) + ' 分 ' + (x % 60) + ' 秒'; };
+    var head = '<div class="text-sm leading-relaxed"><div class="font-bold text-sky-300 mb-1">🌊 單人練習結算（' + (why || (result === 'win' ? '打倒席琳' : '結束')) + '）</div>'
+      + '<div>時間 ' + mmss(sec) + '・總傷害 <b>' + fmt(tot) + '</b>・平均每秒 <b class="text-amber-300">' + fmt(dps) + '</b></div>'
+      + '<div class="text-slate-300 text-xs mt-1">照這個輸出：一個人打二轉決戰（' + fmt(hpSolo) + '）約 ' + mmss(t1) + '；16 人份（' + fmt(FB.hp) + '）約 ' + mmss(t16) + '。（二轉決戰減傷 40，比練習的 30 高，實戰會再慢一些）</div></div>';
+    sys('<span class="text-sky-300 font-bold">單人練習結束：' + mmss(sec) + '，總傷害 ' + fmt(tot) + '，平均每秒 ' + fmt(dps) + '。</span>');
+    try { if (!player.dead) { setMapSelectors(typeof getLastTown === 'function' ? getLastTown() : 'town_aden'); changeMap(true); } } catch (e) {}
+    try { calcStats(); updateUI(); saveGame(); } catch (e) {}
+    try {
+      var body = head + '<div class="m-train-list brk" style="max-height:none;overflow:visible;margin-top:8px">' + html + '</div>';
+      var old = document.getElementById('afk-prac-result'); if (old) old.remove();
+      var ov = document.createElement('div'); ov.id = 'afk-prac-result';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(2,6,23,.72);display:flex;align-items:center;justify-content:center;padding:16px;';
+      ov.innerHTML = '<div style="width:min(440px,94vw);max-height:90vh;display:flex;flex-direction:column;background:#0f172a;border:1px solid #155e75;border-radius:12px;padding:14px;">'
+        + '<div style="overflow-y:auto;flex:1 1 auto;min-height:0">' + body + '</div>'
+        + '<button type="button" data-close="1" class="btn mt-3 py-2 bg-slate-800 border-slate-600" style="flex:none">關閉</button></div>';
+      var lay = null, close = function () { if (ov.parentNode) ov.remove(); };
+      ov.addEventListener('click', function (e) { if (e.target === ov || (e.target.closest && e.target.closest('[data-close]'))) { if (lay && window.AFK_UI) AFK_UI.closeLayer(lay); else close(); } });
+      document.body.appendChild(ov);
+      lay = (window.AFK_UI && AFK_UI.openLayer) ? AFK_UI.openLayer(close) : null;
+    } catch (e) { console.warn('[AFK-finalboss] 練習結算', e); }
+  };
+  (window.__afkGoddessCards = window.__afkGoddessCards || []).push(function (box) {
+    var busy = !!(S()._afkFinal || S().antharas || S().riftRun || S().prideClimb);
+    box.insertAdjacentHTML('beforeend',
+      '<div id="afk-prac-card" class="bg-slate-950/80 border border-cyan-800 rounded p-3 text-sm leading-relaxed">'
+      + '<div class="font-bold mb-1 text-cyan-300">🎯 單人練習：測自己的傷害</div>'
+      + '<div class="text-slate-200 text-xs">照單人試煉的席琳：HP 4 億、AC −100、減傷 30、魔防 500、四屬性抗性 400。席琳不出手、不召喚使徒、沒有時間封印。'
+      + '傭兵、寵物、召喚物都能帶。任何角色都能進、次數不限；沒有獎勵、不算挑戰紀錄，藥水與箭不消耗。結束時列出每個人、每種傷害的細項。</div>'
+      + '<div class="flex flex-wrap gap-3 items-center mt-2 text-xs"><label>時間 <select id="afk-prac-sec" class="bg-slate-900 border border-slate-600 rounded px-1 py-0.5">'
+      + PRAC_SECS.map(function (v) { return '<option value="' + v + '"' + (v === 300 ? ' selected' : '') + '>' + (v / 60) + ' 分鐘</option>'; }).join('') + '</select></label>'
+      + '<label class="flex items-center gap-1"><input type="checkbox" id="afk-prac-gaze">照實戰（有席琳的凝視：每 35 秒傷害 −30%，5 分鐘後 −40%）</label></div></div>'
+      + '<button type="button" class="btn py-2 text-sm font-bold ' + (busy ? 'bg-slate-700 border-slate-600 opacity-60 cursor-not-allowed' : 'bg-cyan-950 hover:bg-cyan-900 border-cyan-600') + '" ' + (busy ? 'disabled' : '') + ' onclick="afkFinalPractice()">🎯 開始單人練習</button>');
+  });
 
   // ── Ping 11-12 03:45：女神挑戰（最終決戰／一轉女神、二轉決戰、單人試煉、終焉階層）從席琳祈禱視窗搬到席琳神殿的新 NPC「死亡女神 席琳」──
   //   其他外掛（afk-finaltiers）把自己的卡片推進 window.__afkGoddessCards；面板打開或重畫時依序畫出來。
