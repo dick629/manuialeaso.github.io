@@ -74,22 +74,35 @@
   // ── 介面（席琳神殿「藝能的守門人」）──
   var NPC = 'npc_afk_artgate', NPC_N = '藝能的守門人';
   var render = function (div) {
-    if (!div) return; var p = P(), r = rec(p); if (!r) return; var RD = W.__afkRiftDg;
-    var h = '<div class="p-4 flex flex-col gap-2 text-sm leading-relaxed"><div class="afk-lore">「你在裂縫裡丟掉的東西，有些會變成你自己的樣子，在這裡等你。」</div>';
-    h += '<div class="text-slate-300 text-xs">次元精通欄：' + [0, 1].map(function (i) { return i < (r.open || 0) ? ('第 ' + (i + 1) + ' 格「' + (r.slot[i] ? ART[r.slot[i]].n : '空') + '」') : ('第 ' + (i + 1) + ' 格未開（' + nm(SLOT_COST[i][0]) + ' ' + SLOT_COST[i][1].toLocaleString() + '）'); }).join('、') + '。只算你本人；村莊裡免費切換。</div>';
-    if ((r.open || 0) < 2) h += '<button type="button" class="btn py-1" data-art="open">開啟第 ' + ((r.open || 0) + 1) + ' 格</button>';
+    if (!div) return; var p = P(), r = rec(p); if (!r) return; var RD = W.__afkRiftDg, K = W.__afkNpcKit;
+    if (!K) return;
+    // 11-18 Ping「介面改一下 讓他跟其他 npc 介面相同」：改用裂縫之門同一套列（名稱、說明、需求、右側按鈕）
+    K.css();
+    var h = '<div class="afk-ax"><div class="ax-lore">「你在裂縫裡丟掉的東西，有些會變成你自己的樣子，在這裡等你。」</div>';
+    h += '<div class="ax-h">次元精通欄</div>';
+    [0, 1].forEach(function (i) {
+      var opened = i < (r.open || 0), c = SLOT_COST[i];
+      h += K.rowHtml({ key: 'slot' + i, name: '第 ' + (i + 1) + ' 格' + (opened ? '：' + (r.slot[i] ? esc(ART[r.slot[i]].n) + '　<span style="color:#86efac">★' + (r.un[r.slot[i]] || 0) + '</span>' : '<span style="color:#94a3b8">空</span>') : '　<span style="color:#94a3b8">未開</span>'),
+        color: '#fde68a', note: opened ? '只算你本人；在村莊裡免費切換。' : '開啟：' + nm(c[0]) + ' ' + c[1].toLocaleString() + '（持有 ' + cnt(c[0]).toLocaleString() + '）',
+        why: !opened && i > (r.open || 0) ? '先開第 ' + i + ' 格' : '', btns: opened ? (r.slot[i] ? [['set:' + i + ':', '拿下', true]] : []) : [['open', '開啟', cnt(c[0]) >= c[1]]] }, 'data-art');
+    });
+    h += '<div class="ax-h">次元藝能</div>';
     KEYS.forEach(function (k) {
       var a = ART[k], s = r.un[k], d = RD && RD.BYID['art_' + k], why = d && RD.canEnter ? RD.canEnter(d) : '';
-      h += '<div class="bg-slate-950/70 border border-cyan-900 rounded p-2"><div class="font-bold text-cyan-200">' + a.n + (s != null ? '　★' + s : '　（未解放）') + '</div>'
-        + '<div class="text-xs text-slate-300">常駐：' + a.perm + '<br>主動：' + a.act + (function () { var R2 = W.__afkArtRes, L = R2 ? R2.txt(p, k) : []; return L.map(function (x) { return '<br><span style="color:#67e8f9">職業共鳴・' + esc(x.cls) + '「' + esc(x.n) + '」' + (x.k !== 1 ? '（×' + x.k + '）' : '') + '：</span>' + esc(x.d); }).join(''); })() + '<br>失落的次元藝能 ×' + cnt('afk_art_' + k) + '</div><div class="flex flex-wrap gap-1 mt-1">'
-        + '<button type="button" class="btn py-1 text-xs" data-art="go:' + k + '"' + (why ? ' title="' + esc(why) + '"' : '') + '>進入「' + (d ? d.n : '') + '」（' + (d ? nm(d.fee.items[0][0]) : '') + ' ×' + (d ? d.fee.items[0][1] : 50) + '）</button>'
-        + (s == null ? '<button type="button" class="btn py-1 text-xs" data-art="unlock:' + k + '">解放</button>' : (s < 3 ? '<button type="button" class="btn py-1 text-xs" data-art="star:' + k + '">升到 ★' + (s + 1) + '（藝能 ' + STAR_NEED[s + 1] + '）</button>' : ''))
-        + (s != null ? [0, 1].filter(function (i) { return i < (r.open || 0); }).map(function (i) { return '<button type="button" class="btn py-1 text-xs" data-art="set:' + i + ':' + (r.slot[i] === k ? '' : k) + '">' + (r.slot[i] === k ? '從第 ' + (i + 1) + ' 格拿下' : '放進第 ' + (i + 1) + ' 格') + '</button>'; }).join('') : '')
-        + '</div></div>';
+      var res = (function () { var R2 = W.__afkArtRes, L = R2 ? R2.txt(p, k) : []; return L.map(function (x) { return '<br><span style="color:#67e8f9">職業共鳴・' + esc(x.cls) + '「' + esc(x.n) + '」' + (x.k !== 1 ? '（×' + x.k + '）' : '') + '：</span>' + esc(x.d); }).join(''); })();
+      var btns = [['go:' + k, '進入', !why, why]];
+      if (s == null) btns.push(['unlock:' + k, '解放', true]); else if (s < 3) btns.push(['star:' + k, '升到 ★' + (s + 1), true]);
+      if (s != null) [0, 1].filter(function (i) { return i < (r.open || 0); }).forEach(function (i) { btns.push(['set:' + i + ':' + (r.slot[i] === k ? '' : k), r.slot[i] === k ? '拿下第 ' + (i + 1) + ' 格' : '放第 ' + (i + 1) + ' 格', true]); });
+      h += K.rowHtml({ key: 'art' + k, name: esc(a.n) + (s != null ? '　<span style="color:#86efac">★' + s + '</span>' : '　<span style="color:#94a3b8">未解放</span>'), color: '#67e8f9',
+        desc: '常駐：' + a.perm + '<br>主動：' + a.act + res,
+        note: '副本「' + (d ? esc(d.n) : '') + '」入場：' + (d ? nm(d.fee.items[0][0]) + ' ×' + d.fee.items[0][1] : '') + '　失落的次元藝能・' + a.n + '：' + cnt('afk_art_' + k) + (s == null ? '（解放要 1）' : s < 3 ? '（★' + (s + 1) + ' 要 ' + STAR_NEED[s + 1] + '）' : ''),
+        btns: btns }, 'data-art');
     });
-    h += '<div class="flex flex-wrap gap-1"><button type="button" class="btn py-1 text-xs" data-art="swap:ess">地獄精華 100 → 次元精華 1（' + cnt('afk_hell_essence') + '／' + cnt(ESS) + '）</button>'
-      + '<button type="button" class="btn py-1 text-xs" data-art="swap:std">至暗星塵 50 → 次元至暗星塵 1（' + cnt('afk_dark_stardust') + '／' + cnt(STD) + '）</button></div></div>';
-    div.innerHTML = h;
+    h += '<div class="ax-h">材料交換</div>';
+    h += K.rowHtml({ key: 'swess', name: '次元精華', color: '#fde68a', note: '地獄精華 100 → 次元精華 1（持有 ' + cnt('afk_hell_essence').toLocaleString() + '／' + cnt(ESS).toLocaleString() + '）', btns: [['swap:ess', '交換', true]] }, 'data-art');
+    h += K.rowHtml({ key: 'swstd', name: '次元至暗星塵', color: '#fde68a', note: '至暗星塵 50 → 次元至暗星塵 1（持有 ' + cnt('afk_dark_stardust').toLocaleString() + '／' + cnt(STD).toLocaleString() + '）', btns: [['swap:std', '交換', true]] }, 'data-art');
+    h += '</div>';
+    var top = div.scrollTop; div.innerHTML = h; div.scrollTop = top;
   };
   document.addEventListener('click', function (e) {
     var b = e.target && e.target.closest && e.target.closest('[data-art]'); if (!b) return;

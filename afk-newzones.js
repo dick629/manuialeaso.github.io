@@ -478,7 +478,10 @@
   var pay = function (md) {
     var c = COST[md];
     if (md === 'dream') { var res = {}; try { res = W.pandoraAdjustSharedDiamonds(-c.amt) || {}; } catch (e) { res = { ok: false }; } return !!res.ok; }
-    var G = W.LineageGrowth; try { G.transaction('單人副本入場', function () { G.spendBlood(c.amt); }); return true; } catch (e) { return false; }
+    var G = W.LineageGrowth;
+    // 11-18 Ping「單人副本不會飛過去開始打」：遠征進場時已經在存檔交易裡，這裡再開一筆會被擋下 → 扣款失敗、停在村莊。已在交易裡就直接扣。
+    try { G.spendBlood(c.amt); return true; } catch (e0) {}
+    try { G.transaction('單人副本入場', function () { G.spendBlood(c.amt); }); return true; } catch (e) { return false; }
   };
   // 傭兵：留在隊伍裡，副本裡暫時不出場（離開副本就回來；存檔裡也記著，讀檔時還原）
   var stashAllies = function (p) { var r = nzRec(p); if (!r.stash && (p.allies || []).length) { r.stash = p.allies; p.allies = []; } };

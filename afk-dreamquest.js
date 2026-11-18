@@ -211,7 +211,8 @@
   // ── 無名的說書人（席琳神殿；夢域鏡世界、完成第 5 章後才會開口）──
   L.addNpc('town_sherine', { id: STORY_NPC, n: STORY_N, title: '劇情', type: 'quest', classicHide: true,
     d: '高大的老人，影子比他本人大很多。他說自己只是個講故事的人，講的卻總是眾神的事。' }, '1254', [60, 72]);   // Ping 11-12 席琳神殿重排
-  var storyVisible = function (p) { return !!(p && !classic(p) && dreamOn(p) && trialQStateFor(p, keyOf(4, p)) === 2); };
+  var storyVisible = function (p) { if (p && !classic(p) && W.AFK_RIFTQ && trialQStateFor(p, W.AFK_RIFTQ.keyR(4, p)) === 2) return true;   // 11-18：「吞噬天空的光」第 5 章完成後也會開口（第 6 章）
+    return !!(p && !classic(p) && dreamOn(p) && trialQStateFor(p, keyOf(4, p)) === 2); };
   if (typeof W.interactNPC === 'function') {
     var oNpc = W.interactNPC;
     W.interactNPC = function (npcId) {

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-453541b0a869",
+  "build": "merge-0.4-2084c7e88173",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -428,8 +428,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dex-extra.js?v=aa4ff864f163",
-      "sha256": "aa4ff864f1632ac9303c25f04a8613dd3b57b5244a359d0b6f0f8835f4ee4b8a",
+      "url": "afk-dex-extra.js?v=60b8b131f304",
+      "sha256": "60b8b131f3042745782491ab66848507bf5d31e51c5f9c0176f211c998831e4a",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -453,8 +453,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dimarts.js?v=e37f671ed255",
-      "sha256": "e37f671ed25589fc7ab6641e35bfa08413a237b76422daaefa520805c27e85dd",
+      "url": "afk-dimarts.js?v=908edb795052",
+      "sha256": "908edb7950528f31186c86b9f7775ac3b51217b3284e5b63d2cd42485ca5ffe1",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -533,8 +533,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamquest.js?v=8a2522717f43",
-      "sha256": "8a2522717f43047fec634d9995a050f83bff022e8cedd765d0e83fee65605ba4",
+      "url": "afk-dreamquest.js?v=527b80a88173",
+      "sha256": "527b80a88173827ba7de4c214e837a70d553fb7b3a5dc2b8ecde8b1eb6940a11",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1018,8 +1018,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-newzones.js?v=76a1325ca6e9",
-      "sha256": "76a1325ca6e9ceefbf8415818fa1b7a43eb9693230ead3283b1b169fd74b54ad",
+      "url": "afk-newzones.js?v=5a6a01e9fcc1",
+      "sha256": "5a6a01e9fcc1981a5fa5699f4247ea2d9d29d393ff4e0227dcc7b5bf7126cfae",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1395,6 +1395,11 @@
     {
       "url": "afk-riftlock.js?v=c2ead4d5c2ce",
       "sha256": "c2ead4d5c2ce0d72f69efef0bbea274e850cc85a7ff5656f93744b4baa405871",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
+      "url": "afk-riftquest.js?v=58da1c11850a",
+      "sha256": "58da1c11850a1dd3f91570ba65ea2e05b85853e3bc95bcb850cbd96057820514",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1799,7 +1804,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "b1350ebfae4641ead186e2989fb72f39520d42567c3eda451573d022fd176208",
+      "sha256": "8089bf7dbc83b7645d416c0bbe88606033631ccf2b98ecf1915ee8c90865e30c",
       "type": "text/html; charset=utf-8"
     },
     {
