@@ -282,7 +282,83 @@
     };
     f.__afkHybrid = true; W.castSkillInner = f;
   };
-  var hookAll = function () { hookReq(); hookSpell(); hookDmg(); hookAura(); hookCast(); hookSkills(); hookPet(); };
+  // ── 傳承法術：屬性魔法（精靈的火／水／風／地魔法）不是妖精也能學、能勾自動施放（Ping 11-18 15:44）──
+  //   施放時 hookCast 已經會暫時當成該屬性；這裡補「學」跟「自動施法清單」兩處的屬性檢查。妖精本人照舊要屬性相符。
+  var eleLegacy = function (p, id) { var sk = DB.skills[id]; return !!(p && sk && (sk.reqEle || sk.reqEleAny) && p.cls !== 'elf' && legacy(p).indexOf(id) >= 0); };
+  var hookLearn = function () {
+    if (typeof W.useItem !== 'function' || W.useItem.__afkHyLearn) return;
+    var o = W.useItem;
+    var f = function (u) {
+      var p = P(), it = null, d = null;
+      if (!W.__afkHybridOff && p) try { it = (p.inv || []).find(function (x) { return x && (x.uid === u || String(x.uid) === String(u)); }); d = it && DB.items[it.id]; } catch (e) {}
+      if (!d || d.type !== 'skillbk' || !eleLegacy(p, d.sk)) return o.apply(this, arguments);
+      var sk = DB.skills[d.sk], keep = p.elfEle; p.elfEle = sk.reqEle || keep || 'fire';
+      try { return o.apply(this, arguments); } finally { p.elfEle = keep; }
+    };
+    f.__afkHyLearn = true; W.useItem = f; try { (0, eval)('useItem = window.useItem'); } catch (e) {}
+  };
+  var hookSelects = function () {
+    if (typeof W.renderSkillSelects !== 'function' || W.renderSkillSelects.__afkHyEle) return;
+    var o = W.renderSkillSelects;
+    var f = function () {
+      var r = o.apply(this, arguments);
+      try {
+        var p = P(); if (p && !W.__afkHybridOff) legacy(p).forEach(function (id) {
+          if (!eleLegacy(p, id) || (p.skills || []).indexOf(id) < 0) return;
+          var need = W.skillReqLv(DB.skills[id], id); if (need == null || N(p.lv) < need) return;
+          document.querySelectorAll('option[value="' + id + '"]').forEach(function (op) { op.disabled = false; op.classList.remove('text-slate-500'); });
+          var cb = document.getElementById('auto-sk-' + id); if (cb) { cb.disabled = false; if (cb.dataset && cb.dataset.unavail) cb.dataset.unavail = '0'; }
+        });
+      } catch (e) {}
+      return r;
+    };
+    f.__afkHyEle = true; W.renderSkillSelects = f; try { (0, eval)('renderSkillSelects = window.renderSkillSelects'); } catch (e) {}
+  };
+  // ── 技能書加一頁「傳承」：這個流派全部的傳承法術（已學、未學、要幾級）──
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var hookBook = function () {
+    if (typeof W.renderClassicSkillBook !== 'function' || W.renderClassicSkillBook.__afkHyBook) return;
+    var o = W.renderClassicSkillBook;
+    var f = function (sDiv) {
+      var p = P(), st = typeof classicSkillBookState !== 'undefined' ? classicSkillBookState : null;
+      var ids = (p && !W.__afkHybridOff) ? legacy(p) : [];
+      if (!ids.length || !st) { if (st && st.mode === 'legacy') st.mode = 'general'; return o.apply(this, arguments); }
+      var leg = st.mode === 'legacy';
+      if (leg) st.mode = 'general';
+      var r;
+      try { r = o.apply(this, arguments); } finally { if (leg) st.mode = 'legacy'; }
+      try {
+        var win = sDiv && sDiv.querySelector('.classic-skill-window'); if (!win) return r;
+        var bar = win.querySelector('.classic-skill-mode');
+        if (bar) {
+          if (leg) bar.querySelectorAll('button').forEach(function (b) { b.classList.remove('active'); });
+          var b = document.createElement('button'); b.type = 'button'; b.textContent = '傳承'; if (leg) b.className = 'active';
+          b.setAttribute('onclick', "classicSkillChooseMode('legacy')"); bar.appendChild(b);
+        }
+        if (!leg) return r;
+        win.setAttribute('data-skill-mode', 'legacy');
+        var hd = win.querySelector('.classic-skill-heading'); if (hd) hd.textContent = '傳承法術';
+        var strip = win.querySelector('.classic-skill-tier-strip'); if (strip) strip.style.visibility = 'hidden';
+        var cells = ids.map(function (id) {
+          var sk = DB.skills[id], learned = (p.skills || []).indexOf(id) >= 0, need = W.skillReqLv(sk, id);
+          var usable = learned && need != null && N(p.lv) >= need;
+          var dim = learned ? (usable ? '' : ' classic-skill-unavailable') : ' classic-skill-unlearned';
+          var status = !learned ? ('未學習・Lv' + (need == null ? '?' : need)) : (usable ? '已學習' : '需要 Lv' + need);
+          var img = '<img src="' + (typeof getIconUrl === 'function' ? getIconUrl(sk, true) : '') + '" onerror="this.style.display=\'none\';" alt="' + esc(sk.n) + '">'
+            + '<span class="classic-skill-name">' + esc(sk.n) + '</span><span class="classic-skill-status">' + status + '</span>';
+          var tip = ' data-tip-skill="' + id + '" title="' + esc(sk.n) + (learned ? '' : '（用一般魔法書學，Lv' + need + '）') + '"';
+          if (usable && sk.type === 'manual') return '<button class="classic-skill-cell tip-host' + dim + '"' + tip + ' onclick="manualCast(\'' + id + '\')">' + img + '</button>';
+          return '<div class="classic-skill-cell tip-host' + dim + '"' + tip + '>' + img + (!learned ? '<span class="classic-skill-lock">◆</span>' : '') + '</div>';
+        });
+        var per = typeof CLASSIC_PAGE_CELLS === 'number' ? CLASSIC_PAGE_CELLS : 16;
+        while (cells.length < per || cells.length % 4) cells.push('<div class="classic-skill-cell classic-skill-empty"></div>');
+        var grid = win.querySelector('.classic-skill-grid'); if (grid) grid.innerHTML = cells.join('');
+      } catch (e) {}
+      return r;
+    };
+    f.__afkHyBook = true; W.renderClassicSkillBook = f; try { (0, eval)('renderClassicSkillBook = window.renderClassicSkillBook'); } catch (e) {}
+  };
+  var hookAll = function () { hookReq(); hookSpell(); hookDmg(); hookAura(); hookCast(); hookSkills(); hookPet(); hookLearn(); hookSelects(); hookBook(); };
   hookAll(); W.addEventListener('load', function () { hookAll(); setTimeout(hookAll, 3000); });
   W.LineageHybrid = { LEGACY: LEGACY, AWAKEN: AWAKEN, legacy: legacy, isHybrid: isHybrid, isBlood: isBlood, routeKey: routeKey, stat: stat,
     V: V, relicKind: relicKind, gearOf: gearOf,

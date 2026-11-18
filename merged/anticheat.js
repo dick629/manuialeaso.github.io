@@ -189,13 +189,14 @@
     var o = C.damage;
     C.damage = function (actor, target, amount) {
       var r = o.apply(this, arguments);
-      try { if (r > 0 && actor && actor.cls) { var v = sealOf(actor); if (v) r = Math.max(1, Math.floor(r * (1 - v.out))); } } catch (e) {}
+      try { if (r > 0 && actor && actor.cls) { var v = sealOf(actor); if (v) { var r0 = r; r = Math.max(1, Math.floor(r * (1 - v.out))); if (typeof W.__afkSealTap === 'function') try { W.__afkSealTap(actor, r0 - r, target); } catch (e2) {} } } } catch (e) {}   /* __afkSealTap：木人場細項記「封印少掉的傷害」 */
       return r;
     };
     C.__afkSeal = true;
   };
   hookSeal(); W.addEventListener('load', hookSeal);
   (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent) { var v = ent && ent.cls ? sealOf(ent) : null; return v ? 1 + v.inn : 1; });
+  W.__afkAcSealInfo = function (actor) { var v = sealOf(actor); return v ? { out: v.out, inn: v.inn, n: v.n } : null; };   // 木人場細項用
   W.__afkAcSealedOn = function (actor) { var v = sealOf(actor); return v ? v.n : 0; };   // 穿著幾件封印中的道具（女神台詞用）
   W.__afkAcHealMult = function (owner, source) { var v = sealOf(owner); return v && source && v.keys[source] ? 0.5 : 1; };
 

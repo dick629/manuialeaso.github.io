@@ -765,7 +765,7 @@
     ctxWrap('relicAuraTick', P_('遺物光環'));
     ctxWrap('relicCharmOnHit', P_('遺物特效'));
     ctxWrap('relicFlywingDouble', P_('遺物特效（飛翼連擊）'));
-    ctxWrap('illuSummonTick', P_('幻術召喚'));
+    ctxWrap('illuSummonTick', A_('幻術召喚'));   // 11-18：幻覺召喚物算在主人頭上（傭兵幻術士的召喚原本被記成「你」）
     ctxWrap('__afkAttr5', P_(function (t, inst, w, proc) { var N = { fire: '爆炎流星雨', water: '寒冬冰雪暴', wind: '靈魂風暴', earth: '陷陣岩崩' }; return '5 星屬性大招：' + (N[proc && proc.ele] || '大招'); }, { sticky: true }));
     // 傭兵
     ctxWrap('allyAttackOnce', A_('普通攻擊', { generic: true }));
@@ -869,7 +869,26 @@
           + '<span class="m-train-brk-t"><i style="width:' + Math.max(1, Math.round(pc)) + '%"></i></span></div>';
       });
     });
-    return html + '<div class="m-train-brk-note">各列相加＝木人實際掉的血（平均每秒）。滑過看總量、下數、平均每下。</div>';
+    return html + '<div class="m-train-brk-note">各列相加＝木人實際掉的血（平均每秒）。滑過看總量、下數、平均每下。</div>' + sealHtml(elapsedSec, tot);
+  }
+  // 異常道具封印（merged/anticheat.js）：每一下被打掉的部分記在這裡，細項最下面另外列「少掉的傷害」（Ping 11-18 15:38）
+  window.__afkSealTap = function (a, lost, t) {
+    if (!brk || !(lost > 0) || !t || !t._train || !inTrain()) return;
+    var w = whoOf(a); brk.seal = brk.seal || {}; brk.seal[w] = (brk.seal[w] || 0) + lost;
+  };
+  function sealHtml(elapsedSec, tot) {
+    var info = null; try { info = typeof window.__afkAcSealInfo === 'function' ? window.__afkAcSealInfo(player) : null; } catch (e) { /* ignore */ }
+    var S = (brk && brk.seal) || {}, ws = Object.keys(S).filter(function (w) { return S[w] > 0; });
+    if (!info && !ws.length) return '<div class="m-train-brk-seal ok">異常道具封印：無（輸出沒有被打折）</div>';
+    var h = '<div class="m-train-brk-who seal"><span>⚠ 異常道具封印少掉的傷害</span><span></span></div>';
+    if (info) h += '<div class="m-train-brk-seal">你身上 ' + info.n + ' 件封印中的道具：造成傷害 −' + Math.round(info.out * 100) + '%、受到傷害 +' + Math.round(info.inn * 100) + '%</div>';
+    ws.sort(function (a, b) { return (a === '你' ? -1 : b === '你' ? 1 : 0) || S[b] - S[a]; }).forEach(function (w) {
+      h += '<div class="m-train-brk-row seal" title="' + esc(w) + ' 被封印打掉的傷害：共 ' + fmt(S[w]) + '">'
+        + '<span class="m-train-brk-n">' + esc(w) + '（少掉）</span>'
+        + '<span class="m-train-brk-v">−' + fmt(elapsedSec > 0 ? S[w] / elapsedSec : 0) + '<small>' + (tot > 0 ? (S[w] / tot * 100).toFixed(1) : '0') + '%</small></span>'
+        + '<span class="m-train-brk-t"><i style="width:' + Math.max(1, Math.min(100, Math.round(tot > 0 ? S[w] / tot * 100 : 0))) + '%"></i></span></div>';
+    });
+    return h + '<div class="m-train-brk-note">「少掉」不算在上面的合計裡；百分比是跟木人實際掉的血相比。把封印中的道具換下來，這部分就會回來。</div>';
   }
   window.__afkTrainBreakdown = function () { return brk; };
 
@@ -1306,6 +1325,7 @@
       '.m-train-brk-t{grid-column:1 / -1;height:5px;background:#0b1220;border-radius:3px;overflow:hidden;}',
       '.m-train-brk-t i{display:block;height:100%;background:#f59e0b;}',
       '.m-train-brk-note{margin-top:6px;font-size:10px;color:#94a3b8;}',
+      '.m-train-brk-who.seal{color:#fca5a5;margin-top:8px;}.m-train-brk-row.seal .m-train-brk-v{color:#fca5a5;}.m-train-brk-row.seal .m-train-brk-t i{background:#ef4444;}.m-train-brk-seal{font-size:11px;color:#fcd34d;margin-top:4px;}.m-train-brk-seal.ok{color:#86efac;margin-top:8px;}',
       '.m-train-row{display:flex;justify-content:space-between;align-items:center;gap:6px;background:#1e293b;border:1px solid #334155;border-radius:6px;padding:3px 7px;}',
       '.m-train-row-name{color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
       '.m-train-lv{color:#64748b;font-size:11px;}',
