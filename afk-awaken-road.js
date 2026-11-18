@@ -533,6 +533,19 @@
   }, true);
 
   W.__afkAwakenRoad = { ROAD: ROAD, LV: LV, CH_N: CH_N, MAP: MAP, store: store, cur: cur, ready: ready, accept: accept, complete: complete, enterEcho: enterEcho, buildEcho: buildEcho, wpnId: wpnId, cloakId: cloakId, titled: titled, html: html };
+  // ── 黑暗妖精試煉 NPC（倫得、康）：覺醒成暗黑騎士也看得到（Ping 11-18 15:13；試煉本身核心已用 questCls 照本職判斷，只是地圖上被藏起來）──
+  try {
+    Object.keys(DB.towns || {}).forEach(function (tid) {
+      (DB.towns[tid].npcs || []).forEach(function (n) {
+        if (!n || !n.darkOnly || n.__afkDarkVis) return;
+        Object.defineProperty(n, '__afkDarkVis', { value: true });
+        Object.defineProperty(n, 'darkOnly', { configurable: true, enumerable: true,
+          get: function () { try { var p = P(); if (p && p.cls !== 'dark' && typeof questCls === 'function' && questCls(p) === 'dark') return false; } catch (e) {} return true; },
+          set: function () {} });
+      });
+    });
+  } catch (e) {}
+
   // ── 新手獎勵可以刪除（Ping 11-18 14:07）：覺醒之路的見習武器、覺醒披風不能賣，背包裡的可以直接刪掉 ──
   var CAN_DEL = /^afk_awq_(wpn|cloak)/;
   W.__afkDelNovice = function (uid) {

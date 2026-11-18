@@ -248,6 +248,43 @@
     } catch (e) {}
   }, 1000);
 
+  // ── 回憶蠟燭（Ping 11-18 15:13）：二轉角色可重配的點數少算了第二輪 Lv50～150 的 101 點 ──
+  //   第一次轉生會收回 Lv50～100 的 51 點（之後練回來再拿），第二次轉生沒有收回——所以沒用蠟燭的二轉角色身上有這 101 點；
+  //   蠟燭只算「創角點數＋(等級−49)」，用了就少 101 點。改成二轉角色另加 101 點；已經用過蠟燭少掉的，讀檔時自動補回未分配點數。
+  var LIFE2 = 101;
+  if (typeof window.startRespec === 'function' && !window.startRespec.__afkR2) {
+    var oStart = window.startRespec;
+    window.startRespec = function () {
+      var r = oStart.apply(this, arguments);
+      try { var p = P(); if (p && p.rebirth >= 2) (0, eval)('if (_respec && !_respec.afkR2) { _respec.pts += ' + LIFE2 + '; _respec.afkR2 = true; }'); } catch (e) {}
+      return r;
+    };
+    window.startRespec.__afkR2 = true;
+    try { (0, eval)('startRespec = window.startRespec'); } catch (e) {}
+  }
+  var fixPts = function () {
+    try {
+      var p = P(); if (!p || !(p.rebirth >= 2) || p.classicMode || typeof createBase === 'undefined') return;
+      var b = createBase[p.cls]; if (!b) return;
+      if (!['str', 'dex', 'con', 'int', 'wis', 'cha'].every(function (k) { return (Number(p.base && p.base[k]) || 0) === (Number(b[k]) || 0); })) return;   // 基礎值被改過的（匯入、GM）不動
+      var star = 0; try { star = window.__afkStarRoad ? Number(window.__afkStarRoad.ptsTotal(p)) || 0 : 0; } catch (e) {}
+      var want = (Number(b.pts) || 0) + Math.max(0, (p.lv || 1) - 49) + LIFE2 + star;
+      var held = ['str', 'dex', 'con', 'int', 'wis', 'cha'].reduce(function (t, k) { return t + (Number(p.alloc && p.alloc[k]) || 0); }, 0) + Math.max(0, Math.floor(Number(p.bonus) || 0));
+      if (held < want) {
+        var add = want - held; p.bonus = Math.max(0, Math.floor(Number(p.bonus) || 0)) + add;
+        sys('<span class="text-amber-300 font-bold">點數校正：二轉角色用回憶蠟燭重新配點時，少算了第二輪 Lv50～150 的升級點數。已補回 ' + add + ' 點未分配點數，請到能力分頁分配。</span>');
+        try { calcStats(); updateUI(); saveGame(); } catch (e) {}
+      }
+    } catch (e) {}
+  };
+  if (typeof window.loadGame === 'function' && !window.loadGame.__afkR2) {
+    var oLoad2 = window.loadGame;
+    window.loadGame = function () { var r = oLoad2.apply(this, arguments); setTimeout(fixPts, 2000); return r; };
+    window.loadGame.__afkR2 = true;
+    try { (0, eval)('loadGame = window.loadGame'); } catch (e) {}
+  }
+  try { if (typeof window.addEventListener === 'function') window.addEventListener('load', function () { setTimeout(fixPts, 5000); }); } catch (e) {}
+
   window.__afkRebirth2 = { soloDone: soloDone, noHire: noHire, finish: finish, card: card, rec2: rec2, breaker: breaker, locked: locked, sealed: sealedR, canSecond: canSecond, doRebirth2: doRebirth2 };
   console.log('[AFK-rebirth2] 已啟用：二轉決戰、次元突破者／封印輪迴、第二次轉生');
 })();

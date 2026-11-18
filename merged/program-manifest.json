@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-b86c4e88f5c1",
+  "build": "merge-0.4-38db9cb9ad35",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -123,8 +123,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-awaken-road.js?v=259f69830877",
-      "sha256": "259f69830877e7cce820e2789ad9f42546f6c83dba86af77b96fc6cecce93492",
+      "url": "afk-awaken-road.js?v=a41d410b470d",
+      "sha256": "a41d410b470d27942fccc6151d8a5ebb74188610a468efc2c698b1850f5ec038",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1188,8 +1188,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-rebirth2.js?v=3e5fea3d0593",
-      "sha256": "3e5fea3d0593a9ef0d20ee35aedba3dbee017058a463668d68c9e2ff6a3a0b1e",
+      "url": "afk-rebirth2.js?v=57061ae2b829",
+      "sha256": "57061ae2b82903748ab5ff857a267cbde15834bfba18b6867b9d562d109e42cc",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1518,6 +1518,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-statsrc.js?v=7e6e742578a9",
+      "sha256": "7e6e742578a9671814dca9fa925c4d442d6cfacbd25d0bf7f5846c86ffedb662",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-statusicon.js?v=9d68288411de",
       "sha256": "9d68288411de2ad25eefcb17dd89cfc326d8f3734f92e3b375763ebb54fb38db",
       "type": "text/javascript; charset=utf-8"
@@ -1618,8 +1623,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-training.js?v=462289cdefb4",
-      "sha256": "462289cdefb4d83f32a786a5f5df242f7e95ffe113e365428b7603d520e1e2f2",
+      "url": "afk-training.js?v=21349ec9d2fe",
+      "sha256": "21349ec9d2feac5002746a50ad6ead7e5851ace42de76c55d5dbfcee80ac87ad",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1764,7 +1769,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "f88c3ecc8984c60961eda3b3ab10d5db8f299b36d0ec4cbfea23b8a889c26cdc",
+      "sha256": "ab2ea7ba4fb5532d4332497514cdec9269b506b21ed1ddcb125ef03d3cf2b26b",
       "type": "text/html; charset=utf-8"
     },
     {

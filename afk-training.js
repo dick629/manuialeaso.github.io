@@ -159,6 +159,8 @@
     }
     var allies = (player && player.allies) || [];
     srcTickBegin();
+    brkTick();
+    for (i = 0; i < mobs.length; i++) { m = mobs[i]; if (m && m._train && m.__brkHp) m.__brkDec = 0; }
     midDrain = {};
     _origTick.apply(this, arguments);
     // 收拍後：量每隻掉血＝這拍受到的傷害，累計後補回
@@ -169,6 +171,8 @@
       if (m && m._train) {
         var base = (before[m.uid] != null) ? before[m.uid] : topOf(m);
         var drain = (base - m.curHp) + (midDrain[m.uid] || 0);   // 加回怪物階段開始前就先收走的那段（見 processMobStatusTick 包裝）
+        // 11-18：改成「這一拍每一下扣血的總和」——原本用拍頭拍尾的差，拍中間怪物自己回血（每秒最大 HP 的 0.1%＝木人 100 萬）會被抵掉，DPS 少算
+        if (m.__brkHp) drain = m.__brkDec;
         if (drain > 0) { dps.perUid[m.uid] = (dps.perUid[m.uid] || 0) + drain; tickTotal += drain; }
         if (hpDrop) m.curHp = Math.max(1, Math.min(topOf(m), Number(m.curHp) || 0)); else m.curHp = TRAIN_HP;
         m._dead = false;
@@ -609,6 +613,7 @@
 
   // ---- 進入木人場 ---------------------------------------------------------
   function enterTraining() {
+    try { brkHook(); } catch (e) { /* ignore */ }
     if (!player || !player.cls) { alert('請先載入角色，再進木人場。'); return; }
     // 防重入：人已在木人場地圖上 → 只重擺怪+DPS歸零，絕不重抓 backup（避免把木人場狀態記成「進場前」）
     if (inTrain()) { applySolo(); if (!skele) dismissExtraSkeletons(); refillTeam(); spawnTrainingMobs(); resetDps(); closePicker(); openHud(); refreshHud(); return; }
@@ -678,7 +683,195 @@
     for (i = 0; i < outs.length; i++) { var p = outs[i]; if (!p) continue; p.hp = petMax(p); if (p.mp < petMmp(p)) p.mp = petMmp(p); }
   }
 
-  function resetDps() { dps = { startTick: (typeof state !== 'undefined' ? state.ticks : 0), perUid: {}, window: [] }; resetSrc(); }
+  function resetDps() { dps = { startTick: (typeof state !== 'undefined' ? state.ticks : 0), perUid: {}, window: [] }; resetSrc(); brkReset(); }
+
+  // ---- 📋 傷害細項（Ping 11-18 14:34）：每一下扣在木人身上的血，照「誰、用什麼打的」分開算 ----------------
+  //   作法：訓練怪的 curHp 換成存取器，血量每少一次就記一筆；「用什麼打的」由外層正在跑的函式決定
+  //   （普通攻擊、某個技能、共鳴、魔擊、觸發魔法、持續傷害、寵物、召喚物…，最內層優先；5 星大招這類「整段算一招」的鎖住不被內層蓋掉）。
+  //   普通攻擊裡面夾帶的武器特效（雙擊、爆破…）沒有自己的函式：用同一段時間戰鬥訊息的【名稱】＋傷害數字對回去。
+  //   各列相加＝木人實際掉的血（跟上面的總 DPS 同一個口徑）。
+  var brk = null, CTX = [];
+  function brkReset() { brk = { rows: {}, recent: [] }; }
+  function whoOf(e) {
+    if (!e || e === player) return '你';
+    return String(e.n || e.name || e.nick || '傭兵');
+  }
+  function brkAdd(who, what, d, n) {
+    var k = who + '\u0001' + what, r = brk.rows[k] || (brk.rows[k] = { who: who, what: what, dmg: 0, hits: 0 });
+    r.dmg += d; r.hits += (n == null ? 1 : n);
+    return r;
+  }
+  function brkHit(d) {
+    if (!brk || !(d > 0) || !inTrain()) return;
+    var c = null;
+    for (var i = CTX.length - 1; i >= 0; i--) { if (CTX[i].sticky) { c = CTX[i]; break; } }
+    if (!c) c = CTX[CTX.length - 1] || null;
+    var who = c ? c.who : '其他', what = c ? c.what : '其他（周圍效果、無法分類）';
+    if (window.__afkChasing && c && c.who === '你' && c.what === '普通攻擊') what = '追擊';   // 巔峰／天賦的追擊＝再跑一次普通攻擊（afk-paragon2 設 __afkChasing）
+    brkAdd(who, what, d);
+    if (c && c.generic) brk.recent.push({ who: who, what: what, d: d });
+  }
+  function hookHp(m) {
+    if (!m || m.__brkHp) return;
+    var v = m.curHp;
+    try {
+      Object.defineProperty(m, 'curHp', { configurable: true, enumerable: true,
+        get: function () { return v; },
+        set: function (x) { var o = Number(v), n = Number(x); if (o > n && isFinite(o) && isFinite(n)) { m.__brkDec += o - n; brkHit(o - n); } v = x; } });
+      Object.defineProperty(m, '__brkHp', { value: true, enumerable: false });
+      Object.defineProperty(m, '__brkDec', { value: 0, writable: true, enumerable: false });
+    } catch (e) { /* ignore */ }
+  }
+  // 包住打人的函式：進去時記「誰、用什麼」，出來時拿掉
+  function ctxWrap(name, fn) {
+    var o = window[name]; if (typeof o !== 'function' || o.__brk) return;
+    var f = function () {
+      if (!inTrain() || !brk) return o.apply(this, arguments);
+      var c = fn.apply(null, arguments); if (!c) return o.apply(this, arguments);
+      CTX.push(c);
+      try { return o.apply(this, arguments); } finally { CTX.pop(); }
+    };
+    f.__brk = true; window[name] = f;
+    try { (0, eval)(name + ' = window.' + name); } catch (e) { /* ignore */ }
+  }
+  function skN(id) { var sk = id && typeof id === 'object' ? id : (DB.skills && DB.skills[id]); return (sk && sk.n) || String(id || '技能'); }
+  function P_(what, extra) { return function () { var c = { who: '你', what: typeof what === 'function' ? what.apply(null, arguments) : what }; if (extra) for (var k in extra) c[k] = extra[k]; return c; }; }
+  function A_(what, extra) { return function (a) { var args = arguments, c = { who: whoOf(a), what: typeof what === 'function' ? what.apply(null, args) : what }; if (extra) for (var k in extra) c[k] = extra[k]; return c; }; }
+  function brkHook() {
+    // 玩家
+    ctxWrap('playerAttack', P_('普通攻擊', { generic: true }));
+    ctxWrap('dualWieldOffhandAttack', P_('副手攻擊', { generic: true }));
+    ctxWrap('qiguPlayerAttack', P_('奇古獸攻擊', { generic: true }));
+    ctxWrap('castSkillInner', P_(function (id) { return '技能：' + skN(id); }));
+    ctxWrap('wandLightArrowProc', P_('共鳴（光箭）'));
+    ctxWrap('procMoonburst', P_('月光爆裂'));
+    ctxWrap('procMagicStrike', P_('魔擊'));
+    ctxWrap('rapidfireProc', P_('連射'));
+    ctxWrap('procCounter', P_('反擊'));
+    ctxWrap('procIai', P_('居合'));
+    ctxWrap('procCombo', P_('連擊'));
+    ctxWrap('dragonExtraAttackProc', P_('龍騎士追加攻擊'));
+    ctxWrap('dragonStrikeProc', P_('龍的一擊'));
+    ctxWrap('dragonSlayStrikeProc', P_('屠龍的一擊'));
+    ctxWrap('reboundExtraAttack', P_('反彈追加攻擊'));
+    ctxWrap('witchIceLance', P_('魔女冰矛'));
+    ctxWrap('bombFlowerExplode', P_('爆炎花'));
+    ctxWrap('weaponSpellProc', P_('武器特效魔法'));
+    ctxWrap('procWeaponSpell', P_('武器特效魔法'));
+    ctxWrap('laiaWandHitProc', P_('武器特效（萊婭魔杖）'));
+    ctxWrap('playerAttrMagicProc', P_('屬性附加魔法'));
+    ctxWrap('procFreeMagicSkill', P_(function (t, id) { return '觸發魔法：' + skN(id); }));
+    ctxWrap('cubeTick', P_('立方'));
+    ctxWrap('relicAuraTick', P_('遺物光環'));
+    ctxWrap('relicCharmOnHit', P_('遺物特效'));
+    ctxWrap('relicFlywingDouble', P_('遺物特效（飛翼連擊）'));
+    ctxWrap('illuSummonTick', P_('幻術召喚'));
+    ctxWrap('__afkAttr5', P_(function (t, inst, w, proc) { var N = { fire: '爆炎流星雨', water: '寒冬冰雪暴', wind: '靈魂風暴', earth: '陷陣岩崩' }; return '5 星屬性大招：' + (N[proc && proc.ele] || '大招'); }, { sticky: true }));
+    // 傭兵
+    ctxWrap('allyAttackOnce', A_('普通攻擊', { generic: true }));
+    ctxWrap('allyComboAttack', A_('連擊', { generic: true }));
+    ctxWrap('allyDualWieldOffhandAttack', A_('副手攻擊', { generic: true }));
+    ctxWrap('allyQiguAttack', A_('奇古獸攻擊', { generic: true }));
+    ctxWrap('allyCastMagic', A_(function (a, sk) { return '技能：' + skN(sk); }));
+    ctxWrap('allyCastPhysicalSkill', A_(function (a, sk) { return '技能：' + skN(sk); }));
+    ctxWrap('allyCastCrush', A_('技能：粉碎'));
+    ctxWrap('allyCastSlaughter', A_('技能：屠殺'));
+    ctxWrap('allyCastMpDmg', A_('技能（MP 傷害）'));
+    ctxWrap('allyProcLightArrow', A_('共鳴（光箭）'));
+    ctxWrap('allyProcMoonburst', A_('月光爆裂'));
+    ctxWrap('_allyMagicStrikeHit', A_('魔擊'));
+    ctxWrap('allyRapidfire', A_('連射'));
+    ctxWrap('allyTripleShot', A_('三重矢'));
+    ctxWrap('allyWitchIceLance', A_('魔女冰矛'));
+    ctxWrap('allyFlywingDouble', A_('遺物特效（飛翼連擊）'));
+    ctxWrap('allyReactCounter', A_('反擊'));
+    ctxWrap('allyReactIai', A_('居合'));
+    ctxWrap('allyDarkCrit', A_('暗殺爆擊'));
+    ctxWrap('allyProcWeaponSpell', A_('武器特效魔法'));
+    ctxWrap('allyLaiaWandHitProc', A_('武器特效（萊婭魔杖）'));
+    ctxWrap('allyAttrMagicProc', A_('屬性附加魔法'));
+    ctxWrap('allyProcFreeMagicSkill', A_(function (a, t, id) { return '觸發魔法：' + skN(typeof t === 'string' ? t : id); }));
+    ctxWrap('allyCubeTick', A_('立方'));
+    ctxWrap('allyStormTick', A_('暴風'));
+    // 寵物、召喚物、持續傷害
+    var petN = function (pet) { var n = ''; try { n = typeof petDisplayName === 'function' ? petDisplayName(pet) : (pet && (pet.name || pet.n)) || ''; } catch (e) { n = ''; } return '寵物' + (n ? '：' + String(n).replace(/<[^>]+>/g, '') : ''); };
+    ctxWrap('petAttackOnce', function (pet) { return { who: petN(pet), what: '寵物攻擊', generic: true }; });
+    ctxWrap('petCastSkill', function (pet) { return { who: petN(pet), what: '寵物技能' }; });
+    ['summonAttack', 'summonV2AttackOnce', 'spiritAttackOnce', 'necroSkeletonTick'].forEach(function (n) { ctxWrap(n, function (sm) { return { who: '召喚物' + (sm && sm.n ? '：' + sm.n : ''), what: '召喚物攻擊', generic: true }; }); });
+    ctxWrap('processMobStatusTick', function () { return { who: '全隊', what: '持續傷害（毒、灼燒、流血、DoT）' }; });
+    // 外掛的追加傷害（標籤卡、遺物事件等走 __afkProc.hitMob）
+    var X = window.__afkProc;
+    if (X && typeof X.hitMob === 'function' && !X.hitMob.__brk) {
+      var oh = X.hitMob;
+      X.hitMob = function () { if (!inTrain() || !brk) return oh.apply(this, arguments); var top = CTX[CTX.length - 1]; CTX.push({ who: top ? top.who : '你', what: '裝備追加傷害' + (top ? '（' + top.what + '）' : '') }); try { return oh.apply(this, arguments); } finally { CTX.pop(); } };
+      X.hitMob.__brk = true;
+    }
+    // 遺物武器橋接（遺物特效）
+    var B = window.AFK_RELIC_WEAPON_BRIDGE;
+    if (B && !B.__brk) {
+      B.__brk = true;
+      var BN = { allySpellHit: '武器特效魔法', boneBurst: '遺物特效：骨爆', pierceHit: '遺物特效：穿透', magicBurst: '魔爆', dualSpell: '遺物特效：雙重施法', nativeSpellHit: '武器特效魔法' };
+      Object.keys(BN).forEach(function (k) {
+        if (typeof B[k] !== 'function') return;
+        var o = B[k];
+        B[k] = function () { if (!inTrain() || !brk) return o.apply(this, arguments); var top = CTX[CTX.length - 1]; CTX.push({ who: top ? top.who : '你', what: BN[k] }); try { return o.apply(this, arguments); } finally { CTX.pop(); } };
+      });
+    }
+    // 戰鬥訊息：普通攻擊裡夾帶的武器特效，用【名稱】＋數字對回去
+    var oL = window.logCombat;
+    if (typeof oL === 'function' && !oL.__brk) {
+      var fL = function (h) {
+        try {
+          if (inTrain() && brk && brk.recent.length) {
+            var txt = String(h).replace(/<[^>]+>/g, '');
+            var lab = (txt.match(/【([^】]{1,16})】/) || [])[1];
+            if (lab) {
+              lab = lab.replace(/^協力·[^·]*·?/, '');
+              var nums = (txt.match(/\d[\d,]*/g) || []).map(function (x) { return Number(x.replace(/,/g, '')); });
+              if (lab && nums.length) brk.recent.forEach(function (ev) {
+                if (ev.moved || lab === ev.who) return;
+                if (nums.some(function (n) { return Math.abs(n - ev.d) <= 1; })) {
+                  var r = brk.rows[ev.who + '\u0001' + ev.what]; if (r) { r.dmg -= ev.d; r.hits--; }
+                  brkAdd(ev.who, ev.what + '・' + lab, ev.d); ev.moved = true;
+                }
+              });
+            }
+            brk.recent = [];
+          }
+        } catch (e) { /* ignore */ }
+        return oL.apply(this, arguments);
+      };
+      fL.__brk = true; window.logCombat = fL;
+      try { (0, eval)('logCombat = window.logCombat'); } catch (e) { /* ignore */ }
+    }
+  }
+  function brkTick() {
+    if (!brk) return;
+    brk.recent = [];
+    var mobs = mapState.mobs || [];
+    for (var i = 0; i < mobs.length; i++) if (mobs[i] && mobs[i]._train) hookHp(mobs[i]);
+  }
+  function brkRowsHtml(elapsedSec) {
+    if (!brk) return '<div class="m-train-empty">尚無輸出</div>';
+    var tot = 0, by = {}, k, r;
+    for (k in brk.rows) { r = brk.rows[k]; if (!(r.dmg > 0)) continue; tot += r.dmg; (by[r.who] = by[r.who] || { dmg: 0, list: [] }); by[r.who].dmg += r.dmg; by[r.who].list.push(r); }
+    if (!(tot > 0)) return '<div class="m-train-empty">尚無輸出</div>';
+    var whos = Object.keys(by).sort(function (a, b) { return (a === '你' ? -1 : b === '你' ? 1 : 0) || by[b].dmg - by[a].dmg; });
+    var html = '';
+    whos.forEach(function (w) {
+      var g = by[w];
+      html += '<div class="m-train-brk-who"><span>' + esc(w) + '</span><span>' + fmt(elapsedSec > 0 ? g.dmg / elapsedSec : 0) + ' /秒・' + (g.dmg / tot * 100).toFixed(1) + '%</span></div>';
+      g.list.sort(function (a, b) { return b.dmg - a.dmg; }).forEach(function (x) {
+        var pc = x.dmg / tot * 100;
+        html += '<div class="m-train-brk-row" title="' + esc(x.what) + '：共 ' + fmt(x.dmg) + '、' + x.hits + ' 下，平均每下 ' + fmt(x.hits ? x.dmg / x.hits : 0) + '">'
+          + '<span class="m-train-brk-n">' + esc(x.what) + '</span>'
+          + '<span class="m-train-brk-v">' + fmt(elapsedSec > 0 ? x.dmg / elapsedSec : 0) + '<small>' + pc.toFixed(1) + '%</small></span>'
+          + '<span class="m-train-brk-t"><i style="width:' + Math.max(1, Math.round(pc)) + '%"></i></span></div>';
+      });
+    });
+    return html + '<div class="m-train-brk-note">各列相加＝木人實際掉的血（平均每秒）。滑過看總量、下數、平均每下。</div>';
+  }
+  window.__afkTrainBreakdown = function () { return brk; };
 
   function showBattleView() {
     var tv = document.getElementById('town-view');
@@ -710,6 +903,7 @@
         '<div class="m-train-tabs">' +
         '<button id="m-train-tab-src" type="button" class="m-train-tab" data-view="src">👥 來源</button>' +
         '<button id="m-train-tab-mob" type="button" class="m-train-tab" data-view="mob">🎯 目標</button>' +
+        '<button id="m-train-tab-brk" type="button" class="m-train-tab" data-view="brk">📋 細項</button>' +
         '</div>' +
         '<div id="m-train-list" class="m-train-list"></div>' +
         '<div class="m-train-hud-btns">' +
@@ -791,7 +985,7 @@
     try { localStorage.setItem(POS_KEY, JSON.stringify({ left: parseInt(hud.style.left, 10), top: parseInt(hud.style.top, 10) })); } catch (e) { /* ignore */ }
   }
   function saveHudView() { try { localStorage.setItem(VIEW_KEY, hudView); } catch (e) { /* ignore */ } }
-  function loadHudView() { try { var v = localStorage.getItem(VIEW_KEY); if (v === 'src' || v === 'mob') hudView = v; } catch (e) { /* ignore */ } }
+  function loadHudView() { try { var v = localStorage.getItem(VIEW_KEY); if (v === 'src' || v === 'mob' || v === 'brk') hudView = v; } catch (e) { /* ignore */ } }
   function restoreHudPos(hud) {
     try {
       var raw = localStorage.getItem(POS_KEY); if (!raw) return;
@@ -836,7 +1030,8 @@
 
     var tabs = document.querySelectorAll('.m-train-tab');
     for (var t = 0; t < tabs.length; t++) tabs[t].classList.toggle('on', tabs[t].getAttribute('data-view') === hudView);
-    listEl.innerHTML = (hudView === 'mob') ? mobRowsHtml(elapsedSec) : srcRowsHtml(elapsedSec);
+    listEl.classList.toggle('brk', hudView === 'brk');
+    listEl.innerHTML = (hudView === 'mob') ? mobRowsHtml(elapsedSec) : (hudView === 'brk') ? brkRowsHtml(elapsedSec) : srcRowsHtml(elapsedSec);
   }
 
   // 🎯 目標：每隻訓練怪身上的 DPS（依選怪格 #1~#5 順序列 = 畫面左→右順序，與 spawnTrainingMobs 的擺位一致、不跳）
@@ -1102,6 +1297,15 @@
       '.m-train-bar-t{flex:1;min-width:0;height:10px;background:#0b1220;border-radius:5px;overflow:hidden;}',
       '.m-train-bar-f{display:block;height:100%;transition:width .3s;}',
       '.m-train-bar-v{flex:none;width:54px;text-align:right;font-size:11px;font-weight:bold;}',
+      '.m-train-list.brk{max-height:340px;}',
+      '.m-train-brk-who{display:flex;justify-content:space-between;gap:6px;margin-top:4px;padding:2px 6px;border-radius:5px;background:#334155;color:#fde68a;font-size:12px;font-weight:bold;}',
+      '.m-train-brk-row{display:grid;grid-template-columns:1fr auto;column-gap:6px;row-gap:1px;padding:1px 2px 2px 8px;}',
+      '.m-train-brk-n{font-size:11px;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}',
+      '.m-train-brk-v{text-align:right;font-size:11px;font-weight:bold;color:#fde68a;white-space:nowrap;}',
+      '.m-train-brk-v small{margin-left:4px;color:#94a3b8;font-weight:normal;}',
+      '.m-train-brk-t{grid-column:1 / -1;height:5px;background:#0b1220;border-radius:3px;overflow:hidden;}',
+      '.m-train-brk-t i{display:block;height:100%;background:#f59e0b;}',
+      '.m-train-brk-note{margin-top:6px;font-size:10px;color:#94a3b8;}',
       '.m-train-row{display:flex;justify-content:space-between;align-items:center;gap:6px;background:#1e293b;border:1px solid #334155;border-radius:6px;padding:3px 7px;}',
       '.m-train-row-name{color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
       '.m-train-lv{color:#64748b;font-size:11px;}',
