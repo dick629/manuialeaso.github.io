@@ -138,13 +138,13 @@
   var RIFT = { glim: 'afk_guard_rift_glim', memory: 'afk_guard_rift_memory', thread: 'afk_guard_rift_thread', sand: 'afk_guard_rift_sand', scale: 'afk_guard_rift_scale' };
   addItem(M.emblem, { n: '褪色的誓約紋章', c: 'text-amber-200', img: IMG('冥法軍團印記'), d: '五名騎士按在守護者之石上的誓約，褪了色仍看得出紅獅的紋樣。騎士副本的王掉落；升級守護者之戒的上半部要用。' });
   addItem(M.shard, { n: '斷誓的環片', c: 'text-slate-200', img: IMG('原石碎片'), d: '從裂縫裡撿回來的戒環碎片。升級守護者之戒的完整版要用。' });
-  addItem(M.dim, { n: '次元結晶', c: 'text-sky-300', img: IMG('召喚球碎片'), d: '次元裂縫裡凝成的結晶。升級守護者之戒（上半部 ★3）要用。' });
+  addItem(M.dim, { n: '次元結晶（戒）', c: 'text-sky-300', img: IMG('召喚球碎片'), d: '次元裂縫裡凝成的結晶。升級守護者之戒（上半部 ★3）要用。' });
   ELES.forEach(function (e) { addItem(M.oath[e], { n: '龍誓結晶(' + ELE_N[e] + ')', c: 'text-orange-200', img: IMG('哀石結晶'), d: '四龍副本・次元裂縫的最終龍留下的結晶。升級守護者之戒的完整版要用。' }); });
-  addItem(RIFT.glim, { n: '裂縫碎光', c: 'text-sky-200', img: IMG('光明的鱗片'), d: '次元裂縫裡的碎光。' });
-  addItem(RIFT.memory, { n: '席琳的水之記憶', c: 'text-cyan-200', img: IMG('人魚之鱗'), d: '次元裂縫裡席琳留下的記憶。' });
-  addItem(RIFT.thread, { n: '天空的縫線', c: 'text-indigo-200', img: IMG('封印的妖怪之魂'), d: '縫補天空用的線。' });
-  addItem(RIFT.sand, { n: '凝結的時之沙', c: 'text-yellow-200', img: IMG('冰之結晶'), d: '凝住的時間。' });
-  addItem(RIFT.scale, { n: '侵蝕龍鱗', c: 'text-purple-300', img: IMG('地龍鱗'), d: '被侵蝕的龍鱗。' });
+  addItem(RIFT.glim, { n: '裂縫碎光（戒）', c: 'text-sky-200', img: IMG('光明的鱗片'), d: '次元裂縫裡的碎光。守護者之戒專用：跟一般的裂縫碎光一起掉落（同樣數量）。' });
+  addItem(RIFT.memory, { n: '席琳的水之記憶（戒）', c: 'text-cyan-200', img: IMG('人魚之鱗'), d: '次元裂縫裡席琳留下的記憶。守護者之戒專用：跟一般的席琳的水之記憶一起掉落（同樣數量）。' });
+  addItem(RIFT.thread, { n: '天空的縫線（戒）', c: 'text-indigo-200', img: IMG('封印的妖怪之魂'), d: '縫補天空用的線。守護者之戒專用：跟一般的天空的縫線一起掉落（同樣數量）。' });
+  addItem(RIFT.sand, { n: '凝結的時之沙（戒）', c: 'text-yellow-200', img: IMG('冰之結晶'), d: '凝住的時間。守護者之戒專用：跟一般的凝結的時之沙一起掉落（同樣數量）。' });
+  addItem(RIFT.scale, { n: '侵蝕龍鱗（戒）', c: 'text-purple-300', img: IMG('地龍鱗'), d: '被侵蝕的龍鱗。守護者之戒專用：跟一般的侵蝕龍鱗一起掉落（同樣數量）。' });
   // 專屬信物（第十三節：從目前會掉落的道具挑，新做「夢域鏡 ＋原名」；原道具從所有掉落表拿掉、古物學者的常駐委託不再抽它）
   //   2026-11-05 同事調查的首選（尚待玩家確認，可替換）：原道具留在 AFK_TTMI_ITEMS.junk() 清單裡（劇情委託靠排序位置），只是不掉、不抽
   var TOKENS = {
@@ -316,6 +316,9 @@
   var VIRT = {}; KEYS.forEach(function (k) { VIRT[k] = { id: ringId(k), uid: 'afk-guard-' + k, en: 0, cnt: 1 }; });
   var slotOn = function (p) { return !!(p && sysOn(p) && (!T || T.enabled('guardring'))); };
   W.__afkGuardSlotOn = slotOn;
+  // 11-18 19:18 Ping：守護者之戒自己那套裂縫材料開始掉——裂縫掉同名材料時（次元裂縫怪物、裂縫副本），同時給一份戒指用的
+  var TWIN = { afk_rift_shard: RIFT.glim, afk_rd_water: RIFT.memory, afk_rd_thread: RIFT.thread, afk_rd_sand: RIFT.sand, afk_rd_scale: RIFT.scale };
+  W.__afkGuardTwin = function (id, n) { var t = TWIN[id], p = P(); if (!t || !(n > 0) || !slotOn(p)) return; try { gainItem(t, n, true, true); } catch (e) {} };
   var ensureSlot = function (p) {
     if (!p || !p.eq || typeof p.eq !== 'object') return;
     var d = Object.getOwnPropertyDescriptor(p.eq, 'guard');

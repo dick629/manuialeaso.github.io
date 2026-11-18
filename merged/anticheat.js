@@ -166,6 +166,33 @@
     } catch (e) {}
   };
   W.__afkAcStamp = function (it) { stamp(it, false); };
+  // Ping 11-18 20:54：封印的時間規則——遊玩時數累積夠了，封印中的道具自動解除（從身上的開始，再來背包、傭兵身上）。
+  //   複本（同一個編號出現在兩處）不會自動解除；印記被竄改的也不會。
+  var unsealOne = function (it) {
+    if (!it || it.afkDup || !sKind(it.id) || stampOk(it.acs)) return false;
+    var cost = costNow(it);
+    if (!it.acs) { it.acs = mkStamp(cost, false); return stampOk(it.acs); }
+    var x = it.acs; if (x.k !== stSig(x)) return false;
+    var need = cost - (Number(x.c) || 0), a = acct();
+    if (need > 0 && a.sh + need > a.ms / 3600000) return false;
+    if (need > 0) { a.sh += need; acctSave(a); }
+    x.c = Math.max(Number(x.c) || 0, cost); x.f = 0; x.k = stSig(x); return true;
+  };
+  var unsealTick = function () {
+    try {
+      var p = P(); if (!p || p.classicMode) return;
+      var list = [], push = function (it) { if (it && typeof it === 'object') list.push(it); };
+      Object.keys(p.eq || {}).forEach(function (k) { push(p.eq[k]); });
+      (p.inv || []).forEach(push);
+      (p.allies || []).forEach(function (al) { if (al && al.eq) Object.keys(al.eq).forEach(function (k) { push(al.eq[k]); }); });
+      var n = 0; list.forEach(function (it) { if (unsealOne(it)) { n++; try { sys('<span class="text-emerald-300">「' + (DB.items[it.id] ? DB.items[it.id].n : it.id) + '」的封印解除了。</span>'); } catch (e) {} } });
+      if (n) { sealCache = new WeakMap(); try { if (typeof saveGame === 'function') saveGame(); } catch (e) {} }
+    } catch (e) {}
+  };
+  setInterval(unsealTick, 60000);
+  W.__afkAcUnseal = unsealTick;
+  // Ping 11-18 19:51：封印中的武器、裝備拿去做成次元遺物＝解除封鎖 → 做出來、強化、進化的次元遺物一律給正當印記（不扣帳號時數）
+  W.__afkAcStampFree = function (it) { try { if (!it || !sKind(it.id)) return; delete it.acs; delete it.afkDup; stamp(it, true); } catch (e) {} };
   W.__afkAcStampMio = function (p, i) { try { var m = p && p.afkMio; if (!m) return; m.acg = m.acg || {}; m.acg[i] = mkStamp(SEAL_H.genesis, false); sealCache = new WeakMap(); } catch (e) {} };
   var sealCache = new WeakMap();
   var exempt = function () { var p = P(); return !p || p.classicMode || isOwner(p); };
@@ -207,6 +234,13 @@
   hookSeal(); hookPetSeal(); W.addEventListener('load', function () { hookSeal(); hookPetSeal(); });
   (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent) { var v = ent && ent.cls ? sealOf(ent) : null; return v ? 1 + v.inn : 1; });
   W.__afkAcSealInfo = function (actor) { var v = sealOf(actor); return v ? { out: v.out, inn: v.inn, n: v.n } : null; };   // 木人場細項用
+  W.__afkAcSealedItem = function (it) { try { if (!it) return false; if (it.afkDup) return true; return !!(sKind(it.id) && !stampOk(it.acs)); } catch (e) { return false; } };   // 11-18：封印中的道具（寄賣攤不能上架）
+  var tagHook = function () {
+    var o = W.buildItemDescHTML; if (typeof o !== 'function' || o.__afkSealTag) return;
+    var f = function (item) { var r = o.apply(this, arguments); try { if (item && W.__afkAcSealedItem && W.__afkAcSealedItem(item)) r = '<span class="font-bold" style="color:#f87171;border:1px solid #f87171;border-radius:4px;padding:0 6px;margin-right:4px">封印</span><br>' + r; } catch (e) {} return r; };
+    f.__afkSealTag = true; W.buildItemDescHTML = f; try { (0, eval)('buildItemDescHTML = window.buildItemDescHTML'); } catch (e) {}
+  };
+  try { W.addEventListener('load', function () { setTimeout(tagHook, 3500); }); } catch (e) {}
   W.__afkAcSealedOn = function (actor) { var v = sealOf(actor); return v ? v.n : 0; };   // 穿著幾件封印中的道具（女神台詞用）
   W.__afkAcHealMult = function (owner, source) { var v = sealOf(owner); return v && source && v.keys[source] ? 0.5 : 1; };
 

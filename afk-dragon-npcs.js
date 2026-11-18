@@ -241,6 +241,106 @@
 
   // ── 二、米米配方 ──
   var DRAGON_ORDER = [['antharas', '安塔瑞斯（地）', 'earth', ANT], ['fafurion', '法利昂（水）', 'water', null], ['valakas', '巴拉卡斯（火）', 'fire', null], ['lindvior', '林德拜爾（風）', 'wind', null]];
+  // ── 魔眼三階＋四龍之瞳（Ping 11-18 18:01 確認；設計稿 Projects claude/dragon-eye-design.md）──
+  //   夢域魔眼：增益常駐 ×1；觸發時增益 ×2、冷卻 30 分鐘；對應狀態抵抗 +30%。
+  //   次元魔眼：常駐增益 ×2；觸發 ×3、冷卻 15 分鐘；對應狀態完全免疫；次元裂縫裡侵蝕扣血每秒 −0.5%、對應屬性抗性最低保留 +100。
+  //   四龍之瞳（四種次元魔眼各一顆合成，每個角色一個）：四種狀態全免疫；四種常駐增益加總 ×1.2；裂縫裡侵蝕扣血每秒 −1%、四屬性抗性最低保留各 +100。
+  var EYE4 = {
+    earth: { n: '地龍之魔眼', base: 'acc_earth_dragon_eye', kind: 'stone', kindN: '石化', res: 'resEarth', bonus: { extraDmg: 5, extraHit: 5, er: 5 }, bonusTxt: '額外傷害 +5、額外命中 +5、迴避 +5' },
+    water: { n: '水龍之魔眼', base: 'acc_water_dragon_eye', kind: 'freeze', kindN: '冰凍', res: 'resWater', bonus: EYES.water.bonus, bonusTxt: EYES.water.bonusTxt },
+    fire: { n: '火龍之魔眼', base: 'acc_fire_dragon_eye', kind: 'burn', kindN: '灼燒', res: 'resFire', bonus: EYES.fire.bonus, bonusTxt: EYES.fire.bonusTxt },
+    wind: { n: '風龍之魔眼', base: 'acc_wind_dragon_eye', kind: 'stun', kindN: '暈眩', res: 'resWind', bonus: EYES.wind.bonus, bonusTxt: EYES.wind.bonusTxt }
+  };
+  var EYE_TIER = { 2: { p: '夢域', perm: 1, trig: 2, cd: 18000, resist: 30 }, 3: { p: '次元', perm: 2, trig: 3, cd: 9000, resist: 30, rift: 0.5, floor: 100 } };
+  var FOUR = { id: 'afk_eye_four', n: '四龍之瞳', mult: 1.2, rift: 1, floor: 100 };
+  var tierId = function (k, lv) { return EYE4[k].base + (lv === 2 ? '_dream' : '_dim'); };
+  Object.keys(EYE4).forEach(function (k) {
+    var E = EYE4[k], bd = DB.items[E.base]; if (!bd) return;
+    [2, 3].forEach(function (lv) {
+      var T = EYE_TIER[lv], id = tierId(k, lv); if (DB.items[id]) return;
+      var it = Object.assign({}, bd, { n: T.p + ' ' + E.n, c: lv === 2 ? 'text-fuchsia-300' : 'text-cyan-300', afkDragonEye: (k === 'earth' || lv === 3) ? undefined : k, eyeLv: lv, eyeKey: k, p: 0, noSell: true });
+      if (k === 'earth' && lv === 2) it.eyePetrify = true;   // 次元魔眼不走原本的觸發（觸發會給 10 分鐘免疫），改成「擋下一次」
+      it.d = '升級過的' + E.n + '，裝備於魔眼欄。常駐：' + E.bonusTxt.replace(/\+(\d+)/g, function (m0, v) { return '+' + (Number(v) * T.perm); }) + '。'
+        + (lv === 2 ? '受到' + E.kindN + '的抵抗 +30%；陷入' + E.kindN + '時觸發：立即解除，10 分鐘內免疫並再得到一倍的增益（共 ×2），每 30 分鐘最多觸發 1 次。'
+          : '受到' + E.kindN + '的抵抗 +30%；怪物想讓你' + E.kindN + '時擋下一次，同時 10 分鐘內增益 ×3（每 15 分鐘一次）。次元裂縫裡：地圖侵蝕的扣血每秒少 0.5%，' + { earth: '地', water: '水', fire: '火', wind: '風' }[k] + '屬性抗性被侵蝕時最低保留多 100。');
+      DB.items[id] = it;
+    });
+  });
+  if (!DB.items[FOUR.id] && DB.items.acc_earth_dragon_eye) DB.items[FOUR.id] = Object.assign({}, DB.items.acc_earth_dragon_eye, { n: FOUR.n, c: 'text-amber-300', eyePetrify: undefined, eyeFour: true, eyeLv: 3, p: 0, noSell: true, noTrade: true,
+    d: '四種次元魔眼合而為一的龍瞳，裝備於魔眼欄。每個角色只能擁有一個。石化、冰凍、灼燒、暈眩各擋下一次（各自每 15 分鐘一次）；常駐四種魔眼的增益加總 ×1.2。次元裂縫裡：地圖侵蝕的扣血每秒少 1%，四屬性抗性被侵蝕時最低保留各多 100。' });
+  var eyeEq = function (p) { try { var e = p && p.eq && p.eq.eye, d = e && DB.items[e.id]; return d && d.eyeLv ? d : null; } catch (e) { return null; } };
+  var eyeCovers = function (d, kind) { if (!d) return null; if (d.eyeFour) return 3; var E = EYE4[d.eyeKey]; return E && E.kind === kind ? d.eyeLv : null; };
+  var trigActive = function (k) { if (k === 'earth') { try { return (player._eyePetrifyUntil || 0) > tnow(); } catch (e) { return false; } } return eyeActive(k); };
+  // 數值：常駐增益＋觸發時多出來的倍數
+  if (typeof W.recomputeStats === 'function') {
+    var oReT = W.recomputeStats;
+    W.recomputeStats = function () {
+      var r = oReT.apply(this, arguments);
+      try {
+        var p = player, d = eyeEq(p); if (!p || !p.d || !d) return r;
+        var add = function (b, m) { Object.keys(b).forEach(function (f) { p.d[f] = (Number(p.d[f]) || 0) + b[f] * m; }); };
+        if (d.eyeFour) Object.keys(EYE4).forEach(function (k) { add(EYE4[k].bonus, FOUR.mult); });
+        else { var T = EYE_TIER[d.eyeLv], E = EYE4[d.eyeKey]; if (T && E) { add(E.bonus, T.perm); var on3 = d.eyeLv === 3 ? (p._afkEyeBuff && p._afkEyeBuff.k === d.eyeKey && p._afkEyeBuff.until > tnow()) : trigActive(d.eyeKey); if (on3) add(E.bonus, T.trig - T.perm); } }
+      } catch (e) {}
+      return r;
+    };
+  }
+  // 冷卻：觸發後把 1 小時改成 30／15 分鐘
+  var cdFix = function () {
+    var p = (typeof player !== 'undefined') ? player : null, d = eyeEq(p); if (!d || d.eyeFour) return;
+    var T = EYE_TIER[d.eyeLv]; if (!T) return;
+    if (d.eyeKey === 'earth') { var u = p._eyePetrifyUntil || 0; if (u && p._afkEyeAdj !== u) { p._afkEyeAdj = u; p._eyePetrifyCdUntil = u - 6000 + T.cd; } return; }
+    var st = p._afkEye && p._afkEye[d.eyeKey]; if (st && st.until && st._adj !== st.until) { st._adj = st.until; st.cd = st.until - 6000 + T.cd; }
+  };
+  if (typeof W.tick === 'function') { var oTickT = W.tick; W.tick = function () { var r = oTickT.apply(this, arguments); try { cdFix(); } catch (e) {} return r; }; }
+  // 抵抗（Ping 11-18 18:50 改）：夢域、次元都是對應狀態抵抗 +30%；次元魔眼與四龍之瞳「擋下一次」——
+  //   冷卻好的時候，怪物想上那個狀態會被擋掉一次（次元魔眼：同時 10 分鐘增益 ×3），之後冷卻 15 分鐘；冷卻中照一般規則（次元裂縫裡照強制異常的規則）。
+  //   擋下的那一次之後不再免疫。afk-abnforce（次元裂縫的強制異常）會先問 __afkEyeBlock。
+  var BLOCK_CD = 9000, blockAt = function (p) { if (!p._afkEyeBlk || typeof p._afkEyeBlk !== 'object') p._afkEyeBlk = {}; return p._afkEyeBlk; };
+  W.__afkEyeBlock = function (kind) {
+    try {
+      var p = player, d = eyeEq(p), lv = eyeCovers(d, kind); if (lv !== 3) return false;
+      var b = blockAt(p), t = tnow(); if ((b[kind] || 0) > t && b[kind] - t <= BLOCK_CD) return false;
+      b[kind] = t + BLOCK_CD;
+      if (!d.eyeFour) { p._afkEyeBuff = { k: d.eyeKey, until: t + 6000 }; try { calcStats(); } catch (e) {} }
+      var E = d.eyeFour ? null : EYE4[d.eyeKey];
+      try { if (!S().ff) logCombat('<span class="font-bold" style="color:#67e8f9;">【' + (d.eyeFour ? '四龍之瞳' : d.n) + '】</span>魔眼擋下了這一次' + (E ? E.kindN + '！10 分鐘內增益 ×3' : '') + '（15 分鐘後才能再擋）。', 'player-special'); } catch (e) {}
+      return true;
+    } catch (e) { return false; }
+  };
+  if (typeof W.playerStatusResisted === 'function') {
+    var oPSR = W.playerStatusResisted;
+    W.playerStatusResisted = function (kind) {
+      try { if (W.__afkEyeBlock(kind)) return true; var lv = eyeCovers(eyeEq(player), kind); if (lv >= 2 && Math.random() * 100 < EYE_TIER[2].resist) return true; } catch (e) {}
+      return oPSR.apply(this, arguments);
+    };
+    try { (0, eval)('playerStatusResisted = window.playerStatusResisted'); } catch (e) {}
+  }
+  // 次元裂縫：侵蝕扣血減免、對應屬性的最低保留（afk-dimrift 讀 REDUCE 與 __afkEroFloorEle）
+  W.__afkEroFloorEle = function (p, k) { var d = eyeEq(p); if (!d) return 0; if (d.eyeFour) return FOUR.floor; var T = EYE_TIER[d.eyeLv], E = EYE4[d.eyeKey]; return T && T.floor && E && E.res === k ? T.floor : 0; };
+  var riftHook = function () {
+    var DR = W.__afkDimRift; if (!DR || !DR.REDUCE || DR.REDUCE.__afkEye) return;
+    DR.REDUCE.__afkEye = true;
+    DR.REDUCE.push(['次元魔眼', 0.5, function (p) { var d = eyeEq(p); return !!(d && !d.eyeFour && d.eyeLv === 3); }]);
+    DR.REDUCE.push(['四龍之瞳', 1, function (p) { var d = eyeEq(p); return !!(d && d.eyeFour); }]);
+  };
+  W.addEventListener('load', riftHook); setTimeout(riftHook, 3000);
+  // 四龍之瞳：每個角色只能擁有一個（背包、身上、倉庫一起算）
+  var fourOwned = function () {
+    try {
+      var p = player, n = 0; (p.inv || []).forEach(function (it) { if (it && it.id === FOUR.id) n++; }); if (p.eq && p.eq.eye && p.eq.eye.id === FOUR.id) n++;
+      var wh = typeof loadWarehouse === 'function' ? loadWarehouse() : null; if (wh && Array.isArray(wh.items)) wh.items.forEach(function (it) { if (it && it.id === FOUR.id) n++; });
+      return n;
+    } catch (e) { return 0; }
+  };
+  if (typeof W.doCraft === 'function') {
+    var oCraft = W.doCraft;
+    W.doCraft = function (npcId, idx) {
+      try { var rc = CRAFT_RECIPES[npcId] && CRAFT_RECIPES[npcId][idx]; if (rc && rc.result === FOUR.id && fourOwned() > 0) { if (typeof logSys === 'function') logSys('<span class="text-amber-300">四龍之瞳每個角色只能擁有一個。</span>'); return; } } catch (e) {}
+      return oCraft.apply(this, arguments);
+    };
+    try { (0, eval)('doCraft = window.doCraft'); } catch (e) {}
+  }
   var SECTIONS = [];
   if (typeof CRAFT_RECIPES !== 'undefined' && CRAFT_RECIPES.npc_mimi) {
     var old = CRAFT_RECIPES.npc_mimi, keep = old.filter(function (r) { return r.result === 'acc_earth_dragon_eye' || /^arm_ancient_dragonscale_/.test(r.result); });
@@ -248,6 +348,16 @@
     var list = [];
     SECTIONS.push([list.length, '魔眼解封']); list.push.apply(list, eye);
     Object.keys(EYES).forEach(function (k) { var E = EYES[k]; list.push({ result: E.item, req: [{ id: E.sealed, cnt: 1 }, { id: 'gold', cnt: 1000000 }] }); });
+    SECTIONS.push([list.length, '魔眼升級：夢域 → 次元 → 四龍之瞳']);
+    Object.keys(EYE4).forEach(function (k) {
+      if (!DB.items[tierId(k, 2)]) return;
+      list.push({ result: tierId(k, 2), req: [{ id: EYE4[k].base, cnt: 1 }, { id: 'afk_dream_crystal', cnt: 200 }, { id: 'afk_hell_essence', cnt: 20 }, { id: 'afk_contempt_' + k, cnt: 1 }, { id: 'gold', cnt: 100000000 }] });
+    });
+    Object.keys(EYE4).forEach(function (k) {
+      if (!DB.items[tierId(k, 3)]) return;
+      list.push({ result: tierId(k, 3), req: [{ id: tierId(k, 2), cnt: 1 }, { id: 'afk_guard_dimcrystal', cnt: 3000 }, { id: 'afk_guard_rift_glim', cnt: 500 }, { id: 'afk_guard_oath_' + k, cnt: 3 }, { id: 'afk_blood_dia', cnt: 500 }] });
+    });
+    if (DB.items[FOUR.id]) list.push({ result: FOUR.id, req: Object.keys(EYE4).map(function (k) { return { id: tierId(k, 3), cnt: 1 }; }) });
     SECTIONS.push([list.length, '古代龍鱗盔甲（四龍盔甲的底材）']); list.push.apply(list, scales);
     DRAGON_ORDER.forEach(function (x) {
       var key = x[0];

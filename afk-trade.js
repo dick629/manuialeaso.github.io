@@ -69,6 +69,7 @@
   var whyNot = function (it) {
     if (!catOf(it)) return '這類物品不能上架';
     if (it.lock) return '已上鎖（先解鎖）';
+    try { if (W.__afkAcSealedItem && W.__afkAcSealedItem(it)) return '封印中的道具不能上架'; } catch (e) {}   // Ping 11-18 20:10
     if ((Number(it.en) || 0) > 15) return '強化超過 +15';
     return '';
   };

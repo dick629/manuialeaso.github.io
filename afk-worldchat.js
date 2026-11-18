@@ -9,7 +9,7 @@
  * ‧對話量：平均每分鐘約 15 句（原本每分鐘 1～3 句）。最近說過的句子 150 句內不重複。
  * ‧收購 NPC 每分鐘說 3 句（只有目前在場的收購者會講，內容帶他要收的東西／價格／地點）。
  * ‧關閉世界頻道（外掛面板「世界頻道靜音」或頻道輸入列旁的按鈕）：
- *   閒聊全部停止、世界頻道內容收起，只留上方置頂的兩行收購訊息。
+ *   閒聊全部停止、世界頻道內容收起；11-18 起置頂的收購訊息也收起，收購者不喊話、照樣出現在村莊。
  * ‧效能：每 4 秒左右寫一行，日誌最多保留 60 行（核心上限），分頁在背景或補跑時不產生。
  * ========================================================================== */
 (function () {
@@ -146,12 +146,18 @@
   // ── 停掉核心原本「每分鐘 1～3 句＋三成互嗆」，改由這裡統一出（避免重複又失控） ──
   window._wcCanIdleChat = function () { return false; };
 
-  // ── 靜音：只留置頂的收購兩行 ──
+  // ── 靜音（11-18 18:28 Ping）：背景閒聊、收購喊話全部不出現（連置頂的收購兩行也收起）；收購者照樣會到村莊，只是不喊話 ──
+  //   關著的時候，不是你自己發起的世界頻道訊息一律不寫進日誌（打開後也不會一次冒出一堆舊的閒聊）。
+  if (typeof window.logWorld === 'function' && !window.logWorld.__afkMute) {
+    var oLW = window.logWorld;
+    var fLW = function (html) { if (muted && !/wc-ask|wc-sys|wander-chat-out|wander-chat-in|wc-mock/.test(String(html || ''))) return; return oLW.apply(this, arguments); };
+    fLW.__afkMute = true; window.logWorld = fLW; try { (0, eval)('logWorld = window.logWorld'); } catch (e) {}
+  }
   var STYLE_ID = 'afk-wc-mute-style';
   var applyMute = function () {
     document.documentElement.classList.toggle('afk-wc-muted', muted);
     var btn = document.getElementById('afk-wc-mute-btn');
-    if (btn) { btn.textContent = muted ? '🔈 開啟頻道' : '🔇 關閉頻道'; btn.title = muted ? '恢復世界頻道閒聊' : '關閉世界頻道閒聊，只保留置頂的收購訊息'; }
+    if (btn) { btn.textContent = muted ? '🔈 開啟頻道' : '🔇 關閉頻道'; btn.title = muted ? '恢復世界頻道閒聊與收購喊話' : '關閉世界頻道：閒聊、收購喊話都不出現（收購者照樣會來）'; }
   };
   window.afkWorldMute = function (on) {
     muted = (on == null) ? !muted : !!on;
@@ -164,6 +170,7 @@
       var st = document.createElement('style'); st.id = STYLE_ID;
       st.textContent = 'html.afk-wc-muted #world-log{display:none!important}'
         + 'html.afk-wc-muted #world-input-row > :not(#afk-wc-mute-btn){display:none!important}'
+        + 'html.afk-wc-muted #sys-log-pins{display:none!important}'
         + '#afk-wc-mute-btn{flex:0 0 auto;padding:2px 8px;margin-right:6px;font-size:12px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#cbd5e1;cursor:pointer;white-space:nowrap}'
         + '.afk-wc-song{font-style:italic}';
       document.head.appendChild(st);

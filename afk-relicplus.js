@@ -46,12 +46,15 @@
     'extraMp', 'str', 'dex', 'con', 'int', 'wis', 'cha', 'mr', 'mdmg', 'mpR', 'hpR', 'mhp', 'mmp', 'dr', 'magicHit', 'relicRole', 'h', 'classicOk',
     'maxLv', 'noBleed', 'tag', 'bowHit', 'bowDmg', 'extraDmg', 'relicBase', 'relicPlus', 'relicFx', 'relicBleedBonus', 'safe', 'maxEn',
     'ac', 'er', 'resFire', 'resWater', 'resWind', 'resEarth', 'weight', 'fireNullifyTicks', 'armguard', 'cls',
-    'relicCatalogId', 'relicStage', 'relicRuntime', 'relicLore', 'relicAsc', 'relicEvo', 'relicFxRes', 'noAscUp', 'gmOnly',
+    'relicCatalogId', 'relicStage', 'relicRuntime', 'relicLore', 'relicAsc', 'relicEvo', 'relicFxRes', 'noAscUp', 'gmOnly', 'relicChase', 'fxResonance', 'fxMagicStrike',
     'relicSourceId', 'relicWeaponStage', 'relicHealingCd', 'relicFx3', 'relicInheritedEffects',
     'allLures', 'hardskinFireProc']);   // hardskinFireProc（業火鍛造鎚的剩餘 HP 1%）：不能被第二、第三詞綴繼承（平衡 2026-11-13）   // allLures（馴獸師的飼料袋）：要裝著那件遺物本身才有效，第二、第三詞綴抽到不繼承（玩家 2026-11-03）
   try { ['relic_tamer_petarm', 'relic_imp_fang'].forEach(function (id) { var d = DB.items[id]; if (d && d.d) d.d = d.d.replace('寵物專用，無法強化。', '寵物專用，可以在哈瑪大師合成、昇華。'); }); } catch (e) {}
   var RES4 = ['resFire', 'resWater', 'resWind', 'resEarth'];
-  var ASC_RES = 2, FX_RES = 3;   // 玩家 2026-10-25 抗性下修：昇華每 +1 四抗 +2；第二、第三詞綴保底四抗 +3（全身昇華 +5 約 500）
+  var ASC_RES = 2, FX_RES = 3, CHASE_FX = 2.5;
+  // 沒有可繼承的特效：武器給追擊 2.5%（11-18 18:24）；防具、飾品照舊四屬性抗性 +3（全身都給追擊會疊到 30～40%，只限武器）
+  var noFx = function (d) { if (d.type === 'wpn') d.relicChase = (Number(d.relicChase) || 0) + CHASE_FX; else RES4.forEach(function (f) { d[f] = (Number(d[f]) || 0) + FX_RES; }); };
+  var noFxTxt = function (d) { return d && d.type === 'wpn' ? '追擊 2.5%' : '四屬性抗性 +3'; };   // 玩家 2026-10-25 抗性下修：昇華每 +1 四抗 +2；第二、第三詞綴保底四抗 +3（全身昇華 +5 約 500）
   var KIND_OK = function (d) { return !!(d && isRelic(d) && !d.gmOnly && (d.type === 'wpn' || d.type === 'arm' || d.type === 'acc') && ['pet', 'doll'].indexOf(d.slot) < 0); };   // 寵物的武器、盔甲遺物也能合成、昇華（Ping 11-15）
   var PET_SLOT = { petwpn: 1, petarm: 1 };
   // 戒指／耳環／項鍊／腰帶等強化上限 +5 的飾品：新增 +6～+10 的設計里程碑
@@ -86,6 +89,20 @@
     if (fields.indexOf('procSkill2') >= 0 && d.procSkill2 && typeof d.procSkill2.rate === 'number') d.procSkill2.rate = d.procSkill2.rate / 2;
     ['procFireSkillRate', 'windSpellProcRate'].forEach(function (f) { if (fields.indexOf(f) >= 0 && typeof d[f] === 'number') d[f] = d[f] / 2; });
     return fields;
+  }
+  // ── 共鳴、魔擊、第二個攻擊施法也能繼承（Ping 11-18 18:01；機率都減半）──
+  //   共鳴：抽到共鳴魔杖 → fxResonance（afk-relicmix 讓這把也算共鳴武器，觸發機率減半）
+  //   魔擊：抽到 eff:'magicstrike' → relicMagicStrike＋fxMagicStrike（機率減半）
+  //   攻擊施法：本身已經有攻擊施法時，抽到的攻擊施法放進第二觸發槽 procSkill2（機率減半）
+  function inheritMix(d, b, donorId, donor) {
+    var out = [];
+    try { if (d.type === 'wpn' && typeof isResonanceWeapon === 'function' && isResonanceWeapon(donorId) && !isResonanceWeapon(d.relicBase || '') && !d.fxResonance) { d.fxResonance = 0.5; out.push('fxResonance'); } } catch (e) {}
+    if (donor.eff === 'magicstrike' && b.eff !== 'magicstrike' && !d.relicMagicStrike) { d.relicMagicStrike = true; d.fxMagicStrike = 0.5; out.push('fxMagicStrike'); }
+    var dsk = typeof donor.procSkill === 'string' ? donor.procSkill : (donor.spellProc && donor.spellProc.skId) || null;
+    if (dsk && (b.procSkill || b.spellProc || d.procSkill) && !d.procSkill2 && dsk !== (d.procSkill || (d.spellProc && d.spellProc.skId))) {
+      d.procSkill2 = { skId: dsk, rate: Math.max(1, Math.round(((Number(donor.procRateBase) || (donor.spellProc && Number(donor.spellProc.rate)) || 5) / 2) * 10) / 10) }; out.push('procSkill2');
+    }
+    return out;
   }
   var parseId = function (id) {
     var m = /^((?:relic_|wpn_)[a-z0-9_]+)~r(\d{1,2})(?:~((?:relic_|wpn_)[a-z0-9_]+))?(?:~a(\d))?(?:~e(\d))?(?:~g((?:relic_|wpn_)[a-z0-9_]+))?$/.exec(String(id || ''));
@@ -164,19 +181,19 @@
       // Inheritance uses the original base effect. Runtime metadata and the
       // donor's upgraded stage must never become effects on the recipient.
       var donor = (window.AFK_RELIC_RUNTIME && window.AFK_RELIC_RUNTIME.originalBase(fx)) || DB.items[fx];
-      var fields = inheritEffects(d, b, donor), copied = fields.length;
+      var fields = inheritEffects(d, b, donor); fields = fields.concat(inheritMix(d, b, fx, donor)); var copied = fields.length;
       if (copied) inherited.push({key:fx,fields:fields});
       // 抽到沒有特效的遺物，或抽到的特效跟本身完全重複（例如兩把都只有出血）→ 改給四屬性抗性 +3，避免「繼承了卻什麼都沒有」
-      if (!copied) { RES4.forEach(function (f) { d[f] = (Number(d[f]) || 0) + FX_RES; }); d.relicFxRes = true; }
+      if (!copied) { noFx(d); d.relicFxRes = true; }   // 11-18 18:24（Ping）：沒有可繼承的特效 → 追擊 2.5%（原本四屬性抗性 +3）
       fxName = donor.n;
     }
     // 至高的支配：第三詞綴（玩家 2026-10-25）——同部位再繼承一件遺物的特效；沒有新欄位可繼承 → 四屬性抗性 +3
     var fx3Name = '', fx3Res = false;
     if (fx3 && DB.items[fx3]) {
       var donor3 = (window.AFK_RELIC_RUNTIME && window.AFK_RELIC_RUNTIME.originalBase(fx3)) || DB.items[fx3];
-      var fields3 = inheritEffects(d, b, donor3), copied3 = fields3.length;
+      var fields3 = inheritEffects(d, b, donor3); fields3 = fields3.concat(inheritMix(d, b, fx3, donor3)); var copied3 = fields3.length;
       if (copied3) inherited.push({key:fx3,fields:fields3});
-      if (!copied3) { RES4.forEach(function (f) { d[f] = (Number(d[f]) || 0) + FX_RES; }); fx3Res = true; }
+      if (!copied3) { noFx(d); fx3Res = true; }
       fx3Name = donor3.n; d.relicFx3 = fx3;
     }
     // Runtime-only provenance: identity-based companion adapters need to know
@@ -195,8 +212,10 @@
         RES4.forEach(function (f) { d[f] = (Number(d[f]) || 0) + ASC_RES * A; });   // 玩家 2026-10-25：每 +1 四抗 +10 → +2
       }
     }
-    d.d = (d.d || b.d || '') + ' 〔遺物合成 +' + n + '〕' + (asc != null ? '〔昇華支配 +' + asc + '〕' : '') + (fxName ? (d.relicFxRes ? '〔第二詞綴：抽到「' + fxName + '」（沒有新特效）→ 四屬性抗性 +3〕' : '〔第二詞綴：繼承「' + fxName + '」的特效〕') : '') + (asc != null && asc >= 5 ? (d.relicEvo != null ? (EVO[d.relicEvo] ? '〔至高的支配：' + EVO[d.relicEvo] + '〕' : '〔至高的支配〕') : '〔可進化：至高的支配〕') : '');
-    if (fx3Name) d.d += fx3Res ? '〔第三詞綴：抽到「' + fx3Name + '」（沒有新特效）→ 四屬性抗性 +3〕' : '〔第三詞綴：繼承「' + fx3Name + '」的特效〕';
+    d.d = (d.d || b.d || '') + ' 〔遺物合成 +' + n + '〕' + (asc != null ? '〔昇華支配 +' + asc + '〕' : '') + (fxName ? (d.relicFxRes ? '〔第二詞綴：抽到「' + fxName + '」（沒有新特效）→ ' + noFxTxt(d) + '〕' : '〔第二詞綴：繼承「' + fxName + '」的特效〕') : '') + (asc != null && asc >= 5 ? (d.relicEvo != null ? (EVO[d.relicEvo] ? '〔至高的支配：' + EVO[d.relicEvo] + '〕' : '〔至高的支配〕') : '〔可進化：至高的支配〕') : '');
+    if (fx3Name) d.d += fx3Res ? '〔第三詞綴：抽到「' + fx3Name + '」（沒有新特效）→ ' + noFxTxt(d) + '〕' : '〔第三詞綴：繼承「' + fx3Name + '」的特效〕';
+    if (d.fxResonance) d.d += '〔繼承：共鳴（機率減半）〕';
+    if (d.fxMagicStrike) d.d += '〔繼承：魔擊（機率減半）〕';
     return d;
   }
   function ensure(id) {
@@ -379,7 +398,7 @@
     var ck = catOf(base), b = DB.items[base];
     return Object.keys(DB.items).filter(function (id) {
       var d = DB.items[id];
-      return id !== base && !!d && isRelic(d) && d.type === b.type && catOf(id) === ck;   // 同部位所有遺物都可能抽到（沒有特效的 → 四屬性抗性 +3）
+      return id !== base && !!d && isRelic(d) && !d.dimRelic && d.dimDragon == null && d.type === b.type && catOf(id) === ck;   // 次元遺物不當詞綴來源（Ping 11-18 18:24）   // 同部位所有遺物都可能抽到（沒有特效的 → 四屬性抗性 +3）
     });
   }
 
@@ -749,7 +768,9 @@
   }
   // 特效套用（核心補丁 24 的兩個掛點＋重算後）
   var evoSet = function (p) {
-    var s2 = {}; equippedEvo(p).forEach(function (e) { if (e === 9) [1, 2, 3, 4, 5, 6, 7, 8].forEach(function (x) { s2[x] = 1; }); else s2[e] = 1; });
+    var s2 = {}, eqv = (p || P() || {}).eq || {};
+    // 11-18：做成次元遺物（第二版，it.dimV）的那件，「至高的支配」的套裝特效換成次元遺物 → 不算
+    Object.keys(eqv).map(function (k) { var e = eqv[k], d = e && DB.items[e.id]; return d && d.relicEvo != null && !e.dimV && enabled() ? d.relicEvo : null; }).filter(function (e) { return e != null; }).forEach(function (e) { if (e === 9) [1, 2, 3, 4, 5, 6, 7, 8].forEach(function (x) { s2[x] = 1; }); else s2[e] = 1; });
     return s2;
   };
   // 克特／死亡騎士／惡魔套裝會強制套裝變身；身上已是變身卡（神話以上）的型態時不蓋掉它，只給套裝本身的數值（玩家 2026-10-24 模擬發現）
@@ -1276,7 +1297,7 @@
       var f = info(g);
       h += '<div class="ax-h">已選擇</div><div class="rp-row rp-selcard"><img src="' + esc(gImg(f.bd)) + '" alt="" onerror="this.style.visibility=\'hidden\'">'
         + '<div class="rp-mid"><div class="rp-nm">' + gName(g, f.bd) + ' <span style="color:#94a3b8;font-weight:600">× ' + g.cnt + '</span>' + (g.eqSlots && g.eqSlots.length ? ' <span class="rp-eqtag">裝備中</span>' : '') + '</div>'
-        + '<div class="rp-sub">目前：' + pretty(statLine(f.cur, g.base)) + (g.fx && DB.items[g.fx] ? (f.cur.relicFxRes ? '、第二詞綴：四屬性抗性 +3' : '、第二詞綴：「' + esc(DB.items[g.fx].n) + '」特效') : '') + '</div>'
+        + '<div class="rp-sub">目前：' + pretty(statLine(f.cur, g.base)) + (g.fx && DB.items[g.fx] ? (f.cur.relicFxRes ? '、第二詞綴：' + noFxTxt(f.cur) : '、第二詞綴：「' + esc(DB.items[g.fx].n) + '」特效') : '') + '</div>'
         + (f.nextTxt ? '<div class="rp-sub" style="color:#fcd34d">' + esc(f.nextTxt) + '</div>' : '') + f.ascTxt + '</div>' + f.btn + batchHtml(g) + '</div>';
     }
     list.innerHTML = h;

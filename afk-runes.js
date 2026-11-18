@@ -146,8 +146,8 @@
       if (n === 0) { short++; return; }
       craft(n);
     };
-    craft = function (n) { steps++; if (n === 3) { obtain(2); obtain(2); } else { obtain(n - 1); costOf(n); } };
-    if (mm) { for (var k = cur + 1; k <= target; k++) { steps++; if (k === 3) obtain(2); else costOf(k); } }
+    craft = function (n) { steps++; obtain(n - 1); costOf(n); };   // 11-18：每一星＝低一星的符文＋次元符文石
+    if (mm) { for (var k = cur + 1; k <= target; k++) { steps++; costOf(k); } }
     else craft(target);
     Object.keys(mats).forEach(function (k) { add(use, k, mats[k]); });
     var miss = [];
@@ -159,9 +159,14 @@
   // ── 動作（回傳錯誤訊息，成功回傳 null）──
   // ── 次元符文石（11-12，時空裂痕「GD之子的期待」的頭目極少掉落）：在佐爾頓這裡用，開啟這個角色的符文次元模式（永久；一個角色一顆）──
   var DIM_ID = 'afk_rune_dim';
-  if (typeof DB !== 'undefined' && DB.items && !DB.items[DIM_ID]) DB.items[DIM_ID] = { n: '次元符文石', type: 'misc', req: 'all', gachaWeight: 0, p: 0, c: 'text-fuchsia-300', weight: 0,
+  if (typeof DB !== 'undefined' && DB.items && !DB.items[DIM_ID]) DB.items[DIM_ID] = { n: '次元符文石★1', type: 'misc', req: 'all', gachaWeight: 0, p: 0, c: 'text-fuchsia-300', weight: 0,
     img: 'assets/icons/rift-supply/afk_rune_dim.webp',
-    d: '撕開時空的符文原石。交給燃柳村的符文師佐爾頓，開啟這個角色的「符文次元模式」：符文之語跟著星數變強（取組成它的符文裡最低的星，每星 +10%）。每個角色各自開，一個角色用一顆。' };
+    d: '撕開時空的符文原石。交給燃柳村的符文師佐爾頓：開啟這個角色的「符文次元模式」（符文之語跟著星數變強，取組成它的符文裡最低的星，每星 +10%；每個角色用一顆）；符文升 ★1 每次用 2 顆。' };
+  // 11-18 18:17（Ping）：次元符文石分 ★1／★2／★3；★2、★3 由時光副本掉落（時光之鏡 5 個開啟，副本製作中）
+  [['afk_rune_dim2', '次元符文石★2', '符文升 ★2 每次用 5 顆。'], ['afk_rune_dim3', '次元符文石★3', '符文升 ★3 每次用 8 顆。']].forEach(function (x) {
+    if (typeof DB !== 'undefined' && DB.items && !DB.items[x[0]]) DB.items[x[0]] = { n: x[1], type: 'misc', req: 'all', gachaWeight: 0, p: 0, c: 'text-fuchsia-200', weight: 0,
+      img: 'assets/icons/rift-supply/afk_rune_dim.webp', d: '被時光磨亮的次元符文石。交給燃柳村的符文師佐爾頓，' + x[2] + '（時光副本掉落）' };
+  });
   var dimOpen = function () {
     var p = P(); if (!p) return '找不到角色。';
     if (p.afkRuneDim) return '這個角色已經開啟符文次元模式了。';
@@ -303,14 +308,9 @@
       if (!RD.starOk(base)) return RD.WIP_STAR[base.key] ? nm(base.id) + '目前還不能升星，之後開放。' : nm(base.id) + '不能升星。';
       if (cur >= 3) return '已經是 ★3 了。';
       var next = RD.starId(base.id, cur + 1);
-      if (cur < 2) {
-        var cost = RD.STAR_COST[cur + 1], miss = Object.keys(cost).filter(function (k) { return have(k) < cost[k]; });
+      { var cost = RD.STAR_COST[cur + 1], miss = Object.keys(cost).filter(function (k) { return have(k) < cost[k]; });
         if (miss.length) return '材料不足：' + miss.map(function (k) { return nm(k) + ' ' + have(k) + '/' + cost[k]; }).join('、');
-        Object.keys(cost).forEach(function (k) { take(k, cost[k]); });
-      } else {
-        if (have(rid) < (m ? 1 : 2)) return '★3 要兩顆同名 ★2 合成：背包裡還需要一顆' + nm(rid) + '（未上鎖）。';
-        take(rid, 1);   // 合成用掉的另一顆
-      }
+        Object.keys(cost).forEach(function (k) { take(k, cost[k]); }); }
       if (m) { var it = resolve(m[1]); if (!it) return '找不到這件裝備。'; socks(it)[idx] = next; }
       else { take(rid, 1); gainItem(next, 1, true, true); }
       done('<span class="' + RD.STAGE_C[r.stage] + ' font-bold">' + NPC_N + '在' + nm(rid) + '上刻下新的星紋——' + nm(next) + '。</span>' + (m ? '（鑲著直接升星）' : ''));
@@ -504,7 +504,7 @@
         desc: esc(x.where) + '<br>' + esc(RD.STAR_TXT[x.bs.key][t - 1]), req: req, pick: pick, btns: [['sto:' + x.loc + '|' + t, '升到 ' + RD.STARS[t], !!pl.ok]] }, 'data-zo');
     });
     if (stars.length > 40) h += '<div class="ax-note">還有 ' + (stars.length - 40) + ' 顆，先升上面的。</div>';
-    h += '<div class="ax-note">★1 哀石結晶 50、★2 解命石 10、★3 兩顆同名 ★2 合成；選好星數，中間每一步的材料和服務費一起扣。魂、傳說符文不能升星。鑲著的符文可以直接升星（★3 另一顆 ★2 從背包拿）。符文之語不跟星數。</div>';
+    h += '<div class="ax-note">★1 次元符文石★1 ×2、★2 次元符文石★2 ×5、★3 次元符文石★3 ×8；選好星數，中間每一步的材料和服務費一起扣。魂、傳說符文不能升星。鑲著的符文可以直接升星（★3 另一顆 ★2 從背包拿）。符文之語不跟星數。</div>';
     // 職業符文：指定技能
     var FX = W.__afkRuneFx, cr = FX && FX.classRune ? FX.classRune(p) : null, rs = FX && FX.skillsOf ? FX.skillsOf(p) : { main: '', cd: '' };
     var mySk = (p.skills || []).filter(function (id) { return DB.skills[id] && !DB.skills[id].passive; });

@@ -72,9 +72,9 @@
   var ITEMS = {
     afk_rift_shard: { n: '裂縫碎光', img: IMG + '原石碎片.png', d: '次元裂縫的光凝成的碎片。進入無盡的裂縫需要 50 個，另需星辰之核 15 個與血龍鑽 500。' },
     afk_dim_crystal: { n: '次元結晶', img: IMG + '原石碎片.png', d: '次元裂縫每一隻怪都會留下的結晶。守護者之戒、席琳遺骸淬鍊、次元遺物都用得到。' },
-    afk_star_dust: { n: '破碎星光塵埃', img: IMG + '原石碎片.png', d: '裂縫裡的星光碎屑。100 個加上血龍鑽 10，可在次元工匠合成「異化星塵」。' },
-    afk_alien_dust: { n: '異化星塵', img: IMG + '原石碎片.png', d: '用來強化次元支配（縫天★）的星塵。' },
-    afk_split_dust: { n: '分裂的蔑視塵埃', img: IMG + '原石碎片.png', d: '用來開啟幻聖紋的塵埃；在次元工匠支付 1,000 個與血龍鑽 100。' },
+    afk_star_dust: { n: '破碎星光塵埃', img: IMG + '原石碎片.png', d: '裂縫裡的星光碎屑。1,000 個加上血龍鑽 100，可在次元的鍛造師合成「異化星塵」。' },
+    afk_alien_dust: { n: '異化星塵', img: IMG + '原石碎片.png', d: '用來強化次元遺物與次元支配（縫天★）的星塵。' },
+    afk_split_dust: { n: '分裂的蔑視塵埃', img: IMG + '原石碎片.png', d: '1,000 個加上血龍鑽 5,000，可在次元的鍛造師合成「聚合的蔑視塵埃」（幻聖紋要用）。' },
     afk_star_core: { n: '星辰之核', img: IMG + '原石碎片.png', d: '無盡的裂縫入場材料：15 個，另需裂縫碎光 50 個與血龍鑽 500，並先完成封印副本。' }
   };
   Object.keys(ITEMS).forEach(function (id) { var x = ITEMS[id]; if (!DB.items[id]) DB.items[id] = { n: x.n, type: 'etc', p: 0, gachaWeight: 0, weight: 0, noUse: true, noSell: true, c: 'text-cyan-300', img: x.img, d: x.d + '（次元裂縫限定掉落）' }; });
@@ -236,7 +236,7 @@
           var eAc = Math.max(0,Math.min(ero, noFloor ? Infinity : R.acMax)-(W.LineageSherine?.erosionBack(p)||0));
           d.ac = (d.ac || 0) + eAc;
           var cut = function (k) { var v = Number(d[k]) || 0; if (noFloor) { d[k] = v - eAc; return; } if (v <= 0) return; var floor = Math.max(keep, Math.floor(v * wc)); var low = Math.min(v, floor); d[k] = Math.max(low, v - eAc); };
-          cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; var e2 = ero - rb; if (noFloor) { d[k] = v - e2; return; } var floor = Math.max(keep, Math.floor(v * wc)); var growthFloor = W.LineageGrowth ? W.LineageGrowth.pct(p, 'curse') : 0; d[k] = Math.max(Math.min(v,floor+growthFloor),v-e2); });
+          cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; var e2 = ero - rb; if (noFloor) { d[k] = v - e2; return; } var floor = Math.max(keep, Math.floor(v * wc)); var growthFloor = W.LineageGrowth ? W.LineageGrowth.pct(p, 'curse') : 0; var eyeF = 0; try { eyeF = typeof W.__afkEroFloorEle === 'function' ? (Number(W.__afkEroFloorEle(p, k)) || 0) : 0; } catch (e) {} d[k] = Math.max(Math.min(v,floor+growthFloor+eyeF),v-e2); });   /* __afkEroFloorEle：次元魔眼的對應屬性最低保留（afk-eyetier） */
         }
       } catch (e) { console.warn('[AFK-dimrift] stats', e); }
       return r;
@@ -300,7 +300,7 @@
   var roll = function (r) { return Math.random() < r; };
   function drops(m) {
     var p = P(), got = [];
-    var give = function (id, n) { if (!DB.items[id] || !(n > 0)) return; try { gainItem(id, n, true, true); } catch (e) {} got.push((DB.items[id].n || id) + (n > 1 ? ' ×' + n : '')); };
+    var give = function (id, n) { if (!DB.items[id] || !(n > 0)) return; try { gainItem(id, n, true, true); if (W.__afkGuardTwin) W.__afkGuardTwin(id, n); } catch (e) {} got.push((DB.items[id].n || id) + (n > 1 ? ' ×' + n : '')); };
     give('afk_dim_crystal', 1);
     if (m.boss) give('afk_rift_shard', 3 + Math.floor(Math.random() * 3)); else if (roll(0.02)) give('afk_rift_shard', 1);
     if (roll(0.01)) give('afk_star_dust', 1);
@@ -311,6 +311,18 @@
     var rare = got.filter(function (x) { return !/次元結晶|裂縫碎光/.test(x); });
     if (rare.length) sys('<span class="text-cyan-300">🌀 裂縫掉落：' + rare.map(esc).join('、') + '</span>');
   }
+  // 11-18 19:18 Ping：次元裂縫模式只掉次元材料——怪物原本的掉落表整個不掉（金幣、經驗照舊；次元材料由上面 drops() 與各副本另外發）
+  var DIM_KEEP = function (id) { try { var L = W.__afkCraftLock; return !!(L && L.IDS && L.IDS.indexOf(id) >= 0); } catch (e) { return false; } };
+  var dimOnlyWrap = function () {   // 包在最外層（之後載入的外掛也會往掉落表加東西）→ 載入時先包一次，load 後再包到最外面
+    var prevDF = W.__afkDropListFilter; if (prevDF && prevDF.__afkDimOnly) return;
+    var f = function (mob, list) {
+      if (typeof prevDF === 'function') list = prevDF(mob, list) || list;
+      try { if (mob && mob._dimRift && on() && list && list.length) return list.filter(function (x) { return x && DIM_KEEP(x[0]); }); } catch (e) {}
+      return list;
+    };
+    f.__afkDimOnly = true; W.__afkDropListFilter = f;
+  };
+  dimOnlyWrap(); W.addEventListener('load', function () { setTimeout(function () { var o = W.__afkDropListFilter; if (o && !o.__afkDimOnly) dimOnlyWrap(); }, 0); });
   if (typeof W.killMob === 'function') {
     var oKill = W.killMob;
     W.killMob = function (idx) {

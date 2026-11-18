@@ -41,13 +41,23 @@
   var say = function (x, h) { try { if (typeof logCombat === 'function' && !(typeof state !== 'undefined' && state.ff)) logCombat(h, 'magic'); } catch (e) {} };
   var who = function (x) { return x === P() ? '你' : (x._allyName || x.name || '隊友'); };
 
+  // ── 擋下一次（Ping 11-18 18:50）：次元魔眼、四龍之瞳、娃娃的「免疫○○」在範圍內各擋下一次，之後 15 分鐘照上面的強制規則 ──
+  var IMMF = { freeze: 'immFreeze', stun: 'immStun', paralyze: 'immParalyze', sleep: 'immSleep', slow: 'immSlow', poison: 'immPoison', burn: 'immBurn', blind: 'immBlind' };
+  var blockOnce = function (x, kind) {
+    try {
+      if (x === P() && typeof W.__afkEyeBlock === 'function' && W.__afkEyeBlock(kind)) return true;
+      var it = x && x.eq && x.eq.doll, d = it && DB.items[it.id], f = IMMF[kind]; if (!d || !f || !d[f]) return false;
+      var t = (typeof state !== 'undefined' && state.ticks) || 0, b = x._afkDollBlk || (x._afkDollBlk = {}); if ((b[kind] || 0) > t && b[kind] - t <= 9000) return false;
+      b[kind] = t + 9000; say(x, '<span class="text-sky-300">' + who(x) + '的娃娃擋下了這一次（15 分鐘後才能再擋）。</span>'); return true;
+    } catch (e) { return false; }
+  };
   // ── 核心的抵抗判定（最外層）：範圍內只看抵抗（最多 80%），免疫不算 ──
   var hookRes = function () {
     ['playerStatusResisted', 'allyStatusResisted'].forEach(function (fn) {
       var o = W[fn]; if (typeof o !== 'function' || o.__afkForce) return;
       var f = fn === 'playerStatusResisted'
-        ? function (kind) { if (!scope()) return o.apply(this, arguments); return Math.random() * 100 < resistOf(P(), kind); }
-        : function (ally, kind) { if (!scope()) return o.apply(this, arguments); return Math.random() * 100 < resistOf(ally, kind); };
+        ? function (kind) { if (!scope()) return o.apply(this, arguments); if (blockOnce(P(), kind)) return true; return Math.random() * 100 < resistOf(P(), kind); }
+        : function (ally, kind) { if (!scope()) return o.apply(this, arguments); if (blockOnce(ally, kind)) return true; return Math.random() * 100 < resistOf(ally, kind); };
       f.__afkForce = true; W[fn] = f;
       try { (0, eval)(fn + ' = window.' + fn); } catch (e) {}
     });

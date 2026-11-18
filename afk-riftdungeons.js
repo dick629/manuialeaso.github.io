@@ -33,22 +33,23 @@
     afk_rd_water: ['席琳的水之記憶', '謀叛、時光副本裡偶爾撿到的水滴，裡面有席琳的記憶。席琳遺骸淬鍊、之魂憶起用得到。'],
     afk_rd_scale: ['侵蝕龍鱗', '四龍副本・裂縫的龍身上剝下的鱗。守護者之戒完整 ★ 用得到。'],
     afk_rd_feather: ['焦黑的光羽', '傲慢之塔 91～100 樓的裂縫怪物、墮光天使身上落下的羽毛。10 片可以召喚墮光天使 阿納金。'],
-    afk_rd_echo: ['號角的殘音', '阿納金第 3～5 形態留下的聲音。用途之後開放。'],
+    afk_rd_echo: ['號角的殘音', '阿納金第 3～5 形態留下的聲音。50 個可以在席琳神殿「藝能的守門人」開啟次元藝能的單人副本（號角）。'],
     afk_rd_thread: ['天空的縫線', '封印戰與無盡的裂縫留下的線。守護者之戒完整 ★3 用得到。'],
-    afk_rd_remnant: ['殷海薩的殘光', '封印戰、無盡的裂縫深處留下的光。用途之後開放。'],
+    afk_rd_remnant: ['殷海薩的殘光', '封印戰、無盡的裂縫深處留下的光。50 個可以在席琳神殿「藝能的守門人」開啟次元藝能的單人副本（殘光）。'],
     afk_rd_pick: ['自選至高昇華支配強化石', '在席琳神殿「次元的鍛造師」換成任一種昇華支配強化石（武器／防具／飾品）。'],
-    afk_rd_mirror: ['倒影之鏡', '倒影迴廊的鏡子。之後用來替裝備重新抽一條附加能力。'],
-    afk_rd_ember: ['熾燼原石', '燃燼礦坑的鑽機挖出來的原石。用途之後開放。'],
-    afk_rd_ink: ['深淵墨晶', '深淵的大王烏賊的墨凝成的晶體。用途之後開放。'],
-    afk_rd_neptune: ['海神的鱗片', '漂流的墓船深處撿到的鱗片。之後給龍之護甲類強化用。'],
-    afk_rd_eclipse: ['星蝕之核', '星墜的祭壇的星蝕者留下的核。創世密奧卡、黃道星卡之後的強化材料。'],
-    afk_rd_hmark: ['哈汀的魔法印記', '哈汀的時空・裂縫留下的印記。用途之後開放。'],
+    afk_rd_mirror: ['倒影之鏡', '倒影迴廊的鏡子。次元時空進化要用（10／15／20 個）；100 個可以在佩特拉後裔村「時光的引路人」換 1 個時光之鏡。'],
+    afk_time_mirror: ['時光之鏡', '照得出過去的鏡子。次元遺物強化到 +3／+5 要 1／5 個、重抽 +3 套裝要 1 個；5 個可以在佩特拉後裔村「時光的引路人」那裡開啟時光副本；倒影之鏡 100 個換 1 個。'],
+    afk_rd_ember: ['熾燼原石', '燃燼礦坑的鑽機挖出來的原石。50 個可以在席琳神殿「藝能的守門人」開啟次元藝能的單人副本（熾燼）。'],
+    afk_rd_ink: ['深淵墨晶', '深淵的大王烏賊的墨凝成的晶體。50 個可以在席琳神殿「藝能的守門人」開啟次元藝能的單人副本（墨）。'],
+    afk_rd_neptune: ['海神的鱗片', '漂流的墓船深處撿到的鱗片。50 個可以在席琳神殿「藝能的守門人」開啟次元藝能的單人副本（海）。'],
+    afk_rd_eclipse: ['星蝕之核', '星墜的祭壇的星蝕者留下的核。黃道星卡升到歸一要 5 個。'],
+    afk_rd_hmark: ['哈汀的魔法印記', '哈汀的時空・裂縫留下的印記。50 個可以在席琳神殿「藝能的守門人」開啟次元藝能的單人副本（哈汀）。'],
     afk_anakin_horn: ['阿納金的號角', '墮光天使 阿納金第一次被擊倒第五形態時留下的號角。裝在裝備視窗第二頁「聖紋下面、之鱗上面」那一格；在「次元的鍛造師」強化，提高次元裂縫裡聖十字之盾擋下的侵蝕。']
   };
   Object.keys(MAT).forEach(function (id) { var x = MAT[id]; if (!DB.items[id]) DB.items[id] = { n: x[0], type: 'etc', p: 0, gachaWeight: 0, weight: 0, noUse: true, noSell: true, c: 'text-cyan-300', img: IMG + '原石碎片.png', d: x[1] + '（次元裂縫限定）' }; });
   var cnt = function (id) { return typeof questCountId === 'function' ? questCountId(id) : 0; };
   var take = function (id, n) { try { questConsumeId(id, n); return true; } catch (e) { return false; } };
-  var give = function (id, n) { if (n > 0 && DB.items[id]) { gainItem(id, n, true, true); return (DB.items[id].n || id) + (n > 1 ? ' ×' + n : ''); } return ''; };
+  var give = function (id, n) { if (n > 0 && DB.items[id]) { gainItem(id, n, true, true); try { if (W.__afkGuardTwin) W.__afkGuardTwin(id, n); } catch (e) {} return (DB.items[id].n || id) + (n > 1 ? ' ×' + n : ''); } return ''; };
   var rr = function (a, b) { return a + Math.floor(Math.random() * (b - a + 1)); };
   var nm = function (id) { return (DB.items[id] && DB.items[id].n) || id; };
 
@@ -265,6 +266,100 @@
         dmgIn: function (run, b, amt) { return alive(function (x) { return x._rdAdd; }).length ? amt * 0.5 : amt; } } }
     ],
     reward: function () { var p = P(), a = []; if (!p.afkDoomWield) { p.afkDoomWield = Date.now(); a.push('「握劍」：絕望屠龍者也能裝備武器了'); } a.push(give('afk_dream_crystal', 50)); return a; } });
+  // ── 時光副本（Ping 11-18 18:24；materials-plan-1118）：佩特拉後裔村「時光的引路人」。時光之鏡 5 個入場，回到過去打自己的隊伍或自己一個人；
+  //    倒影＝你（與傭兵）現在數值的 1.2 倍。掉次元符文石 ★1／★2／★3。不分世界、不用開次元裂縫；次數不限（靠時光之鏡）。
+  var TB = { k: 1.2, hpSelf: 1000, hpAlly: 300, min: 10,
+    drop: { solo: { s1: 0.01, s2: 0.005, s3: 0.0001 }, team: { s1: 0.005, s2: 0.0005, s3: 0.00005 } } };   // 11-18 18:34（Ping）：每種各判定一次、掉 1 顆
+  var tbCopy = function (m, x, hp) {   // 把 x 的數值 ×1.2 套到倒影身上
+    var d = x.d || {}, k = TB.k, mh = Number(x.mhp || x.mhpBase || (x.d && x.d.mhp)) || 1000;
+    m.hp = m.curHp = Math.max(1000, Math.round(mh * k * hp * (1 + R.allyHp * allyN())));
+    m.ac = Math.round((Number(d.ac) || 0) * k); m.mr = Math.round((Number(d.mr) || 0) * k); m.dr = Math.round((Number(d.dr) || 0) * k);
+    ['resFire', 'resWater', 'resWind', 'resEarth'].forEach(function (r) { m[r] = Math.round((Number(d[r]) || 0) * k); });
+    var dmg = Math.max(20, Math.round(((Number(d.meleeDmg) || Number(d.dmg) || 60) + (Number(d.extraDmg) || 0)) * k));
+    m.dmg = [1, dmg]; m.db = 0; m.hit = Math.round(((Number(d.meleeHit) || Number(d.hit) || 50) + (Number(d.extraHit) || 0)) * k); m.er = Math.round((Number(d.er) || 0) * k);
+    m.hard = false; m.hardSkin = 0; m.exp = 0; m.noGold = true; return m;
+  };
+  // 倒影放你的職業技能（Ping 11-18 18:47）：每 6 秒從你學會的攻擊技能抽一招打你；傷害＝該技能平均傷害（沒有骰子的用你一般攻擊 ×2）×（1＋智力／20）×3，至少你最大 HP 6%；再 ×1.2、吃你的魔防
+  var reflSkills = function () { var p = P(); return ((p && p.skills) || []).filter(function (id) { var k = DB.skills[id]; return k && k.type === 'atk' && !k.procOnly && !k.passive; }); };
+  var reflCast = function (run, b, t, M) {
+    if (!M.sk) M.sk = t + 60; if (t < M.sk) return; M.sk = t + 60;
+    var p = P(), list = reflSkills(); if (!p || p.dead || !list.length) return;
+    var id = list[Math.floor(Math.random() * list.length)], k = DB.skills[id], d = p.d || {};
+    var dice = k.dmgDice ? k.dmgDice[0] * (k.dmgDice[1] + 1) / 2 + (Number(k.dmgBase) || 0) : 0;
+    var base = dice > 0 ? dice * (1 + (Number(d.int) || 0) / 20) : ((Number(d.meleeDmg) || Number(d.dmg) || 60) + (Number(d.extraDmg) || 0)) * 2;
+    var mrk = 1; try { mrk = (W.mrMultTaken || W.mrMult)(Number(d.mr) || 0); } catch (e) {}
+    // 11-18 19:18 Ping：倒影的技能傷害太低（約 200）→ 改成 ×3，而且至少是你最大 HP 6%（都再 ×1.2、吃魔防）
+    var dmg = Math.max(base * 3, (Number(p.mhp) || 0) * 0.06) * TB.k * mrk;
+    L.boss.hurt(p, dmg, false);
+    clog('<span class="font-bold" style="color:#c4b5fd;">【' + esc(b.n) + '】</span>施放「' + esc(k.n) + '」，你受到 ' + Math.floor(dmg).toLocaleString() + ' 點傷害。', 'enemy');
+  };
+  var tbWave = function (lv) {   // 第一段：傭兵的倒影（個人模式沒有傭兵＝直接進下一段）
+    var p = P(), list = (p.allies || []).filter(function (a) { return a && !a._downed; }).slice(0, 4), slots = [0, 1, 3, 4];
+    run.wave++;
+    if (!list.length) { nextStage(); run.pending = true; return; }
+    list.forEach(function (x, i) {
+      var m = place(slots[i], findBase('騎士|戰士'), lv, 1, { _rdMirror: true, _rdTb: true, n: '過去的' + (x._allyName || x.name || '傭兵'), boss: false }, 1000);
+      if (m) tbCopy(m, x, TB.hpAlly);
+    });
+  };
+  def({ id: 'timeback', n: '時光副本', npc: 'petra', tier: 0, noRift: true, anyWorld: true, town: 'town_petra', fee: { items: [['afk_time_mirror', 5]] }, min: TB.min, limit: 99999,
+    pick: [['solo', '個人'], ['team', '隊伍']],
+    lore: '回到過去，打自己的隊伍或自己一個人。過去的你們是現在數值的 1.2 倍。個人：傭兵不跟（結束後回到隊伍）；隊伍：先打傭兵的倒影，再打你自己的倒影。',
+    onStart: function (r) { var p = P(); if (r.pick === 'solo' && (p.allies || []).length) { p.afkTbStash = p.allies; p.allies = []; try { renderSquadPanel(); } catch (e) {} } },
+    stages: [
+      { n: '過去的同伴', waves: 1, tb: true },
+      { n: '過去的你', waves: 0, boss: { n: '過去的你', re: '騎士|戰士', hpX: 1, final: true,
+        hpAbs: function () { var p = P(); return (Number(p.mhp) || 1000) * TB.k * TB.hpSelf; },
+        mech: function (run, b, t, M) { if (!M.cp) { M.cp = 1; var hp = b.hp; tbCopy(b, P(), TB.hpSelf); b.hp = b.curHp = hp; b.n = '過去的你'; } reflCast(run, b, t, M); } } }
+    ],
+    reward: function (r) {
+      var D2 = TB.drop[r.pick === 'team' ? 'team' : 'solo'], a = [];
+      if (Math.random() < D2.s1) a.push(give('afk_rune_dim', 1)); if (Math.random() < D2.s2) a.push(give('afk_rune_dim2', 1)); if (Math.random() < D2.s3) a.push(give('afk_rune_dim3', 1));
+      return a;
+    } });
+  // 時光的引路人（佩特拉後裔村）：入場（個人／隊伍）、倒影之鏡 100 → 時光之鏡 1
+  var TB_NPC = 'npc_afk_timeguide', TB_N = '時光的引路人';
+  var pc = function (x) { return (Math.round(x * 100000) / 1000) + '%'; };
+  var tbRender = function (div) {
+    if (!div) return; var d = BYID.timeback, h = '<div class="p-4 flex flex-col gap-3 text-sm leading-relaxed">';
+    h += '<div class="afk-lore">「鏡子裡的不是現在的你……是你曾經以為自己會成為的樣子。」</div>';
+    h += '<div class="text-slate-200">' + esc(d.lore) + '<br>入場：時光之鏡 ×5（你有 ' + cnt('afk_time_mirror') + '）。限時 ' + TB.min + ' 分鐘；倒下或時間到＝失敗，時光之鏡照樣用掉。<br>'
+      + '通關時各判定一次、每種 1 顆：個人 次元符文石★1 ' + pc(TB.drop.solo.s1) + '、★2 ' + pc(TB.drop.solo.s2) + '、★3 ' + pc(TB.drop.solo.s3) + '；'
+      + '隊伍 ★1 ' + pc(TB.drop.team.s1) + '、★2 ' + pc(TB.drop.team.s2) + '、★3 ' + pc(TB.drop.team.s3) + '。</div>';
+    ['solo', 'team'].forEach(function (pk) { var why = canEnter(d, pk); h += '<button type="button" class="btn py-2 font-bold ' + (why ? 'bg-slate-700 opacity-60' : 'bg-cyan-950 border-cyan-600') + '" data-tbgo="' + pk + '"' + (why ? ' title="' + esc(why) + '"' : '') + '>⏳ 進入時光副本（' + (pk === 'solo' ? '個人' : '隊伍') + '）' + (why ? '　' + esc(why) : '') + '</button>'; });
+    var mk = cnt('afk_rd_mirror');
+    h += '<button type="button" class="btn py-2" data-tbswap="1"' + (mk < 100 ? ' disabled' : '') + '>倒影之鏡 ×100 → 時光之鏡 ×1（你有倒影之鏡 ' + mk + '）</button></div>';
+    div.innerHTML = h;
+  };
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-tbgo],[data-tbswap]'); if (!b) return;
+    if (b.dataset.tbgo) { enter('timeback', b.dataset.tbgo); return; }
+    if (cnt('afk_rd_mirror') < 100) return;
+    if (take('afk_rd_mirror', 100)) { give('afk_time_mirror', 1); sys('<span class="text-cyan-200">' + TB_N + '把一百面倒影之鏡疊在一起——成了一面時光之鏡。</span>'); }
+    try { tbRender(document.getElementById('interaction-content')); } catch (e2) {}
+  }, true);
+  var tbNpc = function () {
+    try {
+      var tw = DB.towns && DB.towns.town_petra; if (!tw || (tw.npcs || []).some(function (x) { return x && x.id === TB_NPC; })) return;
+      if (K && K.addNpc) { K.addNpc('town_petra', { id: TB_NPC, n: TB_N, title: '時光副本', type: 'quest', classicHide: true, d: '帶你回到過去，跟從前的自己交手。' }); if (K.hookNpc && !tbNpc.hooked) { tbNpc.hooked = 1; K.hookNpc(TB_NPC, TB_N, '時光副本', tbRender); } }
+    } catch (e) { console.warn('[AFK-riftdg] 時光的引路人', e); }
+  };
+  tbNpc(); W.addEventListener('load', function () { tbNpc(); setTimeout(tbNpc, 2000); });   // 佩特拉後裔村由 afk-newzones 建立（可能在這支之後）
+  setInterval(function () { try { if (!run && P() && P().afkTbStash) tbRestore(); } catch (e) {} }, 3000);
+  // ── 次元藝能的單人副本（Ping 11-18；設計稿 claude/dim-arts-design.md v2）：藝能的守門人（席琳神殿），六種材料各 100 個入場 ──
+  //    單人（傭兵寄放、結束歸隊）；小怪 10 波照次元裂縫強度（HP ×1.5；開著裂縫時傷害照裂縫倍率）；頭目「你的倒影」＝你現在數值 ×1.2，會放你的職業技能。
+  var ARTS = [['horn', '號角迴廊', 'afk_rd_echo', '號角'], ['light', '殘光聖所', 'afk_rd_remnant', '殘光'], ['ember', '燃燼深坑', 'afk_rd_ember', '熾燼'],
+    ['ink', '墨海沉船', 'afk_rd_ink', '深淵墨'], ['sea', '海神祭壇', 'afk_rd_neptune', '海神'], ['hardin', '哈汀的書庫', 'afk_rd_hmark', '哈汀']];
+  ARTS.forEach(function (a) {
+    def({ id: 'art_' + a[0], n: a[1], npc: 'arts', tier: 0, anyWorld: true, fee: { items: [[a[2], 50]] }, min: 15, limit: 99999,
+      lore: '交出 100 個' + nm(a[2]) + '，一個人走進「' + a[1] + '」：10 波怪物，最後是你的倒影（現在數值 ×1.2，會放你的職業技能）。打倒必掉「失落的次元藝能・' + a[3] + '」。',
+      onStart: function () { var p = P(); if ((p.allies || []).length) { p.afkTbStash = p.allies; p.allies = []; try { renderSquadPanel(); } catch (e) {} } },
+      stages: [{ n: a[1], waves: 10, per: 3, pool: ['pride_91_100'], boss: { n: '你的倒影', re: '騎士|戰士', hpX: 1, final: true,
+        hpAbs: function () { var p = P(); return (Number(p.mhp) || 1000) * TB.k * 1500; },
+        mech: function (run, b, t, M) { if (!M.cp) { M.cp = 1; var hp = b.hp; tbCopy(b, P(), 1500); b.hp = b.curHp = hp; b.n = '你的倒影'; } reflCast(run, b, t, M); } } }],
+      reward: function () { return [give('afk_art_' + a[0], 1)]; } });
+  });
+  var tbRestore = function () { var p = P(); if (!p || !p.afkTbStash) return; var st = p.afkTbStash; delete p.afkTbStash; p.allies = (p.allies || []).concat(st.filter(function (a) { return a && (p.allies || []).indexOf(a) < 0; })); try { renderSquadPanel(); } catch (e) {} };
   var BYID = {}; D.forEach(function (d) { BYID[d.id] = d; });
 
   // ── 記錄 ──
@@ -277,7 +372,7 @@
   var canEnter = function (d, pick) {
     var p = P(); if (!p) return '請先進入遊戲。'; if (p.classicMode) return '經典模式沒有。';
     if (d.id === 'doom') { if (p.cls !== 'dragon' || p.rebirthArt !== 'k_doom') return '只有修習絕望屠龍者的龍騎士能進入。'; if (!(Math.floor(p.rebirth || 0) >= 1)) return '一轉後才能進入。'; if (!(p.sherineDream && p.sherineMad)) return '要在席琳夢域鏡。'; if (p.afkDoomWield) return '你已經握回了劍。'; }
-    else { if (!DR.on()) return '要先在席琳那裡打開次元裂縫。'; if (DR.recoverPct(p) < tierNeed(d)) return '要取回 ' + tierNeed(d) + '% 以上的力量。'; }
+    else if (!d.anyWorld) { if (!DR.on()) return '要先在席琳那裡打開次元裂縫。'; if (DR.recoverPct(p) < tierNeed(d)) return '要取回 ' + tierNeed(d) + '% 以上的力量。'; }
     var s = store(p); if (d.needClear && !s.clear[d.needClear]) return '要先通關「' + (d.needClear === 'anakin5' ? '阿納金第 5 形態' : BYID[d.needClear].n) + '」。';
     if (d.pickChain && +pick > 1 && !s.clear['anakin' + (+pick - 1)]) return '要先打倒前一個形態。';
     if (used(d, pick) >= d.limit) return d.per === 'week' ? '這週已經挑戰過了。' : '今天的次數用完了。';
@@ -285,6 +380,7 @@
     var lack = (d.fee.items || []).filter(function (x) { return cnt(x[0]) < x[1]; })[0]; if (lack) return nm(lack[0]) + '不夠。';
     var st = S(); if (st.riftRun || st._afkFinal || st.antharas || st.prideClimb) return '你正身在其他副本之中。';
     if (d.id === 'doom') { if (typeof mapState !== 'undefined' && mapState.current !== DOOM_TOWN) return '要在貝希摩斯（劍塚的守墓人在那裡）。'; }   // Ping 11-12：守墓人搬到龍騎士出生地
+    else if (d.town) { if (typeof mapState !== 'undefined' && mapState.current !== d.town) return '要在' + ((DB.towns && DB.towns[d.town] && DB.towns[d.town].n) || '對應的村莊') + '。'; }
     else if (typeof mapState !== 'undefined' && mapState.current !== TOWN) return '要在席琳神殿。';
     return '';
   };
@@ -310,7 +406,7 @@
     mapState.mobs = [null, null, null, null, null]; mapState.spawnAt = [null, null, null, null, null]; mapState.targetIdx = -1; mapState.forceBoss = false;
     run = { id: id, D: d, pick: pick, si: 0, wave: 0, pending: true, t0: tk(), st0: tk(), until: d.min ? Date.now() + d.min * 60000 : 0, lv: Math.max(80, Math.min(130, (Number(p.lv) || 100) + 5 * d.tier)), meter: 100, floor: 1, M: {}, SM: {}, deaths: 0 };
     if (d.onStart) d.onStart(run);
-    backTown = id === 'doom' ? DOOM_TOWN : TOWN;
+    backTown = id === 'doom' ? DOOM_TOWN : (d.town || TOWN);
     var DRAGON_BG = { '安塔瑞斯': '侵蝕的安塔瑞斯巢穴深處', '法利昂': '破滅的法利昂巢穴深處', '林德拜爾': '災厄的林德拜爾巢穴深處', '巴拉卡斯': '深淵的巴拉卡斯巢穴深處' };   // 11-17 Ping：四龍各用自己的巢穴背景
     try { SPECIAL_AREA_BG[MAP] = (id === 'dragons' && DRAGON_BG[pick]) ? 'assets/area/1920x1080/' + DRAGON_BG[pick] + '.jpg' : 'assets/area/1920x1080/rift_' + id + '.jpg'; } catch (e) {}   // 11-12：每個副本自己的背景（GPT）
     lastMap = MAP;
@@ -324,6 +420,7 @@
     try { renderMobs(); syncMapSelectors(); updateUI(); renderTabs(true); saveGame(); } catch (e) {}
   };
   var leave = function (msg) {
+    try { tbRestore(); } catch (e) {}
     run = null; leaving = Date.now(); if (msg) sys(msg);
     setTimeout(function () { try { if (mapState.current === MAP && run === null) { setMapSelectors(backTown); changeMap(true); try { saveGame(); } catch (e) {} } } catch (e) {} }, 1500);
   };
@@ -361,6 +458,7 @@
     run.pending = false;
     var bossTime = st.boss && (st.dur ? (tk() - run.st0) >= st.dur * 10 : run.wave >= (st.waves || 0));
     if (st.timed) bossTime = st.waveBoss && st.waveBoss[run.wave + 1];
+    if (st.tb) { tbWave(lv); return; }
     if (st.mirror && !st.boss) { mirrorWave(lv, hpk); return; }
     if (bossTime && st.boss) {
       var bd = st.boss, re = bd.dragon ? run.pick : bd.re, baseId = re ? findBase(re) : 'afk_rd_base';
@@ -547,6 +645,18 @@
     if(b._rdStar===k||b._rdBoss&&(M.book&&!b._rdForce||M.wit&&!b._rdForce||M.cut!=null&&M.cut<8||M.core||(M.fly||0)>tk()))return 0;
     return n;
   });
+  // 11-18：下一波卡住的保險——等待下一波超過 1 秒、核心還沒叫出怪（例如格子裡留著倒下的怪、沒排到重生時間），就自己叫
+  if (typeof W.tick === 'function') {
+    var oTickW = W.tick;
+    W.tick = function () {
+      var r = oTickW.apply(this, arguments);
+      try {
+        if (run && run.pending && mapState.current === MAP) { run._pw = (run._pw || 0) + 1; if (run._pw > 10) { run._pw = 0; W.spawnMob(0); } }
+        else if (run) run._pw = 0;
+      } catch (e) {}
+      return r;
+    };
+  }
   W.__afkRiftDg = { growthCanShortcut:growthCanShortcut,growthShortcut:growthShortcut,growthCheckpoint:growthCheckpoint,growthRestore:growthRestore, D: D, BYID: BYID, R: R, canEnter: canEnter, enter: enter, run: function () { return run; }, store: store, MAP: MAP, findBase: findBase, nextStage: nextStage };
   try { console.log('[AFK-riftdg] 已載入：次元裂縫的副本 ' + D.length + ' 個'); } catch (e) {}
 

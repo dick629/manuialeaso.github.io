@@ -102,7 +102,9 @@
       ch({ lv: 80, title: '監視之眼', map: '暗夢星迴（試煉頭目）＋時空裂痕（夢域鏡，撐過 30 分鐘）・接取：席琳神殿 伊奧（交付時要裝著粹煉過的之魂）',
         story: '伊奧：「你一直以為天上那個是月亮吧？死亡之海沒有月亮。」暗夢星迴的夢境者投影，是有人用來觀察強者、記錄戰法的眼睛；光之楔把夢域鏡釘在她的視線底下。打碎眼睛、拿回楔片，戴上之魂——它比我們都更早知道。',
         reqs: [Object.assign({ need: 3, mobs: [] }, Q.eye, { d: Q.eye.d + DREAM_TAIL }), Object.assign({ need: 1, mobs: [] }, Q.wedge, { d: Q.wedge.d + '（席琳夢域鏡的時空裂痕撐過 30 分鐘，結算時取得）' })],
-        first: [['afk_runebox_3', 1], ['afk_dream_dust', 100], ['afk_fate_unlock', 1], ['afk_dq_lens', 1]] })
+        first: [['afk_runebox_3', 1], ['afk_dream_dust', 100], ['afk_fate_unlock', 1], ['afk_dq_lens', 1]],
+        // 11-18：第三階層已經挑戰過（只能一次）或是織星者 → 交付時直接看真相對話（afk-finaltiers）
+        onDone: function (p) { try { var used = !!(p && p.afkFinalTier && p.afkFinalTier.t3), sw = !!(p && p.afkStarWeaver); if ((used || sw) && W.__afkTruthTalk) setTimeout(function () { W.__afkTruthTalk(p); }, 1500); } catch (e) {} } })
     ]
   });
 

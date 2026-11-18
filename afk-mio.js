@@ -36,10 +36,10 @@
   var STAGE = ['', '偉特', '托特', '馬賽', '淵源', '起源', '創世'], STAGE_C = ['', '#93c5fd', '#c4b5fd', '#fcd34d', '#f472b6', '#22d3ee', '#fef3c7'];
   // ── 次元升級（玩家 2026-11-05 20:50／21:34；設計稿 docs/mio-dimension-design.md）──
   //   馬賽 → 淵源：密奧碎片 500＋龍之鑽石 100,000＋金幣 5 億（現在開放）
-  //   淵源 → 起源：次元密奧卡 100＋血龍鑽 500＋金幣 1 億；起源 → 創世：次元密奧卡 500＋血龍鑽 1,000＋金幣 5 億（次元裂縫開放後）
+  //   淵源 → 起源：次元密奧卡 100＋血龍鑽 5,000＋金幣 5 億；起源 → 創世：次元密奧卡 500＋血龍鑽 10,000＋金幣 10 億（11-18 改）
   //   淵源以上：特效照馬賽；裝著時另有「次元效果」（只在次元裂縫生效，裂縫開放後接上）；保底曲線 80（起源、創世之後量）；光環見 AURA。
   var DIM_CARD = 'afk_mio_dim', BLOOD = 'afk_blood_dia';
-  var UP_COST = { 4: { shard: 500, dia: 100000, gold: 500000000 }, 5: { dim: 100, blood: 500, gold: 100000000 }, 6: { dim: 500, blood: 1000, gold: 500000000 } };
+  var UP_COST = { 4: { shard: 500, dia: 100000, gold: 500000000 }, 5: { dim: 100, blood: 5000, gold: 500000000 }, 6: { dim: 500, blood: 10000, gold: 1000000000 } };   // 11-18 19:18 Ping 改
   var DIM_RATE = { mob: 0.00002, boss: 0.002 };
   // 淵源解放（每張卡各付一次；22 張全部淵源才開放）
   var DREAM_X = 'afk_dream_crystal', SHER_X = 'sherine_crystal';
@@ -181,6 +181,7 @@
   var store = function (p) { p.afkMio = p.afkMio || { cards: {} }; p.afkMio.cards = p.afkMio.cards || {}; return p.afkMio; };
   var stageOf = function (p, i) { var c = store(p).cards; if (W.__afkTpCards) c = W.__afkTpCards(p, c); return Number(c[i]) || 0; };   // 11-16 afk-tamper：被標記時實際用標記前的階段
   var libOf = function (p, i) { var s = store(p); return !!(s.lib && s.lib[i]) && stageOf(p, i) >= 4; };
+  var st6lib = function (p, i) { var s = store(p); return stageOf(p, i) >= 6 ? (Number((s.olib || {})[i]) || 0) : 0; };   // 解放起源 1／解放創世 2（11-18）
   var count = function (id) { var p = P(); return p ? (p.inv || []).reduce(function (s, it) { return s + (it && it.id === id && !it.lock ? Math.max(1, Number(it.cnt) || 1) : 0); }, 0) : 0; };
   var take = function (id, n) {
     var p = P(); if (count(id) < n) return false;
@@ -195,7 +196,7 @@
     var s = store(p), eq = equippedIdx(p);
     o.eq = eq; o.eqSt = eq >= 0 ? stageOf(p, eq) : 0; o.eqLib = eq >= 0 && libOf(p, eq) && o.eqSt === 4;   // 起源以後是新的一套，不再用解放淵源
     o.origin = eq >= 0 && o.eqSt >= 5 ? { i: eq, st: o.eqSt, v: originVal(eq, o.eqSt) } : null;
-    var wSt = stageOf(p, K.world), wMult = wSt > 0 ? (o.origin && eq === K.world ? o.origin.v.mult : rawVal(K.world, eq === K.world ? wSt : 1, eq === K.world && o.eqLib).mult) : 1;
+    var wSt = stageOf(p, K.world), wMult = wSt > 0 ? (o.origin && eq === K.world ? o.origin.v.mult * (st6lib(p, eq) ? [1, 1.1, 1.2][st6lib(p, eq)] : 1) : rawVal(K.world, eq === K.world ? wSt : 1, eq === K.world && o.eqLib).mult) : 1;
     CARDS.forEach(function (c, i) {
       var st = stageOf(p, i); if (st <= 0) return;
       o.lit++; if (st >= 2) o.th++; if (st >= 3) o.ma++; if (st >= 4) o.ab++; if (st >= 5) o.og++; if (st >= 6) o.cr++; if (libOf(p, i)) o.lb++;
@@ -550,6 +551,7 @@
           var why = ls === 'rift' ? '已經進過次元裂縫，不能再解放' : ls === 'stage' ? '這張要先升到淵源' : ls === 'miss' ? libNeed().filter(function (x) { return x.have < x.n; }).map(function (x) { return x.name + '還差 ' + (x.n - x.have).toLocaleString(); }).join('；') : '';
           return '<button class="mb" data-mio="lib:' + i + '"' + (ls === 'ok' || ls === 'miss' ? '' : ' disabled') + '>淵源解放（' + cost + '）</button>' + (why ? '<div style="color:#fca5a5;font-size:12px">' + esc(why) + '</div>' : '');
         })()
+      + olibHtml(i)
       + (st > 0 && i !== eq ? '<button class="mb" data-mio="eq:' + i + '">裝備這張</button>' : '')
       + '</div></div>';
     var std = v.eqSt >= 2 ? (STD[stdKeyC(v)] || {})[p.cls] : null;
@@ -570,6 +572,7 @@
         else if (a[0] === 'up') upgrade(Number(a[1]));
         else if (a[0] === 'eq') equipCard(Number(a[1]));
         else if (a[0] === 'lib') liberate(Number(a[1]));
+        else if (a[0] === 'olib') olibUp(Number(a[1]));
         try { if (typeof updateUI === 'function') updateUI(); if (typeof renderTabs === 'function') renderTabs(); } catch (e) {}
         render();
       };
@@ -711,8 +714,175 @@
       return false;
     });
   }
+
+  // ══ 解放起源・解放創世（設計稿 mio-doll-rift-design 第八節；Ping 11-18 20:02 材料定案）══
+  //   22 張都到創世才開放；每張卡各自解放；裝著那張才生效（沒裝著的照舊只給偉特）。
+  //   起源光環（疊在原本光環上）：造成的傷害 +5%、受到的傷害 −5%、異常狀態抵抗 +20%、次元裂縫裡取回力量 +5%。
+  var OLIB_COST = [
+    { dim: 50000, cry: 100000, dream: 200000, sher: 500000, blood: 100000, gold: 50000000000 },
+    { dim: 100000, cry: 200000, dream: 500000, sher: 1000000, blood: 500000, gold: 100000000000 }
+  ];
+  var OLIB_N = ['解放起源', '解放創世'];
+  var OLIB = [
+    [[30, 50], function (v) { return '無敵結束後 5 秒內造成的傷害 +' + v + '%'; }],
+    [[30, 50], function (v) { return '觸發加倍時，另外對附近 2 隻怪造成同樣傷害的 ' + v + '%'; }],
+    [[60, 45], function (v) { return 'MP 低於 30% 時，5 秒內技能不消耗 MP（每 ' + v + ' 秒一次）'; }],
+    [[3, 5], function (v) { return '每 5 秒的回復也給召喚物；隊伍每多 1 人，回復 +' + v + '%'; }],
+    [[8, 12], function (v) { return '傭兵受到的傷害 −' + v + '%'; }],
+    [[5, 8], function (v) { return '解除異常成功時回復最大 HP ' + v + '%'; }],
+    [[30, 50], function (v) { return '替你倒下的傭兵 10 秒後以 ' + v + '% HP 站起來'; }],
+    [[10, 15], function (v) { return '移動中受到的傷害 −' + v + '%'; }],
+    [[0.3, 0.5], function (v) { return '一般攻擊額外造成目標目前 HP ' + v + '% 的傷害（頭目最多該次傷害 ×5）'; }],
+    [[15, 25], function (v) { return '隊伍 4 人以下時，迴避 +' + v; }],
+    [[30, 50], function (v) { return '冷卻減少觸發時，下一招技能傷害 +' + v + '%'; }],
+    [[1, 1], function () { return '反彈給頭目的傷害可以爆擊'; }],
+    [[30, 50], function (v) { return '被暈眩、冰凍、麻痺期間受到的傷害 −' + v + '%'; }],
+    [[2, 3], function (v) { return '死神之鐮期間打倒怪物，鐮刀時間 +' + v + ' 秒（最多 15 秒）'; }],
+    [[10, 15], function (v) { return '藥水溢出的回復量轉成護盾（上限最大 HP ' + v + '%）'; }],
+    [[1, 1], function () { return '對 HP 高於 80% 的目標，第一下必定爆擊（每隻一次）'; }],
+    [[15, 25], function (v) { return '頭目狂暴時，受到它的傷害 −' + v + '%'; }],
+    [[40, 60], function (v) { return '救命觸發後 10 秒內造成的傷害 +' + v + '%'; }],
+    [[1, 1], function () { return '夜晚迴避成功時，下一次攻擊必定爆擊'; }],
+    [[1, 2], function (v) { return '白天每打倒一隻怪回復最大 HP ' + v + '%'; }],
+    [[20, 30], function (v) { return '頭目 HP 低於 30% 時，技能冷卻 −' + v + '%'; }],
+    [[1.1, 1.2], function (v) { return '其他點亮的卡給的偉特效果再 ×' + v; }]
+  ];
+  var olibTxt = function (i, lv) { return OLIB[i][1](OLIB[i][0][Math.max(1, lv) - 1]); };
+  var OLIB_AURA = '起源光環：造成的傷害 +5%、受到的傷害 −5%、異常狀態抵抗 +20%、次元裂縫裡取回力量 +5%';
+  var olibNeed = function (lv) {
+    var p = P(), c = OLIB_COST[lv], DC = W.__afkDiaCost;
+    return [
+      { id: DIM_CARD, name: '次元密奧卡', n: c.dim, have: count(DIM_CARD) },
+      { id: 'afk_dim_crystal', name: '次元結晶', n: c.cry, have: count('afk_dim_crystal') },
+      { id: DREAM_X, name: '夢艷結晶', n: c.dream, have: count(DREAM_X) },
+      { id: SHER_X, name: '席琳結晶', n: c.sher, have: count(SHER_X) },
+      { id: BLOOD, name: '血龍鑽', n: c.blood, have: count(BLOOD) },
+      { k: 'gold', name: '金幣', n: c.gold, have: Math.floor(Number(p && p.gold) || 0) }
+    ];
+  };
+  var olibState = function (i) {   // 'hide'／'done'／'stage'／'miss'／'ok'
+    var p = P(); if (!on(p) || !CARDS[i]) return 'hide';
+    if (compute(p).cr < CARDS.length) return 'hide';
+    var lv = st6lib(p, i); if (lv >= 2) return 'done';
+    if (stageOf(p, i) < 6) return 'stage';
+    return olibNeed(lv).some(function (x) { return x.have < x.n; }) ? 'miss' : 'ok';
+  };
+  var olibUp = function (i) {
+    var p = P(), lv = st6lib(p, i), stt = olibState(i);
+    if (stt === 'miss') { try { var MW = W.__afkMatWh; if (MW && MW.on && MW.on()) olibNeed(lv).forEach(function (x) { if (!x.id) return; var lack = x.n - count(x.id); if (lack > 0) { try { MW.pull(x.id, lack); } catch (e) {} } }); } catch (e) {} stt = olibState(i); }
+    if (stt === 'miss') { sys('<span class="text-amber-300">' + OLIB_N[lv] + '「' + CARDS[i][0] + '」：' + olibNeed(lv).filter(function (x) { return x.have < x.n; }).map(function (x) { return x.name + '還差 ' + (x.n - x.have).toLocaleString(); }).join('；') + '。</span>'); return false; }
+    if (stt !== 'ok') return false;
+    olibNeed(lv).forEach(function (x) { if (x.id) take(x.id, x.n); }); p.gold = (Number(p.gold) || 0) - OLIB_COST[lv].gold;
+    var s = store(p); s.olib = s.olib || {}; s.olib[i] = lv + 1;
+    sys('<span class="font-bold" style="color:#22d3ee">🃏 密奧之卡「' + ROMAN[i] + ' ' + CARDS[i][0] + '」' + OLIB_N[lv] + '——' + esc(olibTxt(i, lv + 1)) + '。</span>');
+    refresh(); try { saveGame(); } catch (e) {}
+    return true;
+  };
+  var olibHtml = function (i) {
+    var p = P(), stt = olibState(i); if (stt === 'hide') return '';
+    var lv = st6lib(p, i);
+    var head = '<div style="color:#67e8f9;font-size:12px;margin:2px 0">' + (lv ? OLIB_N[lv - 1] + '：' + esc(olibTxt(i, lv)) + (lv < 2 ? '　→　' + OLIB_N[1] + '：' + esc(olibTxt(i, 2)) : '') : OLIB_N[0] + '：' + esc(olibTxt(i, 1)) + '；' + OLIB_N[1] + '：' + esc(olibTxt(i, 2))) + '<br>' + esc(OLIB_AURA) + '</div>';
+    if (stt === 'done') return head + '<span style="color:#22d3ee;font-weight:bold;align-self:center">已解放創世</span>';
+    var c = OLIB_COST[lv], cost = '次元密奧卡 ×' + c.dim.toLocaleString() + '＋次元結晶 ×' + c.cry.toLocaleString() + '＋夢艷結晶 ×' + c.dream.toLocaleString() + '＋席琳結晶 ×' + c.sher.toLocaleString() + '＋血龍鑽 ×' + c.blood.toLocaleString() + '＋金幣 ' + c.gold.toLocaleString();
+    var why = stt === 'stage' ? '這張要先升到創世' : stt === 'miss' ? olibNeed(lv).filter(function (x) { return x.have < x.n; }).map(function (x) { return x.name + '還差 ' + (x.n - x.have).toLocaleString(); }).join('；') : '';
+    return head + '<button class="mb" data-mio="olib:' + i + '"' + (stt === 'ok' || stt === 'miss' ? '' : ' disabled') + '>' + OLIB_N[lv] + '（' + cost + '）</button>' + (why ? '<div style="color:#fca5a5;font-size:12px">' + esc(why) + '</div>' : '');
+  };
+  // ── 效果 ──
+  var OLV = function (k) { var p = P(); if (!p || !on(p)) return 0; var c = cur(); if (!c.origin || c.origin.st < 6 || c.eq !== K[k]) return 0; return st6lib(p, c.eq); };
+  var OV = function (k) { var lv = OLV(k); return lv ? OLIB[K[k]][0][lv - 1] : 0; };
+  var AUR = function () { var p = P(), c = p && on(p) ? cur() : null; return !!(c && c.origin && c.origin.st >= 6 && st6lib(p, c.eq) > 0); };
+  if (X) {
+    var ol = { foolA: 0, foolB: 0, magX: false, prN: 0, prU: 0, prMp: 0, whX: false, reap0: 0, reapS: 0, reapU: 0, starU: 0, lov: [] };
+    var oPop = X.pop;
+    X.pop = function (key) {
+      try {
+        var m = /^mioo(\d+)$/.exec(String(key || '')), t = tk(), p = P();
+        if (m && p) {
+          var i = Number(m[1]);
+          if (i === K.fool && OV('fool')) { var sec = originVal(K.fool, 6).sec; ol.foolA = t + sec * 10; ol.foolB = ol.foolA + 50; }
+          if (i === K.magician && OV('magician')) ol.magX = true;
+          if (i === K.hierophant && OV('hierophant')) p.hp = Math.min(p.mhp, p.hp + Math.floor(p.mhp * OV('hierophant') / 100));
+          if (i === K.lovers && OV('lovers')) (p.allies || []).forEach(function (a) { if (a && !(a.curHp > 0) && ol.lov.every(function (x) { return x.a !== a; })) ol.lov.push({ a: a, at: t + 100, pct: OV('lovers') }); });
+          if (i === K.wheel && OV('wheel')) ol.whX = true;
+          if (i === K.death && OV('death')) { ol.reapS = t; ol.reap0 = t + 50; ol.reapU = t + 50; }
+          if (i === K.star && OV('star')) ol.starU = t + 100;
+        }
+      } catch (e) {}
+      return oPop.apply(this, arguments);
+    };
+    (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) {
+      var p = P(); if (!p || !ent) return 1; var k = 1;
+      try {
+        if (ent === p) {
+          if (AUR()) k *= 0.95;
+          var ch = OV('chariot'); if (ch) { var mv = W.AFK_RELIC_RUNTIME && W.AFK_RELIC_RUNTIME.state(p, '_movement'); if (mv && mv.moving) k *= 1 - ch / 100; }
+          var hg = OV('hanged'); if (hg) { var s0 = p.statuses || {}; if ((s0.stun || 0) > 0 || (s0.freeze || 0) > 0 || (s0.paralyze || 0) > 0) k *= 1 - hg / 100; }
+          var tw = OV('tower'); if (tw && mob && mob.boss) { var rg = 1; try { rg = typeof mobRageDmgMult === 'function' ? mobRageDmgMult(mob) : 1; } catch (e) {} if (rg > 1 || mob._enraged) k *= 1 - tw / 100; }
+        } else if ((p.allies || []).indexOf(ent) >= 0) { var em = OV('emperor'); if (em) k *= 1 - em / 100; }
+      } catch (e) {}
+      return k;
+    });
+    X.on('taken', function (ent, dmg, mob) {
+      var p = P(); if (!p || ent !== p || !(dmg > 0) || !mob || !mob.boss || mob._dead || !OV('justice')) return dmg;
+      try { var ju = originVal(K.justice, 6).pct, cr = Math.min(80, Number(p.d && (p.d.meleeCrit || p.d.crit)) || 10); if (rnd() * 100 < cr) X.hitMob(mob, dmg * ju / 100 * 0.5); } catch (e) {}
+      return dmg;
+    });
+    X.on('dealt', function (actor, target, v, opt) {
+      var p = P(); if (!p || actor !== p || !(v > 0) || !target) return v;
+      var t = tk(), m = 1, add = 0; opt = opt || {};
+      if (AUR()) m *= 1.05;
+      var fo = OV('fool'); if (fo && t >= ol.foolA && t < ol.foolB) m *= 1 + fo / 100;
+      if (ol.magX) { ol.magX = false; var mg = OV('magician'); if (mg) { var n = 0; (mapState.mobs || []).forEach(function (x) { if (n < 2 && x && x !== target && !x._dead && x.curHp > 0 && !x._isAlly) { n++; X.hitMob(x, v * mg / 100); } }); } }
+      var wh = OV('wheel'); if (ol.whX && wh && !opt.packet) { ol.whX = false; m *= 1 + wh / 100; }
+      var sg = OV('strength'); if (sg && opt.packet && target.curHp > 0) add += Math.min(target.curHp * sg / 100, target.boss ? v * 5 : Infinity);
+      if (OV('death') && t >= ol.reap0 && t < ol.reapU) m *= 1.2;
+      var st = OV('star'); if (st && t < ol.starU) m *= 1 + st / 100;
+      if (OV('devil') && opt.packet && target.hp > 0 && target.curHp > target.hp * 0.8 && !target._mioDevX) { target._mioDevX = 1; if (!(opt.packet && opt.packet.crit)) m *= 1.5; }
+      return v * m + add;
+    });
+    X.on('tick', function () {
+      var p = P(); if (!p || p.dead || !on(p)) return; var t = tk();
+      var pr = OV('priestess');
+      if (pr) { if (t >= ol.prN && p.mmp > 0 && p.mp < p.mmp * 0.3 && X.inCombat()) { ol.prN = t + pr * 10; ol.prU = t + 50; ol.prMp = p.mp; } if (t < ol.prU) p.mp = Math.max(p.mp, ol.prMp); }
+      var em = OV('empress');
+      if (em && t % 50 === 0) {
+        var base = originVal(K.empress, 6).hp, n = X.party() - 1, extra = Math.floor(base * n * em / 100);
+        if (extra > 0) { p.hp = Math.min(p.mhp, p.hp + extra); (p.allies || []).forEach(function (a) { if (a && !a._downed && a.curHp > 0) a.curHp = Math.min(a.mhp, a.curHp + extra); }); }
+        (p.summonsV2 || []).forEach(function (s0) { if (s0 && s0.hp > 0 && s0.mhp) s0.hp = Math.min(s0.mhp, s0.hp + base + extra); });
+      }
+      if (ol.lov.length) ol.lov = ol.lov.filter(function (x) { if (t < x.at) return true; var a = x.a; if (a && (p.allies || []).indexOf(a) >= 0 && !(a.curHp > 0)) { a._downed = false; a._reviveCd = 0; a.curHp = Math.max(1, Math.floor(a.mhp * x.pct / 100)); } return false; });
+      var jg = OV('judgement');
+      if (jg && t % 5 === 0) {
+        var b = (mapState.mobs || []).filter(function (x) { return x && x.boss && !x._dead && x.curHp > 0 && x.hp > 0 && x.curHp < x.hp * 0.3; })[0];
+        if (b) { var ex = 5 * (1 / (1 - jg / 100) - 1); try { var cd = p.cds || {}; ['atkSk', 'healSk', 'purifySk', 'convertSk'].forEach(function (k) { if (cd[k] > 0) cd[k] = Math.max(0, cd[k] - ex); }); } catch (e) {} }
+      }
+    });
+    X.on('kill', function () {
+      var p = P(); if (!p) return; var t = tk();
+      var dt = OV('death'); if (dt && t < ol.reapU) ol.reapU = Math.min(ol.reapS + 150, ol.reapU + dt * 10);
+      var su = OV('sun'); if (su && !isNight()) p.hp = Math.min(p.mhp, p.hp + Math.floor(p.mhp * su / 100));
+    });
+    X.on('evade', function () { var p = P(); if (p && OV('moon') && isNight()) p._darkEvadeCrit = true; });
+    X.on('potion', function (d, est, hp0) { var p = P(), tp = OV('temperance'); if (!p || !tp) return; var over = est - Math.max(0, (p.mhp || 0) - hp0); if (over > 0) X.shield.add(over, Math.floor(p.mhp * tp / 100)); });
+  }
+  if (typeof W.recomputeStats === 'function') {
+    var oRe3 = W.recomputeStats;
+    W.recomputeStats = function () {
+      var r = oRe3.apply(this, arguments);
+      try {
+        var p = P(); if (p && p.d && on(p) && AUR()) {
+          var hm = OV('hermit'); if (hm && X && X.party() <= 4) p.d.er = (Number(p.d.er) || 0) + hm;
+          var cc = cur(), dd = DB.items[idOf(cc.eq)]; if (dd) dd.abnormalResist = (Number(dd.abnormalResist) || 0) + 20;
+        }
+      } catch (e) {}
+      return r;
+    };
+    try { (0, eval)('recomputeStats = window.recomputeStats'); } catch (e) {}
+  }
+  var regRecover = function () { var R = W.__afkDimRift; if (!R || !R.RECOVER || regRecover.done) return; regRecover.done = true; R.RECOVER.push(['密奧之卡・起源光環', function (p) { return p === P() && AUR() ? 5 : 0; }]); };
+  regRecover(); W.addEventListener('load', regRecover);
   var api = W.__afkMio = { SHARD: SHARD, RATE: RATE, COST: COST, CARDS: CARDS, K: K, SET: SET, AURA: AURA, STD: STD, STD_N: STD_N, STAGE: STAGE, ROMAN: ROMAN, idOf: idOf, idxOf: idxOf,
     store: store, compute: compute, UP_COST: UP_COST, DIM: DIM, dimDesc: dimDesc, DIM_CARD: DIM_CARD, DIM_RATE: DIM_RATE, maxStage: maxStage, needOf: needOf, missOf: missOf, summary: summary, rawVal: rawVal, descOf: descOf, auraTxt: auraTxt, openCard: openCard, upgrade: upgrade, equipCard: equipCard, open: open, close: close,
-    NPC_ID: NPC_ID, npcPanel: npcPanel, LIB_COST: LIB_COST, LIBV: LIBV, AURA_LIB: AURA_LIB, libOf: libOf, libState: libState, liberate: liberate, libNeed: libNeed,
+    NPC_ID: NPC_ID, npcPanel: npcPanel, OLIB: OLIB, OLIB_COST: OLIB_COST, olibState: olibState, olibUp: olibUp, st6lib: st6lib, LIB_COST: LIB_COST, LIBV: LIBV, AURA_LIB: AURA_LIB, libOf: libOf, libState: libState, liberate: liberate, libNeed: libNeed,
     roll: function () { return Math.random(); }, count: count, wheel: wheel, refresh: refresh, ORIGIN: ORIGIN, originVal: originVal };
 })();

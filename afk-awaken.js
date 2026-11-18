@@ -402,7 +402,7 @@
   // ── 掛進 DB ──
   var LABEL = { act: '主動', pas: '被動', buf: '增益' };
   var LEG_COST = ['afk_ts_contempt_earth', 'afk_ts_contempt_water', 'afk_ts_contempt_wind', 'afk_ts_contempt_fire', 'afk_ts_dark_stardust', 'afk_ts_dream_dust'].map(function (id) { return [id, 300]; });
-  var MYTH_COST = [['afk_dim_crystal', 500], ['afk_rift_shard', 100]];
+  var MYTH_COST = [['afk_dim_xcrystal', 500], ['afk_rift_shard', 1000]];   // 11-18 19:18 Ping：異化次元結晶 500＋裂縫碎光 1,000
   var BOOK_P = function (lv) { return Math.round((5000 + lv * lv * 120) / 1000) * 1000; };
   Object.keys(SK).forEach(function (id) {
     var s = SK[id], c = CLS[s.cls];
@@ -410,7 +410,7 @@
       desc: s.desc + (s.k === 'act' ? '（MP ' + s.mp + '，冷卻 ' + s.cd + ' 秒，自動施放）' : s.k === 'buf' ? '（MP ' + s.mp + '，自動維持）' : '') };
     var bk = 'bk_aw_' + s.cls + '_' + s.key;
     DB.items[bk] = { type: 'skillbk', n: c.n + '技能書(' + s.n + ')', p: s.tier === '一般' ? BOOK_P(s.lv) : 0, sk: id, gachaWeight: 0, img: s.img, noShop: true,
-      d: '覺醒職業「' + c.n + '」的' + s.tier + '技能書。' + ({ 一般: '席琳神殿的覺醒導師有賣。', 英雄: '由王掉落。', 傳說: '由王掉落；學習時另外消耗轉生用時空材料六種各 300。', 神話: '只有次元裂縫難度的副本會掉落；學習時另外消耗次元結晶 500、裂縫碎光 100。' }[s.tier] || '') };
+      d: '覺醒職業「' + c.n + '」的' + s.tier + '技能書。' + ({ 一般: '席琳神殿的覺醒導師有賣。', 英雄: '由王掉落。', 傳說: '由王掉落；學習時另外消耗轉生用時空材料六種各 300。', 神話: '只有次元裂縫難度的副本會掉落；學習時另外消耗異化次元結晶 500、裂縫碎光 1,000。' }[s.tier] || '') };
     if (s.tier === '傳說') DB.items[bk].awCost = LEG_COST; else if (s.tier === '神話') DB.items[bk].awCost = MYTH_COST;
     s.book = bk;
   });
@@ -448,7 +448,7 @@
     Object.keys(SK).forEach(function (id) {
       var sk = SK[id], bk = sk.book; if (!bk || !DB.items[bk] || X.acquire[bk]) return;
       if (sk.tier === '一般') X.acq(bk, '席琳神殿「覺醒導師 伊瑟拉」販售（' + (DB.items[bk].p || 0).toLocaleString() + ' 金幣）。');
-      else if (sk.tier === '神話') X.acq(bk, '次元裂縫難度的副本（次元裂縫的多人副本、單人副本的次元裂縫難度）：王 1%、一般怪 0.01%（覺醒職業掉自己職業的書）；也可以在覺醒導師用失去光芒的覺醒職業 神話法術書 10 本＋神話技能秘笈 1 本兌換。學習時另外消耗次元結晶 500、裂縫碎光 100。');
+      else if (sk.tier === '神話') X.acq(bk, '次元裂縫難度的副本（次元裂縫的多人副本、單人副本的次元裂縫難度）：王 1%、一般怪 0.01%（覺醒職業掉自己職業的書）；也可以在覺醒導師用失去光芒的覺醒職業 神話法術書 10 本＋神話技能秘笈 1 本兌換。學習時另外消耗異化次元結晶 500、裂縫碎光 1,000。');
       else if (sk.tier === '傳說') X.acq(bk, '由王掉落（見掉落查詢）；也可以在覺醒導師用失去光芒的覺醒職業 神話法術書 10 本＋傳說技能秘笈 1 本兌換。學習時另外消耗時空材料六種各 300。');
     });
   };
@@ -950,7 +950,7 @@
       Object.keys(HERO_DROP[cls]).forEach(function (k) { var s = SK['sk_aw_' + cls + '_' + k]; if (s) h += '<div class="ax-desc">' + esc(s.n) + '（Lv' + s.lv + '）：' + esc(HERO_DROP[cls][k]) + '</div>'; });
       h += '<div class="ax-h">傳說技能書（Lv80 以上的王掉落；學習另外消耗時空材料六種各 300）</div>';
       Object.keys(LEG_DROP[cls]).forEach(function (k) { var s = SK['sk_aw_' + cls + '_' + k]; if (s) h += '<div class="ax-desc">' + esc(s.n) + '（Lv' + s.lv + '）：' + esc(LEG_DROP[cls][k]) + (learned(p, s.id) ? ' <span class="ok">已學會</span>' : '') + '</div>'; });
-      h += '<div class="ax-h">神話技能書（只有次元裂縫難度的副本會掉；學習另外消耗次元結晶 500、裂縫碎光 100）</div>';
+      h += '<div class="ax-h">神話技能書（只有次元裂縫難度的副本會掉；學習另外消耗異化次元結晶 500、裂縫碎光 1,000）</div>';
       Object.keys(SK).filter(function (id) { return SK[id].cls === cls && SK[id].tier === '神話'; }).forEach(function (id) { var s = SK[id]; h += '<div class="ax-desc">' + esc(s.n) + '（Lv' + s.lv + '）：' + esc(s.desc) + (learned(p, id) ? ' <span class="ok">已學會</span>' : '') + '</div>'; });
     }
     h += '<div class="ax-err">' + esc(ui.err) + '</div><div class="ax-msg">' + esc(ui.msg) + '</div></div>';

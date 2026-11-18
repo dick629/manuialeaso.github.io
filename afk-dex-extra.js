@@ -31,6 +31,18 @@
   X.drop('真‧吉爾塔斯', 'afk_asc_card_spacetime_giltas', 1, '唯一', true);
   X.acq('afk_gt_frag_up', '受詛咒的黑暗妖精聖地「吉爾塔斯」必掉。');
   X.acq('afk_gt_frag_down', '謀叛者的低語（亞丁城副本）第三層「冥皇丹特斯」必掉。');
+  // 11-18 批次：次元裂縫的新材料（只寫來源，不寫機率）
+  X.acq('afk_dim_xcrystal', '次元裂縫難度的副本頭目偶爾留下（隊伍人越多越容易）。');
+  X.acq('afk_merge_dust', '席琳神殿「次元的鍛造師」的材料合成：分裂的蔑視塵埃＋血龍鑽。');
+  X.acq('afk_dimlib_stone', '席琳神殿「次元的鍛造師」的材料合成：昇華支配強化石換取。');
+  X.acq('afk_alien_dust', '席琳神殿「次元的鍛造師」的材料合成：破碎星光塵埃＋血龍鑽。');
+  X.acq('afk_time_mirror', '佩特拉後裔村「時光的引路人」：用倒影之鏡換取。');
+  X.acq('afk_dim_essence', '席琳神殿「藝能的守門人」：用地獄精華換取。');
+  X.acq('afk_dim_stardust', '席琳神殿「藝能的守門人」：用至暗星塵換取。');
+  ['horn', 'light', 'ember', 'ink', 'sea', 'hardin'].forEach(function (k) { X.acq('afk_art_' + k, '席琳神殿「藝能的守門人」的藝能副本：打倒你的倒影時留下。'); });
+  X.acq('afk_rune_dim', 'GD之子的期待的頭目極少留下；佩特拉後裔村「時光的引路人」的時光副本偶爾撿到。');
+  ['afk_rune_dim2', 'afk_rune_dim3'].forEach(function (id) { X.acq(id, '佩特拉後裔村「時光的引路人」的時光副本，偶爾撿到。'); });
+  X.acq('afk_eye_four', '威頓村「米米」：四種次元魔眼合成（每個角色一顆）。');
   X.acq('afk_gt_key', '長老會議廳 NPC「次元裂隙」：次元時空鑰匙碎片(上)＋(下) 組成。交出鑰匙進入異界祭壇（席琳夢域鏡限定、每個角色每天通關一次）。');
   X.acq('afk_gt_orb', '崩壞的長老會議廳「真‧死亡騎士 冥皇丹特斯」：身上沒有寶珠時必掉。帶在身上＝全隊免疫真‧吉爾塔斯的致死圓形結界。');
   X.acq('wpn_gt_sword', '吉爾塔斯副本・異界祭壇：打倒第三層「真‧吉爾塔斯」通關時 1%（唯一）。');

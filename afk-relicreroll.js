@@ -91,7 +91,7 @@
   var fxText = function (q, fx) {
     var r = R(); if (!r || !fx) return '';
     var def = null; try { def = r.buildDef(q.base, q.n, fx, q.asc, q.evo, q.fx3); } catch (e) {}
-    if (def && def.relicFxRes) return '「' + esc(nm(fx)) + '」→ 沒有可繼承的效果，改給四屬性抗性各 +3';
+    if (def && def.relicFxRes) return '「' + esc(nm(fx)) + '」→ 沒有可繼承的效果，改給' + (def.type === 'wpn' ? '追擊 2.5%' : '四屬性抗性各 +3');
     var dd = DB.items[fx] && DB.items[fx].d ? String(DB.items[fx].d).replace(/<[^>]+>/g, '').replace(/\s*〔[^〕]*〕\s*$/, '') : '';
     return '「' + esc(nm(fx)) + '」的特效' + (dd ? '<div class="ax-note">' + esc(dd.length > 120 ? dd.slice(0, 120) + '…' : dd) + '</div>' : '');
   };
@@ -187,7 +187,7 @@
     if (!sacAll.some(function (s) { return s.it.uid === ui.sac; })) ui.sac = sacAll[0] ? sacAll[0].it.uid : '';
     var pick = '<select id="afk-rr-sac" aria-label="當材料的 +10 遺物">' + (sacAll.length ? sacAll.map(function (s) { return '<option value="' + esc(s.it.uid) + '"' + (s.it.uid === ui.sac ? ' selected' : '') + '>+' + COST.plus + ' ' + esc(nm(s.q.base)) + ((Number(s.it.cnt) || 1) > 1 ? ' ×' + s.it.cnt : '') + '</option>'; }).join('') : '<option value="">沒有 +' + COST.plus + ' 遺物</option>') + '</select>';
     h += K.rowHtml({ key: 'roll', ico: K.itemIco(CRY), name: '重洗第二詞綴', color: '#fde047',
-      desc: '從同部位的遺物裡重新抽一件來繼承（不會抽到原本那件、也不會抽到第三詞綴那件；沒有可繼承效果的會改給四屬性抗性 +3）。抽完可以選保留或替換；強化值、昇華與身上其他詞綴都不會動。',
+      desc: '從同部位的遺物裡重新抽一件來繼承（不會抽到原本那件、也不會抽到第三詞綴那件；沒有可繼承效果的：武器改給追擊 2.5%（普攻後 2.5% 機率再打一次），防具、飾品改給四屬性抗性 +3）。抽完可以選保留或替換；強化值、昇華與身上其他詞綴都不會動。',
       note: '當材料的 +10 遺物：背包、未上鎖、沒昇華的任何一件。',
       req: K.reqTxt(K.have(CRY), COST.crystal, '回夢水晶') + '　' + K.reqTxt(sacAll.length ? 1 : 0, 1, '件 +' + COST.plus + ' 遺物'),
       why: pd ? '先決定上一次的結果' : !x ? '先在上面選一件遺物' : '', pick: pick, btns: [['roll', '重洗', K.have(CRY) >= COST.crystal && sacAll.length > 0]] }, 'data-rr');

@@ -77,6 +77,7 @@
       var r = rec(); r.pending = md;
       if (md === 'tier3') { if (!forceCloth(P())) { r.pending = null; sys('<span class="text-amber-300">沒有可以穿的聖衣，無法進入終焉第三階層。</span>'); return; } r.t3 = 'lose'; }   // 進場就算用掉；強制聖衣變身
       FB.startMode(md, '<span class="afk-lore">殷海薩的神諭：「這次她只剩……不，她變強了。」</span><span class="font-bold" style="color:#c084fc;">你再次沉入死亡之海——這一次，迎接你的是「' + nm + '」。</span>' + (md === 'tier3' ? '<span class="afk-lore">夢的底層好像少了一半。</span>' : '') + '<span class="text-amber-200">' + powTxt(md) + '；時間封印照舊。</span>');
+      if (md === 'tier3') { S()._afkTruthMid = false; if (hasLens(P())) say(TRUTH.open); }
     };
     var msg = '⚠ 終焉第' + (t === 2 ? '二' : '三') + '階層：' + nm + '\n\n席琳的' + powTxt(md) + '（使徒的 HP 與傷害 ×' + FB.TIER[md].k + '），時間封印、凝視、死亡之潮照舊。\n'
       + (t === 3 ? '只能挑戰一次——進場就算用掉，倒下、回村或中途重新整理都算失敗。\n進場時強制以聖衣變身（沒有變身就自動穿上星數最高的那件）。\n' : '可以重複挑戰，直到打贏為止；打贏後不能再回頭打這一層。\n')
@@ -84,11 +85,41 @@
     if (W.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '終焉階層', message: msg, okText: '沉入死亡之海', cancelText: '再準備一下', danger: t === 3, onOk: go });
     else if (confirm(msg)) go();
   };
+  // ── 真相對話（story-design 第四節；Ping 11-04：只有帶著「無光的鏡片」才看得到，不加入場門檻；11-18「故事 開始修復」補上）──
+  var LENS = 'afk_dq_lens';
+  var hasLens = function (p) { try { return typeof questCountId === 'function' && questCountId(LENS) > 0; } catch (e) { return false; } };
+  var nar = function (t) { return '<span class="afk-lore" style="color:#cbd5e1">' + t + '</span>'; };
+  var who = function (n, t, c) { return '<span class="font-bold" style="color:' + c + '">' + n + '：</span><span class="afk-lore">「' + t + '」</span>'; };
+  var SH = function (t) { return who('席琳', t, '#7dd3fc'); }, YOU = function (t) { return who('你', t, '#fde68a'); };
+  var TRUTH = {
+    open: [nar('水是溫的。沉沒神殿只剩下一半：左邊的石柱、左邊的階梯、左邊的穹頂。另一半像被刀切過，切口外是一片金色的空無。'),
+      who('殷海薩的神諭', '她只剩一半了。斬下去，第二次諸神之戰就不會開始。', '#fde047'),
+      SH('……你又來了。這一次，你看見我的樣子了嗎？'), SH('別看我的傷口。看你頭上。'),
+      nar('水面上懸著一隻金色的眼睛。每一次沉進死亡之海，你都以為那是月亮。')],
+    mid: [SH('……好安靜。好久沒有這麼安靜了。'), SH('這裡不是死亡之海。這是我的夢，是我剩下的那一半還能做的夢。'),
+      SH('每一次「討伐」，你都是被送進來的。她打開了鏡子，要你替她把我從夢裡抹掉。'), YOU('她是誰？'), SH('我的母親，殷海薩。'),
+      SH('她說可以讓我回家。我跟著天使走上拜溫的塔，走到半路，看見神界的門裡映著別的天空——不是我們的天空。'),
+      SH('我回頭的時候，她已經握住了我的另一半：我的水、我的名字、我的臉。'),
+      SH('現在她穿著我的臉在你們的世界放火。那些「恩賜」是光，你被灼傷過，你知道的。'),
+      SH('我在夢裡死去，就再也醒不來。到那時候，世上只剩下一個席琳，就是她。'), YOU('她到底想要什麼？'),
+      SH('天空。所有的天空。為了鑿穿它，她會把世界之樹吸乾。')],
+    end: [nar('神殿的切口裂開，金色的光像潮水一樣倒灌下來。遠處傳來一聲悶響，像是樹根被拔起。'),
+      SH('縫隙開了。回去吧，生者。這一次，別再相信從天上傳下來的聲音。')]
+  };
+  var say = function (rows) { rows.forEach(function (h, i) { setTimeout(function () { sys(h); }, i * 600); }); };
+  var truthSeen = function (p) { if (p) { p.afkTruth = p.afkTruth || Date.now(); try { saveGame(); } catch (e) {} } };
+  // 已經沒辦法再進第三階層、或是織星者：在「監視之眼」交付時直接看（之魂代替鏡片）
+  W.__afkTruthTalk = function (p) {
+    p = p || P(); if (!p || p.afkTruth) return;
+    say([nar('之魂在你胸口發燙。水面上那隻金色的眼睛——你一直以為是月亮的那隻——碎了。')].concat(TRUTH.mid, TRUTH.end)); truthSeen(p);
+  };
+  W.__afkTruthLens = { has: hasLens, TRUTH: TRUTH };
   var finish = function (md, result, why) {
     var p = P(), r = rec(p), nm = FB.TIER[md].n;
     r.pending = null;
     if (md === 'tier2') { if (result === 'win') r.t2 = 'win'; else if (r.t2 !== 'win') r.t2 = 'lose'; }
     if (md === 'tier3') r.t3 = result === 'win' ? 'win' : 'lose';
+    if (md === 'tier3' && result === 'win' && hasLens(p)) { say(TRUTH.end); truthSeen(p); }
     if (result === 'win') {
       var rw = REWARD[md]; if (rw && DB.items[rw[0]]) gainItem(rw[0], rw[1], true, true);
       sys('<span class="font-bold" style="color:#fde047;">🏆 終焉階層「' + nm + '」通關！</span>' + (rw ? '<span class="text-amber-200">得到 ' + DB.items[rw[0]].n + ' ×' + rw[1] + '。</span>' : '') + (md === 'tier2' ? '<span class="text-fuchsia-200">第三階層「席琳伴身」已經開放（只能挑戰一次）。</span>' : ''));
@@ -98,7 +129,10 @@
   };
   // 中途重新整理：掛著的挑戰算失敗
   var oTick = W.tick;
-  if (typeof oTick === 'function') W.tick = function () { var r = oTick.apply(this, arguments); try { var p = P(), t = p && p.afkFinalTier; if (t && t.pending && !S()._afkFinal) finish(t.pending, 'lose', '中途離開'); } catch (e) {} return r; };
+  if (typeof oTick === 'function') W.tick = function () { var r = oTick.apply(this, arguments); try { var p = P(), t = p && p.afkFinalTier; if (t && t.pending && !S()._afkFinal) finish(t.pending, 'lose', '中途離開'); } catch (e) {}
+    // 真相對話中段：第三階層、帶著鏡片、席琳 HP 降到一半時（一場只播一次）
+    try { var s = S(); if (s._afkFinal && s._afkFinalMode === 'tier3' && !s._afkTruthMid && (s.ticks || 0) % 5 === 0) { var b = (mapState.mobs || []).filter(function (m) { return m && m._afkFinal && !m._dead; })[0]; if (b && b.curHp <= b.hp * 0.5 && hasLens(P())) { s._afkTruthMid = true; say([nar('懷裡的無光的鏡片映出那隻眼睛，鏡面一黑，眼睛碎了。')].concat(TRUTH.mid)); } } } catch (e) {}
+    return r; };
   // Ping 11-12：終焉階層卡片改放在「死亡女神 席琳」NPC（afk-finalboss 的 __afkGoddessCards）
   {
     (W.__afkGoddessCards = W.__afkGoddessCards || []).push(function (box) {

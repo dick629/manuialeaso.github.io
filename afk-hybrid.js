@@ -241,8 +241,10 @@
             var s = vs(target);
             var pf = phys ? 1 : 0, mf = mag ? 1 : 0;
             if (phys && kind === 'ranged' && actor.cls === 'elf') { pf = 0.7; mf = 0.3; }   // 妖精遠攻：70 物理／30 魔法
+            var qg = mag && qiguHit && qiguHit === actor; if (qg) { qiguHit = null; pf = 0.5; mf = 0.5; }   // 奇古獸遺物：50 物理／50 魔法（Ping 11-18 17:51）
             var mult = pf * (1 + V.ph(target, s)) + mf * (1 + V.mg(target, s));
-            var add = 0, we = phys && actor.eq ? wpnEle(actor) : null;
+            var add = 0, we = (phys || qg) && actor.eq ? wpnEle(actor) : null;
+            if (qg && we && we.scroll < 5) we = null;   // 奇古獸遺物的屬性段：屬性詞綴 5 階才算
             if (we) {
               var red = Math.min(0.85, resOf(target, we.ele) / 200);
               var cm = typeof elementCounterMult === 'function' ? elementCounterMult(we.ele, target.e) : 1;
@@ -370,7 +372,32 @@
   };
   W.__afkGrantLegacy = grantLegacy;
   setInterval(function () { try { grantLegacy(); } catch (e) {} }, 3000);
-  var hookAll = function () { hookReq(); hookSpell(); hookDmg(); hookAura(); hookCast(); hookSkills(); hookPet(); hookLearn(); hookSelects(); hookBook(); };
+  // ── 奇古獸遺物＝混傷遺物（Ping 11-18 17:51）：普攻 50 物理／50 魔法（兩種易傷、兩邊命中效果）；
+  //   屬性詞綴未滿 5 階＝無屬性（不套屬性剋制、沒有屬性段）。一般奇古獸照舊。 ──
+  var qiguHit = null, qiguNoEle = null;
+  var isQiguRelic = function (wd) { return !!(wd && wd.qigu && (wd.relic || wd.relicBase || (typeof isRelic === 'function' && isRelic(wd)))); };
+  var attrTier = function (a) { try { var inst = a && a.eq && a.eq.wpn, af = inst && typeof getAttrAffix === 'function' ? getAttrAffix(inst.attr) : null; return af ? N(af.tier) : 0; } catch (e) { return 0; } };
+  var hookQigu = function () {
+    if (typeof W.getAttrAffix === 'function' && !W.getAttrAffix.__afkQg) {
+      var og = W.getAttrAffix;
+      var g = function (attr) { if (qiguNoEle && qiguNoEle.attr === attr) { qiguNoEle = null; return null; } return og.apply(this, arguments); };   // 只擋奇古獸主擊判定屬性的那一次
+      g.__afkQg = true; W.getAttrAffix = g; try { (0, eval)('getAttrAffix = window.getAttrAffix'); } catch (e) {}
+    }
+    var wrap = function (name, actorOf, wpnOf) {
+      var o = W[name]; if (typeof o !== 'function' || o.__afkQg) return;
+      var f = function () {
+        var a = actorOf(arguments), wd = wpnOf(arguments);
+        if (W.__afkHybridOff || !a || !isQiguRelic(wd)) return o.apply(this, arguments);
+        var inst = a.eq && a.eq.wpn;
+        qiguHit = a; qiguNoEle = (inst && inst.attr && attrTier(a) < 5) ? { attr: inst.attr } : null;
+        try { return o.apply(this, arguments); } finally { qiguHit = null; qiguNoEle = null; }
+      };
+      f.__afkQg = true; W[name] = f; try { (0, eval)(name + ' = window.' + name); } catch (e) {}
+    };
+    wrap('qiguPlayerAttack', function () { return P(); }, function (a) { return a[1]; });
+    wrap('allyQiguAttack', function (a) { return a[0]; }, function (a) { return a[2]; });
+  };
+  var hookAll = function () { hookQigu(); hookReq(); hookSpell(); hookDmg(); hookAura(); hookCast(); hookSkills(); hookPet(); hookLearn(); hookSelects(); hookBook(); };
   hookAll(); W.addEventListener('load', function () { hookAll(); setTimeout(hookAll, 3000); });
   W.LineageHybrid = { LEGACY: LEGACY, AWAKEN: AWAKEN, legacy: legacy, isHybrid: isHybrid, isBlood: isBlood, routeKey: routeKey, stat: stat,
     V: V, relicKind: relicKind, gearOf: gearOf,
