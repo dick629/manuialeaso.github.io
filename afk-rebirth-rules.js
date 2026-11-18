@@ -111,6 +111,11 @@
   });
   setInterval(function () { try { paintAll(); } catch (e) {} }, 500);
 
+  // 11-18（Ping 11:07）：直接扣 HP 的效果要先扣護盾時用這個（一般怪死亡的爆炸、死亡的代價）；王的死亡效果是真實傷害，不經過這裡、護盾無效
+  window.__afkShieldEat = function (e, dmg) {
+    try { var sh = e ? Number(e._afkShield) || 0 : 0; if (sh > 0 && dmg > 0) { var a = Math.min(Math.floor(sh), Math.floor(dmg)); e._afkShield = sh - a; return dmg - a; } } catch (x) {}
+    return dmg;
+  };
   // 11-18（Ping）：有護盾要先扣護盾——包在所有受傷外掛的最外層（頁面載入完才包），你和傭兵都一樣
   var absorbLast = function () {
     var o = window.__afkTaken; if (typeof o !== 'function' || o.__afkShieldLast) return;

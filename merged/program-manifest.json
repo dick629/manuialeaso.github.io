@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-ae7e1850d66a",
+  "build": "merge-0.4-b96f734bc9dc",
   "files": [
     {
       "url": "afk-abnforce.js?v=75f657efeabc",
@@ -223,8 +223,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-bossdrain.js?v=7e9c293f1f0c",
-      "sha256": "7e9c293f1f0c5a4339cfe01a8c43061eaa3cded3b4df7f5634cb1d68a8a379bc",
+      "url": "afk-bossdrain.js?v=633f57a75965",
+      "sha256": "633f57a759652ada7fe6c8cf0032a16cb6cd8d8620baef9cfd9f113d8b753623",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -423,8 +423,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dex-extra.js?v=1a2a1de0baa2",
-      "sha256": "1a2a1de0baa296c59285d3ad0d07520f1732b6184ab87eb6ff48abd0772b6091",
+      "url": "afk-dex-extra.js?v=5f6bfacfa7a3",
+      "sha256": "5f6bfacfa7a31e6951b8c9df9c6797f5bcccdcbd587b956f1a3068610f4966b2",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -503,8 +503,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamcost.js?v=2c9e163dae8b",
-      "sha256": "2c9e163dae8ba62066dde14c6f5ce5bdffb4d26316700cc0e27caa06eeba2a8f",
+      "url": "afk-dreamcost.js?v=da1f0f7fff05",
+      "sha256": "da1f0f7fff05497337134bfcec1f61cef2b6fd9972b99a651953dbaf9aafb2a5",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -513,8 +513,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamquest.js?v=469617bdc1cf",
-      "sha256": "469617bdc1cf2952b7fb36070922b6ed29d1f795199194572d835e808c3b7e80",
+      "url": "afk-dreamquest.js?v=4b832e39a85b",
+      "sha256": "4b832e39a85bad5349171a98e72b224f5a013fc0977f2760dc3084eb4d9cb98d",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1178,8 +1178,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-rebirth-rules.js?v=a1041bffcb0e",
-      "sha256": "a1041bffcb0e606e52beb863b54af2dd5ac3d748b98ce8b438b17e7f65fdbfc1",
+      "url": "afk-rebirth-rules.js?v=b677a77d37ca",
+      "sha256": "b677a77d37cab92f0a727d884515cda0eb6769ab9ec1eb76c98d828e5f809cc6",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1348,8 +1348,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-rift2.js?v=4e04d851c6c8",
-      "sha256": "4e04d851c6c8207e71c6968c560317d50b7eaf333845ff9cf1eadd561d8d9646",
+      "url": "afk-rift2.js?v=cc4dfecf42a2",
+      "sha256": "cc4dfecf42a2710bdff718e4212ca80e63afe194d447c16502c9f548ce154183",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1358,8 +1358,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftdungeons.js?v=0fb05b698c83",
-      "sha256": "0fb05b698c8330b887e7d6efaa10b3d1e20136219f784456749ed706b9113d38",
+      "url": "afk-riftdungeons.js?v=f18c54b64390",
+      "sha256": "f18c54b6439064ac7d4378fa88c221ac28cf31fffb51c632cb985b1a5c512d2e",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1388,8 +1388,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-runedata.js?v=237e9e1d1fd7",
-      "sha256": "237e9e1d1fd77c6aaee714bbdf9d8d71740cd71702631328d129e66f51a5a846",
+      "url": "afk-runedata.js?v=bd7dbc0020d5",
+      "sha256": "bd7dbc0020d5444b64435de0ba11c033d1c2864896be2e657ba92ca8146bf625",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1764,7 +1764,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "b6b5cca377fe967b4570efca78208db44729889696e332332c248da66adcecf0",
+      "sha256": "13a2511aa8e51df8d7d0dec3d0f7c89d27f2c011696eafe1a39d6a77f1a01176",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1933,8 +1933,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/activities.js?v=ba3905b5aa2b",
-      "sha256": "ba3905b5aa2b2aaa9ab8cdce6fc610bceabb75c24095cd16a95bc2b90d98cdc9",
+      "url": "merged/activities.js?v=edf70d88084d",
+      "sha256": "edf70d88084d2075fd9044eb2021fd7663a4950f7ac5f2b1346f0373c4d0abd7",
       "type": "text/javascript; charset=utf-8"
     },
     {

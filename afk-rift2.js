@@ -4,7 +4,7 @@
  * 一、時間改用遊戲時間（所有模式）：原本用電腦時鐘，分頁在背景補跑時一整批都算「現在」，
  *     怪物等級、頭目比例、傷害倍率會一口氣跳上去。現在每一下都換算成「開場後經過幾下遊戲時間」。
  * 二、席琳三模式（席琳／瘋狂席琳／夢域鏡席琳）的新規則：
- *   ‧一趟最長 80 分鐘；撐滿 80 分鐘＝完全通關，自動結算。
+ *   ‧一趟最長 80 分鐘；撐滿 80 分鐘＝完全通關，自動結算。（11-18 Ping：改成 60 分鐘、難度 ×1.35、第 25／45 分鐘四龍降臨，見 TUNE；GD 照舊用 TUNE_GD）
  *   ‧2026-11-04（玩家）：出怪時間軸（等級 60 分到最高、四大龍 60 分起）、怪物攻擊力曲線（TUNE.dmgCurve）、時空侵蝕（同一隻頭目 180 秒沒倒，暴走再 +15%、每 10 秒再 +15%，抑制劑消不掉）、
  *     裂痕裡小怪代價／王的死亡詛咒／屍爆每秒最多一次（__afkRiftOnce）。
  *   ‧難度目標：撐到 60／70／80 分鐘，大約要曲線 60／70／80 的裝備（遺物 +10＋原版遺骸＋之魂／遺物 +15＋夢域遺骸／昇華支配 +2）。
@@ -27,7 +27,7 @@
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
   if (T && T.register) T.register({ id: 'rift2', name: '時空裂痕重做（席琳三模式）', group: '遊戲玩法',
-    desc: '時空裂痕改用遊戲時間；席琳三模式一趟 80 分鐘、越後面越難（頭目 60 秒沒倒會暴走、60 分鐘起全場扣血），掉哀石系列與失去光芒的符文石，撐滿 80 分鐘給瘴骸·破材料' });
+    desc: '時空裂痕改用遊戲時間；席琳三模式一趟 60 分鐘、越後面越難（頭目 60 秒沒倒會暴走、第 25／45 分鐘四龍降臨、45 分鐘起全場扣血），掉哀石系列與失去光芒的符文石，撐滿 60 分鐘給瘴骸·破材料' });
   var ON = !T || T.enabled('rift2');
   var RD = W.__afkRuneData;
   if (typeof W.enterRift !== 'function' || typeof W.spawnRiftMob !== 'function' || !RD) { console.warn('[AFK-rift2] 找不到時空裂痕，略過'); return; }
@@ -92,7 +92,8 @@
   };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
-  var TUNE = W.__afkRift2Tune = W.__afkRift2Tune || {
+  // GD之子的期待照舊用 80 分鐘制的曲線（11-18 席琳三模式改 60 分鐘制，GD 不動）
+  var TUNE_GD = {
     hpFrom: 20, hpRate: { sherine: 0.035, mad: 0.0525, dream: 0.0525 },   // 20 分鐘起怪物 HP ×e^(rate×(分鐘−20))；席琳模式 0.067 → 0.035（玩家 2026-10-29：王族＋7 名轉生傭兵、冥皇套 +15 要能撐滿 80 分鐘；實測原本 63～65 分被頭目暴走團滅）
     hpBase: { sherine: 1, mad: 1, dream: 0.15 },   // 各模式怪物 HP 的基本倍率（夢域鏡本身已經 ×50，用這個把三模式拉到同一條難度線）
     enrageSec: 60, enrageMulti: 90, enragePct: 0.05, enrageStep: 0.05, enrageEvery: 10,   // 頭目 60 秒沒倒：每秒全隊最大 HP 5%，每 10 秒再 +5%
@@ -110,13 +111,27 @@
     // 時空侵蝕（2026-11-04）：同一隻頭目出場滿 erodeFrom 秒還沒倒，暴走再加 erodeStep，之後每 10 秒再加一次；暴走抑制劑消不掉這一段
     erodeFrom: 180, erodeStep: 0.15
   };
-  var DROP = { mob: 0.01, bossLow: 0.10, bossHigh: 0.25, bossFrom: 60, box: 0.00001, relicX: 10,
+  // 11-18（Ping 10:58）：一趟壓縮成 60 分鐘、難度 ×1.35——時間點 ×0.75；通關那一刻的怪物 HP、攻擊、全場扣血都是舊版的 1.35 倍；
+  //   四大龍在第 25、45 分鐘各出場一輪（四條依序，一次一條）當難度牆，45 分鐘起也照常進出怪池。
+  var TUNE = W.__afkRift2Tune = W.__afkRift2Tune || {
+    hpFrom: 15, hpRate: { sherine: 0.0533, mad: 0.0767, dream: 0.0767 },   // 15 分鐘起 HP ×e^(rate×(分鐘−15))；60 分鐘時＝舊版 80 分鐘 ×1.35（席琳 ×11.0、瘋狂／夢域 ×31.5）
+    hpBase: { sherine: 1, mad: 1, dream: 0.15 },
+    enrageSec: 60, enrageMulti: 90, enragePct: 0.05, enrageStep: 0.05, enrageEvery: 10,
+    wallFrom: 45, wallBase: 0.0054, wallStep: 0.0045,   // 45 分鐘起全場每秒扣 0.54% 最大 HP，每分鐘再 +0.45%（60 分鐘 7.3%＝舊版 5.4% ×1.35）
+    clearMin: 60,
+    lvFull: 45, bossHalf: 15,
+    dmgCurve: [[0, 0.27], [47.25, 0.675], [52.5, 16.2], [55.5, 40.5], [60, 54]],   // 舊曲線時間 ×0.75、倍率 ×1.35
+    enrageLateFrom: 0, enrageStepLate: 0.05,
+    erodeFrom: 180, erodeStep: 0.15,
+    dragonWaves: [25, 45]   // 四大龍難度牆
+  };
+  var DROP = { mob: 0.01, bossLow: 0.10, bossHigh: 0.25, bossFrom: 35, box: 0.00001, relicX: 10,
     legend: 0.01, legendPct: 0.15, legendId: 'afk_rune_po_l' };   // 玩家 2026-10-29：席琳模式前 15% 時間（80 分的前 12 分）每次擊殺 1% 掉傳說符文「破」，給新手用；一趟最多一顆
-  var SEG = { mad: [[12, 'box1'], [76, 'box2'], [1e9, 'box3']], dream: [[12, 'box1'], [60, 'box2'], [76, 'box3'], [1e9, 'fate']] };
+  var SEG = { mad: [[9, 'box1'], [55, 'box2'], [1e9, 'box3']], dream: [[9, 'box1'], [35, 'box2'], [55, 'box3'], [1e9, 'fate']] };   // 11-18 Ping：60 分鐘制
   // 撐過 RELIC.min 分鐘另給隨機遺物（玩家 2026-11-06）：每個角色每天最多 RELIC.day 件，瘋狂與夢域鏡合計
-  var RELIC = { min: 12, day: 5, lv: { mad: 5, dream: 10 } };
+  var RELIC = { min: 9, day: 3, lv: { mad: 5, dream: 10 } };   // 11-18 Ping：門檻 9 分、每天 3 件
   // 未滿 12 分鐘（撤離或戰死）改給隨機遺物（玩家 2026-11-06 15:17）：瘋狂 +0、夢域 +5；每個角色每天 3 件，跟上面的 5 件分開算；超過照舊給階段一
-  var EARLY = { day: 3, lv: { mad: 0, dream: 5 } };
+  var EARLY = { day: 3, lv: { mad: 0, dream: 0 } };   // 11-18 Ping：夢域也改 +0
   // ── GD之子的期待（Ping 11-12 12:00／12:24，設計稿 docs/gd-rift-design.md）──
   //   沒有進場條件；開場就是 60 分鐘的曲線、之後一直往上；只出頭目；吃次元裂縫規則；保底不生效；沒有時間限制、沒有結算。
   var GD = W.__afkGdTune = W.__afkGdTune || {
@@ -179,7 +194,7 @@
   };
   var afterEnter = function (gd) {
     var s = S();
-    if (s.riftRun) { s._riftRunKey = s.riftStartMs; s._r2Start = s.ticks || 0; s._r2BossDue = s._r2Start + 3000; s._r2World = modeNow(); s._r2Mode = gd ? 'gd' : modeNow(); s._r2Clear = false; s._r2Wall = 0; s._r2Legend = false; s._r2GdRes = 0; s._r2GdElite = !!(gd && gdElite()); sync();
+    if (s.riftRun) { s._riftRunKey = s.riftStartMs; s._r2Start = s.ticks || 0; s._r2BossDue = s._r2Start + 3000; s._r2World = modeNow(); s._r2Mode = gd ? 'gd' : modeNow(); s._r2Clear = false; s._r2Wall = 0; s._r2DwN = 0; s._r2Dq = null; s._r2Legend = false; s._r2GdRes = 0; s._r2GdElite = !!(gd && gdElite()); sync();
       if (gd) { try { logSys('<span class="font-bold" style="color:#f0abfc;">🌀 GD之子的期待：裂痕從第 ' + GD.from + ' 分鐘的強度開始，而且不會停下來。只會出現頭目；撐得越久，掉落越好。</span>'); } catch (e) {} try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {} } }
   };
   // GD之子的期待的入口：沒有進場條件、不用龜裂之核；上一趟的獎勵還沒領也能進（離場時原封不動放回去）
@@ -204,12 +219,37 @@
     for (var k = 0; k < 40; k++) { var id = pickRiftMob(boss, minLv, maxLv, ks); if (!id) return null; if (!ban[id]) return id; }
     return null;
   };
+  // 四大龍難度牆（11-18 Ping）：第 25、45 分鐘各來一輪，四條龍依序出場（場上一次一條，前一條倒下才換下一條）
+  var DRAGON_NM = { antaras: '安塔瑞斯', fafurion: '法利昂', lindvior: '林德拜爾', valakas: '巴拉卡斯' };
+  var dragonAlive = function () {
+    var names = g0('RIFT_DRAGON_NAMES') || [];
+    return (mapState.mobs || []).some(function (x) { return x && !x._dead && x.curHp > 0 && (CORE_DRAGONS.indexOf(x.mobId || x.id) >= 0 || names.indexOf(x.n) >= 0 || /安塔瑞斯|法利昂|巴拉卡斯|林德拜爾/.test(x.n || '')); });
+  };
+  var dragonWall = function (idx, m) {
+    var s = S(), W2 = TUNE.dragonWaves || [];
+    var n = Number(s._r2DwN) || 0;
+    if (n < W2.length && m >= W2[n]) {
+      s._r2DwN = n + 1;
+      s._r2Dq = CORE_DRAGONS.filter(function (id) { return DB.mobs[id]; }).sort(function () { return Math.random() - 0.5; });
+      try { logC('<span class="font-bold" style="color:#fb7185;">【四龍降臨】</span>第 ' + W2[n] + ' 分鐘，時空裂開了一道更深的口子——四大龍要一條接一條地來了。'); } catch (e) {}
+    }
+    if (!s._r2Dq || !s._r2Dq.length || dragonAlive()) return false;
+    var id = s._r2Dq.shift(), base = DB.mobs[id]; if (!base) return false;
+    mapState.mobs[idx] = Object.assign({}, base, { mobId: id, curHp: base.hp, uid: uid(), _born: ++_mobBornSeq, _magCd: {}, justHit: false, st: newMobStatus() });
+    applySherineBuff(idx);
+    if (mapState.mobs[idx].hard) initHardSkin(mapState.mobs[idx]);
+    applySherineGrace(idx);
+    if (typeof vfxBossEntrance === 'function') { try { vfxBossEntrance(mapState.mobs[idx]); } catch (e) {} }
+    if (!s.ff && typeof renderMobs === 'function') renderMobs();
+    return true;
+  };
   // 席琳三模式的出怪（照核心 spawnRiftMob，只換時間軸；暗夢星迴不經過這裡——rule() 已排除）
   var spawnMine = function (idx) {
     var s = S(), t = s.ticks || 0, m = minutes(), gd = s._r2Mode === 'gd';
-    var ks = (gd ? m + GD.from : m) * 60 * (30 / TUNE.lvFull);   // 換算成核心時間軸的秒數：lvFull 分鐘 ↔ 核心的 30 分鐘
+    var ks = gd ? (m + GD.from) * 60 * (30 / TUNE_GD.lvFull) : m * 60 * (30 / TUNE.lvFull);   // 換算成核心時間軸的秒數：lvFull 分鐘 ↔ 核心的 30 分鐘
     var inc = Math.floor(ks / 30), minLv = Math.min(40, 1 + inc), maxLv = Math.min(100, 40 + inc);
     if (gd) { var L = Math.min(100, Math.floor(GD.lvStart + GD.lvPerMin * m)); minLv = Math.max(1, Math.min(L, 100 - GD.lvSpan)); maxLv = Math.min(200, L + GD.lvSpan); }
+    if (!gd && dragonWall(idx, m)) return;
     var isBoss;
     if (gd) isBoss = true;   // GD之子的期待：只出頭目
     else if (m >= TUNE.bossHalf) isBoss = Math.random() < 0.5;
@@ -226,15 +266,15 @@
     if (!s.ff && typeof renderMobs === 'function') renderMobs();
   };
   // 怪物攻擊力（席琳三模式）：TUNE.dmgCurve 分段直線，取代核心「30 分起每分鐘 +20%」
-  var dmgMult = function (m) {
-    var c = TUNE.dmgCurve || []; if (!c.length) return 1;
+  var dmgMult = function (m, gd) {
+    var c = (gd ? TUNE_GD : TUNE).dmgCurve || []; if (!c.length) return 1;
     if (m <= c[0][0]) return c[0][1];
     for (var i = 1; i < c.length; i++) if (m <= c[i][0]) { var a = c[i - 1], b = c[i]; return a[1] + (b[1] - a[1]) * (m - a[0]) / (b[0] - a[0]); }
     var y = c[c.length - 2], z = c[c.length - 1]; return z[1] + (z[1] - y[1]) / (z[0] - y[0]) * (m - z[0]);
   };
   if (typeof W.riftDamageMult === 'function') {
     var oRDM = W.riftDamageMult;
-    W.riftDamageMult = function () { try { if (rule()) return dmgMult(minutes() + (S()._r2Mode === 'gd' ? GD.from : 0)); } catch (e) {} return oRDM.apply(this, arguments); };
+    W.riftDamageMult = function () { try { if (rule()) { var g = S()._r2Mode === 'gd'; return dmgMult(minutes() + (g ? GD.from : 0), g); } } catch (e) {} return oRDM.apply(this, arguments); };
     try { (0, eval)('riftDamageMult = window.riftDamageMult'); } catch (e) {}
   }
   W.spawnRiftMob = function (idx) {
@@ -307,7 +347,7 @@
   W.__afkRiftResume = resume;
 
   // ── 難度 ──
-  var hpMult = function (mode, m) { var rate = (TUNE.hpRate || {})[mode] || 0, base = (TUNE.hpBase || {})[mode] || 1; return base * (m > TUNE.hpFrom ? Math.exp(rate * (m - TUNE.hpFrom)) : 1); };
+  var hpMult = function (mode, m, gd) { var TT = gd ? TUNE_GD : TUNE, rate = (TT.hpRate || {})[mode] || 0, base = (TT.hpBase || {})[mode] || 1; return base * (m > TT.hpFrom ? Math.exp(rate * (m - TT.hpFrom)) : 1); };
   var members = function () { var out = []; if (!player.dead) out.push(player); (player.allies || []).forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) out.push(x); }); return out; };
   var hurtAll = function (pct, why) {
     var dead = false;
@@ -361,7 +401,7 @@
       return;
     }
     // 新出場的怪：HP 隨時間成長（含變身後的下一階）
-    var k = hpMult(mode, m);
+    var k = hpMult(mode, m, gd);
     (mapState.mobs || []).forEach(function (x) {
       if (!x || x._r2 || x._dead) return;
       x._r2 = { born: t };
@@ -375,8 +415,9 @@
       if (hurtAll(worst, '時空暴走')) return;
     }
     // 60 分鐘起：全場壓力牆
-    if (m >= TUNE.wallFrom) {
-      var w = TUNE.wallBase + TUNE.wallStep * Math.floor(m - TUNE.wallFrom);
+    var TW = gd ? TUNE_GD : TUNE;
+    if (m >= TW.wallFrom) {
+      var w = TW.wallBase + TW.wallStep * Math.floor(m - TW.wallFrom);
       if (s._r2Wall !== Math.floor(m)) { s._r2Wall = Math.floor(m); logC('<span class="font-bold" style="color:#c084fc;">【裂痕崩塌】</span>時空正在崩落，全隊每秒失去最大 HP ' + (Math.round(w * 1000) / 10) + '%。'); }
       if (hurtAll(w, '裂痕崩塌')) return;
     }
@@ -533,9 +574,9 @@
         var div = document.createElement('div');
         div.className = 'bg-slate-900/70 border border-violet-700 rounded-lg p-3 text-sm leading-relaxed text-slate-200';
         div.innerHTML = '<div class="font-bold text-violet-300 mb-1">目前：' + MN[mode] + '模式（時空裂痕重做）</div>'
-          + '<div>一趟最長 ' + TUNE.clearMin + ' 分鐘，撐滿就是<b>完全通關</b>（另給 ' + DB.items[cl[0]].n + ' ×' + cl[1] + '）。' + TUNE.hpFrom + ' 分鐘後怪物越來越硬、' + TUNE.lvFull + ' 分鐘怪物等級到最高、之後攻擊力大幅上升；頭目出場 ' + TUNE.enrageSec + ' 秒（同時兩隻以上 ' + TUNE.enrageMulti + ' 秒）還沒倒會<b>時空暴走</b>；' + TUNE.wallFrom + ' 分鐘起全場每秒扣血。</div>'
+          + '<div>一趟最長 ' + TUNE.clearMin + ' 分鐘，撐滿就是<b>完全通關</b>（另給 ' + DB.items[cl[0]].n + ' ×' + cl[1] + '）。' + TUNE.hpFrom + ' 分鐘後怪物越來越硬、' + TUNE.lvFull + ' 分鐘怪物等級到最高、之後攻擊力大幅上升；頭目出場 ' + TUNE.enrageSec + ' 秒（同時兩隻以上 ' + TUNE.enrageMulti + ' 秒）還沒倒會<b>時空暴走</b>；第 ' + (TUNE.dragonWaves || []).join('、') + ' 分鐘「四龍降臨」（四大龍一條接一條出場）；' + TUNE.wallFrom + ' 分鐘起全場每秒扣血。</div>'
           + '<div>同一隻頭目出場 ' + TUNE.erodeFrom + ' 秒還沒倒會「時空侵蝕」（暴走再 +' + Math.round(TUNE.erodeStep * 100) + '%，每 10 秒再加，暴走抑制劑消不掉）。小怪死亡的代價、王的死亡詛咒、王的殘響：裂痕裡每種每秒最多一次。</div>'
-          + '<div>掉落：' + DB.items[RD.DUST[mode]].n + '（一般怪 1%、60 等以下頭目 10%、60 等以上頭目 25%、第 60 分鐘起頭目必掉）；不吃任何掉寶加倍；遺物 0.001%。' + (mode === 'sherine' ? '前 ' + Math.round(TUNE.clearMin * DROP.legendPct) + ' 分鐘每次擊殺 ' + (DROP.legend * 100) + '% 掉傳說符文「汲」（一趟最多一顆）。' : '') + '</div>'
+          + '<div>掉落：' + DB.items[RD.DUST[mode]].n + '（一般怪 1%、60 等以下頭目 10%、60 等以上頭目 25%、第 ' + DROP.bossFrom + ' 分鐘起頭目必掉）；不吃任何掉寶加倍；遺物 0.001%。' + (mode === 'sherine' ? '前 ' + Math.round(TUNE.clearMin * DROP.legendPct) + ' 分鐘每次擊殺 ' + (DROP.legend * 100) + '% 掉傳說符文「汲」（一趟最多一顆）。' : '') + '</div>'
           + '<div>結算：' + rw + '。</div>';
         (container.firstElementChild || container).appendChild(div);
       } catch (e) {}

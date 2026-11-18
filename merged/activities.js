@@ -82,9 +82,9 @@
   // 玩家 11-11：次元裂縫副本要在席琳神殿才進得去；上一項打完會回到別的村莊 → 下一項進不去、整輪卡在暫停。
   //   在村莊裡時先移到席琳神殿再進場。
   function rdParts(id){const s=String(id).slice(3),i=s.indexOf(':');return i<0?[s,undefined]:[s.slice(0,i),s.slice(i+1)];}
-  function prep(id){{const m=/^nz:\w+:(\w+)$/.exec(String(id)),d=m&&W.__afkNewZones&&W.__afkNewZones.SBY[m[1]];if(d&&/^town_/.test(mapState.current||'')&&mapState.current!==d.town){try{setMapSelectors(d.town);changeMap(true);}catch(e){}}}if(String(id).startsWith('rd:')&&/^town_/.test(mapState.current||'')&&mapState.current!=='town_sherine'){try{setMapSelectors('town_sherine');changeMap(true);}catch(e){}}}
+  function prep(id){{const m=/^nz:\w+:(\w+)$/.exec(String(id)),d=m&&W.__afkNewZones&&W.__afkNewZones.SBY[m[1]];if(d&&/^town_/.test(mapState.current||'')&&mapState.current!==d.town){try{setMapSelectors(d.town);changeMap(true);}catch(e){}}}const D=W.__afkRiftDg,leftRd=D&&mapState.current===D.MAP&&!D.run();if(String(id).startsWith('rd:')&&(leftRd||/^town_/.test(mapState.current||'')&&mapState.current!=='town_sherine')){try{setMapSelectors('town_sherine');changeMap(true);}catch(e){}}else if(leftRd){try{setMapSelectors('town_sherine');changeMap(true);}catch(e){}}}
   function enter(id){
-    prep(id);const err=why(id);if(err)throw Error(err);const old=mapState.current,native=special(id),r=round();
+    prep(id);const err=why(id);if(err)throw Error(err);const old=mapState.current,native=special(id),r=round();r.itemAt=Date.now();
     if(native){r.clearBefore=native.clears();native.enter();}
     else if(id==='antharas')antharasEnter();else if(id==='hardin')W.__afkHardin.enter();else if(id==='halpas')W.__afkHalpas.enter('halpas');else if(id.startsWith('rd:')){const [did,pk]=rdParts(id);W.__afkRiftDg.enter(did,pk);}else afkCorruptEnter(id);
     if(mapState.current===old)throw Error('未成功進入 '+(names[id]||id));
@@ -153,7 +153,7 @@
   const oKill=W.killMob;W.killMob=function(i){const m=mapState.mobs[i],d=W.__afkRiftDg&&W.__afkRiftDg.run(),before=d?{id:d.id,si:d.si,wave:d.wave}:null;
     const r=oKill.apply(this,arguments);if(m&&m._dead&&!seen.has(m)){seen.add(m);W.LineageTalents.killed(player,m);const q=round();if(q&&q.status==='running'){
       const id=q.queue[q.index],boss=bosses[id];if(boss&&(m.mobId===boss||m.n===(DB.mobs[boss]||{}).n))finishJob();
-      else if(id.startsWith('rd:')&&W.__afkRiftDg.store().clear[(()=>{const [did,pk]=rdParts(id),d=W.__afkRiftDg.BYID[did];return did+(d&&d.pickChain&&pk?pk:'');})()]>=q.created)finishJob();
+      else if(id.startsWith('rd:')&&W.__afkRiftDg.store().clear[(()=>{const [did,pk]=rdParts(id),d=W.__afkRiftDg.BYID[did];return did+(d&&d.pickChain&&pk?pk:pk?'@'+pk:'');})()]>=(q.itemAt||q.created))finishJob();   // 11-18 Ping：四龍原本共用一個通關紀錄→打完第一條龍，後面三條一進場殺第一隻怪就被當成打完
       else {const native=special(id);if(native&&native.clears()>q.clearBefore)finishJob();}
     }if(before&&G.read(player))shortcut(before);}return r;
   };

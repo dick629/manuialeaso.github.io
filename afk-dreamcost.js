@@ -82,10 +82,11 @@
   var shielded = function (x) { return !!(x && x.buffs && (x.buffs.sk_magic_shield || 0) > 0); };
   var mobCurse = function () {
     try {
-      if (!player.dead && !shielded(player)) { var d0 = Math.max(1, Math.floor((player.mhp || 0) * 0.01)); player.hp -= d0; if (player.hp <= 0 && typeof killPlayer === 'function') killPlayer(); }
+      var eat = function (e, d) { return typeof window.__afkShieldEat === 'function' ? window.__afkShieldEat(e, d) : d; };   // 11-18 Ping：一般怪先扣護盾（王的詛咒照舊真實傷害）
+      if (!player.dead && !shielded(player)) { var d0 = eat(player, Math.max(1, Math.floor((player.mhp || 0) * 0.01))); if (d0 > 0) player.hp -= d0; if (player.hp <= 0 && typeof killPlayer === 'function') killPlayer(); }
       (player.allies || []).forEach(function (x) {
         if (!x || x._downed || !(x.curHp > 0) || shielded(x)) return;
-        x.curHp -= Math.max(1, Math.floor((x.mhp || 0) * 0.01));
+        x.curHp -= eat(x, Math.max(1, Math.floor((x.mhp || 0) * 0.01)));
         if (x.curHp <= 0) { x.curHp = 0; x._downed = true; x._reviveCd = 150; }
       });
     } catch (e) {}

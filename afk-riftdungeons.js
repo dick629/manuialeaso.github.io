@@ -332,6 +332,7 @@
   function finish(endless) {
     var r = run, d = r.D, s = store(), got;
     if (!endless) s.clear[d.id + (d.pickChain ? r.pick : '')] = s.clear[d.id] = Date.now();
+    if (!endless && r.pick && !d.pickChain) s.clear[d.id + '@' + r.pick] = Date.now();   // 11-18：四龍各自記（自動遠征判斷「這一項打完了沒」用）
     got = (d.reward(r) || []).filter(Boolean); var pt = d.noRift ? '' : endless ? (r.floor > 1 ? points() : '') : points(); if (pt) got.push(pt);
     leave('<span class="text-cyan-200 font-bold">🏆 「' + esc(d.n) + '」' + (endless ? '結束' : '通關') + '。</span><span class="text-amber-200">得到：' + (got.length ? got.map(esc).join('、') : '—') + '</span>');
   }

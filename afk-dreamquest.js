@@ -9,7 +9,7 @@
  *     第 3 章：要先完成「知識與背叛」第 7 章。
  *     第 5 章：要打贏終焉第二階層（afkFinalTier.t2 === 'win'）。
  *     第 6 章：八位長老各算一次、第 5 章四條龍各算一次（同一隻重複打不會多給）。
- *     第 7 章：暗夢星迴的試煉頭目 ×3；時空裂痕（夢域鏡）撐過 60 分鐘 → 光之楔的碎片；交付時身上要裝著粹煉過的之魂。
+ *     第 7 章：暗夢星迴的試煉頭目 ×3；時空裂痕（夢域鏡）撐過 30 分鐘 → 光之楔的碎片；交付時身上要裝著粹煉過的之魂。
  *   獎勵一律在第一次交付時給（每個角色每章只做一次）。
  *   經典模式沒有；外掛開關 dreamquest。
  * ========================================================================== */
@@ -99,9 +99,9 @@
         story: '說書人：「人類改寫過一次神話，我笑了。這一次改寫的是神自己，我笑不出來。」拜溫的塔頂還連著神界的門。天使阿納金帶著席琳走上這座塔，對她說「母親願意讓妳回來」。她走到第九十九層，門裡映著一片沒有見過的天空——那是她最後一次完整地回頭。',
         reqs: [Object.assign({ need: 40, mobs: [] }, Q.stair, { d: Q.stair.d + DREAM_TAIL }), Object.assign({ need: 8, mobs: [] }, Q.sutra, { d: Q.sutra.d + '（八位長老各一頁）' + DREAM_TAIL })],
         first: [['afk_abyss_key', 3], ['afk_dark_stardust', 20], ['afk_asc_stone_arm', 1]] }),
-      ch({ lv: 80, title: '監視之眼', map: '暗夢星迴（試煉頭目）＋時空裂痕（夢域鏡，撐過 60 分鐘）・接取：席琳神殿 伊奧（交付時要裝著粹煉過的之魂）',
+      ch({ lv: 80, title: '監視之眼', map: '暗夢星迴（試煉頭目）＋時空裂痕（夢域鏡，撐過 30 分鐘）・接取：席琳神殿 伊奧（交付時要裝著粹煉過的之魂）',
         story: '伊奧：「你一直以為天上那個是月亮吧？死亡之海沒有月亮。」暗夢星迴的夢境者投影，是有人用來觀察強者、記錄戰法的眼睛；光之楔把夢域鏡釘在她的視線底下。打碎眼睛、拿回楔片，戴上之魂——它比我們都更早知道。',
-        reqs: [Object.assign({ need: 3, mobs: [] }, Q.eye, { d: Q.eye.d + DREAM_TAIL }), Object.assign({ need: 1, mobs: [] }, Q.wedge, { d: Q.wedge.d + '（席琳夢域鏡的時空裂痕撐過 60 分鐘，結算時取得）' })],
+        reqs: [Object.assign({ need: 3, mobs: [] }, Q.eye, { d: Q.eye.d + DREAM_TAIL }), Object.assign({ need: 1, mobs: [] }, Q.wedge, { d: Q.wedge.d + '（席琳夢域鏡的時空裂痕撐過 30 分鐘，結算時取得）' })],
         first: [['afk_runebox_3', 1], ['afk_dream_dust', 100], ['afk_fate_unlock', 1], ['afk_dq_lens', 1]] })
     ]
   });
@@ -193,14 +193,14 @@
       return r;
     };
   }
-  // 光之楔的碎片：夢域鏡的時空裂痕撐過 60 分鐘，結算時給
+  // 光之楔的碎片：夢域鏡的時空裂痕撐過 30 分鐘，結算時給
   if (typeof W.riftEndRun === 'function') {
     var oEnd = W.riftEndRun;
     W.riftEndRun = function () {
       var r = oEnd.apply(this, arguments);
       try {
         var p = P(), info = p && p.afkRift2Reward;
-        if (p && info && info.mode === 'dream' && info.min >= 60 && activeFor('afk_dq_wedge', p) && info !== state(p).lastRift) { state(p).lastRift = info; giveOne(p, 'afk_dq_wedge', '撐過 ' + Math.floor(info.min) + ' 分鐘'); }
+        if (p && info && info.mode === 'dream' && info.min >= 30 && activeFor('afk_dq_wedge', p) && info !== state(p).lastRift) { state(p).lastRift = info; giveOne(p, 'afk_dq_wedge', '撐過 ' + Math.floor(info.min) + ' 分鐘'); }
       } catch (e) { console.warn('[AFK-dreamquest] rift', e); }
       return r;
     };

@@ -61,6 +61,7 @@
       if (dead) return;
       var dmg = Math.max(1, Math.floor((Number(t.mhp) || 1) * CFG.corpse));
       if (typeof W.__afkTrueCut === 'function') { try { dmg = W.__afkTrueCut(t, dmg); } catch (e) {} }
+      if (typeof W.__afkShieldEat === 'function') dmg = W.__afkShieldEat(t, dmg);   // 11-18 Ping：一般怪的爆炸先扣護盾
       if (!(dmg > 0)) return;
       if (t === p) { p.hp -= dmg; if (p.hp <= 0 && typeof killPlayer === 'function') { killPlayer(); dead = true; } }
       else { t.curHp -= dmg; if (t.curHp <= 0) { t.curHp = 0; t._downed = true; t._reviveCd = 150; } }
