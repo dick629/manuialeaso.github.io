@@ -259,8 +259,52 @@
       s._r2Mode = null; try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {}
     }
     s._r2Start = null; s._r2BossDue = null;
+    try { if (p) delete p.afkRiftLive; } catch (e) {}
     return r;
   };
+
+  // ── 斷線保底結算（Ping 11-18 10:26 選方案一）──
+  //   裂痕裡每次存檔都把「撐了幾分鐘、模式、有沒有完全通關」記進 player.afkRiftLive；
+  //   頁面被關掉、手機背景清掉、斷線，下次開遊戲時照記錄的時間自動結算（跟撤離一樣：照樣記排名、發獎勵、60 分鐘任務也算）。
+  //   暗夢星迴（試煉頭目）不是比時間的，斷線就只清掉記錄。裂痕裡每 60 秒多存一次檔，最多少算一分鐘。
+  var liveOf = function () {
+    var s = S(); if (!s.riftRun || s.dreamStar) return null;
+    sync();
+    return { v: 1, mode: s._r2Mode || 'plain', min: minutes(), clear: !!s._r2Clear, ms: Math.max(0, Date.now() - (s.riftStartMs || Date.now())), t: Date.now() };
+  };
+  if (typeof W.saveGame === 'function' && !W.saveGame.__afkRiftLive) {
+    var oSave = W.saveGame;
+    W.saveGame = function () {
+      try { var p = P(), lv = liveOf(); if (p && lv) p.afkRiftLive = lv; } catch (e) {}   // 清掉只在正常離開（riftEndRun）或斷線結算時
+      return oSave.apply(this, arguments);
+    };
+    W.saveGame.__afkRiftLive = true;
+    try { (0, eval)('saveGame = window.saveGame'); } catch (e) {}
+  }
+  setInterval(function () { try { if (S().riftRun && !S().dreamStar && typeof W.saveGame === 'function') W.saveGame(); } catch (e) {} }, 60000);
+  var resume = function () {
+    var p = P(), s = S(); if (!p || !p.afkRiftLive || s.riftRun) return;
+    var lv = p.afkRiftLive; delete p.afkRiftLive;
+    if (!lv || typeof lv !== 'object' || !(lv.min >= 0)) return;
+    try {
+      // 把那一趟擺回去再走一次正常的離開流程（排名、獎勵、劇情任務都照算）
+      s.riftRun = true; s.dreamStar = false;
+      s.riftStartMs = Date.now() - Math.max(0, Number(lv.min) * 60000);
+      s._r2Start = (s.ticks || 0) - Math.round(Number(lv.min) * 600);
+      s._r2Mode = lv.mode || 'plain'; s._r2Clear = !!lv.clear; s._riftRunKey = s.riftStartMs;
+      W.riftEndRun();
+      if (typeof logSys === 'function') logSys('<span class="font-bold" style="color:#c4b5fd;">🌀 上次在時空裂痕裡斷線了（撐了 ' + Math.floor(lv.min) + ' 分鐘），已經照斷線前的時間結算。請到時空裂痕入口「領取獎勵」。</span>');
+      try { setMapSelectors('town_rift'); changeMap(true); } catch (e) {}
+      if (typeof W.saveGame === 'function') W.saveGame();
+    } catch (e) { console.warn('[AFK-rift2] resume', e); s.riftRun = false; s._r2Start = null; }
+  };
+  if (typeof W.loadGame === 'function') {
+    var oLoadR = W.loadGame;
+    W.loadGame = function () { var r = oLoadR.apply(this, arguments); setTimeout(resume, 1500); return r; };
+    try { (0, eval)('loadGame = window.loadGame'); } catch (e) {}
+  }
+  W.addEventListener('load', function () { setTimeout(resume, 4000); });
+  W.__afkRiftResume = resume;
 
   // ── 難度 ──
   var hpMult = function (mode, m) { var rate = (TUNE.hpRate || {})[mode] || 0, base = (TUNE.hpBase || {})[mode] || 1; return base * (m > TUNE.hpFrom ? Math.exp(rate * (m - TUNE.hpFrom)) : 1); };

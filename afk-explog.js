@@ -13,6 +13,7 @@
   if (T && !T.enabled('explog')) return;
   var MAX = 200;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var N = function (v) { v = Number(v); return isFinite(v) ? v : 0; };
   var fmt = function (n) { return Math.max(0, Math.floor(Number(n) || 0)).toLocaleString(); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var cap = function (p) { try { return typeof W.__afkLvCap === 'function' ? W.__afkLvCap(p) : 100; } catch (e) { return 100; } };
@@ -98,7 +99,15 @@
         var name = esc(m.n || '怪物'), atCap = lv1 >= cap(p), need = req(lv1) - ex1, pg1 = par(p);
         var pgain = 0;
         if (pg0 && pg1) { if (pg1.lv === pg0.lv) pgain = pg1.xp - pg0.xp; else { pgain = Math.max(0, pg0.cost - pg0.xp) + pg1.xp; for (var q = pg0.lv + 1; q < pg1.lv; q++) pgain += pcost(p, q + 1); } }
-        if (!(gain > 0) && !(pgain > 0)) return r;
+        if (!(gain > 0) && !(pgain > 0)) {
+          // 11-18（Ping）：滿等（巔峰也滿或沒開）也要顯示：給這隻怪的經驗（參考值）
+          if (!atCap) return r;
+          var ref = 0;
+          try { ref = Math.floor(N(m.exp) * (1 + (typeof partyExpBonusPct === 'function' ? N(partyExpBonusPct()) : 0) / 100) * (1 + (typeof dollFieldVal === 'function' ? N(dollFieldVal('expBonus')) : 0) / 100)); } catch (e) {}
+          if (!(ref > 0)) return r;
+          add('擊殺 <span class="text-amber-100">' + name + '</span>　獲得經驗 <b class="text-amber-200">' + fmt(ref) + '</b>' + '<br><span class="text-slate-400">已滿等（Lv.' + lv1 + '）' + (pg1 && pg1.max ? '，巔峰也已滿' : '') + '</span>');
+          return r;
+        }
         // 格式（Ping 11-17 22:44）：擊殺 怪物名稱　獲得經驗 xxxx ／ 下次升級所需 yyyy！
         var line = '擊殺 <span class="text-amber-100">' + name + '</span>';
         if (gain > 0) line += '　獲得經驗 <b class="text-amber-200">' + fmt(gain) + '</b>';
