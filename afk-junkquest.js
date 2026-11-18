@@ -181,6 +181,40 @@
         + '<div class="text-xs text-slate-400">' + (from.length ? '掉落：' + esc(from.join('、')) + (from.length >= 3 ? '…' : '') : '') + '</div></div></div>';
     }).join('') + '</div>';
   };
+  // ── 新手／中階／高階：一般小怪也會掉正在收的素材（Ping 11-18 22:07「新手收集任務 道具 開放一般小怪掉落 不要鎖定在副本」）──
+  //   已解鎖的每一篇，接著劇情章或常駐委託時，任何地方（村莊、木人場、時光屋除外）打倒一般怪 5% 掉一個「這張委託還沒收齊」的素材；收齊就不再掉。原本的掉落照舊。
+  var NOVICE_RATE = 0.05;
+  var noviceNeed = function () {   // 22:10 Ping「整個 新手 中階 高階 都要開放」：已解鎖的每一篇都算
+    var s = st(); if (!s || !on()) return [];
+    var out = [];
+    for (var t = 1; t <= 3; t++) {
+      if (!unlocked(t)) continue;
+      var req = s.story[t] < 3 ? storyReq(t, s.story[t]) : (bounty(t).req || []);
+      req.forEach(function (q) { if (DB.items[q.id] && count(q.id) < q.cnt && !out.some(function (x) { return x.id === q.id; })) out.push(q); });
+    }
+    return out;
+  };
+  var noviceDrop = function (m) {
+    var p = P(); if (!p || !m || m.boss || m.race === '建築' || m._train || m._rd || m._solo) return;
+    var map = (typeof mapState !== 'undefined' && mapState) ? String(mapState.current || '') : '';
+    if (!map || /^town_/.test(map) || map === 'time_room' || (DB.towns && DB.towns[map])) return;
+    try { if (W.__afkDimRiftOn && W.__afkDimRiftOn()) return; } catch (e) {}   // 次元裂縫只掉次元材料
+    if (Math.random() >= NOVICE_RATE) return;
+    var need = noviceNeed(); if (!need.length) return;
+    var q = need[Math.floor(Math.random() * need.length)];
+    try { gainItem(q.id, 1, true, true); } catch (e) { return; }
+    sys('<span style="color:#86efac">【古物學者委託】撿到了 ' + esc(DB.items[q.id].n) + '（' + Math.min(count(q.id), q.cnt) + '／' + q.cnt + '）</span>');
+  };
+  if (typeof W.killMob === 'function') {
+    var oKillJ = W.killMob;
+    W.killMob = function (idx) {
+      var m = null; try { m = mapState.mobs[idx]; } catch (e) {}
+      var was = !!(m && m._dead), r = oKillJ.apply(this, arguments);
+      try { if (m && !was && m._dead) noviceDrop(m); } catch (e) {}
+      return r;
+    };
+    try { (0, eval)('killMob = window.killMob'); } catch (e) {}
+  }
   var BOX = 'list-item bg-slate-800 rounded mb-3 border border-slate-700 p-3';
   function render(div) {
     if (!div) return; var s = st(), p = P(); if (!s || !p) return;
@@ -189,7 +223,7 @@
     for (var t = 1; t <= 3; t++) h += '<button class="btn" onclick="AFK_JUNKQ.view(' + t + ')"' + (view === t ? ' style="color:#fcd34d"' : '') + '>' + TIER[t].n + (t > 1 ? '（Lv' + TIER[t].lv + ' 以上）' : '（Lv60 以下）') + (unlocked(t) ? '' : ' 🔒') + '</button>';
     h += '</div>';
     var tv = view, tierList = tiers[tv];
-    h += '<p class="text-slate-400 text-sm" style="margin-bottom:10px">雜項素材分三階，只能打怪取得（不能買）。劇情委託每章給一件' + TIER[tv].n + '裝備；讀完該篇後開放常駐委託，可以一直換。獎勵只抽你的職業能穿的。' + (tv === 3 ? '高階獎勵是「殘缺的」王裝仿品，能力只有原品的一半。' : '') + '</p>';
+    h += '<p class="text-slate-400 text-sm" style="margin-bottom:10px">雜項素材分三階，只能打怪取得（不能買）。劇情委託每章給一件' + TIER[tv].n + '裝備；正在收的委託素材，任何地方的一般怪都有機會掉（收齊就不再掉）。讀完該篇後開放常駐委託，可以一直換。獎勵只抽你的職業能穿的。' + (tv === 3 ? '高階獎勵是「殘缺的」王裝仿品，能力只有原品的一半。' : '') + '</p>';
     if (!unlocked(tv)) {
       h += '<div class="' + BOX + '"><b>' + esc(STORY[tv].t) + '</b><p class="text-slate-400 text-sm" style="margin-top:6px">要先讀完' + TIER[tv - 1].n + '篇' + (num(p.lv) < TIER[tv].lv ? '，並達到 Lv' + TIER[tv].lv + '（目前 Lv' + num(p.lv) + '）' : '') + '。</p></div>';
     } else {
