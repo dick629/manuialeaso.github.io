@@ -334,10 +334,10 @@
     } catch (e) { return 0; }
   };
   if (typeof W.doCraft === 'function') {
-    var oCraft = W.doCraft;
+    var oDoCraft = W.doCraft;   // 11-18：不能叫 oCraft（下面 renderUniversalCraft 也用 var oCraft，同一個函式範圍會互相蓋掉 → 每個 NPC 都不能製作）
     W.doCraft = function (npcId, idx) {
       try { var rc = CRAFT_RECIPES[npcId] && CRAFT_RECIPES[npcId][idx]; if (rc && rc.result === FOUR.id && fourOwned() > 0) { if (typeof logSys === 'function') logSys('<span class="text-amber-300">四龍之瞳每個角色只能擁有一個。</span>'); return; } } catch (e) {}
-      return oCraft.apply(this, arguments);
+      return oDoCraft.apply(this, arguments);
     };
     try { (0, eval)('doCraft = window.doCraft'); } catch (e) {}
   }

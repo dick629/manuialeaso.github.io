@@ -154,7 +154,7 @@
     // 玩家沒按「離開」、改用遊戲自身回村/地圖選單離開木人場 → 自動收尾（避免 HUD 殘留;假怪 changeMap 已清）
     if (!inTrain() && hudShown()) deactivate();
     if (!inTrain() && player && player.afkTrainWorld) worldRestore();
-    if (!inTrain()) { if (brkExt && brk) brkTick(); return _origTick.apply(this, arguments); }
+    if (!inTrain()) { if ((brkExt || brkField) && brk) brkTick(); return _origTick.apply(this, arguments); }
     // 開拍前：把訓練怪補滿，記下基準（以 uid 為 key，避免死亡輸送帶換格錯亂）
     var before = {};
     var i, m, mobs = mapState.mobs;
@@ -728,11 +728,12 @@
   //   普通攻擊裡面夾帶的武器特效（雙擊、爆破…）沒有自己的函式：用同一段時間戰鬥訊息的【名稱】＋傷害數字對回去。
   //   各列相加＝木人實際掉的血（跟上面的總 DPS 同一個口徑）。
   var brk = null, CTX = [], brkExt = false;   // brkExt：木人場以外借用細項（女神單人練習，afk-finalboss）
-  function brkOn() { return inTrain() || brkExt; }
+  var brkField = false, brkFieldT0 = 0;   // 11-18 Ping：統計頁 DPS 統計點開 ▸ 時，在一般地圖也記細項（全部收起就停）
+  function brkOn() { return inTrain() || brkExt || brkField; }
   function brkReset() { brk = { rows: {}, recent: [] }; }
   function whoOf(e) {
     if (!e || e === player) return '你';
-    return String(e.n || e.name || e.nick || '傭兵');
+    return String(e._allyName || e.n || e.name || e.nick || '傭兵');   // 11-18：跟統計頁 DPS 統計同一個名字
   }
   function petLabel(pet) { var n = ''; try { n = typeof petDisplayName === 'function' ? petDisplayName(pet) : (pet && (pet.name || pet.n)) || ''; } catch (e) { n = ''; } return '寵物' + (n ? '：' + String(n).replace(/<[^>]+>/g, '') : ''); }
   function brkAdd(who, what, d, n) {
@@ -888,7 +889,7 @@
     if (!brk) return;
     brk.recent = [];
     var mobs = mapState.mobs || [];
-    for (var i = 0; i < mobs.length; i++) if (mobs[i] && (mobs[i]._train || (brkExt && mobs[i]._afkBrk))) hookHp(mobs[i]);
+    for (var i = 0; i < mobs.length; i++) if (mobs[i] && (mobs[i]._train || (brkExt && mobs[i]._afkBrk) || (brkField && !mobs[i]._dead && !(mobs[i].curHp <= 0)))) hookHp(mobs[i]);
   }
   function brkRowsHtml(elapsedSec) {
     if (!brk) return '<div class="m-train-empty">尚無輸出</div>';
@@ -938,6 +939,15 @@
     return h + '<div class="m-train-brk-note">「少掉」不算在上面的合計裡；百分比是跟木人實際掉的血相比。</div>';
   }
   window.__afkTrainBreakdown = function () { return brk; };
+  // 統計頁 DPS 統計的細項（afk-dpsdetail）：一般地圖借用同一套記錄。木人場、女神練習進行中時不另外開。
+  window.__afkBrkField = {
+    on: function () { return brkField; },
+    start: function () { if (brkField) return; try { brkHook(); } catch (e) { /* ignore */ } if (!brkExt && !inTrain()) brkReset(); brkField = true; brkFieldT0 = Date.now(); },
+    stop: function () { brkField = false; },
+    reset: function () { if (brkField && !brkExt && !inTrain()) { brkReset(); brkFieldT0 = Date.now(); } },
+    since: function () { return brkFieldT0; },
+    rows: function () { return brk ? brk.rows : {}; }
+  };
   // 女神單人練習借用（afk-finalboss）：目標要標 _afkBrk
   window.__afkBrkExt = {
     start: function () { try { brkHook(); } catch (e) { /* ignore */ } brkReset(); brkExt = true; },

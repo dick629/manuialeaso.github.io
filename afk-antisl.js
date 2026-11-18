@@ -259,18 +259,26 @@
     var d = it && DB.items[it.id]; if (!d || !it.uid) return false;
     return !!(d.relic || d.relicBase || d.dimRelic || d.dimDragon != null || d.relicEvo != null || d.gmOnly || String(it.id) === '99999' || String(it.id) === '99998');
   };
+  // 回傳 [[道具, 傭兵的存檔位或 null]…]
+  //   11-18 21:58 修正：傭兵＝你其他存檔位的角色，他身上的裝備本來就存在那個存檔位裡 → 算在那個存檔位，不能算在你身上（原本被當成同一件出現在兩處，誤封 132 件）
   var itemsOf = function (p) {
-    var out = [], eqOf = function (e) { Object.keys(e || {}).forEach(function (k) { if (e[k] && typeof e[k] === 'object' && e[k].id) out.push(e[k]); }); };
-    (p.inv || []).forEach(function (it) { if (it) out.push(it); }); eqOf(p.eq);
-    (p.allies || []).forEach(function (a) { if (a) eqOf(a.eq); });   // 11-18（Ping）：傭兵身上的也算
+    var out = [], eqOf = function (e, slot) { Object.keys(e || {}).forEach(function (k) { if (e[k] && typeof e[k] === 'object' && e[k].id) out.push([e[k], slot]); }); };
+    (p.inv || []).forEach(function (it) { if (it) out.push([it, null]); }); eqOf(p.eq, null);
+    (p.allies || []).forEach(function (a) { if (a) eqOf(a.eq, a._slot != null ? Number(a._slot) : null); });
     return out;
   };
   var scanUids = function () {
     var p = P(); if (!p || typeof DB === 'undefined') return null;
     var locs = {}, objs = {};
     var add = function (it, loc, live) { if (!guarded(it)) return; var L = locs[it.uid] || (locs[it.uid] = []); if (L.indexOf(loc) < 0) L.push(loc); if (live) (objs[it.uid] = objs[it.uid] || []).push({ loc: loc, it: it }); };
-    var me = 'r:' + ident(p);
-    itemsOf(p).forEach(function (it) { add(it, me, true); });
+    var me = 'r:' + ident(p), slotLocs = {};
+    var slotLoc = function (n, self) {
+      if (n == null || !isFinite(n)) return self;
+      if (n === Number(currentSlot)) return me;
+      if (slotLocs[n] == null) { var rq = null; try { rq = decodeP(localStorage.getItem(slotKey(n))); } catch (e) {} slotLocs[n] = rq && rq.cls ? 'r:' + ident(rq) : 'ally:' + n; }
+      return slotLocs[n];
+    };
+    itemsOf(p).forEach(function (x) { add(x[0], slotLoc(x[1], me), true); });
     try { if (typeof petRoster === 'function') (petRoster() || []).forEach(function (pt) { var e = pt && pt.eq; if (e) Object.keys(e).forEach(function (k) { if (e[k] && typeof e[k] === 'object') add(e[k], 'pets', true); }); }); } catch (e) {}   // 寵物裝備（全帳號共用的寵物桶）
     for (var n = 1; n <= 40; n++) {
       if (n === Number(currentSlot)) continue;
@@ -278,7 +286,7 @@
       if (!raw) continue;
       var q = decodeP(raw); if (!q || !q.cls) continue;
       var loc = 'r:' + ident(q); if (loc === me) continue;
-      itemsOf(q).forEach(function (it) { add(it, loc, false); });
+      itemsOf(q).forEach(function (x) { add(x[0], slotLoc(x[1], loc), false); });
     }
     var wh = null; try { wh = typeof loadWarehouse === 'function' ? loadWarehouse() : null; } catch (e) {}
     if (wh && Array.isArray(wh.items)) wh.items.forEach(function (it) { if (it) add(it, 'wh', true); });
@@ -301,8 +309,26 @@
     if (flagged) { sys('<span class="text-red-400 font-bold">發現 ' + flagged + ' 件遺物同時出現在兩個地方（複製品），複本已封印。</span>'); try { W.saveGame(); } catch (e) {} }
     return { flagged: flagged, dup: Object.keys(locs).filter(function (u) { return locs[u].length > 1; }).length };
   };
+  // 11-18 21:58：傭兵裝備誤判成複本（itemsOf 修正前）→ 每個存檔位第一次讀取時，先把複本標記全部拿掉，再用修正後的規則重掃一次（真的重複會再標回去）
+  var FIX = 'lineage_dupfix_1118_v1';
+  var unflagAll = function () {
+    var p = P(); if (!p) return 0; var n = 0, clr = function (it) { if (it && it.afkDup) { delete it.afkDup; n++; } };
+    itemsOf(p).forEach(function (x) { clr(x[0]); });
+    try { if (typeof petRoster === 'function') (petRoster() || []).forEach(function (pt) { var e = pt && pt.eq; if (e) Object.keys(e).forEach(function (k) { if (e[k] && typeof e[k] === 'object') clr(e[k]); }); }); } catch (e) {}
+    try { var wh = typeof loadWarehouse === 'function' ? loadWarehouse() : null, wn = n; if (wh && Array.isArray(wh.items)) wh.items.forEach(clr); if (n > wn && typeof saveWarehouse === 'function') saveWarehouse(wh); } catch (e) {}
+    return n;
+  };
+  var fixOnce = function () {
+    var p = P(); if (!p) return; var id = ident(p) || String(currentSlot), done = {};
+    try { done = JSON.parse(localStorage.getItem(FIX) || '{}') || {}; } catch (e) {}
+    if (done[id]) return;
+    var n = unflagAll(); done[id] = 1;
+    try { localStorage.setItem(FIX, JSON.stringify(done)); } catch (e) {}
+    if (n) { sys('<span class="text-emerald-300 font-bold">之前誤判成複製品的 ' + n + ' 件道具已經解除封印（傭兵身上的裝備被重複計算）。</span>'); }
+  };
+  W.__afkUidScan = function () { return scanUids(); };
   var lastScanSlot = null;
-  setInterval(function () { var p = P(), s = S(); if (!p || !s || !s.running || s.ff) return; if (lastScanSlot !== currentSlot) { lastScanSlot = currentSlot; setTimeout(scanUids, 3000); } }, 2000);
+  setInterval(function () { var p = P(), s = S(); if (!p || !s || !s.running || s.ff) return; if (lastScanSlot !== currentSlot) { lastScanSlot = currentSlot; setTimeout(function () { try { fixOnce(); } catch (e) {} scanUids(); }, 3000); } }, 2000);
   setInterval(function () { var s = S(); if (P() && s && s.running && !s.ff) scanUids(); }, 5 * 60 * 1000);
   W.__afkUidGuard = { scan: scanUids, guarded: guarded };
 })();

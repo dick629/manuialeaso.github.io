@@ -727,7 +727,7 @@
     <!-- 能力分頁條列式：拿掉背景圖改大字卡片(純 CSS,DOM/updateUI 不動) -->
     <script src="afk-statlist.js?v=411dc6abfff7"></script>
     <script src="afk-autobuy.js?v=0b3c6ef1f6b4"></script>
-    <script src="afk-training.js?v=8920ce1f164c"></script>
+    <script src="afk-training.js?v=06824fffbce1"></script>
     <!-- 廢品標記管理：入口排在木人場鈕下方（自己 insertAdjacentElement，不靠載入順序） -->
     <script src="afk-junkmgr.js?v=48da09305a18"></script>
     <!-- 傭兵招募擋下提示：核心只寫系統日誌，改跳彈窗（不重刻條件，收核心自己的紅字） -->
@@ -864,6 +864,8 @@
     <script src="afk-dreamcost.js?v=da1f0f7fff05"></script>
     <!-- afk-healstat：本圖效率統計的恢復統計、面板 HP恢復量完整算式（需 afk-arts） -->
     <script src="afk-healstat.js?v=8a91de174873"></script>
+    <!-- afk-dpsdetail：統計頁 DPS 統計每一列可以點開看傷害細項（借用 afk-training 的細項記錄，點開才記）；要在 afk-training、afk-healstat 之後 -->
+    <script src="afk-dpsdetail.js?v=679b5100045d"></script>
     <!-- afk-stun：鈍擊＝暈眩（頭目有抗性）、連暈 10 秒→完全停擺 15 秒；包 tick 必須在最外層，所以排最後 -->
     <script src="afk-stun.js?v=a38659621088"></script>
     <!-- 天堂透視鏡已核對物品；套裝與地圖資料就緒後加入配方與裂痕補給。 -->
@@ -915,7 +917,7 @@
     <!-- afk-lostshard：失去光輝的碎片（席琳夢域鏡掉落；哈瑪大師 100 碎片＋500 龍鑽＋1000 席琳結晶熔鑄成材料） -->
     <script src="afk-lostshard.js?v=7edb6dfa58c4"></script>
     <!-- afk-dragon-npcs：四龍副本入口分村（地＝沉默洞穴、火＝威頓村、水＝海音、風＝亞丁）、米米製作改版與四龍盔甲（需 afk-corrupt、afk-affix-plus） -->
-    <script src="afk-dragon-npcs.js?v=7b07f59ed6d9"></script>
+    <script src="afk-dragon-npcs.js?v=f8a3881ba538"></script>
     <!-- afk-traitor：亞丁城副本「謀叛者的低語」（持有亞丁城＋統一七城，經由亞丁城的伊菈進入；冥皇丹特斯、反王肯恩、魔女賽尼斯＋四大軍王與長老）（需 afk-castlewar、afk-sets） -->
     <script src="afk-traitor.js?v=31cf0f5e4844"></script>
     <!-- afk-hidden：隱藏條件（謀叛三人組、王族之敵）；需 afk-card-combat、afk-affix-plus 的受傷掛點 -->
@@ -1262,7 +1264,7 @@
     <script src="merged/arcade-entry.js?v=e5a72d16fa25"></script>
     <script src="merged/anticheat.js?v=7ddd42ff452e"></script>
     <!-- afk-antisl：防 SL（點按鈕的結果先定好、女神挑戰紀錄點、道具身分證、帳號血盟編號）；要在 afk-finalboss／rebirth2／finaltiers、merged/integrity-*、anticheat 之後 -->
-    <script src="afk-antisl.js?v=901e844567f2"></script>
+    <script src="afk-antisl.js?v=88ae662a692f"></script>
     <!-- afk-limitbreak：限界解放（二轉後八職業各一個被動；Ping 11-13）；要在 afk-hidden、afk-arts、afk-affix-plus、afk-card-combat 之後 -->
     <!-- afk-paragon2：巔峰 1000／2000 等的新能力（Ping 11-13）；要在 afk-limitbreak 之前（提供 __afkLimitBreakBoost）也可以，之後也可以 -->
     <script src="afk-paragon2.js?v=a241ada40e53"></script>
