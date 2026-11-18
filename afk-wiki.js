@@ -1160,6 +1160,7 @@
     { k: 'soulstone', n: '靈魂石' },
     { k: 'miosigil', n: '密奧與聖紋' },
     { k: 'guardring', n: '守護者之戒' },
+    { k: 'tagcard', n: '標籤卡' },
     { k: 'dimrift', n: '次元裂縫' },
     { k: 'combat', n: '戰鬥機制' },
     { k: 'stats', n: '能力值' },
@@ -1399,6 +1400,7 @@
     if (key === 'miosigil') return renderMioSigil() + '<div style="height:10px"></div><div class="m-wiki-note" style="font-weight:bold;color:#c4b5fd">密奧・次元升級</div>' + renderMioDim();   // 玩家 11-07 23:37：兩頁合併
     if (key === 'miodim') return renderMioDim();
     if (key === 'guardring') return renderGuardRing();
+    if (key === 'tagcard') return window.__afkTagCard ? window.__afkTagCard.wiki({ wCard: wCard, wTbl: wTbl, wDesc: wDesc }) : '<div class="m-wiki-note">標籤卡在設定裡被關掉了。經典模式沒有這個系統。</div>';
     if (key === 'dimrift') return renderDimRift();
     if (key === 'story') return renderStory();
     if (key === 'tower') return renderTower();
@@ -1492,6 +1494,7 @@
     { key: 'starroad', cls: false, label: '星途遠征' },
     { key: 'autoexped', cls: false, label: '夢域鏡自動遠征' },
     { key: 'guardring', cls: false, label: '守護者之戒' },
+    { key: 'tagcard', cls: false, label: '標籤卡' },
     { key: 'dimrift', cls: false, label: '次元裂縫' },
     { key: 'pledge', cls: false, label: '血盟' },
     { key: 'relicmarket', cls: false, label: '遺物市場' },

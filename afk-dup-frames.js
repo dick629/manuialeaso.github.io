@@ -32,7 +32,61 @@
     if (!RE_TREE.test(p)) return v;
     return v.replace(RE_WEBP, function (x) { return x.slice(0, -4) + '.webp'; });
   };
-  var map = function (v) { return toWebp(dupMap(v)); };
+  // ── 動畫幀合成大圖（Ping 11-18 22:49；scripts/build-anim-sheets.py，公開版部署時打開）──
+  //   每個動作第 1 格以後的幀合成一張 <資料夾>/<動作>.sheet.webp（無損）。要第 N 格時：大圖已切好 → 給切好的那一格（blob 網址）；
+  //   還沒載完 → 先給第 0 格，並記下這張 <img>，切好後自動換上。超過最大格號的照原網址（不存在＝探測幀數時會停下來）。
+  var SH = W.AFK_ANIM_SHEETS && W.AFK_ANIM_SHEETS.on && W.AFK_ANIM_SHEETS.data ? W.AFK_ANIM_SHEETS.data : null;
+  var shIdx = null, shState = Object.create(null);
+  var shGroup = function (dir, act) {
+    if (!shIdx) { shIdx = Object.create(null); var D0 = SH.d, G = SH.g; for (var i = 0; i < G.length; i++) shIdx[D0[G[i][0]] + '/' + G[i][1]] = G[i]; }
+    return shIdx[dir + '/' + act] || null;
+  };
+  var origSet = null;   // 原本的 img.src setter（下面設定）
+  var shLoad = function (key, g, head, enc) {
+    var st = shState[key]; if (st) return st;
+    st = shState[key] = { cells: [], wait: Object.create(null), ok: false };
+    var dir = key.slice(0, key.lastIndexOf('/')), act = g[1];
+    var url = dir + '/' + act + '.sheet.webp'; if (enc) url = url.split('/').map(encodeURIComponent).join('/');
+    var im = new Image();
+    im.onload = function () {
+      var cols = g[3], cw = g[4], ch = g[5], sizes = g[7] || null, nCells = 0, c = g[6], k;
+      if (c && c.length) { for (k = 0; k < c.length; k++) if (c[k] + 1 > nCells) nCells = c[k] + 1; } else nCells = g[2];
+      var left = nCells;
+      for (k = 0; k < nCells; k++) (function (i) {
+        var w = sizes ? sizes[i][0] : cw, h = sizes ? sizes[i][1] : ch;
+        var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(im, (i % cols) * cw, Math.floor(i / cols) * ch, w, h, 0, 0, w, h);
+        cv.toBlob(function (bl) {
+          st.cells[i] = bl ? URL.createObjectURL(bl) : '';
+          if (--left === 0) { st.ok = true; for (var n in st.wait) { var cu = st.cells[cellOf(g, +n)]; st.wait[n].forEach(function (img) { try { if (cu && origSet) origSet.call(img, cu); } catch (e) {} }); } st.wait = null; }
+        }, 'image/png');
+      })(k);
+    };
+    im.onerror = function () { st.bad = true; };
+    try { if (origSet) origSet.call(im, (head || '') + url); else im.src = (head || '') + url; } catch (e) {}
+    return st;
+  };
+  var cellOf = function (g, n) { var c = g[6]; return c && c.length ? c[n - 1] : n - 1; };
+  var RE_SH = /^(.*)_([1-9]\d*)$/;
+  var sheetMap = function (v, img) {
+    if (!SH || typeof v !== 'string' || v.indexOf('.png') < 0 || (v.indexOf('anim') < 0 && v.indexOf('art-v3') < 0)) return null;
+    var q = '', qi = v.search(/[?#]/), u = v; if (qi >= 0) { q = v.slice(qi); u = v.slice(0, qi); }
+    if (!/_[1-9]\d*\.png$/.test(u)) return null;
+    var enc = u.indexOf('%') >= 0, p; try { p = enc ? decodeURIComponent(u) : u; } catch (e) { return null; }
+    var m = RE_TREE.exec(p); if (!m) return null;
+    var at = m.index + (m[0].charAt(0) === '/' ? 1 : 0), head = p.slice(0, at), rel = p.slice(at);
+    var slash = rel.lastIndexOf('/'), dir = rel.slice(0, slash), mm = RE_SH.exec(rel.slice(slash + 1, -4)); if (!mm) return null;
+    var g = shGroup(dir, mm[1]); if (!g) return null;
+    var n = +mm[2]; if (n > g[2]) return v;   // 沒有這一格：照原網址（不存在）
+    var ci = cellOf(g, n); if (ci < 0) return v;
+    var st = shLoad(dir + '/' + mm[1], g, enc ? encodeURI(head) : head, enc);
+    if (st.ok && st.cells[ci]) return st.cells[ci];
+    if (st.bad) return v;
+    if (img && st.wait) { var wl = st.wait[n] || (st.wait[n] = []); if (wl.indexOf(img) < 0) wl.push(img); }
+    var f0 = dir + '/' + mm[1] + '_0.png'; if (enc) f0 = f0.split('/').map(encodeURIComponent).join('/');
+    return (enc ? encodeURI(head) : head) + f0 + q;   // 大圖還沒好：先顯示第 0 格
+  };
+  var map = function (v, img) { var s = sheetMap(v, img); if (s !== null) return s; return toWebp(dupMap(v)); };
   var dupMap = function (v) {
     if (typeof v !== 'string' || v.length < 12) return v;
     if (v.indexOf('anim') < 0 && v.indexOf('art-v3') < 0) return v;
@@ -60,14 +114,15 @@
     if (d && d.set && d.configurable) Object.defineProperty(HTMLImageElement.prototype, 'src', {
       configurable: true, enumerable: d.enumerable, get: d.get,
       // ⚡ 11-12 效能：動畫每格都會重設 src；跟現在一模一樣、而且已經載好的就不再設（瀏覽器每設一次都會重跑一次圖片更新流程）
-      set: function (v) { var nv = map(v); if (typeof nv === 'string' && this.complete && this.naturalWidth > 0 && this.getAttribute('src') === nv) return; d.set.call(this, nv); }
+      set: function (v) { var nv = map(v, this); if (typeof nv === 'string' && this.complete && this.naturalWidth > 0 && this.getAttribute('src') === nv) return; d.set.call(this, nv); }
     });
   } catch (e) {}
+  try { origSet = d && d.set ? d.set : null; } catch (e) {}
   // 2) setAttribute('src', …)
   try {
     var oSA = Element.prototype.setAttribute;
     Element.prototype.setAttribute = function (n, v) {
-      if ((n === 'src' || n === 'SRC') && this instanceof HTMLImageElement) v = map(v);
+      if ((n === 'src' || n === 'SRC') && this instanceof HTMLImageElement) v = map(v, this);
       return oSA.call(this, n, v);
     };
   } catch (e) {}
@@ -83,6 +138,7 @@
     }
     var m2 = map(s); if (m2 && m2 !== s) t.src = m2;
   }, true);
+  W.__afkAnimSheets = { on: !!SH, state: function () { return shState; } };
   W.__afkDupSrc = map; W.__afkWebpOn = function () { return WEBP; };
   W.__afkDupStats = function () { return { folders: F.length, hits: hits }; };
 })();

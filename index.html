@@ -586,7 +586,7 @@
 <script src="js/16-equip-book.js?v=db30ba2eab50"></script>
 <script src="js/18-misc-book.js?v=6f78dfd0f141"></script>
 <script src="js/17-audio.js?v=ed981226d063"></script>
-<script src="js/19-equipment-window.js?v=2bf2f931c483"></script>
+<script src="js/19-equipment-window.js?v=a1ba606b5a75"></script>
 <script src="js/20-warehouse-window.js?v=92e5e1d96a5a"></script>
 <script src="js/21-relic-book.js?v=2cf7d69f2832"></script>
     <script src="js/23-summons.js?v=7261e4984b15"></script>
@@ -610,8 +610,10 @@
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=fab41eefb426"></script>
+    <!-- afk-anim-sheets-data：動畫幀改讀合成大圖的開關與座標表（開發版關、公開版部署時換成開；scripts/build-anim-sheets.py） -->
+    <script src="afk-anim-sheets-data.js?v=92f82202329f"></script>
     <script src="afk-dup-frames-data.js?v=bbe6b7979d4c"></script>
-    <script src="afk-dup-frames.js?v=3b208c70aa17"></script>
+    <script src="afk-dup-frames.js?v=b37c185d4cb9"></script>
     <!-- afk-gptart-icons：GPT新美術——裝備圖示光影修補 837 張（原圖 → assets/icons/gpt/）；要早於其他外掛，開關 art-v3 -->
     <script src="afk-gptart-icons-data.js?v=e1f62a94f46b"></script>
     <script src="afk-gptart-icons.js?v=489fa62e51a8"></script>
@@ -706,7 +708,7 @@
     <!-- afk-illufix：幻術士修補（疼痛的歡愉 −50%、反彈、蝕刻印記；立方：燃燒 每 2 秒 5～50 火傷、灼熱印記、吸血回魔；立方：和諧回 MP 5 → 15，原 afk-classtweak）；排在 afk-wiki 之前（小百科說明跟著改）；需核心補丁 69 -->
     <script src="afk-illufix.js?v=d4806c4f9e9b"></script>
     <!-- 小百科：用到才載入（afk-lazy.js，Ping 11-13） -->
-    <script>window.__AFK_LAZY_SRC={bosslines:["afk-bosslines-data.js?v=baaf7ca125"],wiki:["afk-game-guide.js?v=42bd3a1d67","afk-wiki.js?v=a9c90ae40e"]};</script>
+    <script>window.__AFK_LAZY_SRC={bosslines:["afk-bosslines-data.js?v=baaf7ca125"],wiki:["afk-game-guide.js?v=42bd3a1d67","afk-wiki.js?v=1191132309"]};</script>
     <script src="afk-lazy.js?v=f24c307989d7"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=a2831ae70fbf"></script>
@@ -905,7 +907,7 @@
     <!-- afk-magefix（要在 afk-rebirth-rules 之前，溢補護盾才算得到多回的量）：法師修補——體力回復術智力加成不封頂、另外回復目前 HP 5% -->
     <script src="afk-magefix.js?v=c12862830af7"></script>
     <!-- afk-rebirth-rules：轉生魔法消耗與 SP、溢補護盾、敗者榮光、聖衣補血、魔法武器加倍、百般武藝首擊（排在 afk-arts、afk-card-combat 之後） -->
-    <script src="afk-rebirth-rules.js?v=b677a77d37ca"></script>
+    <script src="afk-rebirth-rules.js?v=9b3c5b3e5f42"></script>
     <!-- afk-debuff-rules：負面效果一律計算抵抗、頭目不再免疫；污濁之水全體 15 秒、冷卻 30 秒（冷卻中改三重矢） -->
     <script src="afk-debuff-rules.js?v=855fffbc4678"></script>
     <!-- afk-finalboss：世界最終頭目「死亡女神 席琳」（死亡之海・席琳的沉沒神殿；瘋狂席琳＋席琳夢域鏡、每角色一次；挑戰後才能冥王域轉生；需 afk-dreamhell、afk-dreamstar、afk-rebirth） -->
@@ -958,7 +960,7 @@
     <!-- afk-npcspace：村莊 NPC 名牌重疊時自動換到附近空位（包 renderTownNPCMap，排在所有加 NPC 的外掛之後） -->
     <script src="afk-npcspace.js?v=821735d54129"></script>
     <!-- afk-dex-extra：掉落查詢的「外掛掉落」登記表（副本／席琳夢域鏡等用程式發的掉落，不在掉落表裡；排在所有加怪加物品的外掛之後） -->
-    <script src="afk-dex-extra.js?v=60b8b131f304"></script>
+    <script src="afk-dex-extra.js?v=62eab4f6d539"></script>
     <!-- afk-heartbeat：旅人頻道（真人心跳聊天）——世界頻道旁的專屬按鈕＋獨立視窗；要自己加入才連線，後端見 backend/heartbeat -->
     <script src="afk-heartbeat.js?v=37c51987e968"></script>
     <!-- afk-itemui：物品資訊窗點外面就關＋特殊物品固定淡光（靜態背景漸層，不用動畫） -->
@@ -1105,7 +1107,7 @@
     <!-- afk-blooddia：潘朵拉黑市「血龍鑽兌換」分頁（龍之鑽石 50 → 血龍鑽 1）；包 pandoraRenderMarket，要在 afk-bmprice、afk-craftui 之後 -->
     <script src="afk-blooddia.js?v=f4ff9acc0ed0"></script>
     <!-- afk-trade：潘朵拉黑市「寄賣攤」（玩家之間用血龍鑽一口價買賣；伺服器＝旅人頻道同一台 /mkt/*）；要在 afk-heartbeat、afk-blooddia、afk-npc-kit 之後 -->
-    <script src="afk-trade.js?v=cd962e8498b9"></script>
+    <script src="afk-trade.js?v=af4c03c35772"></script>
     <!-- afk-poker：德州撲克（歐瑞村莊 荷官 洛蒂；金幣／龍之鑽石／血龍鑽買籌碼對 3～5 位 NPC）；要在 afk-lore-kit、afk-npc-kit、afk-blooddia 之後 -->
     <script src="afk-poker.js?v=3cd0e47cd249"></script>
     <!-- afk-gamehall：🎰 遊戲廳（德州撲克＋百家樂＋沙海法老的寶庫＋賽狗場的統一入口）；要在 afk-poker、afk-dograce 之後 -->
@@ -1135,7 +1137,7 @@
     <!-- afk-starweaver：稱號「織星者」（七城、S 級、上位者、村長、密奧、織羽手環、隱藏稱號、轉生、聖甲蟲、卡冊、星途遠征、6 件至高的支配全部達成）；只在檢查時讀其他系統，放最後 -->
     <script src="afk-starweaver.js?v=1036457f989e"></script>
     <!-- afk-carve：歐瑞村莊刻印師邪迪克爾——武器、盔甲、頭盔、手套、長靴、斗篷各 1 孔的刻印（7 種 Lv1～5）與尤／鯤／彌之印記、3／6 格套裝；要在 afk-procfx、afk-overflow、afk-balance1101、afk-hidden、afk-matwh、afk-expedition、afk-sherine-dream 之後 -->
-    <script src="afk-carve.js?v=aa1992d89e9f"></script>
+    <script src="afk-carve.js?v=ca4a7ba850e6"></script>
     <!-- afk-guardring：守護者之戒（五騎士的劇情、副本、上半部／完整 ★1～★3、主誓約、騎士之印、庇護者之戒、滿月；裝備視窗第二頁密奧上面那格；轉生後、經典模式沒有）；要在 afk-procfx、afk-lore-kit、afk-npc-kit、afk-npctabs、afk-carve 之後，afk-bosslines、afk-bosswatch 之前 -->
     <script src="afk-guardring.js?v=a46b12fd8b0f"></script>
     <!-- afk-siege2：每週守城戰（每週五 20:00 集結、血盟頁可關、攻城頁放棄城堡、回防副本 25 波（倒下轉攻城）、失城 7 天鎖與城陷之恥、奪回戰鏡像敵人）；預設開；要在 afk-castlewar、afk-castle-guards、afk-guardup、afk-soulstone 之後 -->
@@ -1171,9 +1173,9 @@
     <!-- afk-dollrift：魔法娃娃 7～10 階（次元裂縫 32 隻；魔法娃娃商人）；要在 afk-cardplus、afk-dollaffix、afk-bosscard、afk-dimrift、afk-procfx 之後 -->
     <script src="afk-dollrift.js?v=f1e06a095c12"></script>
     <!-- afk-riftdungeons：次元裂縫的副本（席琳神殿 裂縫之門）；要在 afk-dimrift、afk-lore-kit、afk-npc-kit 之後 -->
-    <script src="afk-riftdungeons.js?v=9bbae75da4e3"></script>
+    <script src="afk-riftdungeons.js?v=fadebcac550c"></script>
     <!-- afk-riftquest：次元裂縫任務線「吞噬天空的光」6 章＋伊娃支線「伊娃的水」3 章；要在 afk-lore-kit、afk-dreamquest、afk-dimrift、afk-riftdungeons、afk-finaltiers 之後 -->
-    <script src="afk-riftquest.js?v=58da1c11850a"></script>
+    <script src="afk-riftquest.js?v=458d89c7e441"></script>
     <!-- afk-dimrelic：次元遺物 180 件與四龍專屬的次元時空武器（席琳神殿 次元的鍛造師）；要在 afk-relic-*、afk-dimrift、afk-riftdungeons 之後 -->
     <!-- afk-relic-newfx：遺物新特效（嫉妒、昏迷命中、施法速度、信念、近／遠距離減傷、猜忌；Ping 11-15）；次元遺物會用到，要在 afk-dimrelic 之前 -->
     <script src="afk-relic-newfx.js?v=e48daa16f4e8"></script>
@@ -1181,8 +1183,8 @@
     <!-- afk-dimrelic24：次元遺物 +2／+4 新特效 -->
     <script src="afk-dimrelic24.js?v=783f7adffbf2"></script>
     <!-- afk-dimarts：次元藝能（席琳神殿 藝能的守門人） -->
-    <script src="afk-dimarts.js?v=908edb795052"></script>
-    <script src="afk-dimarts2.js?v=a155466b4125"></script>
+    <script src="afk-dimarts.js?v=fda7f099a4de"></script>
+    <script src="afk-dimarts2.js?v=c7a4036de4a0"></script>
     <!-- afk-mobmagic：夢域鏡、次元裂縫的怪物放魔法＋屬性攻擊 -->
     <script src="afk-mobmagic.js?v=f4ea6442f8b6"></script>
     <!-- afk-breakskills：粉碎能量魔防 −150、污濁之水 AC +150 -->
@@ -1222,13 +1224,13 @@
 <script src="merged/growth-ui.js?v=a27682eaada8"></script>
 <script src="afk-shroomboost.js?v=86ad3d357b99"></script>
 <script src="afk-mercparagon.js?v=d576ddc81f85"></script>
-<script src="afk-awaken.js?v=748559777aeb"></script>
+<script src="afk-awaken.js?v=88bd59198132"></script>
 <script src="afk-awkmerc.js?v=2236ddf68772"></script>
 <script src="afk-awaken-ext.js?v=28668fb71ec0"></script>
 <script src="afk-awaken-transfer.js?v=b349ad374eac"></script>
 <script src="afk-awaken-wiki.js?v=898eaff26408"></script>
 <script src="afk-awaken-road.js?v=a41d410b470d"></script>
-<script src="afk-newzones.js?v=5a6a01e9fcc1"></script>
+<script src="afk-newzones.js?v=d4644a0c55b3"></script>
 <link rel="stylesheet" href="merged/class-ui.css?v=13cc65dd10d2">
 <link rel="stylesheet" href="merged/progression-desktop.css?v=80ff2924c507" media="(min-width: 821px)">
 <link rel="stylesheet" href="merged/progression-mobile.css?v=df9be8980291" media="(max-width: 820px)">
@@ -1279,7 +1281,7 @@
     <script src="afk-talent4.js?v=2a20b883609f"></script>
     <!-- afk-bloodline：巔峰「命脈」職業血脈＋「繼承繁星」（Ping 11-15）；要在 afk-talent4 之後 -->
     <script src="afk-bloodline.js?v=57797f3b317e"></script>
-    <script src="afk-nemesis.js?v=dcfd2c7c193d"></script>
+    <script src="afk-nemesis.js?v=223a023ce5d9"></script>
     <!-- afk-abnforce：次元裂縫／GD之子的期待的強制異常（隱藏規則，Ping 11-13）；要在 afk-carve、afk-guardring 之後 -->
     <script src="afk-abnforce.js?v=08c1533cec6e"></script>
     <!-- afk-allygear：傭兵公會圖形換裝畫面、隊伍名單點名字的即時視窗（Ping 11-13） -->
@@ -1293,17 +1295,20 @@
     <!-- afk-cardregions：怪物卡冊補上新地圖、新地區、新副本（Ping 11-17）；要在 afk-newzones、afk-timeroom 等副本之後 -->
     <script src="afk-cardregions.js?v=4a398b3c1b29"></script>
     <!-- afk-riftrules：次元裂縫／夢域鏡的王屏障、死亡反噬、王減傷、70 等以上小怪（Ping 11-17）；要在 afk-card-combat、afk-mapboss、afk-dimrift 之後 -->
-    <script src="afk-riftrules.js?v=3902d67b50ad"></script>
+    <script src="afk-riftrules.js?v=2ebb58abfdba"></script>
     <script src="afk-clanadmin.js?v=2dc642f1f4fe"></script>
     <!-- afk-dmglabel：物品說明的增傷種類標示〔近戰〕〔遠程〕〔魔法〕〔屬性〕〔通用〕（Ping 11-17） -->
     <script src="afk-dmglabel.js?v=1746ca026fbe"></script>
     <!-- afk-explog：經驗日誌分頁（Ping 11-17） -->
     <script src="afk-explog.js?v=896dfc6064bc"></script>
-    <script src="afk-hybrid.js?v=124d101f8a07"></script>
+    <script src="afk-hybrid.js?v=3a3d94445d65"></script>
     <!-- afk-relicmix：遺物武器特效混合（繼承共鳴／魔擊／第二攻擊施法，特效連鎖 1 層） -->
     <script src="afk-relicmix.js?v=00bb1c911b6d"></script>
     <!-- afk-statsrc：能力分頁點六大屬性，列出點數從哪裡來（Ping 11-18）；要在所有 __afkAttrBoost 外掛之後 -->
     <script src="afk-statsrc.js?v=7e6e742578a9"></script>
+    <!-- afk-tagcard：標籤卡（卡片鑲嵌；至高的支配裝備開卡洞、鑽石卡做標籤卡；佩特拉後裔村 卡片工匠「命運」；Ping 11-18）；要在 afk-hybrid、afk-riftrules、afk-rebirth-rules、afk-dollrift、afk-newzones、afk-npc-kit 之後 -->
+    <script src="afk-tagcard-data.js?v=a75096c3f86f"></script>
+    <script src="afk-tagcard.js?v=6ad61946cbd3"></script>
     <script src="afk-relicshop.js?v=11e2b9f741c2"></script>
     <!-- afk-tamper：直接改角色資料的作弊（隱藏規則，Ping 11-16）；要放在最後（最外層包 tick、recomputeStats、updateUI） -->
     <script src="afk-tamper.js?v=e07a1b266f03"></script>

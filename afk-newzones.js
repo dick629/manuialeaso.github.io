@@ -669,17 +669,19 @@
     X.drop('冰魔', 'relic_icequeen_ear', 5, '冰之女王的宮殿', true);
     var by = {};
     var add = function (id, t) { (by[id] = by[id] || []).push(t); };
-    Object.keys(SPECIAL).forEach(function (n) { SPECIAL[n].forEach(function (e) { add(e[0], n + '（' + (n === '封印的涅默西斯' ? '古代兵器涅默西斯駐紮地的地圖王' : '單人副本的王') + '）' + e[1] + '%'); }); });
-    add('relic_icequeen_ear', '冰之女王的宮殿（單人副本）打倒冰魔 5%');
-    add('afk_aw_myth_frag', '單人副本（夢域鏡難度）的王 0.1%；100 片在覺醒導師合成失去光芒的覺醒職業 神話法術書');
-    add('afk_legend_codex', '單人副本（夢域鏡難度）的王 0.1%');
-    add('afk_aw_myth_lost', '單人副本（次元裂縫難度）的王、次元裂縫的多人副本王 0.01%；也可以在覺醒導師用碎片 100 片合成');
-    add('afk_myth_codex', '單人副本（次元裂縫難度）的王、次元裂縫的多人副本王 0.1%');
-    ['bk_dark_shadowstun', 'bk_elf_spiritstun'].forEach(function (id) { add(id, '單人副本的王、次元裂縫的多人副本王 1%'); });
+    // 11-18 Ping：掉落查詢不寫機率，改成文字
+    var how = function (v) { v = Number(v) || 0; return v >= 100 ? '一定掉' : v >= 20 ? '常常掉' : v >= 3 ? '偶爾掉' : v >= 0.5 ? '不常掉' : v >= 0.05 ? '很少掉' : '極少掉'; };
+    Object.keys(SPECIAL).forEach(function (n) { SPECIAL[n].forEach(function (e) { add(e[0], n + '（' + (n === '封印的涅默西斯' ? '古代兵器涅默西斯駐紮地的地圖王' : '單人副本的王') + '）' + how(e[1])); }); });
+    add('relic_icequeen_ear', '冰之女王的宮殿（單人副本）打倒冰魔時偶爾掉');
+    add('afk_aw_myth_frag', '單人副本（夢域鏡難度）的王很少掉；100 片在覺醒導師合成失去光芒的覺醒職業 神話法術書');
+    add('afk_legend_codex', '單人副本（夢域鏡難度）的王很少掉');
+    add('afk_aw_myth_lost', '單人副本（次元裂縫難度）的王、次元裂縫的多人副本王極少掉；也可以在覺醒導師用碎片 100 片合成');
+    add('afk_myth_codex', '單人副本（次元裂縫難度）的王、次元裂縫的多人副本王很少掉');
+    ['bk_dark_shadowstun', 'bk_elf_spiritstun'].forEach(function (id) { add(id, '單人副本的王、次元裂縫的多人副本王不常掉'); });
     Object.keys(DROPS).forEach(function (k) {
       var zs = Object.keys(ZBY).filter(function (zid) { return ZBY[zid].drops === k; }).map(function (zid) { return ZBY[zid].n; });
       if (!zs.length) return;
-      DROPS[k].forEach(function (e) { if (DB.items[e[0]] && !/^relic_|^afk_nz_|^bk_/.test(e[0]) ) return; add(e[0], zs.join('、') + '的怪 ' + e[1] + '%'); });
+      DROPS[k].forEach(function (e) { if (DB.items[e[0]] && !/^relic_|^afk_nz_|^bk_/.test(e[0]) ) return; add(e[0], zs.join('、') + '的怪' + how(e[1])); });
     });
     Object.keys(by).forEach(function (id) { if (DB.items[id] && !X.acquire[id]) X.acq(id, by[id].join('；') + '。'); });
   };

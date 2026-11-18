@@ -562,10 +562,10 @@
   (function () {
     var DX = W.AFK_DEX_EXTRA; if (!DX || !DX.acq) return;
     var names = function (list) { var seen = {}, out = []; list.forEach(function (v) { var n = mapName(v); if (n && !seen[n]) { seen[n] = 1; out.push(n); } }); return out; };
-    KINDS.forEach(function (k) { var ns = names(DROPS[k.k]); if (ns.length) DX.acq(k.mat, ns.join('、') + '：一般怪 0.3%（乘隊伍人數）、頭目 20%（1～3 個）。也可以在歐瑞村莊的刻印師邪迪克爾用其他刻印材料 10 個換 1 個。'); });
-    DX.acq(DIRS.you.mat, '四龍副本、哈汀的時空的頭目 3%。');
-    DX.acq(DIRS.kun.mat, '傲慢之塔 41 樓以上各層的頭目 2%。');
-    DX.acq(DIRS.mi.mat, '拉斯塔巴德的軍王之室、席琳世界的頭目 1%。');
+    KINDS.forEach(function (k) { var ns = names(DROPS[k.k]); if (ns.length) DX.acq(k.mat, ns.join('、') + '：一般怪很少掉（隊伍人越多越容易），頭目常常掉 1～3 個。也可以在歐瑞村莊的刻印師邪迪克爾用其他刻印材料 10 個換 1 個。'); });
+    DX.acq(DIRS.you.mat, '四龍副本、哈汀的時空的頭目偶爾掉。');
+    DX.acq(DIRS.kun.mat, '傲慢之塔 41 樓以上各層的頭目偶爾掉。');
+    DX.acq(DIRS.mi.mat, '拉斯塔巴德的軍王之室、席琳世界的頭目偶爾掉。');
   })();
 
   // ── NPC 與介面 ──

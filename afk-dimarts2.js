@@ -43,9 +43,11 @@
   // 共鳴倍數：沒裝這個藝能、或職業不符 → 0
   var M = function (art, cls) {
     var p = P(), D = DA(); if (!p || !D || p.classicMode) return 0; var a = D.act(p, art); if (!a) return 0;
-    var k = 0; resList(p).forEach(function (x) { if (x[0] === cls) k = x[1]; }); return a * k * RS;
+    var k = 0; resList(p).forEach(function (x) { if (x[0] === cls) k = x[1]; }); return a * k * RS * (CK[cls] || 1);
   };
 
+  // 11-19 01:47 Ping：偏低的黑暗妖精、暗黑騎士、幻術士提升到「約比最強的弱 0.9」→ 各自的共鳴倍數（實測校正）
+  var CK = { dark: 1, darkknight: 1, illusion: 1 };
   var RS = 0.6;   // 11-18 21:04 Ping：兩格 ★3＝目前輸出 ×3 → 共鳴的數值整體 ×0.6（說明文字照 ★0 設計值）
   // ── 狀態 ──
   var S = { ema: 0, mapAt: '', once: {}, cd: {}, horn: 0, hornEnd: 0 };
@@ -386,7 +388,7 @@
     darkknight: { horn: ['亡者號角', '號角響起時，最近 10 秒死掉的怪化成亡靈，跟著你一般攻擊 15 秒（每隻 30%）'], light: ['墮光', '受到光屬性、神聖的傷害改成回血'], ember: ['黑焰', '燃燒中的敵人回的血改成傷害'], ink: ['深淵契約', '每 30 秒獻祭 10% HP，10 秒內一般攻擊附加獻祭量 ×3'], sea: ['死海', '受到的傷害 −20%'], hardin: ['黑魔導書', '迴避一次，10 秒內對那隻怪傷害 +5%（最多 +50%）'] },
     runeblade: { horn: ['劍之號令', '號角期間每次一般攻擊六把飛劍一起打（各 30%）'], light: ['符文之光', '每 15 秒下一次受到的傷害反彈 200%'], ember: ['熔劍', '技能命中留熔痕，3 秒後爆炸（攻擊力 80%）'], ink: ['墨刃', '換武器屬性時接下來 5 擊附帶墨汁'], sea: ['水之刃', '對有屬性的目標傷害 +20%'], hardin: ['魔劍典籍', '每個攻擊魔法讓一般攻擊 +1%（最多 40%）；放魔法後下一次一般攻擊附帶它的 50%'] }
   };
-  W.__afkArtRes = { M: M, resList: resList, TXT: TXT, CLS_N: CLS_N, S: S, txt: function (p, art) {
+  W.__afkArtRes = { CK: CK, M: M, resList: resList, TXT: TXT, CLS_N: CLS_N, S: S, txt: function (p, art) {
     p = p || P(); if (!p) return []; return resList(p).map(function (x) { var t = TXT[x[0]] && TXT[x[0]][art]; return t ? { cls: CLS_N[x[0]], k: x[1], n: t[0], d: t[1] } : null; }).filter(Boolean);
   } };
 })();

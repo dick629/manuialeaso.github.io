@@ -70,6 +70,7 @@
     if (!catOf(it)) return '這類物品不能上架';
     if (it.lock) return '已上鎖（先解鎖）';
     try { if (W.__afkAcSealedItem && W.__afkAcSealedItem(it)) return '封印中的道具不能上架'; } catch (e) {}   // Ping 11-18 20:10
+    if (typeof W.__afkTagHasHoles === 'function' && W.__afkTagHasHoles(it)) return '開了卡洞（標籤卡）的裝備不能上架';
     if ((Number(it.en) || 0) > 15) return '強化超過 +15';
     return '';
   };

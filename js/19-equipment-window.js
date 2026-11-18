@@ -49,7 +49,8 @@
             { k: 'bracelet2', x: 80.1, y: 67.77, w: 19.67, h: 8.82, reb: 1, lbl: '手環' },   /* 🔌 加掛版補丁:密奧聖紋 */
             { k: 'mio',      x: 19.4, y: 67.77, w: 19.67, h: 8.82, gate: '__afkMioSlotOn', lbl: '密奧' },
             { k: 'sigil',    x: 50.0, y: 33.46, w: 19.67, h: 8.82, gate: '__afkSigilSlotOn', lbl: '聖紋' },   /* 🔌 加掛版補丁:守護者格 */
-            { k: 'guard', x: 19.4, y: 58.46, w: 19.67, h: 8.82, gate: '__afkGuardSlotOn', lbl: '守護者', click: '__afkGuardSlotClick' }
+            { k: 'guard', x: 19.4, y: 58.46, w: 19.67, h: 8.82, gate: '__afkGuardSlotOn', lbl: '守護者', click: '__afkGuardSlotClick' },   /* 🔌 加掛版補丁:卡片標籤格 */
+            { k: 'tagcard', x: 80.1, y: 80.76, w: 19.67, h: 8.82, gate: '__afkTagSlotOn', lbl: '卡片標籤', click: '__afkTagSlotClick' }
         ]
     ];
 

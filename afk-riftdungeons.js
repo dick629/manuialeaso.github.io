@@ -352,7 +352,7 @@
     ['ink', '墨海沉船', 'afk_rd_ink', '深淵墨'], ['sea', '海神祭壇', 'afk_rd_neptune', '海神'], ['hardin', '哈汀的書庫', 'afk_rd_hmark', '哈汀']];
   ARTS.forEach(function (a) {
     def({ id: 'art_' + a[0], n: a[1], npc: 'arts', tier: 0, anyWorld: true, fee: { items: [[a[2], 50]] }, min: 15, limit: 99999,
-      lore: '交出 100 個' + nm(a[2]) + '，一個人走進「' + a[1] + '」：10 波怪物，最後是你的倒影（現在數值 ×1.2，會放你的職業技能）。打倒必掉「失落的次元藝能・' + a[3] + '」。',
+      lore: '交出 50 個' + nm(a[2]) + '，一個人走進「' + a[1] + '」：10 波怪物，最後是你的倒影（現在數值 ×1.2，會放你的職業技能）。打倒必掉「失落的次元藝能・' + a[3] + '」。',
       onStart: function () { var p = P(); if ((p.allies || []).length) { p.afkTbStash = p.allies; p.allies = []; try { renderSquadPanel(); } catch (e) {} } },
       stages: [{ n: a[1], waves: 10, per: 3, pool: ['pride_91_100'], boss: { n: '你的倒影', re: '騎士|戰士', hpX: 1, final: true,
         hpAbs: function () { var p = P(); return (Number(p.mhp) || 1000) * TB.k * 1500; },

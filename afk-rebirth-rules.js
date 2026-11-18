@@ -37,6 +37,7 @@
   var shieldCap = function (e) { return Math.floor((Number(e.mhp) || 0) * 0.4); };   // 溢補護盾上限：最大 HP 40%（玩家 2026-10-31 00:47；原本 20%）
   var addShield = function (e, over) {
     if (!e || !(over > 0)) return;   // 11-18（Ping）：所有角色的治療都可以溢補（原本限轉生）
+    try { if (typeof window.__afkShieldMult === 'function') over = over * (Number(window.__afkShieldMult(e)) || 1); } catch (x) {}   // 標籤卡「溢補護盾量 +%」
     e._afkShield = Math.min(shieldCap(e), (Number(e._afkShield) || 0) + Math.floor(over));
   };
   var healWithShield = function (e, v) {   // 回血；溢出的部分變護盾

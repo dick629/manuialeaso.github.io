@@ -107,14 +107,15 @@
   //   三種易傷：物理（ph）、魔法（mg）、屬性（el.火水風地）。每種＝各類來源各取最高一次相加，合計最多 50%：
   //     hit 命中觸發 5～10%（身上遺物有第二詞綴 +2.5、第三詞綴 +2.5）；skill 技能 5～10%（技能強化 0～3 階：5／6.5／8／10）；
   //     relic 特定遺物 5～10%（+0 5%，每 +3 多 1%）；rune 符文之語 5～10%（★0～3：5／6.67／8.33／10）；scroll 屬性卷軸 5～8%（屬性階 1～5）；
-  //     卡片（標籤卡）之後跟卡片系統一起做。
+  //     card 標籤卡 每張 5%、同一種最多 20%（afk-tagcard 呼叫 cardVuln）；限界突破的卡讓上限 +5%。
   //   另計（不佔 50%）：寵物撕咬＝每層物理、魔法各 1%，基本上限 5 層（11-18）；元素怪對自己的屬性 5%。現有的脆弱、弱點曝光、遺物火易傷照舊另外算。
   //   持續 5 秒（再次觸發刷新）。
   var VULN = typeof WeakMap === 'function' ? new WeakMap() : null;
   var DUR = 50, CAP = 0.5, PET = 0.05, NAT = 0.05;
   var vs = function (t) { if (!VULN || !t || typeof t !== 'object') return null; var s = VULN.get(t); if (!s) { s = { ph: {}, mg: {}, el: {}, pet: 0, petN: 0 }; VULN.set(t, s); } return s; };
   var put = function (box, src, v) { if (!box) return; var c = box[src], t = now(); if (!c || c[1] <= t || c[0] <= v) box[src] = [v, t + DUR]; else c[1] = t + DUR; };
-  var sum = function (box) { var t = now(), n = 0; for (var k in box) if (box[k][1] > t) n += box[k][0]; return Math.min(CAP, n); };
+  var capNow = function () { var p = P(); return CAP + Math.max(0, Math.min(0.2, N(p && p._afkVulnCapUp))); };   // 標籤卡「限界突破：易傷上限 +5%」
+  var sum = function (box) { var t = now(), n = 0; for (var k in box) if (box[k][1] > t) n += box[k][0]; return Math.min(capNow(), n); };
   var elBox = function (s, ele) { return s.el[ele] || (s.el[ele] = {}); };
   // 寵物撕咬（Ping 11-18 04:28）：每咬一次疊 1 層，每層物理、魔法易傷各 +1%，基本上限 5 層，5 秒（咬到就刷新）。
   //   標籤卡「寵物撕咬易傷層數上限 +5」→ 上限 10 層（之後卡片系統設 player._afkPetBiteCap）。
@@ -402,5 +403,6 @@
   W.LineageHybrid = { LEGACY: LEGACY, AWAKEN: AWAKEN, legacy: legacy, isHybrid: isHybrid, isBlood: isBlood, routeKey: routeKey, stat: stat,
     V: V, relicKind: relicKind, gearOf: gearOf,
     addVuln: function (t, k, src, v) { if (W.__afkHybridOff || !(v > 0)) return; var s = vs(t); if (!s) return; if (k === 'ph') put(s.ph, src, v); else if (k === 'mg') put(s.mg, src, v); else if (ELE4[k]) put(elBox(s, k), src, v); },
+    cardVuln: function (t, k, v) { return this.addVuln(t, k, 'card', v); },   // 標籤卡（afk-tagcard）用
     vuln: function (t) { var s = vs(t); return s ? { ph: V.ph(t, s), mg: V.mg(t, s), el: { fire: V.el(t, 'fire', s), water: V.el(t, 'water', s), wind: V.el(t, 'wind', s), earth: V.el(t, 'earth', s) } } : null; } };
 })();

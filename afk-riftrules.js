@@ -39,7 +39,7 @@
   var members = function () { var p = P(), out = []; if (!p) return out; if (!p.dead && p.hp > 0) out.push(p); (p.allies || []).forEach(function (a) { if (a && !a._downed && N(a.curHp) > 0) out.push(a); }); return out; };
   var hurtAll = function (pct) {
     var p = P(); members().forEach(function (x) {
-      var mx = x === p ? N(p.mhp) : N(x.mhp), dmg = Math.floor(mx * pct);
+      var mx = x === p ? N(p.mhp) : N(x.mhp), dmg = Math.floor(mx * pct * (typeof W.__afkRecoilMult === 'function' ? (N(W.__afkRecoilMult(x)) || 1) : 1));   // 標籤卡「怪物倒下時的反噬傷害 −%」
       if (!(dmg > 0)) return;
       if (x === p) p.hp = Math.max(1, N(p.hp) - dmg); else x.curHp = Math.max(1, N(x.curHp) - dmg);
     });

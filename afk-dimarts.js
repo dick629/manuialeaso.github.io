@@ -116,6 +116,9 @@
   addNpc(); W.addEventListener('load', function () { addNpc(); setTimeout(addNpc, 2000); });
 
   // ── 效果 ──
+  // 11-19 01:47 Ping「偏低的黑暗妖精、暗黑騎士、幻術士 可以提升 約比最強的弱 0.9」：裝著次元藝能時，這三個職業自己的出手傷害 ×CF（實測校正）
+  var CF = { dark: 1.67, darkknight: 1.63, illusion: 2.0 };
+  var anyArt = function (p) { var r = p && p.afkArts; if (!r || !r.slot) return false; for (var i = 0; i < r.slot.length; i++) if (r.slot[i] && act(p, r.slot[i])) return true; return false; };
   var B = { horn: 0, hornCd: 0, lightCd: 0, hardinCd: 0, hardin: false };
   var debuffed = function (m) { if (!m) return false; var t = now(); if ((m._dimInk || 0) > t || (m._artBurn && m._artBurn.until > t) || (m._dimBurn && m._dimBurn.until > t)) return true; var st = m.st || {}; return Object.keys(st).some(function (k) { return Number(st[k]) > 0 && k !== 'mrhalf'; }); };
   var hookOut = function () {
@@ -138,6 +141,7 @@
             var skill = opt && !opt.packet && (opt.kind === 'magic' || opt.kind === 'mag' || opt.skillId);
             if ((m = act(p, 'hardin')) && skill) { mul += 0.30 * m; if (B.hardin) { B.hardin = false; mul *= 3; clog('<span class="font-bold" style="color:#a78bfa">【哈汀】</span>這一招 ×3。'); } }
             if ((target._artInk || 0) > t) mul += 0.10;
+            var cf = CF[p.cls]; if (cf && cf !== 1 && anyArt(p)) mul *= cf;   // 11-19 Ping：偏低職業的藝能補正
             amount *= mul;
           }
           if (B.horn > t && (actor === p || (p.allies || []).indexOf(actor) >= 0) && act(p, 'horn')) amount *= 1 + 0.25 * act(p, 'horn');
@@ -225,5 +229,5 @@
   }
   var hookAll = function () { hookOut(); hookIn(); };
   hookAll(); W.addEventListener('load', function () { hookAll(); setTimeout(hookAll, 3000); });
-  W.__afkDimArts = { ART: ART, act: act, rec: rec, A: A, render: render, B: B, MULT: MULT };
+  W.__afkDimArts = { ART: ART, act: act, rec: rec, A: A, render: render, B: B, MULT: MULT, CF: CF };
 })();
