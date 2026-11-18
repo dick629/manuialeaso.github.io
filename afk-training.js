@@ -908,7 +908,7 @@
           + '<span class="m-train-brk-t"><i style="width:' + Math.max(1, Math.round(pc)) + '%"></i></span></div>';
       });
     });
-    return html + '<div class="m-train-brk-note">各列相加＝木人實際掉的血（平均每秒）。滑過看總量、下數、平均每下。</div>' + sealHtml(elapsedSec, tot);
+    return html + '<div class="m-train-brk-note">各列相加＝木人實際掉的血（平均每秒）。滑過看總量、下數、平均每下。</div>' + (inTrain() ? sealHtml(elapsedSec, tot) : '');   // 封印只在木人場細項顯示（Ping 11-18 17:16）
   }
   // 異常道具封印（merged/anticheat.js）：每一下被打掉的部分記在這裡，細項最下面另外列「少掉的傷害」（Ping 11-18 15:38）
   window.__afkSealTap = function (a, lost, t) {
@@ -935,7 +935,7 @@
         + '<span class="m-train-brk-v">−' + fmt(elapsedSec > 0 ? S[w] / elapsedSec : 0) + '<small>' + (tot > 0 ? (S[w] / tot * 100).toFixed(1) : '0') + '%</small></span>'
         + '<span class="m-train-brk-t"><i style="width:' + Math.max(1, Math.min(100, Math.round(tot > 0 ? S[w] / tot * 100 : 0))) + '%"></i></span></div>';
     });
-    return h + '<div class="m-train-brk-note">「少掉」不算在上面的合計裡；百分比是跟木人實際掉的血相比。把封印中的道具換下來，這部分就會回來。</div>';
+    return h + '<div class="m-train-brk-note">「少掉」不算在上面的合計裡；百分比是跟木人實際掉的血相比。</div>';
   }
   window.__afkTrainBreakdown = function () { return brk; };
   // 女神單人練習借用（afk-finalboss）：目標要標 _afkBrk
