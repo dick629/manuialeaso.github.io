@@ -72,6 +72,7 @@
   var OUT_BUY = { h1: 50, h2: 50, h3: 50, blue: 30 };
   var credits = function () { var A0 = A(), cid = null; try { cid = A0 && A0.resolve ? A0.resolve(12039) : null; } catch (e) {} if (!cid) return { id: null, n: 0 }; var p = P(); return { id: cid, n: (p.inv || []).reduce(function (s, it) { return s + (it && it.id === cid && !it.lock ? Math.max(0, Number(it.cnt) || 1) : 0); }, 0) }; };
   var diaHave = function () { try { return Math.max(0, Math.floor(Number(W.pandoraGetSharedDiamonds()) || 0)); } catch (e) { return 0; } };
+  var riftRetry = { p: null };   // 測試對話 11-19：這一次沒喝成／沒買成 → 5 拍後再試，不每一拍都掃整個背包
   var riftOut = function (p, c) {
     var r = RS(); if (!r || !(c.riftHaste || c.riftBlue) || !riftOutOk()) return;
     var A0 = A(), inR = false; try { inR = !!(A0 && A0.inRift && A0.inRift()); } catch (e) {}
@@ -79,13 +80,16 @@
     var ks = (c.riftHaste ? ['h1', 'h2', 'h3'] : []).concat(c.riftBlue ? ['blue'] : []);
     ks.forEach(function (k) {
       if ((Number(p.buffs && p.buffs[r.BUFF[k]]) || 0) > 0) return;
+      var tk = (typeof state !== 'undefined' && state) ? Number(state.ticks) || 0 : 0;
+      if (riftRetry.p === p && riftRetry[k] > tk && riftRetry[k] - tk <= 5) return;
+      riftRetry.p = p; riftRetry[k] = tk + 5;
       var it = (p.inv || []).find(function (x) { return x && x.id === ids[k] && !x.lock && (Number(x.cnt) || 1) > 0; }) || null;
       if (!it) {
         var d = DB.items[ids[k]]; if (!d) return;
         if (inR) {   // 裂痕裡：戰勳買 1 瓶（afk-riftsupply 會在同一輪自動喝）
           var cr = credits(), cost = Number(d.ttmiCost) || 0;
           if (!cost || cr.n < cost || !A0.riftBuy) return;
-          try { if (A0.riftBuy(ids[k], 1)) { stats.bought++; if (typeof logSys === 'function' && !(state && state.ff)) logSys('自動花費 ' + cost + ' 戰勳兌換了 1 瓶' + esc(d.n) + '。'); } } catch (e) {}
+          try { if (A0.riftBuy(ids[k], 1)) { stats.bought++; riftRetry[k] = 0; if (typeof logSys === 'function' && !(state && state.ff)) logSys('自動花費 ' + cost + ' 戰勳兌換了 1 瓶' + esc(d.n) + '。'); } } catch (e) {}
           return;
         }
         var price = OUT_BUY[k], fee = r.OUT_FEE || 10;
@@ -101,7 +105,7 @@
       }
       if (inR) return;   // 裂痕裡的喝由 afk-riftsupply 處理
       try { if (DC && DC.check(r.OUT_FEE)) return; } catch (e) { return; }   // 龍鑽／金幣不夠：安靜跳過
-      try { if (r.use(it, true) === true) stats.used++; } catch (e) {}
+      try { if (r.use(it, true) === true) { stats.used++; riftRetry[k] = 0; } } catch (e) {}
     });
   };
 

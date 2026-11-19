@@ -573,7 +573,7 @@
     <script src="js/03-combat-core.js?v=e1c412f429e7"></script>
     <script src="js/04-combat-attack.js?v=35859a7e7035"></script>
 <script src="js/05-kill-progression.js?v=60b9457f6994"></script>
-    <script src="js/06-status-allies.js?v=3be213dc9de9"></script>
+    <script src="js/06-status-allies.js?v=b6e7f0edf651"></script>
     <script src="js/07-skills-cast.js?v=246cde45ce08"></script>
 <script src="js/08-items-equip.js?v=3639decd3343"></script>
 <script src="js/09-vfx-render.js?v=e13af1b34657"></script>
@@ -590,7 +590,7 @@
 <script src="js/20-warehouse-window.js?v=92e5e1d96a5a"></script>
 <script src="js/21-relic-book.js?v=2cf7d69f2832"></script>
     <script src="js/23-summons.js?v=7261e4984b15"></script>
-    <script src="js/22-pets.js?v=e2817217dbc0"></script>
+    <script src="js/22-pets.js?v=a12594ba1603"></script>
     <script src="js/24-pandora-relic-market.js?v=f75cfb247059"></script>
     <script src="js/25-clan-system.js?v=9f104b862b0f"></script>
     <script src="js/26-world-channel.js?v=f03d4f92d3f4"></script>
@@ -639,7 +639,7 @@
     <!-- 存檔解壓快取：必須排在所有會讀 localStorage 的外掛之前（核心每殺一隻怪都重解壓一次血盟狀態） -->
     <script src="afk-lzcache.js?v=c466838d97c0"></script>
     <!-- afk-perf：卡頓修正（日誌批次寫入／背包分頁按需重建）。必須排在 afk-toast（包 logSys）與 afk-itemsearch（包 renderTabs）之前 -->
-    <script src="afk-perf.js?v=aaa0a36c70ba"></script>
+    <script src="afk-perf.js?v=5275ef71a189"></script>
     <script src="afk-display.js?v=d126f73ab790"></script>
     <!-- afk-mapsync：地圖下拉自我校正（回城／出發後地區/地圖下拉與所在地不符時自動校正） -->
     <script src="afk-mapsync.js?v=3349ebbc7cc1"></script>
@@ -708,7 +708,7 @@
     <!-- afk-illufix：幻術士修補（疼痛的歡愉 −50%、反彈、蝕刻印記；立方：燃燒 每 2 秒 5～50 火傷、灼熱印記、吸血回魔；立方：和諧回 MP 5 → 15，原 afk-classtweak）；排在 afk-wiki 之前（小百科說明跟著改）；需核心補丁 69 -->
     <script src="afk-illufix.js?v=d4806c4f9e9b"></script>
     <!-- 小百科：用到才載入（afk-lazy.js，Ping 11-13） -->
-    <script>window.__AFK_LAZY_SRC={bosslines:["afk-bosslines-data.js?v=baaf7ca125"],wiki:["afk-game-guide.js?v=42bd3a1d67","afk-wiki.js?v=0fd9db3cd6"]};</script>
+    <script>window.__AFK_LAZY_SRC={bosslines:["afk-bosslines-data.js?v=baaf7ca125"],wiki:["afk-game-guide.js?v=42bd3a1d67","afk-wiki.js?v=fb44717922"]};</script>
     <script src="afk-lazy.js?v=f24c307989d7"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=a2831ae70fbf"></script>
@@ -881,7 +881,7 @@
     <!-- afk-junkquest：奇岩「古物學者 塞勒斯」——雜項素材的劇情委託與常駐委託（新手／中階／高階） -->
     <script src="afk-junkquest.js?v=5a24e25470c3"></script>
     <!-- 遺物戰鬥掛接、同伴與固定終階 GM 測試道具。 -->
-    <script src="afk-relic-weapon-bridge.js?v=c49e41d407f6"></script>
+    <script src="afk-relic-weapon-bridge.js?v=d888c3295818"></script>
     <script src="afk-relic-companions.js?v=eac51f612324"></script>
     <script src="afk-relic-defense-bridge.js?v=bbec977d32fe"></script>
     <script src="afk-relic-gm.js?v=12fc55e4da8f"></script>
@@ -1054,7 +1054,7 @@
     <!-- afk-balance1101：範圍魔法 3 秒冷卻（玩家與傭兵）、奇古獸額外傷害不乘魔法倍率（核心補丁 79）；要在其他包 castSkill／allyActWithSkillGate 的外掛之後 -->
     <script src="afk-balance1101.js?v=31e2697ab097"></script>
     <!-- afk-autosupply：技能設定藥水區多「三段加速藥水」「增益料理」自動喝／自動買（照洛依的售價）；要在 afk-ttmi-items 之後 -->
-    <script src="afk-autosupply.js?v=e38e087a3942"></script>
+    <script src="afk-autosupply.js?v=c315b572cce8"></script>
     <!-- afk-riftsupply：裂痕專用補給增強（加速、魔力 ×2 可疊加；治癒 5000、魔力 200、解毒清全部負面＋免疫 5 秒，各 15 秒冷卻；裂痕裡自動使用）；要在 afk-ttmi-items、afk-rift2 之後 -->
     <script src="afk-riftsupply.js?v=fba6bbf4cee8"></script>
     <script src="afk-autocancel.js?v=0cdc48e598d7"></script>
@@ -1113,7 +1113,7 @@
     <!-- afk-slot-sg：遊戲廳拉霸機「沙暴之神的祭壇」的引擎（畫面在 afk-gamehall）；要在 afk-gamehall 之前 -->
     <script src="afk-slot-sg.js?v=1911144c0e86"></script>
     <!-- afk-gamehall：🎰 遊戲廳（德州撲克＋百家樂＋沙海法老的寶庫＋賽狗場的統一入口）；要在 afk-poker、afk-dograce 之後 -->
-    <script src="afk-gamehall.js?v=4fb37e6f7659"></script>
+    <script src="afk-gamehall.js?v=32ea09ec8e04"></script>
     <!-- afk-fishing：🐟 海音深海獵場（捕魚機，遊戲廳裡）；要在 afk-gamehall 之後 -->
     <script src="afk-fishing.js?v=3e99f1535800"></script>
     <!-- afk-dmgfont：🔤 傷害字體（潘朵拉黑市「字體販賣所」分頁）；要在 afk-bmprice 等包黑市畫面的外掛之後 -->

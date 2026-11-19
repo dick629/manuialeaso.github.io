@@ -509,6 +509,7 @@
       var oPmr = window._partyMemberRect, pmrCache = null;
       window._partyMemberRect = function (who) {
         if (!who || typeof who !== 'object') return oPmr.apply(this, arguments);
+        try { if (typeof window.__afkOfflineNow === 'function' && window.__afkOfflineNow()) return null; } catch (e) {}   // 離線／背景補跑中不播特效，不必量位置（回 null＝沒有可見的錨點，呼叫端本來就會處理）
         if (!pmrCache) { pmrCache = new Map(); raf(function () { pmrCache = null; }); }
         if (!pmrCache.has(who)) { var r0 = oPmr.apply(this, arguments); pmrCache.set(who, r0 ? { left: r0.left, top: r0.top, width: r0.width, height: r0.height, right: r0.right, bottom: r0.bottom, x: r0.x, y: r0.y } : null); }
         var r = pmrCache.get(who); return r ? { left: r.left, top: r.top, width: r.width, height: r.height, right: r.right, bottom: r.bottom, x: r.x, y: r.y } : null;

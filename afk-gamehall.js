@@ -404,12 +404,17 @@
       + '.sl-bet .amt{flex:1;text-align:center;font-weight:900;color:#fde68a;font-size:15px}'
       + '.sl-pay{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px}.sl-pay td,.sl-pay th{border:1px solid #3f3f46;padding:2px 4px;text-align:center}.sl-pay img{width:22px;height:22px;image-rendering:pixelated;vertical-align:middle}'
       // 沙暴之神的祭壇
-      + '.gh-win.sg{background:radial-gradient(ellipse at 50% 15%,#1e3a5f,#0b1220 70%);border-color:#38bdf8}'
+      + '.gh-win.sg{background:linear-gradient(#0b1220d0,#0b1220f2),url(assets/gamehall/sg/slot_bg.webp) center top/cover no-repeat,#0b1220;border-color:#e5c76b}'
+      + '.gh-win.sg .sl-cell img{width:90%;height:90%;image-rendering:auto;object-fit:contain}.sg-pay img{image-rendering:auto!important}'
+      + '.gh-win.sg .sl-grid{background:#050a14e6}.gh-win.sg .sl-cell .mv{font-size:13px;bottom:2px}'
       + '.gh-win.sg .sl-grid{background:#0c1a2e;border-color:#e5c76b}.gh-win.sg .sl-cell{background:#08111f}'
       + '.gh-win.sg .sl-cell.orb{background:radial-gradient(circle,#0e7490,#08111f 70%)}.gh-win.sg .sl-cell.orb.t2{background:radial-gradient(circle,#15803d,#08111f 70%)}.gh-win.sg .sl-cell.orb.t3{background:radial-gradient(circle,#7e22ce,#08111f 70%)}'
       + '.gh-win.sg .sl-cell.orb.t4{background:radial-gradient(circle,#b91c1c,#08111f 70%)}.gh-win.sg .sl-cell.orb.t5{background:radial-gradient(circle,#eab308,#08111f 70%);box-shadow:0 0 10px #facc15}'
-      + '.sg-god{display:flex;align-items:center;gap:8px;margin-bottom:5px;min-height:46px}.sg-god .fig{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;background:radial-gradient(circle,#facc1544,transparent 70%)}'
-      + '.sg-god .fig.cast{animation:sg-cast .5s ease-in-out 2}.sg-god .fig.win{animation:sg-win .6s ease-in-out 3}.sg-god .say{flex:1;font-size:12px;color:#bae6fd;font-weight:700}'
+      + '.sg-god{display:flex;align-items:center;gap:8px;margin-bottom:5px;min-height:72px}.sg-god .fig{flex:0 0 72px;width:72px;height:72px;background:url(assets/gamehall/sg/god_idle.webp) 0 0/288px 144px no-repeat;animation:sg-idle 1.2s steps(1) infinite}'
+      + '@keyframes sg-idle{0%{background-position:0 0}12.5%{background-position:-72px 0}25%{background-position:-144px 0}37.5%{background-position:-216px 0}50%{background-position:0 -72px}62.5%{background-position:-72px -72px}75%{background-position:-144px -72px}87.5%{background-position:-216px -72px}}'
+      + '.sg-god .fig.cast{background-image:url(assets/gamehall/sg/god_cast.webp);animation:sg-idle .8s steps(1) infinite}.sg-god .fig.win{background-image:url(assets/gamehall/sg/god_win.webp);animation:sg-idle .8s steps(1) infinite}'
+      + '.gh-win.sg.fs{background:linear-gradient(#0b1220c0,#0b1220ee),url(assets/gamehall/sg/slot_bg_free.webp) center top/cover no-repeat,#0b1220}'
+      + '.sg-god .say{flex:1;font-size:12px;color:#bae6fd;font-weight:700}'
       + '@keyframes sg-cast{50%{transform:translateX(6px) scale(1.15);filter:drop-shadow(0 0 8px #22d3ee)}}@keyframes sg-win{50%{transform:translateY(-6px) scale(1.2);filter:drop-shadow(0 0 10px #facc15)}}'
       + '.sg-opt{display:flex;gap:6px;margin-top:6px}.sg-opt button,.sg-opt label{flex:1}.sg-opt .buy{border-radius:8px;border:1px solid #e5c76b;background:#3a2f0c;color:#fde68a;font-weight:900;padding:6px 4px;cursor:pointer}'
       + '.sg-opt .buy.ask{background:#b45309;color:#fff}.sg-opt label{display:flex;align-items:center;justify-content:center;gap:4px;border-radius:8px;border:1px solid #38bdf8;background:#0c4a6e;color:#e0f2fe;font-weight:800;font-size:12px;padding:4px;cursor:pointer}'
@@ -790,10 +795,15 @@
   function sgBet(cur) { var st = SG_STEPS[cur] || SG_STEPS.dia, b = sg.bet[cur]; return st.indexOf(b) >= 0 ? b : st[0]; }
   function sgCost(cur, bet, buy) { return buy ? bet * SG.BUY_X : sg.ante ? Math.ceil(bet * SG.ANTE) : bet; }
   function sgKey(cv) { return 'sg_' + (cv.s === 'S' ? 'S' : cv.s === 'M' ? 'M' : SG.SYMS[cv.s].k); }
+  // 11-19 GPT 交圖：assets/gamehall/sg/（符號、倍數球、背景、神明待機）
+  var SG_DIR = 'assets/gamehall/sg/';
+  function sgImg(cv) { return SG_DIR + (cv.s === 'S' ? 'sym_scatter' : cv.s === 'M' ? 'orb_' + SG.orbTier(cv.v) : 'sym_' + SG.SYMS[cv.s].k) + '.webp'; }
+  function sgSymImg(k) { return SG_DIR + (k === 'S' ? 'sym_scatter' : k === 'M' ? 'orb_5' : 'sym_' + k) + '.webp'; }
   function sgCell(cv, hit, drop) {
-    var I = art(), orb = cv.s === 'M';
-    return '<div class="sl-cell' + (hit ? ' hit' : '') + (drop ? ' drop' : '') + (orb ? ' orb t' + SG.orbTier(cv.v) : '') + '"><img alt="" src="' + I[sgKey(cv)] + '">' + (orb ? '<span class="mv">×' + fmt(cv.v) + '</span>' : '') + '</div>';
+    var orb = cv.s === 'M';
+    return '<div class="sl-cell' + (hit ? ' hit' : '') + (drop ? ' drop' : '') + (orb ? ' orb t' + SG.orbTier(cv.v) : '') + '"><img alt="" src="' + sgImg(cv) + '">' + (orb ? '<span class="mv">×' + fmt(cv.v) + '</span>' : '') + '</div>';
   }
+  W.__afkSgImg = sgSymImg;
   function sgGrid(grid, hitSyms, drop) {
     var h = '';
     for (var r = 0; r < SG.ROWS; r++) for (var c = 0; c < SG.COLS; c++) { var cv = grid[c][r]; h += sgCell(cv, hitSyms && typeof cv.s === 'number' && hitSyms[cv.s], drop); }
@@ -801,12 +811,13 @@
   }
   var sgIdle = null;
   function renderSg() {
+    try { var gw = el('afk-gh-win'); if (gw) gw.classList.toggle('fs', !!sg.inFs); } catch (e) {}
     var cur = ui.cur, bet = sgBet(cur), h = head('⚡ ' + SG.NAME, '6×5・8 個以上中獎・倍數球最高 ×10,000', true) + '<div class="gh-body">';
     h += curBar('sg');
     var sh = sg.show;
     if (!sgIdle) sgIdle = SG.spin(rng, 'b', 0).steps[0].grid;
     var grid = sh ? sh.grid : sgIdle;
-    h += '<div class="sg-god"><div class="fig ' + esc(sg.god) + '" aria-hidden="true">🦅</div><div class="say">' + esc(sg.say || '沙暴之神靜靜看著祭壇。') + '</div></div>';
+    h += '<div class="sg-god"><div class="fig ' + esc(sg.god) + '" aria-hidden="true"></div><div class="say">' + esc(sg.say || '沙暴之神靜靜看著祭壇。') + '</div></div>';
     h += '<div class="sl-top"><span>' + esc(sg.fsInfo || '') + '</span><span>' + (sh && sh.win ? '贏 ' + fmt(sh.win) : '') + '</span></div>';
     h += '<div class="sl-grid">' + sgGrid(grid, sh && sh.hit, sh && sh.drop) + (sg.ov ? '<div class="sl-ov' + (sg.ovBig ? ' big' : '') + '">' + sg.ov + '</div>' : '') + '</div>';
     h += '<div class="gh-msg">' + esc(ui.msg || '同一種圖示全盤 8 個以上就中獎；中獎的會消掉，上面的掉下來繼續連鎖。') + '</div>';
@@ -819,17 +830,16 @@
     else h += '<div class="gh-btns"><button type="button" class="go" data-gh="sgspin"' + (ui.busy ? ' disabled' : '') + ' style="font-size:16px">轉！</button></div>'
       + '<div class="gh-btns">' + [10, 50, 100, 200, 500].map(function (n, i) { return '<button type="button" data-gh="sgauto:' + n + '"' + (ui.busy ? ' disabled' : '') + '>' + (i ? n : '自動 ' + n) + '</button>'; }).join('') + '</div>';
     h += '<div style="margin-top:6px"><label class="gh-tog"><input type="checkbox" data-gh="quick"' + (ui.quick ? ' checked' : '') + '> 快轉（跳過消除動畫）</label></div>';
-    var I = art();
-    h += '<details style="margin-top:6px"><summary class="gh-sm" style="cursor:pointer">賠率表（× 每轉注額）</summary><table class="sl-pay"><tr><th>圖示</th><th>8～9</th><th>10～11</th><th>12+</th></tr>'
-      + SG.SYMS.map(function (s) { return '<tr><td style="text-align:left"><img alt="" src="' + I['sg_' + s.k] + '"> ' + s.n + '</td><td>' + s.pay[0] / 100 + '</td><td>' + s.pay[1] / 100 + '</td><td>' + s.pay[2] / 100 + '</td></tr>'; }).join('')
-      + '<tr><td style="text-align:left"><img alt="" src="' + I.sg_S + '"> 雷劈金字塔</td><td colspan="3">4／5／6 個＝3／5／100 倍，並進入免費遊戲 15 轉</td></tr>'
-      + '<tr><td style="text-align:left"><img alt="" src="' + I.sg_M + '"> 倍數球</td><td colspan="3">×2～×10,000；這一轉有中獎時，全部倍數相加再乘上獎金</td></tr></table>'
+    h += '<details style="margin-top:6px"><summary class="gh-sm" style="cursor:pointer">賠率表（× 每轉注額）</summary><table class="sl-pay sg-pay"><tr><th>圖示</th><th>8～9</th><th>10～11</th><th>12+</th></tr>'
+      + SG.SYMS.map(function (s) { return '<tr><td style="text-align:left"><img alt="" src="' + sgSymImg(s.k) + '"> ' + s.n + '</td><td>' + s.pay[0] / 100 + '</td><td>' + s.pay[1] / 100 + '</td><td>' + s.pay[2] / 100 + '</td></tr>'; }).join('')
+      + '<tr><td style="text-align:left"><img alt="" src="' + sgSymImg('S') + '"> 雷劈金字塔</td><td colspan="3">4／5／6 個＝3／5／100 倍，並進入免費遊戲 15 轉</td></tr>'
+      + '<tr><td style="text-align:left"><img alt="" src="' + sgSymImg('M') + '"> 倍數球</td><td colspan="3">×2～×10,000；這一轉有中獎時，全部倍數相加再乘上獎金</td></tr></table>'
       + '<div class="gh-sm" style="margin-top:4px;line-height:1.6">免費遊戲：3 個以上金字塔再 +5 轉；倍數球出現得更多，有中獎時倍數加進「總倍數」一直累積到結束。<br>'
       + '加倍下注：每轉多付 25%，進免費遊戲的機會約兩倍；開著時不能購買免費遊戲。<br>購買免費遊戲：付注額 ×' + SG.BUY_X + '，直接得到 4 個金字塔（3 倍）＋免費遊戲 15 轉。<br>'
       + '每次下注（含整段免費遊戲）最多贏 ' + fmt(SG.CAP_X) + ' 倍注額。</div></details>';
     return h + '</div>';
   }
-  function sgFinish() { if (sg.tell) { try { sg.tell(); } catch (e) {} sg.tell = null; } if (sg.res) sg.show = { grid: SG.lastGrid(sg.res), win: sg.res.got }; sg.ov = ''; sg.fsInfo = ''; sg.god = 'idle'; ui.busy = false; }
+  function sgFinish() { sg.inFs = false; try { var gw = el('afk-gh-win'); if (gw) gw.classList.remove('fs'); } catch (e) {} if (sg.tell) { try { sg.tell(); } catch (e) {} sg.tell = null; } if (sg.res) sg.show = { grid: SG.lastGrid(sg.res), win: sg.res.got }; sg.ov = ''; sg.fsInfo = ''; sg.god = 'idle'; ui.busy = false; }
   function sgAnnounce(x, got, cur) {
     if (x < 500) return;
     try { var p = P(), nm = esc((p && p.name) || '冒險者'); if (typeof W.logWorld === 'function') W.logWorld('<span class="wc-answer">⚡【遊戲廳】<b style="color:#fde047">' + nm + '</b> 在' + SG.NAME + '拉到<b style="color:#f59e0b">傳說大獎</b>：' + fmt(Math.floor(x)) + ' 倍，贏得 ' + esc(amtTxt(cur, got)) + '！</span>'); } catch (e) {}
@@ -878,7 +888,8 @@
     addSpin(res.base, '', function (i, hn) { return Math.floor(acc(res.base, i, hn) * bet / 100); });
     if (res.base.mults.length && res.base.pay100 > 0) seq.push({ grid: lastOf(res.base), info: '倍數球 ×' + fmt(sumv(res.base.mults)), win: Math.floor(res.baseWin * bet / 100), wait: 900, god: 'cast', say: '沙暴之神舉起權杖，雷光打進倍數球！' });
     if (res.fs) {
-      seq.push({ grid: lastOf(res.base), info: '⚡ ' + res.base.scat + ' 個金字塔！', ov: '<b>免費遊戲</b><span>15 轉</span>', win: Math.floor((res.baseWin + res.scatWin) * bet / 100), wait: 1500, god: 'win', say: '沙暴降臨！' });
+      seq.push({ grid: lastOf(res.base), info: '⚡ ' + res.base.scat + ' 個金字塔！', ov: '<b>免費遊戲</b><span>15 轉</span>', win: Math.floor((res.baseWin + res.scatWin) * bet / 100), wait: 1500, god: 'win', say: '沙暴降臨！', fs: true });
+      var fsFrom = seq.length;
       var run = res.baseWin + res.scatWin;
       res.fs.forEach(function (f, k) {
         var info = '免費遊戲 第 ' + (k + 1) + ' 轉・剩 ' + f.left + '・總倍數 ×' + fmt(f.totMult || 0) + (f.add ? '・＋5 轉！' : '');
@@ -888,10 +899,11 @@
         if (f.pay > 0 && f.spin.mults.length) seq.push({ grid: lastOf(f.spin), info: info, win: Math.floor(run * bet / 100), wait: 700, god: 'cast', say: '雷光落下：總倍數 ×' + fmt(f.totMult) });
       });
     }
+    if (res.fs) for (var q = fsFrom; q < seq.length; q++) seq[q].fs = true;
     var i = 0;
     var tick = function () {
-      if (i >= seq.length) return fin();
-      var s = seq[i++]; sg.show = { grid: s.grid, hit: s.hit, drop: s.drop, win: s.win }; sg.fsInfo = s.info || ''; sg.ov = s.ov || ''; sg.ovBig = !!s.ov;
+      if (i >= seq.length) { sg.inFs = false; return fin(); }
+      var s = seq[i++]; sg.inFs = !!s.fs; sg.show = { grid: s.grid, hit: s.hit, drop: s.drop, win: s.win }; sg.fsInfo = s.info || ''; sg.ov = s.ov || ''; sg.ovBig = !!s.ov;
       sg.god = s.god || 'idle'; if (s.say) sg.say = s.say;
       render(); later(tick, s.wait);
     };

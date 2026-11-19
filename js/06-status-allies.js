@@ -2885,8 +2885,10 @@ function allyMaintainBuffs(ally) {
     if (ally._waterVitalCd > 0) ally._waterVitalCd--;   // 🤝 v3.4.45 水之元氣單體冷卻遞減（per-entity·每秒一次·比照玩家 js/03:325）
     let _auraBefore = _MERC_ILLU_ATK_AURA.map(s => ((ally.buffs[s] || 0) > 0) ? '1' : '0').join('');   // 🌟 v3.0.100→🔮 v3.2.2 攻擊型幻覺光環(化身+10／歐吉+4傷+4命／巫妖+2魔傷)前狀態：本傭兵取得/失去任一→末尾 calcStats 刷新玩家 d（玩家攻擊即時吃/退·recompute 末段重注入 teamIlluAura(player)）。高崙 AC 走 teamAcBonus 受擊時即時讀取·不需刷新
     let changed = false;
+    let _bsig0 = ''; for (let k in ally.buffs) if (ally.buffs[k] > 0) _bsig0 += k + '|';   /* 🔌 加掛版補丁:增益到期後同一次又補回同一組 → 衍生值沒變，不必整套重算 */
+    let _bpoly = false;
     for (let k in ally.buffs) { if (ally.buffs[k] > 0) { ally.buffs[k]--; if (ally.buffs[k] <= 0) { ally.buffs[k] = 0; changed = true; } } }   // 遞減；到期→需重算移除衍生值
-    if (allyMaintainPoly(ally)) changed = true;   // 變身於同一秒完成續用，重算後不會出現一個 tick 的能力空窗
+    if (allyMaintainPoly(ally)) { changed = true; _bpoly = true; }   // 變身於同一秒完成續用，重算後不會出現一個 tick 的能力空窗
     let _ast = ally.statuses || {};
     let _block = mapState.current.startsWith('town_') || _ast.silence > 0 || _ast.magicseal > 0 || _ast.stun > 0 || _ast.freeze > 0 || _ast.stone > 0 || _ast.paralyze > 0 || _ast.sleep > 0;   // 安全區／沉默／硬控時不施放（仍遞減）
     if (!_block && ally.skills && ally.skills.length) {
@@ -2944,6 +2946,7 @@ function allyMaintainBuffs(ally) {
             }
         }
     }
+    if (changed && !_bpoly) { let _bsig1 = ''; for (let k in ally.buffs) if (ally.buffs[k] > 0) _bsig1 += k + '|'; if (_bsig1 === _bsig0) changed = false; }
     if (changed) { try { _allyLevelRecompute(ally); } catch (e) {} }   // 重算 ally.d 反映 buff 衍生值（含 ally._recompN++·供幻覺 nonce 守衛）
     if (_MERC_ILLU_ATK_AURA.map(s => ((ally.buffs[s] || 0) > 0) ? '1' : '0').join('') !== _auraBefore) { try { if (typeof calcStats === 'function') calcStats(); } catch (e) {} }   // 🌟 v3.0.100→🔮 v3.2.2 本傭兵攻擊型幻覺光環變動→刷新玩家 d（recompute 末段重注入 teamIlluAura(player)）
     try { shareTeamBuffs(ally); } catch (e) {}   // 🤝 v3.4.45 單體輔助共享：本傭兵有清單內 buff→幫缺的隊友補

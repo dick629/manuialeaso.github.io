@@ -436,7 +436,16 @@
     if (!v) { v = list.filter(function (s) { return s.catalogId <= 131; }); weaponViews.set(list, v); }
     return v;
   }
+  // 同一拍內全隊的遺物來源不會變：每一擊、每隻寵物都來問，拍內只算一次（拍外＝介面操作，照舊每次重算）
+  var teamTick = { t: -1, out: null };
   function teamSources() {
+    var live = typeof state !== 'undefined' && state && (state.inTick || state.ff), tk = live ? state.ticks : -1;
+    if (live && teamTick.out && teamTick.t === tk) return teamTick.out;
+    var out = teamSourcesNow();
+    if (live) { teamTick.t = tk; teamTick.out = out; } else teamTick.out = null;
+    return out;
+  }
+  function teamSourcesNow() {
     var r = runtime(), members = r.api.team(), n = members.length, lists = new Array(n), same = !!teamView && teamView.members.length === n;
     for (var i = 0; i < n; i++) { lists[i] = weaponSources(members[i]); if (same && (teamView.members[i] !== members[i] || teamView.lists[i] !== lists[i])) same = false; }
     if (same) return teamView.out;

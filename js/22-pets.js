@@ -193,10 +193,18 @@ function _petAuraVals(c, field) {   // 這個人身上帶 field 的裝備值（�
     if (!v) { v = []; for (let i = 0; i < sn.defs.length; i++) { let d = sn.defs[i]; if (sn.ents[i] && d && d[field]) v.push(d[field]); } sn.vals[field] = v; }
     return v;
 }
+const _petAuraTick = { t: -1, sig: -1, m: Object.create(null) };   /* 🔌 加掛版補丁:寵物光環同一拍只加總一次 */
 function petAuraSum(field) {
+    let _live = typeof state !== 'undefined' && state && (state.inTick || state.ff) && typeof player !== 'undefined' && player, _sig = 0;
+    if (_live) {   // 鍵＝這一拍＋傭兵人數與站著的人數（倒地、復活、換人都會變）；拍外（介面操作）照舊每次重算
+        let al = player.allies || []; _sig = al.length * 64; for (let i = 0; i < al.length; i++) if (al[i] && !al[i]._downed) _sig++;
+        if (_petAuraTick.t !== state.ticks || _petAuraTick.sig !== _sig) { _petAuraTick.t = state.ticks; _petAuraTick.sig = _sig; _petAuraTick.m = Object.create(null); }
+        let c0 = _petAuraTick.m[field]; if (c0 !== undefined) return c0;
+    }
     let s = 0;
     let _scan = function (c) { if (!c || !c.eq) return; let v = _petAuraVals(c, field); for (let i = 0; i < v.length; i++) s += v[i]; };   /* 🔌 加掛版補丁:寵物光環快取 */
     if (typeof player !== 'undefined' && player) { _scan(player); (player.allies || []).forEach(a => { if (a && !a._downed) _scan(a); }); }
+    if (_live) _petAuraTick.m[field] = s;
     return s;
 }
 // 🏺 v3.7.20 寵物有效 HP 上限＝存檔 mhp ＋ 光環加成（petHpAll·蜥蜴領主的王冠 +100）。恢復/治癒/顯示皆以此為上限；不改寫存檔 p.mhp。

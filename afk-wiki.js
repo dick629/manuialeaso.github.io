@@ -5644,7 +5644,7 @@
         wTbl(['幣別', '每轉注額'], ['dia', 'blood'].map(function (c) { return [G.CURS[c], f(G.LIM.sg[c][0]) + '～' + f(G.LIM.sg[c][1]) + ' 顆']; })) +
         wDesc('只能用<b>龍之鑽石</b>或<b>血龍鑽</b>下注。') +
         wTbl(['圖示', '8～9 個', '10～11 個', '12 個以上'], SGx.SYMS.map(function (s) {
-          return ['<img alt="" src="' + I['sg_' + s.k] + '" style="width:22px;height:22px;image-rendering:pixelated;vertical-align:middle"> ' + s.n, (s.pay[0] / 100) + ' 倍', (s.pay[1] / 100) + ' 倍', (s.pay[2] / 100) + ' 倍'];
+          return ['<img alt="" src="' + (window.__afkSgImg ? window.__afkSgImg(s.k) : I['sg_' + s.k]) + '" style="width:24px;height:24px;vertical-align:middle"> ' + s.n, (s.pay[0] / 100) + ' 倍', (s.pay[1] / 100) + ' 倍', (s.pay[2] / 100) + ' 倍'];
         })) +
         wDesc('<b>雷劈金字塔</b>：全盤 4／5／6 個 → 當下贏 ' + SGx.SCAT_PAY[4] / 100 + '／' + SGx.SCAT_PAY[5] / 100 + '／' + SGx.SCAT_PAY[6] / 100 + ' 倍，並進入<b>免費遊戲 ' + SGx.FS_N + ' 轉</b>；免費遊戲中 3 個以上再 <b>+' + SGx.FS_ADD + ' 轉</b>。') +
         wDesc('<b>倍數球</b>：×2～<b>×10,000</b>。這一轉有中獎時，盤面上所有倍數球<b>相加</b>，再乘上這一轉的獎金。免費遊戲裡倍數球出現得更多，而且有中獎時會加進「<b>總倍數</b>」一直累積到結束。') +
