@@ -242,6 +242,8 @@
   if(now()-N(a.auraCheck)>.9){a.auraCheck=now();const next=[];for(const id of p.classPath.auras||[]){const s=C.skills.get(id);if(!usable(p,id)||s?.type!=='光環')continue;const key='upkeep:'+id;if(N(a.cd[key])<=now()){const n=Math.ceil(p.mmp*(a.cd[key]?s.plan.upkeep:s.plan.mp)),h=Math.ceil(maxhp(p)*s.plan.blood);if(p.mp<n||hp(p)<=h)continue;p.mp-=n;p[hpKey(p)]-=h;a.cd[key]=now()+5.1;}next.push(s);}const changed=next.map(s=>s.id).join()!==(a.activeAuras||[]).map(s=>s.id).join();a.activeAuras=next;if(changed)members().forEach(t=>R.recalc(t));}
   if(p!==player||!state.running||!enemies().length||controls(p)||W.LineageClasses?.isBusy()||now()-a.lastAuto<1)return;
   const ids=p.classPath.auto||[],t0=enemies()[0];
+  // 11-20（Ping）：大絕自動放——冷卻好了就先放已選定的大絕（第 3 段優先），不用放進自動施放 8 格
+  {const u=p.classPath.ultimates||{};if(t0)for(const n of [3,2,1]){const id=u[n],s=id&&C.skills.get(id);if(s&&s.type==='大絕'&&usable(p,id)&&!reason(p,s,t0)){cast(id,t0,null,p);break;}}}   // 不佔自動施放的 1 秒間隔
   // 11-19（Ping）：自動施放會排連段——自動清單裡有要「法術一與五連接」或「法術八」的招時，路線的 1、5、8 號也一起算進候選；
   //   前置剛完成就優先放接續的招（連段 8 秒內），1 號放過就優先放 5 號。
   {const route=p.classPath.route,byNo=n=>{for(const x of C.skills.values())if(x.tree===route&&x.number===n&&usable(p,x.id))return x;return null;},need=new Set();

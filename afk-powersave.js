@@ -306,5 +306,15 @@
         card.querySelector('#afk-ps-close').focus();
     }
 
+    // 11-20 02:22 Ping：頭目狂暴的持續紅光（本體呼吸光、氣焰、地面紅環）會卡頓 → 一律關閉（不管有沒有開省電模式）。
+    //   進入狂暴當下的一次性閃光與【頭目狂暴】戰鬥訊息照舊。夢域鏡怪物隨時狂暴，整場都是這幾層在跑。
+    try {
+        var rg = document.createElement('style'); rg.id = 'afk-no-rage-glow';
+        rg.textContent = '#battle-view .mob-target.mob-raging .mob-img-wrap { animation: none; filter: none; }\n'
+            + '#battle-view .mob-target.mob-raging .mob-img-inner { isolation: auto; }\n'
+            + '#battle-view .mob-target.mob-raging .mob-img-inner::before, #battle-view .mob-target.mob-raging .mob-img-inner::after { display: none; animation: none; }';
+        (document.head || document.documentElement).appendChild(rg);
+    } catch (e) {}
+
     try { console.log('[AFK-powersave] hooks OK — 省電模式（關動畫/關光暈濾鏡）已就緒。'); } catch (e) {}
 })();

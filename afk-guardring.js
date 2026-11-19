@@ -145,7 +145,7 @@
   addItem(RIFT.thread, { n: '天空的縫線（戒）', c: 'text-indigo-200', img: IMG('封印的妖怪之魂'), d: '縫補天空用的線。守護者之戒專用：跟一般的天空的縫線一起掉落（同樣數量）。' });
   addItem(RIFT.sand, { n: '凝結的時之沙（戒）', c: 'text-yellow-200', img: IMG('冰之結晶'), d: '凝住的時間。守護者之戒專用：跟一般的凝結的時之沙一起掉落（同樣數量）。' });
   addItem(RIFT.scale, { n: '侵蝕龍鱗（戒）', c: 'text-purple-300', img: IMG('地龍鱗'), d: '被侵蝕的龍鱗。守護者之戒專用：跟一般的侵蝕龍鱗一起掉落（同樣數量）。' });
-  // 專屬信物（第十三節：從目前會掉落的道具挑，新做「夢域鏡 ＋原名」；原道具從所有掉落表拿掉、古物學者的常駐委託不再抽它）
+  // 專屬信物（第十三節：從目前會掉落的道具挑，新做「夢域鏡 ＋原名」；原道具 11-20 起恢復原本的掉落與古物學者委託）
   //   2026-11-05 同事調查的首選（尚待玩家確認，可替換）：原道具留在 AFK_TTMI_ITEMS.junk() 清單裡（劇情委託靠排序位置），只是不掉、不抽
   var TOKENS = {
     moon:   { base: 'ttmi_14564', n: '夢域鏡 圓月寶珠' },
@@ -844,7 +844,8 @@
   var DRAGON_ELE = function (mp) { if (!mp) return null; if (/^antharas_/.test(mp)) return 'earth'; if (/^cr_fafurion_/.test(mp)) return 'water'; if (/^cr_valakas_/.test(mp)) return 'fire'; if (/^cr_lindvior_/.test(mp)) return 'wind'; return null; };
   var DROP = { tear: 0.55, dimBoss: 3, dimMob: 0.10, shardBoss: 0.05, shardFinal: [1, 2], oathFinal: [2, 4], oathMob: 0.005 };
   var mats = function () { return W.__afkGuardMats || null; };   // afk-guardmats 已經負責四龍眼淚（11-05 先上線）→ 這裡不再重複處理
-  var removed = function () { var o = {}; if (!mats()) ELES.forEach(function (e) { o[M.tear[e]] = 1; }); KEYS.forEach(function (k) { if (TOKENS[k].base) o[TOKENS[k].base] = 1; }); return o; };
+  // 11-20 02:21 Ping：信物的原型（火神之槌、圓月寶珠、古老水珍珠、闇之氣息、占星術師的符咒）恢復原本的怪物掉落與古物學者委託
+  var removed = function () { var o = {}; if (!mats()) ELES.forEach(function (e) { o[M.tear[e]] = 1; }); return o; };
   var prevDF = W.__afkDropListFilter;
   W.__afkDropListFilter = function (mob, list) {
     if (typeof prevDF === 'function') list = prevDF(mob, list) || list;

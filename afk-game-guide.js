@@ -779,7 +779,7 @@
     if(key!=='classevolution'&&key!=='classtransfer')return null;
     if(!C)return note('職業資料載入中，請稍後重開。');
     var fusion=key==='classtransfer';
-    var out=note('在席琳神殿找技藝導師 薇爾娜，選「'+(fusion?'職業轉職':'職業進化')+'」分頁。選定的路線和每一段的大絕都不能再改。')+card('進階條件',desc(fusion?'三段各要用掉一顆魂魄，魂魄的職業要是你選的外職、二轉 Lv200。':'三段各要用掉一顆本職業 Lv100 的魂魄，三段依序要零轉、一轉、二轉的魂魄。')+desc('你自己的角色：第一段要一轉，第二段要二轉，第三段還要打贏終焉第三階層。每一段多學五招法術，並從三個大絕裡選一個；第二、三段各多一個隊伍光環。'+(fusion?'轉職流派每一段另外多三招龍語絕技。':''))+desc('大絕冷卻：第一段 30 秒、第二段 60 秒、第三段 90 秒，三段共用冷卻。被動只對自己有效，光環對全隊有效。'));
+    var out=note('在席琳神殿找技藝導師 薇爾娜，選「'+(fusion?'職業轉職':'職業進化')+'」分頁。選定的路線和每一段的大絕都不能再改。')+card('進階條件',desc(fusion?'三段各要用掉一顆魂魄，魂魄的職業要是你選的外職、二轉 Lv200。':'三段各要用掉一顆本職業 Lv100 的魂魄，三段依序要零轉、一轉、二轉的魂魄。')+desc('你自己的角色：第一段要一轉，第二段要二轉，第三段還要打贏終焉第三階層。每一段多學五招法術，並從三個大絕裡選一個；第二、三段各多一個隊伍光環。'+(fusion?'轉職流派每一段另外多三招龍語絕技。':''))+desc('大絕冷卻：第一段 30 秒、第二段 60 秒、第三段 90 秒，三段共用冷卻。戰鬥中冷卻一好就會自動放已選定的大絕（段數高的優先），不用放進自動施放 8 格。被動只對自己有效，光環對全隊有效。'));
     C.trees.forEach(function(t){if(!!t.requiresFusionTransfer!==fusion||cls&&cls!=='all'&&t.base!==cls)return;out+='<details class="m-wiki-card"><summary>'+esc(C.CLS[t.base]+'・'+t.name)+'</summary>'+desc(esc(t.theme))+t.skills.map(function(s){return factCard(esc(s.name),'第 '+s.stage+' 段・'+esc(s.type),esc(C.description(s)),[s.type==='被動'?'個人被動':s.type==='光環'?'啟用消耗 3% MP，每 5 秒消耗 1% MP'+(s.plan.blood?'、1% HP':''):'冷卻 '+s.plan.cd+' 秒']);}).join('')+'</details>';});return out;
   }
   var guide=W.AFK_GAME_GUIDE={
