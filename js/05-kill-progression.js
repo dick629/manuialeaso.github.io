@@ -590,6 +590,7 @@ function killMob(idx) {
     //    瘋狂的席琳世界再 ×3。結晶＝遺骸的唯一產出來源（NPC 伊奧：1 顆換 1 件指定部位遺骸）。
     if (!_kbNoReward && mob._sherine) {   // 🗝️ 軍王之室小怪零產出
         let _cr = (mob.boss ? 0.0001 : 0.00001) * (mob.lv || 1) * (mob._dream ? 5 : (mob._sherineMad ? 3 : 1));   /* 🔌 加掛版補丁:夢艷地獄結晶 ×5 */
+        if (typeof window.__afkCrystalRate === 'function') _cr = window.__afkCrystalRate(mob, _cr);   /* 🔌 加掛版補丁:席琳結晶掉率掛點 */
         if (_cr > 0 && Math.random() < partyDropRate(_cr * classicDropMult())) {
             gainItem('sherine_crystal', 1);
             logSys(`<span class="c-sherine font-bold">✦✦ 席琳結晶 從 ${mob.n} 的殘骸中浮現！✦✦</span>`);

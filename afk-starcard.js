@@ -3,7 +3,7 @@
  *   取得：黃道十二宮的守宮者 0.5% 掉「該宮」的星卡（afk-zodiac）。舊的不分宮「黃道星卡」可以在艾琳娜那裡換成任一宮。
  *   星卡格：一次一張，不算裝備（不佔裝備欄、不算重量、不能強化）。在星鑄師 艾琳娜登錄（用掉 1 張）、選要放哪一張。
  *   升級：裂界＝同宮星卡 ×3＋黃金修復之砂 10＋次元密奧卡 500；歸一＝同宮星卡 ×5＋砂 30＋星蝕之核 5＋次元密奧卡 1,000。
- *   保底：星卡 曲線 95、裂界 105、歸一 110（Ping 11-12 提升）（HP、減傷、魔防、AC、迴避取較好的一邊）。
+ *   保底：星卡 曲線 95、裂界 110、歸一 120（Ping 11-19 提升；原 105／110）（HP、減傷、魔防、AC、迴避取較好的一邊）。
  *   效果：只算放在星卡格的那一張；在次元裂縫裡 ×1.5。經典模式沒有；外掛開關 starcard。
  */
 (function () {
@@ -47,13 +47,13 @@
   var valOf = function (k, st, rift) { var o = {}, V = FX[k][0], m = rift ? RIFT : 1; Object.keys(V).forEach(function (n) { o[n] = Math.round(V[n][Math.max(1, Math.min(3, st)) - 1] * m * 1000) / 1000; }); return o; };
   var descOf = function (k, st, rift) { return FX[k][1](valOf(k, st, rift)); };
 
-  // ── 保底：曲線 95／105／110（105、110 用密奧保底的 80→95 成長率往外推）──
+  // ── 保底：曲線 95／110／120（Ping 11-19；110、120 用密奧保底的 80→95 成長率往外推）──
   var STD = (function () {
     var M = W.__afkMio, s95 = M && M.STD && M.STD['95'], s80 = M && M.STD && M.STD['80']; if (!s95 || !s80) return null;
     var o = { 1: s95, 2: {}, 3: {} };
     Object.keys(s95).forEach(function (c) {
       [2, 3].forEach(function (st) {
-        o[st][c] = s95[c].map(function (v, i) { if (i >= 5) return v; var r = Math.abs(s80[c][i]) > 0 ? Math.abs(v / s80[c][i]) : 1; return Math.round(v * Math.pow(r, (st === 2 ? 10 : 15) / 15)); });
+        o[st][c] = s95[c].map(function (v, i) { if (i >= 5) return v; var r = Math.abs(s80[c][i]) > 0 ? Math.abs(v / s80[c][i]) : 1; return Math.round(v * Math.pow(r, (st === 2 ? 15 : 25) / 15)); });
       });
     });
     return o;

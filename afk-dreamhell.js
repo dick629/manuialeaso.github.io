@@ -25,7 +25,7 @@
  *     （你＋傭兵＋寵物＋召喚物）造成最大 HP 10% 的真實傷害，每隻王（每一階）一次；傳送控制戒指引來的那一波改為 15%
  * 報酬
  *   ‧經驗 ×10、金幣 ×3（2026-10-28 改：原本經驗 0、金幣 0）；每殺一隻 0.1% 機率掉龍之鑽石（掉的時候一半是 1～499 隨機、一半是 500）
- *   ‧掉落機率 ×8（玩家 2026-10-29：原本 ×50）；裝備掉落 50% 祝福（2026-10-28 改：原本 100%）；席琳結晶掉率 ×5
+ *   ‧掉落機率 ×8（玩家 2026-10-29：原本 ×50）；裝備掉落 50% 祝福（2026-10-28 改：原本 100%）；席琳結晶掉率＝瘋狂 ×2、時空裂縫裡再 ×3（11-19，原本 ×5）
  *   ‧新掉落：夢艷結晶（一般怪 10%、頭目必掉 3 顆）、地獄精華（頭目必掉）、
  *            80 級以上的頭目必掉四屬性滅魔蔑視水晶（隨機一種屬性）；一般怪固定 1% 掉滅魔蔑視水晶碎片（100 個合 1 顆）
  *   ‧白金卡全部收集滿：每殺一隻 0.05% 掉昇華支配強化石、0.1% 掉昇華支配碎片
@@ -512,7 +512,7 @@
           '<div id="afk-dream-card" class="bg-slate-950/80 border ' + (on ? 'border-fuchsia-500' : 'border-slate-700') + ' rounded p-3 text-sm leading-relaxed">'
           + '<div class="font-bold mb-1 ' + (on ? 'text-fuchsia-300' : 'text-fuchsia-200') + '">🌙 席琳夢域鏡：目前 ' + (on ? '<span class="text-fuchsia-300">開啟</span>' : '<span class="text-slate-400">關閉</span>') + '</div>'
           + '<div class="afk-lore">「再深一點……讓你的夢，也染上我的顏色。」——席琳</div><div class="text-slate-200 text-xs">全部怪物處於恩賜狀態（HP 共 ×50）、隨時狂暴、AC/魔防再提高、命中 ×3、減傷 +15、迴避率 +20%、傷害（一般怪 ×2／頭目 ×5）、持續傷害 ×5、會回血；'
-          + '一般怪出生 10 秒隨機免疫物理或魔法。經驗 ×10、金幣 ×3，每殺 0.1% 掉龍之鑽石；掉落 ×7、裝備 50% 祝福、席琳結晶 ×5，'
+          + '一般怪出生 10 秒隨機免疫物理或魔法。經驗 ×10、金幣 ×3，每殺 0.1% 掉龍之鑽石；掉落 ×7、裝備 50% 祝福、席琳結晶是瘋狂席琳的 2 倍（時空裂縫裡再 ×3），'
           + '並掉落<span class="text-fuchsia-300 font-bold">夢艷結晶</span>、<span class="text-red-300 font-bold">地獄精華</span>、<span class="text-amber-300 font-bold">滅魔蔑視水晶</span>與碎片（昇華支配材料）。</div></div>'
           + '<button type="button" class="btn py-3 text-base font-bold ' + (!lvOk ? 'bg-slate-600 border-slate-500 opacity-60 cursor-not-allowed' : (on ? 'bg-slate-700 hover:bg-slate-600 border-slate-500' : 'bg-fuchsia-950 hover:bg-fuchsia-900 border-fuchsia-600'))
           + '" ' + (!lvOk ? 'disabled' : '') + ' onclick="toggleSherineDream()">' + (!lvOk ? '等級不足（需 Lv80）' : (on ? '🙏 祈禱：關閉席琳夢域鏡' : '🌙 祈禱：開啟席琳夢域鏡')) + '</button>');
@@ -564,6 +564,26 @@
       return r;
     };
   }
+  // 席琳結晶掉率（Ping 2026-11-19）：瘋狂席琳＝一般 ×3；夢域鏡＝瘋狂 ×2；夢域鏡裡的時空裂縫再 ×3（＝瘋狂 ×6）。
+  //   隊伍加成上限 16 人：partyDropRate 在夢域鏡裡不算人數（afk-fix1102），結晶例外，這裡補成「你＋傭兵」最多 16。核心掛點：補丁 patchCrystalRate1119。
+  var CRYSTAL = { mad: 3, dream: 2, rift: 3, partyCap: 16 };
+  window.__afkCrystalRate = function (mob, rate) {
+    try {
+      if (!mob || !mob._sherine) return rate;
+      var base = (mob.boss ? 0.0001 : 0.00001) * (mob.lv || 1), mult = mob._sherineMad ? CRYSTAL.mad : 1;
+      if (mob._dream) {
+        mult = CRYSTAL.mad * CRYSTAL.dream;
+        var inRift = typeof state !== 'undefined' && state && state.riftRun && typeof mapState !== 'undefined' && mapState.current === 'rift_battle';
+        if (inRift) mult *= CRYSTAL.rift;
+      }
+      var r = base * mult;
+      var core = typeof partyRewardMult === 'function' ? Math.max(1, Number(partyRewardMult()) || 1) : 1;
+      var n = Math.min(CRYSTAL.partyCap, 1 + ((typeof player !== 'undefined' && player && player.allies) || []).filter(function (a) { return a && !a._downed; }).length);
+      if (typeof player !== 'undefined' && player && !player.classicMode && n > core) r *= n / core;   // 結晶一律吃隊伍加成到 16 人（夢域鏡裡隊伍人數本來不加掉寶，結晶例外）
+      return r;
+    } catch (e) { return rate; }
+  };
+  window.__afkCrystalRate.TUNE = CRYSTAL;
   window.__afkDreamHell = { on: dreamOn, applyDream: applyDream, items: Object.keys(ITEMS), illuStat: illuStat, illuMp: ILLU_MP };
   console.log('[AFK-dreamhell] 已啟用：席琳夢域鏡模式（在席琳神殿開啟）');
 })();

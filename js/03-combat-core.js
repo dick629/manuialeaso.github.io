@@ -2028,6 +2028,7 @@ function spawnMob(idx) {
         else if (_ab.length === 1) _elderBossOk = (Date.now() - (_ab[0]._bornMs || Date.now())) >= 180000;
     }
     let _normalBossChance = Math.max(0.01, Math.min(1, (((player && player.d && player.d.bossEncounterPct) || 1) / 100)));
+    if (typeof window.__afkBossChanceAdj === 'function') _normalBossChance = window.__afkBossChanceAdj(_normalBossChance);   /* 🔌 加掛版補丁:出王機率掛點 */
     let wantBoss = !npcClanBattle && !wcMassTauntBattle && (allowMultiBoss || !bossInBattle) && bossPool.length > 0 && (!_elderRoom || _elderBossOk) && (mapState.forceBoss || (siegeArea ? (!mapState.suppressSiegeBoss && Math.random() < 0.10) : (_elderRoom ? Math.random() < 0.05 : Math.random() < _normalBossChance)));
     if(mapState.forceBoss) mapState.forceBoss = false;   // 強制旗標只作用於下一次生怪
     if(wantBoss) {

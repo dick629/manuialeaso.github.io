@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-ee033f92fbe0",
+  "build": "merge-0.4-cf3e0b84ae3f",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -108,8 +108,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-autosupply.js?v=3df52b984c4a",
-      "sha256": "3df52b984c4a9188882a6d335190b6a3f26598020008a6830778debb22043db1",
+      "url": "afk-autosupply.js?v=e38e087a3942",
+      "sha256": "e38e087a3942bb803de123ebd14b6b53c5524ddb4c79048b009255be22f554e7",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -433,8 +433,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dex-extra.js?v=62eab4f6d539",
-      "sha256": "62eab4f6d53931b287835fdecf6cc82492cc62321a0eb647d24fb4f097db6ec2",
+      "url": "afk-dex-extra.js?v=ff038926f012",
+      "sha256": "ff038926f0120fa7f48ec01deaee9c8cbdaad49af9d7756bf0896f2f5dabfd68",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -538,8 +538,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamhell.js?v=3aa9437eab20",
-      "sha256": "3aa9437eab207b5a8382e668b8285b44517227e632edf695de66f01160883780",
+      "url": "afk-dreamhell.js?v=69d583eb2eb4",
+      "sha256": "69d583eb2eb41dfc6cbb707eea43c7a471bd1d45108a2e4eaeed3befafbf8924",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -693,8 +693,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-gamehall.js?v=5806fe9ada3d",
-      "sha256": "5806fe9ada3d959833bba079443afd777ae08bc627bd4498f1dd52a5b122dc68",
+      "url": "afk-gamehall.js?v=4fb37e6f7659",
+      "sha256": "4fb37e6f76596781825ddfbc97286efb8f618c12ad9c0eafff4bb3c07f60f7b3",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -778,8 +778,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-heartbeat.js?v=37c51987e968",
-      "sha256": "37c51987e9683762f3cefaef4978d08bd4b7085c52d5523cb74b68d9bad95f2a",
+      "url": "afk-heartbeat.js?v=e30a758a632f",
+      "sha256": "e30a758a632f016eb732a73e67ce4add919c88541b71e04fa07125646075a0c2",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -873,8 +873,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-kurt-hunt.js?v=39906efeaada",
-      "sha256": "39906efeaada6fc4f3c4ebbb5d8f0ae3d62581efe65c76a99f1e1f0a145ba7f0",
+      "url": "afk-kurt-hunt.js?v=0d632d7fc83f",
+      "sha256": "0d632d7fc83f6e8cc28a50cc48ea41b0b965ea60b27cb4bdf3da7046adcec970",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1243,8 +1243,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-region-boss.js?v=9b35ff53414d",
-      "sha256": "9b35ff53414d275ccabc38f34f5c2e3f20b31fac1432da1d3be64912a9f13483",
+      "url": "afk-region-boss.js?v=58d357ecf6a9",
+      "sha256": "58d357ecf6a9beae211e4cf2732905b3b59cfaefee828df39221035ba6c58a49",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1398,8 +1398,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftdungeons.js?v=fadebcac550c",
-      "sha256": "fadebcac550cd4dca9343418e5e518f80d831757e2f5ac92014881d820cad6eb",
+      "url": "afk-riftdungeons.js?v=bba17c206f55",
+      "sha256": "bba17c206f5560542a7bab6b2338c52bfdd5ba64d434d9f621bf4385e90cfc16",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1408,8 +1408,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-riftquest.js?v=458d89c7e441",
-      "sha256": "458d89c7e44175beaf1bdb38e1a66c322f049b867ea02b7197b1cdea6c908016",
+      "url": "afk-riftquest.js?v=04379f8fcb76",
+      "sha256": "04379f8fcb76af4ac81ef010ea76f8302a60464df313bf497f620e10086b8a3e",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1513,6 +1513,11 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
+      "url": "afk-slot-sg.js?v=1911144c0e86",
+      "sha256": "1911144c0e866373f7db9cc49867ac77da5c727e5864d586ee233fb4d7b07fc6",
+      "type": "text/javascript; charset=utf-8"
+    },
+    {
       "url": "afk-slotinfo.js?v=b518493dbcc2",
       "sha256": "b518493dbcc2fbb578b1c8d139ed0241db09724bdeb410ea31bbc0a7213f15a1",
       "type": "text/javascript; charset=utf-8"
@@ -1538,8 +1543,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-starcard.js?v=0085a10e335b",
-      "sha256": "0085a10e335b1af65c3bc9295c1fa291bd5015e98f04e187ef8694c6423060fe",
+      "url": "afk-starcard.js?v=8c863948be7e",
+      "sha256": "8c863948be7e95636065f3f008493ce89ec9db801c5155e155bc98b4b717e2c2",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1763,8 +1768,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-world-events.js?v=718456288371",
-      "sha256": "718456288371c5e576a5bb3037ecc6fe5ba8e291b5ba5d2387968b5adcff24c0",
+      "url": "afk-world-events.js?v=59f054dc7f2f",
+      "sha256": "59f054dc7f2f2449086d36376a97053b2f9b4041d87b7c3f70fbbb58bf50cb9e",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1824,7 +1829,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "35c98d331043a9273f2c8ddf336ba4645a7073d22d33684f614ff7078c23dca5",
+      "sha256": "acebef6eae0db8f816a5b4147e42cb3fe67e5c4680fcb4a9d170d1e4635debfc",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1843,8 +1848,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/03-combat-core.js?v=3348328d330e",
-      "sha256": "3348328d330eece3b8e03c86e29907092cd0d9969303e445352502c6418a7ff0",
+      "url": "js/03-combat-core.js?v=e1c412f429e7",
+      "sha256": "e1c412f429e7b96e2bb0722be8c53fe4c6a111f26100ecfe97c71009ad42c6d4",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1853,8 +1858,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/05-kill-progression.js?v=681db58cf490",
-      "sha256": "681db58cf490f27cec958a30bb0680a6c836bd590f8688ed704cfcb7bbc22dbc",
+      "url": "js/05-kill-progression.js?v=60b9457f6994",
+      "sha256": "60b9457f6994c6358b54b02c2505ef18923ccbff84c875db7ff0c020f79fa941",
       "type": "text/javascript; charset=utf-8"
     },
     {

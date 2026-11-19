@@ -5,7 +5,7 @@
  * 打開是獨立的聊天視窗（字體 14px、遊戲原生的炭灰面板＋銅邊）。
  *   ‧由網頁直接統整（玩家 2026-10-27）：網站設好伺服器（DEFAULT_API）後，所有玩家進遊戲就自動連上，不用註冊或設定；
  *     每 5 分鐘送一次心跳：角色名、職業、等級（不送裝備、地圖、存檔）。不想出現在名冊可以按「隱身」
- *   ‧10 分鐘內有心跳的算在線；視窗打開時每 15 秒抓新訊息，關著時只靠心跳順便看有沒有新訊息（按鈕亮點）
+ *   ‧20 分鐘內有心跳的算在線（11-19 伺服器省額度：10 → 20）；視窗打開時每 30 秒抓新訊息（11-19：15 → 30 秒），關著時只靠心跳順便看有沒有新訊息（按鈕亮點）
  *   ‧每則最多 80 字；同一人 5 秒一句、一小時 60 句（伺服器把關）
  * 後端：backend/heartbeat（Cloudflare Worker＋D1，免費額度夠用）。部署後把網址寫進下方 DEFAULT_API（「伺服器設定」只給管理者測試用，網址帶 ?hbadmin 才看得到）。
  * 沒設定伺服器時只顯示說明，不會連任何地方。
@@ -18,7 +18,7 @@
 
   var DEFAULT_API = 'https://lineage-heartbeat.manuialeaso.workers.dev';   // 部署好 Worker 後可以把網址寫在這裡（所有人預設連這台）；也可以在視窗裡另外設定
   var K = { api: 'afk_hb_api', id: 'afk_hb_id', join: 'afk_hb_join', seen: 'afk_hb_seen' };
-  var BEAT_MS = 5 * 60 * 1000, FEED_MS = 15000;
+  var BEAT_MS = 5 * 60 * 1000, FEED_MS = 30000;   // 11-19：15 → 30 秒（D1 每日讀取額度）
   var CLS = { royal: ['王族', '#e8c48a'], knight: ['騎士', '#e57f6c'], elf: ['妖精', '#9bc48a'], mage: ['法師', '#8fb4e8'], dark: ['黑暗妖精', '#b59be0'], dragon: ['龍騎士', '#e09a5b'], illusion: ['幻術士', '#d38fc4'], warrior: ['戰士', '#c9b28a'] };
   var get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
   var set = function (k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} };
@@ -163,7 +163,7 @@
   }
   function paint(scroll) {
     var cnt = document.getElementById('afk-hb-count');
-    if (cnt) cnt.textContent = st.online != null ? '（近 10 分鐘在線 ' + st.online + ' 人）' : '';
+    if (cnt) cnt.textContent = st.online != null ? '（近 20 分鐘在線 ' + st.online + ' 人）' : '';
     var main = document.getElementById('afk-hb-main'); if (!main || !st.open) return;
     var err = st.err ? '<div class="afk-hb-err">' + esc(st.err) + '</div>' : '';
     if (!api() && !st.cfg) {

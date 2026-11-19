@@ -243,6 +243,7 @@
   var kurtBusy = function () { try { return !!(W.__afkKurtHunt && W.__afkKurtHunt.hunt && W.__afkKurtHunt.hunt()); } catch (e) { return false; } };
   var canTrigger = function (id) {
     var p = P(); if (!p || act || p.dead || !on(id)) return false;
+    if (p.sherineWorld && !p.sherineMad && !p.classicMode) return false;   // 11-19（Ping）：一般席琳模式沒有地區霸主、世界事件（瘋狂席琳、夢域鏡、次元照舊）
     if ((Number(p.lv) || 0) < LV_MIN || kurtBusy() || catching()) return false;
     try { if (W.__afkRegionBoss && W.__afkRegionBoss.active()) return false; } catch (e) {}   // 地區霸主在場時不疊世界事件
     var s = store(); if (Date.now() < (Number(s.gap) || 0) || Date.now() < (Number(s.cd[id]) || 0)) return false;

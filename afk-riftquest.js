@@ -30,7 +30,9 @@
   var IMG = 'assets/icons/items/';
   var HALF_ID = 'npc_afk_halfsherine', HALF_N = '半身的席琳';
   var riftOn = function () { try { return !!(W.__afkDimRiftOn && W.__afkDimRiftOn()); } catch (e) { return false; } };
-  var opened = function (p) { var r = p && p.afkDimRift; return !!(r && (r.ever || r.on)); };
+  // 11-19（Ping）：能進次元裂縫才接——要打贏終焉第三階層，而且真的踏進過一次（木人場的次元模擬不算）
+  var t3win = function (p) { return !!(p && p.afkFinalTier && p.afkFinalTier.t3 === 'win'); };
+  var opened = function (p) { var r = p && p.afkDimRift; return !!(t3win(p) && r && r.ever); };
   var TAIL = '（次元裂縫開著時才會掉）';
 
   var Q = {
@@ -77,7 +79,7 @@
   // ── 吞噬天空的光 ──
   var line = L.defineLine({
     id: 'riftq', name: '吞噬天空的光', own: HALF_ID, hostIds: ['npc_afk_gt_rift', 'npc_mother', 'npc_shenien', HALF_ID, 'npc_orachilia', 'npc_afk_storyteller'], hostN: '次元裂隙',
-    intro: '天上的縫從兩道變成了三道。光從縫裡落下來，落在哪裡，哪裡就開始被拆開。（完成二次轉生、進過次元裂縫一次後接取；任務道具只在次元裂縫裡取得）',
+    intro: '天上的縫從兩道變成了三道。光從縫裡落下來，落在哪裡，哪裡就開始被拆開。（完成二次轉生、打贏終焉第三階層並進過次元裂縫一次後接取；任務道具只在次元裂縫裡取得）',
     outro: '說書人笑了，笑得很久：「我說過我只是個講故事的人。好吧——我叫格蘭肯。下一段故事，要從一把砸毀過巨人之都的錘子說起。」',
     chapters: [
       { lv: 80, title: '縫隙的第一道裂紋', map: '次元裂縫中任一野外（一般怪）＋不回村撐過 10 分鐘・接取：長老會議廳 次元裂隙',
@@ -143,6 +145,7 @@
   var gate = function (x, p) {
     if (classic(p)) return '經典模式沒有這條劇情。';
     if (Math.floor(p.rebirth || 0) < 2) return '要完成二次轉生。';
+    if (!t3win(p)) return '要先打贏終焉第三階層、能踏進次元裂縫，才能接這條劇情。';
     if (!opened(p)) return '先進一次次元裂縫（席琳神殿 裂縫的守門人）。';
     if (x.l === 'riftq' && x.i === 3 && !halfOn(p)) return '半身的席琳還沒有醒來。（要先在終焉第三階層看過真相）';
     if (x.l === 'evaq' && x.i === 0 && trialQStateFor(p, keyR(2, p)) !== 2) return '琉米埃爾：「女神不見外人。」（要先完成「吞噬天空的光」第 3 章）';
@@ -237,6 +240,20 @@
     };
   }
 
-  W.AFK_RIFTQ = { line: line, eva: eva, keyR: keyR, keyE: keyE, gate: gate, rule: RULE, onKill: onKill, hasDK: hasDK, halfOn: halfOn };
+  // 11-19：之前還不能進次元裂縫就接到的（例如在木人場用次元模擬時接的），退回「未接」，等能進次元裂縫再接
+  var undoEarly = function () {
+    var p = P(); if (!p || !p.trialQ || opened(p)) return;
+    var n = 0;
+    Object.keys(p.trialQ).forEach(function (k) { if (/^afkL_(riftq|evaq)_/.test(k) && p.trialQ[k] === 1) { delete p.trialQ[k]; n++; } });
+    if (n) sys('<span class="text-amber-300">「吞噬天空的光」要打贏終焉第三階層、能踏進次元裂縫後才能接，已經先退回未接；條件達成後再到次元裂隙接取。</span>');
+  };
+  if (typeof W.loadGame === 'function') {
+    var oLoad = W.loadGame;
+    W.loadGame = function () { var r = oLoad.apply(this, arguments); try { undoEarly(); } catch (e) {} return r; };
+    try { (0, eval)('loadGame = window.loadGame'); } catch (e) {}
+  }
+  setTimeout(function () { try { undoEarly(); } catch (e) {} }, 0);
+
+  W.AFK_RIFTQ = { undoEarly: undoEarly, t3win: t3win, line: line, eva: eva, keyR: keyR, keyE: keyE, gate: gate, rule: RULE, onKill: onKill, hasDK: hasDK, halfOn: halfOn };
   console.log('[AFK-riftquest] 已啟用：「吞噬天空的光」6 章＋「伊娃的水」3 章');
 })();

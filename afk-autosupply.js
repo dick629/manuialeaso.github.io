@@ -8,6 +8,7 @@
  *     （營養料理各盤可以疊加，所以「全部」＝每一種都維持著）。
  *   ‧時空裂痕加速藥水（1～3 段）、時空裂痕魔力藥水（2026-11-03 23:11，預設不勾）：帶出裂痕的那幾瓶，一般地圖上沒有效果時自動喝，
  *     每次照 afk-riftsupply 的帶出規則收龍鑽（__afkDiaCost）；不夠就安靜跳過。裂痕裡照舊由 afk-riftsupply 自動喝。只有 riftout 開著才顯示。
+ *     11-19（Ping）：背包沒有就自動買——裂痕內花戰勳（補給原價）、一般地圖每瓶 50 龍鑽（魔力 30），只扣龍鑽。
  *   設定每個角色各自記住（player._afkAutoSupply）。經典模式不顯示、不動作。
  * ========================================================================== */
 (function () {
@@ -67,14 +68,38 @@
   //   裂痕裡照舊由 afk-riftsupply 自己自動喝；這裡只管裂痕外。不會自動買（裂痕補給只能在裂痕裡用戰勳換）。
   var RS = function () { return W.__afkRiftSupply || null; };
   var riftOutOk = function () { var r = RS(); try { return !!(r && r.outOn && r.outOn()); } catch (e) { return false; } };
+  // 11-19（Ping 04:18、04:30）：背包沒有就自動買——裂痕裡用戰勳（照補給原價），一般地圖用龍鑽（每瓶 OUT_BUY，只扣龍鑽；喝的時候另照 riftout 收費）
+  var OUT_BUY = { h1: 50, h2: 50, h3: 50, blue: 30 };
+  var credits = function () { var A0 = A(), cid = null; try { cid = A0 && A0.resolve ? A0.resolve(12039) : null; } catch (e) {} if (!cid) return { id: null, n: 0 }; var p = P(); return { id: cid, n: (p.inv || []).reduce(function (s, it) { return s + (it && it.id === cid && !it.lock ? Math.max(0, Number(it.cnt) || 1) : 0); }, 0) }; };
+  var diaHave = function () { try { return Math.max(0, Math.floor(Number(W.pandoraGetSharedDiamonds()) || 0)); } catch (e) { return 0; } };
   var riftOut = function (p, c) {
     var r = RS(); if (!r || !(c.riftHaste || c.riftBlue) || !riftOutOk()) return;
-    var A0 = A(); try { if (A0 && A0.inRift && A0.inRift()) return; } catch (e) {}
+    var A0 = A(), inR = false; try { inR = !!(A0 && A0.inRift && A0.inRift()); } catch (e) {}
     var ids = r.ids(), DC = W.__afkDiaCost;
     var ks = (c.riftHaste ? ['h1', 'h2', 'h3'] : []).concat(c.riftBlue ? ['blue'] : []);
     ks.forEach(function (k) {
       if ((Number(p.buffs && p.buffs[r.BUFF[k]]) || 0) > 0) return;
-      var it = invOf(function (id) { return id === ids[k]; }); if (!it || it.lock) return;
+      var it = (p.inv || []).find(function (x) { return x && x.id === ids[k] && !x.lock && (Number(x.cnt) || 1) > 0; }) || null;
+      if (!it) {
+        var d = DB.items[ids[k]]; if (!d) return;
+        if (inR) {   // 裂痕裡：戰勳買 1 瓶（afk-riftsupply 會在同一輪自動喝）
+          var cr = credits(), cost = Number(d.ttmiCost) || 0;
+          if (!cost || cr.n < cost || !A0.riftBuy) return;
+          try { if (A0.riftBuy(ids[k], 1)) { stats.bought++; if (typeof logSys === 'function' && !(state && state.ff)) logSys('自動花費 ' + cost + ' 戰勳兌換了 1 瓶' + esc(d.n) + '。'); } } catch (e) {}
+          return;
+        }
+        var price = OUT_BUY[k], fee = r.OUT_FEE || 10;
+        try { if (DC && DC.check(fee)) return; } catch (e) { return; }
+        if (diaHave() < price + fee) return;   // 買完還要付得起喝的費用
+        var res = null; try { res = W.pandoraAdjustSharedDiamonds(-price) || {}; } catch (e) { res = {}; }
+        if (!res.ok) return;
+        try { gainItem(ids[k], 1, true, true); } catch (e) { try { W.pandoraAdjustSharedDiamonds(price); } catch (e2) {} return; }
+        stats.bought++;
+        try { if (typeof logSys === 'function' && !(state && state.ff)) logSys('自動花費 ' + price + ' 龍之鑽石購買了 1 瓶' + esc(d.n) + '。'); } catch (e) {}
+        it = (p.inv || []).find(function (x) { return x && x.id === ids[k] && !x.lock; }) || null;
+        if (!it) return;
+      }
+      if (inR) return;   // 裂痕裡的喝由 afk-riftsupply 處理
       try { if (DC && DC.check(r.OUT_FEE)) return; } catch (e) { return; }   // 龍鑽／金幣不夠：安靜跳過
       try { if (r.use(it, true) === true) stats.used++; } catch (e) {}
     });
@@ -120,9 +145,13 @@
     var rok = riftOutOk(), fee = (RS() && RS().OUT_FEE) || 10;
     [['afk-rift-haste', 'riftHaste', '時空裂痕加速藥水（1～3 段）'], ['afk-rift-blue', 'riftBlue', '時空裂痕魔力藥水']].forEach(function (x) {
       var r0 = document.getElementById(x[0] + '-row'), cb = document.getElementById('set-' + x[0]), lb = document.getElementById(x[0] + '-lb');
-      if (r0) { r0.style.display = rok ? '' : 'none'; r0.title = '一般地圖上沒有效果時，自動喝背包裡帶出來的' + x[2] + '；龍鑽不夠就不喝'; }
+      if (r0) { r0.style.display = rok ? '' : 'none'; r0.title = '沒有效果時自動喝；背包沒有就自動買（裂痕內花戰勳、一般地圖花龍鑽），不夠就不買不喝'; }
       if (cb) cb.checked = !!c[x[1]];
-      if (lb) { var t = x[2] + '（一般地圖每次 ' + fee + ' 龍鑽）'; if (lb.textContent !== t) lb.textContent = t; }
+      if (lb) {
+        var bp = x[1] === 'riftBlue' ? OUT_BUY.blue : OUT_BUY.h1, cc = (RS() && DB.items[RS().ids()[x[1] === 'riftBlue' ? 'blue' : 'h1']] || {}).ttmiCost || 0;
+        var t = x[2] + '<br><small class="text-slate-400">沒有就自動買：裂痕內 ' + cc + ' 戰勳／瓶、一般地圖 ' + bp + ' 龍鑽／瓶；一般地圖每次喝另付 ' + fee + ' 龍鑽＋' + (fee * 10) + ' 萬金幣</small>';
+        if (lb.innerHTML !== t) lb.innerHTML = t;
+      }
     });
     var hl = h && h.closest('label'); if (hl) { var b = bestH3(); hl.title = b ? '沒有三段加速時自動喝；背包沒有就買「' + DB.items[b].n + '」（' + priceOf(b).toLocaleString() + ' 金幣）' : '洛依沒有賣三段加速藥水'; }
   };
@@ -144,5 +173,5 @@
   });
   setTimeout(function () { try { ui(); } catch (e) {} }, 0);
 
-  W.__afkAutoSupply = { step: step, riftOut: riftOut, ui: ui, sync: sync, cfg: cfg, bestH3: bestH3, foods: foods, stats: stats, isH3: isH3 };
+  W.__afkAutoSupply = { OUT_BUY: OUT_BUY, step: step, riftOut: riftOut, ui: ui, sync: sync, cfg: cfg, bestH3: bestH3, foods: foods, stats: stats, isH3: isH3 };
 })();

@@ -161,6 +161,7 @@
   };
   var canTrigger = function (mapId) {
     var p = P(); if (!p || act || p.dead || (Number(p.lv) || 0) < LV_MIN || busy()) return null;
+    if (p.sherineWorld && !p.sherineMad && !p.classicMode) return null;   // 11-19（Ping）：一般席琳模式沒有地區霸主、世界事件（瘋狂席琳、夢域鏡、次元照舊）
     if (!okMap(mapId)) return null;
     var r = regionOf(mapId); if (!r) return null;
     var s = store(); if (Date.now() < (Number(s.gap) || 0) || Date.now() < (Number(s.cd[r]) || 0)) return null;
@@ -303,7 +304,18 @@
     };
   }
 
-  W.__afkRegionBoss = { LIST: R, BY: BY, RATE: RATE, CD_MS: CD_MS, GAP_MS: GAP_MS, DUR: DUR, LV_MIN: LV_MIN, BOX: BOX, MECH_N: MECH_N, MECH_D: MECH_D,
+  // 11-19（Ping）：一般席琳模式碰到王的機率下降（隨機遇到頭目 ×0.5）；傳送控制戒指／瞬移找王（forceBoss）不受影響
+  var PLAIN_SHERINE_BOSS = 0.5;
+  (function () {
+    var prev = W.__afkBossChanceAdj;
+    W.__afkBossChanceAdj = function (c) {
+      if (typeof prev === 'function') c = prev(c);
+      var p = P();
+      if (p && p.sherineWorld && !p.sherineMad && !p.classicMode) c = c * PLAIN_SHERINE_BOSS;
+      return c;
+    };
+  })();
+  W.__afkRegionBoss = { PLAIN_SHERINE_BOSS: PLAIN_SHERINE_BOSS, LIST: R, BY: BY, RATE: RATE, CD_MS: CD_MS, GAP_MS: GAP_MS, DUR: DUR, LV_MIN: LV_MIN, BOX: BOX, MECH_N: MECH_N, MECH_D: MECH_D,
     active: function () { return act; }, canTrigger: canTrigger, regionOf: regionOf, okMap: okMap, levelFor: levelFor, stats: stat, store: store, step: step, end: end, openBox: openBox,
     start: function (r) { var ms = mapState.mobs || [], i; for (i = 0; i < ms.length; i++) if (!ms[i] || ms[i]._dead) break; if (i >= ms.length) for (i = 0; i < ms.length; i++) if (ms[i] && !ms[i].boss) break; if (i >= ms.length) return false; return start(r || regionOf(mapState.current), i); } };
   try { console.log('[AFK-region-boss] 已載入：地區霸主 ' + R.length + ' 名'); } catch (e) {}

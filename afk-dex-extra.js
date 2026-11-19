@@ -46,7 +46,7 @@
   X.acq('afk_time_mirror', '佩特拉後裔村「時光的引路人」：用倒影之鏡換。開啟時光副本、強化次元遺物、重抽次元遺物的套裝都要用。');
   X.acq('afk_rd_sand', GATE + '的「哈汀的時空・裂縫」「謀叛者的低語・裂縫」「回到過去的時光・裂縫」，以及時光副本。席琳遺骸淬鍊、之魂憶起要用。');
   X.acq('afk_rd_water', GATE + '的「謀叛者的低語・裂縫」「回到過去的時光・裂縫」偶爾撿到，時光副本也有機會。席琳遺骸淬鍊、之魂憶起要用。');
-  X.acq('afk_rd_scale', GATE + '的「四龍副本・裂縫」：打倒龍時取得。守護者之戒完整 ★ 要用。');
+  X.acq('afk_rd_scale', GATE + '的「四龍副本・裂縫」：打倒龍時取得。');
   X.acq('afk_rd_feather', RG + '開著時，傲慢之塔 91～100 樓的怪偶爾掉；墮光天使 阿納金也會留下。10 片可以召喚阿納金。');
   X.acq('afk_rd_echo', GATE + '的墮光天使 阿納金第 3～5 形態留下。50 個可以進次元藝能「號角」的副本。');
   X.acq('afk_rd_pick', GATE + '的墮光天使 阿納金留下。在席琳神殿「次元的鍛造師」換成武器、防具或飾品用的昇華支配強化石。');
@@ -56,7 +56,7 @@
   X.acq('afk_rd_neptune', GATE + '的「漂流的墓船」深處撿到，時光副本也有機會。50 個可以進次元藝能「海」的副本。');
   X.acq('afk_rd_eclipse', GATE + '的「星墜的祭壇」：星蝕者留下。黃道星卡升到歸一要用。');
   X.acq('afk_rd_hmark', GATE + '的「哈汀的時空・裂縫」，時光副本也有機會。50 個可以進次元藝能「哈汀」的副本。');
-  X.acq('afk_rd_thread', GATE + '的「封印戰」與「無盡的裂縫」留下。守護者之戒完整 ★3 要用。');
+  X.acq('afk_rd_thread', GATE + '的「封印戰」與「無盡的裂縫」留下。');
   X.acq('afk_rd_remnant', GATE + '的「封印戰」與「無盡的裂縫」深處留下，時光副本也有機會。50 個可以進次元藝能「殘光」的副本。');
   X.acq('afk_anakin_horn', GATE + '：第一次打倒墮光天使 阿納金第 5 形態時取得（每個角色一支）。');
   [['afk_guard_rift_glim', '裂縫碎光'], ['afk_guard_rift_memory', '席琳的水之記憶'], ['afk_guard_rift_thread', '天空的縫線'], ['afk_guard_rift_sand', '凝結的時之沙'], ['afk_guard_rift_scale', '侵蝕龍鱗']].forEach(function (x) {

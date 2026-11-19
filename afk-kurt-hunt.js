@@ -173,6 +173,7 @@
   };
   var canTrigger = function () {
     var p = P(); if (!p || hunt || p.dead) return false;
+    if (p.sherineWorld && !p.sherineMad && !p.classicMode) return false;   // 11-19（Ping）：一般席琳模式沒有地區霸主、世界事件（瘋狂席琳、夢域鏡、次元照舊）
     if ((Number(p.lv) || 0) < LV_MIN) return false;
     if (!royals(false).length) return false;
     if (Date.now() < (Number(p.afkKurtCd) || 0)) return false;
