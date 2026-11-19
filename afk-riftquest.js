@@ -155,7 +155,7 @@
     var oAcc = W.trialQAccept;
     W.trialQAccept = function (key) {
       var x = idxOf(key), p = P();
-      if (x && p) { var why = gate(x, p); if (why) { sys('<span class="text-amber-300">' + esc(why) + '</span>'); return; } }
+      if (x && p) { var why = gate(x, p); if (why) { sys('<span class="text-amber-300">' + esc(why) + '</span>'); try { W.alert('還不能接這個任務：' + why); } catch (e) {} return; } }   // 11-19：原本只寫在系統訊息，按了像沒反應
       return oAcc.apply(this, arguments);
     };
   }

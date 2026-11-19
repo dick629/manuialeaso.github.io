@@ -34,10 +34,12 @@
     var st = (p.afkRb && p.afkRb.stats) || {};
     return B.LIST.map(function (b) { var s = st[b.r] || {}; return { b: b, met: s.met || 0, kills: s.kills || 0, first: s.first || 0 }; });
   };
-  var storyGroups = function (p) {
+  var POST_T3 = { riftq: 1, evaq: 1 };   // 「吞噬天空的光」「伊娃的水」：要打贏終焉第三階層才能接
+  var storyGroups = function (p, forGate) {
     var out = [], L = W.__afkLore;
     if (L && L.lines) Object.keys(L.lines).forEach(function (id) {
       var line = L.lines[id];
+      if (forGate && (POST_T3[id] || POST_T3[line.id])) return;
       out.push({ n: '劇情「' + line.name + '」', host: line.hostN, ch: line.chapters.map(function (c, i) { return { lv: c.lv, t: c.title, done: stOf(p, L.keyOf(line, i, QC(p))) === 2 }; }) });
     });
     var S = W.AFK_CLASS_SAGA;
@@ -72,7 +74,7 @@
         return '<div class="afk-sc-tile' + (r.kills ? ' got' : r.met ? ' met' : '') + '" title="' + esc(r.b.lore) + '"><img alt="" loading="lazy" src="' + esc(tr ? tr.img : '') + '"><b>' + esc(r.b.label) + '</b><small>' + esc(r.kills || r.met ? r.b.n : '？？？') + '</small><small>' + (r.kills ? '打倒 ' + r.kills + ' 次・' + esc(r.b.trophy) : r.met ? '遇到 ' + r.met + ' 次・尚未打倒' : '尚未遇到') + '</small></div>';
       }).join('') + '</div><p class="afk-sc-note">地區霸主在各地區的野外與地監隨機現身（Lv' + W.__afkRegionBoss.LV_MIN + ' 以上）。</p>' : '<p class="afk-sc-note">「地區霸主」目前關閉中。</p>');
     // 劇情
-    var sg = storyGroups(p), sd = 0, sn = 0;
+    var sg = storyGroups(p, !(p.afkFinalTier && p.afkFinalTier.t3 === 'win')), sd = 0, sn = 0;   // 還沒打贏終焉第三階層時，之後才開放的劇情先不列
     sg.forEach(function (g) { g.ch.forEach(function (c) { sn++; if (c.done) sd++; }); });
     h += sec('📜', '劇情', sd, sn, sg.map(function (g) {
       var d = g.ch.filter(function (c) { return c.done; }).length;
@@ -105,14 +107,14 @@
     if (!p || !p.cls) return out;
     var wr = worldRows(p); out.push({ k: 'world', n: '世界事件', a: wr.filter(function (r) { return r.kills > 0; }).length, b: wr.length });
     var br = bossRows(p); out.push({ k: 'boss', n: '地區霸主', a: br.filter(function (r) { return r.kills > 0; }).length, b: br.length });
-    var sd = 0, sn = 0; storyGroups(p).forEach(function (g) { g.ch.forEach(function (c) { sn++; if (c.done) sd++; }); }); out.push({ k: 'story', n: '劇情', a: sd, b: sn });
+    var sd = 0, sn = 0; storyGroups(p, true).forEach(function (g) { g.ch.forEach(function (c) { sn++; if (c.done) sd++; }); }); out.push({ k: 'story', n: '劇情', a: sd, b: sn });   // 11-19：終焉第三階層之後才能接的劇情不算（不然會卡住入場資格）
     var qr = questRows(p); out.push({ k: 'quest', n: '任務', a: qr.filter(function (q) { return q.done; }).length, b: qr.length });
     var HU = W.__afkHunter;
     if (HU && !p.classicMode) { try { out.push({ k: 'hunter', n: '冒險者等級', a: HU.rankIdx(p), b: HU.RANKS.length - 1 }); } catch (e) {} }
     return out;
   };
   var full = function (p) { var pr = progress(p); return pr.length > 0 && pr.every(function (x) { return !x.b || x.a >= x.b; }); };
-  W.__afkSpecialCollection = { progress: progress, full: full };
+  W.__afkSpecialCollection = { progress: progress, full: full, POST_T3: POST_T3 };
 
   var css = document.createElement('style');
   css.textContent = '.afk-sc-sec{border:1px solid #4e3526;border-radius:.4rem;background:#1b1a20;margin-bottom:10px}'
