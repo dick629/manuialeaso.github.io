@@ -23,7 +23,7 @@
         if (k in _ps) return _ps[k];
         try { return (_ps[k] = localStorage.getItem('afk_ps_' + k) === '1'); } catch (e) { return false; }
     }
-    function set(k, v) { if (k !== 'noanim' && k !== 'nofx') return; try { localStorage.setItem('afk_ps_' + k, v ? '1' : '0'); } catch (e) {} _ps[k] = !!v; applyVisualState(); }
+    function set(k, v) { if (k !== 'noanim' && k !== 'nofx' && k !== 'norage') return; try { localStorage.setItem('afk_ps_' + k, v ? '1' : '0'); } catch (e) {} _ps[k] = !!v; applyVisualState(); }
 
     // Static mode still creates/removes sprites when a form, companion or life
     // state changes. A blanket no-op made characters invisible on a fresh load.
@@ -168,6 +168,18 @@
             document.body.classList.toggle('afk-visual-paused', document.hidden);
         }
         applyNofx();
+        applyNorage();
+    }
+    // 11-20 Ping：頭目狂暴的持續紅光（本體呼吸光、氣焰、地面紅環）會卡頓——預設照常顯示，省電模式可以關。
+    //   進入狂暴當下的一次性閃光與【頭目狂暴】戰鬥訊息不受影響。夢域鏡的怪隨時狂暴，整場都是這幾層在跑。
+    var NORAGE_CSS = '#battle-view .mob-target.mob-raging .mob-img-wrap { animation: none; filter: none; }\n'
+        + '#battle-view .mob-target.mob-raging .mob-img-inner { isolation: auto; }\n'
+        + '#battle-view .mob-target.mob-raging .mob-img-inner::before, #battle-view .mob-target.mob-raging .mob-img-inner::after { display: none; animation: none; }';
+    function applyNorage() {
+        var el = document.getElementById('afk-ps-norage');
+        if (on('norage')) {
+            if (!el) { el = document.createElement('style'); el.id = 'afk-ps-norage'; el.textContent = NORAGE_CSS; (document.head || document.documentElement).appendChild(el); }
+        } else if (el && el.parentNode) el.parentNode.removeChild(el);
     }
     applyVisualState();
     document.addEventListener('visibilitychange', applyVisualState);
@@ -203,19 +215,19 @@
         return false;
     }
     var PRESETS = {
-        full: { label: '完整效果', noanim: false, nofx: false, vfx: true, vfxnum: true, fps: 0 },
-        smooth: { label: '流暢顯示', noanim: false, nofx: true, vfx: false, vfxnum: true, fps: 60 },   // 60：60Hz 螢幕上不動，90／120Hz 螢幕少畫一半（afk-fpscap，2026-10-29 23:44）
-        low: { label: '極省電', noanim: true, nofx: true, vfx: false, vfxnum: false, fps: 15 }
+        full: { label: '完整效果', noanim: false, nofx: false, norage: false, vfx: true, vfxnum: true, fps: 0 },
+        smooth: { label: '流暢顯示', noanim: false, nofx: true, norage: true, vfx: false, vfxnum: true, fps: 60 },   // 60：60Hz 螢幕上不動，90／120Hz 螢幕少畫一半（afk-fpscap，2026-10-29 23:44）
+        low: { label: '極省電', noanim: true, nofx: true, norage: true, vfx: false, vfxnum: false, fps: 15 }
     };
     function preset(key) {
         var p = PRESETS[key]; if (!p) return false;
-        set('noanim', p.noanim); set('nofx', p.nofx);
+        set('noanim', p.noanim); set('nofx', p.nofx); set('norage', !!p.norage);
         ['vfx', 'vfxnum'].forEach(function (k) { if (coreReady(k)) CORE[k].set(p[k]); });
         if (window.AFK_FPS) AFK_FPS.set(p.fps || 0);
         return true;
     }
     function snapshot() {
-        var r = { noanim: on('noanim'), nofx: on('nofx') };
+        var r = { noanim: on('noanim'), nofx: on('nofx'), norage: on('norage') };
         if (window.AFK_FPS) r.fps = AFK_FPS.get();
         Object.keys(CORE).forEach(function (k) { if (coreReady(k)) r[k] = CORE[k].get(); });
         return r;
@@ -236,6 +248,7 @@
         var opts = [
             { k: 'noanim', name: '關閉戰鬥動畫', desc: '怪物/玩家/傭兵/寵物/召喚的逐幀動畫停止（傷害/戰鬥數值不變）' },
             { k: 'nofx', name: '關閉光暈與濾鏡', desc: '裝備與怪物的發光、畫面濾鏡等裝飾效果關閉' },
+            { k: 'norage', name: '關閉頭目狂暴紅光', desc: '狂暴怪物身上持續的紅光、氣焰與地面紅環關閉（進入狂暴的閃光與訊息照舊）；夢域鏡卡頓時建議勾選' },
             { core: 'vfx', name: '關閉戰鬥特效', desc: '不再播放技能與攻擊的特效動畫' },
             { core: 'vfxnum', name: '關閉傷害數字', desc: '不再跳出傷害/治療的浮動數字' },
             { core: 'bgm', name: '關閉背景音樂', desc: '同遊戲中音量列的音樂開關' },
@@ -305,16 +318,6 @@
         });
         card.querySelector('#afk-ps-close').focus();
     }
-
-    // 11-20 02:22 Ping：頭目狂暴的持續紅光（本體呼吸光、氣焰、地面紅環）會卡頓 → 一律關閉（不管有沒有開省電模式）。
-    //   進入狂暴當下的一次性閃光與【頭目狂暴】戰鬥訊息照舊。夢域鏡怪物隨時狂暴，整場都是這幾層在跑。
-    try {
-        var rg = document.createElement('style'); rg.id = 'afk-no-rage-glow';
-        rg.textContent = '#battle-view .mob-target.mob-raging .mob-img-wrap { animation: none; filter: none; }\n'
-            + '#battle-view .mob-target.mob-raging .mob-img-inner { isolation: auto; }\n'
-            + '#battle-view .mob-target.mob-raging .mob-img-inner::before, #battle-view .mob-target.mob-raging .mob-img-inner::after { display: none; animation: none; }';
-        (document.head || document.documentElement).appendChild(rg);
-    } catch (e) {}
 
     try { console.log('[AFK-powersave] hooks OK — 省電模式（關動畫/關光暈濾鏡）已就緒。'); } catch (e) {}
 })();

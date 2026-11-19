@@ -148,17 +148,17 @@
   // 專屬信物（第十三節：從目前會掉落的道具挑，新做「夢域鏡 ＋原名」；原道具 11-20 起恢復原本的掉落與古物學者委託）
   //   2026-11-05 同事調查的首選（尚待玩家確認，可替換）：原道具留在 AFK_TTMI_ITEMS.junk() 清單裡（劇情委託靠排序位置），只是不掉、不抽
   var TOKENS = {
-    moon:   { base: 'ttmi_14564', n: '夢域鏡 圓月寶珠' },
-    steel:  { base: 'ttmi_11479', n: '夢域鏡 火神之槌' },
-    swan:   { base: 'ttmi_9643',  n: '夢域鏡 古老水珍珠' },
-    shadow: { base: 'ttmi_4319',  n: '夢域鏡 闇之氣息' },
-    magic:  { base: 'ttmi_7090',  n: '夢域鏡 占星術師的符咒' }
+    moon:   { base: 'ttmi_14564', n: '圓月寶珠（戒）' },
+    steel:  { base: 'ttmi_11479', n: '火神之槌（戒）' },
+    swan:   { base: 'ttmi_9643',  n: '古老水珍珠（戒）' },
+    shadow: { base: 'ttmi_4319',  n: '闇之氣息（戒）' },
+    magic:  { base: 'ttmi_7090',  n: '占星術師的符咒（戒）' }
   };
   var tokenId = function (k) { return 'afk_guard_token_' + k; };
   var syncTokens = function () {
     KEYS.forEach(function (k) {
       var t = TOKENS[k], b = t.base && DB.items[t.base], id = tokenId(k), d = DB.items[id] || addItem(id, {});
-      d.n = t.n || (b ? '夢域鏡 ' + b.n : '夢域鏡 信物');
+      d.n = t.n || (b ? b.n + '（戒）' : '信物（戒）');   // 11-20 Ping：改成「○○（戒）」跟其他戒指材料一致
       d.c = 'text-fuchsia-300'; d.img = (b && b.img) || IMG('光明的鱗片');
       d.d = KN[k].s + '的試煉（夢域鏡）裡，王必掉的信物；次元裂縫難度不掉。升級' + KN[k].short + '守護者之戒的上半部要用。';
     });
@@ -760,7 +760,7 @@
     var mult = 1; try { mult = typeof partyRewardMult === 'function' ? Math.max(1, Number(partyRewardMult()) || 1) : 1; } catch (e) {}
     var em = 3 + Math.floor(rnd() * 3) % 3 + (mode === 'rift' ? 1 : 0); em = Math.max(1, Math.floor(em * mult));
     gainItem(M.emblem, em, true, true); got.push(DB.items[M.emblem].n + ' ×' + em);
-    if (mode !== 'rift') { gainItem(tokenId(k), 1, true, true); got.push(DB.items[tokenId(k)].n + ' ×1'); }   // 玩家 11-11 14:13：次元裂縫不掉「夢域鏡 ○○」信物
+    if (mode !== 'rift') { gainItem(tokenId(k), 1, true, true); got.push(DB.items[tokenId(k)].n + ' ×1'); }   // 玩家 11-11 14:13：次元裂縫不掉「○○（戒）」信物
     if (mode === 'rift') { gainItem(M.shard, 1, true, true); got.push(DB.items[M.shard].n + ' ×1'); }
     var g = store(p); g.clears = g.clears || {}; g.clears[k] = (Number(g.clears[k]) || 0) + 1;
     run.done = true;
