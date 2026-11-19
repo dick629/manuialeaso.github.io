@@ -1055,7 +1055,7 @@
   var relicBases = null;
   var ascRelic = function () {
     var RP = W.__afkRelicPlus; if (!RP) return null;
-    if (!relicBases) relicBases = Object.keys(DB.items).filter(function (id) { var d = DB.items[id]; return d && !/~/.test(id) && typeof isRelic === 'function' && isRelic(d) && !d.relicPlus && !d.isArrow && !d.gmOnly && (d.type === 'wpn' || d.type === 'arm' || d.type === 'acc') && ['pet', 'petwpn', 'petarm', 'doll'].indexOf(d.slot) < 0; });
+    if (!relicBases) relicBases = Object.keys(DB.items).filter(function (id) { var d = DB.items[id]; return d && !/~/.test(id) && typeof isRelic === 'function' && isRelic(d) && !d.relicPlus && !d.relicNoStack && !d.isArrow && !d.gmOnly && (d.type === 'wpn' || d.type === 'arm' || d.type === 'acc') && ['pet', 'petwpn', 'petarm', 'doll'].indexOf(d.slot) < 0; });
     for (var i = 0; i < 20 && relicBases.length; i++) {
       var b = relicBases[Math.floor(Math.random() * relicBases.length)], cap = 15;
       try { cap = enhanceCap(DB.items[b]) <= 5 ? 10 : 15; } catch (e) { cap = DB.items[b].type === 'acc' ? 10 : 15; }

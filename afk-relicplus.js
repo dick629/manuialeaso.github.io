@@ -55,7 +55,7 @@
   // 沒有可繼承的特效：武器給追擊 2.5%（11-18 18:24）；防具、飾品照舊四屬性抗性 +3（全身都給追擊會疊到 30～40%，只限武器）
   var noFx = function (d) { if (d.type === 'wpn') d.relicChase = (Number(d.relicChase) || 0) + CHASE_FX; else RES4.forEach(function (f) { d[f] = (Number(d[f]) || 0) + FX_RES; }); };
   var noFxTxt = function (d) { return d && d.type === 'wpn' ? '追擊 2.5%' : '四屬性抗性 +3'; };   // 玩家 2026-10-25 抗性下修：昇華每 +1 四抗 +2；第二、第三詞綴保底四抗 +3（全身昇華 +5 約 500）
-  var KIND_OK = function (d) { return !!(d && isRelic(d) && !d.gmOnly && (d.type === 'wpn' || d.type === 'arm' || d.type === 'acc') && ['pet', 'doll'].indexOf(d.slot) < 0); };   // 寵物的武器、盔甲遺物也能合成、昇華（Ping 11-15）
+  var KIND_OK = function (d) { return !!(d && isRelic(d) && !d.gmOnly && !d.relicNoStack && (d.type === 'wpn' || d.type === 'arm' || d.type === 'acc') && ['pet', 'doll'].indexOf(d.slot) < 0); };   // 寵物的武器、盔甲遺物也能合成、昇華（Ping 11-15）
   var PET_SLOT = { petwpn: 1, petarm: 1 };
   // 戒指／耳環／項鍊／腰帶等強化上限 +5 的飾品：新增 +6～+10 的設計里程碑
   //   判斷依原作者的強化上限（enhanceCap）：上限 +5 的道具都算這一類
@@ -1868,8 +1868,8 @@
     if (!enabled()) return 1;
     try {
       if (typeof player === 'undefined' || !player || player._allyName || (typeof _recomputingAlly !== 'undefined' && _recomputingAlly) || !player.eq) return 1;
-      var c = 0; for (var k in player.eq) { var it = player.eq[k], d = it && DB.items[it.id]; if (d && d.relicDropX2) c++; }
-      var mult = c ? Math.pow(2, c) : 1;
+      var c = 0, cj = 0; for (var k in player.eq) { var it = player.eq[k], d = it && DB.items[it.id]; if (d && d.relicDropX2) { if (d.relicNoStack) cj = 1; else c++; } }
+      var mult = Math.max(c ? Math.pow(2, c) : 1, cj ? 4 : 1);   // 11-19：CJ的幸運符 ×4（＝兩個兔腳），不跟兔腳疊加（取大的）、兩個也只算一次
       // 席琳夢域鏡（玩家 2026-11-03 10:22）：遺物不受隱藏規則十二影響，隊伍人數加成最多 ×8（16 人隊伍也是 ×8）
       if (player.sherineDream && player.sherineMad) {
         var want = Math.min(8, 1 + (player.allies || []).filter(function (a) { return a && !a._downed; }).length);

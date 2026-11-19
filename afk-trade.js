@@ -166,6 +166,27 @@
   }
   var currentSlotSafe = function () { try { return typeof currentSlot !== 'undefined' ? currentSlot : 0; } catch (e) { return 0; } };
 
+  // 管理員發送的道具（11-19 Ping：補償、活動獎勵；kind＝gift，payload＝{ k：道具名稱或物品編號, cnt, en, note }）
+  var giftId = function (k) {
+    k = String(k == null ? '' : k).trim(); if (!k) return null;
+    if (DB.items[k]) return k;
+    if (k.indexOf('~') >= 0) { try { if (W.__afkRelicData && W.__afkRelicData.ensure && W.__afkRelicData.ensure(k)) return k; } catch (e) {} return null; }
+    var hit = null; Object.keys(DB.items).some(function (id) { var d = DB.items[id]; if (d && d.n === k && id.indexOf('~') < 0) { hit = id; return true; } return false; });
+    return hit;
+  };
+  var giftText = function (g) { return (DB.items[giftId(g.k)] || {}).n || g.k; };
+  var grantGift = function (g) {
+    var p = P(); if (!p) throw new Error('沒有角色');
+    var id = giftId(g.k); if (!id) throw new Error('找不到道具「' + g.k + '」');
+    var n = Math.max(1, Math.floor(Number(g.cnt) || 1)), en = Math.floor(Number(g.en) || 0), d = DB.items[id];
+    if (en && (d.type === 'wpn' || d.type === 'arm' || d.type === 'acc')) {
+      for (var i = 0; i < Math.min(n, 200); i++) p.inv.push({ id: id, uid: typeof uid === 'function' ? uid() : Math.random().toString(36).slice(2, 11), cnt: 1, en: en, lock: false, junk: false });
+      try { if (typeof registerEquipObtained === 'function') registerEquipObtained(id); if (typeof registerRelicObtained === 'function') registerRelicObtained(id); } catch (e) {}
+    } else gainItem(id, n, true, true);
+    try { if (W.__afkTpAbsorb) W.__afkTpAbsorb(); } catch (e) {}
+    return d.n + (n > 1 ? ' ×' + fmt(n) : '') + (en ? ' +' + en : '');
+  };
+
   // 交貨：auto＝只自動回報「已經入帳過」的，真正入帳要玩家按「領取」（要在村莊、進目前角色）
   function deliver(list, auto, only) {
     var ack = [], got = [], fails = [];
@@ -175,11 +196,13 @@
       if (auto || (only && only.indexOf(d.id) < 0)) return;
       if (!p) return;
       try {
+        var gt = null;
         if (d.kind === 'proceeds') gainBlood(Number(d.payload.blood) || 0);
+        else if (d.kind === 'gift') gt = grantGift(d.payload);
         else addItem(d.payload.item);
         markDone(d.id); if (d.kind === 'bought') markDone('L' + d.listing_id); ack.push(d.id);
-        got.push(d.kind === 'proceeds' ? '血龍鑽 ' + fmt(d.payload.blood) + ' 顆（' + d.payload.name + ' 賣出）' : d.payload.name + (d.kind === 'returned' ? '（退回）' : ''));
-      } catch (e) { fails.push(d.payload && d.payload.name + '：' + e.message); }
+        got.push(gt ? '管理員發送的 ' + gt : d.kind === 'proceeds' ? '血龍鑽 ' + fmt(d.payload.blood) + ' 顆（' + d.payload.name + ' 賣出）' : d.payload.name + (d.kind === 'returned' ? '（退回）' : ''));
+      } catch (e) { fails.push((d.payload && (d.payload.name || d.payload.k)) + '：' + e.message); }
     });
     if (got.length) { save(); try { logSys('<span class="text-amber-300 font-bold">🏮 寄賣攤：領到 ' + esc(got.join('、')) + '。</span>'); } catch (e) {} }
     if (fails.length) S.err = '有東西領不到：' + fails.join('；');
@@ -372,8 +395,9 @@
       dl.forEach(function (d) {
         var t = d.kind === 'proceeds' ? '賣出「' + esc(d.payload.name) + '」（買家 ' + esc(d.payload.to) + '）：血龍鑽 ' + fmt(d.payload.blood) + ' 顆（成交 ' + fmt(d.payload.price) + '，手續費 ' + fmt(d.payload.fee) + '）'
           : d.kind === 'returned' ? '退回「' + esc(d.payload.name) + '」' + ({ expired: '（24 小時沒賣掉）', cancel: '（你下架的）' }[d.payload.why] || '（' + esc(d.payload.why || '') + '）')
+          : d.kind === 'gift' ? '管理員發送「' + esc(giftText(d.payload)) + '」' + (d.payload.cnt > 1 ? ' ×' + fmt(d.payload.cnt) : '') + (d.payload.en ? ' +' + d.payload.en : '') + (d.payload.note ? '（' + esc(d.payload.note) + '）' : '')
           : '買到「' + esc(d.payload.name) + '」';
-        h += '<div class="row">' + (d.kind === 'proceeds' ? ico(BLOOD) : ico(d.payload.item && d.payload.item.id)) + '<div class="main"><div class="nm">' + t + '</div><div class="sub">' + new Date(d.created_at).toLocaleString('zh-TW', { hour12: false }) + '・30 天內沒領會作廢</div></div><button type="button" data-tr="claim:' + d.id + '"' + (inTown() && !S.busy ? '' : ' disabled') + '>領取</button></div>';
+        h += '<div class="row">' + (d.kind === 'proceeds' ? ico(BLOOD) : d.kind === 'gift' ? ico(giftId(d.payload.k)) : ico(d.payload.item && d.payload.item.id)) + '<div class="main"><div class="nm">' + t + '</div><div class="sub">' + new Date(d.created_at).toLocaleString('zh-TW', { hour12: false }) + '・30 天內沒領會作廢</div></div><button type="button" data-tr="claim:' + d.id + '"' + (inTown() && !S.busy ? '' : ' disabled') + '>領取</button></div>';
       });
     }
     var ST = { active: '上架中', sold: '已賣出', expired: '過期退回', cancelled: '已下架', removed: '被管理者下架' };
@@ -429,7 +453,7 @@
     show: function () { var p = P(); return on() && !!p && !p.classicMode; },
     render: function (box) { css(); box.innerHTML = html(); bind(box); if (!S.loadedAt && !S.busy) load(); else if (Date.now() - S.loadedAt > 60000 && !S.busy) load(); }
   });
-  W.__afkTrade.catOf = catOf; W.__afkTrade.cleanItem = cleanItem; W.__afkTrade.sync = sync; W.__afkTrade.load = load;
+  W.__afkTrade.catOf = catOf; W.__afkTrade.cleanItem = cleanItem; W.__afkTrade.sync = sync; W.__afkTrade.load = load; W.__afkTrade.deliver = deliver;
 
   // 還原存檔／匯入角色後 24 小時不能交易
   var hookGate = function () {
@@ -444,4 +468,17 @@
   W.__afkTrade.markRestore = function () { set(K_RESTORE, String(Date.now())); };
   // 進遊戲後如果有沒對完的帳，過一會兒自動對一次
   W.addEventListener('load', function () { setTimeout(function () { if (on() && api() && jr().length && P()) sync().catch(function () {}); }, 20000); });
+  // 11-19：管理員發送的道具——進遊戲 25 秒後查一次、之後每 30 分鐘查一次，有新的就在系統訊息提醒
+  var giftSeen = {};
+  var giftCheck = function () {
+    if (!on() || !api() || !P() || P().classicMode) return;
+    sync().then(function () {
+      var nw = ((S.mine && S.mine.deliveries) || []).filter(function (d) { return d.kind === 'gift' && !giftSeen[d.id]; });
+      if (!nw.length) return;
+      nw.forEach(function (d) { giftSeen[d.id] = 1; });
+      try { logSys('<span class="text-amber-300 font-bold">🎁 管理員發送了 ' + nw.map(function (d) { return esc(giftText(d.payload)) + (d.payload.cnt > 1 ? ' ×' + fmt(d.payload.cnt) : ''); }).join('、') + '：到潘朵拉黑市「交易所 → 我的攤位」領取（要在村莊）。</span>'); } catch (e) {}
+      paint();
+    }).catch(function () {});
+  };
+  W.addEventListener('load', function () { setTimeout(giftCheck, 25000); setInterval(giftCheck, 30 * 60000); });
 })();

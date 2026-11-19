@@ -317,11 +317,12 @@
   }
   // 11-18 19:18 Ping：次元裂縫模式只掉次元材料——怪物原本的掉落表整個不掉（金幣、經驗照舊；次元材料由上面 drops() 與各副本另外發）
   var DIM_KEEP = function (id) { try { var L = W.__afkCraftLock; return !!(L && L.IDS && L.IDS.indexOf(id) >= 0); } catch (e) { return false; } };
+  var inRiftBattle = function () { try { return !!(typeof state !== 'undefined' && state && state.riftRun && mapState && mapState.current === 'rift_battle'); } catch (e) { return false; } };
   var dimOnlyWrap = function () {   // 包在最外層（之後載入的外掛也會往掉落表加東西）→ 載入時先包一次，load 後再包到最外面
     var prevDF = W.__afkDropListFilter; if (prevDF && prevDF.__afkDimOnly) return;
     var f = function (mob, list) {
       if (typeof prevDF === 'function') list = prevDF(mob, list) || list;
-      try { if (mob && mob._dimRift && on() && list && list.length) return list.filter(function (x) { return x && DIM_KEEP(x[0]); }); } catch (e) {}
+      try { if (mob && mob._dimRift && on() && list && list.length) { var rf = inRiftBattle(); return list.filter(function (x) { if (!x) return false; if (DIM_KEEP(x[0])) return true; if (!rf) return false; var d = DB.items[x[0]]; return !!(d && d.relic); }); } } catch (e) {}   // 11-19 Ping：時空裂痕裡（GD、次元模式的裂痕）怪物專屬遺物照掉
       return list;
     };
     f.__afkDimOnly = true; W.__afkDropListFilter = f;

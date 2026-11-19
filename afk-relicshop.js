@@ -19,7 +19,7 @@
   var fmt = function (n) { return (Number(n) || 0).toLocaleString(); };
   var sellable = function (id) {
     var d = DB.items[id];
-    if (!d || !d.relic || !d.n || d.gmOnly || d.noTrade || d.bossRelic || d.bossRelicKey) return false;
+    if (!d || !d.relic || !d.n || d.gmOnly || d.relicNoStack || d.noTrade || d.bossRelic || d.bossRelicKey) return false;
     if (NZ[id] || /^dimr_/.test(id) || d.dimRelic) return false;
     if (d.type !== 'wpn' && d.type !== 'arm' && d.type !== 'acc') return false;   // 遺物蛋等
     return true;
