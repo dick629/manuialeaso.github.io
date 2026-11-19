@@ -29,20 +29,26 @@
     { k: 'gem_r', n: '紅寶石', pay: [5, 10, 20] }   // 11-19（Ping）：每轉約 97% 會中獎——紅寶石大量出現、獎金很小
   ];
   // 調權重的旋鈕（模擬結果填在這裡）
-  // 11-19 模擬對準（scripts/sim-slot-sg.mjs；每組 400 萬轉×4 種子）：每轉中獎 97.2%；
-  //   一般約 91.4%（線獎 68.5%＋免費遊戲，約 430 轉進一次）、加倍約 91.2%（約 200 轉進一次）；不再提供購買免費遊戲
+  // 11-19 16:42 模擬對準（每組 40 萬轉×4 種子）：連線照 CHAIN_Q；每轉中獎約 96.6%、平均每轉送 1 次免費轉；
+  //   一般約 91.6%（免費遊戲約 520 轉一次）、加倍約 91.8%（約 170 轉一次）
   var K = {
     off: 2.29,     // 一般盤：符號權重＝off＋i×0.5（越大越難湊到 8 個）
     offF: 2.0,     // 免費遊戲的符號權重
-    sc: 0.71,     // 一般盤分散符號權重
-    scA: 0.875,    // 加倍下注時的分散符號權重（進免費遊戲機率約 ×2）
+    sc: 0.5,     // 一般盤分散符號權重
+    scA: 0.70,    // 加倍下注時的分散符號權重（進免費遊戲機率約 ×2）
     scF: 0.75,     // 免費遊戲裡的分散符號權重（3 個以上 +5 轉）
     mu: 0.252,     // 一般盤倍數球權重（11-19 每轉都會中獎後倍數球幾乎每轉都乘得到 → 調低）
     muF: 0.27,     // 免費遊戲倍數球權重
     dom: 23.5,     // 紅寶石（最後一個符號）的權重：每轉約 97% 會中獎
-    domF: 23.5     // 紅寶石：免費遊戲
+    domF: 23.5,    // 紅寶石：免費遊戲
+    ps: 0.0385     // 線獎整體倍率（連鎖變多、加上連鎖倍數與送轉後，對準返還率用）
   };
   var SCAT_PAY = { 4: 300, 5: 500, 6: 10000 };
+  // 11-19 16:42（Ping）：每一次再連線的機率照表（第 1 格＝第一盤會不會中）；之後補進來的符號照這個機率決定會不會又湊滿
+  var CHAIN_Q = [0.95, 0.925, 0.90, 0.875, 0.85, 0.75, 0.63, 0.57, 0.43, 0.31, 0.22, 0.16, 0.03, 0.015, 0.009];
+  // 多連線的追加獎勵：第 3 次連線起該次獎金 ×2、第 5 次起 ×3、第 8 次起 ×5；一轉連線 6 次以上送 2 次免費轉、10 次以上送 5 次
+  var CHAIN_X = function (j) { return j >= 8 ? 5 : j >= 5 ? 3 : j >= 3 ? 2 : 1; };
+  var GIFT = function (w) { return w >= 10 ? 5 : w >= 6 ? 2 : 0; }, GIFT_CAP = 20;
   // 倍數球：[倍數, 一般盤權重, 免費遊戲權重]
   var MV = [[2, 300, 260], [3, 250, 230], [4, 200, 200], [5, 180, 180], [6, 150, 150], [8, 120, 130], [10, 100, 110], [12, 60, 70], [15, 50, 60],
     [20, 40, 50], [25, 25, 32], [50, 12, 16], [100, 5, 7], [250, 1.5, 2.2], [500, 0.5, 0.8], [5000, 0.012, 0.03], [10000, 0.004, 0.012]];
@@ -69,34 +75,49 @@
   }
   function cloneGrid(g) { return g.map(function (col) { return col.map(function (x) { return x.s === 'M' ? { s: 'M', v: x.v } : { s: x.s }; }); }); }
   // 一轉（含消除連鎖）。forceScat＝購買時保證盤面上 4 個分散符號
+  function hasWin(g) {
+    var cnt = {};
+    for (var c = 0; c < COLS; c++) for (var r = 0; r < ROWS; r++) { var s = g[c][r].s; if (typeof s === 'number') { cnt[s] = (cnt[s] || 0) + 1; if (cnt[s] >= 8) return true; } }
+    return false;
+  }
   function spin(rng, mode, forceScat) {
-    var g = [], c, r;
-    for (c = 0; c < COLS; c++) { g.push([]); for (r = 0; r < ROWS; r++) g[c].push(cell(rng, mode)); }
+    var g, c, r, tries;
+    var want = rng() < CHAIN_Q[0];
+    for (tries = 0; tries < 40; tries++) {
+      g = []; for (c = 0; c < COLS; c++) { g.push([]); for (r = 0; r < ROWS; r++) g[c].push(cell(rng, mode)); }
+      if (hasWin(g) === want) break;
+    }
     if (forceScat) {
       var n0 = 0; for (c = 0; c < COLS; c++) for (r = 0; r < ROWS; r++) if (g[c][r].s === 'S') n0++;
-      var cols = [0, 1, 2, 3, 4, 5];
       for (var t = 0; n0 < forceScat && t < 200; t++) {
-        c = cols[Math.floor(rng() * COLS)]; r = Math.floor(rng() * ROWS);
+        c = Math.floor(rng() * COLS); r = Math.floor(rng() * ROWS);
         if (g[c][r].s !== 'S') { g[c][r] = { s: 'S' }; n0++; }
       }
     }
-    var steps = [], pay100 = 0;
+    var steps = [], pay100 = 0, nWin = 0;
     for (var guard = 0; guard < 60; guard++) {
       var cnt = {}, wins = [];
       for (c = 0; c < COLS; c++) for (r = 0; r < ROWS; r++) { var s = g[c][r].s; if (typeof s === 'number') cnt[s] = (cnt[s] || 0) + 1; }
-      for (var k in cnt) if (cnt[k] >= 8) { var sy = SYMS[k], n = cnt[k], p = n >= 12 ? sy.pay[2] : n >= 10 ? sy.pay[1] : sy.pay[0]; wins.push({ sym: +k, n: n, pay100: p }); pay100 += p; }
-      steps.push({ grid: cloneGrid(g), wins: wins });
+      var hitAny = false; for (var k0 in cnt) if (cnt[k0] >= 8) hitAny = true;
+      if (hitAny) nWin++;
+      var cx = CHAIN_X(nWin);
+      for (var k in cnt) if (cnt[k] >= 8) { var sy = SYMS[k], n = cnt[k], p = n >= 12 ? sy.pay[2] : n >= 10 ? sy.pay[1] : sy.pay[0]; p = Math.round(p * K.ps * cx * 100) / 100; wins.push({ sym: +k, n: n, pay100: p }); pay100 += p; }
+      steps.push({ grid: cloneGrid(g), wins: wins, chain: hitAny ? nWin : 0, cx: hitAny ? cx : 1 });
       if (!wins.length) break;
       var hit = {}; wins.forEach(function (w) { hit[w.sym] = 1; });
-      for (c = 0; c < COLS; c++) {
-        var keep = g[c].filter(function (x) { return !(typeof x.s === 'number' && hit[x.s]); });
-        var add = []; while (add.length + keep.length < ROWS) add.push(cell(rng, mode));
-        g[c] = add.concat(keep);
+      var keeps = [];
+      for (c = 0; c < COLS; c++) keeps.push(g[c].filter(function (x) { return !(typeof x.s === 'number' && hit[x.s]); }));
+      var again = nWin < CHAIN_Q.length && rng() < CHAIN_Q[nWin], ng;
+      for (tries = 0; tries < 40; tries++) {
+        ng = [];
+        for (c = 0; c < COLS; c++) { var add = []; while (add.length + keeps[c].length < ROWS) add.push(cell(rng, mode)); ng.push(add.concat(keeps[c])); }
+        if (hasWin(ng) === again) break;
       }
+      g = ng;
     }
     var last = steps[steps.length - 1].grid, mults = [], scat = 0;
     for (c = 0; c < COLS; c++) for (r = 0; r < ROWS; r++) { if (last[c][r].s === 'M') mults.push(last[c][r].v); if (last[c][r].s === 'S') scat++; }
-    return { steps: steps, pay100: pay100, mults: mults, scat: scat };
+    return { steps: steps, pay100: pay100, mults: mults, scat: scat, nWin: nWin };
   }
   function sum(a) { var s = 0; for (var i = 0; i < a.length; i++) s += a[i]; return s; }
   // 一次下注。opt：{ ante: 加倍下注, buy: 購買免費遊戲 }。回傳的 total 以「注額的 1/100」為單位（注額＝不含加倍的那個數字）
@@ -107,7 +128,16 @@
     var b = spin(rng, ante ? 'a' : 'b', buy ? 4 : 0), ms = sum(b.mults);
     var basePay = b.pay100 * (b.pay100 > 0 && ms > 0 ? ms : 1);
     var sc = b.scat >= 4 ? SCAT_PAY[Math.min(6, b.scat)] : 0;
-    var res = { base: b, baseWin: basePay, scatWin: sc, fs: null, total: basePay + sc, capped: false, buy: buy, ante: ante, cost: buy ? BUY_X : ante ? ANTE : 1 };
+    var res = { base: b, baseWin: basePay, scatWin: sc, fs: null, gift: null, total: basePay + sc, capped: false, buy: buy, ante: ante, cost: buy ? BUY_X : ante ? ANTE : 1 };
+    // 送免費轉：一般盤（與送的轉）連線夠多就送；送的轉不算分散符號、不進免費遊戲
+    var owe = GIFT(b.nWin), gl = [];
+    while (owe > 0 && gl.length < GIFT_CAP && res.total < CAP) {
+      owe--;
+      var gs = spin(rng, ante ? 'a' : 'b', 0), gm = sum(gs.mults), gp = gs.pay100 * (gs.pay100 > 0 && gm > 0 ? gm : 1);
+      owe += GIFT(gs.nWin);
+      gl.push({ spin: gs, pay: gp, more: GIFT(gs.nWin) }); res.total += gp;
+    }
+    if (gl.length) res.gift = gl;
     if (b.scat >= 4 && res.total < CAP) {
       var left = FS_N, tm = 0, fs = [], fsPay = 0;
       while (left > 0 && res.total + fsPay < CAP) {
@@ -124,7 +154,7 @@
     if (res.total >= CAP) { res.total = CAP; res.capped = true; }
     return res;
   }
-  function lastGrid(res) { var s = res.fs && res.fs.length ? res.fs[res.fs.length - 1].spin : res.base; return s.steps[s.steps.length - 1].grid; }
+  function lastGrid(res) { var s = res.fs && res.fs.length ? res.fs[res.fs.length - 1].spin : res.gift && res.gift.length ? res.gift[res.gift.length - 1].spin : res.base; return s.steps[s.steps.length - 1].grid; }
   return {
     NAME: NAME, COLS: COLS, ROWS: ROWS, CAP_X: CAP_X, BUY_X: BUY_X, ANTE: ANTE, FS_N: FS_N, FS_ADD: FS_ADD, SYMS: SYMS, MV: MV, SCAT_PAY: SCAT_PAY, K: K,
     tables: tables, orbTier: orbTier, cell: cell, spin: spin, play: play, lastGrid: lastGrid

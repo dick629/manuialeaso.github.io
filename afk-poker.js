@@ -272,6 +272,7 @@
     });
     seats.forEach(function (s) { s.bet = 0; });
     H.done = true; H.toAct = -1; H.result = res;
+    try { if (tb && tb.hand === H && W.__afkGameHall && W.__afkGameHall.statAdd) W.__afkGameHall.statAdd('poker', tb.def.cur, 0, 0, 0, true); } catch (e) {}   // 11-19 遊戲廳戰績：每手算一局
     return res;
   }
 
@@ -636,6 +637,7 @@
     var nNpc = (opt && opt.nNpc) || cfg.nNpc || (3 + Math.floor(Math.random() * 3));
     tb = newTable(def, amt, nNpc, opt && opt.rng, !!(opt && opt.hard));
     tb.owner = p;
+    try { if (W.__afkGameHall) W.__afkGameHall.statAdd('poker', def.cur, amt, 0, 0, false); } catch (e) {}   // 換籌碼＝投入
     if (def.cur === 'dia') {
       if (!writeDia({ t: def.id, stack: amt, hb: Date.now(), tab: TAB_ID })) { diaAdjust(amt); tb = null; return { ok: false, msg: '籌碼紀錄寫不進去，龍之鑽石已退回' }; }
       heartbeat(true);
@@ -654,6 +656,7 @@
     if (balance(def.cur) < amt) return { ok: false, msg: CURS[def.cur] + '不夠' };
     if (!debit(def.cur, amt)) return { ok: false, msg: CURS[def.cur] + '扣不下來' };
     s.stack += amt;
+    try { if (W.__afkGameHall) W.__afkGameHall.statAdd('poker', def.cur, amt, 0, 0, false); } catch (e) {}
     if (def.cur === 'dia' && !writeDia({ t: def.id, stack: s.stack, hb: Date.now(), tab: TAB_ID })) { s.stack -= amt; diaAdjust(amt); return { ok: false, msg: '籌碼紀錄寫不進去，龍之鑽石已退回' }; }
     persist();
     return { ok: true };
@@ -674,6 +677,7 @@
       if (!credit(def.cur, n, p)) { persist(); return { ok: false, msg: CURS[def.cur] + '暫時換不回來，請再按一次離座' }; }
       delete p.afkPoker; safeSave();
     }
+    try { if (W.__afkGameHall) W.__afkGameHall.statAdd('poker', def.cur, 0, n, 0, false); } catch (e) {}   // 換回來＝贏回
     sys('<span class="text-emerald-300">🃏 離開' + esc(def.n) + '，籌碼換回' + esc(amtTxt(def.cur, n)) + '。</span>');
     try { if (typeof updateUI === 'function') updateUI(); if (typeof renderTabs === 'function' && def.cur === 'blood') renderTabs(); } catch (e) {}
     closeTable();

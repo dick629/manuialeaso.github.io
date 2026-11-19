@@ -158,7 +158,7 @@
     sg.forEach(function (x, i) { out.push((i === sg.length - 1 ? from + ' 分以上或完全通關' : from + '～' + x[0] + ' 分') + '：' + nm[x[1]]); from = x[0]; });
     var lv = RELIC.lv[mode];
     var ev = EARLY.lv[mode];
-    return out.join('；') + (ev != null ? '；未滿 ' + RELIC.min + ' 分鐘（撤離或戰死）改給隨機遺物 +' + ev + '（只抽原版遺物，王者遺物等新增遺物不會出現；每個角色每天最多 ' + EARLY.day + ' 件，瘋狂與夢域鏡合計；超過照舊給階段一）' : '') + (lv ? '；撐過 ' + RELIC.min + ' 分鐘另給隨機遺物 +' + lv + '（只抽原版遺物，王者遺物等新增遺物不會出現；每個角色每天最多 ' + RELIC.day + ' 件，瘋狂與夢域鏡合計；超過改給失去光芒的符文石（階段一））' : '');
+    return out.join('；') + (ev != null ? '；未滿 ' + RELIC.min + ' 分鐘（撤離或戰死）改給隨機遺物 +' + ev + '（王者遺物、次元遺物等不會出現；每個角色每天最多 ' + EARLY.day + ' 件，瘋狂與夢域鏡合計；超過照舊給階段一）' : '') + (lv ? '；撐過 ' + RELIC.min + ' 分鐘另給隨機遺物 +' + lv + '（王者遺物、次元遺物等不會出現；每個角色每天最多 ' + RELIC.day + ' 件，瘋狂與夢域鏡合計；超過改給失去光芒的符文石（階段一））' : '');
   };
   // 裂痕裡每秒最多一次（玩家 2026-11-03 23:39）：小怪死亡代價、王的死亡詛咒、屍爆…同一秒好幾隻倒下只算一次。席琳三模式的裂痕才作用；其他地方一律放行。
   var onceAt = {};
@@ -519,7 +519,7 @@
   // ── 結算 ──
   var randomRelic = function (lv) {
     var R = W.__afkRelicPlus; if (!R) return null;
-    var pool = Object.keys(DB.items).filter(function (id) { var d = DB.items[id]; return d && !/~/.test(id) && !d.noRiftRelic && !d.bossRelicKey && R.kindOk && R.kindOk(d); });   // 只抽原版遺物：王者遺物（bossRelicKey）與之後新做的遺物（noRiftRelic）不放進結算（Ping 11-15）
+    var pool = Object.keys(DB.items).filter(function (id) { var d = DB.items[id]; return d && !/~/.test(id) && !d.noRiftRelic && (!d.bossRelicKey || d.relicFill) && R.kindOk && R.kindOk(d); });   // 11-19 Ping：補齊遺物 150 件也進結算池   // 只抽原版遺物：王者遺物（bossRelicKey）與之後新做的遺物（noRiftRelic）不放進結算（Ping 11-15）
     if (!pool.length) return null;
     var base = pool[Math.floor(Math.random() * pool.length)], d = DB.items[base];
     var n = Math.min(lv, d.type === 'acc' ? 10 : 15), fx = null;

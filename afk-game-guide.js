@@ -81,7 +81,7 @@
     return note('翻開遺物的來歷與力量，查看 +5、+10、昇華支配及終階效果。這裡收錄有專屬特殊效果的 '+(relicRows().length+extraRelicRows().length)+' 件遺物（含王者遺物、補上進階特效的遺物）。')+
       note('遺物在燃柳村「哈瑪大師」合成強化：武器、防具最高 +15，飾品（戒指、耳環、項鍊、腰帶）最高 +10；到頂之後可以昇華支配（+0～+5）。每一階要的材料、成功率請看「遺物強化」分頁；下方表格列出特殊效果有變化的階段。')+
       '<label class="afk-guide-search">搜尋遺物<input id="afk-guide-relic-query" type="search" value="'+esc(relicQuery)+'" placeholder="名稱、編號或效果，例如：護盾"></label><div id="afk-guide-relic-results">'+relicResults()+'</div>'+
-      evoCard()+bossRelicCard()+relicEvoCard();
+      evoCard()+bossRelicCard()+fillRelicCard()+relicEvoCard();
   }
   // 搜尋用：王者遺物、補上進階特效的遺物（不在 AFK_RELIC_CATALOG 裡）
   var extraCache=null;
@@ -91,6 +91,9 @@
     var base=(W.AFK_RELIC_CATALOG||[]).reduce(function(m,c){return Math.max(m,c.id||0);},0),TY={wpn:'武器',arm:'防具',acc:'飾品'};
     if(B&&B.LIST)B.LIST.forEach(function(r,i){var b=MB&&MB.BY[r[0]],cat=B.BASE[r[1]],row={id:base+1+i,key:'relic_boss_'+r[0],n:r[2],type:TY[cat.type]||'',slot:cat.cat,lore:r[3]+'（王者遺物：'+(b?b.n:'地圖王、副本王')+'掉落）',stages:[0,1,2,3,4].map(function(s){return B.text(r,s);})};
       row.search=[row.id,String(row.id).padStart(3,'0'),row.n,row.type,row.slot,row.lore,'王者遺物'].concat(row.stages).join(' ').toLowerCase();out.push(row);});
+    // 補齊遺物 150 件（11-19）：接在王者遺物後面編號
+    if(B&&B.LIST2){var b2=base+(B.LIST?B.LIST.length:0);B.LIST2.forEach(function(r,i){var key='relic_'+r[0],cat=B.BASE[r[1]],row={id:b2+1+i,key:key,n:r[2],type:TY[cat.type]||'',slot:cat.cat,lore:r[3]+'（'+(B.MOBN[key]||'')+'掉落）',stages:[0,1,2,3,4].map(function(s){return B.text(r,s);})};
+      row.search=[row.id,String(row.id).padStart(3,'0'),row.n,row.type,row.slot,row.lore,B.MOBN[key]||''].concat(row.stages).join(' ').toLowerCase();out.push(row);});}
     if(B&&E&&E.MAP)Object.keys(E.MAP).forEach(function(k){var d=DB.items[k];if(!d)return;var st=[1,2,3,4].map(function(s){return [SN[s],B.evoText(k,s)];});
       out.push({n:d.n,search:(d.n+' 進階特效 '+st.map(function(x){return x[1];}).join(' ')).toLowerCase(),html:factCard(esc(d.n),'進階特效（+5 起）',esc(String(d.d||'').replace(/^【遺物】/,'').split(' 〔')[0]),st.map(function(x){return '<b>'+x[0]+'</b>：'+esc(x[1]);}))});});
     return extraCache=out;
@@ -116,6 +119,17 @@
       '「近 5 秒每秒傷害」＝你最近 5 秒平均每秒造成的傷害；召喚、砲擊、地震、中毒這類追加傷害都照它算',
       '保命效果（短暫無敵、保住 1 HP、倒下站起來）：同一個人身上只算階段最高的一件；保住 1 HP、站起來只對你自己有效'
     ])+'<details class="m-wiki-card"><summary class="m-wiki-name" style="cursor:pointer">王者遺物一覽（79 件）</summary><div style="overflow-x:auto"><table class="m-wiki-table"><tr><th>#</th><th>遺物</th><th>本體</th><th>昇華支配 +5</th></tr>'+rows+'</table></div></details>';
+  }
+  // 怪物遺物 150 件（afk-bossrelic LIST2，11-19）
+  function fillRelicCard(){
+    var B=window.__afkBossRelic;if(!B||!B.LIST2)return '';
+    var rows=B.LIST2.map(function(r,i){var key='relic_'+r[0];return '<tr><td>'+(i+1)+'</td><td><b>'+esc(r[2])+'</b><br><span style="opacity:.75">'+esc(B.BASE[r[1]].cat)+'・'+esc(B.MOBN[key]||'')+'</span></td><td>'+esc(B.text(r,0))+'</td><td>'+esc(B.text(r,4))+'</td></tr>';}).join('');
+    return factCard('更多遺物',B.LIST2.length+' 種怪物（含原版的王）各有一件專屬遺物','打倒時有機率掉落（跟一般遺物一樣），合成、昇華支配、詞綴都跟一般遺物相同；時空裂痕結算也可能拿到。',[
+      '特效分 5 階：本體、+5、+10、昇華支配、昇華支配 +5，越往上越強；王的遺物至少 2 種特效，龍與最終王至少 3 種',
+      '屬性弱點：讓目標受到該屬性的傷害提高；屬性武器、屬性魔法打弱點最有效，「弱點追擊」則是什麼攻擊都加',
+      '連鎖、斬首、印記引爆、迴響、溢殺、星落這類追加傷害，不會再觸發其他特效',
+      '復仇、相位、魔鏡、血盾只保護戴的人自己'
+    ])+'<details class="m-wiki-card"><summary class="m-wiki-name" style="cursor:pointer">更多遺物一覽（'+B.LIST2.length+' 件）</summary><div style="overflow-x:auto"><table class="m-wiki-table"><tr><th>#</th><th>遺物</th><th>本體</th><th>昇華支配 +5</th></tr>'+rows+'</table></div></details>';
   }
   function evoCard(){
     return factCard('至高的支配（昇華支配 +5 再進化）','遺物的最後一個階段','在燃柳村「哈瑪大師」把「+5 昇華支配」遺物進化，成功率 100%。',[

@@ -511,11 +511,16 @@
     var p = P(), b = bag(p), q = V.q.trim();
     var names = Object.keys(DATA).filter(function (n) {
       if (q && n.indexOf(q) < 0) return false;
-      if (V.own) return have(diaId(n)) > 0 || !!b[n];
+      if (V.own) {   // 11-19 Ping：只顯示現在就能製作或升星的
+        var dia = have(diaId(n)), cnt = b[n] || [0, 0, 0, 0];
+        if (dia >= MAKE) return true;
+        for (var s2 = 0; s2 < 3; s2++) { var u = UP[s2 + 1]; if (N(cnt[s2]) >= u.same && dia >= u.dia) return true; }
+        return false;
+      }
       return true;
     });
     names.sort(function (x, y) { var a = DATA[x], c = DATA[y]; return (c.b - a.b) || (a.lv - c.lv); });
-    var h = mats() + '<div class="tc-tools"><input type="search" placeholder="搜尋怪物名稱" value="' + esc(V.q) + '" data-tc-q="1"><label style="font-size:13px"><input type="checkbox" data-tc-own="1"' + (V.own ? ' checked' : '') + '> 只顯示有鑽石卡或標籤卡的</label><span class="tc-note">共 ' + names.length + ' 種</span></div>' + msgHtml();
+    var h = mats() + '<div class="tc-tools"><input type="search" placeholder="搜尋怪物名稱" value="' + esc(V.q) + '" data-tc-q="1"><label style="font-size:13px"><input type="checkbox" data-tc-own="1"' + (V.own ? ' checked' : '') + '> 只顯示現在能製作或升星的</label><span class="tc-note">共 ' + names.length + ' 種</span></div>' + msgHtml();
     var shown = names.slice(0, 80);
     h += '<div class="tc-list">' + (shown.length ? shown.map(function (n) {
       var c = DATA[n], dia = have(diaId(n)), cnt = b[n] || [0, 0, 0, 0], top = -1; for (var s = 3; s >= 0; s--) if (cnt[s] > 0) { top = s; break; }
@@ -524,7 +529,7 @@
       var own = [0, 1, 2, 3].filter(function (s) { return cnt[s] > 0; }).map(function (s) { return STAR[s] + ' ×' + cnt[s]; }).join('　') || '還沒有';
       return '<div class="tc-row">' + cardBox(n, Math.max(0, top)) + '<div style="flex:1;min-width:0"><div class="nm' + (c.b ? ' boss' : '') + '">' + esc(n) + (c.b ? '（頭目）' : '') + ' <span class="sub">Lv.' + c.lv + (c.r ? '・' + esc(c.r) : '') + (ELN[c.e] ? '・' + ELN[c.e] + '屬性' : '') + '</span></div>'
         + '<div class="sub">鑽石卡 ' + fmt(dia) + ' 張・標籤卡 ' + own + '</div>' + abilHtml(n, Math.max(0, top)) + '<div class="tc-act">' + btns + '</div></div></div>';
-    }).join('') : '<div class="tc-note">沒有符合的怪物。鑽石卡在席琳夢域鏡打怪才會掉（見小百科「標籤卡」）。</div>') + '</div>';
+    }).join('') : '<div class="tc-note">' + (V.own ? '現在沒有能製作或升星的卡（製作要同一隻怪的鑽石卡 ×' + MAKE + '）。取消上面的勾選可以看全部。' : '沒有符合的怪物。') + '鑽石卡在席琳夢域鏡打怪才會掉（見小百科「標籤卡」）。</div>') + '</div>';
     if (names.length > shown.length) h += '<div class="tc-note" style="margin-top:6px">只列出前 80 種，用搜尋找其他的。</div>';
     return h;
   };
@@ -588,7 +593,7 @@
   var decorate = function () {
     try {
       var s = document.querySelector('#equipment-window-slots [data-slot="tagcard"]'); if (!s || s.__tc) return; s.__tc = 1;
-      s.innerHTML = '<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;color:#fde68a;font-weight:800;font-size:clamp(9px,1.6vw,13px);text-shadow:0 1px 2px #000"><span style="font-size:1.6em">🃏</span>卡片標籤</span>';
+      s.innerHTML = '<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;color:#fde68a;font-weight:800;font-size:clamp(9px,1.6vw,13px);text-shadow:0 1px 2px #000"><img alt="" src="assets/icons/tagcard_slot.webp" style="width:70%;max-width:56px;aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 1px 2px #000)" onerror="this.outerHTML=\'<span style=&quot;font-size:2.6em;line-height:1&quot;>🃏</span>\'">卡片標籤</span>';
       s.classList.add('is-filled');
     } catch (e) {}
   };

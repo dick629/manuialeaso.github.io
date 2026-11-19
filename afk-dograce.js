@@ -334,6 +334,7 @@
             t.push(tk);
             afterGoldChange();
         }
+        try { if (window.__afkGameHall && window.__afkGameHall.statAdd) window.__afkGameHall.statAdd('dog', cur, amount, 0, 0, true); } catch (e) {}   // 11-19 遊戲廳戰績
         logMsg('下注 ' + dog.name + '　' + fmtAmt(cur, amount));
         return true;
     }
@@ -379,6 +380,7 @@
         }
         [CUR_GOLD, CUR_DIA].forEach(function (k) {
             if (!paid[k]) return;
+            try { if (window.__afkGameHall && window.__afkGameHall.statAdd) { var bx = 0; hits[k].forEach(function (tk) { bx = Math.max(bx, tk.odds || 0); }); window.__afkGameHall.statAdd('dog', k, 0, paid[k], bx, false); } } catch (e) {}
             var list = hits[k];
             logMsg('🎉 ' + (list.length === 1 ? list[0].dogName + ' 中獎！' : '賽狗中獎 ' + list.length + ' 筆！') +
                 '自動入袋 ' + fmtAmt(k, paid[k]));

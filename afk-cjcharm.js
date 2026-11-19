@@ -35,6 +35,21 @@
     W.relicPurposeLabels = function (d) { var r = oRL.apply(this, arguments); try { if (d && d.relicNoStack && Array.isArray(r)) r = r.map(function (x) { return /^遺物尋寶/.test(x) ? '遺物尋寶（遺物掉落判定次數×4，不跟幸運暴走兔腳疊加）' : x; }); } catch (e) {} return r; };
     try { (0, eval)('relicPurposeLabels = window.relicPurposeLabels'); } catch (e) {}
   }
+  // 11-19 16:13 Ping：秘境只給經驗、金幣、CJ的幸運符——其他系統在打倒怪物時直接塞進背包的東西（次元結晶（戒）、夢艷結晶…）也擋掉
+  var inKill = 0, onMap = function () { try { return typeof mapState !== 'undefined' && mapState && mapState.current === MAP; } catch (e) { return false; } };
+  var wrapKill = function () {
+    var o = W.killMob; if (typeof o !== 'function' || o.__afkCj) return;
+    var f = function () { if (!onMap()) return o.apply(this, arguments); inKill++; try { return o.apply(this, arguments); } finally { inKill--; } };
+    f.__afkCj = true; W.killMob = f; try { (0, eval)('killMob = window.killMob'); } catch (e) {}
+  };
+  var wrapGain = function () {
+    var o = W.gainItem; if (typeof o !== 'function' || o.__afkCj) return;
+    var f = function (id) { if (inKill > 0 && id !== ID && onMap()) return null; return o.apply(this, arguments); };
+    f.__afkCj = true; W.gainItem = f; try { (0, eval)('gainItem = window.gainItem'); } catch (e) {}
+    var oL = W.logSys;
+    if (typeof oL === 'function' && !oL.__afkCj) { var g = function (h) { if (inKill > 0 && onMap() && /留下了/.test(String(h)) && String(h).indexOf(DB.items[ID].n) < 0) return; return oL.apply(this, arguments); }; g.__afkCj = true; W.logSys = g; try { (0, eval)('logSys = window.logSys'); } catch (e) {} }
+  };
+  W.addEventListener('load', function () { setTimeout(function () { wrapKill(); wrapGain(); }, 80); });
   // 玩家 NPC 的「全部遺物等機率抽」不放這件
   if (typeof W.allRelicIds === 'function') {
     var oAll = W.allRelicIds;

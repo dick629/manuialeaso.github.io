@@ -2035,7 +2035,7 @@ function _applyMobMagicToAllyInner(mob, sk, ally) {
         dmg = Math.floor(dmg);   /* 🔌 加掛版補丁:受傷掛點 */
         dmg = allyDollDamageReduced(ally, dmg);   // 🆕 v2.6.10 #3：魔法娃娃機率減免（受魔法傷害）
         dmg = shieldDmgReduceProc(ally, dmg);   // 🌑 v3.3.33 反叛者的盾牌（傭兵鏡像·魔法）
-        if (typeof window.__afkTaken === 'function') dmg = window.__afkTaken(ally, dmg, mob, 'magic');   /* 🔌 加掛版補丁:受傷掛點 */
+        if (typeof window.__afkTaken === 'function') { window.__afkTakenEle = sk.ele; dmg = window.__afkTaken(ally, dmg, mob, 'magic'); window.__afkTakenEle = null; }   /* 🔌 加掛版補丁:受傷掛點（帶魔法屬性） */
         if (window.AFK_RELIC_RUNTIME) dmg = window.AFK_RELIC_RUNTIME.incoming(ally,dmg,mob,{kind:'magic',element:sk.ele||'none',skill:sk,single:sk.target!=='all'});
         ally.curHp -= dmg;
         if (window.AFK_RELIC_RUNTIME) window.AFK_RELIC_RUNTIME.afterIncoming(ally,dmg,mob); /* relic-runtime:hurt-ally-magic */
@@ -2473,7 +2473,7 @@ function _applyMobMagicInner(mob, sk) {
         dmg = Math.floor(dmg);   /* 🔌 加掛版補丁:受傷掛點 */
         dmg = dollDamageReduced(dmg);   // 🪆 魔法娃娃：受傷機率傷害減免（史巴托/巫妖）
         dmg = shieldDmgReduceProc(player, dmg);   // 🌑 v3.3.33 反叛者的盾牌：受傷 proc（魔法亦適用）
-        if (typeof window.__afkTaken === 'function') dmg = window.__afkTaken(player, dmg, mob, 'magic');   /* 🔌 加掛版補丁:受傷掛點 */
+        if (typeof window.__afkTaken === 'function') { window.__afkTakenEle = sk.ele; dmg = window.__afkTaken(player, dmg, mob, 'magic'); window.__afkTakenEle = null; }   /* 🔌 加掛版補丁:受傷掛點（帶魔法屬性） */
         if (window.AFK_RELIC_RUNTIME) dmg = window.AFK_RELIC_RUNTIME.incoming(player,dmg,mob,{kind:'magic',element:sk.ele||'none',skill:sk,single:sk.target!=='all'});
         player.hp -= dmg;
         if (window.AFK_RELIC_RUNTIME) window.AFK_RELIC_RUNTIME.afterIncoming(player,dmg,mob); /* relic-runtime:hurt-player-magic */

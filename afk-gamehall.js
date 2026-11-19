@@ -571,7 +571,7 @@
     if (!cl && W.__afkPoker && W.__afkPoker.on && W.__afkPoker.on()) h += '<button type="button" class="gh-card" data-gh="poker"><span class="ico">♠︎</span><b>德州撲克</b><span>無限注，對 3～5 位 NPC；有超難桌</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:bac"><span class="ico">🃏</span><b>百家樂</b><span>押莊、閒、和、對子；8 副牌</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:slot"><span class="ico">🔺</span><b>' + SLOT_NAME + '</b><span>埃及拉霸：消除連鎖、太陽倍數、免費遊戲</span></button>';
-    if (!cl && SG) h += '<button type="button" class="gh-card" data-gh="go:sg"><span class="ico">⚡</span><b>' + SG.NAME + '</b><span>沙暴之神：倍數球最高 ×10,000、加倍下注、幾乎每轉都有小獎</span></button>';
+    if (!cl && SG) h += '<button type="button" class="gh-card" data-gh="go:sg"><span class="ico">⚡</span><b>' + SG.NAME + '</b><span>沙暴之神：連鎖越多倍數越高、6 連線送免費轉、倍數球最高 ×10,000</span></button>';
     if (!cl && W.__afkFish && W.__afkFish.on()) h += '<button type="button" class="gh-card" data-gh="fish"><span class="ico">🐟</span><b>' + W.__afkFish.NAME + '</b><span>捕魚機：法利昂、幽靈船長、特殊武器、JP 轉盤</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:mary"><span class="ico">🍒</span><b>' + MARY_NAME + '</b><span>水果盤跑燈、ONCE MORE 送燈、比倍、JP</span></button>';
     if (typeof W.openRaceWindow === 'function') h += '<button type="button" class="gh-card" data-gh="dog"><span class="ico">🐕</span><b>賽狗場</b><span>奇岩賽狗，押冠軍</span></button>';
@@ -582,18 +582,35 @@
     return h + '</div>';
   }
   function renderStats() {
+    // 11-19 Ping：遊戲廳每一種遊戲都列出來（沒玩過的一行帶過）
     var d = hallData() || { st: {} }, td = today(), h = head('📊 遊戲廳戰績', '', true) + '<div class="gh-body">';
-    [['bac', '🃏 百家樂'], ['slot', '🔺 ' + SLOT_NAME]].concat(SG ? [['sg', '⚡ ' + SG.NAME]] : []).concat([['mary', '🍒 ' + MARY_NAME], ['fish', '🐟 ' + ((W.__afkFish && W.__afkFish.NAME) || '捕魚機')]]).forEach(function (g) {
-      h += '<div style="font-weight:800;color:#fde68a;margin:6px 0 2px">' + g[1] + '</div><table class="gh-stat"><tr><th>幣別</th><th>局數</th><th>今日淨輸贏</th><th>累計淨輸贏</th><th>最大一筆</th></tr>';
-      ['gold', 'dia', 'blood'].forEach(function (c) {
-        var s = d.st[g[0] + ':' + c]; if (!s) return h += '<tr><td>' + CURS[c] + '</td><td colspan="4" class="gh-sm">還沒玩過</td></tr>';
-        var tn = s.day === td ? s.tWon - s.tBet : 0, an = s.won - s.bet;
-        var col = function (n) { return '<span style="color:' + (n > 0 ? '#4ade80' : n < 0 ? '#f87171' : '#cbd5e1') + '">' + (n > 0 ? '+' : '') + fmt(n) + '</span>'; };
+    var games = [['poker', '♠︎ 德州撲克'], ['bac', '🃏 百家樂'], ['slot', '🔺 ' + SLOT_NAME]].concat(SG ? [['sg', '⚡ ' + SG.NAME]] : [])
+      .concat([['fish', '🐟 ' + ((W.__afkFish && W.__afkFish.NAME) || '捕魚機')], ['mary', '🍒 ' + MARY_NAME], ['dog', '🐕 賽狗場'],
+        ['arcade-tian-normal', '🀄 四人打天九（一般桌）'], ['arcade-tian-expert', '🀄 四人打天九（超強 AI）'], ['arcade-bj-normal', '♠ 21 點（一般桌）'], ['arcade-bj-expert', '♠ 21 點（超強 AI 擂台）']]);
+    var PIN = { p99: 1, p199: 1, p319: 1 }, PIN_N = { p99: '翠玉物語', p199: '黃金騎士', p319: '赤龍降臨' }; Object.keys(d.st).forEach(function (k) { var m = /^arcade-pin-(.+):/.exec(k); if (m) PIN[m[1]] = 1; });
+    var pinName = function (id) { try { var M = W.LineagePachinkoCore && W.LineagePachinkoCore.MACHINES[id]; return (M && (M.name || M.n)) || PIN_N[id] || id; } catch (e) { return PIN_N[id] || id; } };
+    var pins = Object.keys(PIN); games = games.concat(pins.length ? pins.map(function (id) { return ['arcade-pin-' + id, '● 柏青哥（' + pinName(id) + '）']; }) : [['arcade-pin-', '● 柏青哥']]);
+    var col = function (n) { return '<span style="color:' + (n > 0 ? '#4ade80' : n < 0 ? '#f87171' : '#cbd5e1') + '">' + (n > 0 ? '+' : '') + fmt(n) + '</span>'; };
+    var tot = {};
+    games.forEach(function (g) {
+      var rows = ['gold', 'dia', 'blood'].map(function (c) { return [c, d.st[g[0] + ':' + c]]; }).filter(function (x) { return x[1]; });
+      h += '<div style="font-weight:800;color:#fde68a;margin:6px 0 2px">' + g[1] + '</div>';
+      if (!rows.length) { h += '<div class="gh-sm" style="margin:0 0 4px 4px">還沒玩過</div>'; return; }
+      h += '<table class="gh-stat"><tr><th>幣別</th><th>局數</th><th>今日淨輸贏</th><th>累計淨輸贏</th><th>最大一筆</th></tr>';
+      rows.forEach(function (x) {
+        var c = x[0], s = x[1], tn = s.day === td ? s.tWon - s.tBet : 0, an = s.won - s.bet;
+        var t = tot[c] || (tot[c] = { n: 0, t: 0, a: 0 }); t.n += s.n; t.t += tn; t.a += an;
         h += '<tr><td>' + CURS[c] + '</td><td>' + fmt(s.n) + '</td><td>' + col(tn) + '</td><td>' + col(an) + '</td><td>' + (s.best ? '×' + fmt(Math.round(s.best * 100) / 100) : '—') + '</td></tr>';
       });
       h += '</table>';
     });
-    return h + '<div class="gh-sm" style="margin-top:6px">「最大一筆」＝贏回金額是當局注額的幾倍。今日以台灣時間 00:00 換日。</div></div>';
+    var tk = Object.keys(tot);
+    if (tk.length) {
+      h += '<div style="font-weight:800;color:#fde68a;margin:10px 0 2px">📊 全部合計</div><table class="gh-stat"><tr><th>幣別</th><th>局數</th><th>今日淨輸贏</th><th>累計淨輸贏</th></tr>';
+      ['gold', 'dia', 'blood'].forEach(function (c) { var t = tot[c]; if (t) h += '<tr><td>' + CURS[c] + '</td><td>' + fmt(t.n) + '</td><td>' + col(t.t) + '</td><td>' + col(t.a) + '</td></tr>'; });
+      h += '</table>';
+    }
+    return h + '<div class="gh-sm" style="margin-top:6px">「最大一筆」＝贏回金額是當局注額的幾倍。德州撲克：每手算一局，換籌碼算投入、離座換回算贏回。賽狗場：每張注單算一局。今日以台灣時間 00:00 換日；德州撲克與賽狗場從這次更新開始記錄。</div></div>';
   }
 
   // ── 百家樂畫面 ──
@@ -847,11 +864,11 @@
       + '<div class="gh-btns">' + [10, 50, 100, 200, 500].map(function (n, i) { return '<button type="button" data-gh="sgauto:' + n + '"' + (ui.busy ? ' disabled' : '') + '>' + (i ? n : '自動 ' + n) + '</button>'; }).join('') + '</div>';
     h += '<div style="margin-top:6px"><label class="gh-tog"><input type="checkbox" data-gh="quick"' + (ui.quick ? ' checked' : '') + '> 快轉（連鎖演得快一點）</label></div>';
     h += '<details style="margin-top:6px"><summary class="gh-sm" style="cursor:pointer">賠率表（× 每轉注額）</summary><table class="sl-pay sg-pay"><tr><th>圖示</th><th>8～9</th><th>10～11</th><th>12+</th></tr>'
-      + SG.SYMS.map(function (s) { return '<tr><td style="text-align:left"><img alt="" src="' + sgSymImg(s.k) + '"> ' + s.n + '</td><td>' + s.pay[0] / 100 + '</td><td>' + s.pay[1] / 100 + '</td><td>' + s.pay[2] / 100 + '</td></tr>'; }).join('')
+      + SG.SYMS.map(function (s) { var px = function (v) { var x = v * (SG.K.ps || 1) / 100; return x >= 1 ? Math.round(x * 100) / 100 : +x.toPrecision(2); }; return '<tr><td style="text-align:left"><img alt="" src="' + sgSymImg(s.k) + '"> ' + s.n + '</td><td>' + px(s.pay[0]) + '</td><td>' + px(s.pay[1]) + '</td><td>' + px(s.pay[2]) + '</td></tr>'; }).join('')
       + '<tr><td style="text-align:left"><img alt="" src="' + sgSymImg('S') + '"> 雷劈金字塔</td><td colspan="3">4／5／6 個＝3／5／100 倍，並進入免費遊戲 15 轉</td></tr>'
       + '<tr><td style="text-align:left"><img alt="" src="' + sgSymImg('M') + '"> 倍數球</td><td colspan="3">×2～×10,000；這一轉有中獎時，全部倍數相加再乘上獎金</td></tr></table>'
       + '<div class="gh-sm" style="margin-top:4px;line-height:1.6">免費遊戲：3 個以上金字塔再 +5 轉；倍數球出現得更多，有中獎時倍數加進「總倍數」一直累積到結束。<br>'
-      + '加倍下注：每轉多付 25%，進免費遊戲的機會約兩倍。<br>中獎時同一種圖示會連成線，消掉後上面的掉下來，一直連鎖到沒有新的中獎才結束這一轉。<br>'
+      + '加倍下注：每轉多付 25%，進免費遊戲的機會約兩倍。<br>中獎時同一種圖示會連成線，消掉後上面的掉下來，一直連鎖到沒有新的中獎才結束這一轉。<br>連鎖倍數：這一轉第 3～4 次連線獎金 ×2、第 5～7 次 ×3、第 8 次起 ×5。<br>送免費轉：一轉連線 6 次以上送 2 轉、10 次以上送 5 轉（不扣注額；送的轉沒有金字塔獎與免費遊戲）。<br>'
       + '每次下注（含整段免費遊戲）最多贏 ' + fmt(SG.CAP_X) + ' 倍注額。</div></details>';
     return h + '</div>';
   }
@@ -897,17 +914,28 @@
     var addSpin = function (sp, info, payTxt) {
       sp.steps.forEach(function (st, i) {
         seq.push({ grid: st.grid, drop: true, info: info, win: payTxt(i, false), wait: 380 });
-        if (st.wins.length) { var hs = {}; st.wins.forEach(function (w) { hs[w.sym] = 1; }); seq.push({ grid: st.grid, hit: hs, info: info, win: payTxt(i, true), wait: 520 }); }
+        if (st.wins.length) { var hs = {}; st.wins.forEach(function (w) { hs[w.sym] = 1; }); seq.push({ grid: st.grid, hit: hs, info: (info ? info + '・' : '') + st.chain + ' 連線' + (st.cx > 1 ? '・獎金 ×' + st.cx : ''), win: payTxt(i, true), wait: 520 }); }
       });
     };
     var acc = function (sp, upto, hitNow) { var s = 0; for (var i = 0; i <= upto && i < sp.steps.length; i++) if (i < upto || hitNow) sp.steps[i].wins.forEach(function (w) { s += w.pay100; }); return s; };
     var lastOf = function (sp) { return sp.steps[sp.steps.length - 1].grid; };
     addSpin(res.base, '', function (i, hn) { return Math.floor(acc(res.base, i, hn) * bet / 100); });
     if (res.base.mults.length && res.base.pay100 > 0) seq.push({ grid: lastOf(res.base), info: '倍數球 ×' + fmt(sumv(res.base.mults)), win: Math.floor(res.baseWin * bet / 100), wait: 900, god: 'cast', say: '沙暴之神舉起權杖，雷光打進倍數球！' });
+    // 11-19（Ping）：連線 6 次以上送免費轉（不扣注額）
+    var giftRun = res.baseWin;
+    if (res.gift) {
+      seq.push({ grid: lastOf(res.base), info: res.base.nWin + ' 連線！送 ' + (res.base.nWin >= 10 ? 5 : 2) + ' 次免費轉', ov: '<b>' + res.base.nWin + ' 連線</b><span>送 ' + (res.base.nWin >= 10 ? 5 : 2) + ' 次免費轉</span>', win: Math.floor(giftRun * bet / 100), wait: 1100, god: 'win', say: '沙暴之神笑了：再來！' });
+      res.gift.forEach(function (gf, k) {
+        var info = '送的免費轉 第 ' + (k + 1) + '／' + res.gift.length + ' 轉' + (gf.more ? '・再送 ' + gf.more + ' 轉！' : ''), b0 = giftRun;
+        addSpin(gf.spin, info, function (i2, hn) { return Math.floor((b0 + acc(gf.spin, i2, hn)) * bet / 100); });
+        giftRun += gf.pay;
+        if (gf.pay > 0 && gf.spin.mults.length) seq.push({ grid: lastOf(gf.spin), info: info + '・倍數球 ×' + fmt(sumv(gf.spin.mults)), win: Math.floor(giftRun * bet / 100), wait: 700, god: 'cast' });
+      });
+    }
     if (res.fs) {
       seq.push({ grid: lastOf(res.base), info: '⚡ ' + res.base.scat + ' 個金字塔！', ov: '<b>免費遊戲</b><span>15 轉</span>', win: Math.floor((res.baseWin + res.scatWin) * bet / 100), wait: 1500, god: 'win', say: '沙暴降臨！', fs: true });
       var fsFrom = seq.length;
-      var run = res.baseWin + res.scatWin;
+      var run = giftRun + res.scatWin;
       res.fs.forEach(function (f, k) {
         var info = '免費遊戲 第 ' + (k + 1) + ' 轉・剩 ' + f.left + '・總倍數 ×' + fmt(f.totMult || 0) + (f.add ? '・＋5 轉！' : '');
         var base = run;

@@ -87,12 +87,13 @@
   var paintOne = function (barId, e) {
     var fill = document.getElementById(barId); if (!fill || !fill.parentNode) return;
     var box = fill.parentNode, sh = Math.max(0, Number(e && e._afkShield) || 0);
-    var bar = box.querySelector(':scope > .afk-psh');
-    if (!(sh > 0)) { if (bar) bar.remove(); return; }
-    if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
-    if (!bar) { bar = document.createElement('div'); bar.className = 'afk-psh'; box.appendChild(bar); }
-    bar.style.width = Math.min(100, sh / Math.max(1, Number(e.mhp) || 1) * 100) + '%';
-    box.title = '溢補護盾 ' + Math.ceil(sh).toLocaleString() + '（受傷時先扣護盾，最多最大 HP 的 40%）';
+    var bar = box._afkPsh && box._afkPsh.parentNode === box ? box._afkPsh : null;   // 11-19 效能：不再每次 querySelector／getComputedStyle（原本佔戰鬥 tick 約 10%）
+    if (!(sh > 0)) { if (bar) { bar.remove(); box._afkPsh = null; box._afkPshW = null; } return; }
+    if (!box._afkPshPos) { box._afkPshPos = 1; if (getComputedStyle(box).position === 'static') box.style.position = 'relative'; }
+    if (!bar) { bar = document.createElement('div'); bar.className = 'afk-psh'; box.appendChild(bar); box._afkPsh = bar; box._afkPshW = null; }
+    var w = Math.round(Math.min(100, sh / Math.max(1, Number(e.mhp) || 1) * 100) * 10) / 10;
+    if (box._afkPshW !== w) { box._afkPshW = w; bar.style.width = w + '%'; }
+    var tt = Math.ceil(sh); if (box._afkPshT !== tt) { box._afkPshT = tt; box.title = '溢補護盾 ' + tt.toLocaleString() + '（受傷時先扣護盾，最多最大 HP 的 40%）'; }
   };
   var tagTxt = function (id, e) {
     var t = document.getElementById(id); if (!t) return;
@@ -100,8 +101,10 @@
     var want = sh > 0 ? base + ' 🛡' + fmtK(sh) : base;
     if (t.textContent !== want) t.textContent = want;
   };
+  var lastPaint = 0;
   var paintAll = function () {
     var p = P(); if (!p) return; shCss();
+    var nowMs = Date.now(); if (nowMs - lastPaint < 250) return; lastPaint = nowMs;   // 11-19 效能：護盾條最多每 0.25 秒畫一次（隊伍面板每刻重建時原本每次都重算樣式）
     paintOne('bar-hp', p); paintOne('mv-hp-fill', p); tagTxt('txt-hp', p); tagTxt('mv-hp-txt', p);
     (p.allies || []).forEach(function (a) { if (a && a._slot != null) { paintOne('squad-hp-' + a._slot, a); tagTxt('squad-hp-txt-' + a._slot, a); } });
   };
