@@ -18,6 +18,7 @@
  *   五、蝕刻：攻擊技能、攻擊魔法命中時機率（彌之印記相加）讓目標下一次受到的傷害 ×1.5（彌 6 格 ×1.8）；
  *       不分來源都吃、吃掉就消失、同目標 1 層（再觸發只刷新）、最多存在 5 秒。
  *   六、轉移：付金幣把刻印移到同部位的另一件裝備，不會失敗、不掉等級。刻印 Lv × 10 萬；印記 Lv × 10 萬 × 3。
+ *   八、魄印（11-19）：印記 Lv5 → 魄尤／魄鯤／魄彌 1～5 階（PO、PO_COST、PO_SETS），只在次元裂縫有效；掛 afk-dimrift 的 __afkDimHooks、REDUCE、RECOVER。
  *   七、取得：DROPS（地圖 key → 材料）。一般怪 0.3%（乘隊伍人數的掉寶倍率），頭目 20%（1～3 個）；
  *       印記材料只有頭目掉：勇氣之證 3%、身體的印記 2%、古代技能書 1%。
  *       兌換：刻印材料 10 個 → 其他種刻印材料 1 個，手續費 1 萬金幣。
@@ -87,6 +88,25 @@
   var MAX_SAME = 2;
   var CURSE = { chance: 0.04, dur: 50 }, ETCH = { mult: 1.5, mult6: 1.8, dur: 50 }, FURY_N = 10, KUN_ARMOR = { hp: 0.3, cut: 0.5, cd: 300 }, KUN_DUR = 0.85, AOE_CUT = 5;
   var SET3 = { crit: 3, abn: 5, heal: 5, mp: 10 };
+  // ── 魄印（Ping 2026-11-19 10:56 定案；曲線 80～100）：印記 Lv5 → 進階魄印 1 階（侵蝕龍鱗 20＋胤魂石 1），2～5 階各要胤魂石 2～5。
+  //   新效果只在次元裂縫開著時有效；原本印記的效果全部保留。it.afkCarve.p＝魄印階數（0＝還沒進階）
+  var PO = {
+    you: { n: '魄尤', off: [1, 2, 3, 4, 5], boss: [0.5, 1, 1.5, 2, 2.5],
+      d: function (i) { return '次元裂縫裡：抵銷「造成的傷害 −30%」' + f1(this.off[i]) + '%、對頭目的傷害 +' + f1(this.boss[i]) + '%'; } },
+    kun: { n: '魄鯤', ero: [0.05, 0.1, 0.15, 0.2, 0.25], light: [3, 6, 9, 12, 15],
+      d: function (i) { return '次元裂縫裡：地圖侵蝕每秒少扣最大 HP ' + f1(this.ero[i]) + '%、光蝕每層的效果 −' + f1(this.light[i]) + '%'; } },
+    mi: { n: '魄彌', cast: [1, 2, 3, 4, 5], mr: [3, 6, 9, 12, 15],
+      d: function (i) { return '次元裂縫裡：攻擊技能、攻擊魔法的施放間隔 −' + f1(this.cast[i]) + '%、魔防與抗性被侵蝕的程度 −' + f1(this.mr[i]) + '%'; } }
+  };
+  var PO_SETS = {
+    you: ['次元裂縫裡：取回力量 +5%', '破縫：次元裂縫裡，頭目 HP 30% 以下時，你造成的傷害 +15%'],
+    kun: ['次元裂縫裡：取回力量 +5%', '不沉：次元裂縫裡，王的斬殺線對你從 HP 10% 改成 5%；光蝕最多 20 層 → 15 層'],
+    mi: ['次元裂縫裡：取回力量 +5%', '裂隙詠唱：次元裂縫裡，蝕刻的倍率再 +0.2、蝕刻機率 +3%']
+  };
+  var PO_CAP = { light: 60, cast: 20, mr: 60 }, PO_SET = { recover: 5, crack: 0.3, crackDmg: 15, exec: 5, lightMax: 5, etchMult: 0.2, etch: 3 };
+  var SCALE = 'afk_rd_scale', YIN = 'afk_yin_stone';
+  var PO_COST = [[[SCALE, 20], [YIN, 1]], [[YIN, 2]], [[YIN, 3]], [[YIN, 4]], [[YIN, 5]]];
+  var dimOn = function () { try { return !!(W.__afkDimRiftOn && W.__afkDimRiftOn()); } catch (e) { return false; } };
 
   // 材料說明：拿掉「系統尚未開放」那一行（afk-dropcut 寫的），改成實際用途
   KINDS.forEach(function (x) {
@@ -99,10 +119,20 @@
     d.d = String(d.d || '').replace(/\n?【印記】[^\n]*/g, '') + '\n【印記】歐瑞村莊的刻印師邪迪克爾用它把刻印 Lv5 升成「' + DIRS[k].n + '之印記」' + (d.type === 'acc' ? '（整件用掉，強化值不算）' : '') + '。';
   });
 
+  // 魄印材料的說明（侵蝕龍鱗、胤魂石由別的外掛建立；載入順序不一定，load 後再補一次）
+  var poMatDesc = function () {
+    [[SCALE, '進階成魄印時用 20 片'], [YIN, '魄印升階用：1 階 1 顆、2 階 2 顆……5 階 5 顆']].forEach(function (x) {
+      var d = DB.items[x[0]]; if (!d) return;
+      d.d = String(d.d || '').replace(/\n?【魄印】[^\n]*/g, '') + '\n【魄印】歐瑞村莊的刻印師邪迪克爾把印記 Lv5 進階成魄印（' + x[1] + '）。';
+    });
+  };
+  poMatDesc(); W.addEventListener('load', poMatDesc);
+
   // ── 物品上的刻印 ──
   var cv = function (it) { var c = it && it.afkCarve; return (c && KB[c.k] && c.lv >= 1) ? c : null; };
   var sealed = function (c) { return !!(c && c.s > 0 && DIRS[c.dir]); };
-  var label = function (c) { if (!c) return ''; var k = KB[c.k]; return sealed(c) ? DIRS[c.dir].n + '之印記 Lv' + c.s + '（' + k.ch + '）' : '刻印：' + k.ch + ' Lv' + c.lv; };
+  var poOf = function (c) { return c && sealed(c) && c.s >= 5 && c.p > 0 ? Math.min(5, Math.floor(c.p)) : 0; };
+  var label = function (c) { if (!c) return ''; var k = KB[c.k]; if (poOf(c)) return PO[c.dir].n + ' ' + poOf(c) + ' 階（' + k.ch + '）'; return sealed(c) ? DIRS[c.dir].n + '之印記 Lv' + c.s + '（' + k.ch + '）' : '刻印：' + k.ch + ' Lv' + c.lv; };
   var kindVal = function (c, which) { var k = KB[c.k], arr = which === 2 ? k.v2 : k.v; if (!arr) return 0; return sealed(c) ? arr[4] * SEAL_X : arr[Math.max(0, Math.min(4, c.lv - 1))]; };
   var slotOf = function (d) {
     if (!d) return null;
@@ -114,10 +144,11 @@
   // ── 全身效果 ──
   var cache = { key: null, v: null };
   var NONE = { cnt: { you: 0, kun: 0, mi: 0 }, kind: {}, er: 0, res: 0, dragon: 0, curse: 0, venom: 0, mp: 0, heal: 0, pot: 0, cast: 0, dmg: 0, critDmg: 0, crit: 0,
-    cut: 0, abn: 0, hp: 0, reg: 0, sk: 0, etch: 0, etchMult: ETCH.mult, fury: false, armor: false, dur: 0, aoe: 0 };
+    cut: 0, abn: 0, hp: 0, reg: 0, sk: 0, etch: 0, etchMult: ETCH.mult, fury: false, armor: false, dur: 0, aoe: 0,
+    pcnt: { you: 0, kun: 0, mi: 0 }, poOff: 0, poBoss: 0, poEro: 0, poLight: 0, poCast: 0, poMr: 0 };
   var fx = function (p) {
     p = p || P(); if (!on(p) || !p.eq) return NONE;
-    var key = SLOTS.map(function (s) { var it = p.eq[s[0]], c = cv(it); return c ? s[0] + c.k + c.lv + (c.dir || '') + (c.s || 0) : ''; }).join('|');
+    var key = SLOTS.map(function (s) { var it = p.eq[s[0]], c = cv(it); return c ? s[0] + c.k + c.lv + (c.dir || '') + (c.s || 0) + 'p' + poOf(c) : ''; }).join('|');
     if (cache.key === key && cache.p === p) return cache.v;
     var o = JSON.parse(JSON.stringify(NONE)), lists = {};
     SLOTS.forEach(function (s) {
@@ -129,6 +160,13 @@
         if (c.dir === 'you') { o.dmg += D.dmg[i]; o.critDmg += D.cd[i]; }
         else if (c.dir === 'kun') { o.cut += D.cut[i]; o.abn += D.abn[i]; o.hp += D.hp[i]; o.reg += D.reg[i]; }
         else { o.sk += D.sk[i]; o.etch += D.etch[i]; }
+        var pt = poOf(c);
+        if (pt) {
+          o.pcnt[c.dir]++; var Q = PO[c.dir], j = pt - 1;
+          if (c.dir === 'you') { o.poOff += Q.off[j]; o.poBoss += Q.boss[j]; }
+          else if (c.dir === 'kun') { o.poEro += Q.ero[j]; o.poLight += Q.light[j]; }
+          else { o.poCast += Q.cast[j]; o.poMr += Q.mr[j]; }
+        }
       }
     });
     Object.keys(lists).forEach(function (k) {
@@ -145,6 +183,7 @@
     if (o.cnt.mi >= 3) o.mp += SET3.mp;
     if (o.cnt.mi >= 6) { o.etchMult = ETCH.mult6; o.aoe = AOE_CUT; }
     o.mp = Math.min(90, o.mp);
+    o.poLight = Math.min(PO_CAP.light, o.poLight); o.poCast = Math.min(PO_CAP.cast, o.poCast); o.poMr = Math.min(PO_CAP.mr, o.poMr);
     cache = { key: key, p: p, v: o };
     return o;
   };
@@ -175,7 +214,7 @@
     var oCI = W.castIntervalTicks;
     W.castIntervalTicks = function (p, support) {
       var v = oCI.apply(this, arguments);
-      try { if (!support && p && p === P()) { var c = fx(p).cast; if (c > 0) v = Math.max(0.000001, v * (1 - c / 100)); } } catch (e) {}
+      try { if (!support && p && p === P()) { var fc = fx(p), c = fc.cast; if (c > 0) v = Math.max(0.000001, v * (1 - c / 100)); if (fc.poCast > 0 && dimOn()) v = Math.max(0.000001, v * (1 - fc.poCast / 100)); } } catch (e) {}
       return v;
     };
     try { (0, eval)('castIntervalTicks = window.castIntervalTicks'); } catch (e) {}
@@ -283,6 +322,10 @@
     if (f.venom && afflicted(target)) m *= 1 + f.venom / 100;
     if (f.dragon && isDragon(target)) m *= 1 + f.dragon / 100;
     if (f.sk && skill) m *= 1 + f.sk / 100;
+    if ((f.poBoss || f.pcnt.you >= 6) && target.boss && dimOn()) {   // 魄尤：對頭目；破縫：頭目 HP 30% 以下
+      if (f.poBoss) m *= 1 + f.poBoss / 100;
+      if (f.pcnt.you >= 6 && (Number(target.curHp) || 0) < (Number(target.hp) || 0) * PO_SET.crack) m *= 1 + PO_SET.crackDmg / 100;
+    }
     if (pk && f.fury) {
       fury.n++;
       if (fury.n >= FURY_N) {
@@ -294,7 +337,8 @@
     }
     v *= m;
     if (pk && f.curse && rnd() < CURSE.chance) { target._afkCurse = { at: t, until: t + CURSE.dur, pct: f.curse }; stats.curse++; popFx('curse', '血咒', '#f87171'); }
-    if (skill && f.etch && rnd() < f.etch / 100) { target._afkEtch = { at: t, until: t + ETCH.dur, mult: f.etchMult }; stats.etch++; popFx('etch', '蝕刻', DIRS.mi.c); }
+    var mi6 = f.pcnt.mi >= 6 && dimOn(), ech = f.etch + (mi6 && f.etch ? PO_SET.etch : 0);
+    if (skill && ech && rnd() < ech / 100) { target._afkEtch = { at: t, until: t + ETCH.dur, mult: f.etchMult + (mi6 ? PO_SET.etchMult : 0) }; stats.etch++; popFx('etch', '蝕刻', DIRS.mi.c); }
     return v;
   };
   if (X) {
@@ -332,6 +376,23 @@
   };
   var durTotal = function (p) { var m = 1; durParts(p).forEach(function (x) { m *= 1 - x[1]; }); return (1 - m) * (typeof W.__afkDimPanelF === 'function' ? W.__afkDimPanelF(p) : 1); };   // 次元裂縫的面板壓制也打折
 
+  // ── 魄印：次元裂縫的掛點（afk-dimrift 的 __afkDimHooks、REDUCE、RECOVER）──
+  (function () {
+    var HK = W.__afkDimHooks = W.__afkDimHooks || { outAdd: [], lightCut: [], execPct: [], lightMaxCut: [], eroMult: [] };
+    var me = function (p) { return !!(p && p === P() && on(p)); };
+    HK.outAdd.push(function (p) { return me(p) ? fx(p).poOff / 100 : 0; });
+    HK.lightCut.push(function (p) { return me(p) ? fx(p).poLight / 100 : 0; });
+    HK.lightMaxCut.push(function (p) { return me(p) && fx(p).pcnt.kun >= 6 ? PO_SET.lightMax : 0; });
+    HK.execPct.push(function (x) { return me(x) && fx(x).pcnt.kun >= 6 ? PO_SET.exec : null; });
+    HK.eroMult.push(function (p) { return me(p) ? 1 - fx(p).poMr / 100 : 1; });
+    var hookLists = function () {
+      var DR = W.__afkDimRift; if (!DR || !DR.REDUCE || DR.REDUCE.__afkPo) return; DR.REDUCE.__afkPo = true;
+      DR.REDUCE.push(['魄鯤', function (p) { return fx(p).poEro; }, function (p) { return me(p) && fx(p).poEro > 0; }]);
+      DR.RECOVER.push(['魄印套裝', function (p) { if (!me(p)) return 0; var f = fx(p); return DIR_KEYS.filter(function (k) { return f.pcnt[k] >= 3; }).length * PO_SET.recover; }]);
+    };
+    hookLists(); W.addEventListener('load', hookLists); setTimeout(hookLists, 0);
+  })();
+
   // ── 面板 ──
   var paint = function () {
     var p = P(); if (!p) return;
@@ -360,7 +421,7 @@
   // ── 物品說明、簽章 ──
   if (typeof W.itemSig === 'function') {
     var oSig = W.itemSig;
-    W.itemSig = function (it) { var s0 = oSig.apply(this, arguments), c = cv(it); return c ? s0 + '|CV' + c.k + c.lv + (c.dir || '') + (c.s || 0) : s0; };
+    W.itemSig = function (it) { var s0 = oSig.apply(this, arguments), c = cv(it); return c ? s0 + '|CV' + c.k + c.lv + (c.dir || '') + (c.s || 0) + (poOf(c) ? 'P' + poOf(c) : '') : s0; };
     try { (0, eval)('itemSig = window.itemSig'); } catch (e) {}
   }
   var tipLine = function (it) { var c = cv(it); if (!c) return ''; var col = sealed(c) ? DIRS[c.dir].c : '#fdba74'; return '<span class="font-bold" style="color:' + col + '">【' + esc(label(c)) + '】</span>'; };
@@ -368,7 +429,7 @@
     var oDesc = W.buildItemDescHTML;
     W.buildItemDescHTML = function (it) {
       var h = oDesc.apply(this, arguments);
-      try { var c = cv(it); if (c && on()) { var k = KB[c.k]; h = tipLine(it) + '<br><span class="text-slate-300 text-sm">' + esc(k.d(kindVal(c), kindVal(c, 2))) + (sealed(c) ? '；' + esc(DIRS[c.dir].d(c.s - 1)) : '') + '</span><br>' + h; } } catch (e) {}
+      try { var c = cv(it); if (c && on()) { var k = KB[c.k]; h = tipLine(it) + '<br><span class="text-slate-300 text-sm">' + esc(k.d(kindVal(c), kindVal(c, 2))) + (sealed(c) ? '；' + esc(DIRS[c.dir].d(c.s - 1)) : '') + (poOf(c) ? '；' + esc(PO[c.dir].d(poOf(c) - 1)) : '') + '</span><br>' + h; } } catch (e) {}
       return h;
     };
     try { (0, eval)('buildItemDescHTML = window.buildItemDescHTML'); } catch (e) {}
@@ -466,7 +527,10 @@
       var D = DIRS[arg]; if (!D) return { err: '請選一個方向。' };
       var q = SEAL_COST[0]; return { act: 'seal', dir: arg, need: [[D.mat, q.mark], [kk.mat, q.mat], ['dia', q.dia], [SC, q.sc], [DC, q.dc], ['gold', q.gold]], to: 1 };
     }
-    if (c.s >= 5) return { err: '已經升到最高了。' };
+    if (c.s >= 5) {
+      var pt = poOf(c); if (pt >= 5) return { err: '已經升到最高了。' };
+      return { act: 'po', need: PO_COST[pt], to: pt + 1 };
+    }
     var q2 = SEAL_COST[c.s], D2 = DIRS[c.dir];
     return { act: 'sealUp', need: [[D2.mat, q2.mark], [kk.mat, q2.mat], ['dia', q2.dia], [SC, q2.sc], [DC, q2.dc], ['gold', q2.gold]], to: c.s + 1 };
   };
@@ -483,14 +547,15 @@
         if (st.act === 'engrave') it.afkCarve = { k: st.k.k, lv: 1, dir: null, s: 0 };
         else if (st.act === 'up') it.afkCarve.lv = st.to;
         else if (st.act === 'seal') { it.afkCarve.dir = st.dir; it.afkCarve.s = 1; }
+        else if (st.act === 'po') it.afkCarve.p = st.to;
         else it.afkCarve.s = st.to;
         return function () { if (before) it.afkCarve = before; else delete it.afkCarve; };
       });
       if (err) return err;
-      done('<span class="font-bold" style="color:#fdba74">邪迪克爾的刻刀落下——' + esc(SLOT_N[slot]) + '刻上了【' + esc(label(it.afkCarve)) + '】。</span>');
+      done(st.act === 'po' ? '<span class="font-bold" style="color:' + DIRS[it.afkCarve.dir].c + '">侵蝕的光滲進紋路——' + esc(SLOT_N[slot]) + '的印記成了【' + esc(label(it.afkCarve)) + '】。</span>' : '<span class="font-bold" style="color:#fdba74">邪迪克爾的刻刀落下——' + esc(SLOT_N[slot]) + '刻上了【' + esc(label(it.afkCarve)) + '】。</span>');
       return null;
     },
-    fee: function (it) { var c = cv(it); if (!c) return 0; return sealed(c) ? c.s * MOVE.lv * MOVE.seal : c.lv * MOVE.lv; },
+    fee: function (it) { var c = cv(it); if (!c) return 0; return sealed(c) ? c.s * MOVE.lv * MOVE.seal * (poOf(c) ? 2 : 1) : c.lv * MOVE.lv; },
     // 轉移：from、to 是 'eq:欄位' 或 'inv:uid'，同部位
     move: function (fromRef, toRef) {
       var g = guard(); if (g) return g;
@@ -591,15 +656,17 @@
   };
   var setTxt = function (p) { var f = fx(p); return DIR_KEYS.map(function (k) { return DIRS[k].n + ' ' + f.cnt[k] + '／6'; }).join('、'); };
   var reqHtml = function (need) { return need.map(function (q) { return K.reqTxt(have(q[0]), q[1], esc(nameOf(q[0]))); }).join('　'); };
-  var curDesc = function (c) { var k = KB[c.k]; return esc(k.d(kindVal(c), kindVal(c, 2))) + (sealed(c) ? '；' + esc(DIRS[c.dir].d(c.s - 1)) : ''); };
+  var curDesc = function (c) { var k = KB[c.k]; return esc(k.d(kindVal(c), kindVal(c, 2))) + (sealed(c) ? '；' + esc(DIRS[c.dir].d(c.s - 1)) : '') + (poOf(c) ? '；' + esc(PO[c.dir].d(poOf(c) - 1)) : ''); };
   var html = function () {
     var p = P(), f = fx(p);
     var h = '<div class="ax-lore">「刻在裝備上的紋路，會一路陪著那件裝備。換裝備時，把刻印交給我搬過去就好。」</div>';
     h += K.matBar(KINDS.map(function (k) { return { img: K.iconUrl(DB.items[k.mat]), n: nm(k.mat), v: have(k.mat), tip: ' data-tip-id="' + k.mat + '"' }; })
       .concat(DIR_KEYS.map(function (k) { return { img: K.iconUrl(DB.items[DIRS[k].mat]), n: nm(DIRS[k].mat), v: have(DIRS[k].mat), tip: ' data-tip-id="' + DIRS[k].mat + '"' }; }))
+      .concat([SCALE, YIN].filter(function (id) { return DB.items[id]; }).map(function (id) { return { img: K.iconUrl(DB.items[id]), n: nm(id), v: have(id), tip: ' data-tip-id="' + id + '"' }; }))
       .concat([{ img: K.iconUrl(DB.items[SC]), n: nm(SC), v: have(SC) }, { img: K.iconUrl(DB.items[DC]), n: nm(DC), v: have(DC) }, { img: 'assets/icons/items/龍之鑽石.png', n: '龍之鑽石', v: have('dia') }]));
     h += '<div class="cv-set">' + DIR_KEYS.map(function (k) { var n = f.cnt[k]; return '<span class="' + (n >= 3 ? 'lit' : '') + '" style="color:' + (n >= 3 ? DIRS[k].c : '#94a3b8') + '">' + DIRS[k].n + ' ' + n + '／6</span>'; }).join('') + '</div>';
     var setLines = []; DIR_KEYS.forEach(function (k) { if (f.cnt[k] >= 3) setLines.push(DIRS[k].n + ' 3 格：' + SETS[k][0]); if (f.cnt[k] >= 6) setLines.push(DIRS[k].n + ' 6 格：' + SETS[k][1]); });
+    DIR_KEYS.forEach(function (k) { if (f.pcnt[k] >= 3) setLines.push(PO[k].n + ' 3 格：' + PO_SETS[k][0]); if (f.pcnt[k] >= 6) setLines.push(PO[k].n + ' 6 格：' + PO_SETS[k][1]); });
     if (setLines.length) h += '<div class="ax-note">' + setLines.map(esc).join('<br>') + '</div>';
     // 左：6 格
     var left = SLOTS.map(function (s) {
@@ -634,6 +701,11 @@
         var st3 = nextStep(it), D3 = DIRS[c.dir];
         right += K.rowHtml({ key: 'seal', ico: K.itemIco(D3.mat), name: D3.n + '之印記 Lv' + c.s + ' → Lv' + st3.to, color: D3.c, desc: esc(D3.d(st3.to - 1)),
           req: reqHtml(st3.need), btns: [['up:', '升到 Lv' + st3.to, !missOf(st3.need)]] }, 'data-cv');
+      } else if (poOf(c) < 5) {
+        var st4 = nextStep(it), Q = PO[c.dir], pt0 = poOf(c);
+        right += K.rowHtml({ key: 'po', ico: K.itemIco(pt0 ? YIN : SCALE), name: pt0 ? Q.n + ' ' + pt0 + ' 階 → ' + st4.to + ' 階' : '進階成「' + Q.n + '」1 階', color: DIRS[c.dir].c,
+          desc: (pt0 ? '' : '原本印記的效果全部保留，再加：') + esc(Q.d(st4.to - 1)) + (pt0 ? '' : '<br>3 格：' + esc(PO_SETS[c.dir][0]) + '<br>6 格：' + esc(PO_SETS[c.dir][1])),
+          req: reqHtml(st4.need), btns: [['up:', pt0 ? '升到 ' + st4.to + ' 階' : '進階魄印', !missOf(st4.need)]] }, 'data-cv');
       } else right += '<div class="ax-note">已經升到最高了。</div>';
       // 轉移
       var sd = slotOf(DB.items[it.id]);
@@ -690,6 +762,7 @@
   K.hookNpc(NPC_ID, NPC_N, '刻印師', embed);
 
   var api = W.__afkCarve = { NPC_ID: NPC_ID, KINDS: KINDS, KB: KB, DIRS: DIRS, SETS: SETS, ENG_COST: ENG_COST, SEAL_COST: SEAL_COST, EX: EX, MOVE: MOVE, SLOTS: SLOTS, DROPS: DROPS, SEAL_DROPS: SEAL_DROPS, RATE: RATE,
+    PO: PO, PO_SETS: PO_SETS, PO_COST: PO_COST, PO_CAP: PO_CAP, PO_SET: PO_SET, poOf: poOf,
     CURSE: CURSE, ETCH: ETCH, FURY_N: FURY_N, KUN_ARMOR: KUN_ARMOR, KUN_DUR: KUN_DUR, SEAL_X: SEAL_X,
     fx: fx, bump: bump, cv: cv, label: label, kindVal: kindVal, act: ACT, nextStep: nextStep, have: have, durTotal: durTotal, durParts: durParts, durTick: durTick,
     onKill: onKill, dealt: dealt, ui: ui, embed: embed, render: render, paint: paint, mapName: mapName, stats: function () { return Object.assign({}, stats); }, ctx: ctx,

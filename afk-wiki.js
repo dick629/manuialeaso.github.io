@@ -4067,6 +4067,12 @@
       wTbl(['等級', '印記材料', '原本的刻印材料', '龍之鑽石', '席琳結晶', '夢艷結晶', '金幣'], C.SEAL_COST.map(function (c, i) { return ['Lv' + (i + 1), c.mark, c.mat.toLocaleString(), c.dia.toLocaleString(), c.sc.toLocaleString(), c.dc.toLocaleString(), money(c.gold)]; })));
     out += wCard('◆ 套裝（6 孔裡同方向的印記，等級不限）', wTbl(['方向', '3 格', '6 格'], ['you', 'kun', 'mi'].map(function (k) { return ['<b style="color:' + C.DIRS[k].c + '">' + C.DIRS[k].n + '</b>', esc(C.SETS[k][0]), esc(C.SETS[k][1])]; })) +
       wDesc('還在刻印階段的孔不算。6 格同方向＝3 格、6 格兩段都拿到；3 格尤＋3 格鯤兩邊的 3 格都拿到。邪迪克爾的面板會顯示「尤 3／6、鯤 1／6、彌 2／6」這樣的進度。'));
+    if (C.PO) out += wCard('◆ 魄印（印記 Lv5 之後）', wDesc('印記升到 <b>Lv5</b> 後，可以在邪迪克爾那裡進階成<b>魄尤／魄鯤／魄彌</b>（跟著原本的方向），最高 5 階。原本印記的效果全部保留，另外加上<b>只在次元裂縫裡有效</b>的效果。') +
+      wTbl(['階', '材料'], C.PO_COST.map(function (c, i) { return [(i + 1) + ' 階', c.map(function (q) { return nm(q[0]) + ' ×' + q[1]; }).join('、')]; })) +
+      wTbl(['方向', '1 階 → 5 階（每格；只在次元裂縫）'], ['you', 'kun', 'mi'].map(function (k) { var Q = C.PO[k]; return ['<b style="color:' + C.DIRS[k].c + '">' + Q.n + '</b>', esc(Q.d(0)) + '<br>→ ' + esc(Q.d(4))]; })) +
+      wDesc('多格相加；光蝕減輕最多 ' + C.PO_CAP.light + '%、施放間隔最多 −' + C.PO_CAP.cast + '%、魔防與抗性被侵蝕的程度最多 −' + C.PO_CAP.mr + '%。魄尤抵銷「造成的傷害 −30%」最多抵到不扣。') +
+      wTbl(['方向（同方向魄印的格數）', '3 格', '6 格'], ['you', 'kun', 'mi'].map(function (k) { return ['<b style="color:' + C.DIRS[k].c + '">' + C.PO[k].n + '</b>', esc(C.PO_SETS[k][0]), esc(C.PO_SETS[k][1])]; })) +
+      wDesc('魄印的套裝跟印記的套裝分開算，可以同時拿到。轉移魄印的費用是印記的 2 倍。'));
     var mapsOf = function (list) { var seen = {}, o = []; list.forEach(function (v) { var n = C.mapName(v); if (n && !seen[n]) { seen[n] = 1; o.push(n); } }); return o.join('、'); };
     out += wCard('◆ 材料取得', wTbl(['材料', '地點', '機率'], C.KINDS.map(function (k) { return [nm(k.mat), esc(mapsOf(C.DROPS[k.k])), '一般怪 0.3%（乘隊伍人數）、頭目 20%（1～3 個）']; }).concat([
       [nm(C.DIRS.you.mat), '四龍副本、哈汀的時空', '頭目 3%'],

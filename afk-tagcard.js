@@ -548,15 +548,17 @@
   };
   var view = function () { return document.getElementById('afk-tc'); };
   var refresh = function () { var b = view(); if (b) render(b); };
-  var close = function () { var o = document.getElementById('afk-tc-ov'); if (o) o.remove(); };
+  // 11-19：手機版的殼會把 #afk-tc（role=dialog）搬進自己的頁面，所以事件掛在 #afk-tc 上、關閉時兩個都拿掉
+  var close = function () { var o = document.getElementById('afk-tc-ov'); if (o) o.remove(); var b = document.getElementById('afk-tc'); if (b) b.remove(); };
   var open = function (tab) {
     var p = P(); if (!p || classic(p)) return;
     css(); close(); MSGBOX.err = MSGBOX.ok = ''; V.pick = null; if (tab) V.tab = tab;
     if (!p.eq[V.slot] || !eligible(p.eq[V.slot])) { var f = EQK.filter(function (k) { return p.eq[k] && eligible(p.eq[k]); })[0]; if (f) V.slot = f; }
     var ov = document.createElement('div'); ov.id = 'afk-tc-ov';
     ov.innerHTML = '<div id="afk-tc" role="dialog" aria-label="卡片標籤"></div>';
-    ov.addEventListener('click', function (e) {
-      if (e.target === ov) return close();
+    var box = ov.firstChild;
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    box.addEventListener('click', function (e) {
       var b = e.target.closest && e.target.closest('[data-tc]'); if (!b || b.disabled) return;
       var a = b.getAttribute('data-tc').split(':');
       MSGBOX.err = MSGBOX.ok = '';
@@ -572,9 +574,12 @@
       else if (a[0] === 'up') act.up(a[1], Number(a[2]));
       refresh();
     });
-    ov.addEventListener('input', function (e) { if (e.target.getAttribute('data-tc-q')) { V.q = e.target.value; clearTimeout(open._t); open._t = setTimeout(function () { refresh(); var i = document.querySelector('#afk-tc [data-tc-q]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 250); } });
-    ov.addEventListener('change', function (e) { if (e.target.getAttribute('data-tc-own')) { V.own = !!e.target.checked; refresh(); } });
+    box.addEventListener('input', function (e) { if (e.target.getAttribute('data-tc-q')) { V.q = e.target.value; clearTimeout(open._t); open._t = setTimeout(function () { refresh(); var i = document.querySelector('#afk-tc [data-tc-q]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 250); } });
+    box.addEventListener('change', function (e) { if (e.target.getAttribute('data-tc-own')) { V.own = !!e.target.checked; refresh(); } });
     document.body.appendChild(ov); refresh();
+    // 手機版：殼把視窗搬走後，留下的空白遮罩（全螢幕、z-index 9000）會擋住整個畫面 → 拿掉
+    var drop = function () { if (box.parentNode !== ov && ov.parentNode) ov.remove(); };
+    setTimeout(drop, 0); setTimeout(drop, 300); setTimeout(drop, 1000);
   };
 
   // ── 裝備視窗第二頁「箭筒」位置的格子 ──

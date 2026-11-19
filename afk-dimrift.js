@@ -36,6 +36,10 @@
     mobHp: 1.5, mobDmg: 1.3, mobHit: 4 / 3, bossDmg: 1.3, bossHit: 4 / 3, bossRegen: 0.001, exp: 1.2, dmgOut: 0.7,
     weight: 5000, weightStep: 500
   };
+  // 11-19（Ping）：魄印（afk-carve）等外掛的掛點；每個都是 function(p) 的陣列
+  var HK = W.__afkDimHooks = W.__afkDimHooks || { outAdd: [], lightCut: [], execPct: [], lightMaxCut: [], eroMult: [] };
+  var hsum = function (k, p) { var s = 0; (HK[k] || []).forEach(function (f) { try { s += Number(f(p)) || 0; } catch (e) {} }); return s; };
+  var hmul = function (k, p) { var m = 1; (HK[k] || []).forEach(function (f) { try { var v = Number(f(p)); if (v >= 0) m *= v; } catch (e) {} }); return m; };
   var REDUCE = [   // 扣血減免（每秒少扣的 %）
     ['織星者', 0.5, function (p) { return !!(p.afkStarWeaver || (p.titles && p.titles.indexOf && p.titles.indexOf('織星者') >= 0)); }],
     ['縫隙的守望者（二轉）', 0.5, function (p) { return Math.floor(p.rebirth || 0) >= 2; }],
@@ -123,7 +127,7 @@
   }
 
   // ── 侵蝕 ──
-  var reduceSum = function (p) { return REDUCE.reduce(function (s, x) { return s + (x[2](p) ? x[1] : 0); }, 0); };
+  var reduceSum = function (p) { return REDUCE.reduce(function (s, x) { return s + (x[2](p) ? (typeof x[1] === 'function' ? Number(x[1](p)) || 0 : x[1]) : 0); }, 0); };
   var floorSum = function (p) { return Math.min(R.floorMax, FLOOR.reduce(function (s, x) { return s + (x[2](p) ? x[1] : 0); }, 0)); };
   var weightCut = function (p) { var d = p.d || {}, pct = Number(d.weightPct); if (!isFinite(pct)) return 0; return Math.max(0, Math.min(0.5, 0.5 * (1 - pct / 100))); };
   var pctCut = function (p) { var t = sealTier(p); return t ? [0, 0.05, 0.10, 0.15][t] : 0; };   // 刻印石徽記：侵蝕扣血 −5／−10／−15%
@@ -160,11 +164,11 @@
     var t = tk(), boss = bossOnField();
     if (boss) {
       if (!r.lightAt || t >= r.lightAt) {
-        if (r.lightAt) { r.light = Math.min(R.lightMax, (r.light || 0) + (endlessOn() ? 2 : 1)); clog('<span class="font-bold" style="color:#fde68a">【光蝕】</span>頭目的光落在全隊身上——光蝕 ' + r.light + ' 層（最大 HP −' + (r.light * R.lightHp) + '%、受到的治療 −' + (r.light * R.lightHeal) + '%）。'); try { calcStats(); } catch (e) {} }
+        if (r.lightAt) { r.light = Math.min(Math.max(1, R.lightMax - hsum('lightMaxCut', p)), (r.light || 0) + (endlessOn() ? 2 : 1)); clog('<span class="font-bold" style="color:#fde68a">【光蝕】</span>頭目的光落在全隊身上——光蝕 ' + r.light + ' 層（最大 HP −' + (r.light * R.lightHp) + '%、受到的治療 −' + (r.light * R.lightHeal) + '%）。'); try { calcStats(); } catch (e) {} }
         r.lightAt = t + R.lightEvery;
       }
       if (!r.execAt || t >= r.execAt) {
-        if (r.execAt) members().forEach(function (x) { if (W.__afkExecImmune && W.__afkExecImmune(x)) return; var mx = x === p ? p.mhp : x.mhp, hp = x === p ? p.hp : x.curHp; if (mx > 0 && hp > 0 && hp < mx * R.execPct / 100) { if (x === p) { p.hp = 0; try { killPlayer(); } catch (e) {} } else { x.curHp = 0; x._downed = true; x._reviveCd = 150; } clog('<span class="font-bold" style="color:#f87171">【斬殺線】</span>' + esc(x === p ? '你' : (x._allyName || '傭兵')) + ' 的 HP 低於 10%，被頭目斬殺了！'); } });
+        if (r.execAt) members().forEach(function (x) { if (W.__afkExecImmune && W.__afkExecImmune(x)) return; var mx = x === p ? p.mhp : x.mhp, hp = x === p ? p.hp : x.curHp; var ep = R.execPct; (HK.execPct || []).forEach(function (f) { try { var v = f(x); if (v != null && v < ep) ep = v; } catch (e) {} }); if (mx > 0 && hp > 0 && hp < mx * ep / 100) { if (x === p) { p.hp = 0; try { killPlayer(); } catch (e) {} } else { x.curHp = 0; x._downed = true; x._reviveCd = 150; } clog('<span class="font-bold" style="color:#f87171">【斬殺線】</span>' + esc(x === p ? '你' : (x._allyName || '傭兵')) + ' 的 HP 低於 10%，被頭目斬殺了！'); } });
         r.execAt = t + R.lightEvery;
       }
     } else {
@@ -230,7 +234,7 @@
         HALF.forEach(function (k) { if (typeof d[k] === 'number' && d[k] > 0) d[k] = Math.floor(d[k] * f); });
         if (typeof d.ac === 'number' && d.ac < 0) d.ac = Math.ceil(d.ac * f);
         // 侵蝕：AC 往上加（越高越差），魔防、抗性往下扣到最低保留
-        var ero = Math.floor((rec(p).ero || 0) * (typeof W.__afkEroMult === 'function' ? (Number(W.__afkEroMult(p)) || 1) : 1));   // 龍息娃娃：侵蝕的下降打折
+        var ero = Math.floor((rec(p).ero || 0) * (typeof W.__afkEroMult === 'function' ? (Number(W.__afkEroMult(p)) || 1) : 1) * hmul('eroMult', p));   // 龍息娃娃：侵蝕的下降打折
         if (ero) {
           var keep = floorSum(p), wc = weightCut(p), noFloor = !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn());
           var eAc = Math.max(0,Math.min(ero, noFloor ? Infinity : R.acMax)-(W.LineageSherine?.erosionBack(p)||0));
@@ -292,7 +296,7 @@
     C.damage = function (actor, target, amount, opt) { try { if (on() && actor && !actor.mobId && target && target.mobId && amount > 0) amount = Math.max(1, Math.floor(amount * outMult())); } catch (e) {} return o.call(this, actor, target, amount, opt); };
     return true;
   };
-  var outMult = function () { var p = P(), r = rec(p), k = R.dmgOut; if (r.clothEx) k += 0.15; if (r.athena) k += 0.15; if (r.dimWpn) k *= 1.3; else if (r.supWpn) k *= 0.9; var st = sealTier(p); if (st) k *= 1 + [0, 0.01, 0.03, 0.05][st]; if (r.carry) k *= 1 + r.carry / 100; return k; };
+  var outMult = function () { var p = P(), r = rec(p), k = R.dmgOut; if (r.clothEx) k += 0.15; if (r.athena) k += 0.15; var oa = hsum('outAdd', p); if (oa > 0 && k < 1) k = Math.min(1, k + oa);   /* 魄尤：抵銷 −30%，最多抵到不扣 */ if (r.dimWpn) k *= 1.3; else if (r.supWpn) k *= 0.9; var st = sealTier(p); if (st) k *= 1 + [0, 0.01, 0.03, 0.05][st]; if (r.carry) k *= 1 + r.carry / 100; return k; };
   if (!hookDamage()) { try { document.addEventListener('DOMContentLoaded', hookDamage); } catch (e) {} }
 
   // ── 掉落 ──
@@ -364,7 +368,7 @@
       d: '上位者的遠征徽記在次元裂縫裡重新刻過的徽記（保留上位者徽記的效果）。次元裂縫裡：侵蝕扣血 −' + SEAL.erode[t] + '%、光蝕每層效果 −' + SEAL.light[t] + '%、藥水恢復量 +' + SEAL.pot[t] + '%、受到的異常狀態持續時間 −' + SEAL.debuff[t] + '%、封印戰受到的傷害 −' + SEAL.seal[t] + '%、造成的傷害 +' + SEAL.dmg[t] + '%。' };
   });
   var sealTier = function (p) { var e = p && p.eq && p.eq.engrave, d = e && DB.items[e.id]; return d && d.afkSeal ? d.afkSeal : 0; };
-  var lightCut = function (p) { var t = sealTier(p); return t ? SEAL.light[t] / 100 : 0; };
+  var lightCut = function (p) { var t = sealTier(p); return Math.min(0.9, (t ? SEAL.light[t] / 100 : 0) + hsum('lightCut', p)); };
   var exped = function (p) { return p && p.afkExped && typeof p.afkExped === 'object' ? p.afkExped : null; };
   var rankWhy = function (p) {
     var r = rec(p), cur = r.rank || 0, nx = DR_RANKS[cur + 1]; if (!nx) return '已經是最高位階';
