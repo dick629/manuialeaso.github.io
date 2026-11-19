@@ -201,6 +201,13 @@
       finally {
         delete inv.forEach; inCall = false;
         if (only) { winState[only] = win; try { measureGeom(only); } catch (e) {} }
+        // 11-20 Ping 回報「電腦版滾一下，道具／武器／防具欄會一直往下」：可視範圍假設每列一樣高，
+        //   名稱換成兩行的列比估的高 → 空白高度對不上、補建後位置又跑 → 一直往下。抽查建出來的列，不一致就這一頁改回完整建立。
+        if (win && only && !uneven[only]) try {
+          var vpu = vpOf(only), rs = vpu ? vpu.querySelectorAll(':scope > .list-item') : [], want = win.pitch - win.gap, bad = false;
+          for (var q = 0; q < rs.length && q < 40; q++) { var hh = rs[q].offsetHeight; if (hh && Math.abs(hh - want) > 2) { bad = true; break; } }
+          if (bad) { uneven[only] = true; winState[only] = null; setTimeout(function () { try { window.renderTabs(true); } catch (e) {} }, 0); }
+        } catch (e) {}
         if (pageHost && pageHost.scrollTop !== pageTop) pageHost.scrollTop = pageTop;
       }
     };
@@ -214,7 +221,7 @@
     //  空白是在「核心還原捲動位置之前」就放進去的，所以捲動位置照原樣。捲到接近建好範圍的邊緣時再補建。
     //  以下情況改回完整建立（不冒險）：該頁物品 < 150 件、搜尋框有字、該頁開著快速強化／快速廢品、
     //  非合併手機版且背包不是自己捲動的版面、還沒量到列高。
-    var winState = {}, geom = {};
+    var winState = {}, geom = {}, uneven = {};
     var MIN_ITEMS = 150;
     var countOf = function (tab) { var n = 0, inv = player.inv; for (var i = 0; i < inv.length; i++) if (tabOfItem(inv[i]) === tab) n++; return n; };
     var vpOf = function (tab) { var el = document.getElementById('tab-' + tab); return el && el.querySelector('.classic-inventory-viewport'); };
@@ -241,6 +248,7 @@
       var g = phoneWindow() ? { pitch: 58, cols: 1, scrolls: true, gap: 2, grid: false } : geom[tab];
       if (!g || !g.pitch || !g.cols || !g.scrolls) return null;
       if (fullBuildReason(tab)) return null;
+      if (uneven[tab]) return null;   // 列高不一致（名稱換行等）→ 用固定列距估高度會讓捲動位置一直跑掉，改回完整建立
       var total = countOf(tab); if (total < MIN_ITEMS) return null;
       var position = scrollInfo(tab), top = position.top, viewH = position.height || g.viewH || 400;
       var totalRows = Math.ceil(total / g.cols), visRows = Math.ceil(viewH / g.pitch) + 1, over = Math.max(8, visRows * 2);

@@ -67,6 +67,14 @@
         'body.afk-invlist .classic-inventory-viewport > .list-item .classic-item-lock-badge,body.afk-invlist .classic-inventory-viewport > .list-item .classic-item-junk-label{position:static !important;left:auto !important;right:auto !important;top:auto !important;bottom:auto !important;flex:0 0 auto !important;width:auto !important;height:auto !important;max-width:none !important;max-height:none !important;margin-left:6px !important;background:transparent !important;}',
         // 條列不需要「空格填充」與皮膚捲動箭頭
         'body.afk-invlist .classic-inventory-scroll{display:none !important;}',
+        // 11-20 Ping 回報「點道具會跳到下面兩格、再點又彈回來，一直往下跑」：電腦版長名稱會換成兩、三行（列高 38／60／84 混在一起），
+        //   但可視範圍（afk-perf）與 content-visibility 都假設每列 38px → 清單一重建（點道具就會重建）位置就跑掉。
+        //   電腦版名稱改成一行、放不下用「…」，每列一樣高；完整名稱在點開的道具說明裡。手機合併版（m-unified）有自己的兩行固定列高，不動。
+        'body.afk-invlist:not(.m-unified) .classic-inventory-viewport .classic-name-box{flex-wrap:nowrap !important;overflow:hidden !important;}',
+        'body.afk-invlist:not(.m-unified) .classic-inventory-viewport .classic-name-box > span:not(.classic-slot-name):not(.classic-item-flags){display:block !important;min-width:0 !important;flex:0 1 auto !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important;}',
+        'body.afk-invlist:not(.m-unified) .classic-inventory-viewport .classic-item-flags{flex:0 0 auto !important;white-space:nowrap !important;}',
+        // 11-20：關掉捲動錨定——清單補建（afk-perf 可視範圍）時瀏覽器會想「保持某一列不動」而自己改捲動位置，跟補建互相追 → 一直往下跑
+        'body.afk-invlist .classic-inventory-viewport{overflow-anchor:none !important;}',
         'body.afk-invlist .classic-grid-empty{display:none !important;}',
         // 上游把這個捲動區的捲軸關掉(scrollbar-width:none)，因為皮膚背景圖畫了假的上下箭頭鈕；
         //   但條列模式把那兩顆假箭頭藏了 → 桌機變成兩邊都沒有、只剩滾輪(玩家回報「只有能力那格有拉條」)。

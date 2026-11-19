@@ -20,6 +20,7 @@
  * ========================================================================== */
 (function () {
   'use strict';
+  var HD_ONLY = { '黑暗妖精聖地': 1 };   // 只有 1920×1080 版的背景
   var T = window.AFK_TOGGLES;
   if (T && !T.enabled('maps')) return;
   var DATA = window.__AFK_TTMI_MAPS;
@@ -139,7 +140,8 @@
       if (fm) rm.forEach(function (x, i) { var m2 = /^(.*?)(\d+)樓$/.exec(x.t || ''); if (m2 && m2[1] === fm[1] && Number(m2[2]) < Number(fm[2])) at = i; });
       if (at >= 0) rm.splice(at + 1, 0, { v: mapId, t: info.t }); else rm.push({ v: mapId, t: info.t });
     }
-    try { if (info.bg) SPECIAL_AREA_BG[mapId] = 'assets/area/' + info.bg + '.jpg'; } catch (e) {}
+    // 11-20 Ping：闇龍的傷痕沒有背景——「黑暗妖精聖地」只有 1920×1080 版（assets/area/ 底下沒有舊檔），直接指到新版
+    try { if (info.bg) SPECIAL_AREA_BG[mapId] = HD_ONLY[info.bg] ? 'assets/area/1920x1080/' + info.bg + '.jpg' : 'assets/area/' + info.bg + '.jpg'; } catch (e) {}
     addedMaps.push(info.t);
   });
   // 變異實驗體搬到魔族實驗室 2 樓（afk-sets 原本暫放在黑魔法研究室）
