@@ -777,6 +777,35 @@
     var oCB = window.getClanBuffStats;
     window.getClanBuffStats = function (p) { var b = oCB.apply(this, arguments); return b ? scaleBuff(b) : b; };
   }
+  // 11-20 Ping：傭兵也吃隊長的血盟 Buff（隊長開著就有，不另外扣傭兵的貢獻；傭兵自己那個角色有開的話用自己的）
+  //   load 後包在最外層（lzcache、trackinfo 也包了這支）；隊長的結果在一般重算時記下，傭兵重算時沒有自己的就借隊長的。
+  //   隊長的 Buff 開／關、等級或城堡數變了 → 傭兵重算一次。
+  var mercClan = function () {
+    var o = window.getClanBuffStats; if (typeof o !== 'function' || o.__afkMercClan) return;
+    var lead = null, leadKey = 'null', pend = false;
+    var f = function (p) {
+      var r = o.apply(this, arguments), ally = false;
+      try { ally = typeof _recomputingAlly !== 'undefined' && !!_recomputingAlly; } catch (e) {}
+      if (ally) return r || (lead ? Object.assign({}, lead) : r);
+      try {
+        if (typeof player !== 'undefined' && player && (!p || p === player)) {
+          var k = r ? JSON.stringify(r) : 'null';
+          lead = r ? Object.assign({}, r) : null;
+          if (k !== leadKey) {
+            leadKey = k;
+            if (!pend && Array.isArray(player.allies) && player.allies.length) {
+              pend = true;
+              setTimeout(function () { pend = false; try { (player.allies || []).forEach(function (a) { if (a && typeof _allyLevelRecompute === 'function') _allyLevelRecompute(a); }); } catch (e) {} }, 0);
+            }
+          }
+        }
+      } catch (e) {}
+      return r;
+    };
+    f.__afkMercClan = true; Object.keys(o).forEach(function (k) { if (!(k in f)) f[k] = o[k]; });
+    window.getClanBuffStats = f;
+  };
+  window.addEventListener('load', function () { setTimeout(mercClan, 120); });
   // 全屬性要在「屬性換算戰鬥數值」之前加進去：掛在 __afkAttrBoost（核心夾上限前呼叫）
   var oBoost = window.__afkAttrBoost;
   window.__afkAttrBoost = function (p, d) {

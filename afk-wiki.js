@@ -5256,6 +5256,7 @@
         ['開啟門檻', '至少 <b>' + ((typeof CLAN_BUFF_HOUR_COST !== 'undefined') ? CLAN_BUFF_HOUR_COST : 5) + ' 點貢獻</b>'],
         ['消耗', '<b>每小時 ' + ((typeof CLAN_BUFF_HOUR_COST !== 'undefined') ? CLAN_BUFF_HOUR_COST : 5) + ' 點貢獻</b>'],
         ['關掉時', '未滿 1 小時的零頭<b>照收一次全額</b>'],
+        ['傭兵', '隊長開著時，帶著的傭兵<b>也有同樣的 Buff</b>，不另外扣傭兵的貢獻'],
         ['貢獻不足', '<b>自動關閉</b>並在日誌提示'],
         ['傭兵', '<b>傭兵也吃這個加成</b>，各自扣自己的貢獻']
       ]) +
