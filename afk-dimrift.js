@@ -327,11 +327,29 @@
     f.__afkDimOnly = true; W.__afkDropListFilter = f;
   };
   dimOnlyWrap(); W.addEventListener('load', function () { setTimeout(function () { var o = W.__afkDropListFilter; if (o && !o.__afkDimOnly) dimOnlyWrap(); }, 0); });
+  // 11-19（Ping）：核心另外擲的掉落（記憶水晶 MEM_DROPS、戰士印記 WARRIOR_DROPS、區域額外掉落）不經過掉落表過濾，裂縫裡一併擋掉
+  var sideBlock = { n: 0, ids: null };
+  var sideIds = function () {
+    if (sideBlock.ids) return sideBlock.ids;
+    var o = {}, add = function (tbl) { try { Object.keys(tbl || {}).forEach(function (k) { (tbl[k] || []).forEach(function (e) { if (e && e[0]) o[e[0]] = 1; }); }); } catch (e) {} };
+    try { add(typeof MEM_DROPS !== 'undefined' ? MEM_DROPS : null); } catch (e) {}
+    try { add(typeof WARRIOR_DROPS !== 'undefined' ? WARRIOR_DROPS : null); } catch (e) {}
+    try { (typeof AREA_BONUS_ITEMS !== 'undefined' ? AREA_BONUS_ITEMS : []).forEach(function (id) { o[id] = 1; }); } catch (e) {}
+    try { Object.keys(o).forEach(function (id) { if (DIM_KEEP(id)) delete o[id]; }); } catch (e) {}
+    sideBlock.ids = o; return o;
+  };
+  if (typeof W.gainItem === 'function') {
+    var oGain = W.gainItem;
+    W.gainItem = function (id) { if (sideBlock.n > 0 && sideIds()[id]) return null; return oGain.apply(this, arguments); };
+    try { (0, eval)('gainItem = window.gainItem'); } catch (e) {}
+  }
   if (typeof W.killMob === 'function') {
     var oKill = W.killMob;
     W.killMob = function (idx) {
       var m = mapState.mobs ? mapState.mobs[idx] : null, was = !!(m && m._dead);
-      var r = oKill.apply(this, arguments);
+      var dimKill = !!(m && !was && m._dimRift && on());
+      if (dimKill) sideBlock.n++;
+      var r; try { r = oKill.apply(this, arguments); } finally { if (dimKill) sideBlock.n--; }
       try { if (m && !was && m._dead && m._dimRift && on()) drops(m); } catch (e) { console.warn('[AFK-dimrift] drop', e); }
       return r;
     };

@@ -1000,7 +1000,7 @@ function allyBuffDmgReduceMult(ally) {
 function illusionMagicDmg(dmg, canTrigger, recoverMp) {
     if (!player || dmg <= 0 || !canTrigger) return dmg;
     if (player._setIllusion2 && recoverMp !== false) { let r = Math.floor((player.lv || 1) / 10); if (r > 0) player.mp = Math.min(player.mmp, player.mp + r); }   // 2件：每次法術事件回一次 Lv/10 MP
-    if (player._setIllusion5) dmg = dmg * 2;   // 5件：符合條件的非自動攻擊法術傷害加倍（＝再受一次同傷）
+    if (player._setIllusion5) dmg = dmg * ((typeof window !== 'undefined' && window.__afkIllu5Mult) || 2);   /* 🔌 加掛版補丁:幻覺 5 件倍率 */   // 5件：符合條件的非自動攻擊法術傷害加倍（＝再受一次同傷）
     return dmg;
 }
 

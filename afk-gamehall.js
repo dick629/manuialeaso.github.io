@@ -406,6 +406,7 @@
       // 沙暴之神的祭壇
       + '.gh-win.sg{background:linear-gradient(#0b1220d0,#0b1220f2),url(assets/gamehall/sg/slot_bg.webp) center top/cover no-repeat,#0b1220;border-color:#e5c76b}'
       + '.gh-win.sg .sl-cell img{width:90%;height:90%;image-rendering:auto;object-fit:contain}.sg-pay img{image-rendering:auto!important}'
+      + '.gh-win.sg .sg-lines{position:absolute;left:5px;top:5px;width:calc(100% - 10px);height:calc(100% - 10px);pointer-events:none;filter:drop-shadow(0 0 4px #000);animation:sg-line .45s ease-out}@keyframes sg-line{from{opacity:0}}'
       + '.gh-win.sg .sl-grid{background:#050a14e6}.gh-win.sg .sl-cell .mv{font-size:13px;bottom:2px}'
       + '.gh-win.sg .sl-grid{background:#0c1a2e;border-color:#e5c76b}.gh-win.sg .sl-cell{background:#08111f}'
       + '.gh-win.sg .sl-cell.orb{background:radial-gradient(circle,#0e7490,#08111f 70%)}.gh-win.sg .sl-cell.orb.t2{background:radial-gradient(circle,#15803d,#08111f 70%)}.gh-win.sg .sl-cell.orb.t3{background:radial-gradient(circle,#7e22ce,#08111f 70%)}'
@@ -570,7 +571,7 @@
     if (!cl && W.__afkPoker && W.__afkPoker.on && W.__afkPoker.on()) h += '<button type="button" class="gh-card" data-gh="poker"><span class="ico">♠︎</span><b>德州撲克</b><span>無限注，對 3～5 位 NPC；有超難桌</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:bac"><span class="ico">🃏</span><b>百家樂</b><span>押莊、閒、和、對子；8 副牌</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:slot"><span class="ico">🔺</span><b>' + SLOT_NAME + '</b><span>埃及拉霸：消除連鎖、太陽倍數、免費遊戲</span></button>';
-    if (!cl && SG) h += '<button type="button" class="gh-card" data-gh="go:sg"><span class="ico">⚡</span><b>' + SG.NAME + '</b><span>沙暴之神：倍數球最高 ×10,000、購買免費遊戲、加倍下注</span></button>';
+    if (!cl && SG) h += '<button type="button" class="gh-card" data-gh="go:sg"><span class="ico">⚡</span><b>' + SG.NAME + '</b><span>沙暴之神：倍數球最高 ×10,000、加倍下注、幾乎每轉都有小獎</span></button>';
     if (!cl && W.__afkFish && W.__afkFish.on()) h += '<button type="button" class="gh-card" data-gh="fish"><span class="ico">🐟</span><b>' + W.__afkFish.NAME + '</b><span>捕魚機：法利昂、幽靈船長、特殊武器、JP 轉盤</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:mary"><span class="ico">🍒</span><b>' + MARY_NAME + '</b><span>水果盤跑燈、ONCE MORE 送燈、比倍、JP</span></button>';
     if (typeof W.openRaceWindow === 'function') h += '<button type="button" class="gh-card" data-gh="dog"><span class="ico">🐕</span><b>賽狗場</b><span>奇岩賽狗，押冠軍</span></button>';
@@ -804,10 +805,25 @@
     return '<div class="sl-cell' + (hit ? ' hit' : '') + (drop ? ' drop' : '') + (orb ? ' orb t' + SG.orbTier(cv.v) : '') + '"><img alt="" src="' + sgImg(cv) + '">' + (orb ? '<span class="mv">×' + fmt(cv.v) + '</span>' : '') + '</div>';
   }
   W.__afkSgImg = sgSymImg;
+  // 11-19（Ping）：中獎時把同一種圖示用線連起來
+  var SG_LINE_COL = ['#facc15', '#38bdf8', '#f472b6', '#4ade80', '#fb923c', '#a78bfa', '#f87171', '#2dd4bf', '#e2e8f0'];
+  function sgLines(grid, hitSyms) {
+    if (!hitSyms) return '';
+    var h = '', k = 0;
+    Object.keys(hitSyms).forEach(function (sym) {
+      var pts = [];
+      for (var c = 0; c < SG.COLS; c++) for (var r = 0; r < SG.ROWS; r++) if (grid[c][r].s === +sym) pts.push(((c + 0.5) * 100) + ',' + ((r + 0.5) * 100));
+      if (pts.length < 2) return;
+      var col = SG_LINE_COL[k++ % SG_LINE_COL.length];
+      h += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + col + '" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>'
+        + pts.map(function (q) { var xy = q.split(','); return '<circle cx="' + xy[0] + '" cy="' + xy[1] + '" r="12" fill="' + col + '"/>'; }).join('');
+    });
+    return h ? '<svg class="sg-lines" viewBox="0 0 ' + (SG.COLS * 100) + ' ' + (SG.ROWS * 100) + '" preserveAspectRatio="none" aria-hidden="true">' + h + '</svg>' : '';
+  }
   function sgGrid(grid, hitSyms, drop) {
     var h = '';
     for (var r = 0; r < SG.ROWS; r++) for (var c = 0; c < SG.COLS; c++) { var cv = grid[c][r]; h += sgCell(cv, hitSyms && typeof cv.s === 'number' && hitSyms[cv.s], drop); }
-    return h;
+    return h + sgLines(grid, hitSyms);
   }
   var sgIdle = null;
   function renderSg() {
@@ -823,19 +839,19 @@
     h += '<div class="gh-msg">' + esc(ui.msg || '同一種圖示全盤 8 個以上就中獎；中獎的會消掉，上面的掉下來繼續連鎖。') + '</div>';
     var lock = ui.busy || ui.auto;
     h += '<div class="sl-bet"><button type="button" data-gh="sgbet-"' + (lock ? ' disabled' : '') + ' aria-label="降低注額">－</button><div class="amt">每轉 ' + esc(amtTxt(cur, bet)) + (sg.ante ? '<br><span class="gh-sm">加倍下注：實付 ' + fmt(sgCost(cur, bet)) + '</span>' : '') + '</div><button type="button" data-gh="sgbet+"' + (lock ? ' disabled' : '') + ' aria-label="提高注額">＋</button></div>';
-    h += '<div class="sg-opt"><label><input type="checkbox" data-gh="sgante"' + (sg.ante ? ' checked' : '') + (lock ? ' disabled' : '') + '> 加倍下注 +25%<br>（免費遊戲機率 ×2）</label>'
-      + '<button type="button" class="buy' + (sg.askBuy ? ' ask' : '') + '" data-gh="sgbuy"' + (lock || sg.ante ? ' disabled' : '') + ' title="' + (sg.ante ? '加倍下注開著時不能購買' : '直接進入免費遊戲 15 轉') + '">' + (sg.askBuy ? '確定購買？<br>' + esc(amtTxt(cur, bet * SG.BUY_X)) : '購買免費遊戲<br>' + esc(amtTxt(cur, bet * SG.BUY_X))) + '</button></div>';
+    h += '<div class="sg-opt"><label><input type="checkbox" data-gh="sgante"' + (sg.ante ? ' checked' : '') + (lock ? ' disabled' : '') + '> 加倍下注 +25%（免費遊戲機率 ×2）</label>'
+      + '</div>';
     h += '<div class="gh-sm" style="margin-top:4px;text-align:center">你有' + esc(amtTxt(cur, shownBal(cur))) + '</div>';
     if (ui.auto) h += '<div class="gh-btns"><button type="button" class="stop" data-gh="stop">停止自動（剩 ' + ui.autoLeft + ' 轉）</button></div>';
     else h += '<div class="gh-btns"><button type="button" class="go" data-gh="sgspin"' + (ui.busy ? ' disabled' : '') + ' style="font-size:16px">轉！</button></div>'
       + '<div class="gh-btns">' + [10, 50, 100, 200, 500].map(function (n, i) { return '<button type="button" data-gh="sgauto:' + n + '"' + (ui.busy ? ' disabled' : '') + '>' + (i ? n : '自動 ' + n) + '</button>'; }).join('') + '</div>';
-    h += '<div style="margin-top:6px"><label class="gh-tog"><input type="checkbox" data-gh="quick"' + (ui.quick ? ' checked' : '') + '> 快轉（跳過消除動畫）</label></div>';
+    h += '<div style="margin-top:6px"><label class="gh-tog"><input type="checkbox" data-gh="quick"' + (ui.quick ? ' checked' : '') + '> 快轉（連鎖演得快一點）</label></div>';
     h += '<details style="margin-top:6px"><summary class="gh-sm" style="cursor:pointer">賠率表（× 每轉注額）</summary><table class="sl-pay sg-pay"><tr><th>圖示</th><th>8～9</th><th>10～11</th><th>12+</th></tr>'
       + SG.SYMS.map(function (s) { return '<tr><td style="text-align:left"><img alt="" src="' + sgSymImg(s.k) + '"> ' + s.n + '</td><td>' + s.pay[0] / 100 + '</td><td>' + s.pay[1] / 100 + '</td><td>' + s.pay[2] / 100 + '</td></tr>'; }).join('')
       + '<tr><td style="text-align:left"><img alt="" src="' + sgSymImg('S') + '"> 雷劈金字塔</td><td colspan="3">4／5／6 個＝3／5／100 倍，並進入免費遊戲 15 轉</td></tr>'
       + '<tr><td style="text-align:left"><img alt="" src="' + sgSymImg('M') + '"> 倍數球</td><td colspan="3">×2～×10,000；這一轉有中獎時，全部倍數相加再乘上獎金</td></tr></table>'
       + '<div class="gh-sm" style="margin-top:4px;line-height:1.6">免費遊戲：3 個以上金字塔再 +5 轉；倍數球出現得更多，有中獎時倍數加進「總倍數」一直累積到結束。<br>'
-      + '加倍下注：每轉多付 25%，進免費遊戲的機會約兩倍；開著時不能購買免費遊戲。<br>購買免費遊戲：付注額 ×' + SG.BUY_X + '，直接得到 4 個金字塔（3 倍）＋免費遊戲 15 轉。<br>'
+      + '加倍下注：每轉多付 25%，進免費遊戲的機會約兩倍。<br>中獎時同一種圖示會連成線，消掉後上面的掉下來，一直連鎖到沒有新的中獎才結束這一轉。<br>'
       + '每次下注（含整段免費遊戲）最多贏 ' + fmt(SG.CAP_X) + ' 倍注額。</div></details>';
     return h + '</div>';
   }
@@ -874,7 +890,8 @@
         later(function () { if (ui.auto) sgRound(false); }, t ? 1900 : (ui.quick ? 250 : 600));
       }
     };
-    if (ui.quick) { fin(); return true; }
+    var anyWin = res.total > 0, qk = ui.quick ? 0.35 : 1;   // 11-19（Ping）：有中獎時連鎖照樣演完（快轉只是演得快）才轉下一輪
+    if (ui.quick && !anyWin) { fin(); return true; }
     ui.busy = true; ui.msg = ''; sg.ov = ''; sg.fsInfo = ''; sg.say = buy ? '你獻上供品，沙暴之神睜開了眼睛。' : '';
     var seq = [], sumv = function (a) { return a.reduce(function (s, v) { return s + v; }, 0); };
     var addSpin = function (sp, info, payTxt) {
@@ -905,7 +922,7 @@
       if (i >= seq.length) { sg.inFs = false; return fin(); }
       var s = seq[i++]; sg.inFs = !!s.fs; sg.show = { grid: s.grid, hit: s.hit, drop: s.drop, win: s.win }; sg.fsInfo = s.info || ''; sg.ov = s.ov || ''; sg.ovBig = !!s.ov;
       sg.god = s.god || 'idle'; if (s.say) sg.say = s.say;
-      render(); later(tick, s.wait);
+      render(); later(tick, Math.max(80, Math.round(s.wait * qk)));
     };
     tick();
     return true;
@@ -1160,7 +1177,8 @@
     // 沙暴之神的祭壇
     if (a === 'sgbet-' || a === 'sgbet+') { var sst = SG_STEPS[ui.cur] || SG_STEPS.dia, si = sst.indexOf(sgBet(ui.cur)); si = Math.max(0, Math.min(sst.length - 1, si + (a === 'sgbet+' ? 1 : -1))); sg.bet[ui.cur] = sst[si]; sg.askBuy = false; return render(); }
     if (a === 'sgante') { sg.ante = !!t.checked; LS('afk_gh_sg_ante', sg.ante ? '1' : '0'); sg.askBuy = false; return render(); }
-    if (a === 'sgbuy') { if (!sg.askBuy) { sg.askBuy = true; render(); later(function () { if (sg.askBuy) { sg.askBuy = false; render(); } }, 4000); return; } sg.askBuy = false; return sgRound(true); }
+    if (a === 'sgbuy') { return; }   // 11-19（Ping）：拿掉購買免費遊戲
+    if (a === 'sgbuy_old') { if (!sg.askBuy) { sg.askBuy = true; render(); later(function () { if (sg.askBuy) { sg.askBuy = false; render(); } }, 4000); return; } sg.askBuy = false; return sgRound(true); }
     if (a === 'sgspin') { sg.askBuy = false; return sgRound(false); }
     if (p[0] === 'sgauto') { sg.askBuy = false; ui.auto = 1; ui.autoLeft = Number(p[1]); if (!sgRound(false)) stopAuto(); return; }
     // 拉霸

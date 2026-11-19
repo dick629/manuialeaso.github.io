@@ -138,7 +138,7 @@
   var idxOf = function (key) { var m = /^afkL_(riftq|evaq)_(\d+)_/.exec(String(key || '')); return m ? { l: m[1], i: Number(m[2]) - 1 } : null; };
   var have = function (id) { return typeof questCountId === 'function' ? questCountId(id) : 0; };
   var st = function (p) { p.afkRiftQ = p.afkRiftQ && typeof p.afkRiftQ === 'object' ? p.afkRiftQ : {}; return p.afkRiftQ; };
-  var halfOn = function (p) { return !!(p && p.afkTruth); };
+  var halfOn = function (p) { return !!(p && (p.afkTruth || t3win(p))); };   // 11-19：打贏第三階層就算看過真相（沒帶鏡片也一樣）
   var baseCls = function (a) { var c = a && (a._awkSw || a.cls); try { var b = W.__afkAwkMerc && W.__afkAwkMerc.baseOf(c); if (b) return b; } catch (e) {} return a === P() ? QC(a) : c; };
   var hasDK = function (p) { if (baseCls(p) === 'dragon') return true; return (p.allies || []).some(function (a) { return a && baseCls(a) === 'dragon'; }); };
 
@@ -156,6 +156,8 @@
     W.trialQAccept = function (key) {
       var x = idxOf(key), p = P();
       if (x && p) { var why = gate(x, p); if (why) { sys('<span class="text-amber-300">' + esc(why) + '</span>'); try { W.alert('還不能接這個任務：' + why); } catch (e) {} return; } }   // 11-19：原本只寫在系統訊息，按了像沒反應
+      // 11-19：沒帶鏡片打贏第三階層的人沒看過真相對話 → 接第 4 章時補播一次
+      if (x && p && x.l === 'riftq' && x.i === 3 && !p.afkTruth && W.__afkTruthTalk) { try { setTimeout(function () { W.__afkTruthTalk(p); }, 800); } catch (e) {} }
       return oAcc.apply(this, arguments);
     };
   }

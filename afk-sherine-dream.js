@@ -410,6 +410,14 @@
     try { (0, eval)('tick = window.tick'); } catch (e) {}
   }
 
+  // 11-19（Ping）：幻覺 5 件「再造成一次相同傷害」（×2）讓幻覺混搭成為其他組合的 2～2.8 倍 → 改成追加 20%（×1.2），約為中位數的 1.4 倍。
+  //   核心掛點：補丁 patchIllu5Mult1119（window.__afkIllu5Mult）。說明文字一併改。
+  W.__afkIllu5Mult = 1.2;
+  try {
+    if (typeof SHERINE_SET_TEXT !== 'undefined' && SHERINE_SET_TEXT['幻覺'] && SHERINE_SET_TEXT['幻覺'][2]) {
+      SHERINE_SET_TEXT['幻覺'][2] = '5件：上述魔法造成傷害時，追加該次傷害 20% 的額外傷害（不包含一般傷害法術、共鳴與反射；額外傷害不再觸發套裝效果）';
+    }
+  } catch (e) {}
   W.__afkSherineDream = { isDream: isDream, grp: grp, RIFT_X: RIFT_X, SOUL: SOUL, SOUL_CUT: SOUL_CUT, soulRefined: soulRefined, soulTick: soulTick, SOUL_COST: SOUL_COST, soulOn: soulOn, ETCH_PER: ETCH_PER, SOCKET_NAMES: SOCKET_NAMES, SOCKET_MAX_OPEN: SOCKET_MAX_OPEN, PARTS: PARTS, etchReady: etchReady, etchTake: etchTake, etchName: etchName, migrate: migrate, mainEtch: mainEtch, DREAM: DREAM, DN: DN, isDream: isDream, dreamTiers: dreamTiers, soulOn: soulOn, setCut: setCut, COST: COST, SOUL: SOUL, SOUL_RATE: SOUL_RATE };
   console.log('[AFK-sherine-dream] 已載入：夢域席琳遺骸與之魂');
 })();

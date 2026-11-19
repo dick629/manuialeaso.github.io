@@ -241,7 +241,18 @@
   if(!C.tree(p))return;
   if(now()-N(a.auraCheck)>.9){a.auraCheck=now();const next=[];for(const id of p.classPath.auras||[]){const s=C.skills.get(id);if(!usable(p,id)||s?.type!=='光環')continue;const key='upkeep:'+id;if(N(a.cd[key])<=now()){const n=Math.ceil(p.mmp*(a.cd[key]?s.plan.upkeep:s.plan.mp)),h=Math.ceil(maxhp(p)*s.plan.blood);if(p.mp<n||hp(p)<=h)continue;p.mp-=n;p[hpKey(p)]-=h;a.cd[key]=now()+5.1;}next.push(s);}const changed=next.map(s=>s.id).join()!==(a.activeAuras||[]).map(s=>s.id).join();a.activeAuras=next;if(changed)members().forEach(t=>R.recalc(t));}
   if(p!==player||!state.running||!enemies().length||controls(p)||W.LineageClasses?.isBusy()||now()-a.lastAuto<1)return;
-  const ids=p.classPath.auto||[];for(let k=0;k<ids.length;k++){const i=((a.autoCursor||0)+k)%ids.length,s=C.skills.get(ids[i]),t=enemies()[0];if(s&&!reason(p,s,t)){a.lastAuto=now();a.autoCursor=(i+1)%ids.length;cast(s.id,t,null,p);break;}}
+  const ids=p.classPath.auto||[],t0=enemies()[0];
+  // 11-19（Ping）：自動施放會排連段——自動清單裡有要「法術一與五連接」或「法術八」的招時，路線的 1、5、8 號也一起算進候選；
+  //   前置剛完成就優先放接續的招（連段 8 秒內），1 號放過就優先放 5 號。
+  {const route=p.classPath.route,byNo=n=>{for(const x of C.skills.values())if(x.tree===route&&x.number===n&&usable(p,x.id))return x;return null;},need=new Set();
+   for(const id of ids){const s=C.skills.get(id);for(const o of(s&&s.plan&&s.plan.ops)||[])if(o.kind==='require'&&(o.key==='dual'||o.key==='third'))need.add(o.key);}
+   if(need.size&&t0){const m=mark(p,t0),pick=[];
+    for(const id of ids){const s=C.skills.get(id);if(s&&(s.plan.ops||[]).some(o=>o.kind==='require'&&(o.key==='dual'||o.key==='third'))&&!reason(p,s,t0))pick.push(s);}
+    if(!pick.length&&need.has('dual')&&m.first>now()){const s5=byNo(5);if(s5&&!reason(p,s5,t0))pick.push(s5);}
+    if(!pick.length&&need.has('dual')&&!(m.first>now())&&!(m.dual&&m.dual.until>now()&&!m.dual.used)){const s1=byNo(1);if(s1&&!reason(p,s1,t0))pick.push(s1);}
+    if(!pick.length&&need.has('third')&&!(m.third&&m.third.until>now()&&!m.third.used)){const s8=byNo(8);if(s8&&!reason(p,s8,t0))pick.push(s8);}
+    if(pick.length){a.lastAuto=now();cast(pick[0].id,t0,null,p);return;}}}
+  for(let k=0;k<ids.length;k++){const i=((a.autoCursor||0)+k)%ids.length,s=C.skills.get(ids[i]),t=enemies()[0];if(s&&!reason(p,s,t)){a.lastAuto=now();a.autoCursor=(i+1)%ids.length;cast(s.id,t,null,p);break;}}
  }
  function refundTriggers(p,trigger){const a=st(p);for(const o of passive(p))if(o.kind==='resourceTrigger'&&o.trigger===trigger&&N(a.cd[o.source])<=now()){a.cd[o.source]=now()+o.cd;p.mp=Math.min(p.mmp,p.mp+p.mmp*o.ratio);}}
  function triggerPassives(p,trigger){const a=st(p);for(const o of passive(p))if(o.kind==='nextTrigger'&&o.trigger===trigger&&N(a.cd[o.source])<=now()){a.cd[o.source]=now()+o.cd;put(p,o.key||'nextDamage',o.value,6,o.source,1);}}
