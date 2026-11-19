@@ -764,6 +764,8 @@
     try { if (typeof renderTabs === 'function') renderTabs(true); updateUI(); } catch (e) {}
     var msg = bd.n + '褪去凡鐵之軀，成為至高的支配' + evoTag(evo) + (fx3w ? '，第三詞綴繼承了「' + DB.items[fx3w].n + '」' : '') + '。';
     try { logSys('<span class="text-yellow-300 font-bold">' + msg + '</span>'); } catch (e) {}
+    // 11-19 23:39 Ping：武器成為至高的支配時，用劇情提醒會被席琳封印、要去席琳神殿解開
+    if (bd && bd.type === 'wpn') try { logSys('<span class="text-sky-300">天空裂開一道細縫，有道目光嫉妒地落在' + esc(bd.n) + '上……冰冷的水之鎖從冥界垂下，席琳的封印纏上了它——它現在是「至高支配・封」。帶它去席琳神殿找「次元的鍛造師」，才能解開封印。</span>'); } catch (e) {}
     return { ok: true, id: newId, evo: evo, msg: msg };
   }
   // 特效套用（核心補丁 24 的兩個掛點＋重算後）
@@ -1206,7 +1208,7 @@
         var evMiss = TS_MATS.filter(function (id) { return invCnt(id) < 1; });
         ready = !evMiss.length; label = '進化：至高的支配' + (evMiss.length ? '｜缺 ' + evMiss.map(function (id) { return (DB.items[id] || {}).n || id; }).join('、') : '');
         btn = '<button class="rp-go rp-evo" type="button" data-k="' + esc(g.key) + '"' + (evMiss.length ? ' disabled' : '') + '>進化<br><span style="font-weight:600;font-size:13px">至高的支配 100%</span></button>';
-        ascTxt = '<div class="rp-sub" style="color:#fde047">進化：隨機獲得一種至高的支配特效（' + (bd.type === 'wpn' ? '武器沒有八種特效，改成進化時直接附上「第三詞綴」：隨機繼承另一件遺物的能力，之後可在這裡重洗' : '克特／死亡騎士／惡魔／四大軍王／真．冥皇套裝、全能力 +30、面板能力 +50、四屬性抗性 +100，不跟你已有的重複') + '）' + (bd.set === 'priest' ? '；遺物・司祭苦行套裝直接擁有全部八種' : '') + '</div>'
+        ascTxt = '<div class="rp-sub" style="color:#fde047">進化：隨機獲得一種至高的支配特效（' + (bd.type === 'wpn' ? '武器沒有八種特效，改成進化時直接附上「第三詞綴」：隨機繼承另一件遺物的能力，之後可在這裡重洗；進化後會被席琳封印成「至高支配・封」，要到席琳神殿「次元的鍛造師」解開' : '克特／死亡騎士／惡魔／四大軍王／真．冥皇套裝、全能力 +30、面板能力 +50、四屬性抗性 +100，不跟你已有的重複') + '）' + (bd.set === 'priest' ? '；遺物・司祭苦行套裝直接擁有全部八種' : '') + '</div>'
           + '<div class="rp-sub">需要：' + TS_MATS.map(function (id) { var h = invCnt(id); return '<span class="' + (h ? '' : 'rp-miss') + '">' + esc((DB.items[id] || {}).n || id) + ' ' + h + '/1</span>'; }).join('、') + '</div>';
       }
       else {
@@ -1768,7 +1770,9 @@
   function askEvo(key) {
     var g = groups().filter(function (x) { return x.key === key; })[0]; if (!g) return render();
     var nm = DB.items[g.base].n;
-    var msg = '把「+5 ' + nm + '昇華支配」進化為「' + nm + '至高的支配」，成功率 100%。\n消耗六種時空材料各 1 個，隨機獲得一種至高的支配特效。\n裝滿 6 件至高的支配：發動「至暗支配・席琳的永生」（免疫死亡一次，冷卻 30 秒）。';
+    var msg = DB.items[g.base].type === 'wpn'
+      ? '把「+5 ' + nm + '昇華支配」進化為「' + nm + '至高的支配」，成功率 100%。\n消耗六種時空材料各 1 個，進化時直接附上「第三詞綴」。\n\n⚠ 凡鐵褪去的那一刻，它的光芒會直達天上——有神祇嫉妒這股力量，沉睡在冥界的席琳也會察覺。武器一成為至高的支配，就會被纏上席琳的封印，成為「' + nm + '至高支配・封」：在次元裂縫裡造成的傷害 −10%。\n要解開封印，得帶著它去席琳神殿，找「次元的鍛造師」。'
+      : '把「+5 ' + nm + '昇華支配」進化為「' + nm + '至高的支配」，成功率 100%。\n消耗六種時空材料各 1 個，隨機獲得一種至高的支配特效。\n裝滿 6 件至高的支配：發動「至暗支配・席琳的永生」（免疫死亡一次，冷卻 30 秒）。';
     var go = function () { var r = evolve(key); render(); if (!r.ok) { try { logSys('<span class="text-red-400">' + esc(r.msg) + '</span>'); } catch (e) {} } };
     if (window.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '至高的支配', message: msg, okText: '進化', cancelText: '取消', onOk: go });
     else if (confirm(msg)) go();
