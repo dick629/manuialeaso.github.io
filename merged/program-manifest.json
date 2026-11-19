@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-b197cb47dff0",
+  "build": "merge-0.4-4ee26af54e7f",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -1643,8 +1643,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-timeroom.js?v=37daf4ce00f8",
-      "sha256": "37daf4ce00f8b54bd4d001ad483fb997027535b9e9fdad5e3c0d4721ad612fcc",
+      "url": "afk-timeroom.js?v=96c97cc5bbf0",
+      "sha256": "96c97cc5bbf000b4aaf536d04f3e81deffba2e7a1353458b2edee0039ebc2c1f",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1834,7 +1834,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "d16fd83782dd92dbc8c47a0a45bcc9e85dd8a9cc508d4217a2bb5f7dcc854a89",
+      "sha256": "eaf711d768a1cf5853504db58e907f4973cca68591c2aaa37e33421f34e7f1cb",
       "type": "text/html; charset=utf-8"
     },
     {

@@ -7,7 +7,7 @@
  *       （舊版：日出之國東之地、西之地、北之地的一般怪）
  *     ‧怪物經驗 ×2；能進次元裂縫的角色 ×2.2（Ping 11-15 22:44；原本 ×1.5／×2）。
  *     ‧不掉任何東西（包含地區霸主、世界事件、離線結算、龍之鑽石），只給金幣。
- *       例外（Ping 11-15 22:44）：次元材料（次元裂縫模式）與夢域鏡材料（夢域鏡模式）照常掉，見 KEEP。
+ *       例外（Ping 11-15 22:44）：次元材料（次元裂縫模式）與夢域鏡材料（夢域鏡模式）照常掉，見 KEEP；席琳結晶也照常掉（11-20）。
  *     ‧地區霸主、世界事件出現率 ×2（冷卻照舊）。地區霸主從各地區霸主裡隨機挑一隻（日出之國所在的地區沒有霸主）。
  *     ‧經驗蘑菇（Ping 11-12）：每隻怪 1% 變成經驗蘑菇，經驗 1700 萬（再乘時光屋 ×2／×2.2 與一般的經驗倍率）；打倒牠 1% 下一隻又是經驗蘑菇。
  *   經典模式沒有（席琳神殿地區本來就不開放經典模式）。
@@ -15,7 +15,7 @@
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
-  if (T && T.register) T.register({ id: 'timeroom', name: '時光屋', group: '遊戲內容', desc: '席琳神殿地區的練功地圖：Lv75 以上的一般怪、經驗加成；只掉次元材料與夢域鏡材料，其他不掉。' });
+  if (T && T.register) T.register({ id: 'timeroom', name: '時光屋', group: '遊戲內容', desc: '席琳神殿地區的練功地圖：Lv75 以上的一般怪、經驗加成；只掉次元材料、夢域鏡材料與席琳結晶，其他不掉。' });
   if (T && !T.enabled('timeroom')) return;
   if (typeof DB === 'undefined' || !DB.maps || typeof MAP_CATEGORIES === 'undefined' || typeof MAP_REGIONS === 'undefined') return;
   var MAP = 'time_room', SRC = ['sunrise_east', 'sunrise_west', 'sunrise_north'];
@@ -80,6 +80,7 @@
   var KEEP = {
     afk_rift_shard: 1, afk_dim_crystal: 1, afk_star_dust: 1, afk_split_dust: 1, afk_star_core: 1,   // 次元：裂縫碎光、次元結晶、破碎星光塵埃、分裂的蔑視塵埃、星辰之核
     afk_dream_crystal: 1, afk_hell_essence: 1, afk_contempt_shard: 1,                               // 夢域鏡：夢艷結晶、地獄精華、滅魔蔑視水晶碎片
+    sherine_crystal: 1,                                                                             // 席琳結晶（Ping 11-20 00:55：原本被擋，訊息卻照跳「浮現」）
     afk_contempt_earth: 1, afk_contempt_water: 1, afk_contempt_wind: 1, afk_contempt_fire: 1,       //        四屬性滅魔蔑視水晶
     afk_asc_stone_wpn: 1, afk_asc_stone_arm: 1, afk_asc_stone_acc: 1, afk_asc_shard: 1              //        昇華支配強化石、昇華支配碎片（白金卡全滿）
   };
