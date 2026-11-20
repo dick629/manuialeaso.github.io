@@ -756,6 +756,34 @@
     f._awk = true; W._actorBattleForm = f; try { (0, eval)('_actorBattleForm = window._actorBattleForm'); } catch (e) {}
   };
   hookForm(); W.addEventListener('load', function () { setTimeout(hookForm, 0); });
+  // 覺醒動畫的人物比原職業大約一倍（約 117px 對 60px），在戰場上縮回一般職業的身高；以腳底為基準縮放，站位不變
+  var AWK_SC = 0.53, AWK_FOOT = 26;
+  var fitAwk = function (el, actor) {
+    if (!el) return;
+    var on = false;
+    try { var f = W._actorBattleForm(actor, false); on = !!(f && /^class:awk_/.test(String(f.domKey || f.key || ''))); } catch (e) {}
+    var v = on ? 'calc(var(--afk-bvs, 1) * ' + AWK_SC + ')' : '';
+    if (el.style.scale !== v) { el.style.scale = v; el.style.transformOrigin = on ? ('50% ' + (1 - AWK_FOOT) + 'px') : ''; }
+  };
+  var hookFit = function () {
+    ['_playerMorphApply', '_allySpritesApply'].forEach(function (fn) {
+      if (typeof W[fn] !== 'function' || W[fn]._awkFit) return;
+      var o = W[fn];
+      var f = function () {
+        var r = o.apply(this, arguments);
+        try {
+          if (fn === '_playerMorphApply') { var ps = (0, eval)('typeof _pmState!=="undefined"?_pmState:null'); if (ps && ps.el) fitAwk(ps.el, P()); }
+          else {
+            var ss = (0, eval)('typeof _allySpriteStates!=="undefined"?_allySpriteStates:null'), pl = P(), al = (pl && pl.allies) || null;
+            if (ss) for (var k in ss) { var st = ss[k]; if (!st || !st.el) continue; var who = null; if (al) for (var i = 0; i < al.length; i++) if (al[i] && String(al[i]._slot) === k) { who = al[i]; break; } if (who) fitAwk(st.el, who); }
+          }
+        } catch (e) {}
+        return r;
+      };
+      f._awkFit = true; W[fn] = f; try { (0, eval)(fn + ' = window.' + fn); } catch (e) {}
+    });
+  };
+  hookFit(); W.addEventListener('load', function () { setTimeout(hookFit, 0); });
 
   // ── 立繪：assets/character/男雷神.webp 這種；還沒放圖就用借來的人物 ──
   var PORT = {};

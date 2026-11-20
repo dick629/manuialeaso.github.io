@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
  * afk-mobile-scale.js — 手機版介面縮放與順暢度（純 CSS 注入＋一個設定面板，不包任何核心函式）
  *
  * 只在「上游手機幾何」生效：所有規則都包在與 css/style.css 同一條 media query
@@ -229,10 +229,11 @@
       /* ⑤ 怪物 sprite 容器升合成層（只有本來就帶 transform 的 .mob-anim；玩家/傭兵 sprite 不動，理由見檔頭） */
       GS + '#battle-view.area-fit .mob-target .mob-img-inner.mob-anim{will-change:transform;}',
       /* ⑦ 11-20 Ping「手機角色比例過大」：人物、寵物、怪物的 sprite 是照電腦版 800×450 戰鬥框的 px 畫的，手機戰鬥框小很多卻沒縮
-         → 依戰鬥框實際大小算 --afk-bvs＝min(寬/800, 高/450)，sprite 跟著等比縮（scale 屬性跟原本的 transform 疊加，不影響定位） */
+         → 依戰鬥框寬度算 --afk-bvs＝寬/800（下限 0.45），人物、寵物、怪物站立帶一起等比縮（scale 屬性跟原本的 transform 疊加，不影響定位）。
+         手機戰鬥框是扁長條（約 372×128），不能再拿高度/450 來算，否則會縮到 0.28 變得超小。 */
       GS + '#pet-layer>div{scale:var(--afk-bvs,1);transform-origin:50% 100%;}',
       GS + '#player-morph-sprite,' + GS + '.party-sprite{scale:var(--afk-bvs,1);transform-origin:50% 100%;}',
-      GS + '#battle-view.area-fit #mob-list{height:calc(242px * var(--afk-bvs,1)) !important;}',
+      GS + '#battle-view.area-fit #mob-list{height:242px !important;zoom:var(--afk-bvs,1);}',
       '}',
       /* ④ 橫向 */
       '@media ' + LAND_MQ + '{',
@@ -318,7 +319,7 @@
     var hdr = document.querySelector('#map-view-panel > .panel-header');
     if (hdr) { try { r = hdr.getBoundingClientRect(); if (r.height > 0) setVar('--afk-ms-maphdr-h', r.height); } catch (err) {} }
     var bv = document.getElementById('battle-view');
-    if (bv) { try { r = bv.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { var k = Math.max(0.3, Math.min(1, r.width / 800, r.height / 450)); k = Math.round(k * 100) / 100; if (_last.bvs !== k) { _last.bvs = k; var gs2 = document.getElementById('game-screen'); if (gs2) gs2.style.setProperty('--afk-bvs', String(k)); } } } catch (err) {} }
+    if (bv) { try { r = bv.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { var k = Math.max(0.45, Math.min(1, r.width / 800)); k = Math.round(k * 100) / 100; if (_last.bvs !== k) { _last.bvs = k; var gs2 = document.getElementById('game-screen'); if (gs2) gs2.style.setProperty('--afk-bvs', String(k)); } } } catch (err) {} }
   }
   function watch() {
     if (typeof ResizeObserver !== 'function') { measure(); window.addEventListener('resize', measure); return; }
