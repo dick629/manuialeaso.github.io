@@ -190,10 +190,23 @@
     } catch (e) { return '<img src="' + portrait + '" alt=""' + (seen ? '' : ' class="sil"') + '>'; }
   };
   var ELE = { earth: '地', fire: '火', water: '水', wind: '風' };
-  var subInfo = function (b, t) {   // 跟一般卡冊一樣：銀卡起看屬性與種族，金卡起看出沒
-    if (t < 2) return '';
-    var s = '<div class="bc-sub">屬性 ' + (ELE[b.e] || '無') + (b.race ? '・' + esc(b.race) : '') + '</div>';
-    if (t >= 3) { var ms = (b.maps || []).map(mapName).slice(0, 3).join('、'); if (ms) s += '<div class="bc-sub">出沒：' + esc(ms) + '</div>'; }
+  var BMC = {};
+  var bossMob = function (b) {   // 新地區的王沒有 mobId → 用名字找（找一次記住）
+    if (typeof DB === 'undefined' || !DB.mobs) return {};
+    if (b.mobId && DB.mobs[b.mobId]) return DB.mobs[b.mobId];
+    if (!(b.n in BMC)) { BMC[b.n] = null; for (var k in DB.mobs) if (DB.mobs[k] && DB.mobs[k].n === b.n) { BMC[b.n] = k; break; } }
+    return (BMC[b.n] && DB.mobs[BMC[b.n]]) || {};
+  };
+  var subInfo = function (b, t) {   // 跟一般卡冊一樣（11-20 Ping）：銅卡起 Lv；銀卡起 HP・屬性（＋種族）；金卡起 AC・MR、出沒
+    if (t < 1) return '';
+    var mob = bossMob(b), q = function (v) { return v != null ? esc(String(v)) : '?'; };
+    var s = '<div class="bc-sub bc-lv">Lv ' + q(mob.lv) + '</div>';
+    if (t < 2) return s;
+    s += '<div class="bc-sub">HP ' + (mob.hp != null ? esc(Number(mob.hp).toLocaleString()) : '?') + '・屬性 ' + (ELE[b.e] || '無') + '</div>' + (b.race ? '<div class="bc-sub">種族 ' + esc(b.race) + '</div>' : '');
+    if (t >= 3) {
+      s += '<div class="bc-sub">AC ' + q(mob.ac) + '・MR ' + q(mob.mr) + '</div>';
+      var ms = (b.maps || []).map(mapName).slice(0, 3).join('、'); if (ms) s += '<div class="bc-sub">出沒：' + esc(ms) + '</div>';
+    }
     return s;
   };
   var mapName = function (k) { try { return (typeof _cardMapName === 'function' && _cardMapName(k)) || k; } catch (e) { return k; } };
