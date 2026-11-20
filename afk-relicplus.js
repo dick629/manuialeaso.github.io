@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
  * afk-relicplus.js — 遺物合成（武器／防具 +1～+15、飾品 +1～+10；燃柳村 NPC「哈瑪大師」，玩家 2026-10-20／21 指定）
  *
  * 合成規則
@@ -54,6 +54,7 @@
   var ASC_RES = 2, FX_RES = 3, CHASE_FX = 2.5;
   // 沒有可繼承的特效：武器給追擊 2.5%（11-18 18:24）；防具、飾品照舊四屬性抗性 +3（全身都給追擊會疊到 30～40%，只限武器）
   var noFx = function (d) { if (d.type === 'wpn') d.relicChase = (Number(d.relicChase) || 0) + CHASE_FX; else RES4.forEach(function (f) { d[f] = (Number(d[f]) || 0) + FX_RES; }); };
+  var mechTxt = function (k) { try { return W2().__afkRelicMechTxt(k) || ''; } catch (e) { return ''; } }; var W2 = function () { return window; };
   var noFxTxt = function (d) { return d && d.type === 'wpn' ? '追擊 2.5%' : '四屬性抗性 +3'; };   // 玩家 2026-10-25 抗性下修：昇華每 +1 四抗 +2；第二、第三詞綴保底四抗 +3（全身昇華 +5 約 500）
   var KIND_OK = function (d) { return !!(d && isRelic(d) && !d.gmOnly && !d.relicNoStack && (d.type === 'wpn' || d.type === 'arm' || d.type === 'acc') && ['pet', 'doll'].indexOf(d.slot) < 0); };   // 寵物的武器、盔甲遺物也能合成、昇華（Ping 11-15）
   var PET_SLOT = { petwpn: 1, petarm: 1 };
@@ -184,7 +185,8 @@
       var fields = inheritEffects(d, b, donor); fields = fields.concat(inheritMix(d, b, fx, donor)); var copied = fields.length;
       if (copied) inherited.push({key:fx,fields:fields});
       // 抽到沒有特效的遺物，或抽到的特效跟本身完全重複（例如兩把都只有出血）→ 改給四屬性抗性 +3，避免「繼承了卻什麼都沒有」
-      if (!copied) { noFx(d); d.relicFxRes = true; }   // 11-18 18:24（Ping）：沒有可繼承的特效 → 追擊 2.5%（原本四屬性抗性 +3）
+      // 11-21（Ping 選 B）：抽到原本沒特效、但有新機制的遺物 → 繼承它的新機制（強化 +5 那一階），不再給保底
+      if (!copied) { if (window.__afkRelicMechHas && window.__afkRelicMechHas(fx)) d.relicFxMech = fx; else { noFx(d); d.relicFxRes = true; } }   // 11-18 18:24（Ping）：沒有可繼承的特效 → 追擊 2.5%（原本四屬性抗性 +3）
       fxName = donor.n;
     }
     // 至高的支配：第三詞綴（玩家 2026-10-25）——同部位再繼承一件遺物的特效；沒有新欄位可繼承 → 四屬性抗性 +3
@@ -193,7 +195,7 @@
       var donor3 = (window.AFK_RELIC_RUNTIME && window.AFK_RELIC_RUNTIME.originalBase(fx3)) || DB.items[fx3];
       var fields3 = inheritEffects(d, b, donor3); fields3 = fields3.concat(inheritMix(d, b, fx3, donor3)); var copied3 = fields3.length;
       if (copied3) inherited.push({key:fx3,fields:fields3});
-      if (!copied3) { noFx(d); fx3Res = true; }
+      var fx3Mech = false; if (!copied3) { if (window.__afkRelicMechHas && window.__afkRelicMechHas(fx3)) { d.relicFx3Mech = fx3; fx3Mech = true; } else { noFx(d); fx3Res = true; } }
       fx3Name = donor3.n; d.relicFx3 = fx3;
     }
     // Runtime-only provenance: identity-based companion adapters need to know
@@ -212,8 +214,8 @@
         RES4.forEach(function (f) { d[f] = (Number(d[f]) || 0) + ASC_RES * A; });   // 玩家 2026-10-25：每 +1 四抗 +10 → +2
       }
     }
-    d.d = (d.d || b.d || '') + ' 〔遺物合成 +' + n + '〕' + (asc != null ? '〔昇華支配 +' + asc + '〕' : '') + (fxName ? (d.relicFxRes ? '〔第二詞綴：抽到「' + fxName + '」（沒有新特效）→ ' + noFxTxt(d) + '〕' : '〔第二詞綴：繼承「' + fxName + '」的特效〕') : '') + (asc != null && asc >= 5 ? (d.relicEvo != null ? (EVO[d.relicEvo] ? '〔至高的支配：' + EVO[d.relicEvo] + '〕' : '〔至高的支配〕') : '〔可進化：至高的支配〕') : '');
-    if (fx3Name) d.d += fx3Res ? '〔第三詞綴：抽到「' + fx3Name + '」（沒有新特效）→ ' + noFxTxt(d) + '〕' : '〔第三詞綴：繼承「' + fx3Name + '」的特效〕';
+    d.d = (d.d || b.d || '') + ' 〔遺物合成 +' + n + '〕' + (asc != null ? '〔昇華支配 +' + asc + '〕' : '') + (fxName ? (d.relicFxMech ? '〔第二詞綴：繼承「' + fxName + '」：' + mechTxt(d.relicFxMech) + '〕' : d.relicFxRes ? '〔第二詞綴：抽到「' + fxName + '」（沒有新特效）→ ' + noFxTxt(d) + '〕' : '〔第二詞綴：繼承「' + fxName + '」的特效〕') : '') + (asc != null && asc >= 5 ? (d.relicEvo != null ? (EVO[d.relicEvo] ? '〔至高的支配：' + EVO[d.relicEvo] + '〕' : '〔至高的支配〕') : '〔可進化：至高的支配〕') : '');
+    if (fx3Name) d.d += fx3Mech ? '〔第三詞綴：繼承「' + fx3Name + '」：' + mechTxt(d.relicFx3Mech) + '〕' : fx3Res ? '〔第三詞綴：抽到「' + fx3Name + '」（沒有新特效）→ ' + noFxTxt(d) + '〕' : '〔第三詞綴：繼承「' + fx3Name + '」的特效〕';
     if (d.fxResonance) d.d += '〔繼承：共鳴（機率減半）〕';
     if (d.fxMagicStrike) d.d += '〔繼承：魔擊（機率減半）〕';
     return d;
@@ -1755,7 +1757,7 @@
     pushResult(newId, tk.got[0]); remember(newId);
     if (!saveOk()) { undo(); try { saveGame(); } catch (e) {} return { ok: false, msg: '存檔失敗，什麼都沒有改變。' }; }
     try { if (typeof renderTabs === 'function') renderTabs(true); updateUI(); } catch (e) {}
-    var msg = DB.items[g.base].n + '的第三詞綴甦醒了：繼承「' + DB.items[fx3].n + '」' + (DB.items[newId] && DB.items[newId].d && DB.items[newId].d.indexOf('沒有新特效') >= 0 ? '（沒有新特效 → 四屬性抗性 +3）' : '的特效') + '。';
+    var msg = DB.items[g.base].n + '的第三詞綴甦醒了：繼承「' + DB.items[fx3].n + '」' + (DB.items[newId] && DB.items[newId].relicFx3Mech ? '的新機制' : DB.items[newId] && DB.items[newId].d && DB.items[newId].d.indexOf('沒有新特效') >= 0 ? '（沒有新特效 → ' + noFxTxt(DB.items[newId]) + '）' : '的特效') + '。';
     try { logSys('<span class="text-yellow-300 font-bold">' + esc(msg) + '</span>'); } catch (e) {}
     return { ok: true, id: newId, fx3: fx3, msg: msg };
   }

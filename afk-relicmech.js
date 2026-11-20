@@ -109,7 +109,7 @@
     } catch (e) { console.warn('[AFK-relicmech] tier', e); }
   };
   var SC = { c: 1, p: 1, h: 1, x: 1 };   // 只放大機率 c、百分比 p、治療 h、傷害倍率 x
-  var scale = function (o, mul) { if (!o || mul === 1) return o; var r = {}; Object.keys(o).forEach(function (k) { var v = o[k]; r[k] = SC[k] && typeof v === 'number' ? (k === 'c' ? Math.min(100, r1(v * mul)) : r1(v * mul)) : v; }); return r; };
+  var scale = function (o, mul) { if (!o || mul === 1) return o; var r = {}; Object.keys(o).forEach(function (k) { var v = o[k]; r[k] = SC[k] && typeof v === 'number' ? (k === 'c' ? Math.min(100, r1(v * mul)) : k === 'x' && v <= 5 ? (v <= 1 ? v : Math.round((1 + (v - 1) * mul) * 100) / 100) : r1(v * mul)) : v;   /* 11-21：倍率型 x（×1.2、×2…）只縮放超出 1 的部分，避免縮成 ×1 */ }); return r; };
 
   // ════════ 一、119 件重做（數字＝T2 基準；s1～s4＝+5／+10／昇華支配／昇華支配 +5） ════════
   var M = {};
@@ -814,11 +814,15 @@
 
   // ════════ 收集：身上每件 → 效果清單（快取，換裝重算）════════
   var GEN = 0, CACHE = new WeakMap();
-  var hookGen = function () { ['calcStats', 'recomputeStats'].forEach(function (fn) { var o = W[fn]; if (typeof o !== 'function' || o.__afkRM) return; var f = function () { GEN++; return o.apply(this, arguments); }; f.__afkRM = true; W[fn] = f; try { (0, eval)(fn + ' = window.' + fn); } catch (e) {} }); };
+  var hookGen = function () { ['calcStats', 'recomputeStats'].forEach(function (fn) { var o = W[fn]; if (typeof o !== 'function' || o.__afkRM) return; var f = function () { return o.apply(this, arguments); };   /* 11-21：不再每次重算屬性就清快取（裝備改由編號比對） */ f.__afkRM = true; W[fn] = f; try { (0, eval)(fn + ' = window.' + fn); } catch (e) {} }); };
+  var sigOf = function (a) { var s = []; for (var k in a.eq) { var e = a.eq[k]; s.push(e ? e.id : ''); } if (a === P()) { try { (typeof petsOutList === 'function' ? petsOutList() : []).forEach(function (pt) { if (pt && pt.eq) for (var k2 in pt.eq) { var e2 = pt.eq[k2]; s.push(e2 ? e2.id : ''); } s.push('|'); }); } catch (e) {} } return s; };
+  var sameSig = function (x, y) { if (!x || x.length !== y.length) return false; for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false; return true; };
   var stageOf = function (it) { var d = it && DB.items[it.id]; if (!d || !d.relic) return null; var base = d.relicBase || it.id, n = N(d.relicPlus), asc = d.relicAsc != null ? d.relicAsc : null; return { d: d, base: base, s: n > 0 || asc != null ? tier(n, asc) : 0, fx: d.relicFx || null }; };
   var collect = function (a) {
     if (!a || !a.eq) return null;
-    var key = tk() + ':' + GEN, c = CACHE.get(a); if (c && c.k === key) return c.v;
+    // 11-21 效能：同一刻直接用快取；換刻時只比對裝備（含出戰寵物）編號，沒變就沿用，不再每刻重掃
+    var t0 = tk(), c = CACHE.get(a); if (c && c.t === t0 && c.g === GEN) return c.v;
+    var sg = sigOf(a); if (c && c.g === GEN && sameSig(c.sig, sg)) { c.t = t0; return c.v; }
     var L = [], fam = {};
     var add = function (h, o, s, d, slot) { var e = { o: o, s: s, d: d, slot: slot }; if (h && h.v) e.h = h; else if (h) Object.keys(h).forEach(function (k) { e[k] = h[k]; }); L.push(e); };
     var take = function (it, slot) {
@@ -834,6 +838,8 @@
         if (s >= 2) { var e = eleOfMob(sm), role = ROLE_OF(bd, accIdx(b)); add({ ele: e, role: role }, null, s >= 4 ? 1 : 0, d, slot); }
       }
       var hf = s >= 2 ? hunterAffix(b, q.fx) : null; if (hf) add({ hunt: hf, affix: 1 }, null, Math.min(4, s), d, slot);
+      // 11-21（Ping 選 B）：第二、第三詞綴抽到原本沒特效、但有新機制的遺物 → 帶它的新機制（強化 +5 那一階）
+      (W.__afkRelicMechAllTest ? [d.relicFx, d.relicFx3] : [d.relicFxMech, d.relicFx3Mech]).forEach(function (k) {   /* AllTest＝內部評估做法 C 用，遊戲內不開 */ if (!k || !M[k] || k === b) return; var dd = Object.create(d); dd._b = k; add(M[k], scale(M[k].v[0], (TMUL[k] || 1.15) / 1.15), 1, dd, slot); });
       if (s >= 4 && CATKEY[b]) add({ cat: CAT[CATKEY[b]] }, null, s, d, slot);
       if (s >= 3 && CATKEY[b] && CAT[CATKEY[b]].asc) add({ cat: CAT[CATKEY[b]] }, null, s, d, slot);
     };
@@ -842,13 +848,22 @@
     // 同系共鳴 2／4／6 件
     var reso = {}; Object.keys(fam).forEach(function (f) { var n = fam[f]; if (n >= 2) reso[f] = n >= 6 ? 15 : n >= 4 ? 10 : 5; });
     var v = { L: L, reso: reso, six: Object.keys(fam).filter(function (f) { return fam[f] >= 6; }) };
-    CACHE.set(a, { k: key, v: v }); return v;
+    CACHE.set(a, { t: t0, g: GEN, sig: sg, v: v }); return v;
   };
   var keyOf = function (x) { var d = x.d || {}; return (d._b || d.relicBase || '?') + ':' + (x.h ? 'M' : x.hunt ? (x.grudge ? 'G' : x.affix ? 'A' : 'H') : x.ele ? 'E' : x.cat ? 'C' : '?'); };
   var each = function (a, fn) { var v = collect(a); if (!v) return; for (var i = 0; i < v.L.length; i++) { var pk = CURK; if (W.__afkRMTrace) CURK = keyOf(v.L[i]); try { fn(v.L[i]); } catch (e) { if (W.__afkRMErr) W.__afkRMErr.push(keyOf(v.L[i]) + ' ' + e.message); if (!each.warned) { each.warned = 1; console.warn('[AFK-relicmech]', e); } } CURK = pk; } };
 
   // ════════ 掛點 ════════
-  var teamPct = function (k, ctx) { var n = 0; party().forEach(function (a) { each(a, function (x) { if (x.h && x.h[k]) { var tv = N(x.h[k](a, x.o, ctx, x.d)); if (tv) { n += tv; tr(); } } }); }); return n; };
+  // 11-21 效能：全隊的「團隊型」條目每刻只整理一次（原本每一下傷害都把全隊 8 人的遺物全部掃一遍）
+  var TIDX = { k: null, v: null }, TKEYS = ['team', 'teamHit', 'guard', 'teamTaken', 'teamCut'];
+  var teamIdx = function () {
+    var key = tk() + ':' + GEN; if (TIDX.k === key) return TIDX.v;
+    var o = { aura: [] }; TKEYS.forEach(function (k) { o[k] = []; });
+    party().forEach(function (a) { var c = collect(a); if (!c) return; c.L.forEach(function (x) { if (x.h) TKEYS.forEach(function (k) { if (x.h[k]) o[k].push([a, x]); }); if (x.ele && x.ele.role === 'aura' && x.ele.e === 'earth') o.aura.push([a, x]); }); });
+    TIDX.k = key; TIDX.v = o; return o;
+  };
+  var eachT = function (k, fn) { var L = teamIdx()[k]; for (var i = 0; i < L.length; i++) { var pk = CURK; if (W.__afkRMTrace) CURK = keyOf(L[i][1]); try { fn(L[i][0], L[i][1]); } catch (e) { if (W.__afkRMErr) W.__afkRMErr.push(keyOf(L[i][1]) + ' ' + e.message); } CURK = pk; } };
+  var teamPct = function (k, ctx) { var n = 0; eachT(k, function (a, x) { var tv = N(x.h[k](a, x.o, ctx, x.d)); if (tv) { n += tv; tr(); } }); return n; };
   var dealt = function (actor, tgt, v, opt) {
     if (!on() || !(v > 0) || !tgt || !actor || typeof actor !== 'object' || !alive(tgt)) return v;
     var kind = opt && opt.kind, main = kind === 'melee' || kind === 'ranged' || kind === 'magic', src = null;
@@ -880,7 +895,7 @@
       if (x.ele && x.ele.role === 'atk') ELEX.atk[x.ele.e](actor, ELEX.atkV[x.ele.e][x.s], ctx);
       if (x.cat && x.cat.hit) x.cat.hit(actor, ctx, x.s);
     });
-    party().forEach(function (a) { each(a, function (x) { if (x.h && x.h.teamHit) x.h.teamHit(a, x.o, actor, ctx, x.d); }); });
+    eachT('teamHit', function (a, x) { x.h.teamHit(a, x.o, actor, ctx, x.d); });
     return v;
   };
   var taken = function (ent, dmg, mob, kind) {
@@ -889,7 +904,7 @@
     if (mm) { if (mm.miss) { mm.miss = 0; return 0; } if ((mm.dust || 0) > t && roll(N(mm.dustP))) return 0; if ((mm.blind || 0) > t && roll(30)) return 0; }
     var c = { dmg: dmg, raw: dmg, mob: mob, kind: kind };
     // 隊友幫忙擋、全隊減傷
-    party().forEach(function (a) { each(a, function (x) { if (x.h && x.h.guard && a !== ent) c.dmg = x.h.guard(a, x.o, ent, c, x.d); if (x.h && x.h.teamTaken) c.dmg = x.h.teamTaken(a, x.o, ent, c, x.d); if (x.ele && x.ele.role === 'aura' && x.ele.e === 'earth') c.dmg *= 1 - ELEX.auraV.earth[x.s] / 100; }); });
+    eachT('guard', function (a, x) { if (a !== ent) c.dmg = x.h.guard(a, x.o, ent, c, x.d); }); eachT('teamTaken', function (a, x) { c.dmg = x.h.teamTaken(a, x.o, ent, c, x.d); }); eachT('aura', function (a, x) { c.dmg *= 1 - ELEX.auraV.earth[x.s] / 100; });
     var tc = Math.min(20, teamPct('teamCut', c)); if (tc) c.dmg *= 1 - tc / 100;
     if (isAlly(ent)) each(P(), function (x) { if (x.h && x.h.allyCut) c.dmg *= 1 - N(x.h.allyCut(P(), x.o)) / 100; });
     var cut = 0, f = famOf(mob);
@@ -1041,5 +1056,7 @@
   var init = function () { if (init.done) return; init.done = true; dropEvo(); calcTier(); catInit(); hookGen(); hookHeal(); hookEco(); hookRT(); bind(); hookTier(); baseText(); rebuild(); };
   hookGen(); bind(); hookTier();
   W.addEventListener('load', function () { setTimeout(init, 0); setTimeout(function () { hookHeal(); hookEco(); rebuild(); }, 800); });
-  W.__afkRelicMech = { M: M, ECHO: ECHO, HUNT: HUNT, CAT: CAT, CATKEY: CATKEY, TMUL: TMUL, SRCF: SRCF, collect: collect, textFor: textFor, hunterAffix: hunterAffix, tier: tier, _dealt: dealt, _taken: taken, _tick: tick, _kill: kill, _death: death, init: init, scale: scale };
+  W.__afkRelicMechHas = function (k) { return !!M[k]; };
+  W.__afkRelicMechTxt = function (k) { var h = M[k]; if (!h) return ''; try { return h.t(scale(h.v[0], (TMUL[k] || 1.15) / 1.15)); } catch (e) { return ''; } };
+  W.__afkRelicMech = { M: M, ECHO: ECHO, HUNT: HUNT, CAT: CAT, CATKEY: CATKEY, TMUL: TMUL, SRCF: SRCF, collect: collect, textFor: textFor, hunterAffix: hunterAffix, tier: tier, _dealt: dealt, _taken: taken, _tick: tick, _kill: kill, _death: death, init: init, scale: scale, bump: function () { GEN++; } };
 })();

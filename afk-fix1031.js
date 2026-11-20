@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
  * afk-fix1031.js — 實測回報修正（玩家 2026-10-31 02:50；外掛開關 fix1031，預設開）
  *
  *   一、裝備函式容錯：equipItem 收到「物品 id 字串」或還沒建立資料的 +N 遺物衍生 id（例：xxx~r15）時，
@@ -290,11 +290,13 @@
   // 十一（Ping 2026-11-20 12:52）：隊長背包已經有傭兵試煉要的道具，卻不能替傭兵交付——
   //   核心只認「傭兵在隊時撿到、分配給他的那份」（mercTrialLoot），隊長原本就有的不算。
   //   改成：分配的份數和隊長背包（＋倉庫，不含上鎖）取比較多的那個；交付時照樣從隊長背包扣。
+  var QC = { t: -1, l: -1, m: null };
   var wrapAllyLoot = function () {
     var o = W._allyQuestLootCount; if (typeof o !== 'function' || o.__afkBag) return;
     var f = function (ally, id) {
       var a = o.apply(this, arguments), b = 0;
-      try { if (typeof questCountId === 'function') b = Number(questCountId(id)) || 0; } catch (e) {}
+      // 11-21 效能：掉落判定每刻會對每個道具問很多次 → 同一刻、背包件數沒變時沿用（原本每次都掃整個背包＋倉庫，佔遊戲運算約 7%）
+      try { if (typeof questCountId === 'function') { var tk = (typeof state !== 'undefined' && state.ticks) || 0, il = (typeof player !== 'undefined' && player.inv) ? player.inv.length : 0; if (QC.t !== tk || QC.l !== il) { QC.t = tk; QC.l = il; QC.m = Object.create(null); } b = QC.m[id] != null ? QC.m[id] : (QC.m[id] = Number(questCountId(id)) || 0); } } catch (e) {}
       return Math.max(a, b);
     };
     f.__afkBag = true; W._allyQuestLootCount = f; try { (0, eval)('_allyQuestLootCount = window._allyQuestLootCount'); } catch (e) {}
