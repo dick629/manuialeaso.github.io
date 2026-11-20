@@ -28,6 +28,9 @@
   //   失去氣息的死亡騎士的烈炎之劍（連同用它做死亡騎士的烈炎之劍的配方）
   var EXTRA = /^失去氣息的 ?(封印的傲慢之塔\d+樓傳送符|魔法書|技術書|戰士的印記|精靈水晶|黑暗精靈水晶|死亡騎士的烈炎之劍)/;
   var extra = []; Object.keys(DB.items).forEach(function (id) { var d = DB.items[id]; if (d && EXTRA.test(String(d.n || '')) && !DEL[id]) { DEL[id] = 1; extra.push(id); } });
+  // Ping 11-20 11:45：烈焰手套(31天) 漏掉了（同系列寒慄／震裂／暴風手套(31天) 早已刪除）→ 一起刪
+  // 精準之牙(7天)／(30天)：沒有任務、配方用到，同樣刪除（Ping 11-20 11:47）
+  ['ttmi_11680', 'ttmi_13578', 'ttmi_13581'].forEach(function (id) { if (DB.items[id] && !DEL[id]) { DEL[id] = 1; extra.push(id); } });
   // Ping 11-17 01:26：純白的沙：MR 也全部移除（STUN／HOLD 已經移除；舊存檔已有的保留）
   Object.keys(DB.items).forEach(function (id) { var d = DB.items[id]; if (d && /^純白的沙：/.test(String(d.n || '')) && !DEL[id]) { DEL[id] = 1; extra.push(id); } });
   // 任務先建立、清理後執行：古物委託會快取材料排序。不可移除材料後仍留下無法交付的任務，

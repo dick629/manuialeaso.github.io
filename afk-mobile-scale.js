@@ -144,8 +144,11 @@
       var sw = Math.min(screen.width, screen.height), sh = Math.max(screen.width, screen.height), w, scr;
       if (portrait()) { w = Math.min(760, Math.round(sw / v)); scr = sw; }
       else { w = Math.round(sh / Math.max(v, sw / 515)); scr = sh; }
-      c = 'width=' + w + ', initial-scale=' + (Math.round(scr / w * 1000) / 1000) + ', viewport-fit=cover';   // 明寫縮放比例：瀏覽器轉向後才不會沿用舊的放大倍率
-    }
+      var isc = Math.round(scr / w * 1000) / 1000;
+      c = 'width=' + w + ', initial-scale=' + isc + ', viewport-fit=cover';   // 明寫縮放比例：瀏覽器轉向後才不會沿用舊的放大倍率
+      // 11-20 Ping 回報「手機輸入 HP／MP 時畫面放大縮不回去」：這裡整串換掉時把 iOS 的 maximum-scale 也弄丟了 → 補回（等於這個縮放比例）
+      if (isIOS()) c += ', maximum-scale=' + isc;
+    } else if (isIOS() && !/maximum-scale/.test(c)) c += ', maximum-scale=1';
     if (m.getAttribute('content') !== c) m.setAttribute('content', c);
   }
   // 轉向：先還原成裝置寬度讓瀏覽器重算，再套上縮放；最後補發 resize 讓各介面重新量尺寸
@@ -333,10 +336,14 @@
   }
 
   // ── ⑤ iOS：擋「聚焦 <16px 的 select/input 自動放大」（捏合縮放不受影響；Android 不加） ─────────
+  function isIOS() { var ua = navigator.userAgent || ''; return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); }
+  // 萬一還是放大了：輸入框失焦時把 viewport 重新設一次，Safari 會照 maximum-scale 縮回去
+  if (isIOS()) document.addEventListener('focusout', function (e) {
+    var t = e.target; if (!t || !/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;
+    setTimeout(function () { var m = document.querySelector('meta[name="viewport"]'); if (!m) return; var c = m.getAttribute('content') || ''; m.setAttribute('content', c + ' '); setTimeout(function () { m.setAttribute('content', c); }, 30); }, 60);
+  }, true);
   function iosViewport() {
-    var ua = navigator.userAgent || '';
-    var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-    if (!ios) return;
+    if (!isIOS()) return;
     var m = document.querySelector('meta[name="viewport"]'); if (!m) return;
     var c = m.getAttribute('content') || '';
     if (/maximum-scale/.test(c)) return;
