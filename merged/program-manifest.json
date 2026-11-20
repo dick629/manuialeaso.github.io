@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-9fea632176f4",
+  "build": "merge-0.4-0350dcd8402f",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -353,8 +353,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-castlewar.js?v=576d7662f1b8",
-      "sha256": "576d7662f1b84c9d6e559c3e50e644a90a60df914be2850bf94e0c766dadb765",
+      "url": "afk-castlewar.js?v=cb26de68a6c4",
+      "sha256": "cb26de68a6c4df90d26a29ed1f17fb601739085352c521fea70069d67ceec62d",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1008,8 +1008,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-mobile-scale.js?v=d6abea29678d",
-      "sha256": "d6abea29678d79d19b608b4aad0b61be4c105eced96d7bdfb5e1cafbdb402619",
+      "url": "afk-mobile-scale.js?v=3f94bd06f357",
+      "sha256": "3f94bd06f357cc61b5b5cd8e7fa1d7b5298a1cc31c614aa4390cb43de83edd0c",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1243,8 +1243,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-redguard.js?v=25c2e4d3d762",
-      "sha256": "25c2e4d3d76295f86c0175b3db67bd7472ca276679c90b755da26cc2ba219fdf",
+      "url": "afk-redguard.js?v=a5198e73979e",
+      "sha256": "a5198e73979ef593c8323e11d1322b1d776554a1994e69d4c98e47a0a2e844f8",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1839,7 +1839,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "82ad7b88e29e848aaa0a5c41298fd66155ecd896adfa21f85ec969d592ad0373",
+      "sha256": "4c86ae629360a900a144df275ac9e4fe73a5e4c1d7f496429d49bb4c22fc027e",
       "type": "text/html; charset=utf-8"
     },
     {

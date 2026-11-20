@@ -100,6 +100,7 @@
     var p = P(), c = CWa(); if (!p || !c) return '請先進入遊戲。';
     var d = c.data(), ids = hostileIds(), n = ids.length;
     if (!n) return '目前沒有血盟對你宣戰。';
+    if (c.held().length >= 7 && !d.allWarDone) return '天下統一後的肅清反賊之戰（連續擊殺一萬名）無法用祈禱停止，要靠你親手平定。';   // 11-20 Ping
     if (pay === 'dia') {
       var need = n * WAR_COST.dia;
       if (typeof W.pandoraAdjustSharedDiamonds !== 'function') return '龍之鑽石帳戶暫時無法使用。';

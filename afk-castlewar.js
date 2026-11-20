@@ -282,6 +282,7 @@
     if (peace()) return 0;
     var n = held().length;
     // 女神嘆息信徒 京「消除宣戰」（afk-redguard，玩家 2026-11-06）：消除時的城數不變就維持停戰；城數一變就失效
+    if (n >= 7 && !d.allWarDone && d.truceN) delete d.truceN;   // 11-20 Ping：統一後的一萬人之戰不能被消除宣戰擋掉（之前消除過的自動失效）
     if (d.truceN) { if (d.truceN === n) return 0; delete d.truceN; }
     if (n <= 1) return 0;
     if (n >= 7) return d.allWarDone ? 0 : Infinity;   // 一萬人事件只有第一次統一會發生

@@ -228,6 +228,11 @@
       '#m-log-sheet #combat-log,#m-log-sheet #sys-log,#m-log-sheet #world-log{contain:content;}',
       /* ⑤ 怪物 sprite 容器升合成層（只有本來就帶 transform 的 .mob-anim；玩家/傭兵 sprite 不動，理由見檔頭） */
       GS + '#battle-view.area-fit .mob-target .mob-img-inner.mob-anim{will-change:transform;}',
+      /* ⑦ 11-20 Ping「手機角色比例過大」：人物、寵物、怪物的 sprite 是照電腦版 800×450 戰鬥框的 px 畫的，手機戰鬥框小很多卻沒縮
+         → 依戰鬥框實際大小算 --afk-bvs＝min(寬/800, 高/450)，sprite 跟著等比縮（scale 屬性跟原本的 transform 疊加，不影響定位） */
+      GS + '#pet-layer>div{scale:var(--afk-bvs,1);transform-origin:50% 100%;}',
+      GS + '#player-morph-sprite,' + GS + '.party-sprite{scale:var(--afk-bvs,1);transform-origin:50% 100%;}',
+      GS + '#battle-view.area-fit #mob-list{height:calc(242px * var(--afk-bvs,1)) !important;}',
       '}',
       /* ④ 橫向 */
       '@media ' + LAND_MQ + '{',
@@ -312,6 +317,8 @@
     if (hud > 0) setVar('--afk-ms-hud-h', hud);
     var hdr = document.querySelector('#map-view-panel > .panel-header');
     if (hdr) { try { r = hdr.getBoundingClientRect(); if (r.height > 0) setVar('--afk-ms-maphdr-h', r.height); } catch (err) {} }
+    var bv = document.getElementById('battle-view');
+    if (bv) { try { r = bv.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { var k = Math.max(0.3, Math.min(1, r.width / 800, r.height / 450)); k = Math.round(k * 100) / 100; if (_last.bvs !== k) { _last.bvs = k; var gs2 = document.getElementById('game-screen'); if (gs2) gs2.style.setProperty('--afk-bvs', String(k)); } } } catch (err) {} }
   }
   function watch() {
     if (typeof ResizeObserver !== 'function') { measure(); window.addEventListener('resize', measure); return; }
@@ -319,6 +326,7 @@
     try { _ro = new ResizeObserver(function () { measure(); }); } catch (e) { measure(); return; }
     ['m-status', 'mobile-vitals'].forEach(function (id) { var e = document.getElementById(id); if (e) _ro.observe(e); });
     var hdr = document.querySelector('#map-view-panel > .panel-header'); if (hdr) _ro.observe(hdr);
+    var bvw = document.getElementById('battle-view'); if (bvw) _ro.observe(bvw);
     measure();
   }
   // afk-battlehud 的 #m-status 是進遊戲才建的 → 建好後補 observe（#game-screen 顯示時就夠，跟 afk-mobile 同一個觸發點）
