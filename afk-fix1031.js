@@ -17,6 +17,7 @@
  *       （創盟的王族被刪除或覆蓋、從備份匯入成新身分…；換發身分證只會換「還找得到的」舊碼，所以救不回來）時，
  *       由目前登入、同模式的王族接任盟主，並在系統訊息說明。血盟名稱、城堡、成員貢獻都不變。
  *   八、職業專屬武器（2026-10-31 12:53）：龍騎士、幻術士「不能用匕首／矛」的通則，遇到 req 明確列出該職業的武器（潘朵拉神劍）以 req 為準。
+ *   十一、傭兵試煉交付（2026-11-20）：隊長背包原本就有的試煉道具也算傭兵的（見檔尾）。
  *   九、傲慢之塔攀登狀態殘留（2026-10-31 14:11）：被強制換圖帶離塔後攀登旗標還留著，之後在別的地圖打倒任何頭目（區域霸主…）
  *       就被傳進傲慢之塔；現在人不在塔的樓層時一律清掉攀登旗標。
  *   七、精通之證沒掉的提示（2026-10-31 11:30）：精通任務是每個角色各自的——打倒精通頭目（飛龍）卻沒拿到精通之證時，
@@ -285,6 +286,20 @@
       return r;
     });
   }
+
+  // 十一（Ping 2026-11-20 12:52）：隊長背包已經有傭兵試煉要的道具，卻不能替傭兵交付——
+  //   核心只認「傭兵在隊時撿到、分配給他的那份」（mercTrialLoot），隊長原本就有的不算。
+  //   改成：分配的份數和隊長背包（＋倉庫，不含上鎖）取比較多的那個；交付時照樣從隊長背包扣。
+  var wrapAllyLoot = function () {
+    var o = W._allyQuestLootCount; if (typeof o !== 'function' || o.__afkBag) return;
+    var f = function (ally, id) {
+      var a = o.apply(this, arguments), b = 0;
+      try { if (typeof questCountId === 'function') b = Number(questCountId(id)) || 0; } catch (e) {}
+      return Math.max(a, b);
+    };
+    f.__afkBag = true; W._allyQuestLootCount = f; try { (0, eval)('_allyQuestLootCount = window._allyQuestLootCount'); } catch (e) {}
+  };
+  wrapAllyLoot(); W.addEventListener('load', wrapAllyLoot);
 
   W.__afkFix1031 = { clanHeal: clanHeal, resolveItem: resolveItem, baseId: baseId, scanDerived: scanDerived };
 })();

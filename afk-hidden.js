@@ -280,6 +280,9 @@
     var eq = p.eq || {}; for (var k in eq) { var e = eq[k]; if (e && e.id === ATHENA) return true; }
     return false;
   };
+  // 11-20 Ping：雅典娜之杖是隱藏道具，不列入裝備收藏冊（已登錄過的不會因此消失）
+  var athNoCol = function () { try { if (typeof EQUIP_CAT_ITEMS !== 'undefined') Object.keys(EQUIP_CAT_ITEMS).forEach(function (k) { var L = EQUIP_CAT_ITEMS[k]; if (Array.isArray(L)) for (var i = L.length - 1; i >= 0; i--) if (L[i] === ATHENA) L.splice(i, 1); }); } catch (e) {} };
+  athNoCol(); W.addEventListener('load', function () { setTimeout(athNoCol, 300); });
   var noviceFight = function () { var s = (typeof state !== 'undefined' && state) || {}; return !!(s._afkFinal && s._afkFinalNovice && (s._afkFinalMode || 'first') === 'first'); };
   var athOn = function () { var p = P(); return !!(p && !p.classicMode && (!T || T.enabled('hiddenbonus')) && noviceFight() && carryAthena()); };
   var goddess = function (m) { return !!(m && m._afkFinal); };

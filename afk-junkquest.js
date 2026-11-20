@@ -197,12 +197,14 @@
   var noviceDrop = function (m) {
     var p = P(); if (!p || !m || m.boss || m.race === '建築' || m._train || m._rd || m._solo) return;
     var map = (typeof mapState !== 'undefined' && mapState) ? String(mapState.current || '') : '';
-    if (!map || /^town_/.test(map) || map === 'time_room' || (DB.towns && DB.towns[map])) return;
+    if (!map || /^town_/.test(map) || map === 'time_room' || map === 'growth_mushroom' || (DB.towns && DB.towns[map])) return;   // 11-20：蘑菇秘境只給經驗、金幣、CJ的幸運符
     try { if (W.__afkDimRiftOn && W.__afkDimRiftOn()) return; } catch (e) {}   // 次元裂縫只掉次元材料
     if (Math.random() >= NOVICE_RATE) return;
     var need = noviceNeed(); if (!need.length) return;
     var q = need[Math.floor(Math.random() * need.length)];
+    var c0 = count(q.id);
     try { gainItem(q.id, 1, true, true); } catch (e) { return; }
+    if (count(q.id) <= c0) return;   // 11-20：被其他規則擋下沒進背包 → 不要顯示「撿到了」
     sys('<span style="color:#86efac">【古物學者委託】撿到了 ' + esc(DB.items[q.id].n) + '（' + Math.min(count(q.id), q.cnt) + '／' + q.cnt + '）</span>');
   };
   if (typeof W.killMob === 'function') {
