@@ -132,7 +132,9 @@
     while (pick.length < k) { var i = Math.floor(Math.random() * list.length); pick.push(list.splice(i, 1)[0]); }
     return { req: pick.map(function (id) { return { id: id, cnt: TIER[t].bounty[1] }; }), at: Date.now() };
   };
-  var bounty = function (t) { var s = st(); if (!s.bounty[t] || !s.bounty[t].req || !s.bounty[t].req.every(function (q) { return DB.items[q.id]; })) s.bounty[t] = newBounty(t); return s.bounty[t]; };
+  var skipNow = function (id) { var f = window.__afkBountySkip; try { return !availableItem(id) || (typeof f === 'function' && !!f(id)); } catch (e) { return false; } };
+  // 11-20 Ping：常駐委託要在瘋狂席琳就能做完——舊存檔留著的委託若指定了只有夢域鏡才拿得到的材料（四龍眼淚）或已停用的道具，自動換一張
+  var bounty = function (t) { var s = st(); if (!s.bounty[t] || !s.bounty[t].req || !s.bounty[t].req.every(function (q) { return DB.items[q.id] && !skipNow(q.id); })) s.bounty[t] = newBounty(t); return s.bounty[t]; };
   var enough = function (req) { return req.length > 0 && req.every(function (q) { return count(q.id) >= q.cnt; }); };
   var save = function () { try { if (typeof saveGame === 'function') saveGame(); } catch (e) {} };
   var refresh = function () { try { if (typeof renderTabs === 'function') renderTabs(true); if (typeof updateUI === 'function') updateUI(); } catch (e) {} };
