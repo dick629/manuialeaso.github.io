@@ -162,14 +162,35 @@
     } catch (e) {}
   };
   // 收藏冊：別的外掛晚一點才把道具放進收藏冊 → 載入後再清一次刪除名單
+  // 11-20 Ping：收藏冊裡標「不計入完成條件」的道具直接從收藏冊拿掉
+  var OPT = function (id) { var d = DB.items[id]; return !!(d && d.lmDropOptional); };
   var colPurge = function () {
     try {
-      if (typeof EQUIP_CAT_ITEMS !== 'undefined') Object.keys(EQUIP_CAT_ITEMS).forEach(function (k) { var L = EQUIP_CAT_ITEMS[k]; if (!Array.isArray(L)) return; for (var i = L.length - 1; i >= 0; i--) if (DEL[L[i]]) { try { delete EQUIP_ITEM_CAT[L[i]]; } catch (e) {} L.splice(i, 1); } });
-      if (typeof MISC_CAT_ITEMS !== 'undefined') Object.keys(MISC_CAT_ITEMS).forEach(function (k) { var L = MISC_CAT_ITEMS[k]; if (!Array.isArray(L)) return; for (var i = L.length - 1; i >= 0; i--) if (DEL[L[i]]) { try { delete MISC_ITEM_CAT[L[i]]; } catch (e) {} L.splice(i, 1); } });
+      if (typeof EQUIP_CAT_ITEMS !== 'undefined') Object.keys(EQUIP_CAT_ITEMS).forEach(function (k) { var L = EQUIP_CAT_ITEMS[k]; if (!Array.isArray(L)) return; for (var i = L.length - 1; i >= 0; i--) if (DEL[L[i]] || OPT(L[i])) { try { delete EQUIP_ITEM_CAT[L[i]]; } catch (e) {} L.splice(i, 1); } });
+      if (typeof MISC_CAT_ITEMS !== 'undefined') Object.keys(MISC_CAT_ITEMS).forEach(function (k) { var L = MISC_CAT_ITEMS[k]; if (!Array.isArray(L)) return; for (var i = L.length - 1; i >= 0; i--) if (DEL[L[i]] || OPT(L[i])) { try { delete MISC_ITEM_CAT[L[i]]; } catch (e) {} L.splice(i, 1); } });
     } catch (e) {}
+  };
+  // 已登錄過的道具會被核心「動態補登」放回收藏冊 → 補登後再拿掉（只拿掉清單，登錄紀錄不動）
+  var drop1 = function (id) {
+    if (!(DEL[id] || OPT(id))) return;
+    [[typeof EQUIP_CAT_ITEMS !== 'undefined' && EQUIP_CAT_ITEMS, typeof EQUIP_ITEM_CAT !== 'undefined' && EQUIP_ITEM_CAT], [typeof MISC_CAT_ITEMS !== 'undefined' && MISC_CAT_ITEMS, typeof MISC_ITEM_CAT !== 'undefined' && MISC_ITEM_CAT]].forEach(function (x) {
+      var L = x[0], M = x[1]; if (!L || !M || !M[id]) return; var a = L[M[id]]; if (Array.isArray(a)) { var i = a.indexOf(id); if (i >= 0) a.splice(i, 1); } delete M[id];
+    });
+  };
+  var wrapReg = function () {
+    ['registerEquipObtained', 'registerMiscObtained'].forEach(function (fn) {
+      var o = W[fn]; if (typeof o !== 'function' || o.__afkColCut) return;
+      W[fn] = function (id) { var r = o.apply(this, arguments); try { drop1(id); } catch (e) {} return r; }; W[fn].__afkColCut = true;
+      try { (0, eval)(fn + ' = window.' + fn); } catch (e) {}
+    });
+    ['ensureEquipBook', 'ensureMiscDex', 'mergeSharedIntoPlayer'].forEach(function (fn) {
+      var o = W[fn]; if (typeof o !== 'function' || o.__afkColCut) return;
+      W[fn] = function () { var r = o.apply(this, arguments); try { colPurge(); } catch (e) {} return r; }; W[fn].__afkColCut = true;
+      try { (0, eval)(fn + ' = window.' + fn); } catch (e) {}
+    });
   };
   var run = function () { try { tables(); purge(); pets(); notes(); addDrops(); colPurge(); } catch (e) { console.warn('[AFK-dropcut]', e); } };
   run();
-  W.addEventListener('load', function () { try { tables(); } catch (e) {} setTimeout(function () { addDrops(); colPurge(); }, 600); });
+  W.addEventListener('load', function () { try { tables(); } catch (e) {} setTimeout(function () { addDrops(); colPurge(); wrapReg(); }, 600); setTimeout(function () { wrapReg(); colPurge(); }, 3000); });
   W.__afkDropCut = { EXTRA: extra, DEL: DEL, RED: RED, PET: PET, K: K, stats: stats, run: run, data: DATA, questProtected: QUEST_KEEP, restoredQuestItems: restoredQuests, craftProtected: CRAFT_KEEP, restoredCraftItems: restoredCraft };
 })();

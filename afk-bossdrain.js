@@ -11,6 +11,7 @@
  *        外掛副本（afk_ 開頭的地圖：星途遠征、幽靈船、異界祭壇、哈汀的時空、謀叛者的低語、哈爾巴斯…；木人場 afk_dummy 除外）。
  *   時空裂痕裡每秒最多一次（同一秒好幾隻王倒下只算一次；2026-11-03 fixE，上一次的 tick 記在 window.__afkDrainAt，不存檔）。
  * 二、隱藏規則：怪物死亡時屍爆，隊伍裡每個角色受到最大 HP 3% 的真實傷害（只在夢域鏡；會倒下；吃符文「骸」的真實傷害減免）。
+ *     11-20：改成 2 秒合併、分 5 秒扣完、每秒最多 3%（CB）。
  *     Ping 11-15：原本只有不死系、5%；改成全部怪物（建築與暗夢星迴自爆的那隻除外）、3%。
  * ========================================================================== */
 (function () {
@@ -55,11 +56,11 @@
     });
     if (n) clog('<span class="font-bold" style="color:#a78bfa">【王的殘響】</span>王倒下的餘波掃過全隊：失去最大 MP 的 ' + Math.round(CFG.mp * 100) + '%（MP 不夠的人改失去最大 HP 的 ' + Math.round(CFG.hp * 100) + '%）。');
   };
-  var corpse = function () {
-    var p = P(), dead = false;
+  var corpse = function (pct) {
+    var p = P(), dead = false; pct = pct || CFG.corpse;
     members().forEach(function (t) {
       if (dead) return;
-      var dmg = Math.max(1, Math.floor((Number(t.mhp) || 1) * CFG.corpse));
+      var dmg = Math.max(1, Math.floor((Number(t.mhp) || 1) * pct));
       if (typeof W.__afkTrueCut === 'function') { try { dmg = W.__afkTrueCut(t, dmg); } catch (e) {} }
       if (typeof W.__afkShieldEat === 'function') dmg = W.__afkShieldEat(t, dmg);   // 11-18 Ping：一般怪的爆炸先扣護盾
       if (!(dmg > 0)) return;
@@ -67,6 +68,20 @@
       else { t.curHp -= dmg; if (t.curHp <= 0) { t.curHp = 0; t._downed = true; t._reviveCd = 150; } }
     });
   };
+
+  // 11-20（Ping 13:50）：屍爆改成「2 秒內倒下的合成一次、分 5 秒扣完、每秒最多 3%」——打得快不會被一下炸光
+  //   一次的量：第一隻 3%，每多一隻 +0.5%，最多 6%；照樣會倒下、照樣先扣護盾、吃符文「骸」。回村或離開夢域鏡就清掉。
+  var CB = { win: 20, dur: 50, first: 0.03, inc: 0.005, cap: 0.06, dps: 0.03, n: 0, until: 0, cur: [] };
+  var cbTick = function () {
+    var t = Number(S().ticks) || 0;
+    if (!hiddenOn() || !dreamOn() || (typeof mapState !== 'undefined' && /^town_/.test(String(mapState.current || '')))) { CB.n = 0; CB.cur.length = 0; return; }
+    if (CB.n && t >= CB.until) { var tot = Math.min(CB.cap, CB.first + CB.inc * (CB.n - 1)); CB.cur.push({ ps: tot * 10 / CB.dur, until: t + CB.dur }); CB.n = 0; }
+    if (!CB.cur.length || t % 10) return;
+    var sum = 0; CB.cur = CB.cur.filter(function (e) { if (e.until > t) { sum += e.ps; return true; } return false; });
+    var d = Math.min(CB.dps, sum); if (d > 0 && P() && !P().dead) { corpse(d); CB.pct = (CB.pct || 0) + d; }
+  };
+  var bindCb = function () { var X = W.__afkProc; if (X && X.on && !bindCb.done) { X.on('tick', cbTick); bindCb.done = true; } };
+  bindCb(); W.addEventListener('load', function () { setTimeout(bindCb, 200); });
 
   if (typeof W.killMob === 'function') {
     var oKill = W.killMob;
@@ -81,11 +96,11 @@
             var tk0 = Number(S().ticks) || 0, inRift = !!(S().riftRun && mapState.current === 'rift_battle');
             if (!inRift || !(W.__afkDrainAt != null && tk0 - W.__afkDrainAt < 10 && tk0 >= W.__afkDrainAt)) { if (inRift) W.__afkDrainAt = tk0; drain(); }
           }
-          if (m.race !== '建築' && !m._dsBlast && hiddenOn() && dreamOn() && !P().dead && (typeof window.__afkRiftOnce !== 'function' || window.__afkRiftOnce('corpse'))) corpse();   // 時空裂痕裡每秒最多一次（2026-11-03 23:39）
+          if (m.race !== '建築' && !m._dsBlast && hiddenOn() && dreamOn() && !P().dead) { if (!CB.n) CB.until = (Number(S().ticks) || 0) + CB.win; CB.n++; }   // 11-20：改成 2 秒合併（見 CB）
         }
       } catch (e) { console.warn('[AFK-bossdrain]', e); }
       return r;
     };
   }
-  W.__afkBossDrain = { CFG: CFG, instance: instance, drain: drain, corpse: corpse };
+  W.__afkBossDrain = { CFG: CFG, CB: CB, instance: instance, drain: drain, corpse: corpse };
 })();

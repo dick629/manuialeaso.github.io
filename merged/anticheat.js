@@ -126,15 +126,15 @@
   };
   // 11-11 23:47（Ping）：acPre 是內部標記，不在道具說明顯示（原本加的「不受異常道具檢查」那一行拿掉）
   // ── S 級封印（Ping 11-11 16:35／16:46；設計稿十四節）──
-  //   S 級＝GM 道具、至高的支配、次元遺物（含次元時空武器）、創世密奧卡。
+  //   S 級＝GM 道具、至高的支配、次元遺物（含次元時空武器）、創世密奧卡、昇華飾品（11-20）。
   //   正當來源＝遊戲正規流程做出來時蓋的印記（acs）。沒有印記、或印記標成「太快」的 S 級＝封印。
-  //   太快：每件 S 級的合理時數（至高支配 300、次元遺物 +0～+5 累計 1／20／50／90／140／240、四龍次元時空 1／15／30／50、創世 500 小時）；
+  //   太快：每件 S 級的合理時數（至高支配 500（11-20 起；原 300）、昇華飾品 300、次元遺物 +0～+5 累計 1／20／50／90／140／240、四龍次元時空 1／15／30／50、創世 500 小時）；
   //         蓋印記或強化時，整個帳號這版之後做出來的 S 級時數加總 > 帳號遊玩時數（離線補跑、月亮省電模式打對折）→ 標成太快。印記跟著道具走（放倉庫、換角色都不變）。
   //   封印（面板、說明都照常顯示；只有實際結算打折）：穿著的每件 −15% 造成傷害、+15% 受到傷害（最多 −80%／+80%）；
   //         封印的武器改成造成傷害 −35%；該件遺物特效的回復量 ×0.5。管理者的角色不封。
   // 合理時數（Ping 11-11 17:20：低於這個時數就拿到＝異常）。次元遺物照強化等級累計；四龍次元時空武器照進化階段。
-  var SEAL_H = { supreme: 300, genesis: 500 }, DIM_SEAL = [1, 20, 50, 90, 140, 240], DRG_SEAL = [1, 15, 30, 50];
-  var sKind = function (id) { var d = DB.items[id]; if (!d) return ''; if (String(id) === '99998' || String(id) === '99999' || d.gmOnly) return 'gm'; if (d.dimRelic || d.dimDragon != null) return 'dim'; if (d.relicEvo != null) return 'supreme'; return ''; };
+  var SEAL_H = { supreme: 500, genesis: 500, ascacc: 300 }   /* Ping 11-20：至高支配 300→500；昇華飾品納入 S 級 */, DIM_SEAL = [1, 20, 50, 90, 140, 240], DRG_SEAL = [1, 15, 30, 50];
+  var sKind = function (id) { var d = DB.items[id]; if (!d) return ''; if (String(id) === '99998' || String(id) === '99999' || d.gmOnly) return 'gm'; if (d.dimRelic || d.dimDragon != null) return 'dim'; if (d.relicEvo != null) return 'supreme'; if (d.relicAsc != null && d.type === 'acc') return 'ascacc'; return ''; };
   var ACCT_KEY = 'lineage_ac_acct_v1', ACCT_SALT = 'lgacct:7d1:';
   var acctSig = function (a) { return fnv(ACCT_SALT + a.ms + '|' + a.sh); };
   var acct = function () { var a = null; try { a = JSON.parse(localStorage.getItem(ACCT_KEY) || 'null'); } catch (e) {} if (!a || a.k !== acctSig(a)) a = { ms: 0, sh: 0 }; return a; };
