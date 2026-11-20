@@ -255,7 +255,7 @@
     run: function (p) { var S = st(p); Object.keys(S.cd).forEach(function (k) { var d = SK[k]; if (d && d.tier === '一般' && d.key !== 'time') S.cd[k] = 0; }); pop(p, 'time', '時間消除', '#a5f3fc'); return true; } });
   add('paladin', 'unity', { n: '團結', tier: '英雄', lv: 50, k: 'pas', desc: '自己和隊伍（含傭兵）經驗 +5%；每多 1 個隊員再 +1.75%，最多 +12%。' });
   add('paladin', 'protect', { n: '神聖保護', tier: '英雄', lv: 55, k: 'pas', desc: '受到的傷害 - 等級÷8。', taken: function (p, dmg) { return Math.max(0, dmg - Math.floor(LV(p) / 8) * (mast(p, 'awp_guard') ? 2 : 1)); } });
-  add('paladin', 'grace', { n: '神聖恩典', tier: '英雄', lv: 60, k: 'act', mp: 30, cd: 30, ctrl: true, desc: '為隊伍中 HP 比例最低的成員（自己、隊長、傭兵、寵物、召喚物、守衛）立即回復最大 HP 20%，之後 8 秒內自己的藥水回復量 +30%；昏迷中也能用。',
+  add('paladin', 'grace', { n: '神聖恩典', tier: '英雄', lv: 60, k: 'act', heal: 1, mp: 30, cd: 30, ctrl: true, desc: '為隊伍中 HP 比例最低的成員（自己、隊長、傭兵、寵物、召喚物、守衛）立即回復最大 HP 20%，之後 8 秒內自己的藥水回復量 +30%；昏迷中也能用。',
     can: function (p) { var t = healPick(p); return !!t && t.pct < 0.6; }, run: function (p) { var t = healPick(p); healAny(p, t ? t.m : p, 0.2); st(p).buf.grace = now() + 8; return true; } });
   add('paladin', 'cross', { n: '神聖十字架', tier: '英雄', lv: 65, k: 'pas', desc: '每 6 秒落下光之十字架，範圍 120%。盾 +0～4 落 1 個、+5～8 落 2 個、+9 以上落 3 個。',
     tick: function (p) { var S = st(p); if (N(S.cd.cross) > now()) return; var t = target(); if (!t) return; S.cd.cross = now() + 6; var e = Math.max(0, offEn(p)), n = !hasOff(p) ? 1 : e >= 9 ? 3 : e >= 5 ? 2 : 1; for (var i = 0; i < n; i++) near(t, 4).forEach(function (x) { deal(p, x, 1.2, { magic: true, src: 'cross', color: '#fef9c3', show: i === 0 }); }); } });
@@ -335,7 +335,7 @@
   };
   var areaHeal = function (p, frac) { [p].concat((p === P() ? (p.allies || []) : [])).forEach(function (a) { if (a && !a._downed && !a.dead) heal(a, N(a.mhp) * frac); }); };
   // 雷神
-  add('thunder', 'plasma2', { n: '等離子電場', tier: '傳說', lv: 80, k: 'act', mp: 30, cd: 60, ctrl: true, desc: '解除自己的昏迷、凍結等控制，回復 20% HP，5 秒內受到的傷害 -50%；昏迷中也能放。',
+  add('thunder', 'plasma2', { n: '等離子電場', tier: '傳說', lv: 80, k: 'act', heal: 1, mp: 30, cd: 60, ctrl: true, desc: '解除自己的昏迷、凍結等控制，回復 20% HP，5 秒內受到的傷害 -50%；昏迷中也能放。',
     can: function (p) { return controlled(p) || N(p.hp) < N(p.mhp) * 0.5; },
     run: function (p) { var z = p.statuses || {}; ['stun', 'freeze', 'stone', 'sleep', 'paralyze'].forEach(function (k) { if (z[k]) z[k] = 0; }); heal(p, N(p.mhp) * 0.2); st(p).buf.plasma = now() + 5; return true; },
     taken: function (p, dmg) { return buffOn(p, 'plasma') ? dmg * 0.5 : dmg; } });
@@ -352,7 +352,7 @@
     run: function (p) { st(p).buf.mimic = now() + 30; return true; }, stat: function (p, d) { if (buffOn(p, 'mimic')) d.atkSpdPct += 20; },
     hit: function (p, t) { if (buffOn(p, 'mimic') && chance(0.12)) { var sum = 0; near(t, 3).forEach(function (x) { sum += deal(p, x, 2.0, { magic: true, src: 'wave' }); }); heal(p, sum * 0.1); } } });
   add('darkknight', 'stun2', { n: '暗黑之暈（復仇者）', tier: '傳說', lv: 80, k: 'pas', desc: '暗黑之暈的傷害減免下降 10% → 20%，持續 6 → 8 秒。' });
-  add('darkknight', 'illusion', { n: '幻覺', tier: '傳說', lv: 80, k: 'act', mp: 30, cd: 90, ctrl: true, desc: 'HP 低於 40% 時召喚幻影分身：回復 25% HP，5 秒內受到的傷害 -60%；昏迷中也能放。',
+  add('darkknight', 'illusion', { n: '幻覺', tier: '傳說', lv: 80, k: 'act', heal: 1, mp: 30, cd: 90, ctrl: true, desc: 'HP 低於 40% 時召喚幻影分身：回復 25% HP，5 秒內受到的傷害 -60%；昏迷中也能放。',
     can: function (p) { return N(p.hp) < N(p.mhp) * 0.4; }, run: function (p) { heal(p, N(p.mhp) * 0.25); st(p).buf.phantom = now() + 5; return true; },
     taken: function (p, dmg) { return buffOn(p, 'phantom') ? dmg * 0.4 : dmg; } });
   add('darkknight', 'dk2', { n: '黑暗騎士（復仇者）', tier: '傳說', lv: 80, k: 'pas', desc: '黑暗騎士的魔法追加 ×2；攻速 +5%。', stat: function (p, d) { d.atkSpdPct += 5; } });
@@ -372,7 +372,7 @@
     run: function (p) { st(p).buf.avatar = now() + 30; return true; }, stat: function (p, d) { if (buffOn(p, 'avatar')) d.atkSpdPct += 15; },
     hit: function (p, t) { if (!buffOn(p, 'avatar')) return; if (N(t.mp) > 0) t.mp = Math.max(0, N(t.mp) - 20); if (chance(0.05)) stun(p, t, 2); } });
   // 魔劍士
-  add('runeblade', 'flow', { n: '生命流', tier: '傳說', lv: 80, k: 'act', mp: 40, cd: 45, desc: '回復全隊 LFE×20 的 HP。', can: function (p) { return N(p.hp) < N(p.mhp) * 0.8; },
+  add('runeblade', 'flow', { n: '生命流', tier: '傳說', lv: 80, k: 'act', heal: 1, mp: 40, cd: 45, desc: '回復全隊 LFE×20 的 HP。', can: function (p) { return N(p.hp) < N(p.mhp) * 0.8; },
     run: function (p) { [p].concat(p === P() ? (p.allies || []) : []).forEach(function (a) { if (a && !a._downed) heal(a, LFE(p) * 20); }); return true; } });
   add('runeblade', 'illusion2', { n: '幻覺反擊（傳說）', tier: '傳說', lv: 80, k: 'pas', desc: '幻覺反擊的傷害 200% → 350%。' });
   add('runeblade', 'burst2', { n: '符石爆裂（王牌）', tier: '傳說', lv: 80, k: 'pas', desc: '符石爆裂的傷害 ×1.6。' });
@@ -387,7 +387,7 @@
     run: function (p, t) { deal(p, t, 3.0, { src: 'outlaw' }); deb(t, 'meleeVuln', 0.15, 10); return true; } });
   add('berserker', 'crisis', { n: '泰坦：危急', tier: '傳說', lv: 80, iconName: '泰坦：危急', k: 'pas', desc: '近距離爆擊 +5%；攻擊時 3% 機率粉碎護盾，追加 100% 傷害。',
     stat: function (p, d) { d.meleeCrit += 5; }, hit: function (p, t) { if (chance(0.03)) deal(p, t, 1.0, { src: 'shatter' }); } });
-  add('berserker', 'gaia', { n: '蓋亞', tier: '傳說', lv: 80, k: 'act', mp: 30, cd: 60, ctrl: true, desc: 'HP 低於 50% 時：立即回復 20% HP，之後 10 秒每秒再回 2%；昏迷中也能放。',
+  add('berserker', 'gaia', { n: '蓋亞', tier: '傳說', lv: 80, k: 'act', heal: 1, mp: 30, cd: 60, ctrl: true, desc: 'HP 低於 50% 時：立即回復 20% HP，之後 10 秒每秒再回 2%；昏迷中也能放。',
     can: function (p) { return N(p.hp) < N(p.mhp) * 0.5; }, run: function (p) { heal(p, N(p.mhp) * 0.2); st(p).buf.gaia = now() + 10; return true; },
     tick: function (p) { var S = st(p); if (buffOn(p, 'gaia') && now() - N(S.cnt.gaiaAt) >= 1) { S.cnt.gaiaAt = now(); heal(p, N(p.mhp) * 0.02); } } });
   add('berserker', 'heart', { n: '燃燒之心', tier: '傳說', lv: 80, k: 'pas', desc: '受到致命傷害時保留 1 HP，5 秒內不會倒下，期間近距離傷害 + 最大 HP 的 1%（每 120 秒一次）。',
@@ -406,7 +406,8 @@
   var BOOK_P = function (lv) { return Math.round((5000 + lv * lv * 120) / 1000) * 1000; };
   Object.keys(SK).forEach(function (id) {
     var s = SK[id], c = CLS[s.cls];
-    DB.skills[id] = { n: s.n, type: s.k === 'act' ? 'atk' : s.k === 'buf' ? 'buff' : 'passive', dmgType: 'physical', label: LABEL[s.k], tier: 1, awAct: s.k !== 'pas', awCls: s.cls, awLv: s.lv, awTier: s.tier, mp: s.mp || 0, img: s.img,
+    DB.skills[id] = { n: s.n, type: s.k === 'act' ? 'atk' : s.k === 'buf' ? 'buff' : 'passive', healSlot: !!s.heal, dmgType: 'physical',   /* 11-21：補血／保命技（生命流、等離子電場…）放進技能設定的「治癒魔法」，不再跟攻擊技能搶 */
+      label: LABEL[s.k], tier: 1, awAct: s.k !== 'pas', awCls: s.cls, awLv: s.lv, awTier: s.tier, mp: s.mp || 0, img: s.img,
       desc: s.desc + (s.k === 'act' ? '（MP ' + s.mp + '，冷卻 ' + s.cd + ' 秒，自動施放）' : s.k === 'buf' ? '（MP ' + s.mp + '，自動維持）' : '') };
     var bk = 'bk_aw_' + s.cls + '_' + s.key;
     DB.items[bk] = { type: 'skillbk', n: c.n + '技能書(' + s.n + ')', p: s.tier === '一般' ? BOOK_P(s.lv) : 0, sk: id, gachaWeight: 0, img: s.img, noShop: true,
