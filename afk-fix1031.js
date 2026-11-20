@@ -301,5 +301,31 @@
   };
   wrapAllyLoot(); W.addEventListener('load', wrapAllyLoot);
 
+  // 11-20 Ping：魔女 5/5「每 5 次共鳴放一次冰雪暴」——學了魔擊精通後共鳴改發魔擊，原本完全不計數（一轉後四個精通都有）。
+  //   拿共鳴武器＋魔擊精通時，魔擊也算一次共鳴。
+  var witchCount = function (who, isAlly) {
+    if (!who || !who._setWitch5) return;
+    who._witchResCnt = (who._witchResCnt || 0) + 1;
+    if (who._witchResCnt < 5) return;
+    who._witchResCnt = 0;
+    var sk = DB.skills && DB.skills['sk_blizzard']; if (!sk) return;
+    if (isAlly) { if (typeof allyStormTick === 'function') allyStormTick(who, sk, true); }
+    else if (typeof stormBuffTick === 'function') stormBuffTick(sk, true);
+  };
+  var resoWpn = function (e) { try { var w = e && e.eq && e.eq.wpn; return !!(w && typeof isResonanceWeapon === 'function' && isResonanceWeapon(w.id)); } catch (e2) { return false; } };
+  var wrapWitch = function () {
+    var o1 = W.procMagicStrike;
+    if (typeof o1 === 'function' && !o1.__afkWitch) {
+      W.procMagicStrike = function (t, isSpread) { var r = o1.apply(this, arguments); try { var p = player; if (!isSpread && p && p._setWitch5 && !p.classicMode && resoWpn(p) && typeof hasMastery === 'function' && hasMastery('m_strike')) witchCount(p, false); } catch (e) {} return r; };
+      W.procMagicStrike.__afkWitch = true; try { (0, eval)('procMagicStrike = window.procMagicStrike'); } catch (e) {}
+    }
+    var o2 = W._allyMagicStrikeHit;
+    if (typeof o2 === 'function' && !o2.__afkWitch) {
+      W._allyMagicStrikeHit = function (ally) { var r = o2.apply(this, arguments); try { if (ally && ally._setWitch5 && !ally.classicMode && resoWpn(ally) && typeof allyHasMastery === 'function' && allyHasMastery(ally, 'm_strike')) witchCount(ally, true); } catch (e) {} return r; };
+      W._allyMagicStrikeHit.__afkWitch = true; try { (0, eval)('_allyMagicStrikeHit = window._allyMagicStrikeHit'); } catch (e) {}
+    }
+  };
+  wrapWitch(); W.addEventListener('load', wrapWitch);
+
   W.__afkFix1031 = { clanHeal: clanHeal, resolveItem: resolveItem, baseId: baseId, scanDerived: scanDerived };
 })();

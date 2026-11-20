@@ -785,6 +785,7 @@
     ctxWrap('castSkillInner', P_(function (id) { return '技能：' + skN(id); }));
     ctxWrap('wandLightArrowProc', P_('共鳴（光箭）'));
     ctxWrap('procMoonburst', P_('月光爆裂'));
+    ctxWrap('stormBuffTick', function (sk, free) { return { who: '你', what: free ? '套裝：魔女冰雪暴' : '持續傷害：' + skN(sk) }; });   // 11-20 Ping：魔女 5/5 的冰雪暴原本混在「共鳴（光箭）」裡
     ctxWrap('procMagicStrike', P_('魔擊'));
     ctxWrap('rapidfireProc', P_('連射'));
     ctxWrap('procCounter', P_('反擊'));
@@ -818,6 +819,7 @@
     ctxWrap('allyCastSlaughter', A_('技能：屠殺'));
     ctxWrap('allyCastMpDmg', A_('技能（MP 傷害）'));
     ctxWrap('allyProcLightArrow', A_('共鳴（光箭）'));
+    ctxWrap('allyStormTick', A_(function (a, sk, free) { return free ? '套裝：魔女冰雪暴' : '持續傷害：' + skN(sk); }));
     ctxWrap('allyProcMoonburst', A_('月光爆裂'));
     ctxWrap('_allyMagicStrikeHit', A_('魔擊'));
     ctxWrap('allyRapidfire', A_('連射'));
