@@ -1275,6 +1275,7 @@ function _enemyPhysicalAttackInner(mob, idx, stunChance = 0, atkDmg = null, atkD
             let _sh = DB.items[player.eq.shield.id];
             let _blockChance = _lancePair ? 100 : ((_sh && _sh.block) ? (heavy ? _sh.block : _sh.block * 0.3) : 0);   // 🛡️ 非重擊：格檔發動率為重擊的 30%
             if(_blockChance > 0 && Math.random() * 100 < _blockChance) { let _before = totalDmg; totalDmg = (totalDmg * 0.5); blockReduced = Math.round(_before - totalDmg); blocked = true; }
+            if (blocked && typeof window.__afkOnBlock === 'function') { try { window.__afkOnBlock(player, mob); } catch (e) {} }   /* 🔌 加掛版補丁:格擋掛點 */
         }
 
         totalDmg = (totalDmg * mobRageDmgMult(mob));   // 🔥 HP<門檻：一般攻擊／連擊最終傷害倍率

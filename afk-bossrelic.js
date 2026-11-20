@@ -308,8 +308,18 @@
     });
     return v;
   };
-  var SAVES = { invuln: 1, lastStand: 1, revive: 1 };
+  var SAVES = { invuln: 1, lastStand: 1, revive: 1, husk: 1 };
   var TXT = {
+    acid: function (v) { return '攻擊命中時讓目標 AC +' + v.p + '（最多 ' + v.k + ' 層）'; },
+    husk: function (v) { return '倒下時留下空殼：保住 1 HP 並 ' + v.d + ' 秒不受傷害（冷卻 ' + v.cd + ' 秒）'; },
+    shadow: function (v) { return '影分身斬：每 ' + v.t + ' 秒影子追加一次攻擊（你近 5 秒每秒傷害 ' + v.p + '%）'; },
+    scarab: function (v) { return '聖甲蟲群：每 ' + v.t + ' 秒咬全體敵人（你近 5 秒每秒傷害 ' + v.p + '%）並上一層弱點'; },
+    forkRush: function (v) { return '火叉連刺：對新目標的前 3 下傷害 +' + v.p + '%'; },
+    thirst: function (v) { return '血之渴望：HP 低於 30% 時吸血 +' + v.p + '%'; },
+    teamRegen: function (v) { return '清流：全隊每 ' + v.t + ' 秒恢復最大 HP ' + v.p + '%'; },
+    windBlade: function (v) { return '攻擊命中時 ' + v.c + '% 追加風刃（' + v.p + '% 傷害）'; },
+    burnHit: function (v) { return '攻擊命中時 ' + v.c + '% 讓目標燃燒 5 秒，每秒造成你近 5 秒每秒傷害 ' + v.p + '%'; },
+    vow: function (v) { return '黑騎士之誓：隊友 HP 低於 30% 時你替他吃下一擊（冷卻 ' + v.cd + ' 秒）'; },
     regen: function (v) { return '每 10 秒恢復最大 HP ' + v.p + '%'; },
     summon: function (v) { return '召喚「' + v.name + '」協戰：戰鬥中每 3 秒攻擊目標一次，造成你近 5 秒每秒傷害 ' + v.p + '%（算召喚物：寵物・召喚物・守衛的傷害加成都有效）'; },
     share: function (v) { return '受到的傷害 −' + v.p + '%（召喚物分擔）'; },
@@ -406,13 +416,52 @@
   var isWpnRow = function (row) { return BASE[row[1]].type === 'wpn'; };
   var FILL = {}, MOBN = {};
   var tag = function (key) { return FILL[key] ? '' : '王者遺物・'; };
-  var fxText = function (row, s) { return (might(row, s) ? (FILL['relic_boss_' + row[0]] || FILL['relic_' + row[0]] ? '遺物之威' : '王者之威') + '：造成的傷害 +' + might(row, s) + '%；' : '') + row.slice(4).map(function (e) { return TXT[e[0]](val(e[1], s)); }).join('；'); };
+  var VSF = [1, 1.2, 1.4, 1.8, 2.2];
+  var varLines = function (row, s) { var vn = VARN[row[2]], l = []; if (!vn) return l; row.slice(4).forEach(function (e) { var f = e[0] === 'weakAura' || e[0] === 'vsWeak' ? 'weak' : e[0]; if (VFAM[f] && vn[f] && l.indexOf(VTXT[f][vn[f]]) < 0) l.push(VTXT[f][vn[f]] + (s > 0 ? '（強度 ×' + VSF[s] + '）' : '')); }); return l; };
+  var fxText = function (row, s) { return (might(row, s) ? (FILL['relic_boss_' + row[0]] || FILL['relic_' + row[0]] ? '遺物之威' : '王者之威') + '：造成的傷害 +' + might(row, s) + '%；' : '') + row.slice(4).map(function (e) { return TXT[e[0]](val(e[1], s)); }).concat(varLines(row, s)).join('；'); };
 
   // ── 物品 ──
   var BY = {}, KEYS = [];
   var boss = function (id) { try { return W.__afkMapBoss && W.__afkMapBoss.BY[id]; } catch (e) { return null; } };
   var imgOf = function (k) { try { return getIconUrl(DB.items[k]); } catch (e) { return ''; } };
   LIST2.forEach(function (row) { var key = 'relic_' + row[0]; FILL[key] = 1; MOBN[key] = row[4]; row.splice(4, 1); });
+  // ── 11-20 Ping：效果組合完全相同的改掉一項；四大家族拆變化（設計稿 claude/relic-redesign-bossfill.md）──
+  var REPL = {
+    '工兵長的蟻酸瓶': ['summon', ['acid', { k: 5, p: 2 }]], '空殼騎士的鎧甲': ['revive', ['husk', { cd: 240, d: 3 }]], '火焰之影的魔劍': ['pulse', ['shadow', { t: 10, p: 100 }]],
+    '木乃伊王的聖甲蟲': ['curse', ['scarab', { t: 15, p: 50 }]], '小惡魔的火叉耳環': ['ambush', ['forkRush', { p: 30 }]], '吸血鬼的獠牙': ['dmgShield', ['thirst', { p: 100 }]],
+    '水精靈王的水滴戒': ['weakAura', ['teamRegen', { t: 5, p: 1 }]], '風精靈王的疾風靴': ['weakAura', ['teamDmg', { p: 3 }]], '火精靈王的焰杖': ['weakAura', ['teamDmg', { p: 3 }]],
+    '深淵風靈的風環': ['vsWeak', ['windBlade', { c: 8, p: 40 }]], '深淵火靈的焰環': ['vsWeak', ['burnHit', { c: 8, p: 10 }]], '岩石戰士的石鎚': ['weakAura', ['acid', { k: 10, p: 1 }]],
+    '黑暗范德的黑騎士盾': ['reflect', ['vow', { cd: 20 }]]
+  };
+  LIST.concat(LIST2).forEach(function (row) { var r = REPL[row[2]]; if (!r) return; for (var i = 4; i < row.length; i++) if (Array.isArray(row[i]) && row[i][0] === r[0]) { row[i] = r[1]; break; } });
+  var VARL = {
+    weak: { spread: '盜賊王的沙暗匕首、羽蛇祭司的羽冠、格利芬王的翼羽弓、潘恩的污染笛、千眼的凝視之眼、鷹獅的翼爪靴、特提斯的觸鬚環、深淵水靈的潮珠、炎魔分身的火影戒、巴列斯的獄炎戟、須曼的湖底鱗帶、巴洛斯的長老戒',
+      boom: '潮汐女巫的珠杖、黑鱗幼龍的逆鱗、大王烏賊的墨囊、掘地將軍的礦工腰帶、守墓神官的權杖、盜賊團的咒杖、翼龍的皮靴、深淵風靈的風環、炎魔惡魔的焦爪、火焰之影的魔劍、支配眼魔的眼冠、風龍守護者的風靴',
+      focus: '冰狼王的毛皮斗篷、白虎王的牙飾、法老的黃金面具、巨人首領的戰錘、翼魔教官的蝠翼靴、實驗體的火核耳環、小眼魔的眼珠、深淵火靈的焰環、幻象眼魔的幻眼、不死鳥的羽衣、琪娜的長老聖印、風荒龍的翼骨弓',
+      drain: '蠍王的尾鉤、狼群首領的頭骨盔、鋼心巨像的水晶心、蛇女祭司的蛇杖、仙人掌狗的尖刺耳飾、沙鰭的雙鰭刃、木乃伊王的聖甲蟲、惡魔司祭的角冠、沙人的砂礫拳套、冰魔的冰核、艾迪爾的長老杖、地荒龍的鱗盾',
+      brk: '黑鬍子的燧發短銃、獅身人面的謎之耳環、白蟻的酸囊、閃電球的雷核、小惡魔的火叉耳環、親衛槍兵的焰矛、賀洛斯的鷹眼弓、巴塔斯的長老耳環' },
+    block: { thorn: '叛騎士的斷誓劍、監獄長的鎖鍊、守門巨像的石臂甲、甲蟲的硬殼盾、哈蒙將軍的怨劍、佩特拉魔像的岩拳、奧馬爾的傲慢之拳',
+      charge: '落武者的居合刀、鋼心巨像的水晶心、空殼騎士的鎧甲、范德的騎士劍、岩石野獸的岩盾、佩特拉守護者的古盾、地荒龍的鱗盾',
+      guard: '骨兵長的骨盾、屍骨將的骨刃、教頭的雙刃戟、巴風特親衛的山羊盾、巨大守護者的墓門盾、闇黑范德的黑騎士劍',
+      heal: '鐵壁將軍的塔盾、骷髏劍聖的古劍、試作兵器的機械臂、支配范德的斷罪劍、黑暗范德的黑騎士盾' },
+    curse: { spread: '大長者的骨杖、食人妖精祭司的骨鈴、白蟻的酸囊、巴風特司祭的骨杖、蕾雅的法令權杖、史塔伯洛的厄運戒',
+      deep: '監獄長的鎖鍊、工兵長的蟻酸瓶、混沌司祭的長戟、支配木乃伊王的裹屍布、不死木乃伊王的黃金腰帶、巴洛斯的長老戒',
+      back: '法老的黃金面具、蛇女祭司的蛇杖、木乃伊王的聖甲蟲、墮落的黑翼、海露拜的冥法杖、支配木乃伊王的黃金面具',
+      drain: '老長老的智慧耳環、守墓神官的權杖、扭曲女王的權杖、混沌的面甲、謀叛賽尼斯的魔女心' },
+    absorb: { shield: '深海守護者的鱗甲、土精靈王的岩護腿、惡魔親衛的焦甲、大地魔像的岩甲、須曼的湖底鱗帶、地泥龍的泥鱗帶',
+      mp: '果凍王的黏液、水精靈王的水滴戒、狄高的水之心、不死鳥的羽衣、炎魔的獄火鞭、地荒龍的鱗盾',
+      charge: '沙漠蜥蜴的鱗片護腿、風精靈王的疾風靴、安加斯的火之心、冰魔的冰核、風龍守護者的風靴',
+      share: '實驗體的火核耳環、火精靈王的焰杖、巴薩斯的風之心、風泥龍的鱗脛甲、恐怖安塔瑞斯的龍鱗甲' }
+  };
+  var VARN = {};   // 名稱 → { weak: 'spread', ... }
+  Object.keys(VARL).forEach(function (fam) { Object.keys(VARL[fam]).forEach(function (vn) { VARL[fam][vn].split('、').forEach(function (n) { (VARN[n] = VARN[n] || {})[fam] = vn; }); }); });
+  var VTXT = {
+    weak: { spread: '弱點傳染：目標倒下時，弱點傳給最近一隻怪', boom: '弱點引爆：同一目標被你上弱點 5 次時引爆（你近 5 秒每秒傷害 100%）', focus: '弱點集火：全隊打有弱點的目標傷害 +3%', drain: '弱點汲取：打有弱點的目標回 MP 0.3%（每秒一次）', brk: '弱點破甲：每次上弱點讓目標 AC +2（最多 10）' },
+    block: { thorn: '格擋反刺：格擋時反擊一次（你近 5 秒每秒傷害 60%）', charge: '格擋蓄力：每次格擋 +1 層，滿 5 層下一擊傷害 +50%', guard: '格擋護衛：隊友被物理攻擊時 5% 由你擋下', heal: '格擋回復：格擋時回 HP 0.5%' },
+    curse: { spread: '詛咒擴散：被詛咒的怪倒下時，詛咒跳到一隻怪', deep: '詛咒加深：詛咒每 3 秒效果 +5%（最多 +25%）', back: '詛咒反噬：被詛咒的怪攻擊時 5% 打到自己', drain: '詛咒汲取：詛咒中的怪受到你的傷害 1% 回你 HP' },
+    absorb: { shield: '吸收護盾：吸收量 30% 變成護盾', mp: '吸收回魔：吸收量 20% 變成 MP', charge: '吸收蓄能：吸收量累積到最大 HP 30% 時放一次元素爆發（全體、累積量 100%）', share: '吸收分享：吸收量一半分給 HP 最低的隊友' }
+  };
+  var VFAM = { weak: 1, block: 1, curse: 1, absorb: 1 };
   var ALL = LIST.map(function (r) { return ['relic_boss_' + r[0], r]; }).concat(LIST2.map(function (r) { return ['relic_' + r[0], r]; }));
   ALL.forEach(function (pair) {
     var key = pair[0], row = pair[1], B = BASE[row[1]];
@@ -459,7 +508,7 @@
   var fxLines = function (key, row, s) {
     var l = []; if (might(row, s)) l.push((FILL[key] ? '遺物之威' : '王者之威') + '：造成的傷害 +' + might(row, s) + '%');
     row.slice(4).forEach(function (e) { if (e[0] === 'res' || e[0] === 'res4') return; l.push(TXT[e[0]](val(e[1], s))); });
-    return l;
+    return l.concat(varLines(row, s));
   };
   var tipHtml = function (d) {
     var key = d.bossRelicKey, row = BY[key], s = Math.max(0, Math.min(4, N(d.bossRelic)));
@@ -629,6 +678,7 @@
       if (!d.bossRelicKey || !BY[d.bossRelicKey]) return;
       var s = Math.max(0, Math.min(4, N(d.bossRelic))), row = BY[d.bossRelicKey];
       if (slot === 'wpn' && might(row, s)) { v.has = true; v.might = N(v.might) + might(row, s); }
+      var vn = VARN[row[2]]; if (vn) row.slice(4).forEach(function (e) { var f0 = e[0] === 'weakAura' || e[0] === 'vsWeak' ? 'weak' : e[0]; if (VFAM[f0] && vn[f0]) { var kk = 'vr_' + f0 + '_' + vn[f0]; v[kk] = Math.max(N(v[kk]), VSF[s]); v.has = true; } });
       row.slice(4).forEach(function (e) {
         var k = e[0], o = val(e[1], s); v.has = true;
         if (SAVES[k]) { if (!save || s > save.s) save = { k: k, s: s, o: o, key: d.bossRelicKey }; return; }
@@ -665,6 +715,8 @@
   var TS = { t: -1, g: -1, v: {} };
   var teamSum = function (k) { var t = tk(); if (TS.t !== t || TS.g !== GEN) { TS.t = t; TS.g = GEN; TS.v = {}; } var c = TS.v[k]; if (c !== undefined) return c; var n = 0; party().forEach(function (a) { var f = fx(a); if (f && f[k]) n += N(f[k].p); }); TS.v[k] = n; return n; };
 
+  var TV = { t: -1, g: -1, v: {} };
+  var teamVar = function (k) { var t = tk(); if (TV.t !== t || TV.g !== GEN) { TV.t = t; TV.g = GEN; TV.v = {}; } if (TV.v[k] !== undefined) return TV.v[k]; var n = 0; party().forEach(function (a) { var f = fx(a); if (f && f[k]) n = Math.max(n, N(f[k])); }); TV.v[k] = n; return n; };
   // ── 屬性弱點（遺物執行層的狀態：fireVulnerability…，跟覺醒技、血脈同一套）──
   var RAPI = function () { var R = W.AFK_RELIC_RUNTIME; return R && R.api; };
   var ELES = ['fire', 'water', 'wind', 'earth'];
@@ -681,7 +733,8 @@
     var mine = !comp && (isPlayer(actor) || isAlly(actor));
     if (mine) dpsAdd(actor, v);
     var pf = fx(p), mult = 1, om0 = MK_.get(tgt);
-    if (om0 && (om0.curse || 0) > t) mult += Math.min(60, N(om0.curseP)) / 100;   // 詛咒、破甲破魔：目標受到的傷害增加
+    if (om0 && (om0.curse || 0) > t) { mult += Math.min(60, N(om0.curseP)) / 100; var dpf = teamVar('vr_curse_deep'); if (dpf && om0.curseAt) mult += Math.min(25, Math.floor((t - om0.curseAt) / 30) * 5) * dpf / 100; }   // 詛咒、破甲破魔：目標受到的傷害增加；11-20 詛咒加深
+    var fcf = teamVar('vr_weak_focus'); if (fcf && hasWeak(tgt)) mult += 0.03 * fcf;   // 11-20 弱點集火
     var aura = Math.min(15, petAuraOn() ? teamSum('petAura') : 0), team = Math.min(20, teamSum('teamDmg'));
     if (!mine) {   // 寵物、召喚物
       if (pf) {
@@ -725,13 +778,17 @@
       if (f.iai && kind === 'melee' && t - s.iaiAt >= f.iai.t * 10) { add += f.iai.p; s.iaiAt = t; popFx('iai', '居合'); }
       if (f.blockNext && s.blockReady) { add += f.blockNext.p; s.blockReady = false; }
       if (f.ambush) { var o = mk(tgt); o.amb = o.amb || []; if (o.amb.indexOf(actor) < 0) { o.amb.push(actor); add += f.ambush.p; } }
+      if (f.forkRush) { var ofr = mk(tgt); ofr.fr = ofr.fr || new Map(); var nfr = ofr.fr.get(actor) || 0; if (nfr < 3) { ofr.fr.set(actor, nfr + 1); add += f.forkRush.p; } }
+      if (f.vr_block_charge && N(s.bc) >= 5) { s.bc = 0; add += 50 * f.vr_block_charge; popFx('bc', '蓄力一擊'); }
+      if (f.thirst && hpOf(actor) < mhpOf(actor) * 0.3) s.thirstOn = true; else s.thirstOn = false;
     }
     mult += add / 100; v = v * mult;
     if (!main) return v;
     // 命中時的觸發
     var o2 = mk(tgt);
     if (f.entangle && proc(actor, 'ent', f.entangle.c)) { o2.ent = t + 50; o2.entP = Math.max(o2.ent > t ? N(o2.entP) : 0, f.entangle.p); }
-    if (f.curse && proc(actor, 'cur', f.curse.c)) { o2.curse = t + 80; o2.curseP = Math.max(N(o2.curseP), f.curse.p); }
+    if (f.curse && proc(actor, 'cur', f.curse.c)) { if (!((o2.curse || 0) > t)) o2.curseAt = t; o2.curse = t + 80; o2.curseP = Math.max(N(o2.curseP), f.curse.p); }
+    if (f.vr_curse_drain && (o2.curse || 0) > t) heal(actor, v * 0.01 * f.vr_curse_drain);
     if (f.blind && proc(actor, 'bli', f.blind.c)) { o2.blind = t + 50; o2.blindP = Math.max(N(o2.blindP), f.blind.p); }
     if (f.control && !tgt.boss && proc(actor, 'ctl', f.control.c)) { o2.ctl = t + Math.round(f.control.d * 10); }
     if (f.poison && proc(actor, 'poi', f.poison.c)) {
@@ -740,12 +797,18 @@
       else { mine2.sort(function (a, b) { return a.until - b.until; }); mine2[0].until = t + 80; }
     }
     if (f.mpSteal && isPlayer(actor) && proc(actor, 'mps', f.mpSteal.c)) actor.mp = Math.min(N(actor.mmp), N(actor.mp) + Math.round(f.mpSteal.n));
-    if (f.lifesteal) heal(actor, v * f.lifesteal.p / 100);
+    if (f.lifesteal) heal(actor, v * f.lifesteal.p / 100 * (s.thirstOn ? 1 + f.thirst.p / 100 : 1));
+    if (f.acid) { o2.acid = N(o2.acid); if (o2.acid < f.acid.k) { o2.acid++; tgt.ac = N(tgt.ac) + f.acid.p; } }
+    if (f.windBlade && proc(actor, 'wbl', f.windBlade.c)) { var wbv = v * f.windBlade.p / 100; setTimeout(function () { hit(tgt, wbv); }, 0); }
+    if (f.burnHit && proc(actor, 'brn', f.burnHit.c)) o2.dots.push({ src: actor, k: 'brn', until: t + 50, per: panel(actor) * f.burnHit.p / 100 });
+    if (f.vr_weak_drain && hasWeak(tgt) && isPlayer(actor) && t - N(s.wdAt) >= 10) { s.wdAt = t; actor.mp = Math.min(N(actor.mmp), N(actor.mp) + Math.floor(N(actor.mmp) * 0.003 * f.vr_weak_drain)); }
     if (f.double && (kind === 'melee' || kind === 'ranged') && proc(actor, 'dbl', f.double.c)) { var dv = Math.floor(v); setTimeout(function () { hit(tgt, dv); }, 0); }
     if (f.splash && kind === 'magic' && proc(actor, 'spl', f.splash.c)) { var sv = v * f.splash.p / 100; setTimeout(function () { mobs().forEach(function (m) { if (m !== tgt) hit(m, sv); }); }, 0); }
     // ── 補齊遺物 11-19 新機制 ──
     if (f.revenge && s.rev > 0) { v += s.rev * f.revenge.p / 100; s.rev = 0; popFx('rev', '復仇'); }
-    if (f.weak) f.weak.forEach(function (o) { if (proc(actor, 'wk' + o.e, o.c)) setWeak(tgt, o.e, o.p); });
+    if (f.weak) f.weak.forEach(function (o) { if (proc(actor, 'wk' + o.e, o.c)) { setWeak(tgt, o.e, o.p);
+      if (f.vr_weak_boom) { o2.wkN = N(o2.wkN) + 1; if (o2.wkN >= 5) { o2.wkN = 0; var bv = panel(actor) * f.vr_weak_boom; setTimeout(function () { hit(tgt, bv); }, 0); popFx('wkb', '弱點引爆'); } }
+      if (f.vr_weak_brk) { var cap = Math.round(10 * f.vr_weak_brk), cur = N(o2.wkAc); if (cur < cap) { var addAc = Math.min(cap - cur, Math.round(2 * f.vr_weak_brk)); o2.wkAc = cur + addAc; tgt.ac = N(tgt.ac) + addAc; } } } });
     if (f.execute && !tgt.boss && N(tgt.curHp) - v <= N(tgt.hp) * f.execute.p / 100 && N(tgt.curHp) > v && proc(actor, 'exe', f.execute.c)) { v = N(tgt.curHp); popFx('exe', '斬首'); }
     var bl = o2.bomb; if (bl) for (var bi = 0; bi < bl.length; bi++) if (bl[bi].src === actor) bl[bi].acc += v;
     if (f.bomb && proc(actor, 'bmb', f.bomb.c) && !(bl && bl.some(function (b) { return b.src === actor; }))) { (o2.bomb = o2.bomb || []).push({ src: actor, until: t + 50, acc: 0, p: f.bomb.p, name: f.bomb.name }); BOMB_MOBS.add(tgt); }
@@ -773,13 +836,24 @@
         if ((o.web || 0) > t) dmg *= 1 - Math.min(60, N(o.webP)) / 100;
       }
     }
-    // 全隊：你的 HP 每少 25%
     var pf = fx(p);
+    if (isAlly(ent) && pf) {
+      if (pf.vr_block_guard && kind === 'phys' && Math.random() * 100 < 5 * pf.vr_block_guard) { popFx('bgd', '護衛格擋'); return 0; }
+      if (pf.vow && hpOf(ent) < mhpOf(ent) * 0.3 && t - N(st(p).vowAt) >= pf.vow.cd * 10) { st(p).vowAt = t; p.hp = Math.max(1, N(p.hp) - dmg); popFx('vow', '黑騎士之誓'); return 0; }
+    }
+    if (mob) { var omc = MK_.get(mob), cbf = teamVar('vr_curse_back'); if (cbf && omc && (omc.curse || 0) > t && Math.random() * 100 < 5 * cbf) { var cbv = dmg; setTimeout(function () { hit(mob, cbv); }, 0); popFx('cbk', '詛咒反噬'); return 0; } }
+    // 全隊：你的 HP 每少 25%
     if (pf && pf.lowHpTeam) { var steps = Math.min(3, Math.floor((1 - hpOf(p) / mhpOf(p)) * 4 + 1e-9)); if (steps > 0) dmg *= 1 - pf.lowHpTeam.p * steps / 100; }
     var f = fx(ent);
     if (!f) return dmg;
     if (f.phase && proc(ent, 'pha', f.phase.c)) { popFx('pha', '相位'); return 0; }
-    if (f.block && kind === 'phys' && proc(ent, 'blk', f.block.c)) { s.blockReady = true; popFx('blk', '格擋'); return 0; }
+    if (f.block && kind === 'phys' && proc(ent, 'blk', f.block.c)) {
+      s.blockReady = true; popFx('blk', '格擋');
+      if (f.vr_block_thorn && mob && alive(mob)) { var btv = panel(ent) * 0.6 * f.vr_block_thorn; setTimeout(function () { hit(mob, btv); }, 0); }
+      if (f.vr_block_charge) s.bc = Math.min(5, N(s.bc) + 1);
+      if (f.vr_block_heal) heal(ent, mhpOf(ent) * 0.005 * f.vr_block_heal);
+      return 0;
+    }
     var cut = 0;
     if (f.share) cut += f.share.p;
     if (f.guard) cut += f.guard.p;
@@ -792,7 +866,11 @@
     if (cut) dmg *= 1 - Math.min(50, cut) / 100;
     if (f.bigHitCut && dmg > mhpOf(ent) * f.bigHitCut.th / 100) dmg *= 1 - Math.min(60, f.bigHitCut.p) / 100;
     if (f.eleAbsorb && me) f.eleAbsorb.forEach(function (o) { if ((o.e === me || o.e === 'all') && proc(ent, 'eab' + o.e, o.c)) { var hv = dmg * o.p / 100; setTimeout(function () { heal(ent, hv); }, 0); } });
-    if (f.absorb) { var ae = kind === 'magic' ? (W.__afkTakenEle && W.__afkTakenEle !== 'none' ? W.__afkTakenEle : me) : me; if (ae) f.absorb.forEach(function (o) { if (o.e === ae) { var av = dmg * o.p / 100; setTimeout(function () { heal(ent, av); }, 0); } }); }
+    if (f.absorb) { var ae = kind === 'magic' ? (W.__afkTakenEle && W.__afkTakenEle !== 'none' ? W.__afkTakenEle : me) : me; if (ae) f.absorb.forEach(function (o) { if (o.e === ae) { var av = dmg * o.p / 100; setTimeout(function () { heal(ent, av); }, 0);
+      if (f.vr_absorb_shield && isPlayer(ent)) { try { X().shield.add(av * 0.3 * f.vr_absorb_shield, Math.floor(mhpOf(ent) * 0.2)); } catch (e) {} }
+      if (f.vr_absorb_mp && isPlayer(ent)) ent.mp = Math.min(N(ent.mmp), N(ent.mp) + Math.floor(av * 0.2 * f.vr_absorb_mp));
+      if (f.vr_absorb_charge) { s.absAcc = N(s.absAcc) + av * f.vr_absorb_charge; if (s.absAcc >= mhpOf(ent) * 0.3) { var aav = s.absAcc; s.absAcc = 0; setTimeout(function () { mobs().forEach(function (m) { hit(m, aav); }); }, 0); popFx('abc', '元素爆發'); } }
+      if (f.vr_absorb_share) { var lw = party().filter(function (x) { return x !== ent; }).sort(function (x, y) { return hpOf(x) / mhpOf(x) - hpOf(y) / mhpOf(y); })[0]; if (lw) { var shv = av * 0.5 * f.vr_absorb_share; setTimeout(function () { heal(lw, shv); }, 0); } } } }); }
     if (f.revenge) s.rev = Math.min(mhpOf(ent) * 0.5, N(s.rev) + dmg);
     if (mob && alive(mob)) {
       var om = mk(mob);
@@ -843,10 +921,13 @@
         s.sfAt = s.sfAt || {}; if (t - (s.sfAt[i] || 0) < o.t * 10) return; s.sfAt[i] = t;
         var pv = panel(a); if (pv > 0) { var l = mobs(); for (var j = l.length - 1; j > 0; j--) { var q = Math.floor(Math.random() * (j + 1)), w = l[j]; l[j] = l[q]; l[q] = w; } l.slice(0, 3).forEach(function (m) { hit(m, pv * o.p / 100); }); popFx('sf' + i, o.name); }
       });
+      if (f.shadow && t - N(s.shdAt) >= f.shadow.t * 10) { s.shdAt = t; var tgS = target(), pvS = panel(a); if (tgS && pvS > 0) { hit(tgS, pvS * f.shadow.p / 100); popFx('shd', '影分身斬'); } }
+      if (f.scarab && t - N(s.scrAt) >= f.scarab.t * 10) { s.scrAt = t; var pvC = panel(a); if (pvC > 0) { mobs().forEach(function (m) { hit(m, pvC * f.scarab.p / 100); setWeak(m, 'rand', 10); }); popFx('scr', '聖甲蟲群'); } }
       if (f.shield && isPlayer(a) && t - s.shieldAt >= f.shield.t * 10) {
         s.shieldAt = t; try { var cap = Math.floor(mhpOf(a) * f.shield.p / 100); X().shield.add(cap, cap); } catch (e) {}
       }
     });
+    party().forEach(function (a) { var f = fx(a); if (!f || !f.teamRegen) return; var s = st(a); if (t - N(s.trAt) < f.teamRegen.t * 10) return; s.trAt = t; party().forEach(function (b) { heal(b, mhpOf(b) * f.teamRegen.p / 100); }); });
     // 寵物：幫忙回血、額外施法、自動站起來
     var pf2 = fx(P());
     if (pf2 && (pf2.petHeal || pf2.petCast || pf2.petRevive)) {
@@ -877,8 +958,10 @@
   };
 
   // ── 打倒怪物、保命 ──
-  var kill = function () {
-    if (!on()) return; var p = P(), f = fx(p); if (!f) return;
+  var kill = function (m0) {
+    if (!on()) return; var p = P();
+    try { if (m0) { var sp = teamVar('vr_weak_spread'); if (sp && hasWeak(m0)) { var nx = others(m0, 1)[0]; if (nx) setWeak(nx, 'rand', 20 * sp); } var csp = teamVar('vr_curse_spread'), oc = MK_.get(m0), t0 = tk(); if (csp && oc && (oc.curse || 0) > t0) { var nc = others(m0, 1)[0]; if (nc) { var ocn = mk(nc); ocn.curse = t0 + 80; ocn.curseP = Math.max(N(ocn.curseP), N(oc.curseP)); ocn.curseAt = t0; } } } } catch (e) {}
+    var f = fx(p); if (!f) return;
     if (f.killHp) heal(p, mhpOf(p) * f.killHp.p / 100);
     if (f.killRush) { var s = st(p), t = tk(); s.krN = s.krUntil > t ? Math.min(f.killRush.k, N(s.krN) + 1) : 1; s.krUntil = t + 80; }
     if (f.killMp && N(p.mmp) > 0) p.mp = Math.min(N(p.mmp), N(p.mp) + Math.floor(N(p.mmp) * f.killMp.p / 100));
@@ -889,6 +972,7 @@
     if (sv.k === 'invuln' || t - s.saveCd < sv.o.cd * 10) return false;
     s.saveCd = t;
     if (sv.k === 'lastStand') { p.hp = 1; s.lsUntil = t + 100; s.lsP = sv.o.p; s.invUntil = t + 5; popFx('ls', '不滅'); note('ls', '<span class="text-amber-300 font-bold">【王者遺物】你撐住了最後一口氣！</span>'); return true; }
+    if (sv.k === 'husk') { p.hp = 1; s.invUntil = t + Math.round(N(sv.o.d) * 10); popFx('hk', '空殼替身'); note('hk', '<span class="text-amber-300 font-bold">【王者遺物】空殼替你擋住了這一下！</span>'); return true; }
     if (sv.k === 'revive') { p.hp = Math.max(1, Math.floor(mhpOf(p) * sv.o.h / 100)); s.invUntil = t + 5; popFx('rv', '再起'); note('rv', '<span class="text-amber-300 font-bold">【王者遺物】你重新站了起來！</span>'); return true; }
     return false;
   };
