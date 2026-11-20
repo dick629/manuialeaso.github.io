@@ -43,7 +43,10 @@
   var target = function () { try { var t = typeof getTarget === 'function' ? getTarget() : null; return alive(t) ? t : mobs()[0] || null; } catch (e) { return null; } };
   var others = function (m, n) { var l = mobs().filter(function (x) { return x !== m; }); for (var i = l.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), q = l[i]; l[i] = l[j]; l[j] = q; } return l.slice(0, n); };
   var nearest = function (m) { return others(m, 1)[0] || null; };
-  var hit = function (m, n) { var x = X(); if (x && n > 0 && alive(m)) { tr(); return x.hitMob(m, n); } return 0; };
+  // 追加傷害；W.__afkRMHitCap（內部測試用，預設關）＝每隻怪每刻最多幾下，超過的累加到下一刻一次打出
+  var PEND = new Set();
+  var hit = function (m, n) { var x = X(); if (!(x && n > 0 && alive(m))) return 0; tr(); var cap = W.__afkRMHitCap; if (cap > 0) { var t = tk(); if (m._rmHitT !== t) { m._rmHitT = t; m._rmHitN = 0; } if (++m._rmHitN > cap) { m._rmPend = N(m._rmPend) + n; PEND.add(m); return 0; } } return x.hitMob(m, n); };
+  var flushPend = function () { if (!PEND.size) return; var x = X(); PEND.forEach(function (m) { var v = N(m._rmPend); m._rmPend = 0; if (x && v > 0 && alive(m)) x.hitMob(m, v); }); PEND.clear(); };
   var later = function (fn, ms) { var k = CURK; setTimeout(function () { var pk = CURK; CURK = k; try { fn(); } catch (e) { if (W.__afkRMErr) W.__afkRMErr.push((k || '?') + ' later ' + e.message); } CURK = pk; }, ms || 0); };
   var panel = function (a) { var v = 0; try { v = N(W.__afkPanelDmg(a)); } catch (e) {} if (!(v > 0)) { try { var d = a.d || {}; v = Math.max(N(d.meleeDmg), N(d.rangedDmg), N(d.magicDmg)) || 50; } catch (e2) { v = 50; } } return v; };
   var roll = function (c) { return Math.random() * 100 < c; };
@@ -841,17 +844,39 @@
       // 11-21（Ping 選 B）：第二、第三詞綴抽到原本沒特效、但有新機制的遺物 → 帶它的新機制（強化 +5 那一階）
       (W.__afkRelicMechAllTest ? [d.relicFx, d.relicFx3] : [d.relicFxMech, d.relicFx3Mech]).forEach(function (k) {   /* AllTest＝內部評估做法 C 用，遊戲內不開 */ if (!k || !M[k] || k === b) return; var dd = Object.create(d); dd._b = k; add(M[k], scale(M[k].v[0], (TMUL[k] || 1.15) / 1.15), 1, dd, slot); });
       if (s >= 4 && CATKEY[b]) add({ cat: CAT[CATKEY[b]] }, null, s, d, slot);
-      if (s >= 3 && CATKEY[b] && CAT[CATKEY[b]].asc) add({ cat: CAT[CATKEY[b]] }, null, s, d, slot);
+      if (s === 3 && CATKEY[b] && CAT[CATKEY[b]].asc) add({ cat: CAT[CATKEY[b]] }, null, s, d, slot);   /* 11-21：昇華 +5（s4）上一行已加過，避免重複 */
     };
     Object.keys(a.eq).forEach(function (slot) { if (slot === 'wpn2' || /^rem_|^doll|^mio/.test(slot)) return; take(a.eq[slot], slot); });
     if (a === P()) { try { (typeof petsOutList === 'function' ? petsOutList() : []).forEach(function (pt) { if (pt && pt.eq) Object.keys(pt.eq).forEach(function (k) { take(pt.eq[k], 'pet'); }); }); } catch (e) {} }
     // 同系共鳴 2／4／6 件
     var reso = {}; Object.keys(fam).forEach(function (f) { var n = fam[f]; if (n >= 2) reso[f] = n >= 6 ? 15 : n >= 4 ? 10 : 5; });
-    var v = { L: L, reso: reso, six: Object.keys(fam).filter(function (f) { return fam[f] >= 6; }) };
+    // 11-21：同一件遺物的同一個新機制出現在好幾個地方（本體＋別件的詞綴、兩個一樣的戒指）→ 只留最高的那一階
+    var best = {}; L.forEach(function (x, i) { if (!x.h) return; var bk = (x.d && (x.d._b || x.d.relicBase)) || '?'; var j = best[bk]; if (j == null || L[j].s < x.s) best[bk] = i; });
+    L = L.filter(function (x, i) { if (!x.h) return true; var bk = (x.d && (x.d._b || x.d.relicBase)) || '?'; return best[bk] === i; });
+    var v = { L: L, F: {}, reso: reso, six: Object.keys(fam).filter(function (f) { return fam[f] >= 6; }) };
     CACHE.set(a, { t: t0, g: GEN, sig: sg, v: v }); return v;
   };
   var keyOf = function (x) { var d = x.d || {}; return (d._b || d.relicBase || '?') + ':' + (x.h ? 'M' : x.hunt ? (x.grudge ? 'G' : x.affix ? 'A' : 'H') : x.ele ? 'E' : x.cat ? 'C' : '?'); };
   var each = function (a, fn) { var v = collect(a); if (!v) return; for (var i = 0; i < v.L.length; i++) { var pk = CURK; if (W.__afkRMTrace) CURK = keyOf(v.L[i]); try { fn(v.L[i]); } catch (e) { if (W.__afkRMErr) W.__afkRMErr.push(keyOf(v.L[i]) + ' ' + e.message); if (!each.warned) { each.warned = 1; console.warn('[AFK-relicmech]', e); } } CURK = pk; } };
+  // 11-21 效能：每個角色的條目先依「用在哪種事件」分好，事件發生時只跑相關的那幾條
+  var hh = function (x, k) { return !!(x.h && x.h[k]); }, cc = function (x, k) { return !!(x.cat && x.cat[k]); }, er = function (x, r) { return !!(x.ele && x.ele.role === r); };
+  var PRED = {
+    comp: function (x) { return hh(x, 'comp') || cc(x, 'comp') || er(x, 'pet') || er(x, 'sum'); },
+    compHit: function (x) { return hh(x, 'compHit'); },
+    allyDmg: function (x) { return hh(x, 'allyDmg'); }, allyCut: function (x) { return hh(x, 'allyCut'); },
+    dmg: function (x) { return hh(x, 'dmg') || !!x.hunt || cc(x, 'dmg'); },
+    hit: function (x) { return hh(x, 'hit') || !!x.hunt || er(x, 'atk') || cc(x, 'hit'); },
+    cut: function (x) { return hh(x, 'cut') || !!x.hunt || er(x, 'grd') || er(x, 'sum') || er(x, 'pet'); },
+    taken: function (x) { return hh(x, 'taken') || hh(x, 'taken2') || cc(x, 'taken'); },
+    tick: function (x) { return hh(x, 'tick') || cc(x, 'tick') || !!x.ele; },
+    kill: function (x) { return hh(x, 'kill') || cc(x, 'kill'); }, death: function (x) { return hh(x, 'death') || cc(x, 'death'); },
+    evade: function (x) { return hh(x, 'evade'); }, resist: function (x) { return hh(x, 'resist'); }, potion: function (x) { return hh(x, 'potion'); }, block: function (x) { return hh(x, 'block'); },
+    healIn: function (x) { return hh(x, 'healIn'); }, healOut: function (x) { return hh(x, 'healOut') || er(x, 'heal'); },
+    healMulIn: function (x) { return hh(x, 'healMulIn'); }, healMul: function (x) { return hh(x, 'healMul') || er(x, 'heal'); },
+    gold: function (x) { return hh(x, 'gold'); }, mpCost: function (x) { return hh(x, 'mpCost'); }, dotIn: function (x) { return hh(x, 'dotIn'); },
+    hunt: function (x) { return !!x.hunt; }
+  };
+  var eachK = function (k, a, fn) { var v = collect(a); if (!v) return; var L = v.F[k] || (v.F[k] = v.L.filter(PRED[k])); for (var i = 0; i < L.length; i++) { var pk = CURK; if (W.__afkRMTrace) CURK = keyOf(L[i]); try { fn(L[i]); } catch (e) { if (W.__afkRMErr) W.__afkRMErr.push(keyOf(L[i]) + ' ' + e.message); } CURK = pk; } };
 
   // ════════ 掛點 ════════
   // 11-21 效能：全隊的「團隊型」條目每刻只整理一次（原本每一下傷害都把全隊 8 人的遺物全部掃一遍）
@@ -872,16 +897,16 @@
     add += vulnOf(tgt);
     add += Math.min(30, teamPct('team', ctx));
     if (comp) {
-      each(p, function (x) { if (x.h && x.h.comp) { var cpv = N(x.h.comp(p, x.o, ctx, x.d)); if (cpv) { add += cpv; tr(); } } if (x.cat && x.cat.comp) { var ccv = N(x.cat.comp(p, ctx, x.s)); if (ccv) { add += ccv; tr(); } } if (x.ele && x.ele.role === 'pet' && src === 'pet') { var pv = ELEX.petV[x.ele.e][x.s]; if (x.ele.e === 'water') setMp(p, mpOf(p) + v * pv / 200); else if (x.ele.e !== 'earth') add += pv; } if (x.ele && x.ele.role === 'sum' && src === 'summon' && (x.ele.e === 'wind' || x.ele.e === 'none')) add += ELEX.sumV[x.ele.e][x.s]; if (x.cat && x.cat.comp) add += N(x.cat.comp(p, ctx)); });
+      eachK('comp', p, function (x) { if (x.h && x.h.comp) { var cpv = N(x.h.comp(p, x.o, ctx, x.d)); if (cpv) { add += cpv; tr(); } } if (x.ele && x.ele.role === 'pet' && src === 'pet') { var pv = ELEX.petV[x.ele.e][x.s]; if (x.ele.e === 'water') setMp(p, mpOf(p) + v * pv / 200); else if (x.ele.e !== 'earth') add += pv; } if (x.ele && x.ele.role === 'sum' && src === 'summon' && (x.ele.e === 'wind' || x.ele.e === 'none')) add += ELEX.sumV[x.ele.e][x.s]; if (x.cat && x.cat.comp) { var ccv = N(x.cat.comp(p, ctx)); if (ccv) { add += ccv; tr(); } } });
       v = v * (1 + add / 100);
-      each(p, function (x) { if (x.h && x.h.compHit) x.h.compHit(p, x.o, { tgt: tgt, v: v, src: src }, x.d); });
+      eachK('compHit', p, function (x) { if (x.h && x.h.compHit) x.h.compHit(p, x.o, { tgt: tgt, v: v, src: src }, x.d); });
       return v;
     }
     if (!isPlayer(actor) && !isAlly(actor)) return v * (1 + add / 100);
-    if (isAlly(actor)) each(p, function (x) { if (x.h && x.h.allyDmg) add += N(x.h.allyDmg(p, x.o)); });
+    if (isAlly(actor)) eachK('allyDmg', p, function (x) { if (x.h && x.h.allyDmg) add += N(x.h.allyDmg(p, x.o)); });
     var f = famOf(tgt), cv = collect(actor);
     if (cv && f && cv.reso[f]) add += cv.reso[f];
-    each(actor, function (x) {
+    eachK('dmg', actor, function (x) {
       if (x.h && x.h.dmg) { var dv = N(x.h.dmg(actor, x.o, ctx, x.d)); if (dv) { add += dv; tr(); } }
       if (x.hunt && x.hunt === f) { if (x.grudge) add += 5; else if (x.affix) add += 10; else add += [0, 5, 8, 12, 15][x.s] || 0; var H = HUNT[f]; if (H && H.dmg) add += N(H.dmg(actor, x.s, tgt)); }
       if (x.cat && x.cat.dmg) { var cv2 = N(x.cat.dmg(actor, ctx, x.s)); if (cv2) { add += cv2; tr(); } }
@@ -889,7 +914,7 @@
     v = v * (1 + Math.min(200, add) / 100);
     if (!main) return v;
     ctx.v = v;
-    each(actor, function (x) {
+    eachK('hit', actor, function (x) {
       if (x.h && x.h.hit) x.h.hit(actor, x.o, ctx, x.d);
       if (x.hunt && x.hunt === f) { var H = HUNT[f]; if (H && H.hit) { var six = cv && cv.six.indexOf(f) >= 0; H.hit(actor, x.s, tgt); if (six) H.hit(actor, x.s, tgt); } }
       if (x.ele && x.ele.role === 'atk') ELEX.atk[x.ele.e](actor, ELEX.atkV[x.ele.e][x.s], ctx);
@@ -906,9 +931,9 @@
     // 隊友幫忙擋、全隊減傷
     eachT('guard', function (a, x) { if (a !== ent) c.dmg = x.h.guard(a, x.o, ent, c, x.d); }); eachT('teamTaken', function (a, x) { c.dmg = x.h.teamTaken(a, x.o, ent, c, x.d); }); eachT('aura', function (a, x) { c.dmg *= 1 - ELEX.auraV.earth[x.s] / 100; });
     var tc = Math.min(20, teamPct('teamCut', c)); if (tc) c.dmg *= 1 - tc / 100;
-    if (isAlly(ent)) each(P(), function (x) { if (x.h && x.h.allyCut) c.dmg *= 1 - N(x.h.allyCut(P(), x.o)) / 100; });
+    if (isAlly(ent)) eachK('allyCut', P(), function (x) { if (x.h && x.h.allyCut) c.dmg *= 1 - N(x.h.allyCut(P(), x.o)) / 100; });
     var cut = 0, f = famOf(mob);
-    each(ent, function (x) {
+    eachK('cut', ent, function (x) {
       if (x.h && x.h.cut) { var ct = N(x.h.cut(ent, x.o, c, x.d)); if (ct) { cut += ct; tr(); } }
       if (x.hunt && x.hunt === f) { if (x.grudge) cut += 5; var H = HUNT[f]; if (H && H.cut) cut += N(H.cut(ent, x.s)); }
       if (x.ele && x.ele.role === 'grd') { var g = ELEX.grdV[x.ele.e][x.s]; if (x.ele.e === 'none' && mob && eleOfMob(mob) !== 'none') cut += g[0]; if (x.ele.e === 'wind' && roll(g[0])) c.dmg = 0; if (x.ele.e === 'water') heal(ent, c.dmg * g[0] / 100); if (x.ele.e === 'fire' && kind === 'phys' && mob && roll(g[0])) dot(mob, ent, 'xgb', panel(ent) * 0.1, 5, 1); }
@@ -916,16 +941,16 @@
       if (x.ele && x.ele.role === 'pet' && x.ele.e === 'earth' && petsUp().length) cut += ELEX.petV.earth[x.s] / 3;
     });
     if (cut) c.dmg *= 1 - Math.min(50, cut) / 100;
-    each(ent, function (x) { var d0 = c.dmg; if (x.h && x.h.taken) c.dmg = Math.max(0, N(x.h.taken(ent, x.o, c, x.d))); if (c.dmg !== d0) tr(); if (x.h && x.h.taken2) c.dmg = Math.max(0, N(x.h.taken2(ent, x.o, c, x.d))); if (x.cat && x.cat.taken) c.dmg = Math.max(0, N(x.cat.taken(ent, c))); });
+    eachK('taken', ent, function (x) { var d0 = c.dmg; if (x.h && x.h.taken) c.dmg = Math.max(0, N(x.h.taken(ent, x.o, c, x.d))); if (c.dmg !== d0) tr(); if (x.h && x.h.taken2) c.dmg = Math.max(0, N(x.h.taken2(ent, x.o, c, x.d))); if (x.cat && x.cat.taken) c.dmg = Math.max(0, N(x.cat.taken(ent, c))); });
     return c.dmg;
   };
   var DOT_T = 0;
   var tick = function () {
-    if (!on()) return;
+    if (!on()) return; flushPend();
     var t = tk(), fight = false; try { fight = X().inCombat(); } catch (e) {}
     var ctx = { fight: fight };
     party().forEach(function (a) {
-      each(a, function (x) {
+      eachK('tick', a, function (x) {
         if (x.h && x.h.tick) x.h.tick(a, x.o, ctx, x.d);
         if (x.cat && x.cat.tick) x.cat.tick(a, ctx);
         if (x.ele && fight) {
@@ -941,30 +966,30 @@
     if (t % 10 === 0 && DOTM.size) DOTM.forEach(function (m) {
       var o = MK_.get(m); if (!o || !alive(m)) { DOTM.delete(m); return; }
       o.dots = o.dots.filter(function (d) { return d.until > t; }); if (!o.dots.length) { DOTM.delete(m); return; }
-      var sum = 0, f = famOf(m); o.dots.forEach(function (d) { var mul = 1; if (d.src && f === '蟲蛛') each(d.src, function (x) { if (x.hunt === '蟲蛛') mul = Math.max(mul, HUNT['蟲蛛'].dotX(d.src, x.s)); }); sum += d.per * mul; });
+      var sum = 0, f = famOf(m); o.dots.forEach(function (d) { var mul = 1; if (d.src && f === '蟲蛛') eachK('hunt', d.src, function (x) { if (x.hunt === '蟲蛛') mul = Math.max(mul, HUNT['蟲蛛'].dotX(d.src, x.s)); }); sum += d.per * mul; });
       if (sum > 0) { try { if (typeof W.__afkDotCap === 'function') sum = Math.max(0, N(W.__afkDotCap(m, sum, 'relicmech'))) || sum; } catch (e) {} hit(m, sum); }
     });
   };
   var kill = function (m) {
     if (!on() || !m) return; var src = null; try { src = typeof _combatSrc !== 'undefined' ? _combatSrc : null; } catch (e) {}
-    party().forEach(function (a) { each(a, function (x) { var c = { m: m, bySrc: src }; if (x.h && x.h.kill) x.h.kill(a, x.o, c, x.d); if (x.cat && x.cat.kill) x.cat.kill(a, c, x.s); }); });
+    party().forEach(function (a) { eachK('kill', a, function (x) { var c = { m: m, bySrc: src }; if (x.h && x.h.kill) x.h.kill(a, x.o, c, x.d); if (x.cat && x.cat.kill) x.cat.kill(a, c, x.s); }); });
     try { MK_.delete(m); DOTM.delete(m); } catch (e) {}
   };
   var death = function () {
     if (!on()) return false; var p = P(), saved = false;
-    each(p, function (x) { if (saved) return; if (x.h && x.h.death && x.h.death(p, x.o, x.d)) saved = true; else if (x.cat && x.cat.death && x.cat.death(p)) saved = true; });
+    eachK('death', p, function (x) { if (saved) return; if (x.h && x.h.death && x.h.death(p, x.o, x.d)) saved = true; else if (x.cat && x.cat.death && x.cat.death(p)) saved = true; });
     if (saved && p.hp <= 0) p.hp = 1;
     return saved;
   };
-  var evade = function (mob) { if (!on()) return; var p = P(); each(p, function (x) { if (x.h && x.h.evade) x.h.evade(p, x.o, { mob: mob }, x.d); }); };
-  var resist = function (k) { if (!on()) return false; var p = P(), r = false; each(p, function (x) { if (!r && x.h && x.h.resist && x.h.resist(p, x.o, k, x.d)) r = true; }); return r; };
-  var potion = function (def0, est) { if (!on()) return; var p = P(); each(p, function (x) { if (x.h && x.h.potion) x.h.potion(p, x.o, { est: est }, x.d); }); };
-  W.__afkOnBlock = (function (prev) { return function (ent, mob) { try { if (typeof prev === 'function') prev(ent, mob); } catch (e) {} if (!on()) return; each(ent, function (x) { if (x.h && x.h.block) x.h.block(ent, x.o, { mob: mob }, x.d); }); }; })(W.__afkOnBlock);
+  var evade = function (mob) { if (!on()) return; var p = P(); eachK('evade', p, function (x) { if (x.h && x.h.evade) x.h.evade(p, x.o, { mob: mob }, x.d); }); };
+  var resist = function (k) { if (!on()) return false; var p = P(), r = false; eachK('resist', p, function (x) { if (!r && x.h && x.h.resist && x.h.resist(p, x.o, k, x.d)) r = true; }); return r; };
+  var potion = function (def0, est) { if (!on()) return; var p = P(); eachK('potion', p, function (x) { if (x.h && x.h.potion) x.h.potion(p, x.o, { est: est }, x.d); }); };
+  W.__afkOnBlock = (function (prev) { return function (ent, mob) { try { if (typeof prev === 'function') prev(ent, mob); } catch (e) {} if (!on()) return; eachK('block', ent, function (x) { if (x.h && x.h.block) x.h.block(ent, x.o, { mob: mob }, x.d); }); }; })(W.__afkOnBlock);
   // 治療：你施放的治療（治療者遺物）、你受到的治療
   var hookHeal = function () {
     var R = W.AFK_RELIC_RUNTIME; if (!R || !R.observe || hookHeal.done) return; hookHeal.done = true;
     var o = W.foulWaterHealMult;
-    if (typeof o === 'function' && !o.__afkRM) { var f = function (tg) { var m = o.apply(this, arguments); try { if (on() && tg && (isPlayer(tg) || isAlly(tg))) { var add = 0; each(tg, function (x) { if (x.h && x.h.healMulIn) add += N(x.h.healMulIn(tg, x.o)); }); var p = P(); each(p, function (x) { if (x.h && x.h.healMul) add += N(x.h.healMul(p, x.o)); if (x.ele && x.ele.role === 'heal' && x.ele.e === 'water') add += ELEX.healV.water[x.s]; }); if (add) m *= 1 + add / 100; } } catch (e) {} return m; }; f.__afkRM = true; W.foulWaterHealMult = f; try { (0, eval)('foulWaterHealMult = window.foulWaterHealMult'); } catch (e) {} }
+    if (typeof o === 'function' && !o.__afkRM) { var f = function (tg) { var m = o.apply(this, arguments); try { if (on() && tg && (isPlayer(tg) || isAlly(tg))) { var add = 0; eachK('healMulIn', tg, function (x) { if (x.h && x.h.healMulIn) add += N(x.h.healMulIn(tg, x.o)); }); var p = P(); eachK('healMul', p, function (x) { if (x.h && x.h.healMul) add += N(x.h.healMul(p, x.o)); if (x.ele && x.ele.role === 'heal' && x.ele.e === 'water') add += ELEX.healV.water[x.s]; }); if (add) m *= 1 + add / 100; } } catch (e) {} return m; }; f.__afkRM = true; W.foulWaterHealMult = f; try { (0, eval)('foulWaterHealMult = window.foulWaterHealMult'); } catch (e) {} }
   };
   // 你的治療命中（看全隊 HP 上升）：每 0.5 秒比對，歸給「最近施法的你」
   var HPS = new WeakMap();
@@ -974,8 +999,8 @@
       var before = HPS.get(a), now = hpOf(a); HPS.set(a, now);
       if (before == null || now <= before || a.dead) return;
       var amt = now - before, over = 0;
-      each(a, function (x) { if (x.h && x.h.healIn) x.h.healIn(a, x.o, { amt: amt }, x.d); });
-      if (amt > mhpOf(a) * 0.02) each(p, function (x) {
+      eachK('healIn', a, function (x) { if (x.h && x.h.healIn) x.h.healIn(a, x.o, { amt: amt }, x.d); });
+      if (amt > mhpOf(a) * 0.02) eachK('healOut', p, function (x) {
         if (x.h && x.h.healOut) x.h.healOut(p, x.o, { to: a, amt: amt, over: now >= mhpOf(a) ? amt * 0.3 : 0 }, x.d);
         if (x.ele && x.ele.role === 'heal') { var e = x.ele.e, hv = ELEX.healV[e][x.s]; if (e === 'fire' && roll(hv)) mobs().forEach(function (m) { hit(m, amt * 0.5); }); if (e === 'wind' && roll(hv)) { var l = party().filter(function (y) { return y !== a; })[0]; if (l) heal(l, amt * 0.5); } if (e === 'earth') S(a, 'xheal').cut = tk() + 50; if (e === 'none' && roll(hv)) S(a, 'xheal').imm = tk() + 30; }
       });
@@ -989,7 +1014,7 @@
   var hookEco = function () {
     if (typeof W.dollFieldVal === 'function' && !W.dollFieldVal.__afkRM) {
       var oD = W.dollFieldVal;
-      var nD = function (field) { var r = oD.apply(this, arguments); try { if (field === 'goldBonus' && on()) { var p = P(); each(p, function (x) { if (x.h && x.h.gold) r = N(r) + N(x.h.gold(p, x.o)); }); } } catch (e) {} return r; };
+      var nD = function (field) { var r = oD.apply(this, arguments); try { if (field === 'goldBonus' && on()) { var p = P(); eachK('gold', p, function (x) { if (x.h && x.h.gold) r = N(r) + N(x.h.gold(p, x.o)); }); } } catch (e) {} return r; };
       nD.__afkRM = true; W.dollFieldVal = nD; try { (0, eval)('dollFieldVal = window.dollFieldVal'); } catch (e) {}
     }
   };
@@ -1038,7 +1063,7 @@
       var oc = R.castCost;
       R.castCost = function (actor, skill, id, cost) {
         var c = oc.apply(this, arguments);
-        try { if (on() && isPlayer(actor) && c > 0 && c < Number.MAX_SAFE_INTEGER && skill && (skill.dmgType || 'magic') === 'magic') { var pc = 0; each(actor, function (x) { if (x.h && x.h.mpCost) { pc = Math.max(pc, N(x.h.mpCost(actor, x.o))); if (pc) tr(); } }); if (pc) c = Math.max(0, Math.floor(c * (1 - Math.min(100, pc) / 100))); } } catch (e) {}
+        try { if (on() && isPlayer(actor) && c > 0 && c < Number.MAX_SAFE_INTEGER && skill && (skill.dmgType || 'magic') === 'magic') { var pc = 0; eachK('mpCost', actor, function (x) { if (x.h && x.h.mpCost) { pc = Math.max(pc, N(x.h.mpCost(actor, x.o))); if (pc) tr(); } }); if (pc) c = Math.max(0, Math.floor(c * (1 - Math.min(100, pc) / 100))); } } catch (e) {}
         return c;
       };
       R.castCost._rm = 1;
@@ -1047,7 +1072,7 @@
       var oi = R.incoming;
       R.incoming = function (ent, dmg, src, opt) {
         var v = oi.apply(this, arguments);
-        try { if (on() && opt && opt.kind === 'dot' && /^(poison|burn|bleed)$/.test(opt.dotKind || '') && v > 0 && (isPlayer(ent) || isAlly(ent))) each(ent, function (x) { if (x.h && x.h.dotIn) { var d0 = v; v = Math.max(0, N(x.h.dotIn(ent, x.o, { dmg: v, kind: opt.dotKind }))); if (v !== d0) tr(); } }); } catch (e) {}
+        try { if (on() && opt && opt.kind === 'dot' && /^(poison|burn|bleed)$/.test(opt.dotKind || '') && v > 0 && (isPlayer(ent) || isAlly(ent))) eachK('dotIn', ent, function (x) { if (x.h && x.h.dotIn) { var d0 = v; v = Math.max(0, N(x.h.dotIn(ent, x.o, { dmg: v, kind: opt.dotKind }))); if (v !== d0) tr(); } }); } catch (e) {}
         return v;
       };
       R.incoming._rm = 1;
