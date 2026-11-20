@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
  * afk-runefx.js — 符文石與符文之語的效果（玩家 2026-10-29 晚，設計稿 docs/runes-design.md 第三版）
  *
  * 算法：
@@ -297,6 +297,9 @@
   var castAs = function (p, skId, star) {
     var snap = p.cds && p.cds.atkSk !== undefined ? p.cds.atkSk : undefined, r = false;
     cast = { actor: p, sk: skId, star: star };
+    // 11-20 玩家回報：自動攻擊技能（例：屠宰者）的施法間隔幾乎一直在跑，職業符文到點時被 atkSk 擋下＝指定技能（例：驚悚死神）放不出來。
+    //   符文施放本來就不吃也不佔自動攻擊技能的冷卻 → 施放當下暫時歸零，放完還原。
+    if (snap !== undefined && p.cds) p.cds.atkSk = 0;
     try { r = (typeof castSkill === 'function') ? castSkill(skId) : false; }
     finally { cast = null; if (snap !== undefined && p.cds) p.cds.atkSk = snap; }
     return r;
@@ -319,8 +322,7 @@
     if (inTown() || !(typeof getTarget === 'function' && getTarget())) return;
     if (!p._afkClsAt) p._afkClsAt = t;
     if (t - p._afkClsAt < CLS_IV[Math.min(3, star)]) return;
-    p._afkClsAt = t;
-    castAs(p, skId, star);
+    if (castAs(p, skId, star) !== false) p._afkClsAt = t;   // 沒放出去（目標已有同狀態、MP 不足…）下一輪再試，不白等一整個間隔
   };
   // 傭兵的職業符文（玩家 2026-10-30 22:21）：傭兵自己存檔裡指定的技能（他那一格在佐爾頓設定的 afkRuneSkill）
   //   增益：到期自動重放（MP 照扣，★1 −30%、★2 −60%、★3 不扣）；攻擊：每 8／7／6／5 秒自動施放（MP 照扣）
@@ -348,6 +350,12 @@
       if (inTown() || !(typeof getTarget === 'function' && getTarget())) return;
       if (!a._afkClsAt) a._afkClsAt = t;
       if (t - a._afkClsAt < CLS_IV[Math.min(3, star)]) return;
+      if (sk.fixedStatus) {   // 護衛毀滅／恐懼無助／驚悚死神：走傭兵的控制技（自己扣 MP、目標已有狀態就不放）
+        var okF = false; cast = { actor: a, sk: skId, star: star };
+        try { okF = typeof allyCastFixedStatus === 'function' && allyCastFixedStatus(a, sk); } catch (e) {} finally { cast = null; }
+        if (okF) a._afkClsAt = t;
+        return;
+      }
       if ((a.mp || 0) < base) return;
       a._afkClsAt = t; a.mp -= base;
       cast = { actor: a, sk: skId, star: star };

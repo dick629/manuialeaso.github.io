@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
  * afk-autosupply.js — 自動喝／自動買：三段加速藥水、增益料理（玩家 2026-11-01 18:23；外掛開關 autosupply，預設開）
  *
  *   技能設定分頁的藥水區（自我加速藥水、變形卷軸、魔法屏障卷軸…那一塊）多兩個勾選，跟原本的勾選一樣「自動使用＝自動購買」：
@@ -135,7 +135,7 @@
     old.style.display = '';
     sync();
   };
-  var lastSel = '';
+  var lastSel = null;   // 11-21：洛依沒賣料理時清單是空字串，原本跟初值相同＝選單一直空白
   var sync = function () {
     var p = P(); if (!p) return; var c = cfg(p);
     var h = document.getElementById('set-afk-haste3'), f = document.getElementById('set-afk-food'), s = document.getElementById('set-afk-food-sel'), row = document.getElementById('afk-food-sel-row');
