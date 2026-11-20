@@ -31,6 +31,9 @@
   // Ping 11-20 11:45：烈焰手套(31天) 漏掉了（同系列寒慄／震裂／暴風手套(31天) 早已刪除）→ 一起刪
   // 精準之牙(7天)／(30天)：沒有任務、配方用到，同樣刪除（Ping 11-20 11:47）
   ['ttmi_11680', 'ttmi_13578', 'ttmi_13581'].forEach(function (id) { if (DB.items[id] && !DEL[id]) { DEL[id] = 1; extra.push(id); } });
+  // Ping 11-20 13:29：收藏冊整理——變身卷軸類、不符合遊戲觀的活動／節慶／商城道具、真龍內甲、四種鱗、修練者解咒卷軸等一起刪除（187 種）
+  var COL_DEL_1120 = ["ttmi_13716", "ttmi_13723", "ttmi_14567", "ttmi_14565", "ttmi_13718", "ttmi_13725", "ttmi_14566", "ttmi_11822", "ttmi_13712", "ttmi_13719", "ttmi_13726", "ttmi_13715", "ttmi_14572", "ttmi_13722", "ttmi_13729", "ttmi_13710", "ttmi_14568", "ttmi_13717", "ttmi_13724", "ttmi_10580", "ttmi_14316", "ttmi_13720", "ttmi_13714", "ttmi_14570", "ttmi_13721", "ttmi_13728", "ttmi_11577", "ttmi_11578", "ttmi_14617", "ttmi_9860", "ttmi_12474", "ttmi_12473", "ttmi_12477", "ttmi_12476", "ttmi_12480", "ttmi_12479", "ttmi_12483", "ttmi_12482", "ttmi_14629", "ttmi_14630", "ttmi_12061", "ttmi_12060", "ttmi_13323", "ttmi_5178", "ttmi_5180", "ttmi_9471", "ttmi_10257", "ttmi_10258", "ttmi_10261", "ttmi_10259", "ttmi_10260", "ttmi_14268", "ttmi_13085", "ttmi_13324", "ttmi_9048", "ttmi_9047", "ttmi_9966", "ttmi_10974", "ttmi_9904", "ttmi_9445", "ttmi_9575", "ttmi_11740", "ttmi_9577", "ttmi_10699", "ttmi_9578", "ttmi_9573", "ttmi_9105", "ttmi_10786", "ttmi_10796", "ttmi_11535", "ttmi_11532", "ttmi_10793", "ttmi_10790", "ttmi_10797", "ttmi_10791", "ttmi_11536", "ttmi_10798", "ttmi_10794", "ttmi_11533", "ttmi_10788", "ttmi_10789", "ttmi_10795", "ttmi_11534", "ttmi_10792", "ttmi_10799", "ttmi_10787", "ttmi_14491", "ttmi_14494", "ttmi_14490", "ttmi_610", "ttmi_606", "ttmi_13356", "ttmi_13355", "ttmi_9104", "ttmi_10430", "ttmi_10431", "ttmi_10429", "ttmi_10428", "ttmi_9579", "ttmi_10800", "ttmi_10810", "ttmi_10807", "ttmi_10804", "ttmi_10805", "ttmi_10808", "ttmi_10802", "ttmi_10803", "ttmi_10809", "ttmi_10813", "ttmi_10806", "ttmi_10801", "ttmi_9446", "ttmi_9905", "ttmi_9576", "ttmi_13447", "ttmi_13448", "ttmi_13449", "ttmi_13450", "ttmi_9574", "ttmi_10121", "ttmi_10122", "ttmi_10120", "ttmi_10119", "ttmi_13590", "ttmi_11468", "ttmi_11474", "ttmi_11462", "ttmi_11465", "ttmi_11471", "ttmi_11469", "ttmi_11466", "ttmi_11472", "ttmi_11470", "ttmi_11476", "ttmi_11464", "ttmi_11467", "ttmi_11473", "ttmi_10433", "ttmi_10434", "ttmi_14657", "ttmi_14654", "ttmi_14652", "ttmi_14656", "ttmi_14653", "ttmi_14655", "afk_matgift_ttmi_9956", "afk_matgift_ttmi_9957", "ttmi_5134", "ttmi_11637", "ttmi_10251", "ttmi_10255", "ttmi_9872", "ttmi_9871", "ttmi_9873", "ttmi_9932", "ttmi_5135", "ttmi_5051", "ttmi_5133", "ttmi_9137", "ttmi_9138", "ttmi_9136", "ttmi_10971", "ttmi_9703", "ttmi_9477", "ttmi_10246", "ttmi_10973", "ttmi_9989", "ttmi_10266", "ttmi_9990", "ttmi_9121", "ttmi_9988", "ttmi_9022", "ttmi_10263", "ttmi_10247", "ttmi_9987", "ttmi_10972", "ttmi_9923", "ttmi_9795", "ttmi_9478", "ttmi_10265", "ttmi_10249", "ttmi_10254", "ttmi_10264", "ttmi_10248", "ttmi_mix_food_hpmp", "ttmi_mix_food_atk", "ttmi_mix_food_def", "ttmi_9921", "ttmi_9922", "ttmi_9924"];
+  COL_DEL_1120.forEach(function (id) { if (DB.items[id] && !DEL[id]) { DEL[id] = 1; extra.push(id); } });
   // Ping 11-17 01:26：純白的沙：MR 也全部移除（STUN／HOLD 已經移除；舊存檔已有的保留）
   Object.keys(DB.items).forEach(function (id) { var d = DB.items[id]; if (d && /^純白的沙：/.test(String(d.n || '')) && !DEL[id]) { DEL[id] = 1; extra.push(id); } });
   // 任務先建立、清理後執行：古物委託會快取材料排序。不可移除材料後仍留下無法交付的任務，
@@ -85,6 +88,8 @@
   var idOf = function (e) { return Array.isArray(e) ? e[0] : (e && typeof e === 'object' ? (e.id || null) : e); };
 
   // ── 一＋二＋三：掉落表 ──
+  // 11-20（Ping 13:37）：這次補進收藏冊掉落的道具（名稱怪物、紅騎士團、x靈、恢復原作掉落的）最低 1%
+  var MIN1 = toSet(["ttmi_9081", "ttmi_12941", "ttmi_12922", "ttmi_1814", "ttmi_9675", "ttmi_1626", "ttmi_9705", "ttmi_9943", "ttmi_13188", "ttmi_9522", "ttmi_10638", "ttmi_10277", "ttmi_1884", "ttmi_4279", "ttmi_9083", "ttmi_13186", "ttmi_10767", "ttmi_9521", "ttmi_5410", "ttmi_11498", "ttmi_11898", "ttmi_14553", "ttmi_13859", "ttmi_1676", "ttmi_9526", "ttmi_14560", "ttmi_10279", "ttmi_10771", "ttmi_9678", "ttmi_10641", "ttmi_11721", "ttmi_14550", "ttmi_10490", "ttmi_14081", "ttmi_9679", "ttmi_11825", "ttmi_13191", "ttmi_12927", "ttmi_14083", "ttmi_13432", "ttmi_1414", "ttmi_13189", "ttmi_9524", "ttmi_14082", "ttmi_13428", "ttmi_14548", "ttmi_10946", "ttmi_10769", "ttmi_10281", "ttmi_1769", "ttmi_9677", "ttmi_12925", "ttmi_10640", "ttmi_14084", "ttmi_13430", "ttmi_11722", "ttmi_14549", "ttmi_10947", "ttmi_14802", "ttmi_14716", "ttmi_9680", "ttmi_13192", "ttmi_13431", "ttmi_12895", "ttmi_12894", "ttmi_10045", "ttmi_10046", "ttmi_2331", "ttmi_2188", "ttmi_11882", "ttmi_11980", "ttmi_10772", "ttmi_9947", "ttmi_2190", "ttmi_13076", "ttmi_14612", "ttmi_9090", "ttmi_13195", "ttmi_13194", "ttmi_13422", "ttmi_10775", "ttmi_9950", "ttmi_10285", "ttmi_13416", "ttmi_14614", "ttmi_9092", "ttmi_13948", "ttmi_13949", "ttmi_12027", "ttmi_2203", "ttmi_10720", "ttmi_10642", "ttmi_7044", "ttmi_13419", "ttmi_11506", "ttmi_9095", "ttmi_12513", "ttmi_10643", "ttmi_10773", "ttmi_13417", "ttmi_10333", "ttmi_14576", "ttmi_14584", "ttmi_14613", "ttmi_2292", "ttmi_10903", "ttmi_10644", "ttmi_10981", "ttmi_13423", "ttmi_13418", "ttmi_14434", "ttmi_13403", "ttmi_2650", "ttmi_12487", "ttmi_11503", "ttmi_10780", "ttmi_9955", "ttmi_13130", "ttmi_2445", "ttmi_11851", "ttmi_11641", "ttmi_11608", "ttmi_2486", "ttmi_11642", "ttmi_11643", "ttmi_14444", "ttmi_14445", "ttmi_11502", "ttmi_13129", "ttmi_5030", "ttmi_10779", "ttmi_2548", "ttmi_2550", "ttmi_11938", "ttmi_11936", "ttmi_9953", "ttmi_13341", "ttmi_13342", "ttmi_13340", "ttmi_13343", "ttmi_14664", "ttmi_14665", "ttmi_14666", "ttmi_11852", "ttmi_11640", "ttmi_13679", "ttmi_13900", "ttmi_10389", "ttmi_10110", "ttmi_13131", "ttmi_10463", "ttmi_1573", "ttmi_608", "ttmi_452", "ttmi_8059", "ttmi_674", "ttmi_9820", "ttmi_9586", "ttmi_9585", "ttmi_14873", "ttmi_612"]);
   var tables = function () {
     TABLES.forEach(function (n) {
       var t = tbl(n); if (!t) return;
@@ -94,6 +99,7 @@
           var e = L[i], id = idOf(e);
           if (DEL[id] || PET[id]) { L.splice(i, 1); stats.removed++; continue; }
           if (RED[id] && Array.isArray(e) && typeof e[1] === 'number' && !done.has(e)) { e[1] = round(e[1]); done.add(e); stats.reduced++; }
+          if (MIN1[id] && Array.isArray(e) && typeof e[1] === 'number' && e[1] < 1) { e[1] = 1; done.add(e); }   // 11-20 Ping：收藏冊道具最低 1%
         }
       });
     });
@@ -144,8 +150,26 @@
     Object.keys(DATA.notes).forEach(function (id) { var d = DB.items[id], t = NOTE[DATA.notes[id]]; if (!d || !t || String(d.d || '').indexOf(t) >= 0) return; d.d = String(d.d || '') + '\n' + t; });
     (DATA.hidden || []).forEach(function (id) { if (DB.items[id]) DB.items[id].afkRebirthHidden = true; });   // 轉生用隱藏道具（效果在 afk-hidden，說明不寫）
   };
-  var run = function () { try { tables(); purge(); pets(); notes(); } catch (e) { console.warn('[AFK-dropcut]', e); } };
+  // ── 五（Ping 11-20 13:29）：名稱裡有怪物、紅騎士團（克特）、x靈系列（元素怪）的收藏冊道具，補進那些怪的掉落 ──
+  //   機率最低 1%（Ping 13:37）。原作有掉落怪的其他道具，改成不再擋（merged/drop-policy-data 拿掉那幾筆），一樣最低 1%。經典模式不加。
+  var ADD_1120 = [["克特", "ttmi_1814", 0.3], ["克特", "ttmi_13188", 0.3], ["克特", "ttmi_13186", 0.3], ["強盜", "ttmi_13859", 0.003], ["強盜頭目", "ttmi_13859", 0.003], ["克特", "ttmi_13191", 0.3], ["克特", "ttmi_13189", 0.3], ["惡魔", "ttmi_1769", 0.3], ["克特", "ttmi_13192", 0.3], ["曼波兔", "ttmi_10045", 0.003], ["曼波兔", "ttmi_10046", 0.003], ["安塔瑞斯", "ttmi_14612", 0.3], ["克特", "ttmi_13195", 0.3], ["克特", "ttmi_13194", 0.3], ["林德拜爾", "ttmi_14614", 0.3], ["克特", "ttmi_2203", 0.3], ["法利昂", "ttmi_14613", 0.3], ["水靈之主", "ttmi_11851", 0.003], ["深淵水靈", "ttmi_11851", 0.003], ["水精靈王", "ttmi_11851", 0.003], ["骷髏", "ttmi_2486", 0.003], ["骷髏弓箭手", "ttmi_2486", 0.003], ["骷髏斧手", "ttmi_2486", 0.003], ["骷髏槍兵", "ttmi_2486", 0.003], ["骷髏神射手", "ttmi_2486", 0.003], ["骷髏警衛", "ttmi_2486", 0.003], ["骷髏鬥士", "ttmi_2486", 0.003], ["深淵火靈", "ttmi_14444", 0.003], ["火精靈王", "ttmi_14444", 0.003], ["深淵風靈", "ttmi_14445", 0.003], ["風精靈王", "ttmi_14445", 0.003], ["妖魔", "ttmi_11938", 0.003], ["妖魔弓箭手", "ttmi_11938", 0.003], ["妖魔鬥士", "ttmi_11938", 0.003], ["妖魔法師", "ttmi_11938", 0.003], ["妖魔巡守", "ttmi_11938", 0.003], ["火靈之主", "ttmi_11852", 0.003], ["深淵火靈", "ttmi_11852", 0.003], ["火精靈王", "ttmi_11852", 0.003], ["惡魔", "ttmi_13900", 0.3]];
+  var addDrops = function () {
+    try {
+      if (typeof MOB_DROPS === 'undefined' || (typeof player !== 'undefined' && player && player.classicMode)) return;
+      ADD_1120.forEach(function (a) { if (!DB.items[a[1]] || DEL[a[1]]) return; var L = MOB_DROPS[a[0]] || (MOB_DROPS[a[0]] = []); if (!L.some(function (e) { return e && e[0] === a[1]; })) { var ne = [a[1], Math.max(1, a[2])]; done.add(ne); L.push(ne); } });
+      tables();
+      if (typeof W.__afkDexCacheBump === 'function') W.__afkDexCacheBump();
+    } catch (e) {}
+  };
+  // 收藏冊：別的外掛晚一點才把道具放進收藏冊 → 載入後再清一次刪除名單
+  var colPurge = function () {
+    try {
+      if (typeof EQUIP_CAT_ITEMS !== 'undefined') Object.keys(EQUIP_CAT_ITEMS).forEach(function (k) { var L = EQUIP_CAT_ITEMS[k]; if (!Array.isArray(L)) return; for (var i = L.length - 1; i >= 0; i--) if (DEL[L[i]]) { try { delete EQUIP_ITEM_CAT[L[i]]; } catch (e) {} L.splice(i, 1); } });
+      if (typeof MISC_CAT_ITEMS !== 'undefined') Object.keys(MISC_CAT_ITEMS).forEach(function (k) { var L = MISC_CAT_ITEMS[k]; if (!Array.isArray(L)) return; for (var i = L.length - 1; i >= 0; i--) if (DEL[L[i]]) { try { delete MISC_ITEM_CAT[L[i]]; } catch (e) {} L.splice(i, 1); } });
+    } catch (e) {}
+  };
+  var run = function () { try { tables(); purge(); pets(); notes(); addDrops(); colPurge(); } catch (e) { console.warn('[AFK-dropcut]', e); } };
   run();
-  W.addEventListener('load', function () { try { tables(); } catch (e) {} });
+  W.addEventListener('load', function () { try { tables(); } catch (e) {} setTimeout(function () { addDrops(); colPurge(); }, 600); });
   W.__afkDropCut = { EXTRA: extra, DEL: DEL, RED: RED, PET: PET, K: K, stats: stats, run: run, data: DATA, questProtected: QUEST_KEEP, restoredQuestItems: restoredQuests, craftProtected: CRAFT_KEEP, restoredCraftItems: restoredCraft };
 })();
