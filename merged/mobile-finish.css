@@ -795,3 +795,5 @@ body.m-unified #tab-content-panel .classic-list-toolbar .afk-qj-row button{flex:
 body.m-unified #tab-content-panel .classic-list-toolbar .afk-qj-row details{flex:1 1 100%}
 body.m-unified #tab-content-panel .classic-list-toolbar .afk-qj-row summary{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.m-unified #tab-content-panel .classic-list-toolbar .afk-qj-row [id^="qjf-count-"]{flex:1 1 100%;margin-left:0}
+/* Ping 11-20：遊戲設定裡的「🔌 外掛」按鈕框跟「更多」重複 → 手機版收起（按鈕留在 DOM，「更多」的選項照樣點得到） */
+body.m-unified #m-afk-navrow{display:none!important}

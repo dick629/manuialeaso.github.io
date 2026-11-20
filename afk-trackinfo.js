@@ -143,6 +143,8 @@
     if (clanActive()) out.push({ t: '血盟Buff', c: 'text-emerald-300' });
     var s = activeSets();
     for (var i = 0; i < s.length; i++) out.push({ t: s[i], c: 'text-amber-400' });   // 琥珀金＝裝備分頁套裝欄位的框光同色
+    // 11-20：其他外掛要顯示在狀態列的格子（例：afk-riftrules 的「臨終詛咒 ×層數」）—— 每個函式回傳 {t,c,ti} 或 null
+    try { (window.__afkStatusExtra || []).forEach(function (f) { var r = f(); if (r && r.t) out.push(r); }); } catch (e) {}
 
     // ── 找王／迴避王 ────────────────────────────────────────────
     // 這兩個都設定在別的面板裡，戰鬥中完全看不出「現在到底有沒有在作用」；更麻煩的是它們會互相影響：

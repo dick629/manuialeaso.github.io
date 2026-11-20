@@ -5,7 +5,7 @@
  *     ‧王的魔法屏障：出場帶最大 HP 15%／10% 的護盾；1 分鐘內沒打死再補一次（只補一次）
  *     ‧王的死亡傷害：王倒下時全隊扣最大 HP 10%／5%；出場 30 秒內打死改 15%／8%
  *     ‧王的近戰、遠程、魔法減傷：先減 5%／3% 再算其他
- *     ‧70 等以上地區的小怪：出場帶 10%／5% 護盾；死亡時全隊扣最大 HP 5%／3%
+ *     ‧70 等以上地區的小怪：出場帶 10%／5% 護盾；死亡反噬見下方 RCV（11-20 改成 2 秒合併＋5 秒詛咒）
  *   死亡傷害直接扣最大 HP 的百分比（不吃減傷），最少留 1 HP，不會因此倒下。
  *   王的法術爆擊：afk-enemyx 本來就讓敵人的法術也會爆擊（夢域鏡 50%、×2.5；次元裂縫 70%、×3），這裡不再重複擲。
  *   無盡的裂縫另外的規則（面板再壓 25%、光環與王的傷害 ×2）在 afk-dimrift。
@@ -45,6 +45,40 @@
     });
   };
   var shieldOf = function (m) { return N(m._rrShield); };
+  // ── 11-20（Ping 選 B＋C）：小怪倒下的反噬改成「合併＋詛咒」——打得快不會被一路秒到 1 HP ──
+  //   B：2 秒內倒下的小怪合成一次：第一隻 5%（夢域鏡 3%），之後每多一隻 +1%（+0.6%），一次最多 10%（6%）。
+  //   C：合成後不直接扣，變成 5 秒的「臨終詛咒」平均扣完；疊在一起時每秒最多 3%（1.8%）。治療、吸血、回血都能抵。
+  //   王倒下的反噬不變（單次事件）。RCV.v2 = false 會回到舊規則（每隻直接扣 5%／3%）。
+  var RCV = { v2: true, win: 20, dur: 50,
+    rift: { first: 0.05, inc: 0.01, cap: 0.10, dps: 0.03 },
+    dream: { first: 0.03, inc: 0.006, cap: 0.06, dps: 0.018 },
+    n: 0, until: 0, cur: [], layers: 0, stat: { kills: 0, hits: 0, pct: 0 } };
+  var rcvCfg = function () { return rift() ? RCV.rift : RCV.dream; };
+  // 11-20（Ping）：掛很久要變痛——每 1000 層，小怪的合併反噬與每秒上限 ×1.1（一層層往上加），最多 ×5（4 萬層）。
+  //   以 Ping 的帳號（每秒約 5.7 隻）算，×5 時次元裂縫每秒最多 14.75%，約等於舊規則（每隻直接 5%）的一半。王倒下的反噬不乘。
+  RCV.per = 1000; RCV.step = 0.1; RCV.maxMult = 5;
+  var rcvMult = function () { return Math.min(RCV.maxMult, 1 + RCV.step * Math.floor(RCV.layers / RCV.per)); };
+  var rcvKill = function () { if (!RCV.n) RCV.until = tk() + RCV.win; RCV.n++; RCV.layers++; RCV.stat.kills++; };
+  // 狀態列「臨終詛咒 ×層數」：層數＝這趟（回村前）打倒的 70 等以上小怪數；正在扣血時顯示紅色，沒在扣時灰色
+  (W.__afkStatusExtra = W.__afkStatusExtra || []).push(function () {
+    if (!RCV.v2 || !RCV.layers || !mode()) return null;
+    var t = tk(), c = rcvCfg(), sum = 0, last = 0;
+    RCV.cur.forEach(function (e) { if (e.until > t) { sum += e.ps; last = Math.max(last, e.until); } });
+    var mu = rcvMult(), ps = Math.min(c.dps * mu, sum), act = ps > 0;
+    return { t: '臨終詛咒 ×' + RCV.layers.toLocaleString(), c: act ? 'text-rose-400' : 'text-slate-400',
+      ti: '這一趟打倒的 70 等以上小怪會留下臨終詛咒（回村清除）。每 1000 層，小怪倒下的反噬 ×1.1，最多 ×5' + (mu > 1 ? '（目前 ×' + (Math.round(mu * 10) / 10) + '）' : '') + '。' + (act ? '現在每秒扣全隊最大 HP ' + (Math.round(ps * 1000) / 10) + '%，還剩 ' + Math.ceil((last - t) / 10) + ' 秒。' : '目前沒有在扣血。') };
+  });
+  var rcvTick = function () {
+    if (!mode() || inTown()) { RCV.n = 0; RCV.cur.length = 0; RCV.layers = 0; return; }
+    var t = tk(), c = rcvCfg();
+    var mu = rcvMult();
+    if (RCV.n && t >= RCV.until) { var pc = Math.min(c.cap, c.first + c.inc * (RCV.n - 1)) * mu; RCV.cur.push({ ps: pc * 10 / RCV.dur, until: t + RCV.dur }); RCV.n = 0; }
+    if (!RCV.cur.length || t % 10) return;
+    var sum = 0; RCV.cur = RCV.cur.filter(function (e) { if (e.until > t) { sum += e.ps; return true; } return false; });
+    var d = Math.min(c.dps * mu, sum); if (d > 0) { hurtAll(d); RCV.stat.hits++; RCV.stat.pct += d; }
+  };
+  var bindRcv = function () { var X = W.__afkProc; if (X && X.on && !bindRcv.done) { X.on('tick', rcvTick); bindRcv.done = true; } };
+  bindRcv(); W.addEventListener('load', function () { setTimeout(bindRcv, 200); });
   // ── 11-17（Ping）：戰鬥記錄「造成 0 點傷害」寫出原因（護盾吸收、免疫、幽影、沉眠之海）──
   //   擋下傷害的地方呼叫 __afkZeroMark(原因)；同一瞬間緊接著的「造成 0 點…傷害」記錄後面加上「（被擋下：原因）」。
   var ZW = { why: '', at: 0 };
@@ -129,7 +163,7 @@
             var fast = m._rrBorn && tk() - m._rrBorn <= 300, pct = fast ? c.deathFast : c.death;
             hurtAll(pct);
             log('<span class="font-bold" style="color:#fca5a5">【臨終的反噬】</span>' + (m.n || '王') + ' 倒下時反噬全隊：最大 HP −' + Math.round(pct * 100) + '%' + (fast ? '（30 秒內擊倒）' : '') + '。');
-          } else if (mapLv() >= 70) hurtAll(c.mobDeath);
+          } else if (mapLv() >= 70) { if (RCV.v2) rcvKill(); else { hurtAll(c.mobDeath); RCV.stat.kills++; RCV.stat.hits++; RCV.stat.pct += c.mobDeath; } }
         }
       } catch (e) {}
       return r;
@@ -217,6 +251,6 @@
     try { (0, eval)('_renderMobsImpl = window._renderMobsImpl'); } catch (e) {}
   }
   setInterval(function () { try { if (mode()) paintShields(); } catch (e) {} }, 500);   // 傷害不一定會重畫怪物，半秒補一次數字
-  W.__afkRiftRules = { CFG: CFG, mode: mode, mapLv: mapLv };
+  W.__afkRiftRules = { CFG: CFG, mode: mode, mapLv: mapLv, RCV: RCV };
   try { console.log('[AFK-riftrules] 已啟用：次元裂縫／夢域鏡的王屏障、死亡反噬、王減傷、70 等以上小怪'); } catch (e) {}
 })();

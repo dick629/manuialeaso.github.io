@@ -77,6 +77,11 @@
     ['次元裂縫小說','閱讀故事，保留閱讀進度','m-afk-nav-novel'],
     ['冒險小百科','規則、道具與玩法查詢','m-afk-nav-wiki'],
     ['遊戲廳','前往遊戲廳與休閒活動','m-afk-nav-gamehall'],
+    // Ping 11-20 03:45：遊戲設定裡的「🔌 外掛」那一框在手機版跟這裡重複 → 那一框收起來，原本只在那裡的四個搬進來
+    ['掉落查詢','怪物掉落與道具取得方式','m-afk-nav-dex'],
+    ['木人場','打木樁測試輸出','m-afk-nav-train'],
+    ['廢品標記管理','整理標記為廢品的道具','m-afk-nav-junkmgr'],
+    ['遺物整理','重複的遺物一次賣掉或回收','m-afk-nav-relicbatch'],
     ['外掛與介面','外掛開關與顯示偏好','afk-toggles-entry'],
     ['手機顯示','縮放、字體大小、輕量模式','display'],
     ['存檔與修復','備份、檢查與安全復原','recovery']
@@ -94,7 +99,11 @@
     'm-afk-nav-novel':'assets/icons/items/古代的卷軸.png',
     'display':'assets/logo/王族icon.webp',
     'recovery':'assets/icons/items/品質鑽石.png',
-    'logout':'assets/icons/items/瞬間移動卷軸.png'
+    'logout':'assets/icons/items/瞬間移動卷軸.png',
+    'm-afk-nav-dex':'assets/icons/items/丹特斯的召書.png',
+    'm-afk-nav-train':'assets/icons/items/不死族的骨頭.png',
+    'm-afk-nav-junkmgr':'assets/icons/items/金幣.png',
+    'm-afk-nav-relicbatch':'assets/icons/items/上鎖的庫庫爾坎高級寶箱.png'
   };
   function openMenuAction(action){
     if(action==='recovery'){$('lm-recovery').click();return;}

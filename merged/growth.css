@@ -155,4 +155,7 @@
 
 #growth-overlay .growth-round-list{list-style:none;margin:6px 0 10px;padding:0;border:1px solid #514438;border-radius:6px}#growth-overlay .growth-round-list li{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid #3a3029;color:#cfc3b0}#growth-overlay .growth-round-list li:last-child{border-bottom:0}#growth-overlay .growth-round-list li small{margin-left:auto;font-size:11px;color:#a99b88}#growth-overlay .growth-round-list li.done{color:#86efac}#growth-overlay .growth-round-list li.done small{color:#86efac}#growth-overlay .growth-round-list li.cur{color:#fde68a;background:rgba(199,163,100,.12)}#growth-overlay .growth-round-list li span{width:1.2em;text-align:center}
 #growth-overlay .growth-stat p.growth-stat-desc{font-size:12.5px;color:#d6cbb8;line-height:1.55;margin:12px 0 0}#growth-overlay .growth-stat p.growth-stat-desc+p{margin-top:6px}
-
+/* 11-20：巔峰「每次加」 */
+html body #growth-overlay .growth-pgstep{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 10px;font-size:13px;color:#c5b68c}
+html body #growth-overlay .growth-pgstep button{min-height:28px !important;padding:3px 12px !important;border:1px solid #5b5240 !important;border-radius:4px !important;background:#1c1912 !important;color:#d9cfb8 !important;cursor:pointer}
+html body #growth-overlay .growth-pgstep button.is-on{background:#6b5520 !important;border-color:#d4a84a !important;color:#fff3cf !important;font-weight:700}
