@@ -257,7 +257,8 @@
   var OWN = 'lineage_uid_owner_v1';
   var guarded = function (it) {
     var d = it && DB.items[it.id]; if (!d || !it.uid) return false;
-    return !!(d.relic || d.relicBase || d.dimRelic || d.dimDragon != null || d.relicEvo != null || d.gmOnly || String(it.id) === '99999' || String(it.id) === '99998');
+    // 11-21 22:45 Ping（方案一）：複本封印只管 S 級（次元遺物／次元龍遺物、至高的支配、昇華支配飾品、GM 裝備），一般遺物不管強化到幾都不封
+    return !!(d.dimRelic || d.dimDragon != null || d.relicEvo != null || (d.relicAsc != null && d.type === 'acc') || d.gmOnly || String(it.id) === '99999' || String(it.id) === '99998');
   };
   // 回傳 [[道具, 傭兵的存檔位或 null]…]
   //   11-18 21:58 修正：傭兵＝你其他存檔位的角色，他身上的裝備本來就存在那個存檔位裡 → 算在那個存檔位，不能算在你身上（原本被當成同一件出現在兩處，誤封 132 件）
@@ -269,8 +270,8 @@
   };
   var scanUids = function () {
     var p = P(); if (!p || typeof DB === 'undefined') return null;
-    var locs = {}, objs = {};
-    var add = function (it, loc, live) { if (!guarded(it)) return; var L = locs[it.uid] || (locs[it.uid] = []); if (L.indexOf(loc) < 0) L.push(loc); if (live) (objs[it.uid] = objs[it.uid] || []).push({ loc: loc, it: it }); };
+    var locs = {}, objs = {}, flagged = 0, unflagged = 0, whDirty = false;
+    var add = function (it, loc, live) { if (!guarded(it)) { if (live && it && it.afkDup) { delete it.afkDup; delete it.afkDupAt; unflagged++; if (loc === 'wh') whDirty = true; } return; } var L = locs[it.uid] || (locs[it.uid] = []); if (L.indexOf(loc) < 0) L.push(loc); if (live) (objs[it.uid] = objs[it.uid] || []).push({ loc: loc, it: it }); };
     var me = 'r:' + ident(p), slotLocs = {};
     var slotLoc = function (n, self) {
       if (n == null || !isFinite(n)) return self;
@@ -292,7 +293,6 @@
     if (wh && Array.isArray(wh.items)) wh.items.forEach(function (it) { if (it) add(it, 'wh', true); });
     var own = {}; try { own = JSON.parse(localStorage.getItem(OWN) || '{}') || {}; } catch (e) {}
     var IMP = 'lineage_uid_imported_v1', imported = {}; try { imported = JSON.parse(localStorage.getItem(IMP) || '{}') || {}; } catch (e) {}
-    var flagged = 0, unflagged = 0, whDirty = false;
     Object.keys(locs).forEach(function (uid) {
       var L = locs[uid];
       if (L.length === 1) {

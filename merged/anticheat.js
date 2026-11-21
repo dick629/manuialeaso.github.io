@@ -204,7 +204,7 @@
     Object.keys(actor.eq).forEach(function (k) {
       var it = actor.eq[k]; if (!it) return;
       if (k === 'mio') { var m = actor.afkMio, i = /^afk_mio_(\d\d)$/.exec(it.id || ''); if (m && i && Number((m.cards || {})[Number(i[1])]) >= 6 && !stampOk((m.acg || {})[Number(i[1])])) n++; return; }
-      if (it.afkDup) { n++; if (k === 'weapon' || k === 'wpn') w = 1; var dd = DB.items[it.id]; keys[(dd && dd.relicBase) || String(it.id).split('~')[0]] = 1; return; }   // 11-12 道具身分證：同一個編號同時出現在兩處的複本（afk-antisl）
+      if (it.afkDup && sKind(it.id)) { n++; if (k === 'weapon' || k === 'wpn') w = 1; var dd = DB.items[it.id]; keys[(dd && dd.relicBase) || String(it.id).split('~')[0]] = 1; return; }   // 11-12 道具身分證：同一個編號同時出現在兩處的複本（afk-antisl）
       if (!sKind(it.id) || stampOk(it.acs)) return;
       n++; if (k === 'weapon' || k === 'wpn') w = 1;   /* 11-18：武器欄的鍵是 wpn（原本寫 weapon，武器 −35% 從來沒生效） */
       var d = DB.items[it.id]; keys[(d && d.relicBase) || String(it.id).split('~')[0]] = 1;
@@ -235,7 +235,7 @@
   hookSeal(); hookPetSeal(); W.addEventListener('load', function () { hookSeal(); hookPetSeal(); });
   (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent) { var v = ent && ent.cls ? sealOf(ent) : null; return v ? 1 + v.inn : 1; });
   W.__afkAcSealInfo = function (actor) { var v = sealOf(actor); return v ? { out: v.out, inn: v.inn, n: v.n } : null; };   // 木人場細項用
-  W.__afkAcSealedItem = function (it) { try { if (!it || exempt()) return false; if (it.afkDup) return true; return !!(sKind(it.id) && !stampOk(it.acs)); } catch (e) { return false; } };   // 11-18：封印中的道具（寄賣攤不能上架）
+  W.__afkAcSealedItem = function (it) { try { if (!it || exempt()) return false; if (it.afkDup && sKind(it.id)) return true; return !!(sKind(it.id) && !stampOk(it.acs));   /* 11-21 22:45：複本封印只算 S 級 */ } catch (e) { return false; } };   // 11-18：封印中的道具（寄賣攤不能上架）
   var tagHook = function () {
     var o = W.buildItemDescHTML; if (typeof o !== 'function' || o.__afkSealTag) return;
     var f = function (item) { var r = o.apply(this, arguments); try { if (item && W.__afkAcSealedItem && W.__afkAcSealedItem(item)) r = '<span class="font-bold" style="color:#f87171;border:1px solid #f87171;border-radius:4px;padding:0 6px;margin-right:4px">封印</span><br>' + r; } catch (e) {} return r; };
