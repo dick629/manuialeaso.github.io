@@ -546,6 +546,14 @@
         }
       } catch (e) {}
       try { if (d && d.relic && typeof r === 'string' && r.indexOf('【遺物】') === 0 && r.indexOf('<') < 0) r = plainRelicTip(r); } catch (e) {}
+      // 詞綴抽到涅默西斯的符石劍（11-21）：效果跟著這件的強化階段，說明另列一段
+      try {
+        var NM = W.__afkNemesis, hb = d && d.relicBase && DB.items[d.relicBase];
+        if (NM && d && d.nemesisSword && hb && !hb.nemesisSword && typeof r === 'string') {
+          var ns = tier(N(d.relicPlus), d.relicAsc != null ? N(d.relicAsc) : null);
+          r += '<br><span class="text-amber-300 font-bold">詞綴特效・' + esc((DB.items[NM.KEY] || {}).n || '涅默西斯的符石劍') + '（' + STAGE_N[ns] + '）</span><br><span class="text-amber-200">' + esc(NM.fxText(ns)) + '</span>';
+        }
+      } catch (e) {}
       return r;
     };
     f.__afkBR = true; W.tooltipItemDescription = f; try { (0, eval)('tooltipItemDescription = window.tooltipItemDescription'); } catch (e) {}
