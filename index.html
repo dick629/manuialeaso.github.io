@@ -570,7 +570,7 @@
     <script src="js/00-data.js?v=579471450eea"></script>
 <script src="js/01-drops-config.js?v=af9e6cc15042"></script>
 <script src="js/02-stats-recompute.js?v=8cefe7e46f92"></script>
-    <script src="js/03-combat-core.js?v=e1c412f429e7"></script>
+    <script src="js/03-combat-core.js?v=4c7b8f67b0ad"></script>
     <script src="js/04-combat-attack.js?v=2daca231ca06"></script>
 <script src="js/05-kill-progression.js?v=60b9457f6994"></script>
     <script src="js/06-status-allies.js?v=b6e7f0edf651"></script>
@@ -606,7 +606,7 @@
          無開關：這是顯示正確性，不是功能。實測 forceDarkModeEnabled+darkModeImagePolicy=smart 可重現、加這行即解。 -->
     <style>:root{color-scheme:dark}</style>
     <!-- afk-toggles 必須最先載入：外掛開關中樞（逃生門，自己不可被關；某支外掛壞掉時玩家關掉它就能用原版繼續玩） -->
-    <script src="afk-toggles.js?v=a248e4258a15"></script>
+    <script src="afk-toggles.js?v=a72e53d13466"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
     <script src="afk-webp-frames-data.js?v=c9e44b02f76f"></script>
@@ -639,7 +639,7 @@
     <!-- 存檔解壓快取：必須排在所有會讀 localStorage 的外掛之前（核心每殺一隻怪都重解壓一次血盟狀態） -->
     <script src="afk-lzcache.js?v=c466838d97c0"></script>
     <!-- afk-perf：卡頓修正（日誌批次寫入／背包分頁按需重建）。必須排在 afk-toast（包 logSys）與 afk-itemsearch（包 renderTabs）之前 -->
-    <script src="afk-perf.js?v=69fc7dd91cef"></script>
+    <script src="afk-perf.js?v=ed172117bf4f"></script>
     <script src="afk-display.js?v=d126f73ab790"></script>
     <!-- afk-mapsync：地圖下拉自我校正（回城／出發後地區/地圖下拉與所在地不符時自動校正） -->
     <script src="afk-mapsync.js?v=3349ebbc7cc1"></script>
@@ -751,7 +751,7 @@
     <script src="afk-relic-catalog.js?v=347a231cb7e3"></script>
     <script src="afk-relic-weapons.js?v=cff2a350921a"></script>
     <script src="afk-relic-defense.js?v=86c0ec7fc393"></script>
-    <script src="afk-relic-runtime.js?v=bbfa5ec8e833"></script>
+    <script src="afk-relic-runtime.js?v=ecee41d46c04"></script>
     <script src="afk-summoncloth.js?v=5807ef78ab79"></script>
     <!-- afk-npc-kit：NPC 服務面板共用外觀（哈瑪大師、艾格尼絲、佐爾頓、艾彼迪爾）；排在這些 NPC 外掛之前 -->
     <script src="afk-npc-kit.js?v=d22d6d56d5e9"></script>
@@ -1155,7 +1155,7 @@
     <!-- afk-skillup：技能強化（席琳神殿 技藝導師 薇爾娜）；要在 afk-hidden、afk-callally、afk-card-combat 之後，afk-intdmg 之前 -->
     <script src="afk-skillup.js?v=639a82c8ce89"></script>
     <!-- afk-dreamquest：夢域鏡任務線「水面下的證詞」7 章（伊奧、扎爾、喬、迷幻森林之母、奧拉奇里亞、無名的說書人）；要在 afk-lore-kit、afk-hardin、afk-rift2、afk-soulstone 之後 -->
-    <script src="afk-dreamquest.js?v=74447bcf04c8"></script>
+    <script src="afk-dreamquest.js?v=92ac4c87b0d7"></script>
     <!-- afk-evolve：職業進化（席琳神殿 技藝導師 薇爾娜；第一批召喚、寵物、爆發流派＋意志）；要在 afk-skillup、afk-relic-runtime、afk-card-combat 之後 -->
     <script src="afk-evolve.js?v=c8346a9cb965"></script>
     <!-- afk-mapboss：地圖王（野外打倒 300 隻）、副本王（地監待滿 10 分鐘）、王之徽章；要在 afk-lore-kit、afk-region-boss 之後 -->
@@ -1306,7 +1306,7 @@
     <!-- afk-dmglabel：物品說明的增傷種類標示〔近戰〕〔遠程〕〔魔法〕〔屬性〕〔通用〕（Ping 11-17） -->
     <script src="afk-dmglabel.js?v=1746ca026fbe"></script>
     <!-- afk-explog：經驗日誌分頁（Ping 11-17） -->
-    <script src="afk-explog.js?v=896dfc6064bc"></script>
+    <script src="afk-explog.js?v=3c2f8081cf11"></script>
     <script src="afk-hybrid.js?v=3a3d94445d65"></script>
     <!-- afk-relicmix：遺物武器特效混合（繼承共鳴／魔擊／第二攻擊施法，特效連鎖 1 層） -->
     <script src="afk-relicmix.js?v=00bb1c911b6d"></script>

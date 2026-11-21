@@ -45,6 +45,15 @@
     var key = def && def.relicBase || String(id).split('~')[0], c = byKey[key];
     return c ? { id: key, sourceId: key, catalogId: c.id, key: key, def: def, item: def, inst: inst, stage: stageOf(def), n: finite(def.relicPlus), asc: def.relicAsc == null ? null : def.relicAsc } : null;
   }
+  var srcGen = 0;
+  var hookSrcGen = function () {
+    ['calcStats', 'recomputeStats'].forEach(function (fn) {
+      var o = W[fn]; if (typeof o !== 'function' || o.__afkSrcGen) return;
+      var f = function () { srcGen++; try { return o.apply(this, arguments); } finally { srcGen++; } }; f.__afkSrcGen = true; W[fn] = f;
+      try { (0, eval)(fn + ' = window.' + fn); } catch (e) {}
+    });
+  };
+  hookSrcGen(); W.addEventListener('load', hookSrcGen);
   function sourceList(actor) {
     if (!enabled() || !actor || !actor.eq || typeof DB === 'undefined') return [];
     if(action&&action.gm&&action.actor===actor&&action.gmSources)return action.gmSources;
@@ -55,10 +64,13 @@
     // keys in the same order as Object.keys for plain equipment objects) instead
     // of allocating a key array and doing dictionary lookups on every query.
     var eq=actor.eq,old=caches.get(actor);
+    // 11-21 效能（補跑）：同一刻、中間沒有重算能力（換裝一定會重算）就直接沿用，不再逐格比對
+    var tkNow=(typeof state!=='undefined'&&state)?state.ticks:-1;
+    if(old&&old.revision===revision&&old.t===tkNow&&old.g===srcGen)return old.sources;
     if(old&&old.revision===revision){
       var okeys=old.keys,oids=old.idList,at=0,same=true;
       for(var sk in eq){if(okeys[at]!==sk){same=false;break;}var entry=eq[sk],eid=entry&&entry.id||'';if(typeof eid!=='string')eid=String(eid);if(oids[at]!==eid){same=false;break;}at++;}
-      if(same&&at===okeys.length)return old.sources;
+      if(same&&at===okeys.length){old.t=tkNow;old.g=srcGen;return old.sources;}
     }
     var keys=Object.keys(eq);
     var selected = {};
@@ -72,7 +84,7 @@
     });
     var list = Object.keys(selected).map(function (k) { return selected[k]; }).sort(function (a, b) { return a.catalogId - b.catalogId; });
     var idList=new Array(keys.length);for(var ix=0;ix<keys.length;ix++){var e=actor.eq[keys[ix]];idList[ix]=String(e&&e.id||'');}
-    caches.set(actor, { revision:revision,keys:keys,idList:idList,sources:list }); return list;
+    caches.set(actor, { revision:revision,keys:keys,idList:idList,sources:list,t:tkNow,g:srcGen }); return list;
   }
   // Identity-based base effects (e.g. necromancy) also work when inherited.
   // Keep these out of sources()/dispatch: their copied fields are already on

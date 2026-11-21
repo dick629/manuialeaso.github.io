@@ -2133,8 +2133,8 @@ function spawnMob(idx) {
     if (!bossInBattle
         && MAP_CATEGORIES.wild.some(m => m.v === mapState.current)
         && !mapState.mobs.some(m => m && m.n === '林德拜爾')
-        && player.inv.some(i => (i.id === 'item_dragon_egg' || i.id === 'item_dragon_egg2') && i.cnt > 0)
-        && Math.random() < 0.01) {
+        && Math.random() < 0.01
+        && player.inv.some(i => (i.id === 'item_dragon_egg' || i.id === 'item_dragon_egg2') && i.cnt > 0)) {   /* 🔌 加掛版補丁:林德拜爾先擲骰 */
         mobId = 'lindvior';
     }
     if (typeof window.__afkForceTroll === 'function' && !_antharasDungeon) { try { let _ft = window.__afkForceTroll(idx, mobId); if (_ft && _ft.spawn && DB.mobs[_ft.mobId] && DB.mobs[_ft.mobId].trollPlayer) { mobId = _ft.mobId; mapState._trollSpawn = _ft.spawn; } } catch (e) {} }   /* 🔌 加掛版補丁:宣戰強制敵對 NPC */

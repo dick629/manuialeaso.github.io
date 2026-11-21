@@ -175,6 +175,9 @@
       if (r.maps && r.maps.indexOf(map) >= 0 && !(r.normalOnly && m.boss)) hit = true;
       // 玩家 11-11：夢域鏡裡怪名可能加了前後綴 → 用「包含」比對；供奉帳的雄雌計數若跟手上本數對不起來（掉了、被賣、交過）就重算
       if (r.uniqCap && st.altar) { var tot = 0; for (var an in st.altar) tot += st.altar[an] || 0; if (tot > have(id)) st.altar = {}; }
+      // 11-21（Ping 回報）：長老經文、龍的傷痕也一樣——記錄裡給過的數量比手上多（刪掉、賣掉、弄丟），就重算，否則永遠不會再掉
+      if (r.uniq && st.elders) { var te = 0; for (var en in st.elders) te += st.elders[en] ? 1 : 0; if (te > have(id)) st.elders = {}; }
+      if (r.dragon && st.dragons) { var td = 0; for (var dn in st.dragons) td += st.dragons[dn] ? 1 : 0; if (td > have(id)) st.dragons = {}; }
       var nm = r.names ? r.names.filter(function (x) { return n === x || n.indexOf(x) >= 0; })[0] : null;
       var nn = nm || n;
       if (r.names && r.names.indexOf(nn) >= 0) {

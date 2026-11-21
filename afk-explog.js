@@ -14,7 +14,8 @@
   var MAX = 200;
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var N = function (v) { v = Number(v); return isFinite(v) ? v : 0; };
-  var fmt = function (n) { return Math.max(0, Math.floor(Number(n) || 0)).toLocaleString(); };
+  // 11-21 效能：toLocaleString 很慢（補跑每隻怪都會叫），改成自己加千分位（結果一樣）
+  var fmt = function (n) { return String(Math.max(0, Math.floor(Number(n) || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var cap = function (p) { try { return typeof W.__afkLvCap === 'function' ? W.__afkLvCap(p) : 100; } catch (e) { return 100; } };
   var req = function (lv) { try { return typeof getExpReq === 'function' ? Number(getExpReq(lv)) || 0 : 0; } catch (e) { return 0; } };
