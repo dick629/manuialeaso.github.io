@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
  * afk-runes.js — 符文師佐爾頓（燃柳村；原本在說話之島，11-02 02:56 搬家）：星蝕·解符文孔、鑲嵌／拆下符文、哀石兌換（玩家 2026-10-29 晚）
  *
  * 原本叫「蝕刻」，跟無屬性印記的「蝕刻」撞名，改名「星蝕·解」，並從艾格尼絲那裡獨立出來交給符文師。
@@ -127,7 +127,8 @@
   // ── 升星路線（2026-11-03）：從現在的星數一路升到目標星數，算出總共要用掉的符文與材料 ──
   //   背包那一列：做出一顆目標星數的符文；中間需要的低星符文先用背包裡現成的（高星優先），沒有才往下做。
   //   鑲著的那一格：孔裡那顆一路往上升；★2→★3 要的另一顆 ★2 一樣先用背包現成的，沒有就用背包的低星符文做。
-  var starPlan = function (loc, target) {
+  // 11-21（Ping）：兩條路線。track＝'n' 一般（同名符文：★1 哀石結晶 50、★2 解命石 10、★3 兩顆同名一般 ★2）／'d' 次元（次元符文石 2／5／8 → 次元 X之符文）
+  var starPlan = function (loc, target, track) {
     var mm = /^sock:(.+):(\d+)$/.exec(String(loc || '')), rid = null;
     if (mm) { var c = find(mm[1]); if (!c) return { err: '找不到這件裝備。' }; rid = (c.it.sockets || [])[Number(mm[2])]; if (!rid) return { err: '這個孔沒有符文。' }; }
     else if (String(loc || '').indexOf('inv:') === 0) rid = String(loc).slice(4);
@@ -136,24 +137,26 @@
     if (!RD.starOk(base)) return { err: RD.WIP_STAR[base.key] ? nm(base.id) + '目前還不能升星，之後開放。' : nm(base.id) + '不能升星。' };
     if (!(target >= 1 && target <= 3)) return { err: '請選要升到幾星。' };
     var cur = mm ? (Number(r.star) || 0) : 0;
+    if (mm && cur > 0) track = r.dim ? 'd' : 'n';   // 鑲著的已經有星：沿用它原本的路線
+    var nrm = track !== 'd', sid = function (n) { return RD.starId(base.id, n, nrm); }, COST = nrm ? RD.STAR_COST_N : RD.STAR_COST;
     if (mm && target <= cur) return { err: '已經是' + (RD.STARS[cur] || '') + '了。' };
-    var avail = [0, 1, 2, 3].map(function (n) { return have(RD.starId(base.id, n)); });
+    var avail = [0, 1, 2, 3].map(function (n) { return have(sid(n)); });
     var use = {}, mats = {}, short = 0, steps = 0;
     var add = function (o, k, n) { o[k] = (o[k] || 0) + n; };
-    var costOf = function (n) { var c = RD.STAR_COST[n]; if (c) Object.keys(c).forEach(function (k) { add(mats, k, c[k]); }); };
-    var craft, obtain = function (n) {   // 從背包拿一顆 ★n：有現成的就用，沒有就做
-      if (avail[n] > 0) { avail[n]--; add(use, RD.starId(base.id, n), 1); return; }
+    var costOf = function (n) { var c = COST[n]; if (c) Object.keys(c).forEach(function (k) { add(mats, k, c[k]); }); };
+    var craft, obtain = function (n) {   // 從背包拿一顆這條路線的 ★n：有現成的就用，沒有就做
+      if (avail[n] > 0) { avail[n]--; add(use, sid(n), 1); return; }
       if (n === 0) { short++; return; }
       craft(n);
     };
-    craft = function (n) { steps++; obtain(n - 1); costOf(n); };   // 11-18：每一星＝低一星的符文＋次元符文石
-    if (mm) { for (var k = cur + 1; k <= target; k++) { steps++; costOf(k); } }
+    craft = function (n) { steps++; if (nrm && n === 3) { obtain(2); obtain(2); } else { obtain(n - 1); costOf(n); } };
+    if (mm) { for (var k = cur + 1; k <= target; k++) { steps++; if (nrm && k === 3) obtain(2); else costOf(k); } }
     else craft(target);
     Object.keys(mats).forEach(function (k) { add(use, k, mats[k]); });
     var miss = [];
     if (short) miss.push(nm(base.id) + ' 還差 ' + short + ' 顆');
     Object.keys(use).forEach(function (k) { var h = have(k); if (h < use[k]) miss.push(nm(k) + ' ' + h + '/' + use[k]); });
-    return { ok: !miss.length, miss: miss, use: use, short: short, steps: steps, base: base, cur: cur, target: target, from: rid };
+    return { ok: !miss.length, miss: miss, use: use, short: short, steps: steps, base: base, cur: cur, target: target, from: rid, track: nrm ? 'n' : 'd', to: sid(target) };
   };
 
   // ── 動作（回傳錯誤訊息，成功回傳 null）──
@@ -176,6 +179,23 @@
     try { if (W.__afkRuneFx && W.__afkRuneFx.bump) W.__afkRuneFx.bump(); } catch (e) {}
     try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {}
     try { logSys('<span class="font-bold" style="color:#f0abfc;">🌀 佐爾頓把次元符文石按進你的符文裡——符文之語開始跟著星辰的數量發光。（符文次元模式已開啟）</span>'); } catch (e) {}
+    try { saveGame(); } catch (e) {}
+    return null;
+  };
+  // Ping 11-21 11:57：次元符文之語升級（開啟次元模式之後）：★1 解命石 20、★2 解命石 30＋破空石 10、★3 星蝕之核 5；每星加成 +13%／+16%／+20%
+  var DIM_UP = { 1: { afk_fate_unlock: 20 }, 2: { afk_fate_unlock: 30, afk_void_stone: 10 }, 3: { afk_rd_eclipse: 5 } }, DIM_PCT = [10, 13, 16, 20];
+  var dimLv = function (p) { var d = p && p.afkRuneDim; return d ? Math.max(0, Math.min(3, Number(d.lv) || 0)) : 0; };
+  var dimUp = function () {
+    var p = P(); if (!p) return '找不到角色。';
+    if (!p.afkRuneDim) return '要先開啟符文次元模式。';
+    var lv = dimLv(p); if (lv >= 3) return '次元符文之語已經是 ★3 了。';
+    var need = DIM_UP[lv + 1], miss = Object.keys(need).filter(function (k) { return have(k) < need[k]; });
+    if (miss.length) return '材料不足：' + miss.map(function (k) { return nm(k) + ' ' + have(k) + '/' + need[k]; }).join('、');
+    Object.keys(need).forEach(function (k) { take(k, need[k]); });
+    p.afkRuneDim.lv = lv + 1;
+    try { if (W.__afkRuneFx && W.__afkRuneFx.bump) W.__afkRuneFx.bump(); } catch (e) {}
+    try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {}
+    try { logSys('<span class="font-bold" style="color:#f0abfc;">🌀 佐爾頓把次元的刻痕再鑿深一層——次元符文之語 ' + RD.STARS[lv + 1] + '（符文之語每星 +' + DIM_PCT[lv + 1] + '%）。</span>'); } catch (e) {}
     try { saveGame(); } catch (e) {}
     return null;
   };
@@ -307,8 +327,10 @@
       var base = r.base ? RD.byId[r.base] : r, cur = Number(r.star) || 0;
       if (!RD.starOk(base)) return RD.WIP_STAR[base.key] ? nm(base.id) + '目前還不能升星，之後開放。' : nm(base.id) + '不能升星。';
       if (cur >= 3) return '已經是 ★3 了。';
-      var next = RD.starId(base.id, cur + 1);
-      { var cost = RD.STAR_COST[cur + 1], miss = Object.keys(cost).filter(function (k) { return have(k) < cost[k]; });
+      var nrm1 = cur > 0 ? !r.dim : true;   // 單步升星：已有星沿用原路線；無星走一般升星
+      if (nrm1 && cur + 1 === 3) return '一般 ★3 要兩顆同名 ★2，請用下面的「升到 ★3」。';
+      var next = RD.starId(base.id, cur + 1, nrm1);
+      { var cost = (nrm1 ? RD.STAR_COST_N : RD.STAR_COST)[cur + 1], miss = Object.keys(cost).filter(function (k) { return have(k) < cost[k]; });
         if (miss.length) return '材料不足：' + miss.map(function (k) { return nm(k) + ' ' + have(k) + '/' + cost[k]; }).join('、');
         Object.keys(cost).forEach(function (k) { take(k, cost[k]); }); }
       if (m) { var it = resolve(m[1]); if (!it) return '找不到這件裝備。'; socks(it)[idx] = next; }
@@ -317,9 +339,9 @@
       return null;
     },
     // 直接升到指定星數（2026-11-03）：loc＝'inv:<任一星的符文id>' 或 'sock:<裝備ref>:<孔>'；中間每一步的材料照扣（★3 要的另一顆 ★2 也照規則做）
-    starTo: function (loc, target) {
+    starTo: function (loc, target, track) {
       var p = P(); if (!p) return '請先進入遊戲。';
-      var pl = starPlan(loc, Number(target));
+      var pl = starPlan(loc, Number(target), track);
       if (pl.err) return pl.err;
       if (!pl.ok) return '材料不足：' + pl.miss.join('、');
       var DC = W.__afkDiaCost, fee = DC ? DC.COST.rune * pl.steps : 0, fm = DC && fee ? DC.check(fee) : null;
@@ -327,7 +349,7 @@
       var m = /^sock:(.+):(\d+)$/.exec(String(loc)), it = null;
       if (m) { it = resolve(m[1]); if (!it) return '找不到這件裝備。'; }
       Object.keys(pl.use).forEach(function (id) { if (pl.use[id] > 0) take(id, pl.use[id]); });
-      var to = RD.starId(pl.base.id, pl.target);
+      var to = pl.to;
       if (m) socks(it)[Number(m[2])] = to; else gainItem(to, 1, true, true);
       if (DC && fee) DC.pay(fee);
       done('<span class="' + RD.STAGE_C[pl.base.stage] + ' font-bold">' + NPC_N + '在' + nm(pl.from) + '上刻下新的星紋——' + nm(to) + '。</span>' + (m ? '（鑲著直接升星）' : ''));
@@ -391,7 +413,10 @@
     var DCr = W.__afkDiaCost, feeLine = DCr ? '<p class="ax-lore" style="color:' + (DCr.check(DCr.COST.rune) ? '#fca5a5' : '#fde68a') + '">每項服務收' + DCr.txt(DCr.COST.rune) + '（哀石兌換不收）' + (DCr.check(DCr.COST.rune) ? '：' + DCr.check(DCr.COST.rune) : '') + '。</p>' : '';
     var h = feeLine + '<p class="ax-lore">「星辰墜落時會在大地刻下傷痕，席琳的遺骸也一樣。把它們交給我，我替你的裝備鑿出能容納星蝕的孔，再把符文嵌進去。」——符文師 ' + NPC_N + '</p>'
       + K.matBar([RD.CUR[1], RD.CUR[2], RD.CUR[3], RD.REMOVE[0], RD.FATE.id, COST.reverie])
-      + (p.afkRuneDim ? '<div class="ax-note" style="color:#f0abfc">🌀 符文次元模式：已開啟。符文之語跟著星數變強（取組成它的符文裡最低的星，每星 +10%）。</div>'
+      + (p.afkRuneDim ? (function () { var lv = dimLv(p), nx = DIM_UP[lv + 1];
+          return '<div class="ax-note" style="color:#f0abfc">🌀 符文次元模式：已開啟' + (lv ? '（次元符文之語 ' + RD.STARS[lv] + '）' : '') + '。符文之語跟著星數變強（取組成它的符文裡最低的星，每星 +' + DIM_PCT[lv] + '%）。'
+            + (nx ? '<br>升到 ' + RD.STARS[lv + 1] + '（每星 +' + DIM_PCT[lv + 1] + '%）：' + Object.keys(nx).map(function (k) { return K.reqTxt(have(k), nx[k], nm(k)); }).join('　')
+              + ' <button type="button" class="btn" data-zo="dimup" style="margin-left:6px"' + (Object.keys(nx).every(function (k) { return have(k) >= nx[k]; }) ? '' : ' disabled') + '>升級</button>' : '') + '</div>'; })()
         : (have(DIM_ID) > 0 ? '<div class="ax-note" style="color:#f0abfc">🌀 你帶著次元符文石。<button type="button" class="btn" data-zo="dim" style="margin-left:6px">交給佐爾頓，開啟符文次元模式</button></div>' : ''))
       + '<div class="ax-h">① 選擇裝備</div>'
       + '<div class="ax-filter">' + Object.keys(FILTERS).map(function (k) { return '<button type="button" data-zof="' + k + '"' + (ui.filter === k ? ' class="on"' : '') + '>' + FILTERS[k] + '</button>'; }).join('')
@@ -484,27 +509,34 @@
     var stars = [], seenB = {};
     (p.inv || []).forEach(function (q) {
       var r = q && !q.lock && RD.byId[q.id]; if (!r) return; var bs = r.base ? RD.byId[r.base] : r;
-      if (!RD.starOk(bs) || (r.star || 0) >= 3 || seenB[bs.id]) return; seenB[bs.id] = 1;
-      var lo = 3, cn = [0, 1, 2].map(function (n) { var c = have(RD.starId(bs.id, n)); if (c > 0 && n < lo) lo = n; return c; });
-      stars.push({ loc: 'inv:' + bs.id, key: 'i:' + bs.id, r: bs, bs: bs, lo: lo, where: '背包：' + [0, 1, 2].filter(function (n) { return cn[n] > 0; }).map(function (n) { return (n ? RD.STARS[n] : '無星') + ' ×' + cn[n]; }).join('、') });
+      if (!RD.starOk(bs) || seenB[bs.id]) return; seenB[bs.id] = 1;
+      var cnt = function (n, nrm) { return have(RD.starId(bs.id, n, nrm)); };
+      var parts = []; if (cnt(0)) parts.push('無星 ×' + cnt(0)); [1, 2, 3].forEach(function (n) { if (cnt(n, true)) parts.push(RD.STARS[n] + ' ×' + cnt(n, true)); if (cnt(n)) parts.push('次元' + RD.STARS[n] + ' ×' + cnt(n)); });
+      stars.push({ loc: 'inv:' + bs.id, key: 'i:' + bs.id, r: bs, bs: bs, inv: true, where: '背包：' + parts.join('、') });
     });
     candidates().forEach(function (c) { (c.it.sockets || []).forEach(function (rid, i) { var r = rid && RD.byId[rid]; if (!r) return; var bs = r.base ? RD.byId[r.base] : r; if (!RD.starOk(bs) || (r.star || 0) >= 3) return; stars.push({ loc: 'sock:' + c.ref + ':' + i, key: 's:' + c.ref + ':' + i, r: r, bs: bs, lo: Number(r.star) || 0, sock: true, where: c.where + '・' + plain(c.it) + ' 第 ' + (i + 1) + ' 孔' }); }); });
     if (!stars.length) h += '<div class="ax-note">背包和裝備上沒有可以升星的符文。</div>';
     ui.stT = ui.stT || {};
     stars.slice(0, 40).forEach(function (x) {
+      ui.stK = ui.stK || {};
+      var trk = x.sock && (Number(x.r.star) || 0) > 0 ? (x.r.dim ? 'd' : 'n') : (ui.stK[x.key] === 'd' ? 'd' : 'n');
+      if (x.inv) { x.lo = 3; for (var n0 = 0; n0 <= 2; n0++) if (have(RD.starId(x.bs.id, n0, trk === 'n')) > 0) { x.lo = n0; break; } if (x.lo === 3 && have(RD.starId(x.bs.id, 3, trk === 'n')) > 0) x.lo = 3; }
+      if (x.lo >= 3) return;
       var t = Number(ui.stT[x.key]) || 0; if (!(t > x.lo && t <= 3)) t = x.lo + 1;
-      var pl = starPlan(x.loc, t), req;
+      var pl = starPlan(x.loc, t, trk), req;
       if (pl.err) req = '<span class="no" style="font-size:12px">' + esc(pl.err) + '</span>';
       else req = (pl.short ? K.reqTxt(have(x.bs.id), (pl.use[x.bs.id] || 0) + pl.short, nm(x.bs.id)) + '　' : '')
         + Object.keys(pl.use).filter(function (k) { return !(pl.short && k === x.bs.id); }).map(function (k) { return K.reqTxt(have(k), pl.use[k], nm(k)); }).join('　');
-      var pick = '<span class="afk-zo-stt" style="display:inline-flex;gap:4px">' + [1, 2, 3].filter(function (n) { return n > x.lo; }).map(function (n) {
+      var canTrk = !(x.sock && (Number(x.r.star) || 0) > 0);
+      var tk = '<span class="afk-zo-stk" style="display:inline-flex;gap:4px;margin-right:8px">' + [['n', '一般'], ['d', '次元']].map(function (q2) { var on = q2[0] === trk; return canTrk || on ? '<button type="button" data-zok="' + esc(x.key) + '|' + q2[0] + '" aria-pressed="' + (on ? 'true' : 'false') + '" style="padding:6px 10px;border-radius:6px;font-weight:700;font-size:13px;' + (on ? 'background:#7e22ce;color:#fff;border:1px solid #f0abfc' : 'background:#0f172a;color:#f0abfc;border:1px solid #6b21a8') + '"' + (canTrk ? '' : ' disabled') + '>' + q2[1] + '</button>' : ''; }).join('') + '</span>';
+      var pick = tk + '<span class="afk-zo-stt" style="display:inline-flex;gap:4px">' + [1, 2, 3].filter(function (n) { return n > x.lo; }).map(function (n) {
         return '<button type="button" data-zot="' + esc(x.key) + '|' + n + '" aria-pressed="' + (n === t ? 'true' : 'false') + '" style="padding:6px 10px;border-radius:6px;font-weight:700;font-size:13px;' + (n === t ? 'background:#a16207;color:#fff;border:1px solid #fde68a' : 'background:#0f172a;color:#fde68a;border:1px solid #475569') + '">' + RD.STARS[n] + '</button>';
       }).join('') + '</span>';
-      h += K.rowHtml({ key: 'st-' + x.key, ico: K.itemIco(x.sock ? x.r.id : x.bs.id), name: nm(x.sock ? x.r.id : x.bs.id) + ' → ' + RD.STARS[t], color: '#fde68a',
-        desc: esc(x.where) + '<br>' + esc(RD.STAR_TXT[x.bs.key][t - 1]), req: req, pick: pick, btns: [['sto:' + x.loc + '|' + t, '升到 ' + RD.STARS[t], !!pl.ok]] }, 'data-zo');
+      h += K.rowHtml({ key: 'st-' + x.key, ico: K.itemIco(x.sock ? x.r.id : x.bs.id), name: nm(x.sock ? x.r.id : x.bs.id) + ' → ' + (pl.to ? nm(pl.to) : RD.STARS[t]), color: '#fde68a',
+        desc: esc(x.where) + '<br>' + esc(RD.STAR_TXT[x.bs.key][t - 1]), req: req, pick: pick, btns: [['sto:' + x.loc + '|' + t + '|' + trk, '升到 ' + RD.STARS[t], !!pl.ok]] }, 'data-zo');
     });
     if (stars.length > 40) h += '<div class="ax-note">還有 ' + (stars.length - 40) + ' 顆，先升上面的。</div>';
-    h += '<div class="ax-note">★1 次元符文石★1 ×2、★2 次元符文石★2 ×5、★3 次元符文石★3 ×8；選好星數，中間每一步的材料和服務費一起扣。魂、傳說符文不能升星。鑲著的符文可以直接升星（★3 另一顆 ★2 從背包拿）。符文之語不跟星數。</div>';
+    h += '<div class="ax-note">一般升星：★1 哀石結晶 50、★2 解命石 10、★3 兩顆同名 ★2 合成 → X之符文 ★n。次元升星：★1 次元符文石★1 ×2、★2 次元符文石★2 ×5、★3 次元符文石★3 ×8 → 次元 X之符文 ★n（符文之語跟著星數加成，不用開次元模式）。選好路線與星數，中間每一步的材料和服務費一起扣。魂、傳說符文不能升星。鑲著的符文可以直接升星（已經有星的沿用原本路線；一般 ★3 另一顆 ★2 從背包拿）。</div>';
     // 職業符文：指定技能
     var FX = W.__afkRuneFx, cr = FX && FX.classRune ? FX.classRune(p) : null, rs = FX && FX.skillsOf ? FX.skillsOf(p) : { main: '', cd: '' };
     var mySk = (p.skills || []).filter(function (id) { return DB.skills[id] && !DB.skills[id].passive; });
@@ -531,6 +563,7 @@
     host.addEventListener('click', function (ev) {
       var f = ev.target.closest('[data-zof]'); if (f) { ui.filter = f.getAttribute('data-zof'); ui.more = 0; ui.err = ''; render(host); return; }
       if (ev.target.closest('[data-zomore]')) { ui.more++; render(host); return; }
+      var zk = ev.target.closest('[data-zok]'); if (zk) { var v3 = zk.getAttribute('data-zok'), bk = v3.lastIndexOf('|'); ui.stK = ui.stK || {}; ui.stK[v3.slice(0, bk)] = v3.slice(bk + 1); ui.stT = ui.stT || {}; delete ui.stT[v3.slice(0, bk)]; ui.err = ''; ui.msg = ''; render(host); return; }
       var zt = ev.target.closest('[data-zot]'); if (zt) { var v2 = zt.getAttribute('data-zot'), bi = v2.lastIndexOf('|'); ui.stT = ui.stT || {}; ui.stT[v2.slice(0, bi)] = Number(v2.slice(bi + 1)); ui.err = ''; ui.msg = ''; render(host); return; }
       var s = ev.target.closest('[data-zosel]'); if (s) { ui.sel = s.getAttribute('data-zosel'); ui.err = ''; ui.msg = ''; render(host); return; }
       var b = ev.target.closest('button[data-zo]'); if (!b || b.disabled) return;
@@ -542,8 +575,9 @@
       else if (a === 'remove') err = ACT.remove(ui.sel, Number(ui.rm));
       else if (a === 'fate') err = ACT.fate();
       else if (a === 'dim') err = dimOpen();
+      else if (a === 'dimup') err = dimUp();
       else if (a.indexOf('st:') === 0) err = ACT.star(a.slice(3));
-      else if (a.indexOf('sto:') === 0) { var q2 = a.slice(4), bar = q2.lastIndexOf('|'); err = ACT.starTo(q2.slice(0, bar), Number(q2.slice(bar + 1))); }
+      else if (a.indexOf('sto:') === 0) { var q2 = a.slice(4), bar2 = q2.lastIndexOf('|'), trk2 = q2.slice(bar2 + 1); q2 = q2.slice(0, bar2); var bar = q2.lastIndexOf('|'); err = ACT.starTo(q2.slice(0, bar), Number(q2.slice(bar + 1)), trk2); }
       else if (a.indexOf('lg:') === 0) err = ACT.legend(a.slice(3));
       else if (a.indexOf('cb:') === 0) { err = ACT.combine(a.slice(3)); if (err && RD.byId[err]) err = null; }
       else if (a.indexOf('ex1:') === 0) err = ACT.exchange(a.slice(4), false);

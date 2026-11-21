@@ -36,16 +36,18 @@
   var wordsOn = function (socks, where) {
     var out = [], s = socks || [];
     out.st = [];   // 11-12 次元模式：每個符文之語的星數＝組成它的符文裡最低的星
+    out.sd = [];   // 11-21：只算「次元 X之符文」的星（一般升星的算 0）——沒開次元模式時用這個
     var lo = function (ids) { var m = 99; ids.forEach(function (id) { var r = runeOf(id); m = Math.min(m, r ? (Number(r.star) || 0) : 0); }); return m === 99 ? 0 : m; };
+    var loD = function (ids) { var m = 99; ids.forEach(function (id) { var r = runeOf(id); m = Math.min(m, r && r.dim ? (Number(r.star) || 0) : 0); }); return m === 99 ? 0 : m; };
     if (where === 'weapon') {
       var used = {};
-      if (s.length >= 3) RD.WORDS.forEach(function (w) { if (w.where === 'weapon' && w.seq.length === 3 && matchSeq(s.slice(0, 3), w.seq)) { out.push(w); out.st.push(lo(s.slice(0, 3))); used[0] = used[1] = used[2] = true; } });
+      if (s.length >= 3) RD.WORDS.forEach(function (w) { if (w.where === 'weapon' && w.seq.length === 3 && matchSeq(s.slice(0, 3), w.seq)) { out.push(w); out.st.push(lo(s.slice(0, 3))); out.sd.push(loD(s.slice(0, 3))); used[0] = used[1] = used[2] = true; } });
       [[0, 1], [1, 2]].forEach(function (pr) {
         if (used[pr[0]] && used[pr[1]]) return;
-        RD.WORDS.forEach(function (w) { if (w.where === 'weapon' && w.seq.length === 2 && s.length > pr[1] && matchSeq([s[pr[0]], s[pr[1]]], w.seq)) { out.push(w); out.st.push(lo([s[pr[0]], s[pr[1]]])); } });
+        RD.WORDS.forEach(function (w) { if (w.where === 'weapon' && w.seq.length === 2 && s.length > pr[1] && matchSeq([s[pr[0]], s[pr[1]]], w.seq)) { out.push(w); out.st.push(lo([s[pr[0]], s[pr[1]]])); out.sd.push(loD([s[pr[0]], s[pr[1]]])); } });
       });
     } else if (where === 'armor') {
-      RD.WORDS.forEach(function (w) { if (w.where === 'armor' && s.length >= 2 && matchSeq([s[0], s[1]], w.seq)) { out.push(w); out.st.push(lo([s[0], s[1]])); } });
+      RD.WORDS.forEach(function (w) { if (w.where === 'armor' && s.length >= 2 && matchSeq([s[0], s[1]], w.seq)) { out.push(w); out.st.push(lo([s[0], s[1]])); out.sd.push(loD([s[0], s[1]])); } });
     }
     return out;
   };
@@ -62,8 +64,8 @@
     if (c && c.t === t && c.v === ver) return c;
     var n = {}, w = {}, cls = null, ss = {}, sm = {};
     var add = function (id) { var r = runeOf(id); if (!r) return; if (r.cat === 'class') { if (!cls) cls = r; return; } var k = r.nk || r.ch, lim = r.unique ? 1 : 2; if ((n[k] || 0) >= lim) return; n[k] = (n[k] || 0) + 1; var st = Number(r.star) || 0; ss[k] = (ss[k] || 0) + st; sm[k] = Math.max(sm[k] || 0, st); };   // 傳說符文全身只算 1 顆；ss＝算進去的符文星數合計、sm＝最高星（升星，2026-10-30）
-    var dim = !!a.afkRuneDim, wk = {};   // 次元模式（次元符文石，每個角色各自開）：符文之語每星 +10%（同名取最高）
-    var addW = function (list) { list.forEach(function (x, i) { w[x.id] = Math.min(2, (w[x.id] || 0) + 1); if (dim) wk[x.id] = Math.max(wk[x.id] || 1, 1 + STARK * Math.min(STARMAX, (list.st && list.st[i]) || 0)); }); };
+    var dim = !!a.afkRuneDim, wk = {}, STARK = starK(a);   // 次元模式（次元符文石，每個角色各自開）：符文之語每星 +10%（同名取最高）
+    var addW = function (list) { list.forEach(function (x, i) { w[x.id] = Math.min(2, (w[x.id] || 0) + 1); var stv = dim ? ((list.st && list.st[i]) || 0) : ((list.sd && list.sd[i]) || 0); if (stv) wk[x.id] = Math.max(wk[x.id] || 1, 1 + STARK * Math.min(STARMAX, stv)); }); };
     var wp = a.eq.wpn; if (wp && Array.isArray(wp.sockets)) { wp.sockets.forEach(add); addW(wordsOn(wp.sockets, 'weapon')); }
     ARMOR.forEach(function (k) { var it = a.eq[k]; if (it && Array.isArray(it.sockets)) { it.sockets.forEach(add); addW(wordsOn(it.sockets, 'armor')); } });
     ACC.forEach(function (k) { var it = a.eq[k]; if (it && Array.isArray(it.sockets)) it.sockets.forEach(add); });
@@ -71,7 +73,7 @@
     var line = function (slots) { var out = []; slots.forEach(function (k) { var it = a.eq[k]; if (it && Array.isArray(it.sockets)) it.sockets.forEach(function (x) { out.push(x || null); }); }); return out; };
     [['armorline', line(LINE_ARMOR)], ['accline', line(ACC)]].forEach(function (pr) {
       var arr = pr[1]; if (arr.length < 3) return;
-      RD.WORDS.forEach(function (wd) { if (wd.where !== pr[0] || w[wd.id]) return; for (var i = 0; i + 3 <= arr.length; i++) if (matchSeq(arr.slice(i, i + 3), wd.seq)) { w[wd.id] = 1; if (dim) { var m3 = 99; arr.slice(i, i + 3).forEach(function (id) { var r = runeOf(id); m3 = Math.min(m3, r ? (Number(r.star) || 0) : 0); }); wk[wd.id] = 1 + STARK * Math.min(STARMAX, m3); } break; } });
+      RD.WORDS.forEach(function (wd) { if (wd.where !== pr[0] || w[wd.id]) return; for (var i = 0; i + 3 <= arr.length; i++) if (matchSeq(arr.slice(i, i + 3), wd.seq)) { w[wd.id] = 1; { var m3 = 99; arr.slice(i, i + 3).forEach(function (id) { var r = runeOf(id); m3 = Math.min(m3, r && (dim || r.dim) ? (Number(r.star) || 0) : 0); }); if (m3 > 0 && m3 < 99) wk[wd.id] = 1 + STARK * Math.min(STARMAX, m3); } break; } });
     });
     c = { t: t, v: ver, n: n, w: w, wk: wk, cls: cls, ss: ss, sm: sm };
     if (cache) cache.set(a, c);
@@ -80,6 +82,9 @@
   var N = function (a, ch) { return stateOf(a).n[ch] || 0; };
   var Wd = function (a, id) { return stateOf(a).w[id] || 0; };
   var STARK = 0.10, STARMAX = 3;   // 每星 +10%；★4、★5 還沒開放
+  // Ping 11-21 11:57：次元符文之語升級 ★1／★2／★3 → 每星 +13%／+16%／+20%（每個角色各自、永久）
+  var DIM_LV_K = [0.10, 0.13, 0.16, 0.20];
+  function starK(a) { var d = a && a.afkRuneDim, lv = d ? Math.max(0, Math.min(3, Number(d.lv) || 0)) : 0; return DIM_LV_K[lv]; }
   var WK = function (a, id) { return stateOf(a).wk[id] || 1; };   // 符文之語的星級倍數（沒開次元模式＝1）
   var WM = function (a, id, m) { return Math.min(2, 1 + (m - 1) * WK(a, id)); };   // 倍率類：增加的部分照比例放大，最多 ×2
   var WL = function (a, id, m) { return Math.max(0, 1 - (1 - m) * WK(a, id)); };   // 減少類倍率（×0.95 這種）
@@ -446,5 +451,5 @@
     };
   });
 
-  W.__afkRuneFx = { WK: WK, STARK: STARK, bump: bump, stateOf: stateOf, wordsOf: wordsOf, wordsOn: wordsOn, N: N, Wd: Wd, SS: SS, SM: SM, classRune: classRune, skillsOf: skillsOf, classTick: classTick, allyClassTick: allyClassTick, extraSkills: extraSkills, castAs: castAs };
+  W.__afkRuneFx = { WK: WK, STARK: STARK, DIM_LV_K: DIM_LV_K, starK: starK, bump: bump, stateOf: stateOf, wordsOf: wordsOf, wordsOn: wordsOn, N: N, Wd: Wd, SS: SS, SM: SM, classRune: classRune, skillsOf: skillsOf, classTick: classTick, allyClassTick: allyClassTick, extraSkills: extraSkills, castAs: castAs };
 })();

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-24375b26a833",
+  "build": "merge-0.4-30040efd4e97",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -1448,18 +1448,18 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-runedata.js?v=ec93170c3ffc",
-      "sha256": "ec93170c3ffcf642fd1e85317cba60d4c836391f9e952df136e6758469dcab3f",
+      "url": "afk-runedata.js?v=b16a5336097e",
+      "sha256": "b16a5336097e72c8189ee80111f65c8e7053d72b4e18620ae67ab797981a0c22",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-runefx.js?v=70f5d4c672c1",
-      "sha256": "70f5d4c672c1204d0138301fb7d1449bc6f0c68704e11307b99e06202fe7d035",
+      "url": "afk-runefx.js?v=02bd824faa6d",
+      "sha256": "02bd824faa6d1625d1b495132fa22fb959eceba0afd8567669b1ab3919ff4e90",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-runes.js?v=b2894cb9e4f1",
-      "sha256": "b2894cb9e4f1d4bde8e28a66a967ed6f8be3837a1cbe4a766e3642910c1df44b",
+      "url": "afk-runes.js?v=c8d83cbdb496",
+      "sha256": "c8d83cbdb4961537d6e501d79d52209bb2cd69d7355a787a8fb70e90f159e438",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "c84bfceb0ce4036b8856cf6f02e800b0e9a39d1acade0585db69163f41132beb",
+      "sha256": "fbfb910106860fa8b0158fb5c2dd9ab637dc4766c44cf9461d28076f33129d1d",
       "type": "text/html; charset=utf-8"
     },
     {

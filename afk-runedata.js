@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
  * afk-runedata.js — 符文石與時空裂痕新材料的資料（玩家 2026-10-29 晚，設計稿 docs/runes-design.md 第三版）
  *
  * 不是開關：只登錄物品與資料表，給 afk-runes（佐爾頓：開孔、鑲嵌、兌換）與 afk-rift2（時空裂痕）使用。
@@ -136,19 +136,26 @@
     huan: ['攻擊型每 7 秒施放；增益型重放的 MP −30%', '攻擊型每 6 秒施放；增益型重放的 MP −60%', '攻擊型每 5 秒施放、指定技能傷害 +20%；增益型重放不耗 MP，而且也套用到全部傭兵'],
     nu: ['攻擊型每 7 秒施放；增益型重放的 MP −30%', '攻擊型每 6 秒施放；增益型重放的 MP −60%', '攻擊型每 5 秒施放、指定技能傷害 +20%；增益型重放不耗 MP，而且也套用到全部傭兵']
   };
-  // 11-18 18:17（Ping）：升星改用次元符文石（取代原本的材料）：★1 次元符文石★1 ×2、★2 次元符文石★2 ×5、★3 次元符文石★3 ×8
-  var STAR_COST = { 1: { afk_rune_dim: 2 }, 2: { afk_rune_dim2: 5 }, 3: { afk_rune_dim3: 8 } };
+  // 11-21（Ping）：升星分兩條
+  //   一般升星（同名符文，原本 10-30 的規則）：★1 哀石結晶 50、★2 解命石 10、★3 兩顆同名 ★2 合成 → 「X之符文 ★n」（id 尾碼 _n1～_n3）
+  //   次元升星（次元符文石，11-18 的規則）：★1 次元符文石★1 ×2、★2 次元符文石★2 ×5、★3 次元符文石★3 ×8 → 「次元 X之符文 ★n」（id 尾碼 _s1～_s3，沿用舊編號＝已經升好的自動變次元版）
+  //   次元版＝★效果＋符文之語跟著星數加成（不用開次元模式）
+  var STAR_COST = { 1: { afk_rune_dim: 2 }, 2: { afk_rune_dim2: 5 }, 3: { afk_rune_dim3: 8 } };   // 次元
+  var STAR_COST_N = { 1: { afk_lament_gem: 50 }, 2: { afk_fate_unlock: 10 }, 3: {} };            // 一般（★3 另外要一顆同名一般 ★2）
   var starOk = function (r) { return !!(r && !r.star && !r.unique && !NO_STAR[r.key] && !WIP_STAR[r.key] && STAR_TXT[r.key]); };
-  var starId = function (baseId, n) { return n > 0 ? baseId + '_s' + n : baseId; };
+  var starId = function (baseId, n, normal) { return n > 0 ? baseId + (normal ? '_n' : '_s') + n : baseId; };
   var STARS = ['', '★1', '★2', '★3'];
+  var COST_TXT_D = '次元升星：★1 次元符文石★1 ×2、★2 次元符文石★2 ×5、★3 次元符文石★3 ×8（燃柳村的符文師佐爾頓）。', COST_TXT_N = '一般升星：★1 哀石結晶 50、★2 解命石 10、★3 兩顆同名 ★2 合成（燃柳村的符文師佐爾頓）。';
   list.forEach(function (r) {
     if (!starOk(r)) return;
     for (var n = 1; n <= 3; n++) {
-      var id = starId(r.id, n);
-      byId[id] = Object.assign({}, r, { id: id, star: n, base: r.id });
-      ITEMS[id] = { n: r.ch + '之符文 ' + STARS[n], c: STAGE_C[r.stage], img: IMG('符文(' + r.ch + ')'),
-        d: '【符文石・' + STAGE_N[r.stage] + '・' + CAT_N[r.cat] + '・' + STARS[n] + '】' + STAR_TXT[r.key][n - 1] + '（未升星：' + r.d + '）。'
-          + '升星：★1 次元符文石★1 ×2、★2 次元符文石★2 ×5、★3 次元符文石★3 ×8（燃柳村的符文師佐爾頓）。符文之語不跟星數（開了符文次元模式才跟）。' };
+      var id = starId(r.id, n), idn = starId(r.id, n, true);
+      byId[id] = Object.assign({}, r, { id: id, star: n, base: r.id, dim: true });
+      byId[idn] = Object.assign({}, r, { id: idn, star: n, base: r.id });
+      ITEMS[id] = { n: '次元 ' + r.ch + '之符文 ' + STARS[n], c: STAGE_C[r.stage], img: IMG('符文(' + r.ch + ')'),
+        d: '【次元符文石・' + STAGE_N[r.stage] + '・' + CAT_N[r.cat] + '・' + STARS[n] + '】' + STAR_TXT[r.key][n - 1] + '（未升星：' + r.d + '）。符文之語跟著星數加成（每星 +10%）。' + COST_TXT_D };
+      ITEMS[idn] = { n: r.ch + '之符文 ' + STARS[n], c: STAGE_C[r.stage], img: IMG('符文(' + r.ch + ')'),
+        d: '【符文石・' + STAGE_N[r.stage] + '・' + CAT_N[r.cat] + '・' + STARS[n] + '】' + STAR_TXT[r.key][n - 1] + '（未升星：' + r.d + '）。' + COST_TXT_N + '符文之語不跟星數（開了符文次元模式才跟）。' };
     }
   });
   var BOX = { 1: 'afk_runebox_1', 2: 'afk_runebox_2', 3: 'afk_runebox_3' };
@@ -176,6 +183,7 @@
     var x = ITEMS[id];
     DB.items[id] = { n: x.n, type: 'etc', p: 0, c: x.c, img: x.img, noUse: !x.eff, gachaWeight: 0, d: x.d };
     if (x.eff) { DB.items[id].eff = x.eff; DB.items[id].runeStage = x.stage; }
+    if (/_n\d$/.test(id)) return;   // 11-21：一般升星的 ★ 符文不加進收藏冊（收藏冊件數不變）
     try { if (typeof miscCatKey === 'function' && typeof MISC_CAT_ITEMS !== 'undefined') { var k = miscCatKey(id, DB.items[id]); if (k && MISC_CAT_ITEMS[k] && !MISC_ITEM_CAT[id]) { MISC_CAT_ITEMS[k].push(id); MISC_ITEM_CAT[id] = k; if (typeof OBTAINABLE_MISC !== 'undefined') OBTAINABLE_MISC[id] = true; } } } catch (e) {}
   });
   // 失去光芒的符文石：使用＝打開
@@ -261,6 +269,6 @@
     // 平衡點數（玩家 2026-10-29：太強就壓縮傷害、太弱就追加傷害）：鑲著這顆符文時，造成的傷害 ×(1＋點數×1%)；0＝不調整
     // 佐爾頓合成（玩家 2026-10-29）：同階段符文 3 顆＋哀石結晶 10 → 隨機一顆高一階的符文。只開放 階段一→二、階段二→三（傳說不從合成出）
     COMBINE: { n: 3, cost: ['afk_lament_gem', 10], from: [1, 2] },
-    STAR_TXT: STAR_TXT, STAR_COST: STAR_COST, NO_STAR: NO_STAR, WIP_STAR: WIP_STAR, starOk: starOk, starId: starId, STARS: STARS,
+    STAR_TXT: STAR_TXT, STAR_COST: STAR_COST, STAR_COST_N: STAR_COST_N, NO_STAR: NO_STAR, WIP_STAR: WIP_STAR, starOk: starOk, starId: starId, STARS: STARS,
     BAL: { po_l: 5, '破': 5 /* 破（攻擊）：設計是無視減傷與「防禦」各 20%，防禦那一半改用平衡點數 +5（每顆 +5% 傷害，平衡表建議 +5～+10）*/ }, OPEN_COST: OPEN_COST, REMOVE: ['afk_lament_stone', 500], openBox: openBox, refinePlan: refinePlan };
 })();
