@@ -85,24 +85,25 @@
     return partBar()+controls+(all.length?all.slice(relicPage*PAGE_SIZE,(relicPage+1)*PAGE_SIZE).map(function(r){return r.html||relicCard(r,false);}).join(''):note('找不到符合的遺物，請縮短名稱或改用效果關鍵字。'))+controls;
   }
   function relics(){
-    return note('翻開遺物的來歷與力量，查看 +5、+10、昇華支配及終階效果。這裡收錄有專屬特殊效果的 '+(relicRows().length+extraRelicRows().length)+' 件遺物（含王者遺物、補上進階特效的遺物）。')+
-      note('遺物在燃柳村「哈瑪大師」合成強化：武器、防具最高 +15，飾品（戒指、耳環、項鍊、腰帶）最高 +10；到頂之後可以昇華支配（+0～+5）。每一階要的材料、成功率請看「遺物強化」分頁；下方表格列出特殊效果有變化的階段。')+
-      '<label class="afk-guide-search">搜尋遺物<input id="afk-guide-relic-query" type="search" value="'+esc(relicQuery)+'" placeholder="名稱、編號或效果，例如：護盾"></label><div id="afk-guide-relic-results">'+relicResults()+'</div>'+
-      evoCard()+bossRelicCard()+fillRelicCard()+relicEvoCard();
+    return note('翻開遺物的來歷與力量，查看 +5、+10、昇華支配及終階效果。這裡收錄有專屬特殊效果的 '+(relicRows().length+extraRelicRows().length)+' 件遺物。')+
+      note('依部位分頁，點開每件遺物可看來歷與各階段的特殊效果。合成、昇華支配、至高的支配、詞綴與特效怎麼計算，請看「遺物強化」分頁。')+
+      '<label class="afk-guide-search">搜尋遺物<input id="afk-guide-relic-query" type="search" value="'+esc(relicQuery)+'" placeholder="名稱、編號或效果，例如：護盾"></label><div id="afk-guide-relic-results">'+relicResults()+'</div>';
   }
   // 搜尋用：王者遺物、補上進階特效的遺物（不在 AFK_RELIC_CATALOG 裡）
   var extraCache=null;
   function extraRelicRows(){
     if(extraCache)return extraCache;var out=[],B=window.__afkBossRelic,E=window.__afkRelicEvo,MB=window.__afkMapBoss,SN=['本體','+5','+10','昇華支配','昇華支配 +5'];
     // 王者遺物接在一般遺物後面編號（251 起），卡片跟一般遺物同一個樣子（Ping 11-14 00:04）
-    var base=(W.AFK_RELIC_CATALOG||[]).reduce(function(m,c){return Math.max(m,c.id||0);},0),TY={wpn:'武器',arm:'防具',acc:'飾品'};
+    var base=(W.AFK_RELIC_CATALOG||[]).reduce(function(m,c){return Math.max(m,c.id||0);},0),TY={wpn:'武器',arm:'防具',acc:'飾品'},SLOTN={helm:'頭盔',armor:'盔甲',cloak:'斗篷',tshirt:'T恤',gloves:'手套',boots:'靴子',shield:'盾牌',shin:'脛甲',ear:'耳環',ring:'戒指',amulet:'項鍊',belt:'腰帶',petarm:'寵物防具',petwpn:'寵物武器'};
     if(B&&B.LIST)B.LIST.forEach(function(r,i){var b=MB&&MB.BY[r[0]],cat=B.BASE[r[1]],row={id:base+1+i,key:'relic_boss_'+r[0],n:r[2],type:TY[cat.type]||'',slot:cat.cat,lore:r[3]+'（王者遺物：'+(b?b.n:'地圖王、副本王')+'掉落）',stages:[0,1,2,3,4].map(function(s){return B.text(r,s);})};
       row.search=[row.id,String(row.id).padStart(3,'0'),row.n,row.type,row.slot,row.lore,'王者遺物'].concat(row.stages).join(' ').toLowerCase();out.push(row);});
     // 補齊遺物 150 件（11-19）：接在王者遺物後面編號
     if(B&&B.LIST2){var b2=base+(B.LIST?B.LIST.length:0);B.LIST2.forEach(function(r,i){var key='relic_'+r[0],cat=B.BASE[r[1]],row={id:b2+1+i,key:key,n:r[2],type:TY[cat.type]||'',slot:cat.cat,lore:r[3]+'（'+(B.MOBN[key]||'')+'掉落）',stages:[0,1,2,3,4].map(function(s){return B.text(r,s);})};
       row.search=[row.id,String(row.id).padStart(3,'0'),row.n,row.type,row.slot,row.lore,B.MOBN[key]||''].concat(row.stages).join(' ').toLowerCase();out.push(row);});}
     if(B&&E&&E.MAP)Object.keys(E.MAP).forEach(function(k){var d=DB.items[k];if(!d)return;var tx=function(s){try{if(B.EVO&&B.EVO[k])return B.evoText(k,s);}catch(e){}return window.__afkRelicMechTxtS?window.__afkRelicMechTxtS(k,s):'';};var st=[1,2,3,4].map(function(s){return [SN[s],tx(s)];});
-      out.push({key:k,n:d.n,search:(d.n+' 進階特效 '+st.map(function(x){return x[1];}).join(' ')).toLowerCase(),html:factCard(esc(d.n),'進階特效（+5 起）',esc(String(d.d||'').replace(/^【遺物】/,'').split(' 〔')[0]),st.map(function(x){return '<b>'+x[0]+'</b>：'+esc(x[1]);}))});});
+      // 11-21 Ping：跟其他遺物同一個樣子（收合、編號、部位），不再用另一種卡片
+      var evoBase=out.reduce(function(m,r){return Math.max(m,r.id||0);},base),row={id:0,key:k,n:d.n,type:TY[d.type]||'',slot:SLOTN[d.slot]||TY[d.type]||'',lore:String(d.d||'').replace(/^【遺物】/,'').split(' 〔')[0],stages:[null].concat(st.map(function(x){return x[1]||null;}))};
+      row.id=evoBase+1;row.search=[row.id,String(row.id).padStart(3,'0'),row.n,row.type,row.slot,row.lore,'進階特效'].concat(st.map(function(x){return x[1];})).join(' ').toLowerCase();out.push(row);});
     return extraCache=out;
   }
   // 原本沒有進階特效的遺物（afk-relicevo.js）：+5 起每階加一層效果
@@ -137,6 +138,19 @@
       '連鎖、斬首、印記引爆、迴響、溢殺、星落這類追加傷害，不會再觸發其他特效',
       '復仇、相位、魔鏡、血盾只保護戴的人自己'
     ])+lazy('fill','<summary class="m-wiki-name" style="cursor:pointer">更多遺物一覽（'+B.LIST2.length+' 件）</summary>',function(){return '<div style="overflow-x:auto"><table class="m-wiki-table"><tr><th>#</th><th>遺物</th><th>本體</th><th>昇華支配 +5</th></tr>'+rows()+'</table></div>';});
+  }
+  // 11-21 Ping：遺物特效的通用規則移到「遺物強化」分頁（遺物進階只放各件說明）
+  function relicRulesCard(){
+    return factCard('遺物特效怎麼算','王者遺物、更多遺物、進階特效的共通規則','王者遺物（地圖王、副本王掉落）、更多遺物（各種怪物掉落）跟一般遺物一樣合成、昇華支配、抽詞綴；原本只長數值的遺物，+5 起也會多一層效果。',[
+      '特效分 5 階：本體、+5、+10、昇華支配、昇華支配 +5，越往上越強；王的遺物至少 2 種特效，龍與最終王至少 3 種',
+      '武器多一項「王者之威」：造成的傷害提升（各種武器不同）',
+      '「近 5 秒每秒傷害」＝你最近 5 秒平均每秒造成的傷害；召喚、砲擊、地震、中毒這類追加傷害都照它算',
+      '屬性弱點：讓目標受到該屬性的傷害提高；屬性武器、屬性魔法打弱點最有效，「弱點追擊」則是什麼攻擊都加',
+      '連鎖、斬首、印記引爆、迴響、溢殺、星落這類追加傷害，不會再觸發其他特效',
+      '保命效果（短暫無敵、保住 1 HP、倒下站起來）：同一個人身上只算階段最高的一件；保住 1 HP、站起來只對你自己有效',
+      '復仇、相位、魔鏡、血盾只保護戴的人自己',
+      '進階特效的主題：寵物、召喚、治療、減傷、屬性；其餘的武器加傷害，防具、飾品給全隊補助；同一種效果穿好幾件會相加，但各有上限'
+    ]);
   }
   function evoCard(){
     return factCard('至高的支配（昇華支配 +5 再進化）','遺物的最後一個階段','在燃柳村「哈瑪大師」把「+5 昇華支配」遺物進化，成功率 100%。',[
@@ -792,6 +806,7 @@
   var guide=W.AFK_GAME_GUIDE={
     render:function(key,cls){var progression=progressionGuide(key,cls);if(progression!==null)return progression;return key==='relicstages'?relics():key==='cardforms'?formRules():key==='versionrules'?rules():key==='rebirtharts'?arts(cls):key==='reborn'?reborn():key==='lore'?lore():null;},
     augment:augment,newbieCard:newbieCard,expeditionCard:expeditionCard,villageCard:villageCard,starroadCard:starroadCard,
+    relicRulesCard:relicRulesCard,
     searchRelics:function(terms,max){var hit=function(r){return terms.every(function(t){return r.search.indexOf(t.toLowerCase())>=0;});};return relicRows().filter(hit).map(function(r){return {title:r.n,html:relicCard(r,true)};}).concat(extraRelicRows().filter(hit).map(function(r){return {title:r.n,html:r.html};})).slice(0,max||60);},
     searchClasses:function(fusion,terms,max){var C=W.LineageClassCore;if(!C)return [];var out=[];C.trees.forEach(function(t){if(!!t.requiresFusionTransfer!==fusion)return;t.skills.forEach(function(s){if(out.length>=(max||60))return;var title=C.CLS[t.base]+'・'+t.name+'・'+s.name,text=C.description(s),q=(title+' '+text).toLowerCase();if(terms.every(function(term){return q.indexOf(term.toLowerCase())>=0;}))out.push({title:title,html:factCard(esc(title),'第 '+s.stage+' 段・'+esc(s.type),esc(text),[])});});});return out;},
     relicRows:relicRows,
