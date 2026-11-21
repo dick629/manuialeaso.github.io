@@ -292,22 +292,33 @@
     if (wh && Array.isArray(wh.items)) wh.items.forEach(function (it) { if (it) add(it, 'wh', true); });
     var own = {}; try { own = JSON.parse(localStorage.getItem(OWN) || '{}') || {}; } catch (e) {}
     var IMP = 'lineage_uid_imported_v1', imported = {}; try { imported = JSON.parse(localStorage.getItem(IMP) || '{}') || {}; } catch (e) {}
-    var flagged = 0, whDirty = false;
+    var flagged = 0, unflagged = 0, whDirty = false;
     Object.keys(locs).forEach(function (uid) {
       var L = locs[uid];
-      if (L.length === 1) { own[uid] = L[0]; return; }
+      if (L.length === 1) {
+        own[uid] = L[0];
+        // 11-21（Ping）：另一份已經不在了（舊存檔刪掉、倉庫那件賣掉）→ 複本封印自動解除
+        (objs[uid] || []).forEach(function (o) { if (o.it.afkDup) { delete o.it.afkDup; delete o.it.afkDupAt; unflagged++; if (o.loc === 'wh') whDirty = true; } });
+        return;
+      }
       // 剛從別台搬進來（匯入、合併還原）的角色身上那件是正本：它是被帶過來的；這台倉庫裡留下的是舊複本
-      var imp = L.filter(function (l) { return l.indexOf('r:') === 0 && imported[l.slice(2)]; })[0];
+      // 11-21（Ping）：搬家時發的身分證——搬進來的角色（14 天內）身上那件一律算正本；搬了好幾次就以最近一次為準
+      var imp = L.filter(function (l) { return l.indexOf('r:') === 0 && imported[l.slice(2)]; }).sort(function (a, b) { return (imported[b.slice(2)] || 0) - (imported[a.slice(2)] || 0); })[0];
       var owner = imp || (L.indexOf(own[uid]) >= 0 ? own[uid] : (L.indexOf('wh') >= 0 ? 'wh' : L[0]));
       own[uid] = owner;
-      (objs[uid] || []).forEach(function (o) { if (o.loc !== owner && !o.it.afkDup) { o.it.afkDup = true; flagged++; if (o.loc === 'wh') whDirty = true; } });
+      (objs[uid] || []).forEach(function (o) {
+        if (o.loc !== owner && !o.it.afkDup) { o.it.afkDup = true; o.it.afkDupAt = owner; flagged++; if (o.loc === 'wh') whDirty = true; }
+        else if (o.loc === owner && o.it.afkDup) { delete o.it.afkDup; delete o.it.afkDupAt; unflagged++; if (o.loc === 'wh') whDirty = true; }   // 正本被封過（例如搬家前判錯）→ 解開
+      });
     });
     var keys = Object.keys(own); if (keys.length > 5000) keys.slice(0, keys.length - 5000).forEach(function (k) { delete own[k]; });
     try { localStorage.setItem(OWN, JSON.stringify(own)); } catch (e) {}
-    try { localStorage.removeItem(IMP); } catch (e) {}   // 搬進來的優先只用在搬進來後的第一次掃描
+    // 11-21：搬家紀錄不再只用一次，保留 14 天（期間搬進來的那份一直算正本）
+    try { var keep = {}, cut = Date.now() - 14 * 86400000; Object.keys(imported).forEach(function (k) { if (Number(imported[k]) > cut) keep[k] = imported[k]; }); if (Object.keys(keep).length) localStorage.setItem(IMP, JSON.stringify(keep)); else localStorage.removeItem(IMP); } catch (e) {}
     if (whDirty) { try { if (typeof saveWarehouse === 'function') saveWarehouse(wh); } catch (e) {} }
+    if (unflagged) { sys('<span class="text-emerald-300 font-bold">' + unflagged + ' 件之前被當成複製品的遺物已經解除封印（另一份已經不在，或這件才是正本）。</span>'); if (!flagged) { try { W.saveGame(); } catch (e) {} } }
     if (flagged) { sys('<span class="text-red-400 font-bold">發現 ' + flagged + ' 件遺物同時出現在兩個地方（複製品），複本已封印。</span>'); try { W.saveGame(); } catch (e) {} }
-    return { flagged: flagged, dup: Object.keys(locs).filter(function (u) { return locs[u].length > 1; }).length };
+    return { flagged: flagged, unflagged: unflagged, dup: Object.keys(locs).filter(function (u) { return locs[u].length > 1; }).length };
   };
   // 11-18 21:58：傭兵裝備誤判成複本（itemsOf 修正前）→ 每個存檔位第一次讀取時，先把複本標記全部拿掉，再用修正後的規則重掃一次（真的重複會再標回去）
   var FIX = 'lineage_dupfix_1118_v1';

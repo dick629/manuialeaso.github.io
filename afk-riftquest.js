@@ -63,7 +63,7 @@
     afk_rq_heart: { names: ['深淵之主'], rift: true },
     afk_rq_seed: { maps: Object.keys(SUN), uniqMap: true, anyMob: true },
     afk_rq_charm: { maps: Object.keys(SUN) },
-    afk_rq_plume: { maps: ['pride_91_100'] },
+    afk_rq_plume: { maps: ['pride_91_100', 'pride_f91', 'pride_f92', 'pride_f93', 'pride_f94', 'pride_f95', 'pride_f96', 'pride_f97', 'pride_f98', 'pride_f99', 'pride_f100'] },   // 11-21：傲慢之塔攀登模式的樓層也算
     afk_rq_oracle: { names: ['墮光天使 阿納金'], boss: true },
     afk_rq_assent: { dragon: true },
     afk_rq_log: { names: ['深淵的大王烏賊'], boss: true },

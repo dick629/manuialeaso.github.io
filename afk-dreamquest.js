@@ -53,10 +53,12 @@
   var PRIDE_TOP = ['艾莉絲', '木乃伊王', '土精靈王', '水精靈王', '風精靈王', '火精靈王', '騎士范德'];
   var ELDERS = ['長老．琪娜', '長老．安迪斯', '長老．巴塔斯', '長老．巴洛斯', '長老．巴陸德', '長老．拉曼斯', '長老．泰瑪斯', '長老．艾迪爾'];
   var DRAGONS = ['安塔瑞斯', '法利昂', '巴拉卡斯', '林德拜爾'];
+  var PRIDE_MAPS = ['pride_91_100']; for (var pf = 91; pf <= 100; pf++) PRIDE_MAPS.push('pride_f' + pf);
   // 掉落規則：maps＝在這些地圖打倒一般怪；names＝打倒這些名字的怪（含頭目）；uniq＝同一種只算一次
   var RULE = {
     afk_dq_drop: { maps: ['eva_kingdom'] },
-    afk_dq_grace: { maps: ['pride_91_100'], normalOnly: true },
+    // 11-21（Ping 回報）：傲慢之塔「攀登」模式每層是 pride_f91～pride_f100，原本只認 pride_91_100 → 攀登時不會掉
+    afk_dq_grace: { maps: PRIDE_MAPS, normalOnly: true },
     afk_dq_ledger: { names: ['邪惡的鐮刀死神', '邪惡的鐮刀死神(支配)'] },
     afk_dq_plan: { maps: ['zone_41'] },
     afk_dq_note: { names: ['哈汀之影'] },
@@ -64,7 +66,7 @@
     afk_dq_book: { names: ['提卡爾杰弗雷庫(雄)', '提卡爾杰弗雷庫(雌)'], uniqCap: 2 },
     afk_dq_scar: { dragon: true },
     afk_dq_echo: { names: ['真‧吉爾塔斯'] },
-    afk_dq_stair: { maps: ['pride_91_100'], normalOnly: true },
+    afk_dq_stair: { maps: PRIDE_MAPS, normalOnly: true },
     afk_dq_sutra: { names: ELDERS, uniq: true },
     afk_dq_eye: { dreamStar: true }
   };
