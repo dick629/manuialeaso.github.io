@@ -1082,6 +1082,7 @@
   hookGen(); bind(); hookTier();
   W.addEventListener('load', function () { setTimeout(init, 0); setTimeout(function () { hookHeal(); hookEco(); rebuild(); }, 800); });
   W.__afkRelicMechHas = function (k) { return !!M[k]; };
+  W.__afkRelicMechTxtS = function (k, st) { var h = M[k]; if (!h || !(st >= 1)) return ''; try { return h.t(scale(h.v[Math.min(st, h.v.length) - 1], (TMUL[k] || 1.15) / 1.15)); } catch (e) { return ''; } };
   W.__afkRelicMechTxt = function (k) { var h = M[k]; if (!h) return ''; try { return h.t(scale(h.v[0], (TMUL[k] || 1.15) / 1.15)); } catch (e) { return ''; } };
   W.__afkRelicMech = { M: M, ECHO: ECHO, HUNT: HUNT, CAT: CAT, CATKEY: CATKEY, TMUL: TMUL, SRCF: SRCF, collect: collect, textFor: textFor, hunterAffix: hunterAffix, tier: tier, _dealt: dealt, _taken: taken, _tick: tick, _kill: kill, _death: death, init: init, scale: scale, bump: function () { GEN++; } };
 })();

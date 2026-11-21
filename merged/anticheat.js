@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
  * merged/anticheat.js — 異常道具檢查（設計稿 docs/anticheat-design.md，Ping 11-11 決定）
  *
  *   ‧遊玩時間 p.afkPlay：每個遊戲 tick 加 100 毫秒（離線補跑也是 tick，照補跑實際跑的算）；簽章對不上＝歸零。
@@ -171,7 +171,7 @@
   var unsealOne = function (it) {
     if (!it || it.afkDup || !sKind(it.id) || stampOk(it.acs)) return false;
     var cost = costNow(it);
-    if (!it.acs) { it.acs = mkStamp(cost, false); return stampOk(it.acs); }
+    if (!it.acs) { it.acs = mkStamp(cost, true); return stampOk(it.acs); }   // Ping 11-21：沒有印記的＝遊戲正常給的（原本 gainItem 漏蓋印記），直接給正當印記、不扣時數
     var x = it.acs; if (x.k !== stSig(x)) return false;
     var need = cost - (Number(x.c) || 0), a = acct();
     if (need > 0 && a.sh + need > a.ms / 3600000) return false;
@@ -182,14 +182,17 @@
     try {
       var p = P(); if (!p || p.classicMode) return;
       var list = [], push = function (it) { if (it && typeof it === 'object') list.push(it); };
+      // Ping 11-21：之前遊戲正常給的獎勵被判「太快」而封印 → 這版第一次載入時，印記沒被竄改的一律解除（一次）
+      var mig = !p._acMig1121, fixed = 0;
       Object.keys(p.eq || {}).forEach(function (k) { push(p.eq[k]); });
       (p.inv || []).forEach(push);
       (p.allies || []).forEach(function (al) { if (al && al.eq) Object.keys(al.eq).forEach(function (k) { push(al.eq[k]); }); });
+      if (mig) { p._acMig1121 = 1; list.forEach(function (it) { var x = it && it.acs; if (x && x.f && x.k === stSig(x)) { x.f = 0; x.k = stSig(x); fixed++; } }); if (fixed) { sealCache = new WeakMap(); try { sys('<span class="text-emerald-300">' + fixed + ' 件道具的封印解除了。</span>'); } catch (e) {} } }
       var n = 0; list.forEach(function (it) { if (unsealOne(it)) { n++; try { sys('<span class="text-emerald-300">「' + (DB.items[it.id] ? DB.items[it.id].n : it.id) + '」的封印解除了。</span>'); } catch (e) {} } });
-      if (n) { sealCache = new WeakMap(); try { if (typeof saveGame === 'function') saveGame(); } catch (e) {} }
+      if (n || fixed) { sealCache = new WeakMap(); try { if (typeof saveGame === 'function') saveGame(); } catch (e) {} }
     } catch (e) {}
   };
-  setInterval(unsealTick, 60000);
+  setInterval(unsealTick, 60000); setTimeout(unsealTick, 8000);
   W.__afkAcUnseal = unsealTick;
   // Ping 11-18 19:51：封印中的武器、裝備拿去做成次元遺物＝解除封鎖 → 做出來、強化、進化的次元遺物一律給正當印記（不扣帳號時數）
   W.__afkAcStampFree = function (it) { try { if (!it || !sKind(it.id)) return; delete it.acs; delete it.afkDup; stamp(it, true); } catch (e) {} };
@@ -234,7 +237,7 @@
   hookSeal(); hookPetSeal(); W.addEventListener('load', function () { hookSeal(); hookPetSeal(); });
   (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent) { var v = ent && ent.cls ? sealOf(ent) : null; return v ? 1 + v.inn : 1; });
   W.__afkAcSealInfo = function (actor) { var v = sealOf(actor); return v ? { out: v.out, inn: v.inn, n: v.n } : null; };   // 木人場細項用
-  W.__afkAcSealedItem = function (it) { try { if (!it) return false; if (it.afkDup) return true; return !!(sKind(it.id) && !stampOk(it.acs)); } catch (e) { return false; } };   // 11-18：封印中的道具（寄賣攤不能上架）
+  W.__afkAcSealedItem = function (it) { try { if (!it || exempt()) return false; if (it.afkDup) return true; return !!(sKind(it.id) && !stampOk(it.acs)); } catch (e) { return false; } };   // 11-18：封印中的道具（寄賣攤不能上架）
   var tagHook = function () {
     var o = W.buildItemDescHTML; if (typeof o !== 'function' || o.__afkSealTag) return;
     var f = function (item) { var r = o.apply(this, arguments); try { if (item && W.__afkAcSealedItem && W.__afkAcSealedItem(item)) r = '<span class="font-bold" style="color:#f87171;border:1px solid #f87171;border-radius:4px;padding:0 6px;margin-right:4px">封印</span><br>' + r; } catch (e) {} return r; };
@@ -270,8 +273,11 @@
         try { if (p) { var a = store(p); if (r && r.uid != null) a.seen[r.uid] = costOf(r); (a.admin = a.admin || []).push([String(id), Number(arguments[1]) || 1, Date.now()]); if (a.admin.length > 200) a.admin.splice(0, a.admin.length - 200); } } catch (e) {}
         return r;
       }
+      var pre = null; try { if (sKind(id)) { var pp0 = P(); pre = new Set(); (pp0 && pp0.inv || []).forEach(function (x) { if (x && x.id === id) pre.add(x); }); } } catch (e) {}
       var r2 = oGain.apply(this, arguments);
-      try { if (r2 && typeof r2 === 'object' && sKind(r2.id)) stamp(r2, false); } catch (e) {}   // 遊戲本身給的 S 級＝正當來源
+      try { if (r2 && typeof r2 === 'object' && sKind(r2.id)) stamp(r2, true); } catch (e) {}
+      // 11-21：回傳的物件不一定是放進背包的那一筆 → 背包裡新出現的同編號道具也蓋印記（原本漏蓋，正常獎勵被當成沒有來源而封印）
+      try { if (pre) { var pp1 = P(); (pp1 && pp1.inv || []).forEach(function (x) { if (x && x.id === id && !pre.has(x) && !x.acs) stamp(x, true); }); } } catch (e) {}   // 遊戲本身給的 S 級＝正當來源；Ping 11-21：正常獎勵不扣帳號時數、不會因「太快」被封（門檻 500 小時照舊，只管強化、進化做出來的）
       // 次元裂縫（含時空裂縫的副本）裡遊戲給的東西：不算進取得速度
       try { var R = W.__afkDimRift; if (r2 && r2.uid != null && R && typeof R.on === 'function' && R.on()) { var pp = P(); (pp && pp.inv || []).forEach(function (x) { if (x && x.uid === r2.uid) x.acx = 1; }); } } catch (e) {}
       return r2;

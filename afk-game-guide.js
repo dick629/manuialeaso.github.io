@@ -94,7 +94,7 @@
     // 補齊遺物 150 件（11-19）：接在王者遺物後面編號
     if(B&&B.LIST2){var b2=base+(B.LIST?B.LIST.length:0);B.LIST2.forEach(function(r,i){var key='relic_'+r[0],cat=B.BASE[r[1]],row={id:b2+1+i,key:key,n:r[2],type:TY[cat.type]||'',slot:cat.cat,lore:r[3]+'（'+(B.MOBN[key]||'')+'掉落）',stages:[0,1,2,3,4].map(function(s){return B.text(r,s);})};
       row.search=[row.id,String(row.id).padStart(3,'0'),row.n,row.type,row.slot,row.lore,B.MOBN[key]||''].concat(row.stages).join(' ').toLowerCase();out.push(row);});}
-    if(B&&E&&E.MAP)Object.keys(E.MAP).forEach(function(k){var d=DB.items[k];if(!d)return;var st=[1,2,3,4].map(function(s){return [SN[s],B.evoText(k,s)];});
+    if(B&&E&&E.MAP)Object.keys(E.MAP).forEach(function(k){var d=DB.items[k];if(!d)return;var tx=function(s){try{if(B.EVO&&B.EVO[k])return B.evoText(k,s);}catch(e){}return window.__afkRelicMechTxtS?window.__afkRelicMechTxtS(k,s):'';};var st=[1,2,3,4].map(function(s){return [SN[s],tx(s)];});
       out.push({n:d.n,search:(d.n+' 進階特效 '+st.map(function(x){return x[1];}).join(' ')).toLowerCase(),html:factCard(esc(d.n),'進階特效（+5 起）',esc(String(d.d||'').replace(/^【遺物】/,'').split(' 〔')[0]),st.map(function(x){return '<b>'+x[0]+'</b>：'+esc(x[1]);}))});});
     return extraCache=out;
   }
@@ -102,7 +102,7 @@
   function relicEvoCard(){
     var B=window.__afkBossRelic,E=window.__afkRelicEvo;if(!B||!E||!B.evoText)return '';
     var TH={pet:'寵物',sum:'召喚',heal:'治療',dr:'減傷',ele:'屬性',wpn:'增傷（武器）',arm:'補助（防具、飾品）'};
-    var rows=Object.keys(TH).map(function(g){return (E.K[g]||[]).map(function(k){var d=DB.items[k];if(!d)return '';return '<tr><td><b>'+esc(d.n)+'</b><br><span style="opacity:.75">'+TH[g]+'</span></td><td>'+esc(B.evoText(k,1))+'</td><td>'+esc(B.evoText(k,4))+'</td></tr>';}).join('');}).join('');
+    var rows=Object.keys(TH).map(function(g){return (E.K[g]||[]).map(function(k){var d=DB.items[k];if(!d)return '';var tx=function(st){try{if(B.EVO&&B.EVO[k])return B.evoText(k,st);}catch(e){}return window.__afkRelicMechTxtS?window.__afkRelicMechTxtS(k,st):'';};return '<tr><td><b>'+esc(d.n)+'</b><br><span style="opacity:.75">'+TH[g]+'</span></td><td>'+esc(tx(1))+'</td><td>'+esc(tx(4))+'</td></tr>';}).join('');}).join('');
     return factCard('其他遺物的進階特效','原本只長數值的遺物，現在 +5 起也會進化','合成到 +5、+10、昇華支配、昇華支配 +5，各加一層效果，本體不變。',[
       '主題：寵物、召喚、治療、減傷、屬性；其餘的武器加傷害，防具、飾品給全隊補助',
       '寵物類：寵物會吃你的面板、幫全隊回血、破甲破魔、讓目標中毒、額外施法、給全隊傷害加成，最後一階寵物倒下會自己站起來',
