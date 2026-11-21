@@ -676,24 +676,7 @@
     }
   }
 
-  // ⑨ 11-21（Ping「補跑更快」）：補跑中傭兵重算後，不再每次重算玩家
-  //    核心在傭兵重算後會在 settleDeadMobs 重算玩家一次（只為還原玩家的衍生值）。實測 1,500 刻補跑、105 次：
-  //    重算前後玩家的能力值、所有可序列化的全域值都完全一樣，一次約 3ms、佔補跑約 6～7%。
-  //    補跑中（state.ff）先記下，補跑一停（下一個非補跑的 settleDeadMobs）再算一次；平常遊玩照舊。
-  var ffCalcPending = false;
-  var hookFfCalc = function () {
-    var o = window.settleDeadMobs; if (typeof o !== 'function' || o.__afkFfCalc) return;
-    var f = function () {
-      try {
-        var S = typeof state !== 'undefined' ? state : null;
-        if (S && S.ff && window._allyCalcDirty) { window._allyCalcDirty = false; ffCalcPending = true; }
-        else if (ffCalcPending && !(S && S.ff)) { ffCalcPending = false; window._allyCalcDirty = true; }
-      } catch (e) {}
-      return o.apply(this, arguments);
-    };
-    f.__afkFfCalc = true; window.settleDeadMobs = f; try { (0, eval)('settleDeadMobs = window.settleDeadMobs'); } catch (e) {}
-  };
-  if (on('perf-ffcalc')) { hookFfCalc(); window.addEventListener('load', hookFfCalc); }
+  // ⑨ 11-21 補跑時傭兵重算不連帶重算玩家——同日 20:25 Ping 要求整個拿掉（玩家回報能力值掉約 40%，疑似相關）
 
   console.log('[AFK-perf] 已啟用：' + [on('perf-render') ? '畫面重繪減量' : '', on('perf-log') ? '日誌批次寫入' : '', on('perf-tabs') ? '背包分頁按需重建' : '', on('perf-dom') ? '同值不重寫' : '', on('perf-mem') ? '動畫快取記憶體上限' : '', on('perf-vfx') ? '特效讀位置合併' : '', on('perf-pot') ? '治癒藥水不重算' : '', on('perf-dex') ? '收集冊完成度快取' : ''].filter(Boolean).join('、'));
 })();

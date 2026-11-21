@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-b85871e5110b",
+  "build": "merge-0.4-49c57666405d",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -1133,8 +1133,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-perf.js?v=ed172117bf4f",
-      "sha256": "ed172117bf4f8fd7d6f424ac637e14f7e76efed59b1bfefdf5786a5acea1afcc",
+      "url": "afk-perf.js?v=b54f445f4864",
+      "sha256": "b54f445f48649d3346ce57311285d58934a504d63b623276c316c0803fba9f39",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1663,8 +1663,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-toggles.js?v=a72e53d13466",
-      "sha256": "a72e53d1346690a8a1ac83017b574a3279fea5b5a0b3e4439e818ba40b8b9116",
+      "url": "afk-toggles.js?v=a248e4258a15",
+      "sha256": "a248e4258a150a37fd4879e06d8ce28e60a3e190130ca059141e69432654d86f",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "4a1b29619c8e2a0939370e1d3c74824dca5780b465f412e0ca5a063aa5c57bc6",
+      "sha256": "161782b2b0d65df43009fadaacdc3a0fa10e45ad5222296625fba83a92448075",
       "type": "text/html; charset=utf-8"
     },
     {
