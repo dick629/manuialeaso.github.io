@@ -28,7 +28,7 @@
   return commit('扎爾封存角色魂魄',(p,v,changes)=>{const source=_roleReadSavePlayer(slot);if(!source||identity(source)!==entry.identity)throw Error('來源存檔已變更');if(source.cls===p.cls&&identity(source)===identity(p))throw Error('不能消耗自己或自己的複本');
    for(let n=1;n<=(typeof SAVE_SLOT_MAX==='number'?SAVE_SLOT_MAX:16);n++){const role=n===currentSlot?p:_roleReadSavePlayer(n);if(role&&(role.allies||[]).some(a=>a&&Number(a._slot)===slot))throw Error('此角色仍在隊伍中，請先解除傭兵僱用');}
    if(typeof _mercLedgerOutbox!=='undefined'&&_mercLedgerOutbox.some(r=>r&&String(r.slot)===String(slot)))throw Error('來源角色尚有待結算傭兵經驗，請先登入該角色領取');
-   if(typeof _mercLedgerRead==='function'&&_mercLedgerRead().some(r=>r&&!r.claimed&&String(r.slot)===String(slot)))throw Error('來源角色尚有待領傭兵經驗，請先登入該角色領取');
+   /* 11-21 Ping：只擋「這個角色登入真的領得到」的紀錄（跟 mercExpClaimPending 同條件：存檔位＋職業＋enSeed／名字）；存檔位以前的角色、領不到的舊帳不再永遠擋住封魂 */if(typeof _mercLedgerRead==='function'&&_mercLedgerRead().some(r=>{if(!r||r.claimed||String(r.slot)!==String(slot)||r.cls!==source.cls)return false;const same=!!(r.enSeed&&source.enSeed&&r.enSeed===source.enSeed);if(r.enSeed&&source.enSeed&&!same)return false;if(!same&&(r.name||'')!==(source.name||''))return false;return Math.floor(r.exp||0)>0||!!Math.trunc(Number(r.alignmentDelta)||0)||(r.questLoot||[]).length>0;}))throw Error('來源角色尚有待領傭兵經驗，請先登入該角色領取');
    const used=legacyUsed();if(source.enSeed&&used.includes(source.enSeed))throw Error('這個角色已被舊制進化消耗，不能再次封魂');if(source.enSeed)change(changes,'afk_evo_used_v1',JSON.stringify(used.concat(source.enSeed)));
    const souls=C.seal(v,source,{id:crypto.randomUUID(),identity:entry.identity,slot,at:Date.now()});
    if(typeof PET_ROSTER_KEY!=='undefined')for(const key of [PET_ROSTER_KEY,PET_ROSTER_KEY+'_classic']){
