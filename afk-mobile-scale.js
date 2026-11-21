@@ -319,7 +319,7 @@
     var hdr = document.querySelector('#map-view-panel > .panel-header');
     if (hdr) { try { r = hdr.getBoundingClientRect(); if (r.height > 0) setVar('--afk-ms-maphdr-h', r.height); } catch (err) {} }
     var bv = document.getElementById('battle-view');
-    if (bv) { try { r = bv.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { var k = Math.max(0.45, Math.min(1, Math.max(r.width / 800, r.height / 450))); k = Math.round(k * 100) / 100; if (_last.bvs !== k) { _last.bvs = k; var gs2 = document.getElementById('game-screen'); if (gs2) gs2.style.setProperty('--afk-bvs', String(k)); } } } catch (err) {} }
+    if (bv) { try { r = bv.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { var k = Math.max(0.45, Math.min(1, Math.max(r.width / 800, r.height / 450) * (window.__afkBvsBoost || 1.2))); k = Math.round(k * 100) / 100; if (_last.bvs !== k) { _last.bvs = k; var gs2 = document.getElementById('game-screen'); if (gs2) gs2.style.setProperty('--afk-bvs', String(k)); } } } catch (err) {} }
   }
   function watch() {
     if (typeof ResizeObserver !== 'function') { measure(); window.addEventListener('resize', measure); return; }

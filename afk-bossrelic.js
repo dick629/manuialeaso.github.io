@@ -534,8 +534,17 @@
   var hookTip = function () {
     var o = W.tooltipItemDescription; if (typeof o !== 'function' || o.__afkBR) return;
     var f = function (d, id) {
-      try { if (d && d.bossRelicKey && BY[d.bossRelicKey]) return tipHtml(d); } catch (e) {}
+      try { if (d && d.bossRelicKey && BY[d.bossRelicKey] && !(d.relicBase && d.relicBase !== d.bossRelicKey)) return tipHtml(d); } catch (e) {}
       var r = o.apply(this, arguments);
+      // 別件遺物的詞綴抽到王者／補齊遺物（11-21）：說明照本體自己的寫，詞綴特效另列一段（本體階，不會隨強化升階）
+      try {
+        if (d && d.bossRelicKey && BY[d.bossRelicKey] && d.relicBase && d.relicBase !== d.bossRelicKey) {
+          if (typeof r === 'string' && r.indexOf('【遺物】') === 0 && r.indexOf('<') < 0) r = plainRelicTip(r);
+          var dk = d.bossRelicKey;
+          r += '<br><span class="text-amber-300 font-bold">詞綴特效・' + esc(BY[dk][2]) + '</span><br>' + fxLines(dk, BY[dk], 0).map(function (x) { return '<span class="text-amber-200">・' + esc(x) + '</span>'; }).join('<br>');
+          return r;
+        }
+      } catch (e) {}
       try { if (d && d.relic && typeof r === 'string' && r.indexOf('【遺物】') === 0 && r.indexOf('<') < 0) r = plainRelicTip(r); } catch (e) {}
       return r;
     };
