@@ -182,12 +182,10 @@
     try {
       var p = P(); if (!p || p.classicMode) return;
       var list = [], push = function (it) { if (it && typeof it === 'object') list.push(it); };
-      // Ping 11-21：之前遊戲正常給的獎勵被判「太快」而封印 → 這版第一次載入時，印記沒被竄改的一律解除（一次）
-      var mig = !p._acMig1121, fixed = 0;
+      var fixed = 0;
       Object.keys(p.eq || {}).forEach(function (k) { push(p.eq[k]); });
       (p.inv || []).forEach(push);
       (p.allies || []).forEach(function (al) { if (al && al.eq) Object.keys(al.eq).forEach(function (k) { push(al.eq[k]); }); });
-      if (mig) { p._acMig1121 = 1; list.forEach(function (it) { var x = it && it.acs; if (x && x.f && x.k === stSig(x)) { x.f = 0; x.k = stSig(x); fixed++; } }); if (fixed) { sealCache = new WeakMap(); try { sys('<span class="text-emerald-300">' + fixed + ' 件道具的封印解除了。</span>'); } catch (e) {} } }
       var n = 0; list.forEach(function (it) { if (unsealOne(it)) { n++; try { sys('<span class="text-emerald-300">「' + (DB.items[it.id] ? DB.items[it.id].n : it.id) + '」的封印解除了。</span>'); } catch (e) {} } });
       if (n || fixed) { sealCache = new WeakMap(); try { if (typeof saveGame === 'function') saveGame(); } catch (e) {} }
     } catch (e) {}
