@@ -151,6 +151,7 @@
     if (x.l === 'evaq' && x.i === 0 && trialQStateFor(p, keyR(2, p)) !== 2) return '琉米埃爾：「女神不見外人。」（要先完成「吞噬天空的光」第 3 章）';
     return '';
   };
+  (W.__afkQGates = W.__afkQGates || []).push(function (key, p) { var x = idxOf(key); return x && p ? gate(x, p) : ''; });   // 11-21：隊長替隊員接取也要過
   if (typeof W.trialQAccept === 'function') {
     var oAcc = W.trialQAccept;
     W.trialQAccept = function (key) {

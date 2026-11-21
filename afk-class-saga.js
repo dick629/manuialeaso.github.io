@@ -256,7 +256,8 @@
     W.trialItemActive.__afkSaga = true;
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installGate); else installGate();
-  // 接取：要先完成前一章
+  // 接取：要先完成前一章（11-21：隊長替隊員接取也照這條）
+  (W.__afkQGates = W.__afkQGates || []).push(function (key, p) { var q = sagaOf(key); return q && p && !prevDone(p, q) ? SAGA[q.cls].hostN + '：先把「' + chOf(q.cls)[q.i - 1].title + '」的事辦完。' : ''; });
   var oAcc = W.trialQAccept;
   W.trialQAccept = function (key) {
     var q = sagaOf(key), p = P();

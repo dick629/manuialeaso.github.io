@@ -126,6 +126,9 @@
     return '';
   };
 
+  // 11-21：隊長替隊員接取、交付也要過同樣的條件（看隊員自己的存檔）
+  (W.__afkQGates = W.__afkQGates || []).push(function (key, p) { var i = chIndexOfKey(key); return i >= 0 && p ? gate(i, p) : ''; });
+  (W.__afkQDoneGates = W.__afkQDoneGates || []).push(function (key, p) { return chIndexOfKey(key) === 6 && p && !soulRefined(p) ? '伊奧：「戴上粹煉過的之魂再來。」（隊員要裝著粹煉過的之魂才能交付）' : ''; });
   if (typeof W.trialQAccept === 'function') {
     var oAcc = W.trialQAccept;
     W.trialQAccept = function (key) {

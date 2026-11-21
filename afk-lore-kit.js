@@ -234,6 +234,23 @@
       return r;
     };
   }
+  // ── 11-21 Ping 回報：從隊長的「隊員任務」替隊員接取，會跳過各劇情的前置條件 ──
+  //   各劇情把接取條件登記在 __afkQGates（交付條件 __afkQDoneGates），這裡用隊員自己的存檔檢查一次
+  (W.__afkQGates = W.__afkQGates || []).push(function (key, p) { var x = KEYS[key]; return x && p && !prevDone(x.line, x.i, p) ? x.line.hostN + '：先把「' + x.line.chapters[x.i - 1].title + '」的事辦完。' : ''; });
+  var allyWhy = function (list, slotN, key) {
+    var ctx = null; try { ctx = typeof _allyManagerSource === 'function' ? _allyManagerSource(slotN, false) : null; } catch (e) {}
+    if (!ctx || !ctx.source) return '';
+    var name = (ctx.ally && (ctx.ally._allyName || ctx.ally.name)) || '隊員';
+    for (var i = 0; i < (list || []).length; i++) { var r = ''; try { r = list[i](key, ctx.source) || ''; } catch (e) {} if (r) return name + '：' + r; }
+    return '';
+  };
+  var wrapAlly = function (fn, listName) {
+    var o = W[fn]; if (typeof o !== 'function' || o.__afkGate) return;
+    var f = function (slotN, key) { var why = allyWhy(W[listName], slotN, key); if (why) { sys('<span class="text-amber-300">' + esc(why) + '</span>'); try { W.alert('還不能替隊員' + (listName === '__afkQGates' ? '接取' : '交付') + '：' + why); } catch (e) {} return; } return o.apply(this, arguments); };
+    f.__afkGate = true; W[fn] = f; try { (0, eval)(fn + ' = window.' + fn); } catch (e) {}
+  };
+  var hookAlly = function () { wrapAlly('allyAcceptTrialQuest', '__afkQGates'); wrapAlly('allyCompleteTrialQuest', '__afkQDoneGates'); };
+  hookAlly(); W.addEventListener('load', hookAlly);
   if (typeof W.trialQAccept === 'function') {
     var oAcc = W.trialQAccept;
     W.trialQAccept = function (key) {

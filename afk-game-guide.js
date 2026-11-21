@@ -4,7 +4,13 @@
  */
 (function () {
   'use strict';
-  var W=window, relicPage=0, relicQuery='', relicCache=null, PAGE_SIZE=25;
+  var W=window, relicPage=0, relicQuery='', relicCache=null, PAGE_SIZE=25, relicPart='武器';
+  // 11-21 Ping：遺物進階分部位、一覽表展開時才組（手機一次組全部會頓）
+  var LAZY={};
+  function lazy(key,summary,fn){LAZY[key]=fn;return '<details class="m-wiki-card" data-guide-lazy="'+key+'">'+summary+'<div class="afk-guide-lazy"></div></details>';}
+  var PARTS=['武器','頭盔','盔甲','斗篷','T恤','手套','靴子','盾牌','脛甲','耳環','戒指','項鍊','腰帶','寵物'];
+  var SLOTP={helm:'頭盔',armor:'盔甲',cloak:'斗篷',tshirt:'T恤',gloves:'手套',boots:'靴子',shield:'盾牌',shin:'脛甲',ear:'耳環',ring:'戒指',amulet:'項鍊',belt:'腰帶',petarm:'寵物',petwpn:'寵物'};
+  function partOf(key){var d=key&&DB.items[key];if(!d)return '';if(SLOTP[d.slot])return SLOTP[d.slot];return d.type==='wpn'?'武器':'';}
   var esc=function(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
   var copy=function(x){return JSON.parse(JSON.stringify(x));};
   var on=function(id){return !W.AFK_TOGGLES||AFK_TOGGLES.enabled(id);};
@@ -71,11 +77,12 @@
     body+=table(['階段','特殊效果'],r.stages.map(function(s,i){return s==null?null:[labels[i],esc(s)];}).filter(Boolean));
     return '<details class="m-wiki-card afk-guide-relic"'+(open?' open':'')+'><summary class="m-wiki-name">'+String(r.id).padStart(3,'0')+' '+esc(r.n)+' <small>'+esc(r.slot)+'</small></summary>'+body+'</details>';
   }
-  function filteredRelics(){var terms=relicQuery.toLowerCase().split(/\s+/).filter(Boolean);return relicRows().concat(extraRelicRows()).filter(function(r){return terms.every(function(t){return r.search.indexOf(t)>=0;});});}
+  function filteredRelics(){var terms=relicQuery.toLowerCase().split(/\s+/).filter(Boolean);return relicRows().concat(extraRelicRows()).filter(function(r){if(!terms.length)return partOf(r.key)===relicPart;return terms.every(function(t){return r.search.indexOf(t)>=0;});});}
+  function partBar(){var q=!!relicQuery.trim();return '<div class="afk-guide-parts" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">'+PARTS.map(function(p){var on=!q&&p===relicPart;return '<button type="button" class="btn" data-guide-part="'+p+'" style="padding:4px 10px;'+(on?'background:#92400e !important;color:#fde68a !important;border-color:#fbbf24 !important;box-shadow:0 0 0 2px #fbbf24 inset !important':'')+'">'+p+'</button>';}).join('')+'</div>'+(q?'<div class="m-wiki-msg">搜尋時列出全部部位的結果。</div>':'');}
   function relicResults(){
     var all=filteredRelics(),pages=Math.max(1,Math.ceil(all.length/PAGE_SIZE));relicPage=Math.min(relicPage,pages-1);
     var controls='<div class="afk-guide-page"><button type="button" class="btn" data-guide-page="-1"'+(relicPage===0?' disabled':'')+'>上一頁</button><span>'+(relicPage+1)+'／'+pages+' 頁・'+all.length+' 件</span><button type="button" class="btn" data-guide-page="1"'+(relicPage+1>=pages?' disabled':'')+'>下一頁</button></div>';
-    return controls+(all.length?all.slice(relicPage*PAGE_SIZE,(relicPage+1)*PAGE_SIZE).map(function(r){return r.html||relicCard(r,false);}).join(''):note('找不到符合的遺物，請縮短名稱或改用效果關鍵字。'))+controls;
+    return partBar()+controls+(all.length?all.slice(relicPage*PAGE_SIZE,(relicPage+1)*PAGE_SIZE).map(function(r){return r.html||relicCard(r,false);}).join(''):note('找不到符合的遺物，請縮短名稱或改用效果關鍵字。'))+controls;
   }
   function relics(){
     return note('翻開遺物的來歷與力量，查看 +5、+10、昇華支配及終階效果。這裡收錄有專屬特殊效果的 '+(relicRows().length+extraRelicRows().length)+' 件遺物（含王者遺物、補上進階特效的遺物）。')+
@@ -95,41 +102,41 @@
     if(B&&B.LIST2){var b2=base+(B.LIST?B.LIST.length:0);B.LIST2.forEach(function(r,i){var key='relic_'+r[0],cat=B.BASE[r[1]],row={id:b2+1+i,key:key,n:r[2],type:TY[cat.type]||'',slot:cat.cat,lore:r[3]+'（'+(B.MOBN[key]||'')+'掉落）',stages:[0,1,2,3,4].map(function(s){return B.text(r,s);})};
       row.search=[row.id,String(row.id).padStart(3,'0'),row.n,row.type,row.slot,row.lore,B.MOBN[key]||''].concat(row.stages).join(' ').toLowerCase();out.push(row);});}
     if(B&&E&&E.MAP)Object.keys(E.MAP).forEach(function(k){var d=DB.items[k];if(!d)return;var tx=function(s){try{if(B.EVO&&B.EVO[k])return B.evoText(k,s);}catch(e){}return window.__afkRelicMechTxtS?window.__afkRelicMechTxtS(k,s):'';};var st=[1,2,3,4].map(function(s){return [SN[s],tx(s)];});
-      out.push({n:d.n,search:(d.n+' 進階特效 '+st.map(function(x){return x[1];}).join(' ')).toLowerCase(),html:factCard(esc(d.n),'進階特效（+5 起）',esc(String(d.d||'').replace(/^【遺物】/,'').split(' 〔')[0]),st.map(function(x){return '<b>'+x[0]+'</b>：'+esc(x[1]);}))});});
+      out.push({key:k,n:d.n,search:(d.n+' 進階特效 '+st.map(function(x){return x[1];}).join(' ')).toLowerCase(),html:factCard(esc(d.n),'進階特效（+5 起）',esc(String(d.d||'').replace(/^【遺物】/,'').split(' 〔')[0]),st.map(function(x){return '<b>'+x[0]+'</b>：'+esc(x[1]);}))});});
     return extraCache=out;
   }
   // 原本沒有進階特效的遺物（afk-relicevo.js）：+5 起每階加一層效果
   function relicEvoCard(){
     var B=window.__afkBossRelic,E=window.__afkRelicEvo;if(!B||!E||!B.evoText)return '';
     var TH={pet:'寵物',sum:'召喚',heal:'治療',dr:'減傷',ele:'屬性',wpn:'增傷（武器）',arm:'補助（防具、飾品）'};
-    var rows=Object.keys(TH).map(function(g){return (E.K[g]||[]).map(function(k){var d=DB.items[k];if(!d)return '';var tx=function(st){try{if(B.EVO&&B.EVO[k])return B.evoText(k,st);}catch(e){}return window.__afkRelicMechTxtS?window.__afkRelicMechTxtS(k,st):'';};return '<tr><td><b>'+esc(d.n)+'</b><br><span style="opacity:.75">'+TH[g]+'</span></td><td>'+esc(tx(1))+'</td><td>'+esc(tx(4))+'</td></tr>';}).join('');}).join('');
+    var rows=function(){return Object.keys(TH).map(function(g){return (E.K[g]||[]).map(function(k){var d=DB.items[k];if(!d)return '';var tx=function(st){try{if(B.EVO&&B.EVO[k])return B.evoText(k,st);}catch(e){}return window.__afkRelicMechTxtS?window.__afkRelicMechTxtS(k,st):'';};return '<tr><td><b>'+esc(d.n)+'</b><br><span style="opacity:.75">'+TH[g]+'</span></td><td>'+esc(tx(1))+'</td><td>'+esc(tx(4))+'</td></tr>';}).join('');}).join('');};
     return factCard('其他遺物的進階特效','原本只長數值的遺物，現在 +5 起也會進化','合成到 +5、+10、昇華支配、昇華支配 +5，各加一層效果，本體不變。',[
       '主題：寵物、召喚、治療、減傷、屬性；其餘的武器加傷害，防具、飾品給全隊補助',
       '寵物類：寵物會吃你的面板、幫全隊回血、破甲破魔、讓目標中毒、額外施法、給全隊傷害加成，最後一階寵物倒下會自己站起來',
       '同一種效果穿好幾件會相加，但各有上限'
-    ])+'<details class="m-wiki-card"><summary class="m-wiki-name" style="cursor:pointer">進階特效一覽（'+Object.keys(E.MAP).length+' 件）</summary><div style="overflow-x:auto"><table class="m-wiki-table"><tr><th>遺物</th><th>+5</th><th>昇華支配 +5</th></tr>'+rows+'</table></div></details>';
+    ])+lazy('evo','<summary class="m-wiki-name" style="cursor:pointer">進階特效一覽（'+Object.keys(E.MAP).length+' 件）</summary>',function(){return '<div style="overflow-x:auto"><table class="m-wiki-table"><tr><th>遺物</th><th>+5</th><th>昇華支配 +5</th></tr>'+rows()+'</table></div>';});
   }
   // 王者遺物（afk-bossrelic.js）：規則＋79 件一覽（本體、昇華支配 +5）
   function bossRelicCard(){
     var B=window.__afkBossRelic;if(!B)return '';
-    var MB=window.__afkMapBoss,rows=B.LIST.map(function(r,i){var b=MB&&MB.BY[r[0]];return '<tr><td>'+(i+1)+'</td><td><b>'+esc(r[2])+'</b><br><span style="opacity:.75">'+esc(B.BASE[r[1]].cat)+'・'+esc(b?b.n:'')+'</span></td><td>'+esc(B.text(r,0))+'</td><td>'+esc(B.text(r,4))+'</td></tr>';}).join('');
+    var MB=window.__afkMapBoss,rows=function(){return B.LIST.map(function(r,i){var b=MB&&MB.BY[r[0]];return '<tr><td>'+(i+1)+'</td><td><b>'+esc(r[2])+'</b><br><span style="opacity:.75">'+esc(B.BASE[r[1]].cat)+'・'+esc(b?b.n:'')+'</span></td><td>'+esc(B.text(r,0))+'</td><td>'+esc(B.text(r,4))+'</td></tr>';}).join('');};
     return factCard('王者遺物','79 隻地圖王、副本王各有一件專屬遺物','打倒王時有機率掉落（跟一般遺物一樣），合成、昇華支配、詞綴都跟一般遺物相同。',[
       '特效分 5 階：本體、+5、+10、昇華支配、昇華支配 +5，越往上越強',
       '武器多一項「王者之威」：造成的傷害提升（各種武器不同）',
       '「近 5 秒每秒傷害」＝你最近 5 秒平均每秒造成的傷害；召喚、砲擊、地震、中毒這類追加傷害都照它算',
       '保命效果（短暫無敵、保住 1 HP、倒下站起來）：同一個人身上只算階段最高的一件；保住 1 HP、站起來只對你自己有效'
-    ])+'<details class="m-wiki-card"><summary class="m-wiki-name" style="cursor:pointer">王者遺物一覽（79 件）</summary><div style="overflow-x:auto"><table class="m-wiki-table"><tr><th>#</th><th>遺物</th><th>本體</th><th>昇華支配 +5</th></tr>'+rows+'</table></div></details>';
+    ])+lazy('boss','<summary class="m-wiki-name" style="cursor:pointer">王者遺物一覽（79 件）</summary>',function(){return '<div style="overflow-x:auto"><table class="m-wiki-table"><tr><th>#</th><th>遺物</th><th>本體</th><th>昇華支配 +5</th></tr>'+rows()+'</table></div>';});
   }
   // 怪物遺物 150 件（afk-bossrelic LIST2，11-19）
   function fillRelicCard(){
     var B=window.__afkBossRelic;if(!B||!B.LIST2)return '';
-    var rows=B.LIST2.map(function(r,i){var key='relic_'+r[0];return '<tr><td>'+(i+1)+'</td><td><b>'+esc(r[2])+'</b><br><span style="opacity:.75">'+esc(B.BASE[r[1]].cat)+'・'+esc(B.MOBN[key]||'')+'</span></td><td>'+esc(B.text(r,0))+'</td><td>'+esc(B.text(r,4))+'</td></tr>';}).join('');
+    var rows=function(){return B.LIST2.map(function(r,i){var key='relic_'+r[0];return '<tr><td>'+(i+1)+'</td><td><b>'+esc(r[2])+'</b><br><span style="opacity:.75">'+esc(B.BASE[r[1]].cat)+'・'+esc(B.MOBN[key]||'')+'</span></td><td>'+esc(B.text(r,0))+'</td><td>'+esc(B.text(r,4))+'</td></tr>';}).join('');};
     return factCard('更多遺物',B.LIST2.length+' 種怪物（含原版的王）各有一件專屬遺物','打倒時有機率掉落（跟一般遺物一樣），合成、昇華支配、詞綴都跟一般遺物相同；時空裂痕結算也可能拿到。',[
       '特效分 5 階：本體、+5、+10、昇華支配、昇華支配 +5，越往上越強；王的遺物至少 2 種特效，龍與最終王至少 3 種',
       '屬性弱點：讓目標受到該屬性的傷害提高；屬性武器、屬性魔法打弱點最有效，「弱點追擊」則是什麼攻擊都加',
       '連鎖、斬首、印記引爆、迴響、溢殺、星落這類追加傷害，不會再觸發其他特效',
       '復仇、相位、魔鏡、血盾只保護戴的人自己'
-    ])+'<details class="m-wiki-card"><summary class="m-wiki-name" style="cursor:pointer">更多遺物一覽（'+B.LIST2.length+' 件）</summary><div style="overflow-x:auto"><table class="m-wiki-table"><tr><th>#</th><th>遺物</th><th>本體</th><th>昇華支配 +5</th></tr>'+rows+'</table></div></details>';
+    ])+lazy('fill','<summary class="m-wiki-name" style="cursor:pointer">更多遺物一覽（'+B.LIST2.length+' 件）</summary>',function(){return '<div style="overflow-x:auto"><table class="m-wiki-table"><tr><th>#</th><th>遺物</th><th>本體</th><th>昇華支配 +5</th></tr>'+rows()+'</table></div>';});
   }
   function evoCard(){
     return factCard('至高的支配（昇華支配 +5 再進化）','遺物的最後一個階段','在燃柳村「哈瑪大師」把「+5 昇華支配」遺物進化，成功率 100%。',[
@@ -793,6 +800,8 @@
   var inputTimer=0;
   function repaintRelics(){var el=document.getElementById('afk-guide-relic-results');if(el)el.innerHTML=relicResults();}
   document.addEventListener('input',function(e){if(!e.target||e.target.id!=='afk-guide-relic-query')return;relicQuery=e.target.value;relicPage=0;clearTimeout(inputTimer);inputTimer=setTimeout(repaintRelics,150);});
+  document.addEventListener('click',function(e){var b=e.target&&e.target.closest('[data-guide-part]');if(!b)return;relicPart=b.dataset.guidePart;relicPage=0;if(relicQuery){relicQuery='';var q=document.getElementById('afk-guide-relic-query');if(q)q.value='';}repaintRelics();});
+  document.addEventListener('toggle',function(e){var d=e.target;if(!d||!d.open||!d.dataset||!d.dataset.guideLazy)return;var box=d.querySelector('.afk-guide-lazy');if(!box||box.dataset.done)return;var fn=LAZY[d.dataset.guideLazy];if(!fn)return;box.dataset.done='1';try{box.innerHTML=fn();}catch(er){box.textContent='';}},true);
   document.addEventListener('click',function(e){var b=e.target&&e.target.closest('[data-guide-page]');if(!b||b.disabled)return;relicPage=Math.max(0,relicPage+Number(b.dataset.guidePage));repaintRelics();});
   var style=document.createElement('style');style.id='afk-game-guide-style';style.textContent='.afk-guide-search{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}.afk-guide-search input{flex:1;min-width:0;width:100%;background:#080e1b;color:#e2e8f0;border:1px solid #475569;border-radius:8px;padding:10px}.afk-guide-page{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 0;font-size:13px}.afk-guide-page button{min-height:36px;padding:6px 12px}.afk-guide-page button:disabled{opacity:.4}.afk-guide-relic summary{cursor:pointer;line-height:1.6;list-style:revert}.afk-guide-relic summary small{font-size:12px;color:#a5b4c8}.afk-guide-relic[open] summary{padding-bottom:8px;border-bottom:1px solid #334155;margin-bottom:10px}.afk-guide-missing summary{padding:8px;cursor:pointer;color:#cbd5e1}.afk-guide-missing small{color:#94a3b8;font-size:12px}.afk-guide-missing .m-wiki-desc{overflow-wrap:anywhere}';document.head.appendChild(style);
 })();

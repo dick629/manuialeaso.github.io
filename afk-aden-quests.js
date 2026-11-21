@@ -99,6 +99,8 @@
   });
   var keyOf = function (q, p) { return q.key + '_' + (QC(p || P() || {}) || ''); };
   var prevDone = function (i, p) { return i === 0 || trialQStateFor(p || P(), keyOf(QUESTS[i - 1], p)) === 2; };
+  // 11-21：隊長替隊員接取也要過同一道關（afk-lore-kit 的 allyAcceptTrialQuest 包裝）
+  (W.__afkQGates = W.__afkQGates || []).push(function (key, p) { var i = QUESTS.findIndex(function (q) { return String(key || '').indexOf(q.key + '_') === 0; }); return i > 0 && !prevDone(i, p) ? '近衛隊長 雷歐：先把「' + QUESTS[i - 1].title + '」的事辦完再說。' : ''; });
   if (typeof W.trialQAccept === 'function') {
     var oAcc = W.trialQAccept;
     W.trialQAccept = function (key) {
