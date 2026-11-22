@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-9a9f05cd38c9",
+  "build": "merge-0.4-09b631b1a735",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -553,8 +553,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamstar.js?v=78db9277a87b",
-      "sha256": "78db9277a87b2d58dce9b17d3e20be80905c36864ec9ebf050902ba1266c2e3a",
+      "url": "afk-dreamstar.js?v=539d0e1cb3cd",
+      "sha256": "539d0e1cb3cd0a3774164cd952279b4350d06ef8e2d6f27fb0b12397bdbea843",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -708,8 +708,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-gdrift.js?v=a099b5e06384",
-      "sha256": "a099b5e06384bdfa51529a005d054862c06d04ee0e546e8e3b2afcf95f988af2",
+      "url": "afk-gdrift.js?v=0b1cee6cb299",
+      "sha256": "0b1cee6cb2997b4b2df08835d0fd5b2f35fc8b030fc6f37607370a4c9c51b02c",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -813,8 +813,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-hunter.js?v=17998ce79d16",
-      "sha256": "17998ce79d16ae89b8cf8bdfbd6f1337702ad5c49930e1b7db7a052820fbfe80",
+      "url": "afk-hunter.js?v=c58cb31452d0",
+      "sha256": "c58cb31452d09ff2f54682b84bc328de09b87ab1926efa2d53b14ec89265ab4e",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1403,8 +1403,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-rift2.js?v=6ae44fabe6da",
-      "sha256": "6ae44fabe6dad15f99837c2937639c55b68deecc73fb6aeac15fba92af868880",
+      "url": "afk-rift2.js?v=e433d10068ff",
+      "sha256": "e433d10068ffd6686133e8698510d660e78665ac01d262080b179207cb80b039",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1503,8 +1503,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-siege2.js?v=4f8ac1a8ccb8",
-      "sha256": "4f8ac1a8ccb86c4a7bedf9950ba93f65c9898832aaacf803c13d679d51b0a4d9",
+      "url": "afk-siege2.js?v=6a955f9ba750",
+      "sha256": "6a955f9ba7506f66a9c7f8ff6607a20234b09134a17ff27e5063283e68d9ea30",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "9c9d6ed9f1b49f80afe273f26159cf29751eb23267b98f2d0bee54b00e5fe16a",
+      "sha256": "6842d6a68e7931fc386888285c26ca0ef5316e9c44d0b069d57e9323528a348c",
       "type": "text/html; charset=utf-8"
     },
     {

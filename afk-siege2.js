@@ -1168,6 +1168,29 @@
     else if (W.confirm(msg)) go();
     return true;
   };
+  // ── 花龍鑽立即奪回（11-22 Ping）：只限守城戰丟掉、還在 3 天鎖裡的城 ──
+  var BUY_DIA = 10000;
+  var buyRetake = function (city) {
+    var why = busy(); if (why) { sys('<span class="text-amber-300">' + esc(why) + '</span>'); return; }
+    if (flowActive()) { sys('<span class="text-amber-300">守城戰還沒結束，現在不能宣戰。</span>'); return; }
+    try { if (W.__afkSiegeLose && W.__afkSiegeLose.left() > 0) { var lt = W.__afkSiegeLose.text(); sys('<span class="text-amber-300">' + esc(lt) + '</span>'); try { if (typeof showToast === 'function') showToast(lt); } catch (e) {} return; } } catch (e) {}
+    var li = lostInfo(city); if (!li || held().indexOf(city) >= 0) return;
+    if (li.lockUntil <= now()) { startRetake(city); return; }
+    var have = 0; try { have = Math.floor(Number(W.pandoraGetSharedDiamonds()) || 0); } catch (e) {}
+    if (have < BUY_DIA) { sys('<span class="text-amber-300">龍之鑽石不足（需要 ' + BUY_DIA.toLocaleString() + '，目前 ' + have.toLocaleString() + '）。</span>'); return; }
+    var go = function () {
+      var o = store(), l2 = o.lost[city]; if (!l2 || l2.lockUntil <= now() || held().indexOf(city) >= 0) return;
+      var r = null; try { r = W.pandoraAdjustSharedDiamonds(-BUY_DIA); } catch (e) {}
+      if (!r || !r.ok) { sys('<span class="text-amber-300">' + esc((r && r.error) || '龍之鑽石扣除失敗') + '</span>'); return; }
+      l2.lockUntil = now(); write(o);
+      sys('<span class="text-sky-300 font-bold">💎 花了 ' + BUY_DIA.toLocaleString() + ' 龍之鑽石，立刻出兵奪回' + esc(cityName(city)) + '。</span>');
+      try { if (typeof closeModal === 'function') closeModal(); } catch (e) {}
+      startRetake(city, true);
+    };
+    var msg = '花 ' + BUY_DIA.toLocaleString() + ' 龍之鑽石，立刻奪回' + cityName(city) + '？（目前持有 ' + have.toLocaleString() + '）\n不用等 3 天，馬上進奪回戰：守軍是你自己的影子（八個職業），5 波；限時 30 分鐘。打輸了城還是對方的，30 分鐘內不能宣戰，但之後可以直接再打，不用再花龍鑽。';
+    if (W.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '立即奪回', message: msg, okText: '花龍鑽出兵', cancelText: '取消', onOk: go });
+    else if (W.confirm(msg)) go();
+  };
   if (typeof W.startSiege === 'function') {
     var oStart = W.startSiege;
     W.startSiege = function (faction, city) {
@@ -1196,11 +1219,26 @@
       try {
         var el = targetEl || document.getElementById('interaction-content'), grid = el && el.querySelector('.siege-castle-grid'); if (!grid || classic()) return r;
         var o = store(), t = now();
+        var lockedLost = [];
         grid.querySelectorAll('[data-castle]').forEach(function (b) {
           var c = b.getAttribute('data-castle'), li = o.lost[c], st = b.querySelector('.siege-castle-status'); if (!li || held().indexOf(c) >= 0) return;
-          if (li.lockUntil > t) { b.disabled = true; b.removeAttribute('onclick'); b.classList.remove('is-open'); b.classList.add('is-locked'); if (st) st.textContent = '失守・' + daysLeft(li.lockUntil - t) + ' 天後可奪回'; }
+          if (li.lockUntil > t) {
+            b.disabled = true; b.removeAttribute('onclick'); b.classList.remove('is-open'); b.classList.add('is-locked'); if (st) st.textContent = '失守・' + daysLeft(li.lockUntil - t) + ' 天後可奪回';
+            lockedLost.push(c);   // 11-22：下面另列「花龍鑽立即奪回」
+          }
           else if (st) st.textContent = '奪回戰';
         });
+        // 11-22 Ping：守城戰丟掉、還在 3 天鎖裡的城 → 花 10,000 龍鑽立即奪回（另起一塊，不塞進城堡格子）
+        var oldBuy = el.querySelector('#afk-s2-buy'); if (oldBuy) oldBuy.remove();
+        if (lockedLost.length) {
+          var have = 0; try { have = Math.floor(Number(W.pandoraGetSharedDiamonds()) || 0); } catch (e) {}
+          var enough = have >= BUY_DIA, bx = document.createElement('div'); bx.id = 'afk-s2-buy';
+          bx.className = 'mt-2 p-2 rounded border border-sky-700 bg-slate-900/70 text-sm text-slate-200';
+          bx.innerHTML = '<div class="font-bold text-sky-200 mb-1">💎 立即奪回</div><div class="text-xs text-slate-400 mb-2">守城戰丟掉的城不用等 3 天：每座花 ' + BUY_DIA.toLocaleString() + ' 龍之鑽石，馬上進奪回戰（目前持有 ' + have.toLocaleString() + '）。</div>'
+            + '<div class="flex flex-wrap gap-2">' + lockedLost.map(function (c) { return '<button type="button" data-s2buy="' + esc(c) + '" ' + (enough ? '' : 'disabled ') + 'class="px-2 py-1 rounded border ' + (enough ? 'border-sky-500 bg-sky-950/70 text-sky-200' : 'border-slate-600 bg-slate-800 text-slate-400') + '">' + (enough ? '奪回' + esc(cityName(c)) : esc(cityName(c)) + '（龍鑽不足，還差 ' + (BUY_DIA - have).toLocaleString() + '）') + '</button>'; }).join('') + '</div>';
+          grid.insertAdjacentElement('afterend', bx);
+          bx.querySelectorAll('[data-s2buy]').forEach(function (bb) { bb.onclick = function () { buyRetake(bb.getAttribute('data-s2buy')); }; });
+        }
         var note = el.querySelector('.border-t.border-slate-700');
         if (note) note.textContent = '七座城都可以宣戰，最多持有 7 座。每週五 20:00～21:00 會有血盟來攻你的城（守城戰，可以在血盟頁關掉）；失去的城 3 天後可以打回來。持有越多城，攻城越難。3 座以上每小時有收成；持有 2 座以上會有血盟對你宣戰。';
         // 放棄城堡：只列自己持有的城

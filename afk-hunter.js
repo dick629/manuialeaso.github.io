@@ -205,7 +205,7 @@
     var r0 = rankIdx(p); h.pts = (Number(h.pts) || 0) + n; var r1 = rankIdx(p);
     if (r1 > r0) {
       sys('<span class="font-bold" style="color:' + RANKS[r1][2] + ';text-shadow:0 0 8px #000">🏅 冒險者等級提升為 ' + RANKS[r1][0] + ' 級！</span>'
-        + (r1 === RANKS.length - 1 ? '<span class="text-amber-200">（S 級冒險者：可以挑戰終焉第二階層，並在第二、三階層得到 S 級加成）</span>' : ''));
+        + (r1 === RANKS.length - 1 ? '<span class="text-amber-200">（S 級冒險者：可以挑戰終焉第二階層，並在第二、三階層與二轉單人試煉得到 S 級加成）</span>' : ''));
       try { recomputeStats(); } catch (e) {}
     }
   };
@@ -265,7 +265,9 @@
     shieldBadge();
     return 0;
   };
-  W.__afkFbOutMod = function (actor, target, r) { return (tierOn() && sOf(actor)) ? r * (1 + S_BUFF.atk) : r; };
+  // 11-22 Ping：二轉「單人試煉」也吃 S 級的造成傷害 +10%（其他三項在單人試煉沒意義：席琳方傷害本來就 −100%）
+  var soloOn = function () { var FB = W.__afkFinalBoss; try { return !!(FB && FB.on() && FB.mode() === 'solo'); } catch (e) { return false; } };
+  W.__afkFbOutMod = function (actor, target, r) { return ((tierOn() || soloOn()) && sOf(actor)) ? r * (1 + S_BUFF.atk) : r; };
   W.__afkFbGazeMod = function (actor, pct) { return (tierOn() && sOf(actor)) ? pct * S_BUFF.gazeCut : pct; };
   W.__afkFbHurtMod = function (t, dmg, why) { if (!tierOn() || !sOf(t)) return dmg; return shield(t, dmg * (1 - S_BUFF.dr), why); };
   var hookIncoming = function () {
@@ -320,7 +322,7 @@
       + bar((h.pts || 0) - rk[1], nx ? nx[1] - rk[1] : 1, rk[2])
       + '<div class="text-xs text-slate-400 mt-1">完成委託 ' + (h.done || 0) + ' 個・狩獵徽章 ' + (h.badges || 0) + ' 枚'
       + (ri ? '・等級加成：最大 HP +' + PER_RANK.mhp * ri + '、最大 MP +' + PER_RANK.mmp * ri + '、掉落機率 +' + Math.round(PER_RANK.drop * ri * 100) + '%' : '') + '</div>'
-      + (ri === RANKS.length - 1 ? '<div class="text-xs mt-1" style="color:#fde68a">S 級冒險者：可以挑戰終焉第二階層；在第二、三階層受到的傷害 −10%、造成的傷害 +10%、凝視的傷害下降減半，每 15 秒抵銷一次大傷害。</div>' : '') + '</div>';
+      + (ri === RANKS.length - 1 ? '<div class="text-xs mt-1" style="color:#fde68a">S 級冒險者：可以挑戰終焉第二階層；在第二、三階層受到的傷害 −10%、造成的傷害 +10%、凝視的傷害下降減半，每 15 秒抵銷一次大傷害；二轉單人試煉造成的傷害也 +10%。</div>' : '') + '</div>';
     hh += '<div class="font-bold text-lime-300">進行中的委託（' + h.active.length + '／' + ACTIVE_MAX + '）</div>';
     hh += h.active.length ? h.active.map(function (c) {
       return '<div class="p-2 rounded border border-lime-800 bg-slate-900/40"><div class="flex justify-between gap-2"><span>' + esc(title(c)) + '</span><span class="text-lime-300">' + c.got + '／' + c.need + '</span></div>' + bar(c.got, c.need, '#84cc16')

@@ -574,11 +574,8 @@
         var cl = RD.CLEAR[mode];
         var div = document.createElement('div');
         div.className = 'bg-slate-900/70 border border-violet-700 rounded-lg p-3 text-sm leading-relaxed text-slate-200';
-        div.innerHTML = '<div class="font-bold text-violet-300 mb-1">目前：' + MN[mode] + '模式（時空裂痕重做）</div>'
-          + '<div>一趟最長 ' + TUNE.clearMin + ' 分鐘，撐滿就是<b>完全通關</b>（另給 ' + DB.items[cl[0]].n + ' ×' + cl[1] + '）。' + TUNE.hpFrom + ' 分鐘後怪物越來越硬、' + TUNE.lvFull + ' 分鐘怪物等級到最高、之後攻擊力大幅上升；頭目出場 ' + TUNE.enrageSec + ' 秒（同時兩隻以上 ' + TUNE.enrageMulti + ' 秒）還沒倒會<b>時空暴走</b>；第 ' + (TUNE.dragonWaves || []).join('、') + ' 分鐘「四龍降臨」（四大龍一條接一條出場）；' + TUNE.wallFrom + ' 分鐘起全場每秒扣血。</div>'
-          + '<div>同一隻頭目出場 ' + TUNE.erodeFrom + ' 秒還沒倒會「時空侵蝕」（暴走再 +' + Math.round(TUNE.erodeStep * 100) + '%，每 10 秒再加，暴走抑制劑消不掉）。小怪死亡的代價、王的死亡詛咒、王的殘響：裂痕裡每種每秒最多一次。</div>'
-          + '<div>掉落：' + DB.items[RD.DUST[mode]].n + '（一般怪 1%、60 等以下頭目 10%、60 等以上頭目 25%、第 ' + DROP.bossFrom + ' 分鐘起頭目必掉）；不吃任何掉寶加倍；遺物 0.001%。' + (mode === 'sherine' ? '前 ' + Math.round(TUNE.clearMin * DROP.legendPct) + ' 分鐘每次擊殺 ' + (DROP.legend * 100) + '% 掉傳說符文「汲」（一趟最多一顆）。' : '') + '</div>'
-          + '<div>結算：' + rw + '。</div>';
+        div.innerHTML = '<div class="font-bold text-violet-300 mb-1">目前：' + MN[mode] + '模式</div>'
+          + '<div class="text-xs text-slate-400">規則、難度、掉落與結算請看 <a href="javascript:void(0)" class="underline text-sky-300" onclick="window.AFK_WIKI_API&&AFK_WIKI_API.goto({tab:\'rift\'})">📚 小百科「時空裂痕」</a></div>';   // 11-22 Ping：規則與掉落不寫在入口，統一放小百科
         (container.firstElementChild || container).appendChild(div);
       } catch (e) {}
       return r;
