@@ -49,9 +49,13 @@
   // 11-17（Ping）：任務道具可以標成廢品、販賣（任務物品、劇情材料 afk_q_／afk_aq_、quest_ 開頭）
   // 11-22（Ping）：原版的試煉／職業任務道具（打怪掉、拿去 NPC 換東西的）也一樣可以標廢品、賣掉；要再換就再去打
   var QX = { item_ant_fruit: 1, item_ant_branch: 1, item_ant_bark: 1, item_elmore_heart: 1, item_time_orb: 1, item_cyclops_blood: 1,
-    item_demon_search: 1, item_demon_spy: 1, item_yeti_heart: 1, item_lost_soul: 1 };
+    item_demon_search: 1, item_demon_spy: 1, item_yeti_heart: 1, item_lost_soul: 1,
+    new_item_197: 1, item_elf_whisper: 1, item_chaos_key: 1, item_soulfire_ash: 1, item_wyvern_blood: 1,   // 11-22 13:52：王族搜索狀等再補 5 種
+    item_dantes_letter: 1, item_ancient_book: 1, item_sealed_intel: 1, item_spy_report: 1, item_royal_order: 1,
+    // 劇情線的道具（冥皇丹特斯、吉爾塔斯、精通任務、哈汀、哈爾巴斯、紅獅）：都能再打到或再做出來
+    item_dk_book: 1, item_giltas_seal: 1, item_summonorb_full: 1, item_mastery_proof: 1, afk_hd_mark: 1, afk_hp_scale: 1, afk_hp_heart: 1, afk_hp_seed: 1, afk_kurt_guard: 1 };   // 11-22 13:55：50 級試煉信件也開放（試煉進行中、身上沒有時打怪會再掉）
   var isQuest = function (id, d) { var s = String(id); return !!(d && (d.questItem || QX[s] || d.type === 'quest' || /^(quest_|afk_q_|afk_aq_)/.test(s))); };
-  try { Object.keys(QX).forEach(function (id) { var d = DB.items[id]; if (d && typeof d.d === 'string') d.d = d.d.replace(/（無法販售）/g, ''); }); } catch (e) {}
+  try { Object.keys(QX).forEach(function (id) { var d = DB.items[id]; if (d && typeof d.d === 'string') d.d = d.d.replace(/（無法販售）/g, '').replace(/無法刪除、/g, ''); }); } catch (e) {}
   var openQuest = function () { var n = 0; Object.keys(DB.items).forEach(function (id) { var d = DB.items[id]; if (isQuest(id, d) && (d.noSell || d.noJunk) && !d.doll) { d.noSell = false; d.noJunk = false; d.afkQuestSell = true; n++; } }); return n; };
   openQuest(); W.addEventListener('load', function () { openQuest(); setTimeout(openQuest, 3000); setTimeout(openQuest, 10000); });
   var cache = {};
