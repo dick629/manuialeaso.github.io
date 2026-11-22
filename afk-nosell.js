@@ -47,7 +47,11 @@
     'afk_reverie_', 'afk_cloth_', 'afk_athena_', 'afk_cs_', 'afk_q_', 'afk_aq_', 'afk_card_', 'afk_kurt_order', 'afk_kurt_guard', 'afk_star_',
     'afk_cancel_', 'afk_matgift_', 'afk_guard_'];
   // 11-17（Ping）：任務道具可以標成廢品、販賣（任務物品、劇情材料 afk_q_／afk_aq_、quest_ 開頭）
-  var isQuest = function (id, d) { var s = String(id); return !!(d && (d.questItem || d.type === 'quest' || /^(quest_|afk_q_|afk_aq_)/.test(s))); };
+  // 11-22（Ping）：原版的試煉／職業任務道具（打怪掉、拿去 NPC 換東西的）也一樣可以標廢品、賣掉；要再換就再去打
+  var QX = { item_ant_fruit: 1, item_ant_branch: 1, item_ant_bark: 1, item_elmore_heart: 1, item_time_orb: 1, item_cyclops_blood: 1,
+    item_demon_search: 1, item_demon_spy: 1, item_yeti_heart: 1, item_lost_soul: 1 };
+  var isQuest = function (id, d) { var s = String(id); return !!(d && (d.questItem || QX[s] || d.type === 'quest' || /^(quest_|afk_q_|afk_aq_)/.test(s))); };
+  try { Object.keys(QX).forEach(function (id) { var d = DB.items[id]; if (d && typeof d.d === 'string') d.d = d.d.replace(/（無法販售）/g, ''); }); } catch (e) {}
   var openQuest = function () { var n = 0; Object.keys(DB.items).forEach(function (id) { var d = DB.items[id]; if (isQuest(id, d) && (d.noSell || d.noJunk) && !d.doll) { d.noSell = false; d.noJunk = false; d.afkQuestSell = true; n++; } }); return n; };
   openQuest(); W.addEventListener('load', function () { openQuest(); setTimeout(openQuest, 3000); setTimeout(openQuest, 10000); });
   var cache = {};
