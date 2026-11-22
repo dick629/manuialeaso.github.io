@@ -166,7 +166,16 @@
     var F=W.AFK_CARD_FORMS,A=W.AFK_CARD_ASCENSION,PC=W.AFK_POLY_CODEX;
     if(!F||!A)return note('請開啟「白金／鑽石卡」與「鑽石變身與高階卡合成」，再重新載入遊戲。');
     var R=A.rules||{},rate=function(t){return Math.round(((R[t]||{}).rate||0)*100)+'%';},cost=A.cost||5,pity=A.pityFailures||10,half=Math.ceil(F.catalog.mythic.length/2);
-    var h=note('倒下的魔物會留下一縷形貌；收集它們、熔鑄它們，終有一天能披上十二宮的星光。高階合成與卡冊都在<b>燃柳村・至幻者</b>。');
+    // 11-22 Ping：先給一張「照順序做」的上手卡，細節表格在後面
+    function stepCard(title,list){return '<section class="m-wiki-card" style="border-color:#b45309"><div class="m-wiki-name">'+title+'</div>'+list.map(function(s,i){return '<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid rgba(148,163,184,.18);'+(i?'':'border-top:0;')+'"><span style="flex:0 0 26px;height:26px;border-radius:50%;background:#b45309;color:#fff7ed;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;">'+(i+1)+'</span><div style="flex:1;line-height:1.65"><b>'+s[0]+'</b><br>'+s[1]+'</div></div>';}).join('')+'</section>';}
+    var h=note('打怪收集變身卡、在<b>燃柳村「至幻者」</b>登錄與合成，就能變身成更強的型態。第一次接觸先看下面「怎麼開始」，細節再往下查表。');
+    h+=stepCard('🧭 怎麼開始（照順序做）',[
+      ['先收怪物卡','打怪會掉「怪物卡」（看「收藏-怪物」分頁）。某隻怪的圖鑑登錄到<b>銀卡</b>之後，打牠才會掉變身卡。'],
+      ['收集變身卡：青銅 → 銅 → 鐵','把變身卡拿到至幻者的<b>變身收集冊</b>登錄，每登錄一階就有能力加成。全部變身都登錄青銅後才會掉銅卡，全部登錄銅後才會掉鐵卡。'],
+      ['解鎖鑽石變身','打到某隻怪的第一張<b>鑽石卡</b>（席琳夢域鏡才會掉），就永久解鎖那隻怪的變身，用<b>變形卷軸</b>就能自選。'],
+      ['高階合成：神話 → 天上 → 時空 → 聖衣','在至幻者用 '+cost+' 張材料卡合成。神話用鐵卡（要任一地區怪物圖鑑全白金）；天上用白金卡、時空用鑽石卡（都要先收集一半 '+half+' 種神話變身）；聖衣用鑽石卡（要 14 種時空變身全部取得）。連敗 '+pity+' 次後下一次必定成功。'],
+      ['升星變強','高階卡第一次取得＝點亮並解鎖變身；之後再拿到同一張就 +1 星（最多 7 星），每顆星加五種屬性抗性。']
+    ]);
     h+=card('鑽石卡解鎖怪物變身',table(['條件','結果'],[
       ['取得某隻怪的第一張鑽石卡','自動登錄，永久解鎖該怪物變身。'],
       ['使用變形卷軸','可自選已解鎖的卡片變身，不另需變形控制戒指。'],

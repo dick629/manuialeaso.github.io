@@ -91,7 +91,7 @@
   };
   if (typeof W.killMob === 'function') {
     var oKill = W.killMob;
-    W.killMob = function (idx) { var m = here() && mapState.mobs ? mapState.mobs[idx] : null, was = m && !m._dead; killing++; try { return oKill.apply(this, arguments); } finally { killing--; try { if (was && m._dead && m._afkShroom && Math.random() < SHROOM.again) shroomNext = true; } catch (e) {} } };
+    W.killMob = function (idx) { var m = here() && mapState.mobs ? mapState.mobs[idx] : null, was = m && !m._dead; killing++; try { return oKill.apply(this, arguments); } finally { killing--; if (killing <= 0 && typeof blockedNames !== 'undefined') blockedNames = []; try { if (was && m._dead && m._afkShroom && Math.random() < SHROOM.again) shroomNext = true; } catch (e) {} } };
     try { (0, eval)('killMob = window.killMob'); } catch (e) {}
   }
   // 外層再包一次（load 時）：之後才載入的外掛（次元裂縫、夢域鏡…）在擊殺後補發的掉落也算在擊殺結算裡
@@ -107,8 +107,21 @@
     //   錢扣了卻拿不到東西（每一拍重買一次，4 分鐘扣掉 200 多億金幣），核心隨後讀不到那瓶藥水而丟例外、補跑中止。
     //   第 4 個參數 forceNormal=true 的是購買／補給，不算掉落 → 放行；擊殺結算中（killing>0）照擋。
     var buying = function (a) { return a && a[3] === true && killing <= 0; };
-    W.gainItem = function () { if (!KEEP[arguments[0]] && !buying(arguments) && blocked()) return undefined; return oGain.apply(this, arguments); };
+    // 11-22 Ping：被擋下的掉落，核心還是會印「罕見掉落！你獲得了 ○○」→ 記下這次擊殺被擋的道具名，同一次擊殺裡提到它的系統訊息不印
+    var blockedNames = [];
+    W.gainItem = function () { if (!KEEP[arguments[0]] && !buying(arguments) && blocked()) { try { var bn = DB.items[arguments[0]] && DB.items[arguments[0]].n; if (bn && blockedNames.indexOf(bn) < 0) blockedNames.push(bn); } catch (e) {} return undefined; } return oGain.apply(this, arguments); };
     try { (0, eval)('gainItem = window.gainItem'); } catch (e) {}
+    var hookLog = function () {
+      if (typeof W.logSys !== 'function' || W.logSys.__afkTrLog) return;
+      var oLog = W.logSys;
+      var f = function (msg) {
+        if (blockedNames.length && !here()) blockedNames = [];
+        if (blockedNames.length && killing > 0 && here()) { var t = String(msg || ''); for (var i = 0; i < blockedNames.length; i++) if (t.indexOf(blockedNames[i]) >= 0) return; }
+        return oLog.apply(this, arguments);
+      };
+      f.__afkTrLog = true; W.logSys = f; try { (0, eval)('logSys = window.logSys'); } catch (e) {}
+    };
+    hookLog(); W.addEventListener('load', hookLog);
   }
   if (typeof W.pandoraAdjustSharedDiamonds === 'function') {
     var oDia = W.pandoraAdjustSharedDiamonds;

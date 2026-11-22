@@ -74,6 +74,10 @@
       'font-size:16px;padding:14px 12px;}',
     /* ↗ 鈕去掉自身上下內距(原 py-4 會把整列撐得比原版按鈕高);列高由主鈕決定,↗ 靠 stretch 等高 */
     '#main-menu .m-dex-entry-newtab,#main-menu .m-wiki-entry-newtab{padding-top:0;padding-bottom:0;}',
+    /* 11-22 Ping：手機首頁「怪物／掉落查詢」跟「小百科」兩列寬度不一（一個 18rem 置中、一個滿版）→ 兩列一樣寬、↗ 一樣大 */
+    'body.m-mobile #main-menu .m-dex-entry-row,body.m-mobile #main-menu .m-wiki-entry-row{display:flex !important;gap:8px;align-items:stretch;width:100% !important;max-width:none !important;margin:0 auto 12px !important;}',
+    'body.m-mobile #main-menu .m-dex-entry-main,body.m-mobile #main-menu .m-wiki-entry-main{flex:1 1 auto !important;width:auto !important;max-width:none !important;margin:0 !important;}',
+    'body.m-mobile #main-menu .m-dex-entry-newtab,body.m-mobile #main-menu .m-wiki-entry-newtab{flex:0 0 64px !important;width:64px !important;max-width:none !important;margin:0 !important;font-size:20px;}',
 
     /* 🔌 桌機:整塊外掛入口放在左欄「版本號正上方」的空白處(標題與 #login-meta-layer 之間)。
        左緣/寬度對齊版本號那層;bottom 貼在版本號上方一點、內容 justify-content:flex-end 由下往上長
