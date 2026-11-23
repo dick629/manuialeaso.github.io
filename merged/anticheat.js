@@ -290,6 +290,33 @@
     try { (0, eval)('gainItem = window.gainItem'); } catch (e) {}
   }
 
+  // ── 金幣、經驗值、等級：主控台直接改大的擋下來（Ping 11-23 18:41） ──
+  //   角色身上這三個欄位改成「有人把關的欄位」：數字變大時，如果不是在遊戲迴圈裡、而且是主控台動的手 → 不改，記一筆。
+  //   變小不管；登記的角色、輸入管理密碼後不受限。存檔內容不變（存出來還是一般的數字）。
+  var GUARD_KEYS = ['gold', 'exp', 'lv'], guarded = new WeakSet();
+  var guardFields = function (p) {
+    if (!p || typeof p !== 'object' || !p.cls || guarded.has(p)) return;
+    guarded.add(p);
+    GUARD_KEYS.forEach(function (k) {
+      try {
+        var d0 = Object.getOwnPropertyDescriptor(p, k); if (d0 && (d0.get || d0.set || d0.configurable === false)) return;
+        var cur = p[k];
+        Object.defineProperty(p, k, {
+          enumerable: true, configurable: false,
+          get: function () { return cur; },
+          set: function (v) {
+            if (!inTick && typeof v === 'number' && typeof cur === 'number' && v > cur && !LOCAL() && !unlocked && external() && !p.classicMode && !isOwner(p)) {
+              try { console.warn('從主控台修改角色數值需要先輸入管理密碼。'); } catch (e) {}
+              try { var a = store(p); (a.tam = a.tam || []).push([k, Math.min(v, 9e15), Date.now()]); if (a.tam.length > 30) a.tam.splice(0, a.tam.length - 30); } catch (e) {}
+              return;
+            }
+            cur = v;
+          }
+        });
+      } catch (e) {}
+    });
+  };
+
   // ── 蜜罐 ──
   var honey = function () {
     var p = P();
@@ -317,6 +344,7 @@
     var p = P(); if (!p) return [];
     return allItems(p).filter(function (r) { return sKind(r.it.id) && !stampOk(r.it.acs); }).map(function (r) { var d = DB.items[r.it.id]; return (d ? d.n : r.it.id) + '（' + (r.where === 'eq' ? '穿著' : '背包') + '・' + (r.it.acs ? (r.it.acs.f ? '太快' : '印記不符') : '沒有正當來源') + '）'; });
   };
+  admin.tamper = function () { if (!unlocked) return []; var p = P(); return p ? ((store(p).tam || []).map(function (x) { return x[0] + ' → ' + x[1] + '（' + new Date(x[2]).toLocaleString() + '）'; })) : []; };
   admin.account = function () { if (!unlocked) return null; var a = acct(); return { hours: Math.round(a.ms / 36000) / 100, usedS: a.sh, left: Math.round(a.ms / 36000) / 100 - a.sh }; };
   try { Object.defineProperty(W, 'LineageAdmin', { value: Object.freeze(admin), writable: false, configurable: false, enumerable: true }); } catch (e) { W.LineageAdmin = Object.freeze(admin); }   // 11-23：不能被主控台整個換掉
 
@@ -325,7 +353,7 @@
     var oTick = W.tick, n = 0;
     W.tick = function () {
       var r; inTick++; try { r = oTick.apply(this, arguments); } finally { inTick--; }
-      try { var st0 = (typeof state !== 'undefined' && state) || null, p = P(); if (p && !p.classicMode) { var x = play(p); x.ms += TICK; x.sig = signOf(p, x); acctMs += TICK * ((st0 && st0.ff) || (document.body && document.body.classList.contains('afk-screen-on')) ? 0.5 : 1); if (++n % 100 === 0) { try { if (W.__afkClock) p._clkSeen = W.__afkClock.seen(); } catch (e) {} var ac = acct(); ac.ms += acctMs; acctMs = 0; acctSave(ac); scan(); } } } catch (e) {}
+      try { var st0 = (typeof state !== 'undefined' && state) || null, p = P(); if (p && !p.classicMode) { var x = play(p); x.ms += TICK; x.sig = signOf(p, x); acctMs += TICK * ((st0 && st0.ff) || (document.body && document.body.classList.contains('afk-screen-on')) ? 0.5 : 1); if (++n % 100 === 0) { try { guardFields(p); } catch (e) {} try { if (W.__afkClock) p._clkSeen = W.__afkClock.seen(); } catch (e) {} var ac = acct(); ac.ms += acctMs; acctMs = 0; acctSave(ac); scan(); } } } catch (e) {}
       return r;
     };
     try { (0, eval)('tick = window.tick'); } catch (e) {}
@@ -336,6 +364,7 @@
       // 時鐘防護（11-23）：存檔裡記的「上次看到的時間」先讀回來（瀏覽器那份被刪掉也還有這份），再讓遊戲算離線時間
       try { var CK = W.__afkClock; if (CK && typeof _roleReadSavePlayer === 'function') { var q0 = _roleReadSavePlayer(slot != null ? slot : currentSlot); if (q0 && q0._clkSeen) CK.absorb(q0._clkSeen); } } catch (e) {}
       var r = oLoad.apply(this, arguments); try { scan(true); } catch (e) {}
+      try { guardFields(P()); } catch (e) {}
       try { var C2 = W.__afkClock, p2 = P(); if (C2 && p2) { p2._clkSeen = C2.seen();
         if (C2.ahead() > 0) sys('<span class="text-amber-300">裝置的時間比實際時間快，遊戲以實際時間計算。</span>');
         else if (C2.debt() > 0 && C2.until() > C2.raw()) sys('<span class="text-amber-300">裝置時間比上次遊玩時還早：關閉遊戲的期間不計離線收益，每日重置也照原本的時間，直到 ' + C2.fmt(C2.until()) + ' 之後恢復。</span>'); } } catch (e) {}
