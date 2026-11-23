@@ -78,6 +78,8 @@
     return '<details class="m-wiki-card afk-guide-relic"'+(open?' open':'')+'><summary class="m-wiki-name">'+String(r.id).padStart(3,'0')+' '+esc(r.n)+' <small>'+esc(r.slot)+'</small></summary>'+body+'</details>';
   }
   function filteredRelics(){var terms=relicQuery.toLowerCase().split(/\s+/).filter(Boolean);return relicRows().concat(extraRelicRows()).filter(function(r){if(!terms.length)return partOf(r.key)===relicPart;return terms.every(function(t){return r.search.indexOf(t)>=0;});});}
+  // 11-23 Ping「底比斯腰帶」搜不到：整串找不到時，改成「名稱依序含有這些字」（底比斯…腰帶）
+  var _fr=filteredRelics;filteredRelics=function(){var r=_fr();if(r.length||!relicQuery.trim())return r;var cs=relicQuery.toLowerCase().replace(/\s+/g,'').split('');return relicRows().concat(extraRelicRows()).filter(function(x){var n=String(x.n||'').toLowerCase(),i=0;return cs.every(function(c){i=n.indexOf(c,i);if(i<0)return false;i++;return true;});});};
   function partBar(){var q=!!relicQuery.trim();return '<div class="afk-guide-parts" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">'+PARTS.map(function(p){var on=!q&&p===relicPart;return '<button type="button" class="btn" data-guide-part="'+p+'" style="padding:4px 10px;'+(on?'background:#92400e !important;color:#fde68a !important;border-color:#fbbf24 !important;box-shadow:0 0 0 2px #fbbf24 inset !important':'')+'">'+p+'</button>';}).join('')+'</div>'+(q?'<div class="m-wiki-msg">搜尋時列出全部部位的結果。</div>':'');}
   function relicResults(){
     var all=filteredRelics(),pages=Math.max(1,Math.ceil(all.length/PAGE_SIZE));relicPage=Math.min(relicPage,pages-1);
