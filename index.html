@@ -16,7 +16,7 @@
     <style>html,body{background:#0f141d}#afk-boot{position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0f141d;color:#e8d8b6;font:15px/1.5 system-ui,sans-serif;transition:opacity .3s}#afk-boot img{width:88px;height:88px;border-radius:18px}#afk-boot .bar{width:180px;height:4px;border-radius:2px;background:#2a2f3a;overflow:hidden}#afk-boot .bar i{display:block;height:100%;width:0;background:#c9a55a;transition:width .2s}</style>
     <!-- 11-12 玩家：手機開網頁到主選單要 3.5 分鐘 → 記錄每次開機各階段花多久（快取診斷「開機耗時」看得到） -->
     <script>(function(){var P=window.performance;if(!P||!P.now)return;try{P.setResourceTimingBufferSize&&P.setResourceTimingBufferSize(3000);}catch(e){}var L={n:0,ms:0,top:{}};try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){L.n++;L.ms+=e.duration;});}).observe({type:"longtask",buffered:true});}catch(e){}window.__afkBootLong=L;var mark={};window.__afkBootMark=function(k){if(!(k in mark))mark[k]=Math.round(P.now());};document.addEventListener("DOMContentLoaded",function(){__afkBootMark("dom");});window.addEventListener("load",function(){__afkBootMark("load");});var save=function(){try{var rs=P.getEntriesByType("resource"),agg={js:[0,0,0,0],css:[0,0,0,0],img:[0,0,0,0],audio:[0,0,0,0],other:[0,0,0,0]},slow=[],lastJs=0;rs.forEach(function(r){var u=r.name,k=/\/(bgm|sfx)\//.test(u)?"audio":/\.js(\?|$)/.test(u)?"js":/\.css(\?|$)/.test(u)?"css":/\.(webp|png|jpe?g|gif)(\?|$)/.test(u)?"img":"other",a=agg[k];a[0]++;a[1]+=r.transferSize||0;if(!r.transferSize)a[2]++;a[3]=Math.max(a[3],Math.round(r.responseEnd));if(k==="js")lastJs=Math.max(lastJs,r.responseEnd);var nm=u.replace(/^.*\//,"").replace(/\?.*$/,"");try{nm=decodeURIComponent(nm);}catch(e){}slow.push([Math.round(r.duration),nm]);});slow.sort(function(a,b){return b[0]-a[0];});var nav=(P.getEntriesByType("navigation")||[])[0]||{};var rec={at:Date.now(),mark:mark,nav:{ttfb:Math.round(nav.responseStart||0),html:Math.round(nav.responseEnd||0),sw:Math.round(nav.workerStart||0)},agg:agg,lastJs:Math.round(lastJs),slow:slow.slice(0,8),long:{n:L.n,ms:Math.round(L.ms)},sw:!!(navigator.serviceWorker&&navigator.serviceWorker.controller),mem:(navigator.deviceMemory||0),cpu:(navigator.hardwareConcurrency||0)};var arr=[];try{arr=JSON.parse(localStorage.getItem("afk_diag_boot")||"[]")||[];}catch(e){}arr.unshift(rec);localStorage.setItem("afk_diag_boot",JSON.stringify(arr.slice(0,3)));try{localStorage.removeItem("lineage_boot_times");localStorage.removeItem("afk_boot_times");}catch(e){}}catch(e){}};var iv=setInterval(function(){if(typeof loadGame==="function"&&!document.getElementById("afk-boot")&&document.readyState!=="loading"){clearInterval(iv);__afkBootMark("menu");setTimeout(save,3000);}},250);})();</script>
-    <script src="merged/recovery-boot.js?v=ffe629596dba"></script>
+    <script src="merged/recovery-boot.js?v=20af40f8411b"></script>
     <link rel="icon" type="image/png" href="assets/favicon.png">   <!-- 🖼️ 瀏覽器分頁圖示(favicon)：把你的圖放到 assets/favicon.png 即生效；可改 href 路徑或副檔名(.ico/.svg) -->
 
     <link rel="stylesheet" href="css/style.css?v=b74c8c865c05">
@@ -1105,15 +1105,15 @@
     <!-- afk-nosell：系統專屬道具（聖紋、手環、密奧之卡、聖物、靈魂石、符文石、席琳遺骸、專屬材料）不能賣、不會被自動賣出；要在 afk-itemguard、afk-sellguard、afk-relicsell、afk-soulstone 之後（包它們包過的販賣函式） -->
     <script src="afk-nosell.js?v=4dfa66fea6b3"></script>
     <!-- afk-blooddia：潘朵拉黑市「血龍鑽兌換」分頁（龍之鑽石 50 → 血龍鑽 1）；包 pandoraRenderMarket，要在 afk-bmprice、afk-craftui 之後 -->
-    <script src="afk-blooddia.js?v=4c8a22fc6772"></script>
+    <script src="afk-blooddia.js?v=5bac260d71b9"></script>
     <!-- afk-trade：潘朵拉黑市「寄賣攤」（玩家之間用血龍鑽一口價買賣；伺服器＝旅人頻道同一台 /mkt/*）；要在 afk-heartbeat、afk-blooddia、afk-npc-kit 之後 -->
-    <script src="afk-trade.js?v=31d1a062842a"></script>
+    <script src="afk-trade.js?v=07da2f223919"></script>
     <!-- afk-poker：德州撲克（歐瑞村莊 荷官 洛蒂；金幣／龍之鑽石／血龍鑽買籌碼對 3～5 位 NPC）；要在 afk-lore-kit、afk-npc-kit、afk-blooddia 之後 -->
-    <script src="afk-poker.js?v=2925ee969113"></script>
+    <script src="afk-poker.js?v=f94f306a9b40"></script>
     <!-- afk-slot-sg：遊戲廳拉霸機「沙暴之神的祭壇」的引擎（畫面在 afk-gamehall）；要在 afk-gamehall 之前 -->
     <script src="afk-slot-sg.js?v=611606efd6c6"></script>
     <!-- afk-gamehall：🎰 遊戲廳（德州撲克＋百家樂＋沙海法老的寶庫＋賽狗場的統一入口）；要在 afk-poker、afk-dograce 之後 -->
-    <script src="afk-gamehall.js?v=2385f71283c0"></script>
+    <script src="afk-gamehall.js?v=3e38040c04cb"></script>
     <!-- afk-fishing：🐟 海音深海獵場（捕魚機，遊戲廳裡）；要在 afk-gamehall 之後 -->
     <script src="afk-fishing.js?v=3e99f1535800"></script>
     <!-- afk-dmgfont：🔤 傷害字體（潘朵拉黑市「字體販賣所」分頁）；要在 afk-bmprice 等包黑市畫面的外掛之後 -->
@@ -1207,10 +1207,10 @@
 <script src="merged/save-bridge.js?v=17db1378175b"></script>
 <script src="merged/recovery-core.js?v=cc0034aba24d"></script>
 <script src="merged/backup-store.js?v=f40a03e26107"></script>
-<script src="merged/integrity-core.js?v=0d2ac193647b"></script>
+<script src="merged/integrity-core.js?v=9d69d26e157a"></script>
 <script src="merged/integrity-store.js?v=3bae9d66d9d1"></script>
 <script src="merged/integrity-runtime.js?v=7852370293f7"></script>
-<script src="merged/save-gate.js?v=16fc1aafc15b"></script>
+<script src="merged/save-gate.js?v=daac1ae5be3f"></script>
 <!-- afk-reloadguard：同一個角色讀回自己舊存檔的帳本（倉庫存入次數、讀回次數）；要在 js/12、merged/integrity-core、merged/save-gate 之後 -->
 <script src="afk-reloadguard.js?v=591fcee39605"></script>
 <script src="merged/mobile-adventure.js?v=d606d4cac5f9"></script>
@@ -1265,14 +1265,14 @@
       <link rel="stylesheet" href="merged/pachinko.css?v=7b6dbceacfb3">
       <script src="merged/arcade-core.js?v=23a25978e875"></script>
       <script src="merged/pachinko-core.js?v=b8f5b0f4bcce"></script>
-      <script src="merged/arcade-runtime.js?v=ecfdfa2772ec"></script>
+      <script src="merged/arcade-runtime.js?v=319652781d42"></script>
       <script src="merged/pachinko-ui.js?v=7e6f94eba522"></script>
       <script src="merged/arcade-ui.js?v=3922b1cb4402"></script>
     </template>
     <script src="merged/arcade-entry.js?v=e5a72d16fa25"></script>
-    <script src="merged/anticheat.js?v=77912da21530"></script>
+    <script src="merged/anticheat.js?v=fb20a6f32862"></script>
     <!-- afk-antisl：防 SL（點按鈕的結果先定好、女神挑戰紀錄點、道具身分證、帳號血盟編號）；要在 afk-finalboss／rebirth2／finaltiers、merged/integrity-*、anticheat 之後 -->
-    <script src="afk-antisl.js?v=880a6b4eaf09"></script>
+    <script src="afk-antisl.js?v=8f6857e03916"></script>
     <!-- afk-limitbreak：限界解放（二轉後八職業各一個被動；Ping 11-13）；要在 afk-hidden、afk-arts、afk-affix-plus、afk-card-combat 之後 -->
     <!-- afk-paragon2：巔峰 1000／2000 等的新能力（Ping 11-13）；要在 afk-limitbreak 之前（提供 __afkLimitBreakBoost）也可以，之後也可以 -->
     <script src="afk-paragon2.js?v=a241ada40e53"></script>

@@ -61,8 +61,9 @@
   function debit(cur, n) {
     var p = P(); if (!p || !(n > 0) || balance(cur) < n) return false;
     if (cur === 'gold') { p.gold = Math.floor(Number(p.gold) || 0) - n; return true; }
-    if (cur === 'dia') return diaAdjust(-n);
+    if (cur === 'dia') { var okD = diaAdjust(-n); if (okD) try { if (W.__afkGam) W.__afkGam.move(cur, -n, p); } catch (e) {} return okD; }
     if (cur === 'blood') {
+      try { if (W.__afkGam) W.__afkGam.move(cur, -n, p); } catch (e) {}   // 11-23：遊戲廳的輸贏另外記（讀回舊存檔時不倒回）
       for (var j = p.inv.length - 1; j >= 0 && n > 0; j--) { var it = p.inv[j]; if (!it || it.id !== BLOOD || it.lock) continue; var q = Math.min(n, Number(it.cnt) || 1); it.cnt = (Number(it.cnt) || 1) - q; n -= q; if (it.cnt <= 0) p.inv.splice(j, 1); }
       return true;
     }
@@ -71,8 +72,8 @@
   function credit(cur, n) {
     var p = P(); if (!(n > 0)) return true; if (!p) return false;
     if (cur === 'gold') { p.gold = Math.floor(Number(p.gold) || 0) + n; return true; }
-    if (cur === 'dia') return diaAdjust(n);
-    if (cur === 'blood') { if (!DB.items[BLOOD]) return false; W.gainItem(BLOOD, n, true, true); return true; }
+    if (cur === 'dia') { var okC = diaAdjust(n); if (okC) try { if (W.__afkGam) W.__afkGam.move(cur, n, p); } catch (e) {} return okC; }
+    if (cur === 'blood') { if (!DB.items[BLOOD]) return false; W.gainItem(BLOOD, n, true, true); try { if (W.__afkGam) W.__afkGam.move(cur, n, p); } catch (e) {} return true; }
     return false;
   }
   function amtTxt(cur, n) { return CURS[cur] + ' ' + fmt(n) + (cur === 'gold' ? '' : ' 顆'); }
@@ -707,7 +708,8 @@
   //   進行中的對賭存在存檔（重新整理也能接著打）。
   var DU_N = 20, DU_PTS = 1000, DU_AMT = [50, 100, 200, 500], DU_PAY = 1.95;
   var du = { side: 'B', amt: 100, stake: {} };
-  function duelData() { var d = hallData(); return d ? d.duel : null; }
+  function duelData() { var d = hallData(); if (d && d.duel && d.duel.gid && W.__afkGam && W.__afkGam.isDone(d.duel.gid)) { delete d.duel; safeSave(); }   // 11-23：已經結算過的對賭（讀回舊存檔帶回來的）作廢
+    return d ? d.duel : null; }
   function aiBet(D, my) {
     var left = DU_N - D.r, diff = D.ai - D.me;
     if (diff > 0) { var a = Math.min(D.ai, my.amt); return { side: my.side, amt: Math.max(50, a) }; }   // 領先：跟你一樣，差距不變
@@ -752,7 +754,7 @@
       var st = du.stake[cur] || CHIPS[cur][1] || CHIPS[cur][0];
       if (balance(cur) < st) { ui.msg = CURS[cur] + '不夠。'; return render(); }
       if (!debit(cur, st)) { ui.msg = '扣款失敗。'; return render(); }
-      hallData().duel = { cur: cur, stake: st, me: DU_PTS, ai: DU_PTS, r: 0, shoe: newShoe(rng), log: [] };
+      hallData().duel = { gid: (cur !== 'gold' && W.__afkGam) ? W.__afkGam.id() : undefined, cur: cur, stake: st, me: DU_PTS, ai: DU_PTS, r: 0, shoe: newShoe(rng), log: [] };
       statAdd('bacduel', cur, st, 0, 0, false); ui.msg = ''; safeSave(); return render();
     }
     if (!D) return render();
@@ -772,6 +774,7 @@
       if (D.r < DU_N) return render();
       var win = D.me > D.ai, tie = D.me === D.ai, back = win ? Math.floor(D.stake * DU_PAY) : tie ? D.stake : 0;
       delete hallData().duel;
+      if (D.gid && W.__afkGam) W.__afkGam.done(D.gid);
       if (back > 0 && !credit(D.cur, back)) console.warn('[AFK-gamehall] 對賭入帳失敗');
       statAdd('bacduel', D.cur, 0, back, back / D.stake, true);
       if (win) { var hd = hallData(); hd.legend = Object.assign({}, hd.legend, { duel: ((hd.legend && hd.legend.duel) || 0) + 1 }); }

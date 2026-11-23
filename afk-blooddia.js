@@ -127,6 +127,124 @@
 })();
 
 /* ============================================================================
+ * 帳號貨幣跟著「讀回舊存檔」倒回（Ping 11-23 16:45～17:00 定案）
+ *   ‧每個角色的存檔記兩組累計數字：p.afkAcctNet＝這個角色讓帳號的龍之鑽石(d)、血龍鑽(b) 淨增加多少；
+ *     p.afkGamNet＝其中屬於遊戲廳（撲克、21 點、天九、百家樂、拉霸…）輸贏的部分。
+ *   ‧讀回同一個角色的舊存檔、女神挑戰「回到挑戰前」：(現在 − 舊存檔) 的非賭博淨額從帳號倒回（賺的扣回、花的退還）。
+ *     賭博輸贏不倒回。餘額不夠扣 → 扣到 0，不夠的記欠款，之後賺到的先還。
+ *   ‧已結算的賭局不能再結算：每一局（龍鑽、血龍鑽的）有編號，結算過的編號記在瀏覽器（afk_gam_done_v1）。
+ *   ‧上線前的舊存檔沒有這些數字 → 當成 0（從上線那一刻起算）。完整備份還原、換裝置匯入不套用。
+ * ========================================================================== */
+(function () {
+  'use strict';
+  var W = window, DKEY = 'afk_acct_debt_v1', GKEY = 'afk_gam_done_v1', SALT = 'adb:6f1:';
+  var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var fnv = function (s) { var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; } return h.toString(36); };
+  var num = function (v) { v = Math.floor(Number(v) || 0); return isFinite(v) ? v : 0; };
+  var pair = function (p, k) { var o = p && p[k]; if (!o || typeof o !== 'object') { o = { d: 0, b: 0 }; if (p) p[k] = o; } o.d = num(o.d); o.b = num(o.b); return o; };
+  var peek = function (p, k) { var o = p && p[k]; return { d: num(o && o.d), b: num(o && o.b) }; };
+  // ── 欠款：只增不減的四個累計（欠下的、還掉的）；瀏覽器與每個角色存檔各記一份，取大的 ──
+  var dz = function (o) { o = o || {}; return { bi: Math.max(0, num(o.bi)), bp: Math.max(0, num(o.bp)), di: Math.max(0, num(o.di)), dp: Math.max(0, num(o.dp)) }; };
+  var dsig = function (o) { return fnv(SALT + [o.bi, o.bp, o.di, o.dp].join('|')); };
+  var dRead = function () { var o = null; try { o = JSON.parse(localStorage.getItem(DKEY) || 'null'); } catch (e) {} if (!o || o.k !== dsig(dz(o))) o = null; return dz(o); };
+  var dWrite = function (o) { o = dz(o); o.bp = Math.min(o.bp, o.bi); o.dp = Math.min(o.dp, o.di); var w = { bi: o.bi, bp: o.bp, di: o.di, dp: o.dp }; w.k = dsig(w); try { localStorage.setItem(DKEY, JSON.stringify(w)); } catch (e) {} return o; };
+  var dMerge = function (p) { if (!p) return dRead(); var a = dRead(), s = dz(p.afkDebt), m = { bi: Math.max(a.bi, s.bi), bp: Math.max(a.bp, s.bp), di: Math.max(a.di, s.di), dp: Math.max(a.dp, s.dp) }; m = dWrite(m); if (m.bi || m.di) p.afkDebt = { bi: m.bi, bp: m.bp, di: m.di, dp: m.dp }; return m; };
+  var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
+  // ── 龍之鑽石：包住加減，記到目前角色 ──
+  var oAdj = W.pandoraAdjustSharedDiamonds, adjSum = 0, inRepay = false;
+  var diaNow = function () { try { return Math.floor(Number(W.pandoraGetSharedDiamonds()) || 0); } catch (e) { return 0; } };
+  var repayDia = function (gain) {
+    if (inRepay || !(gain > 0) || typeof oAdj !== 'function') return;
+    var m = dRead(), owe = m.di - m.dp; if (!(owe > 0)) return;
+    var pay = Math.min(owe, gain, diaNow()); if (!(pay > 0)) return;
+    inRepay = true; try { var r = oAdj.call(W, -pay); if (r && r.ok) { m.dp += pay; dWrite(m); var p = P(); if (p) p.afkDebt = { bi: m.bi, bp: m.bp, di: m.di, dp: m.dp }; sys('<span class="text-amber-300">償還讀回舊進度的欠款：龍之鑽石 ' + pay.toLocaleString() + ' 顆' + (m.di - m.dp > 0 ? '（還欠 ' + (m.di - m.dp).toLocaleString() + '）' : '（已還清）') + '。</span>'); } } finally { inRepay = false; }
+  };
+  if (typeof oAdj === 'function') {
+    W.pandoraAdjustSharedDiamonds = function (delta) {
+      var r = oAdj.apply(this, arguments);
+      try { var n = Math.trunc(Number(delta) || 0), p = P(); if (r && r.ok && n && !inRepay) { adjSum += n; if (p && !p.classicMode) pair(p, 'afkAcctNet').d += n; if (n > 0) repayDia(n); } } catch (e) {}
+      return r;
+    };
+  }
+  // 不經過上面那個函式、直接改龍鑽的流程：量前後差
+  var measure = function (name) {
+    var o = W[name]; if (typeof o !== 'function') return;
+    W[name] = function () {
+      var b0 = diaNow(), a0 = adjSum, r = o.apply(this, arguments);
+      try { var extra = (diaNow() - b0) - (adjSum - a0), p = P(); if (extra && p && !p.classicMode) { pair(p, 'afkAcctNet').d += extra; if (extra > 0) repayDia(extra); } } catch (e) {}
+      return r;
+    };
+    try { (0, eval)(name + ' = window.' + name); } catch (e) {}
+  };
+  measure('performWanderingBuyerTrade'); measure('buyPandoraItem');
+  // ── 賭局編號 ──
+  var gRead = function () { try { var a = JSON.parse(localStorage.getItem(GKEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+  var gam = {
+    id: function () { return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); },
+    isDone: function (id) { return !!id && gRead().indexOf(String(id)) >= 0; },
+    done: function (id) { if (!id) return; var a = gRead(); id = String(id); if (a.indexOf(id) < 0) { a.push(id); try { localStorage.setItem(GKEY, JSON.stringify(a.slice(-800))); } catch (e) {} } },
+    // 遊戲廳的扣款／入帳：cur＝'dia'｜'blood'，n 可正可負
+    move: function (cur, n, p) { p = p || P(); if (!p || p.classicMode) return; var k = cur === 'dia' ? 'd' : cur === 'blood' ? 'b' : ''; if (k) pair(p, 'afkGamNet')[k] += num(n); }
+  };
+  W.__afkGam = gam;
+  // ── 讀回舊存檔 ──
+  var nonGam = function (p) { var n = peek(p, 'afkAcctNet'), g = peek(p, 'afkGamNet'); return { d: n.d - g.d, b: n.b - g.b }; };
+  W.__afkAcctNet = {
+    // 血龍鑽鏡像同步時叫：delta＝這個角色讓帳號變動的量；a＝血龍鑽帳戶（可直接改 a.b 還欠款）
+    onBlood: function (p, delta, a) {
+      if (!p || !delta) return;
+      pair(p, 'afkAcctNet').b += num(delta);
+      if (delta > 0) { var m = dRead(), owe = m.bi - m.bp; if (owe > 0) { var pay = Math.min(owe, delta, a.b); if (pay > 0) { a.b -= pay; m.bp += pay; dWrite(m); p.afkDebt = { bi: m.bi, bp: m.bp, di: m.di, dp: m.dp }; sys('<span class="text-amber-300">償還讀回舊進度的欠款：血龍鑽 ' + pay.toLocaleString() + ' 顆' + (m.bi - m.bp > 0 ? '（還欠 ' + (m.bi - m.bp).toLocaleString() + '）' : '（已還清）') + '。</span>'); } } }
+    },
+    debt: function () { var m = dRead(); return { d: m.di - m.dp, b: m.bi - m.bp }; },
+    mergeDebt: dMerge,
+    // cur＝現在這個位置的角色、old＝要讀回的舊存檔角色；回傳實際調整
+    onReload: function (cur, old) {
+      var out = { d: 0, b: 0, owe: { d: 0, b: 0 } };
+      try {
+        if (!cur || !old || cur.classicMode) return out;
+        var c = nonGam(cur), o = nonGam(old), nb = c.b - o.b, nd = c.d - o.d, m = dRead();
+        var BA = W.__afkBloodAcct;
+        if (nb && BA && BA.adjust) {
+          if (nb > 0) { var tb = -BA.adjust(-nb); out.b = -tb; if (nb - tb > 0) { m.bi += nb - tb; out.owe.b = nb - tb; } }
+          else { var back = -nb, oweB = m.bi - m.bp, payB = Math.min(oweB, back); if (payB > 0) { m.bp += payB; back -= payB; } if (back > 0) out.b = BA.adjust(back); }
+        }
+        if (nd && typeof oAdj === 'function') {
+          inRepay = true;
+          try {
+            if (nd > 0) { var td = Math.min(nd, diaNow()); if (td > 0) { var r1 = oAdj.call(W, -td); if (!(r1 && r1.ok)) td = 0; } out.d = -td; if (nd - td > 0) { m.di += nd - td; out.owe.d = nd - td; } }
+            else { var backD = -nd, oweD = m.di - m.dp, payD = Math.min(oweD, backD); if (payD > 0) { m.dp += payD; backD -= payD; } if (backD > 0) { var r2 = oAdj.call(W, backD); if (r2 && r2.ok) out.d = backD; } }
+          } finally { inRepay = false; }
+        }
+        dWrite(m);
+        if (out.d || out.b || out.owe.d || out.owe.b) try { sessionStorage.setItem('afk_acct_reload_note', JSON.stringify(out)); } catch (e) {}
+      } catch (e) { console.warn('[AFK-acctnet] onReload', e); }
+      return out;
+    }
+  };
+  // 進角色：欠款紀錄跟存檔對一次；剛讀回舊進度的話說明帳號貨幣怎麼調整
+  if (typeof W.loadGame === 'function') {
+    var oL = W.loadGame;
+    W.loadGame = function () {
+      var r = oL.apply(this, arguments);
+      try {
+        var p = P(); if (p && !p.classicMode) { dMerge(p); pair(p, 'afkAcctNet'); pair(p, 'afkGamNet'); }
+        var nt = sessionStorage.getItem('afk_acct_reload_note');
+        if (nt && p) {
+          sessionStorage.removeItem('afk_acct_reload_note'); var o = JSON.parse(nt), f = function (n) { return (n > 0 ? '+' : '−') + Math.abs(n).toLocaleString(); }, parts = [];
+          if (o.b) parts.push('血龍鑽 ' + f(o.b)); if (o.d) parts.push('龍之鑽石 ' + f(o.d));
+          var ow = []; if (o.owe && o.owe.b) ow.push('血龍鑽 ' + o.owe.b.toLocaleString()); if (o.owe && o.owe.d) ow.push('龍之鑽石 ' + o.owe.d.toLocaleString());
+          setTimeout(function () { sys('<span class="text-amber-300 font-bold">讀回舊進度：這段期間賺的、花的帳號貨幣一起倒回' + (parts.length ? '（' + parts.join('、') + '）' : '') + (ow.length ? '；餘額不夠的部分記成欠款（' + ow.join('、') + '），之後賺到的會先還。' : '。') + '</span>'); }, 3000);
+        }
+      } catch (e) {}
+      return r;
+    };
+    Object.keys(oL).forEach(function (k) { if (!(k in W.loadGame)) W.loadGame[k] = oL[k]; });
+    try { (0, eval)('loadGame = window.loadGame'); } catch (e) {}
+  }
+})();
+
+/* ============================================================================
  * 血龍鑽改成帳號共用貨幣（Ping 11-23 15:24）
  *   ‧所有角色共用一份數字（存瀏覽器 afk_blood_acct_v1，加簽章），跟龍之鑽石一樣。
  *   ‧搬家：每個角色第一次讀進來時，背包裡的血龍鑽加進共用帳戶（同一個存檔位＋角色名只搬一次，讀舊存檔不會重複加）；
@@ -153,7 +271,9 @@
     keep.cnt = n; delete keep.lock; delete keep.junk;
   };
   var slotKey = function (p) { var s = ''; try { s = String(currentSlot); } catch (e) {} return s + ':' + String(p.name || ''); };
-  var curP = null, last = 0, busy = false, movedIn = 0;
+  var idKey = function (p) { try { var IC = W.LineageIntegrityCore; if (IC) { var q = Object.assign({}, p); q.enSeed = IC.seed(p); var v = IC.identity(q); if (v) return 'id:' + (W.LineageIdentityDigest ? W.LineageIdentityDigest(String(v)).slice(0, 16) : fnv(String(v))); } } catch (e) {} return ''; };
+  var MIG_END = Date.UTC(2026, 11, 22, 16, 0);   // 搬家截止：2026-12-23 00:00（台灣時間）；之後才第一次讀進來的舊存檔，背包裡的血龍鑽不再搬
+  var curP = null, last = 0, busy = false, movedIn = 0, loading = false, loadGain = 0;
   var migrateWh = function (a) {
     if (a.wh) return;
     try {
@@ -172,22 +292,25 @@
       var a = read();
       if (curP !== p) {   // 剛讀檔／換角色
         migrateWh(a);
-        var k = slotKey(p);
-        if (!a.mig[k] && !p.afkBloodMig) { var n = invCount(p); a.b += n; movedIn += n; if (n > 0) try { logSys('<span class="text-rose-300">背包裡的血龍鑽 ' + n.toLocaleString() + ' 顆已搬進帳號共用（所有角色共用）。</span>'); } catch (e) {} }
-        a.mig[k] = 1; p.afkBloodMig = 1;
+        var k = slotKey(p), ik = idKey(p), lg = loadGain; loadGain = 0;
+        // 11-23：搬家改認角色本身（原本認存檔位＋角色名 → 同一份舊匯出檔匯到別的位置會再搬一次）
+        if (!a.mig[k] && !(ik && a.mig[ik]) && !p.afkBloodMig && Date.now() < MIG_END) { var n = Math.max(0, invCount(p) - lg); a.b += n; movedIn += n; if (n > 0) try { logSys('<span class="text-rose-300">背包裡的血龍鑽 ' + n.toLocaleString() + ' 顆已搬進帳號共用（所有角色共用）。</span>'); } catch (e) {} }
+        a.mig[k] = 1; if (ik) a.mig[ik] = 1; p.afkBloodMig = 1;
+        a.b += lg;   // 讀檔過程中拿到的血龍鑽（原本會被鏡像蓋掉）
+        if (lg) try { if (W.__afkAcctNet) W.__afkAcctNet.onBlood(p, lg, a); } catch (e) {}
         write(a); setInv(p, a.b); last = a.b; curP = p; return;
       }
       var c = invCount(p);
-      if (c !== last) { a.b = Math.max(0, a.b + (c - last)); write(a); }
+      if (c !== last) { a.b = Math.max(0, a.b + (c - last)); try { if (W.__afkAcctNet) W.__afkAcctNet.onBlood(p, c - last, a); } catch (e) {} write(a); }
       if (invCount(p) !== a.b) setInv(p, a.b);
       last = a.b;
     } finally { busy = false; }
   };
-  W.__afkBloodAcct = { get: function () { return read().b; }, sync: sync, read: read, moved: function () { return movedIn; } };
+  W.__afkBloodAcct = { adjust: function (n) { var a = read(), t = Math.max(0, a.b + Math.floor(Number(n) || 0)), ap = t - a.b; a.b = t; write(a); return ap; }, get: function () { return read().b; }, sync: sync, read: read, moved: function () { return movedIn; } };
   // 存檔前、換角色前先同步
   if (typeof W.saveGame === 'function') { var oS = W.saveGame; W.saveGame = function () { try { sync(); } catch (e) {} return oS.apply(this, arguments); }; }
-  if (typeof W.loadGame === 'function') { var oL = W.loadGame; W.loadGame = function () { try { sync(); } catch (e) {} curP = null; var r = oL.apply(this, arguments); try { sync(); } catch (e) {} return r; }; Object.keys(oL).forEach(function (k) { if (!(k in W.loadGame)) W.loadGame[k] = oL[k]; }); }
-  if (typeof W.gainItem === 'function') { var oG = W.gainItem; W.gainItem = function (id) { var r = oG.apply(this, arguments); if (id === ID) try { sync(); } catch (e) {} return r; }; }
+  if (typeof W.loadGame === 'function') { var oL = W.loadGame; W.loadGame = function () { try { sync(); } catch (e) {} curP = null; loading = true; loadGain = 0; var r; try { r = oL.apply(this, arguments); } finally { loading = false; } try { sync(); } catch (e) {} return r; }; Object.keys(oL).forEach(function (k) { if (!(k in W.loadGame)) W.loadGame[k] = oL[k]; }); }
+  if (typeof W.gainItem === 'function') { var oG = W.gainItem; W.gainItem = function (id, n) { var r = oG.apply(this, arguments); if (id === ID) { if (loading && curP === null) { if (r) loadGain += Math.max(1, Math.floor(Number(n) || 1)); } else try { sync(); } catch (e) {} } return r; }; }
   setInterval(function () { try { sync(); } catch (e) {} }, 500);
   try { W.addEventListener('storage', function (e) { if (e && e.key === KEY) try { sync(); } catch (x) {} }); } catch (e) {}
   // 背包不顯示鏡像

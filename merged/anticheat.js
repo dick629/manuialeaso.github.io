@@ -22,7 +22,7 @@
   var dg = function (s) { try { return W.LineageIdentityDigest(String(s)); } catch (e) { return ''; } };
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
-  var unlocked = false, adminLog = [];
+  var unlocked = false, adminLog = [], inTick = 0, importAllowUntil = 0;
   // 本機測試（localhost）不攔主控台呼叫；自動測試要驗證這裡時先設 __afkAcTest
   var LOCAL = function () { try { return /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && !W.__afkAcTest; } catch (e) { return false; } };
   var INIT_KEY = 'lineage_ac_init_v1';
@@ -48,8 +48,8 @@
     if (W.__afkAcTest && W.__afkAcTest.notOwner) return false;
     if (ownerCache.has(p)) return ownerCache.get(p);
     var r = dg(ident(p)), own = !!roles[r];
-    if (own) { try { localStorage.setItem(OB_KEY, dg(OB_SALT + r)); } catch (e) {} }
-    else own = browserOwner();
+    // 11-23 16:45 Ping：只認登記的角色本身；瀏覽器記號可以偽造 → 不再採用（舊記號順手清掉）
+    try { if (localStorage.getItem(OB_KEY)) localStorage.removeItem(OB_KEY); } catch (e) {}
     ownerCache.set(p, own); return own;
   };
 
@@ -252,7 +252,13 @@
       var lim = Error.stackTraceLimit; Error.stackTraceLimit = 80; var s = new Error().stack || ''; Error.stackTraceLimit = lim;
       var ls = s.split('\n').filter(function (l) { return /\S/.test(l) && !/^Error\b/.test(l); });
       if (ls.length < 2) return false;
-      return !/(https?|file|blob):\/\//.test(ls[ls.length - 1]);
+      var lastL = ls[ls.length - 1];
+      if (!/(https?|file):\/\//.test(lastL)) return true;
+      // 11-23 16:45：把加錢函式直接交給計時器／事件（最底層就是入口本身）也算主控台
+      if (lastL.indexOf('__afkMoneyEntry') >= 0) return true;
+      // 主控台裡定義的函式夾在中間（Chrome：<anonymous>:行:列 而且沒有網址；Firefox：debugger eval code）
+      for (var i = 1; i < ls.length; i++) { var l = ls[i]; if (/debugger eval code/.test(l) || (/<anonymous>:\d+:\d+/.test(l) && !/(https?|file):\/\//.test(l))) return true; }
+      return false;
     } catch (e) { return false; }
   };
   var giveGlitch = function (p) {
@@ -263,7 +269,7 @@
   if (typeof oGain === 'function') {
     W.gainItem = function (id) {
       var st = (typeof state !== 'undefined' && state) || {};
-      if (!st.ff && !LOCAL() && external()) {
+      if (!inTick && !LOCAL() && external()) {   // 11-23 16:45：原本看 state.ff（主控台可以自己設）→ 改看「是不是在遊戲迴圈裡」
         var p = P();
         if (!unlocked && !isOwner(p)) { if (S_TIER(id) && Date.now() >= S_FROM) return giveGlitch(p); try { console.warn('從主控台叫道具需要先輸入管理密碼。'); } catch (e) {} return false; }   // Ping 11-11 16:15：F12 叫一般材料也要密碼
         adminLog.push({ id: id, n: arguments[1], at: Date.now() });
@@ -300,7 +306,8 @@
   admin.unlock = function (pw) { unlocked = dg(SALT + String(pw == null ? '' : pw)) === PWH; return unlocked; };
   admin.lock = function () { unlocked = false; return true; };
   // 11-17（Ping）：放行匯入一次——10 分鐘內的下一次「匯入進度」不擋舊進度（只限這台裝置上目前沒有的角色）
-  admin.allowImport = function () { if (!unlocked) return false; try { localStorage.setItem('lineage_import_allow_once', String(Date.now() + 600000)); } catch (e) { return false; } adminLog.push({ t: Date.now(), a: 'allowImport' }); return '已放行：10 分鐘內的下一次匯入不會被「舊進度」擋下（只放行一次）'; };
+  admin.allowImport = function () { if (!unlocked) return false; importAllowUntil = Date.now() + 600000; adminLog.push({ t: Date.now(), a: 'allowImport' }); return '已放行：10 分鐘內的下一次匯入不會被「舊進度」擋下（只放行一次）'; };
+  admin.consumeImportAllow = function () { if (importAllowUntil > Date.now()) { importAllowUntil = 0; return true; } importAllowUntil = 0; return false; };
   admin.quarantine = function () { if (!unlocked) return []; var p = P(); return p ? store(p).q.map(function (x, i) { var d = DB.items[x.it.id]; return i + ': ' + (d ? d.n : x.it.id) + '（' + x.why + '）'; }) : []; };
   admin.restore = function (i) { if (!unlocked) return false; var p = P(); if (!p) return false; var a = store(p), x = a.q[i]; if (!x) return false; a.q.splice(i, 1); a.seen[x.it.uid] = costOf(x.it); p.inv.push(x.it); try { updateUI(); } catch (e) {} return true; };
   admin.playHours = function () { var p = P(); return p ? Math.round(hours(p) * 100) / 100 : 0; };
@@ -311,21 +318,29 @@
     return allItems(p).filter(function (r) { return sKind(r.it.id) && !stampOk(r.it.acs); }).map(function (r) { var d = DB.items[r.it.id]; return (d ? d.n : r.it.id) + '（' + (r.where === 'eq' ? '穿著' : '背包') + '・' + (r.it.acs ? (r.it.acs.f ? '太快' : '印記不符') : '沒有正當來源') + '）'; });
   };
   admin.account = function () { if (!unlocked) return null; var a = acct(); return { hours: Math.round(a.ms / 36000) / 100, usedS: a.sh, left: Math.round(a.ms / 36000) / 100 - a.sh }; };
-  W.LineageAdmin = Object.freeze(admin);
+  try { Object.defineProperty(W, 'LineageAdmin', { value: Object.freeze(admin), writable: false, configurable: false, enumerable: true }); } catch (e) { W.LineageAdmin = Object.freeze(admin); }   // 11-23：不能被主控台整個換掉
 
   // ── 掛上遊戲迴圈 ──
   if (typeof W.tick === 'function') {
     var oTick = W.tick, n = 0;
     W.tick = function () {
-      var r = oTick.apply(this, arguments);
-      try { var st0 = (typeof state !== 'undefined' && state) || null, p = P(); if (p && !p.classicMode) { var x = play(p); x.ms += TICK; x.sig = signOf(p, x); acctMs += TICK * ((st0 && st0.ff) || (document.body && document.body.classList.contains('afk-screen-on')) ? 0.5 : 1); if (++n % 100 === 0) { var ac = acct(); ac.ms += acctMs; acctMs = 0; acctSave(ac); scan(); } } } catch (e) {}
+      var r; inTick++; try { r = oTick.apply(this, arguments); } finally { inTick--; }
+      try { var st0 = (typeof state !== 'undefined' && state) || null, p = P(); if (p && !p.classicMode) { var x = play(p); x.ms += TICK; x.sig = signOf(p, x); acctMs += TICK * ((st0 && st0.ff) || (document.body && document.body.classList.contains('afk-screen-on')) ? 0.5 : 1); if (++n % 100 === 0) { try { if (W.__afkClock) p._clkSeen = W.__afkClock.seen(); } catch (e) {} var ac = acct(); ac.ms += acctMs; acctMs = 0; acctSave(ac); scan(); } } } catch (e) {}
       return r;
     };
     try { (0, eval)('tick = window.tick'); } catch (e) {}
   }
   if (typeof W.loadGame === 'function') {
     var oLoad = W.loadGame;
-    W.loadGame = function () { var r = oLoad.apply(this, arguments); try { scan(true); } catch (e) {} return r; };
+    W.loadGame = function (slot) {
+      // 時鐘防護（11-23）：存檔裡記的「上次看到的時間」先讀回來（瀏覽器那份被刪掉也還有這份），再讓遊戲算離線時間
+      try { var CK = W.__afkClock; if (CK && typeof _roleReadSavePlayer === 'function') { var q0 = _roleReadSavePlayer(slot != null ? slot : currentSlot); if (q0 && q0._clkSeen) CK.absorb(q0._clkSeen); } } catch (e) {}
+      var r = oLoad.apply(this, arguments); try { scan(true); } catch (e) {}
+      try { var C2 = W.__afkClock, p2 = P(); if (C2 && p2) { p2._clkSeen = C2.seen();
+        if (C2.ahead() > 0) sys('<span class="text-amber-300">裝置的時間比實際時間快，遊戲以實際時間計算。</span>');
+        else if (C2.debt() > 0 && C2.until() > C2.raw()) sys('<span class="text-amber-300">裝置時間比上次遊玩時還早：關閉遊戲的期間不計離線收益，每日重置也照原本的時間，直到 ' + C2.fmt(C2.until()) + ' 之後恢復。</span>'); } } catch (e) {}
+      return r;
+    };
     try { (0, eval)('loadGame = window.loadGame'); } catch (e) {}
   }
   // ── 效能（11-11）：補跑期間 updateUI 外面包的一層層外掛（PVP 傳送鈕、頭像…）也先不跑，
@@ -345,16 +360,16 @@
   //   3. 每小時取得紀錄存進存檔：[觀察到的龍鑽增加, 正規龍鑽, 觀察到的血龍鑽增加, 正規血龍鑽]，留 30 天
   (function () {
     var BLOOD = 'afk_blood_dia', AKEY = 'afk_curlog_v1', CSALT = 'cl:7d1:';
-    var okCall = function () { var st = (typeof state !== 'undefined' && state) || {}; return !!st.ff || LOCAL() || !external() || unlocked || isOwner(P()); };
+    var okCall = function () { var st = (typeof state !== 'undefined' && state) || {}; return LOCAL() || !external() || unlocked || isOwner(P()); };   // 11-23 16:45：拿掉快轉例外（state.ff 主控台可以自己設）
     var deny = function () { try { console.warn('從主控台改龍之鑽石、血龍鑽需要先輸入管理密碼。'); } catch (e) {} };
     var pend = { d: 0, b: 0 };
     var wrapFn = function (obj, name, mk) { try { var o = obj && obj[name]; if (typeof o === 'function' && !o.__afkCur) { var f = mk(o); f.__afkCur = true; obj[name] = f; } } catch (e) {} };
-    wrapFn(W, 'pandoraAdjustSharedDiamonds', function (o) { return function (delta) { if (Number(delta) > 0 && !okCall()) { deny(); return { ok: false, error: '需要管理密碼。' }; } var r = o.apply(this, arguments); if (r && r.ok && Number(delta) > 0) pend.d += Math.trunc(Number(delta)); return r; }; });
-    wrapFn(W, 'pandoraRestoreSharedDiamonds', function (o) { return function () { if (!okCall()) { deny(); return { ok: false, error: '需要管理密碼。' }; } var r = o.apply(this, arguments); rebase(true); return r; }; });   // 匯入存檔：重新取基準
-    wrapFn(W, 'pandoraTestSetDiamonds', function (o) { return function () { if (!okCall()) { deny(); return false; } return o.apply(this, arguments); }; });
+    wrapFn(W, 'pandoraAdjustSharedDiamonds', function (o) { return function __afkMoneyEntry(delta) { if (Number(delta) > 0 && !okCall()) { deny(); return { ok: false, error: '需要管理密碼。' }; } var r = o.apply(this, arguments); if (r && r.ok && Number(delta) > 0) pend.d += Math.trunc(Number(delta)); return r; }; });
+    wrapFn(W, 'pandoraRestoreSharedDiamonds', function (o) { return function __afkMoneyEntry() { if (!okCall()) { deny(); return { ok: false, error: '需要管理密碼。' }; } var r = o.apply(this, arguments); rebase(true); return r; }; });   // 匯入存檔：重新取基準
+    wrapFn(W, 'pandoraTestSetDiamonds', function (o) { return function __afkMoneyEntry() { if (!okCall()) { deny(); return false; } return o.apply(this, arguments); }; });
     wrapFn(W, 'performWanderingBuyerTrade', function (o) { return function () { var b0 = 0; try { b0 = Number(W.pandoraGetSharedDiamonds()) || 0; } catch (e) {} var r = o.apply(this, arguments); try { var b1 = Number(W.pandoraGetSharedDiamonds()) || 0; if (b1 > b0) pend.d += b1 - b0; } catch (e) {} return r; }; });
-    wrapFn(W.__afkGameHall, 'credit', function (o) { return function () { if (!okCall()) { deny(); return false; } return o.apply(this, arguments); }; });
-    ['cashOut', 'topUp', 'buyIn'].forEach(function (k) { wrapFn(W.__afkPoker, k, function (o) { return function () { if (!okCall()) { deny(); return { ok: false, msg: '需要管理密碼。' }; } return o.apply(this, arguments); }; }); });
+    wrapFn(W.__afkGameHall, 'credit', function (o) { return function __afkMoneyEntry() { if (!okCall()) { deny(); return false; } return o.apply(this, arguments); }; });
+    ['cashOut', 'topUp', 'buyIn'].forEach(function (k) { wrapFn(W.__afkPoker, k, function (o) { return function __afkMoneyEntry() { if (!okCall()) { deny(); return { ok: false, msg: '需要管理密碼。' }; } return o.apply(this, arguments); }; }); });
     wrapFn(W, 'gainItem', function (o) { return function (id, n) { var r = o.apply(this, arguments); try { if (id === BLOOD && r) pend.b += Math.max(1, Math.floor(Number(n) || 1)); } catch (e) {} return r; }; });
     // 倉庫裡的血龍鑽：存倉庫時順手更新，不每次都讀
     var whB = null;

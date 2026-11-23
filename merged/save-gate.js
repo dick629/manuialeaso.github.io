@@ -84,11 +84,14 @@
     }
     else if(reload){const why=this.reloadWhy(doc.p,slot);if(why)throw Error(why);if(!confirm(newer?'這份是「'+(doc.p.name||'')+'」比較新的進度（第 '+inSeq+' 次存檔，這裡是第 '+curSeq+' 次）。\n要換成這份進度嗎？這個位置目前的進度會被蓋掉（會先自動備份一份）。':'這份是「'+(doc.p.name||'')+'」自己的舊存檔。\n要讀回這份舊進度嗎？這個位置目前的進度會被蓋掉（會先自動備份一份）。')){trace.step('玩家按了取消','');trace.end(false,'玩家取消');return false;}
      const RL=window.__afkReloadLedger;if(RL)doc.p.afkReloadN=RL.count(doc.p)+1;}
+    let acctCur=null;try{acctCur=reload&&typeof _roleReadSavePlayer==='function'?_roleReadSavePlayer(slot):null;}catch(e){}
+    doc.p._mktRestoreAt=Date.now();   // 11-23：寄賣攤「匯入後 24 小時不能交易」跟著存檔走（原本只記在瀏覽器，刪掉就解除）
     const apply=async()=>{
      if(localStorage.getItem(key)!==cur)throw Error('目的位置的資料已變更，請重新操作');
      const change={key,before:cur,after:LineageLegacyCodec.wrap(JSON.stringify(doc)),reason:reload?'ROLE_RELOAD':'ROLE_IMPORT'};
      await R.transact(localStorage,[change],s=>LineageBackups.save({...s,originalImport:raw,slot},reload?'role-reload':'role-import'),{integrity:reload?'reload':'import',canWrite:()=>!(typeof state!=='undefined'&&state.running)&&R.scan(R.capture(localStorage)).canRepair});
      if(reload&&rel2==='device'&&window.__afkReloadLedger)window.__afkReloadLedger.bump(doc.p);
+     if(reload&&rel2==='device'&&acctCur&&window.__afkAcctNet)try{window.__afkAcctNet.onReload(acctCur,doc.p);}catch(e){}   // 11-23：帳號的龍鑽、血龍鑽跟著倒回
      try{const IC=window.LineageIntegrityCore,q=Object.assign({},doc.p);q.enSeed=IC.seed(doc.p);const m=JSON.parse(localStorage.getItem('lineage_uid_imported_v1')||'{}');m[IC.identity(q)]=Date.now();localStorage.setItem('lineage_uid_imported_v1',JSON.stringify(m));}catch(e){}
     };
     trace.step('寫入存檔（保護交易）','先自動備份再寫入');

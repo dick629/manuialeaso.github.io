@@ -41,7 +41,7 @@
   const rb=roles(before,true,true),ra=roles(after,false,prevDup),okKeys=new Set(Object.values(rb).map(x=>x.key)),bad=new Set(B.roleKeys(before).filter(k=>!okKeys.has(k)));
   const last=id=>Math.max(own(rb,id)?saveSeq(rb[id].p):0,dict(base.seq)?Number(base.seq[id])||0:0);
   // 11-17 管理員放行：LineageAdmin.allowImport() 後 10 分鐘內的下一次匯入，不擋「舊進度」（只放行這台裝置上目前沒有的角色）
-  let allowOnce=false;if(kind==='import'){try{const v=Number(localStorage.getItem('lineage_import_allow_once'))||0;if(v>Date.now()){allowOnce=true;localStorage.removeItem('lineage_import_allow_once');}}catch(e){}}
+  let allowOnce=false;if(kind==='import'){try{localStorage.removeItem('lineage_import_allow_once');const A=window.LineageAdmin;allowOnce=!!(A&&typeof A.consumeImportAllow==='function'&&A.consumeImportAllow());}catch(e){}}   // 11-23：放行記號改放在管理模組裡（原本是瀏覽器裡沒簽章的時間值，玩家自己填就能放行）
   if(kind==='import'&&!allowOnce)for(const [id,{p}] of Object.entries(ra))if(!own(rb,id)&&own(base.seen,id)&&!(saveSeq(p)>last(id)))fail('這個角色曾經在這台裝置上出現過，而這份存檔不比上次的進度新；為了防止重複匯入舊裝備，只能匯入比較新的進度（請在原本的裝置上繼續玩、存檔後再匯出）');
   // 11-11 21:37 同一個角色讀回自己的舊存檔（覆蓋原位置）：角色名單必須完全不變；封魂、魂魄消耗、職業路線照樣由 absorb 擋
   // 11-12 女神挑戰紀錄點（checkpoint）同樣只能是同一個角色

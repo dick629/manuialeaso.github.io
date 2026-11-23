@@ -242,6 +242,7 @@
       var run = function () { return W.LineageRecovery.transact(localStorage, [change], function (snap) { return W.LineageBackups.save(Object.assign({}, snap, { slot: slot }), 'goddess-checkpoint'); }, { integrity: 'checkpoint', canWrite: function () { return true; } }); };
       await (navigator.locks ? navigator.locks.request('lineage-merged-save-write', { mode: 'exclusive' }, run) : run());
       var m2 = ckRead(); delete m2[k]; ckWrite(m2); await rawDel(k);
+      try { var oldP = decodeP(raw); if (oldP && W.__afkAcctNet) W.__afkAcctNet.onReload(p, oldP); } catch (e) {}   // 11-23：帳號的龍鑽、血龍鑽跟著倒回
       try { sessionStorage.setItem('afk_autoreload_resume', JSON.stringify({ slot: slot, at: Date.now(), hours: 0, update: false })); } catch (e) {}
       try { sessionStorage.setItem('afk_ckpt_restored', String(slot)); } catch (e) {}
       location.reload();

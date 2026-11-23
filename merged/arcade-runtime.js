@@ -25,6 +25,7 @@
   if(!Number.isFinite(raw)||raw<0||raw>Number.MAX_SAFE_INTEGER/100)throw Error('派彩金額超出安全範圍');
   if(r.mode==='legend'&&raw>r.reserve){const bn=(raw-r.reserve)*0.05;raw+=bn;r.legendBonus=bn;d.legendWins=(d.legendWins||0)+1;}
   const cents=Math.round(raw*100)+(d.frac[r.cur]||0),pay=Math.floor(cents/100);d.frac[r.cur]=cents%100;
+  if(r.cur!=='gold'&&W.__afkGam){if(W.__afkGam.isDone(r.id)){r.settled=true;r.returned=0;r.finished=Date.now();return;}W.__afkGam.done(r.id);}   /* 11-23：龍鑽、血龍鑽的牌局結算過就不能再結算（讀回舊存檔帶回來的） */
   if(pay&&!H.credit(r.cur,pay))throw Error('派彩入帳失敗');r.settled=true;r.returned=pay;r.finished=Date.now();
   const key=r.game+':'+r.mode+':'+r.cur,s=d.stats[key]||(d.stats[key]={rounds:0,net:0,win:0,playerPoints:0,aiPoints:0});s.rounds++;s.net+=raw-r.reserve;if(raw>r.reserve)s.win++;
   if(r.game==='bj'){s.playerPoints+=r.g.pNet;s.aiPoints+=r.g.nNet;}if(r.game==='tian')d.banker[r.mode]=r.g.lastWinner;

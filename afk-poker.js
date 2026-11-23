@@ -570,8 +570,9 @@
   function debit(cur, n) {
     var p = P(); if (!p || !(n > 0) || balance(cur) < n) return false;
     if (cur === 'gold') { p.gold = Math.floor(Number(p.gold) || 0) - n; return true; }
-    if (cur === 'dia') return diaAdjust(-n);
+    if (cur === 'dia') { var okD = diaAdjust(-n); if (okD) try { if (W.__afkGam) W.__afkGam.move(cur, -n, p); } catch (e) {} return okD; }
     if (cur === 'blood') {
+      try { if (W.__afkGam) W.__afkGam.move(cur, -n, p); } catch (e) {} 
       for (var j = p.inv.length - 1; j >= 0 && n > 0; j--) { var it = p.inv[j]; if (!it || it.id !== BLOOD || it.lock) continue; var q = Math.min(n, Number(it.cnt) || 1); it.cnt = (Number(it.cnt) || 1) - q; n -= q; if (it.cnt <= 0) p.inv.splice(j, 1); }
       return true;
     }
@@ -580,8 +581,8 @@
   function credit(cur, n, p) {
     p = p || P(); if (!(n > 0)) return true; if (!p) return false;
     if (cur === 'gold') { p.gold = Math.floor(Number(p.gold) || 0) + n; return true; }
-    if (cur === 'dia') return diaAdjust(n);
-    if (cur === 'blood') { if (!DB.items[BLOOD] || p !== P()) return false; gainItem(BLOOD, n, true, true); return true; }
+    if (cur === 'dia') { var okC = diaAdjust(n); if (okC) try { if (W.__afkGam) W.__afkGam.move(cur, n, p); } catch (e) {} return okC; }
+    if (cur === 'blood') { if (!DB.items[BLOOD] || p !== P()) return false; gainItem(BLOOD, n, true, true); try { if (W.__afkGam) W.__afkGam.move(cur, n, p); } catch (e) {} return true; }
     return false;
   }
   function amtTxt(cur, n) { return CURS[cur] + ' ' + fmt(n) + (cur === 'gold' ? '' : ' 顆'); }
@@ -596,6 +597,7 @@
   function persist() {
     if (!tb) return;
     var rec = { t: tb.def.id, stack: tb.seats[0].stack, hb: Date.now(), tab: TAB_ID };
+    if (tb.def.cur === 'blood' && tb.owner) rec.gid = (tb.owner.afkPoker && tb.owner.afkPoker.gid) || (W.__afkGam ? W.__afkGam.id() : undefined);   // 11-23：血龍鑽桌的籌碼編號（換回過就不能再換）
     if (tb.def.cur === 'dia') { if (!writeDia(rec)) console.warn('[AFK-poker] 籌碼紀錄寫不進去'); }
     else if (tb.owner) { tb.owner.afkPoker = rec; if (tb.owner === P()) safeSave(); }
   }
@@ -609,7 +611,8 @@
     var out = [], p = P();
     if (p && p.afkPoker && !(tb && tb.owner === p && tb.def.cur !== 'dia')) {
       var r = p.afkPoker, def = TBL[r.t], n = Math.max(0, Math.floor(Number(r.stack) || 0));
-      if (def && def.cur !== 'dia' && credit(def.cur, n, p)) { delete p.afkPoker; safeSave(); if (n > 0) out.push(amtTxt(def.cur, n)); }
+      if (r.gid && W.__afkGam && W.__afkGam.isDone(r.gid)) { delete p.afkPoker; safeSave(); }   // 讀回舊存檔帶回來的、已經換回過的籌碼
+      else if (def && def.cur !== 'dia' && (r.gid && W.__afkGam ? (W.__afkGam.done(r.gid), true) : true) && credit(def.cur, n, p)) { delete p.afkPoker; safeSave(); if (n > 0) out.push(amtTxt(def.cur, n)); }
       else if (!def || def.cur === 'dia') delete p.afkPoker;
     }
     var d = readDia();
@@ -650,7 +653,7 @@
     if (def.cur === 'dia') {
       if (!writeDia({ t: def.id, stack: amt, hb: Date.now(), tab: TAB_ID })) { diaAdjust(amt); tb = null; return { ok: false, msg: '籌碼紀錄寫不進去，龍之鑽石已退回' }; }
       heartbeat(true);
-    } else { p.afkPoker = { t: def.id, stack: amt, hb: Date.now(), tab: TAB_ID }; safeSave(); }
+    } else { p.afkPoker = { t: def.id, stack: amt, hb: Date.now(), tab: TAB_ID, gid: (def.cur === 'blood' && W.__afkGam) ? W.__afkGam.id() : undefined }; safeSave(); }
     sys('<span class="text-emerald-300">🃏 在' + esc(tblName()) + '用' + esc(amtTxt(def.cur, amt)) + '換了籌碼入座。</span>');
     try { if (typeof updateUI === 'function') updateUI(); } catch (e) {}
     return { ok: true, table: tb };
@@ -684,6 +687,7 @@
       writeDia(null); heartbeat(false);
     } else {
       if (!credit(def.cur, n, p)) { persist(); return { ok: false, msg: CURS[def.cur] + '暫時換不回來，請再按一次離座' }; }
+      if (p.afkPoker && p.afkPoker.gid && W.__afkGam) W.__afkGam.done(p.afkPoker.gid);
       delete p.afkPoker; safeSave();
     }
     try { if (W.__afkGameHall) W.__afkGameHall.statAdd('poker', def.cur, 0, n, 0, false); } catch (e) {}   // 換回來＝贏回

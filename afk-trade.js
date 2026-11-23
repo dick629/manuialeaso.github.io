@@ -85,7 +85,7 @@
       var id = it.id;
       if (id.indexOf('~') >= 0) { if (!(W.__afkRelicData && W.__afkRelicData.ensure && W.__afkRelicData.ensure(id))) return null; }
       var d = DB.items[id]; if (!d || d.gmOnly || d.noTrade) return null;
-      var o = { id: id, uid: String(it.uid || ''), cnt: int(it.cnt == null ? 1 : it.cnt, 1, 10), en: int(it.en == null ? 0 : it.en, -20, 15) };
+      var o = { id: id, uid: String(it.uid || ''), cnt: int(it.cnt == null ? 1 : it.cnt, 1, 100), en: int(it.en == null ? 0 : it.en, -20, 15) };
       if (isNaN(o.cnt) || isNaN(o.en)) return null;
       if (it.bless != null && it.bless !== false) { if (it.bless === true || it.bless === 'cursed') o.bless = it.bless; else return null; }
       if (it.anc != null && it.anc !== false) { if (it.anc === true || ANC[it.anc]) o.anc = it.anc; else return null; }
@@ -97,7 +97,7 @@
       if (it.rbLv != null) o.rbLv = int(it.rbLv, 0, 50);
       if (['ancLv', 'blessLv', 'rbLv'].some(function (k) { return k in o && isNaN(o[k]); })) return null;
       if (it.gw != null) { if (Array.isArray(it.gw) && it.gw.length <= 3 && it.gw.every(function (x) { return /^[a-z]{2,4}\d{1,2}$/.test(String(x)); })) o.gw = it.gw.slice(); else return null; }
-      if (!catOf(o)) return null;
+      var oc = catOf(o); if (!oc || o.cnt > (RULE.cats[oc] || 1)) return null;   // 11-23：數量上限照分類（卷軸 100、卡片與法術書 10、其餘 1）；原本一律 10，卷軸超過 10 張會上架失敗
       return o;
     } catch (e) { return null; }
   };
@@ -119,7 +119,11 @@
   var jrSet = function (a) { set(K_JR, a.length ? JSON.stringify(a) : null); };
   var done = function () { return jget(K_DONE, []); };
   var markDone = function (id) { var a = done(); if (a.indexOf(id) < 0) a.push(id); set(K_DONE, JSON.stringify(a.slice(-300))); };
-  var restoreLeft = function () { var t = Number(get(K_RESTORE) || 0); return t ? Math.max(0, t + COOL_MS - Date.now()) : 0; };
+  var restoreLeft = function () {   // 11-23：瀏覽器紀錄與存檔裡的紀錄取比較晚的，互相補回
+    var t = Number(get(K_RESTORE) || 0) || 0, p = P(), now = Date.now();
+    if (p) { var s = Number(p._mktRestoreAt) || 0; if (s > now) s = p._mktRestoreAt = now; if (t > now) t = now; if (t > s) p._mktRestoreAt = t; else if (s > t) { t = s; set(K_RESTORE, String(t)); } }
+    return t ? Math.max(0, t + COOL_MS - now) : 0;
+  };
 
   // ── 連線 ──
   function req(method, path, b) {
@@ -189,28 +193,43 @@
 
   // 交貨：auto＝只自動回報「已經入帳過」的，真正入帳要玩家按「領取」（要在村莊、進目前角色）
   function deliver(list, auto, only) {
-    var ack = [], got = [], fails = [];
-    var p = P(), dn = done();
+    // 11-23：真正入帳前先跟伺服器「領取」——伺服器標記已領後才把內容交回來，同一筆只會發一次。
+    //        伺服器還沒更新（沒有領取功能）時照舊：先入帳、再回報。
+    var p = P(), dn = done(), ack = [], want = [];
     list.forEach(function (d) {
       if (dn.indexOf(d.id) >= 0) { ack.push(d.id); return; }
-      if (auto || (only && only.indexOf(d.id) < 0)) return;
-      if (!p) return;
-      try {
-        var gt = null;
-        if (d.kind === 'proceeds') gainBlood(Number(d.payload.blood) || 0);
-        else if (d.kind === 'gift') gt = grantGift(d.payload);
-        else addItem(d.payload.item);
-        markDone(d.id); if (d.kind === 'bought') markDone('L' + d.listing_id); ack.push(d.id);
-        got.push(gt ? '管理員發送的 ' + gt : d.kind === 'proceeds' ? '血龍鑽 ' + fmt(d.payload.blood) + ' 顆（' + d.payload.name + ' 賣出）' : d.payload.name + (d.kind === 'returned' ? '（退回）' : ''));
-      } catch (e) { fails.push((d.payload && (d.payload.name || d.payload.k)) + '：' + e.message); }
+      if (auto || (only && only.indexOf(d.id) < 0) || !p) return;
+      want.push(d);
     });
-    if (got.length) { save(); try { logSys('<span class="text-amber-300 font-bold">🏮 寄賣攤：領到 ' + esc(got.join('、')) + '。</span>'); } catch (e) {} }
-    if (fails.length) S.err = '有東西領不到：' + fails.join('；');
-    if (!ack.length) return Promise.resolve(got);
-    return authed('/mkt/ack', { ids: ack }).then(function () {
-      if (S.mine) S.mine.deliveries = (S.mine.deliveries || []).filter(function (x) { return ack.indexOf(x.id) < 0; });
+    var credit = function (items) {
+      var got = [], fails = [];
+      items.forEach(function (d) {
+        try {
+          var gt = null;
+          if (d.kind === 'proceeds') gainBlood(Number(d.payload.blood) || 0);
+          else if (d.kind === 'gift') gt = grantGift(d.payload);
+          else addItem(d.payload.item);
+          markDone(d.id); if (d.kind === 'bought') markDone('L' + d.listing_id);
+          got.push(gt ? '管理員發送的 ' + gt : d.kind === 'proceeds' ? '血龍鑽 ' + fmt(d.payload.blood) + ' 顆（' + d.payload.name + ' 賣出）' : d.payload.name + (d.kind === 'returned' ? '（退回）' : ''));
+        } catch (e) { fails.push((d.payload && (d.payload.name || d.payload.k)) + '：' + e.message); }
+      });
+      if (got.length) { save(); try { logSys('<span class="text-amber-300 font-bold">🏮 寄賣攤：領到 ' + esc(got.join('、')) + '。</span>'); } catch (e) {} }
+      if (fails.length) S.err = '有東西領不到：' + fails.join('；');
       return got;
-    }, function () { return got; });
+    };
+    var prune = function (ids) { if (S.mine) S.mine.deliveries = (S.mine.deliveries || []).filter(function (x) { return ids.indexOf(x.id) < 0; }); };
+    var sendAck = function (ids, got) { if (!ids.length) return Promise.resolve(got); return authed('/mkt/ack', { ids: ids }).then(function () { prune(ids); return got; }, function () { return got; }); };
+    if (!want.length) return sendAck(ack, []);
+    return authed('/mkt/claim', { ids: want.map(function (d) { return d.id; }) }).then(function (r) {
+      var items = (r && r.claimed) || [], ids = items.map(function (x) { return x.id; });
+      var got = credit(items); prune(ids);
+      if (items.length < want.length && !got.length && !S.err) S.err = '這幾筆已經領過了。';
+      return sendAck(ack, got);
+    }, function (e) {
+      if (e && e.status === 404) { var got = credit(want); return sendAck(ack.concat(want.filter(function (d) { return done().indexOf(d.id) >= 0; }).map(function (d) { return d.id; })), got); }
+      S.err = '領取失敗：' + ((e && e.message) || '連線中斷') + '，請稍後再領。';
+      return sendAck(ack, []);
+    });
   }
 
   function load() {
