@@ -343,3 +343,17 @@
   if (typeof oProf === 'function') W.pandoraBuyOrderPriceProfile = function (id) { var r = oProf.apply(this, arguments); if (r) r = Object.assign({}, r, { base: r.base * K }); return r; };
   W.__afkPandoraGoldK = K;
 })();
+
+/* 收購單不能指定遺物（Ping 11-23 16:14）：黑市的遺物只會隨機上架。
+ *   核心 pandoraBuyOrderAllowed 只擋 d.relic，次元遺物（dimr_、dimRelic）漏掉 → 這裡補擋所有遺物；
+ *   已經掛著的遺物收購單，下次換格時清掉。 */
+(function () {
+  'use strict';
+  var W = window;
+  if (typeof DB === 'undefined' || !DB.items) return;
+  var isR = function (id) { var d = DB.items[id]; return !!(d && (d.relic || d.dimRelic || /^dimr_/.test(String(id)) || (typeof isRelic === 'function' && isRelic(d)))); };
+  var oAllow = W.pandoraBuyOrderAllowed;
+  if (typeof oAllow === 'function') W.pandoraBuyOrderAllowed = function (id) { if (isR(id)) return false; return oAllow.apply(this, arguments); };
+  var oStock = W._pandoraStock;
+  if (typeof oStock === 'function') W._pandoraStock = function (nowT, market) { try { if (market && market.buyOrder && isR(market.buyOrder.id)) market.buyOrder = null; } catch (e) {} return oStock.apply(this, arguments); };
+})();

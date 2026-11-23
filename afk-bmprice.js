@@ -118,7 +118,7 @@
     if (!hit) return '';   // 名字還沒打完整 → 不出字（每個按鍵都跳「查無此物品」只會閃）
     if (!hit.ok) {
       return hit.d.relic
-        ? '<span class="afk-bm-no">遺物不能用金幣收購，要在下面的布告欄花龍鑽搜索</span>'
+        ? '<span class="afk-bm-no">遺物不能指定收購，只會隨機上架</span>'
         : '<span class="afk-bm-no">這件不能指定收購</span>';
     }
     var r = rangeOf(hit.id);

@@ -443,6 +443,11 @@
   var left = function (p) { p = p || P(); return p ? Math.max(0, (Number(p.afkPgBuff) || 0) - tk()) : 0; };
   W.__afkPgBuffMult = function (p) { return left(p) > 0 ? 1 + K : 1; };
   var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
+  var drink = function (p, it, cur) {
+    if ((Number(it.cnt) || 1) > 1) it.cnt = (Number(it.cnt) || 1) - 1; else p.inv.splice(p.inv.indexOf(it), 1);
+    p.afkPgBuff = tk() + cur + TK;
+    sys('<span class="text-amber-300">喝下巔峰祝福藥水：巔峰經驗 +30%，剩 ' + Math.round((cur + TK) / 600) + ' 分鐘。</span>');
+  };
   if (typeof W.useItem === 'function') {
     var oUse = W.useItem;
     W.useItem = function (uid) {
@@ -451,12 +456,35 @@
       if (it.lock) return;
       if (!((Number(p.rebirth) || 0) >= 1) || p.classicMode) { sys('<span class="text-red-400">巔峰祝福藥水要轉生後才能喝。</span>'); return; }
       var cur = left(p); if (cur + TK > MAXTK) { sys('<span class="text-red-400">巔峰祝福的效果最多疊到 24 小時。</span>'); return; }
-      if ((Number(it.cnt) || 1) > 1) it.cnt = (Number(it.cnt) || 1) - 1; else p.inv.splice(p.inv.indexOf(it), 1);
-      p.afkPgBuff = tk() + cur + TK;
-      sys('<span class="text-amber-300">喝下巔峰祝福藥水：巔峰經驗 +30%，剩 ' + Math.round((cur + TK) / 600) + ' 分鐘。</span>');
+      drink(p, it, cur);
       try { var l2 = p.inv.find(function (x) { return x.uid === uid; }); if (l2 && typeof openModal === 'function') openModal(l2, false); else if (typeof closeModal === 'function') closeModal(); } catch (e) {}
       try { renderTabs(); updateUI(); saveGame(); } catch (e) {}
     };
   }
+  // 熱鍵自動喝（Ping 11-23 16:18）：放進熱鍵格、勾「自動使用」→ 效果結束後自動補喝一瓶（轉生後、背包未上鎖的才喝）
+  var HI = W.AFK_HOTBAR_ITEMS;
+  if (HI && typeof HI.describe === 'function') {
+    var oDesc = HI.describe;
+    HI.describe = function (id) { if (id === ID) return { kind: 'buff', keys: ['afk_pg_potion'], label: '效果結束後補用', manual: false }; return oDesc.apply(this, arguments); };
+  }
+  var nextAuto = 0;
+  var autoStep = function () {
+    var p = P(), t = tk();
+    if (!p || p.classicMode || !(Number(p.rebirth) >= 1) || typeof state === 'undefined' || !state.running || p.dead || !(p.hp > 0)) return;
+    if (t < nextAuto && nextAuto - t < 600) return;
+    if (!W.AFK_HOTBAR || (W.AFK_TOGGLES && !W.AFK_TOGGLES.enabled('hotbar')) || left(p) > 0) return;
+    var bar = W.AFK_HOTBAR.bar ? W.AFK_HOTBAR.bar() : [], au = p._afkHotbarAuto || [], on = false;
+    for (var i = 0; i < bar.length; i++) if (bar[i] === ID && au[i]) { on = true; break; }
+    if (!on) return;
+    nextAuto = t + 50;
+    var it = (p.inv || []).find(function (x) { return x && x.id === ID && !x.lock && (x.cnt == null || x.cnt > 0); });
+    if (!it) return;
+    drink(p, it, 0);
+    try { if (W.AFK_HOTBAR.render) W.AFK_HOTBAR.render(); } catch (e) {}
+  };
+  var oAuto = W.autoActions;
+  if (typeof oAuto === 'function') W.autoActions = function () { var r = oAuto.apply(this, arguments); try { autoStep(); } catch (e) {} return r; };
+  // 掉落查詢的取得方式（Ping 11-23 16:18）
+  try { if (W.AFK_DEX_EXTRA && W.AFK_DEX_EXTRA.acq) W.AFK_DEX_EXTRA.acq(ID, '次元裂縫開著時，打倒任何怪物都有機會掉落。轉生後才能喝，可以放熱鍵自動喝。'); } catch (e) {}
   W.__afkPgPotion = { ID: ID, left: left, K: K };
 })();
