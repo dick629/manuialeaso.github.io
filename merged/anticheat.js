@@ -364,6 +364,7 @@
       try { var CK = W.__afkClock; if (CK && typeof _roleReadSavePlayer === 'function') { var q0 = _roleReadSavePlayer(slot != null ? slot : currentSlot); if (q0 && q0._clkSeen) CK.absorb(q0._clkSeen); } } catch (e) {}
       var r = oLoad.apply(this, arguments); try { scan(true); } catch (e) {}
       try { guardFields(P()); } catch (e) {}
+      try { setTimeout(unsealTick, 1500); } catch (e) {}   // 11-23 20:40：進角色後馬上檢查一次（原本要等每分鐘那一輪，沒有印記的正常道具會先顯示封印最多一分鐘）
       try { var C2 = W.__afkClock, p2 = P(); if (C2 && p2) { p2._clkSeen = C2.seen();
         if (C2.ahead() > 0) sys('<span class="text-amber-300">裝置的時間比實際時間快，遊戲以實際時間計算。</span>');
         else if (C2.debt() > 0 && C2.until() > C2.raw()) sys('<span class="text-amber-300">裝置時間比上次遊玩時還早：關閉遊戲的期間不計離線收益，每日重置也照原本的時間，直到 ' + C2.fmt(C2.until()) + ' 之後恢復。</span>'); } } catch (e) {}
