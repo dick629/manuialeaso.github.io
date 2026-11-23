@@ -170,6 +170,7 @@
   //   複本（同一個編號出現在兩處）不會自動解除；印記被竄改的也不會。
   var unsealOne = function (it) {
     if (!it || it.afkDup || !sKind(it.id) || stampOk(it.acs)) return false;
+    if (DB.items[it.id] && DB.items[it.id].afkHama) return false;   // 11-23 Ping：哈瑪＝GM 娃娃，不自動給正當印記（一般玩家持有＝封印）
     var cost = costNow(it);
     if (!it.acs) { it.acs = mkStamp(cost, true); return stampOk(it.acs); }   // Ping 11-21：沒有印記的＝遊戲正常給的（原本 gainItem 漏蓋印記），直接給正當印記、不扣時數
     var x = it.acs; if (x.k !== stSig(x)) return false;

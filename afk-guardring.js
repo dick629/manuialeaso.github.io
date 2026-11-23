@@ -842,7 +842,7 @@
   // ═══════════════════════════ 八、掉落 ═══════════════════════════
   // 四龍副本的地圖 → 屬性
   var DRAGON_ELE = function (mp) { if (!mp) return null; if (/^antharas_/.test(mp)) return 'earth'; if (/^cr_fafurion_/.test(mp)) return 'water'; if (/^cr_valakas_/.test(mp)) return 'fire'; if (/^cr_lindvior_/.test(mp)) return 'wind'; return null; };
-  var DROP = { tear: 0.55, dimBoss: 3, dimMob: 0.10, shardBoss: 0.05, shardFinal: [1, 2], oathFinal: [2, 4], oathMob: 0.005 };
+  var DROP = { tear: 0.55, dimMob: 0.01, shardBoss: 0.05, shardFinal: [1, 2], oathFinal: [2, 4], oathMob: 0.005 };
   var mats = function () { return W.__afkGuardMats || null; };   // afk-guardmats 已經負責四龍眼淚（11-05 先上線）→ 這裡不再重複處理
   // 11-20 02:21 Ping：信物的原型（火神之槌、圓月寶珠、古老水珍珠、闇之氣息、占星術師的符咒）恢復原本的怪物掉落與古物學者委託
   var removed = function () { var o = {}; if (!mats()) ELES.forEach(function (e) { o[M.tear[e]] = 1; }); return o; };
@@ -863,7 +863,7 @@
     try {
       if (!mats() && ele && dreamOn(p) && !m.boss && rnd() < DROP.tear) give(M.tear[ele], 1, m);   // 四龍眼淚：四龍副本的小怪（夢域鏡）
       if (riftOn()) {
-        if (m.boss) give(M.dim, DROP.dimBoss, m); else if (rnd() < DROP.dimMob) give(M.dim, 1, m);   // 次元結晶：比照夢艷結晶
+        if (rnd() < DROP.dimMob) give(M.dim, 1, m);   // 次元結晶（戒）：11-23 Ping 每隻 1%（王也一樣）
         if (ele) {
           var final = !!m._afkDragonStage;
           if (final) { give(M.shard, randIn(DROP.shardFinal), m); give(M.oath[ele], randIn(DROP.oathFinal), m); }

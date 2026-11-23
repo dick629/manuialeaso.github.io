@@ -247,7 +247,7 @@
   (function buildHama() {
     if (DB.items[HAMA] || !T5.length) return;
     var SKIP = { p: 1, safe: 1, dollTier: 1, gachaWeight: 0, procRateBase: 1 };
-    var d = { n: '魔法娃娃：哈瑪', type: 'acc', slot: 'doll', req: 'all', safe: 0, p: 0, doll: true, dollTier: 7, noEnhance: true, gachaWeight: 0, c: 'c-doll7', afkHama: true };   // 名稱暗紫色（玩家 2026-10-27）   // 七階（玩家 2026-10-24：原版六階之上）
+    var d = { n: '魔法娃娃：哈瑪', type: 'acc', slot: 'doll', req: 'all', safe: 0, p: 0, doll: true, dollTier: 7, noEnhance: true, gachaWeight: 0, c: 'c-doll7', afkHama: true, gmOnly: true };   // 11-23 Ping：哈瑪＝GM 娃娃（S 級 gm），鑽石卡不能再換   // 名稱暗紫色（玩家 2026-10-27）   // 七階（玩家 2026-10-24：原版六階之上）
     var procs = [], parts = [];
     T5.forEach(function (id) {
       var x = DB.items[id]; if (!x) return;
@@ -261,7 +261,7 @@
       });
     });
     if (procs.length) { d.procSkill = procs[0]; d.procRateBase = 1; d.afkExtraProcs = procs.slice(1); }
-    d.d = '七階魔法娃娃。由鑽石卡兌換：融合全部五階魔法娃娃（' + parts.join('、') + '）的能力'
+    d.d = 'GM 專用的魔法娃娃。融合全部五階魔法娃娃（' + parts.join('、') + '）的能力'
       + (procs.length ? '，攻擊時各自 1% 觸發 ' + procs.map(function (sk) { return (DB.skills[sk] || {}).n || sk; }).join('、') : '') + '。裝於魔法娃娃欄，游標變成哈瑪大師。';
     d.img = 'assets/icons/accessories/魔法娃娃：哈瑪.png';
     try { if (typeof DOLL_BY_TIER !== 'undefined' && DOLL_BY_TIER[7].indexOf(HAMA) < 0) DOLL_BY_TIER[7].push(HAMA); } catch (e) {}
@@ -318,6 +318,7 @@
     after(); return { ok: true };
   };
   window.afkDiamondToHama = function () {
+    return { ok: false, msg: '哈瑪不能用鑽石卡兌換。' };   // 11-23 Ping：停止兌換
     if (!enabled()) return { ok: false, msg: '白金／鑽石卡功能目前停用。' };
     if (!DB.items[HAMA]) return { ok: false };
     if (!takeCards(5, NEED)) { logSys('<span class="text-red-400">需要 ' + NEED + ' 張已登錄鑽石階的重複鑽石卡。</span>'); return { ok: false }; }
@@ -333,11 +334,9 @@
       try {
         var pc = excessCnt(4), dc = excessCnt(5), okP = pc >= NEED, okD = dc >= NEED;
         var html = '<div id="afk-cp-doll" class="px-4 pb-3 pt-2 border-t border-slate-700/60 space-y-2">'
-          + '<div class="text-sm text-slate-300">💎 <b>白金／鑽石卡兌換</b> <span class="text-xs text-slate-400">（已登錄到該階的重複卡・只算背包）</span></div>'
+          + '<div class="text-sm text-slate-300">💎 <b>白金卡兌換</b> <span class="text-xs text-slate-400">（已登錄到該階的重複卡・只算背包）</span></div>'
           + '<div class="bg-slate-900/50 border border-slate-700 rounded px-3 py-2 text-sm"><div><span class="c-card-plat font-bold">白金卡</span> ' + NEED + ' 張 → 自選一隻五階魔法娃娃　持有：<span class="' + (okP ? 'c-card-plat' : 'text-slate-500') + ' font-bold">' + pc + '</span> 張</div>'
-          + '<div class="flex flex-wrap gap-1 mt-2">' + T5.map(function (id) { return '<button class="btn px-2 py-1 text-xs ' + (okP ? 'bg-slate-600 hover:bg-slate-500 border-slate-400' : 'bg-slate-700 border-slate-600 opacity-50 cursor-not-allowed') + '" ' + (okP ? '' : 'disabled ') + 'onclick="afkPlatToDoll(\'' + id + '\')">' + DB.items[id].n.replace('魔法娃娃：', '') + '</button>'; }).join('') + '</div></div>'
-          + '<div class="flex items-center justify-between bg-slate-900/50 border border-slate-700 rounded px-3 py-2"><span class="text-sm"><span class="c-card-diamond font-bold">鑽石卡</span> ' + NEED + ' 張 → 七階 <span class="c-doll7 font-bold">魔法娃娃：哈瑪</span>（五階全部能力融合）　持有：<span class="' + (okD ? 'c-card-diamond' : 'text-slate-500') + ' font-bold">' + dc + '</span> 張</span>'
-          + '<button class="btn px-3 py-1 text-xs font-bold ' + (okD ? 'bg-cyan-800 hover:bg-cyan-700 border-cyan-500' : 'bg-slate-700 border-slate-600 opacity-50 cursor-not-allowed') + '" ' + (okD ? '' : 'disabled ') + 'onclick="afkDiamondToHama()">兌換</button></div></div>';
+          + '<div class="flex flex-wrap gap-1 mt-2">' + T5.map(function (id) { return '<button class="btn px-2 py-1 text-xs ' + (okP ? 'bg-slate-600 hover:bg-slate-500 border-slate-400' : 'bg-slate-700 border-slate-600 opacity-50 cursor-not-allowed') + '" ' + (okP ? '' : 'disabled ') + 'onclick="afkPlatToDoll(\'' + id + '\')">' + DB.items[id].n.replace('魔法娃娃：', '') + '</button>'; }).join('') + '</div></div></div>';
         var old = div.querySelector('#afk-cp-doll'); if (old) old.remove();
         div.insertAdjacentHTML('beforeend', html);
       } catch (e) {}

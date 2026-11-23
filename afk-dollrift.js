@@ -146,7 +146,7 @@
   var panel = function () {
     if (!ok()) return '';
     var s = store(), b = cnt(BADGE), dc = diaCards(), h = '<div id="afk-dollrift" class="afk-dr-sec"><h4>🌀 七～十階魔法娃娃（次元裂縫）</h4>';
-    h += '<div class="afk-dr-note">32 隻，每階 8 條路線。平常就有能力，在次元裂縫裡另外再多一種效果；九階以上會自動發動「縫光」。七階以上只能這裡換、抽、往上合成（哈瑪不算在內）。</div>';
+    h += '<div class="afk-dr-note">32 隻，每階 8 條路線。平常就有能力，在次元裂縫裡另外再多一種效果；九階以上會自動發動「縫光」。七階以上只能這裡換、抽、往上合成。</div>';
     h += '<div class="afk-dr-row"><span>👑 王之徽章 ' + BADGE_N.toLocaleString() + ' 個 → 隨機一隻<span class="c-doll7 font-bold">七階</span>　持有 <b class="' + (b >= BADGE_N ? 'text-green-400' : 'text-red-400') + '">' + b.toLocaleString() + '</b></span><button type="button" onclick="__afkDollRift.exchange()"' + (b >= BADGE_N ? '' : ' disabled') + '>兌換</button></div>';
     h += '<div class="afk-dr-row"><span>🎴 王者鑽石卡 ' + DRAW_N + ' 張抽一次 → ' + DRAW_RATE + '% 隨機一隻<span class="c-doll8 font-bold">八階</span>　持有 <b class="' + (dc >= DRAW_N ? 'text-green-400' : 'text-red-400') + '">' + dc + '</b>　保底 ' + s.draw + '/' + (PITY - 1) + '</span><button type="button" onclick="__afkDollRift.draw()"' + (dc >= DRAW_N ? '' : ' disabled') + '>抽一次</button></div>';
     [7, 8, 9].forEach(function (t) {

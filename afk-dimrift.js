@@ -75,7 +75,7 @@
   var IMG = 'assets/icons/items/';
   var ITEMS = {
     afk_rift_shard: { n: '裂縫碎光', img: IMG + '原石碎片.png', d: '次元裂縫的光凝成的碎片。進入無盡的裂縫需要 50 個，另需星辰之核 15 個與血龍鑽 500。' },
-    afk_dim_crystal: { n: '次元結晶', img: IMG + '原石碎片.png', d: '次元裂縫每一隻怪都會留下的結晶。守護者之戒、席琳遺骸淬鍊、次元遺物都用得到。' },
+    afk_dim_crystal: { n: '次元結晶', img: IMG + '原石碎片.png', d: '次元裂縫裡的怪物偶爾會留下的結晶。守護者之戒、席琳遺骸淬鍊、次元遺物都用得到。' },
     afk_star_dust: { n: '破碎星光塵埃', img: IMG + '原石碎片.png', d: '裂縫裡的星光碎屑。1,000 個加上血龍鑽 100，可在次元的鍛造師合成「異化星塵」。' },
     afk_alien_dust: { n: '異化星塵', img: IMG + '原石碎片.png', d: '用來強化次元遺物與次元支配（縫天★）的星塵。' },
     afk_split_dust: { n: '分裂的蔑視塵埃', img: IMG + '原石碎片.png', d: '1,000 個加上血龍鑽 5,000，可在次元的鍛造師合成「聚合的蔑視塵埃」（幻聖紋要用）。' },
@@ -305,7 +305,7 @@
   function drops(m) {
     var p = P(), got = [];
     var give = function (id, n) { if (!DB.items[id] || !(n > 0)) return; try { gainItem(id, n, true, true); if (W.__afkGuardTwin) W.__afkGuardTwin(id, n); } catch (e) {} got.push((DB.items[id].n || id) + (n > 1 ? ' ×' + n : '')); };
-    give('afk_dim_crystal', 1);
+    if (roll(0.05)) give('afk_dim_crystal', 1);   // 11-23 Ping：每隻 5%（王也一樣）
     if (m.boss) give('afk_rift_shard', 3 + Math.floor(Math.random() * 3)); else if (roll(0.02)) give('afk_rift_shard', 1);
     if (roll(0.01)) give('afk_star_dust', 1);
     if (roll(0.01)) give('afk_split_dust', 1);
