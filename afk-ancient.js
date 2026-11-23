@@ -26,9 +26,9 @@
   });
   // 濃縮古代藥水（玩家 2026-11-02 01:02）：一罐＝三罐古代藥水的補量；工匠薩克的濃縮藥水配方改做這個（古代藥水 ×3＋金幣），圖示沿用原本的濃縮藥水
   var CPOTS = [
-    ['potion_heal_canc1', '濃縮古代體力恢復劑', 'potion_heal_anc1', 'text-rose-300', 'assets/icons/ttmi/i158.jpg'],
+    ['potion_heal_canc1', '濃縮古代體力恢復劑', 'potion_heal_anc1', 'text-rose-300', 'assets/icons/ttmi/i158.png'],
     ['potion_heal_canc2', '濃縮古代強力體力恢復劑', 'potion_heal_anc2', 'text-amber-300', 'assets/icons/items/食人巨魔的血.png'],
-    ['potion_heal_canc3', '濃縮古代終極體力恢復劑', 'potion_heal_anc3', 'text-sky-200', 'assets/icons/ttmi/i159.jpg']
+    ['potion_heal_canc3', '濃縮古代終極體力恢復劑', 'potion_heal_anc3', 'text-sky-200', 'assets/icons/ttmi/i159.png']
   ];
   CPOTS.forEach(function (x) {
     var b = DB.items[x[2]]; if (!b || DB.items[x[0]]) return;

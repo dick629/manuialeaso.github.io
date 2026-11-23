@@ -36,7 +36,7 @@
   var DROP = { ess: 0.01, min: 5, perLv: 0.25 };
   var mat = function (id, n, c, img, d) { if (!DB.items[id]) DB.items[id] = { n: n, type: 'etc', p: 0, c: c, img: img, gachaWeight: 0, noJunk: true, d: d }; };
   mat(SOUL, '深淵靈魂', 'text-violet-300', 'assets/icons/items/失去光明的靈魂.png', '靈魂石訓練所的王留下的魂魄。席琳神殿的手環工匠 赫菲收 1,000 個換一個手環或一顆胤魂石。');
-  mat(ESS, '意志抵抗精華', 'text-rose-300', 'assets/icons/ttmi/i159.jpg', '靈魂石訓練所的王 1% 掉落。升 3 階手環要 100 個。');
+  mat(ESS, '意志抵抗精華', 'text-rose-300', 'assets/icons/ttmi/i159.png', '靈魂石訓練所的王 1% 掉落。升 3 階手環要 100 個。');
   mat(YIN, '胤魂石', 'text-amber-300', 'assets/icons/items/靈魂之球.png', '深淵靈魂 1,000 個凝成的石頭。升 2 階手環要 3 顆、升 3 階要 5 顆。');
 
   var LV = [0, 1, 2, 3], LV_N = ['', '·壹', '·貳', '·參'];

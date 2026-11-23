@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-fbfd6f848729",
+  "build": "merge-0.4-25035f728bdf",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -43,8 +43,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-ancient.js?v=5e9d66436878",
-      "sha256": "5e9d66436878655651539d4cfd0503547812bbba64d2bedb72e916c06ae0ab7a",
+      "url": "afk-ancient.js?v=23a1e1e107e2",
+      "sha256": "23a1e1e107e25f995c1f0ef9ac322ac5288e85b17be7813e7655e46cfcf89d7e",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -273,8 +273,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-bracelet.js?v=a6a36a9d648a",
-      "sha256": "a6a36a9d648ad3bd7425af3a091888844e9d10c34307235123ac3f2aa8986b58",
+      "url": "afk-bracelet.js?v=7fbed2237cfc",
+      "sha256": "7fbed2237cfc1dfa36aba9fd4bac66e3de0421fd50d2a883c343117ec75f9b88",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1708,8 +1708,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-ttmi-icons-data.js?v=a93979b08d9a",
-      "sha256": "a93979b08d9ab513ca6f92b08e9fb2c68e81f37ee69b6187293d13367d55189f",
+      "url": "afk-ttmi-icons-data.js?v=5d72adb1972a",
+      "sha256": "5d72adb1972a0e40f934c879e6011552c455e309125dd0bf34fa9a165c8823a3",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "0e92ad1ad69ede2a95a9cc41120374eb65eb07b4af2b03238e53c67a6c9b8536",
+      "sha256": "68f571e89767a0ff49baa7cb854af47903ea133220b8ebb2c992b37a9afb1c03",
       "type": "text/html; charset=utf-8"
     },
     {
