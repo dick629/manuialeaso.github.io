@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-473fe5eb8995",
+  "build": "merge-0.4-db759213e770",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -333,8 +333,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-cardplus.js?v=e12895d3c044",
-      "sha256": "e12895d3c044c176a4496d8137c69d14c3e40ed715645e1a789f43e5f8b0cd7c",
+      "url": "afk-cardplus.js?v=c69dd81c6eb2",
+      "sha256": "c69dd81c6eb2595a3fe5bf08243be837a35bbc58cf4f11ca90292e91345f3c69",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "677b7b0065bc9e7492e42f8b1c9dc11b48225e48fa8e9ef7f9892484d4d3f766",
+      "sha256": "b513d25d8d3d8e1ca5edaec6ce9eadacc82516c309547b4b5a22d2901af5b108",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2023,8 +2023,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/anticheat.js?v=597263e3ef62",
-      "sha256": "597263e3ef62e41feb459ca41d1ddf8f93f6cc2b9ad33df9b7d6e055d930e8e5",
+      "url": "merged/anticheat.js?v=60aea0a82798",
+      "sha256": "60aea0a82798796ce405499b44de992fe5167256d225c54ffcb5ffd4ab6a1af3",
       "type": "text/javascript; charset=utf-8"
     },
     {

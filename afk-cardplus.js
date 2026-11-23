@@ -247,7 +247,7 @@
   (function buildHama() {
     if (DB.items[HAMA] || !T5.length) return;
     var SKIP = { p: 1, safe: 1, dollTier: 1, gachaWeight: 0, procRateBase: 1 };
-    var d = { n: '魔法娃娃：哈瑪', type: 'acc', slot: 'doll', req: 'all', safe: 0, p: 0, doll: true, dollTier: 7, noEnhance: true, gachaWeight: 0, c: 'c-doll7', afkHama: true, gmOnly: true };   // 11-23 Ping：哈瑪＝GM 娃娃（S 級 gm），鑽石卡不能再換   // 名稱暗紫色（玩家 2026-10-27）   // 七階（玩家 2026-10-24：原版六階之上）
+    var d = { n: '魔法娃娃：哈瑪', type: 'acc', slot: 'doll', req: 'all', safe: 0, p: 0, doll: true, dollTier: 7, noEnhance: true, gachaWeight: 0, c: 'c-doll7', afkHama: true, noTrade: true };   // 11-23 20:13 Ping：不算 GM 道具（不封印），但不能兌換、不能交易   // 名稱暗紫色（玩家 2026-10-27）   // 七階（玩家 2026-10-24：原版六階之上）
     var procs = [], parts = [];
     T5.forEach(function (id) {
       var x = DB.items[id]; if (!x) return;
@@ -261,7 +261,7 @@
       });
     });
     if (procs.length) { d.procSkill = procs[0]; d.procRateBase = 1; d.afkExtraProcs = procs.slice(1); }
-    d.d = 'GM 專用的魔法娃娃。融合全部五階魔法娃娃（' + parts.join('、') + '）的能力'
+    d.d = '七階魔法娃娃。融合全部五階魔法娃娃（' + parts.join('、') + '）的能力'
       + (procs.length ? '，攻擊時各自 1% 觸發 ' + procs.map(function (sk) { return (DB.skills[sk] || {}).n || sk; }).join('、') : '') + '。裝於魔法娃娃欄，游標變成哈瑪大師。';
     d.img = 'assets/icons/accessories/魔法娃娃：哈瑪.png';
     try { if (typeof DOLL_BY_TIER !== 'undefined' && DOLL_BY_TIER[7].indexOf(HAMA) < 0) DOLL_BY_TIER[7].push(HAMA); } catch (e) {}

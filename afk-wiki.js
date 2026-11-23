@@ -2370,7 +2370,7 @@
       if (bagPool) { bagPool.forEach(function (p) { var dd = items[p[0]]; var t = dd ? dd.dollTier : 0; bagByTier2[t] = (bagByTier2[t] || 0) + p[1]; bagSum2 += p[1]; }); }
       if (boxPool) { boxPool.forEach(function (p) { boxByTier2[p[0]] = (boxByTier2[p[0]] || 0) + p[1]; boxSum2 += p[1]; }); }
       var sr2 = (typeof DOLL_SYNTH_RATES !== 'undefined') ? DOLL_SYNTH_RATES : {};
-      for (var t2 = 1; t2 <= 6; t2++) {   // 11-23：哈瑪＝GM 娃娃，不列取得方式
+      for (var t2 = 1; t2 <= 6; t2++) {   // 11-23：哈瑪不能兌換，不列取得方式
         var src = [];
         if (bagByTier2[t2]) src.push('🎒 袋子開出（' + (bagByTier2[t2] / bagSum2 * 100).toFixed(0) + '%）');
         if (boxByTier2[t2]) src.push('📦 高級盒子開出（' + (boxByTier2[t2] / boxSum2 * 100).toFixed(0) + '%）');
@@ -2415,7 +2415,7 @@
 
     // 逐階列出每隻娃娃(讀 d.d 官方介紹)
     for (var tier = 1; tier <= 7; tier++) {
-      var list = (byTier[tier] || []).filter(function (id) { return !(items[id] && items[id].gmOnly); });   // 11-23：GM 娃娃（哈瑪）不列
+      var list = (byTier[tier] || []).filter(function (id) { return !(items[id] && items[id].gmOnly); });   // GM 娃娃不列
       if (!list.length) continue;
       var rows = list.map(function (id) {
         var dd = items[id];
