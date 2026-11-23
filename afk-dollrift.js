@@ -22,6 +22,7 @@
   var RATE = { 7: 50, 8: 30, 9: 10 };
   var CN = { 7: '七階', 8: '八階', 9: '九階', 10: '十階' }, COL = { 7: 'c-doll7', 8: 'c-doll8', 9: 'c-doll9', 10: 'c-doll10' };
   var BASE = { hpR: [25, 30, 35, 40], mpR: [12, 15, 18, 20], mhp: [200, 300, 400, 500], mr: [12, 15, 18, 20] };
+  var EXP = [12, 15, 18, 22], EXP_RULE = 5;   // 11-23 Ping：經驗值獲得量（共通）；統御（王族）路線再 +5%
   // 路線：平常的能力（items 上的數值、或 fx 動態）＋裂縫專屬
   var R = [
     { k: 'rule', n: '統御', cls: '王族', st: {}, fx: { ally: [4, 6, 8, 10] }, rift: { allyEro: [10, 15, 20, 25] },
@@ -67,10 +68,11 @@
       var d = { n: '魔法娃娃：' + name, type: 'acc', slot: 'doll', req: 'all', safe: 0, p: 0, doll: true, dollTier: t, noEnhance: true, gachaWeight: 0, c: COL[t], img: imgOf(t, r.k), afkRiftDoll: { t: t, k: r.k } };
       Object.keys(BASE).forEach(function (s) { d[s] = BASE[s][i]; });
       Object.keys(r.st).forEach(function (s) { d[s] = (d[s] || 0) + r.st[s][i]; });
-      var parts = ['HP 恢復 +' + BASE.hpR[i], 'MP 恢復 +' + BASE.mpR[i], '最大 HP +' + BASE.mhp[i], '魔防 +' + BASE.mr[i], r.txt(i)];
+      d.expBonus = EXP[i] + (r.k === 'rule' ? EXP_RULE : 0);
+      var parts = ['HP 恢復 +' + BASE.hpR[i], 'MP 恢復 +' + BASE.mpR[i], '最大 HP +' + BASE.mhp[i], '魔防 +' + BASE.mr[i], '經驗值獲得量 +' + d.expBonus + '%', r.txt(i)];
       var rp = [r.rtxt(i)]; if (ACT[t]) rp.push('每 ' + ACT[t] + ' 秒自動發動「縫光」：全隊光蝕 −3 層、5 秒內地圖侵蝕暫停'); if (t === 10) rp.push('造成的傷害 +6%、受到的傷害 −6%');
       d.d = CN[t] + '魔法娃娃（次元裂縫・' + r.n + '）。' + parts.join('、') + '。在次元裂縫裡另外有：' + rp.join('；') + '。';
-      if (!DB.items[id]) DB.items[id] = d;
+      if (!DB.items[id]) DB.items[id] = d; else { DB.items[id].expBonus = d.expBonus; DB.items[id].d = d.d; }
       var row = { id: id, t: t, i: i, k: r.k, r: r, n: name };
       BY[id] = row; LIST.push(row); TIER_IDS[t].push(id);
     });
@@ -243,7 +245,7 @@
     });
   }
 
-  W.__afkDollRift = { synthMany: synthMany, askMany: askMany, noMany: noMany, R: R, NAMES: NAMES, LIST: LIST, BY: BY, TIER_IDS: TIER_IDS, RATE: RATE, BADGE_N: BADGE_N, DRAW_N: DRAW_N, DRAW_RATE: DRAW_RATE, PITY: PITY, ACT: ACT, CN: CN, COL: COL, BASE: BASE,
+  W.__afkDollRift = { EXP: EXP, EXP_RULE: EXP_RULE, synthMany: synthMany, askMany: askMany, noMany: noMany, R: R, NAMES: NAMES, LIST: LIST, BY: BY, TIER_IDS: TIER_IDS, RATE: RATE, BADGE_N: BADGE_N, DRAW_N: DRAW_N, DRAW_RATE: DRAW_RATE, PITY: PITY, ACT: ACT, CN: CN, COL: COL, BASE: BASE,
     idOf: idOf, imgOf: imgOf, store: store, exchange: exchange, draw: draw, synth: synth, panel: panel, cur: cur, tierCount: tierCount };
   try { console.log('[AFK-dollrift] 已載入：魔法娃娃 7～10 階（32 隻）'); } catch (e) {}
 })();

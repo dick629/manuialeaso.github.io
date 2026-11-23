@@ -510,6 +510,7 @@
     if (!P()) return false;
     toCenter();
     try { if (W.__afkPoker && W.__afkPoker.closeLobby) W.__afkPoker.closeLobby(); } catch (e) {}
+    try { var pw = el('afk-pk-win'); if (pw && pw.style.display !== 'none' && W.__afkPoker && W.__afkPoker.toBall) W.__afkPoker.toBall(); } catch (e) {}   // 11-23 Ping：還坐在牌桌時，牌桌視窗會蓋住遊戲廳 → 先把牌桌縮成小球（座位保留）
     try { var tic = el('town-interaction-container'); if (tic && !tic.classList.contains('hidden') && (tic.querySelector('.pk-tbl')) && typeof W.closeNpcInteraction === 'function') W.closeNpcInteraction(); } catch (e) {}
     var w = win(); w.style.display = ''; ui.min = false; var b = el('afk-gh-ball'); if (b) b.style.display = 'none';
     if (view) go(view); else render();
@@ -1169,7 +1170,7 @@
     if (a === 'min') return toBall();
     if (a === 'home') { if (ui.busy) { stopAnims(); if (ui.view === 'sg') sgFinish(); else finishShow(); ui.busy = false; } stopAuto(); return go('home'); }
     if (a === 'quick') { ui.quick = !!t.checked; LS('afk_gh_quick', ui.quick ? '1' : '0'); return; }
-    if (a === 'poker') { close(); try { W.__afkPoker.openLobby(); } catch (e) {} return; }
+    if (a === 'poker') { close(); try { if (W.__afkPoker.table && W.__afkPoker.table()) W.__afkPoker.openWin(); else W.__afkPoker.openLobby(); } catch (e) {} return; }   // 還坐在牌桌：直接回牌桌
     if (a === 'fish') { close(); try { W.__afkFish.open(); } catch (e) { console.warn(e); } return; }
     if (a === 'dog') { close(); toCenter(); try { W.openRaceWindow(); } catch (e) {} return; }
     if (p[0] === 'arcade' && W.LineageArcadeEntry) return W.LineageArcadeEntry.open(p[1]);

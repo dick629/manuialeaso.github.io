@@ -17,7 +17,7 @@
   function pct(p,k){const g=read(p);return g?C.value(g,k):0;}
   function sync(){const g=read(P());if(g&&W.LineageGrowthUI)W.LineageGrowthUI.refreshSummary();return g;}
   function gainOfflineXP(petExp){let n=Number(petExp)||0;const p=P();if(typeof W.__afkTtmiExpMult==='function')n*=W.__afkTtmiExpMult(p);if(typeof W.__afkExpShare==='function')n*=W.__afkExpShare(p);gainXP(Math.floor(n));}
-  function gainXP(n){const p=P(),g=read(p);if(g)C.gain(g,n,N(p.rebirth),N(p.lv),W.getExpReq(100));}
+  function gainXP(n){const p=P(),g=read(p);if(g){n=Math.floor(N(n)*(1+C.value(g,'pexp')/100)*(typeof W.__afkPgBuffMult==='function'?W.__afkPgBuffMult(p):1));C.gain(g,n,N(p.rebirth),N(p.lv),W.getExpReq(100));}}   // 11-23：巔峰經驗節點＋巔峰祝福藥水
   function snapshot(){const out={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k!==backupKey)out[k]=localStorage.getItem(k);}return out;}
   function restore(before,writes,put,remove){
     for(const [k,last] of writes){if(localStorage.getItem(k)!==last)throw Error('另一個視窗已修改資料，保留較新資料並提供交易備份');}

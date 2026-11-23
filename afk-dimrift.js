@@ -306,6 +306,7 @@
     var p = P(), got = [];
     var give = function (id, n) { if (!DB.items[id] || !(n > 0)) return; try { gainItem(id, n, true, true); if (W.__afkGuardTwin) W.__afkGuardTwin(id, n); } catch (e) {} got.push((DB.items[id].n || id) + (n > 1 ? ' ×' + n : '')); };
     if (roll(0.05)) give('afk_dim_crystal', 1);   // 11-23 Ping：每隻 5%（王也一樣）
+    if (roll(0.01)) give('afk_pg_potion', 1);   // 11-23 Ping：巔峰祝福藥水，所有怪 1%
     if (m.boss) give('afk_rift_shard', 3 + Math.floor(Math.random() * 3)); else if (roll(0.02)) give('afk_rift_shard', 1);
     if (roll(0.01)) give('afk_star_dust', 1);
     if (roll(0.01)) give('afk_split_dust', 1);
@@ -426,4 +427,36 @@
   W.__afkCrossThrough = function () { if (!on()) return null; var p0 = P(), hl = p0 && p0.eq && p0.eq.horn ? (rec(p0).hornLv || 0) : 0; return 1 - [0.3, 0.4, 0.45, 0.5][Math.max(0, Math.min(3, hl))]; };
   W.__afkDimRift = { CARRY: CARRY, R: R, RANKS: DR_RANKS, rankUp: rankUp, rankWhy: rankWhy, sealTier: sealTier, allyPanel: allyPanel, REDUCE: REDUCE, FLOOR: FLOOR, RECOVER: RECOVER, on: on, open: on, canOpen: canOpen, toggle: toggle, rec: rec, reduceSum: reduceSum, floorSum: floorSum, recoverPct: recoverPct, panelF: panelF, weightCut: weightCut, erodeSecond: erodeSecond, lightSecond: lightSecond, drops: drops, outMult: outMult };
   try { console.log('[AFK-dimrift] 已載入：次元裂縫（世界規則）'); } catch (e) {}
+})();
+
+/* 巔峰祝福藥水（Ping 11-23 14:39／14:54）：次元裂縫所有怪 1% 掉落。
+ *   喝下：巔峰經驗 +30%，1 小時（再喝延長 1 小時，最多疊到 24 小時）；轉生後才能喝（巔峰本來就要轉生）。
+ *   不受「轉生後經驗藥水無效」影響（只加巔峰經驗，不走天堂透視鏡的經驗倍率）。時間照遊戲進度算（離線補跑也會走）。 */
+(function () {
+  'use strict';
+  var W = window, ID = 'afk_pg_potion', TK = 36000, MAXTK = 24 * 36000, K = 0.30;
+  if (typeof DB === 'undefined' || !DB.items) return;
+  var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var tk = function () { return (typeof state !== 'undefined' && state) ? Number(state.ticks) || 0 : 0; };
+  if (!DB.items[ID]) DB.items[ID] = { n: '巔峰祝福藥水', type: 'misc', eff: ID, c: 'text-amber-300', p: 0, gachaWeight: 0, img: 'assets/icons/items/伊娃的祝福.png',
+    d: '次元裂縫裡偶爾撿到的藥水，喝下後 1 小時內得到的巔峰經驗 +30%（再喝延長 1 小時，最多 24 小時）。轉生後才能喝。' };
+  var left = function (p) { p = p || P(); return p ? Math.max(0, (Number(p.afkPgBuff) || 0) - tk()) : 0; };
+  W.__afkPgBuffMult = function (p) { return left(p) > 0 ? 1 + K : 1; };
+  var sys = function (h) { try { if (typeof logSys === 'function') logSys(h); } catch (e) {} };
+  if (typeof W.useItem === 'function') {
+    var oUse = W.useItem;
+    W.useItem = function (uid) {
+      var p = P(), it = p && (p.inv || []).find(function (x) { return x && x.uid === uid; });
+      if (!it || it.id !== ID) return oUse.apply(this, arguments);
+      if (it.lock) return;
+      if (!((Number(p.rebirth) || 0) >= 1) || p.classicMode) { sys('<span class="text-red-400">巔峰祝福藥水要轉生後才能喝。</span>'); return; }
+      var cur = left(p); if (cur + TK > MAXTK) { sys('<span class="text-red-400">巔峰祝福的效果最多疊到 24 小時。</span>'); return; }
+      if ((Number(it.cnt) || 1) > 1) it.cnt = (Number(it.cnt) || 1) - 1; else p.inv.splice(p.inv.indexOf(it), 1);
+      p.afkPgBuff = tk() + cur + TK;
+      sys('<span class="text-amber-300">喝下巔峰祝福藥水：巔峰經驗 +30%，剩 ' + Math.round((cur + TK) / 600) + ' 分鐘。</span>');
+      try { var l2 = p.inv.find(function (x) { return x.uid === uid; }); if (l2 && typeof openModal === 'function') openModal(l2, false); else if (typeof closeModal === 'function') closeModal(); } catch (e) {}
+      try { renderTabs(); updateUI(); saveGame(); } catch (e) {}
+    };
+  }
+  W.__afkPgPotion = { ID: ID, left: left, K: K };
 })();

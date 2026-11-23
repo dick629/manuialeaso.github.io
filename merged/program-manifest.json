@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-b4728ef95d18",
+  "build": "merge-0.4-9d9ea65102d6",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -483,8 +483,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dimrift.js?v=db6c87579e8f",
-      "sha256": "db6c87579e8f7820e28fa3d6528735577d25a9efbaeaa45361db662a892f4c4a",
+      "url": "afk-dimrift.js?v=5dde005274a5",
+      "sha256": "5dde005274a58909c31a46324041e58e961e22023300e19cdc730904ba95cbe5",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -518,8 +518,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dollrift.js?v=f452b145807d",
-      "sha256": "f452b145807d2d8e8cdc9b3221907d36cb087523e93479a278160b7dcbb9bcc9",
+      "url": "afk-dollrift.js?v=21551dcd9f63",
+      "sha256": "21551dcd9f6307f7dee695278ab5eac10d71becabe6f597e203ab08f1637c379",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -703,8 +703,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-gamehall.js?v=e9c985f1c206",
-      "sha256": "e9c985f1c206217178ba47fbd2dd4f2e592278dcd95030fdcc14f35f51ea4736",
+      "url": "afk-gamehall.js?v=6c21e8412ab6",
+      "sha256": "6c21e8412ab6da4fc257dc8d420f416817bdd28da44b712e0b528f71a8e86c57",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1128,8 +1128,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-partylead.js?v=2ce0dd3f303f",
-      "sha256": "2ce0dd3f303f97de59018bb034c8e52ebb1db9832c8f0efd08c176a97a890b14",
+      "url": "afk-partylead.js?v=a505924b4992",
+      "sha256": "a505924b499264eab76d6e044f7b2e0571725f61e189729cb9bfe37dc949d737",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "75d91fb50e433ec7d09b218c8f9c346395654affcd965ddb2cc5dcbcaa508a2e",
+      "sha256": "ab1e9c7dc254ba2f042446ee5ed4d049a639a3405d2dc42d0cbee5e7981b4eea",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2138,8 +2138,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-core.js?v=870f41d55cbd",
-      "sha256": "870f41d55cbd4688a6e7171605583fc94d0ce2b5e92edffa7d7397e9fe338e72",
+      "url": "merged/growth-core.js?v=f30f100d17ce",
+      "sha256": "f30f100d17ce5c443b7e1910726b3f9456aba24240688a40c94c65af8c46676d",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2148,8 +2148,8 @@
       "type": "text/css; charset=utf-8"
     },
     {
-      "url": "merged/growth-runtime.js?v=157d4352eed5",
-      "sha256": "157d4352eed5a6dbaf31ecee5057be97f8b595f6c5bb551ace6b8fbd448c6165",
+      "url": "merged/growth-runtime.js?v=a4849ca87ee9",
+      "sha256": "a4849ca87ee9fc3391334b10cb34c9b2a5be30b83dbc560f4d4246d082dd1383",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2158,8 +2158,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/growth-views.js?v=d0baa6a7d757",
-      "sha256": "d0baa6a7d7574e7a2c4a3f4d11af42f191463ddee1bb33db9d7f71e80394865e",
+      "url": "merged/growth-views.js?v=ed869880b6cf",
+      "sha256": "ed869880b6cf21b33736e0d272f9577bf27204507ffa64dad16ff4758569846e",
       "type": "text/javascript; charset=utf-8"
     },
     {

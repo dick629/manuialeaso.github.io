@@ -2430,8 +2430,8 @@
       out += wCard('🌀 七～十階魔法娃娃（次元裂縫，32 隻）', wDesc('每階 8 條路線（統御、堅壁、遠矢、星詠、影刃、龍息、幻夢、不屈），平常就有能力，<b>在次元裂縫裡另外再多一種效果</b>。九階以上在裂縫裡每 ' + DR.ACT[9] + ' 秒（十階 ' + DR.ACT[10] + ' 秒）自動發動「縫光」：全隊光蝕 −3 層、5 秒內地圖侵蝕暫停；十階在裂縫裡另外造成的傷害 +6%、受到的傷害 −6%。')
         + wDesc('都在<b>威頓村「魔法娃娃商人」</b>：王之徽章 <b>' + fmn(DR.BADGE_N) + '</b> 個換隨機一隻七階；王者鑽石卡 <b>' + DR.DRAW_N + '</b> 張抽一次，' + DR.DRAW_RATE + '% 得到隨機一隻八階；同階 2 隻合成高一階（路線隨機）：七→八 ' + DR.RATE[7] + '%、八→九 ' + DR.RATE[8] + '%、九→十 ' + DR.RATE[9] + '%。失敗吃 1 隻退 1 隻；同一階連續失敗 9 次，第 10 次必定成功（抽卡也一樣）。')
         + wDesc('娃娃多的時候可以按「×10」「×20」「×30」或「全部」，同一階一次連續合成好幾次；每一次的成功率和保底都照算，跟一下一下按完全一樣，結果會整理成一則訊息。')
-        + wTbl(['階', '共通能力'], [7, 8, 9, 10].map(function (t) { var i = t - 7; return [DR.CN[t], 'HP 恢復 +' + DR.BASE.hpR[i] + '、MP 恢復 +' + DR.BASE.mpR[i] + '、最大 HP +' + DR.BASE.mhp[i] + '、魔防 +' + DR.BASE.mr[i]]; }))
-        + wTbl(['路線', '平常（七／八／九／十階）', '次元裂縫裡（七／八／九／十階）'], DR.R.map(function (r) { return ['<b>' + r.n + '</b>', [0, 1, 2, 3].map(function (i) { return esc(r.txt(i)); }).join('<br>'), [0, 1, 2, 3].map(function (i) { return esc(r.rtxt(i)); }).join('<br>')]; }))
+        + wTbl(['階', '共通能力'], [7, 8, 9, 10].map(function (t) { var i = t - 7; return [DR.CN[t], 'HP 恢復 +' + DR.BASE.hpR[i] + '、MP 恢復 +' + DR.BASE.mpR[i] + '、最大 HP +' + DR.BASE.mhp[i] + '、魔防 +' + DR.BASE.mr[i] + (DR.EXP ? '、經驗值獲得量 +' + DR.EXP[i] + '%' : '')]; }))
+        + wTbl(['路線', '平常（七／八／九／十階）', '次元裂縫裡（七／八／九／十階）'], DR.R.map(function (r) { return ['<b>' + r.n + '</b>', [0, 1, 2, 3].map(function (i) { return esc(r.txt(i)) + (r.k === 'rule' && DR.EXP_RULE ? '；經驗值獲得量再 +' + DR.EXP_RULE + '%' : ''); }).join('<br>'), [0, 1, 2, 3].map(function (i) { return esc(r.rtxt(i)); }).join('<br>')]; }))
         + wTbl(['階', '統御', '堅壁', '遠矢', '星詠', '影刃', '龍息', '幻夢', '不屈'], [7, 8, 9, 10].map(function (t) { return ['<b class="' + DR.COL[t] + '">' + DR.CN[t] + '</b>'].concat(DR.NAMES[t].map(esc)); })));
     }
 

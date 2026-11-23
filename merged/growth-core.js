@@ -38,12 +38,15 @@
     // 巔峰 4000 等開放
     dmgTaken:{name:'受到的傷害',step:.1,cap:10,need:4000,neg:true},antiCrit:{name:'抗暴（敵人爆擊率）',step:.1,cap:10,need:4000,neg:true,unit:' 百分點'},heavyDef:{name:'受到的重擊傷害',step:.1,cap:20,need:4000,neg:true},critDef:{name:'受到的爆擊傷害',step:.1,cap:20,need:4000,neg:true},finalDef2:{name:'最終減傷 Ⅱ',step:.1,cap:5,need:4000,neg:true},
     minHeavyDef:{name:'寵物・召喚物・守衛 受到的重擊傷害',step:.1,cap:10,need:4000,neg:true},minCritDef:{name:'寵物・召喚物・守衛 受到的爆擊傷害',step:.1,cap:10,need:4000,neg:true},minAntiCrit:{name:'寵物・召喚物・守衛 抗暴',step:.1,cap:10,need:4000,neg:true,unit:' 百分點'},
-    cdr3:{name:'施法冷卻 Ⅲ',step:.1,cap:5,need:4000,neg:true}
+    cdr3:{name:'施法冷卻 Ⅲ',step:.1,cap:5,need:4000,neg:true},
+    // 11-23 Ping：巔峰經驗（只加巔峰經驗）
+    pexp:{name:'巔峰經驗',step:.1,cap:30}
   };
   const PMAX=5000;   // 巔峰等級上限（Ping 11-11 12:37：700 → 1000；11-13 03:47：1000 → 3000；11-14 14:39：3000 → 5000）
   // 每一級要的經驗倍數（Ping 11-13 03:47 甲案）：1～1000 ×1、1001～2000 ×2、2001～2500 ×6、2501～3000 ×24
   // 11-14 14:39：3001～3500 ×36、3501～4000 ×48、4001～4500 ×64、4501～5000 ×96
-  function levelMult(lv){return lv<=1000?1:lv<=2000?2:lv<=2500?6:lv<=3000?24:lv<=3500?36:lv<=4000?48:lv<=4500?64:96;}
+  // 11-23 Ping：改成均勻遞增、越後面越難：1～1000 ×0.7（−30%），之後 ×0.7×等級÷1000（2000 等 ×1.4、5000 等 ×3.5）
+  function levelMult(lv){lv=lv||1;return lv<=1000?0.7:Math.round(0.7*lv)/1000;}
   const integer=n=>Number.isSafeInteger(n)&&n>=0;
   const copy=x=>JSON.parse(JSON.stringify(x));
   function fresh(level){return {v:1,maxLevel:Math.max(1,Math.min(200,Math.floor(Number(level)||1))),unlocked:false,talent:{order:[],nodes:[],j:false},paragon:{level:0,xp:0,points:{}}};}
@@ -74,7 +77,7 @@
     return Object.keys(p.points).every(k=>paragon[k]&&integer(p.points[k])&&p.points[k]<=Math.min(PMAX,Math.ceil(paragon[k].cap/paragon[k].step))&&(!p.points[k]||!paragon[k].need||p.level>=paragon[k].need)&&(!p.points[k]||!paragon[k].reqKey||N0(p.points[paragon[k].reqKey])>=paragon[k].reqPts))&&Object.values(p.points).reduce((a,b)=>a+b,0)<=p.level;
   }
   function value(g,k){const d=paragon[k];if(!d||d.need&&g.paragon.level<d.need)return 0;return Math.min(d.cap,Math.round((g.paragon.points[k]||0)*d.step*1000)/1000);}
-  function xpCost(rebirth,e100,lv){if(!Number.isSafeInteger(e100)||e100<=0)throw Error('E100 無效');return e100*(rebirth>=2?3:2)*levelMult(lv||1);}
+  function xpCost(rebirth,e100,lv){if(!Number.isSafeInteger(e100)||e100<=0)throw Error('E100 無效');return Math.round(e100*(rebirth>=2?3:2)*levelMult(lv||1));}
   function gain(g,amount,rebirth,level,e100){
     if(rebirth<1||level<100||g.paragon.level>=PMAX||!Number.isFinite(amount)||amount<=0)return 0;
     const p=g.paragon;let total=p.xp+amount,n=0;

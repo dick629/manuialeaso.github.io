@@ -106,3 +106,20 @@
   }
   W.__afkPartyLead = { swap: swap };
 })();
+
+/* 11-23 Ping：換隊長（或任何換角色）後自動販賣停掉。
+ *   原因：state.ticks 換成新角色自己的進度，但核心的自動賣廢品倒數 state._junkSellAt 沒有清，
+ *   還停在舊角色的 tick 數（例如 3,399 萬 vs 新角色 3.6 萬）→ 要等很久才會再賣。
+ *   做法：讀檔後把倒數清掉讓核心重排；另外每 5 秒檢查一次，倒數離現在太遠（超過 10 分鐘）也清掉。 */
+(function () {
+  'use strict';
+  var W = window;
+  var fix = function () { try { if (typeof state !== 'undefined' && state && state._junkSellAt != null && state._junkSellAt - (state.ticks || 0) > 6000) state._junkSellAt = null; } catch (e) {} };
+  if (typeof W.loadGame === 'function' && !W.loadGame._afkJunkAt) {
+    var oLoad = W.loadGame;
+    W.loadGame = function () { var r = oLoad.apply(this, arguments); try { if (typeof state !== 'undefined' && state) state._junkSellAt = null; } catch (e) {} return r; };
+    W.loadGame._afkJunkAt = true;
+    Object.keys(oLoad).forEach(function (k) { if (!(k in W.loadGame)) W.loadGame[k] = oLoad[k]; });
+  }
+  setInterval(fix, 5000);
+})();
