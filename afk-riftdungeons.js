@@ -187,11 +187,11 @@
     ],
     reward: function () { return [give('afk_rd_scale', rr(3, 5)), Math.random() < 0.02 ? give('afk_abyss_key', 1) : '', give('afk_rift_shard', 50)]; } });
 
-  def({ id: 'mine', n: 'C 燃燼礦坑', tier: 2, fee: { blood: 500 }, min: 11, lore: '保護裂縫鑽機 10 分鐘，怪物每 30 秒一波（共 20 波）。鑽機 HP 歸零就失敗；第 10、20 波熔岩挖掘者 博格會直接打鑽機。鑽機每撐 1 分鐘產出 1 個熾燼原石。',
+  def({ id: 'mine', n: 'C 燃燼礦坑', tier: 2, fee: { blood: 500 }, min: 11, lore: '保護裂縫鑽機，怪物共 20 波：最慢每 30 秒一波，清完一波下一波馬上來。20 波全部打完或撐滿 10 分鐘就過關；鑽機 HP 歸零就失敗；第 10、20 波熔岩挖掘者 博格會直接打鑽機。每打完 2 波（或每撐 1 分鐘）產出 1 個熾燼原石，最多 10 個。',
     stages: [{ n: '鑽機', timed: 600, spawnEvery: 30, per: 3, waveBoss: { 10: 1, 20: 1 }, boss: { n: '熔岩挖掘者 博格', re: '挖掘|礦|岩', hpX: 6 } }],
     onStart: function (r) { r.drill = 100; r.ore = 0; },
     drillTick: function (r, t) { if (t % 10) return; var n = alive().length, bo = alive(function (x) { return x._rdBoss; }).length; r.drill -= n * 0.08 + bo * 1; if (t % 600 === 0 && t > r.t0) r.ore++; if (r.drill <= 0) fail('裂縫鑽機被打壞了。'); },
-    reward: function (r) { return [give('afk_rd_ember', Math.max(1, r.ore)), give('afk_dim_crystal', 30)]; } });
+    reward: function (r) { return [give('afk_rd_ember', Math.max(1, Math.min(10, Math.max(r.ore, Math.floor((r.wave || 0) / 2))))), give('afk_dim_crystal', 30)]; } });   // 11-23：每打完 2 波也算 1 個（提早打完 20 波＝10 個），最多 10 個
 
   def({ id: 'ship', n: 'D 漂流的墓船', tier: 2, fee: { blood: 500 }, min: 25, lore: '三艘船依序登船，每艘船有船長。最後的深淵的大王烏賊：8 條觸手全部打斷前本體不受傷；每 30 秒墨潮，全隊命中 −50% 5 秒（目盲）。',
     stages: [
@@ -564,7 +564,12 @@
         if (run && cur === MAP && t !== t0) {
           var d = run.D, st = curStage();
           if (run.until && Date.now() > run.until) { leave('<span class="text-red-400">時間到，裂縫闔上了——挑戰失敗。</span>'); return r; }
-          if (st.timed) { if (t - run.st0 >= st.timed * 10) { finish(); return r; } if (every(run.SM, 'spawn', st.spawnEvery, t) || run.wave === 0 && run.pending) { run.pending = true; spawnWave(); } }
+          if (st.timed) {
+            // 11-23 19:41 Ping：打完怪不用乾等——這一波清光，下一波 2 秒後就來；全部波數打完直接過關（撐滿時間照舊也算過關）
+            var totW = Math.round(st.timed / st.spawnEvery), clearW = run.wave > 0 && !run.pending && !alive().length;
+            if (t - run.st0 >= st.timed * 10 || (clearW && run.wave >= totW)) { finish(); return r; }
+            if (clearW && run.SM.spawn && run.SM.spawn - t > 20) run.SM.spawn = t + 20;
+            if (every(run.SM, 'spawn', st.spawnEvery, t) || run.wave === 0 && run.pending) { run.pending = true; spawnWave(); } }
           else { if (!run.pending && !alive(function (x) { return x._rd; }).length) run.pending = true; if (st.dur && run.pending === false && (t - run.st0) >= st.dur * 10 && !run.bd && !alive(function (x) { return x._rdBoss; }).length) run.pending = true; }
           if (st.onTick) st.onTick(run, t, run.SM);
           if (d.drillTick) d.drillTick(run, t);
