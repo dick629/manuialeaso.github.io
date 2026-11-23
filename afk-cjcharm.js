@@ -16,7 +16,7 @@
     n: 'CJ的幸運符', type: 'acc', slot: 'ear', relic: true, noEnhance: true, ac: 0,
     relicDropX2: true, relicNoStack: true, req: 'all', p: 10000, gachaWeight: 0,
     img: 'assets/icons/gpt/cj_charm.webp',
-    d: '【遺物】蘑菇秘境深處撿到的幸運符，背面歪歪扭扭刻著「CJ」。遺物掉落判定 ×4（跟幸運暴走兔腳的效果不疊加）。'
+    d: '【遺物】蘑菇秘境深處撿到的幸運符，背面歪歪扭扭刻著「CJ」。遺物掉落判定 ×4。效果只算一個：戴兩個不會加倍，也不跟幸運暴走兔腳疊加（取比較高的）。'
   };
   // 蘑菇秘境：整張掉落表換成只有 CJ的幸運符（包在最外層：載入時包一次，load 後再確認一次）
   var wrap = function () {
@@ -32,7 +32,7 @@
   // 物品說明：兔腳的「×2」字樣換成 ×4
   if (typeof W.relicPurposeLabels === 'function') {
     var oRL = W.relicPurposeLabels;
-    W.relicPurposeLabels = function (d) { var r = oRL.apply(this, arguments); try { if (d && d.relicNoStack && Array.isArray(r)) r = r.map(function (x) { return /^遺物尋寶/.test(x) ? '遺物尋寶（遺物掉落判定次數×4，不跟幸運暴走兔腳疊加）' : x; }); } catch (e) {} return r; };
+    W.relicPurposeLabels = function (d) { var r = oRL.apply(this, arguments); try { if (d && d.relicNoStack && Array.isArray(r)) r = r.map(function (x) { return /^遺物尋寶/.test(x) ? '遺物尋寶（遺物掉落判定次數×4；戴兩個不會加倍，不跟幸運暴走兔腳疊加）' : x; }); } catch (e) {} return r; };
     try { (0, eval)('relicPurposeLabels = window.relicPurposeLabels'); } catch (e) {}
   }
   // 11-19 16:13 Ping：秘境只給經驗、金幣、CJ的幸運符——其他系統在打倒怪物時直接塞進背包的東西（次元結晶（戒）、夢艷結晶…）也擋掉
