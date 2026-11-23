@@ -339,5 +339,65 @@
     };
     try { (0, eval)('updateUI = window.updateUI'); } catch (e) {}
   }
+  // ── 龍之鑽石、血龍鑽（Ping 11-23 15:09）──
+  //   1. 主控台加錢要管理密碼：加龍鑽、直接設定龍鑽數量、遊戲廳入帳、撲克換回籌碼（遊戲本身的流程不受影響）
+  //   2. 對帳（只記錄，不動玩家資料）：餘額增加的量 比 正規管道記到的量 多 → 記一筆異常
+  //   3. 每小時取得紀錄存進存檔：[觀察到的龍鑽增加, 正規龍鑽, 觀察到的血龍鑽增加, 正規血龍鑽]，留 30 天
+  (function () {
+    var BLOOD = 'afk_blood_dia', AKEY = 'afk_curlog_v1', CSALT = 'cl:7d1:';
+    var okCall = function () { var st = (typeof state !== 'undefined' && state) || {}; return !!st.ff || LOCAL() || !external() || unlocked || isOwner(P()); };
+    var deny = function () { try { console.warn('從主控台改龍之鑽石、血龍鑽需要先輸入管理密碼。'); } catch (e) {} };
+    var pend = { d: 0, b: 0 };
+    var wrapFn = function (obj, name, mk) { try { var o = obj && obj[name]; if (typeof o === 'function' && !o.__afkCur) { var f = mk(o); f.__afkCur = true; obj[name] = f; } } catch (e) {} };
+    wrapFn(W, 'pandoraAdjustSharedDiamonds', function (o) { return function (delta) { if (Number(delta) > 0 && !okCall()) { deny(); return { ok: false, error: '需要管理密碼。' }; } var r = o.apply(this, arguments); if (r && r.ok && Number(delta) > 0) pend.d += Math.trunc(Number(delta)); return r; }; });
+    wrapFn(W, 'pandoraRestoreSharedDiamonds', function (o) { return function () { if (!okCall()) { deny(); return { ok: false, error: '需要管理密碼。' }; } var r = o.apply(this, arguments); rebase(true); return r; }; });   // 匯入存檔：重新取基準
+    wrapFn(W, 'pandoraTestSetDiamonds', function (o) { return function () { if (!okCall()) { deny(); return false; } return o.apply(this, arguments); }; });
+    wrapFn(W, 'performWanderingBuyerTrade', function (o) { return function () { var b0 = 0; try { b0 = Number(W.pandoraGetSharedDiamonds()) || 0; } catch (e) {} var r = o.apply(this, arguments); try { var b1 = Number(W.pandoraGetSharedDiamonds()) || 0; if (b1 > b0) pend.d += b1 - b0; } catch (e) {} return r; }; });
+    wrapFn(W.__afkGameHall, 'credit', function (o) { return function () { if (!okCall()) { deny(); return false; } return o.apply(this, arguments); }; });
+    ['cashOut', 'topUp', 'buyIn'].forEach(function (k) { wrapFn(W.__afkPoker, k, function (o) { return function () { if (!okCall()) { deny(); return { ok: false, msg: '需要管理密碼。' }; } return o.apply(this, arguments); }; }); });
+    wrapFn(W, 'gainItem', function (o) { return function (id, n) { var r = o.apply(this, arguments); try { if (id === BLOOD && r) pend.b += Math.max(1, Math.floor(Number(n) || 1)); } catch (e) {} return r; }; });
+    // 倉庫裡的血龍鑽：存倉庫時順手更新，不每次都讀
+    var whB = null;
+    var countWh = function (w) { return ((w && w.items) || []).reduce(function (s, it) { return s + (it && it.id === BLOOD ? (Number(it.cnt) || 1) : 0); }, 0); };
+    wrapFn(W, 'saveWarehouse', function (o) { return function (w) { var r = o.apply(this, arguments); try { whB = countWh(w); } catch (e) {} return r; }; });
+    try { (0, eval)('saveWarehouse = window.saveWarehouse'); } catch (e) {}
+    var invB = function (p) { return ((p && p.inv) || []).reduce(function (s, it) { return s + (it && it.id === BLOOD ? (Number(it.cnt) || 1) : 0); }, 0); };
+    var diaNow = function () { try { return Math.floor(Number(W.pandoraGetSharedDiamonds()) || 0); } catch (e) { return null; } };
+    var BA = function () { return W.__afkBloodAcct; };
+    var mvSeen = 0, mvNew = function () { var b = BA(); if (!b) return 0; var m = Number(b.moved()) || 0, d = m - mvSeen; mvSeen = m; return Math.max(0, d); };
+    var csig = function (a) { return dg(CSALT + [a.d, a.t, a.b == null ? '' : a.b].join('|')); };
+    var aRead = function () { try { var a = JSON.parse(localStorage.getItem(AKEY) || 'null'); if (a && typeof a === 'object') { a.bad = a.k !== csig(a); return a; } } catch (e) {} return null; };
+    var aWrite = function (d) { var a = { d: d, t: Date.now() }; if (BA()) a.b = BA().get(); a.k = csig(a); try { localStorage.setItem(AKEY, JSON.stringify(a)); } catch (e) {} };
+    var recOf = function (p) { var r = p.afkCurLog; if (!r || typeof r !== 'object') r = p.afkCurLog = { h: {}, an: [] }; if (!r.h || typeof r.h !== 'object') r.h = {}; if (!Array.isArray(r.an)) r.an = []; return r; };
+    var hour = function (r) { var k = String(Math.floor(Date.now() / 3600000)); var h = r.h[k] || (r.h[k] = [0, 0, 0, 0]); return h; };
+    var prune = function (r) { var lim = Math.floor(Date.now() / 3600000) - 720; Object.keys(r.h).forEach(function (k) { if (Number(k) < lim) delete r.h[k]; }); if (r.an.length > 200) r.an.splice(0, r.an.length - 200); };
+    var anom = function (r, kind, n, why) { r.an.push([Date.now(), kind, n, why]); };
+    var curP = null, lastB = null, lastD = null;
+    function rebase(dOnly) { lastD = diaNow(); if (lastD != null) aWrite(lastD); if (!dOnly) { var p = P(); lastB = p ? invB(p) + (whB || 0) : null; } pend.d = 0; if (!dOnly) pend.b = 0; }
+    var check = function () {
+      var p = P(); if (!p || p.classicMode) return;
+      var r = recOf(p), h = hour(r);
+      if (curP !== p) {   // 換角色、剛讀檔：先跟存起來的基準比（關遊戲時被改過）
+        curP = p; if (whB == null) { try { whB = countWh(loadWarehouse()); } catch (e) { whB = 0; } }
+        var a = aRead(), d0 = diaNow();
+        if (a && d0 != null) { if (a.bad) anom(r, 'dia', 0, '紀錄被改過'); else if (d0 > a.d) anom(r, 'dia', d0 - a.d, '遊戲沒開時增加'); }
+        var ib = invB(p), mv0 = mvNew();
+        if (BA()) { var b0 = BA().get(); if (a && !a.bad && a.b != null && b0 - mv0 > a.b) anom(r, 'blood', b0 - mv0 - a.b, '遊戲沒開時增加'); ib = b0; }
+        else if (r.lb != null && ib > r.lb) anom(r, 'blood', ib - r.lb, '讀檔時比上次存檔多');
+        lastD = d0; lastB = BA() ? ib : ib + whB; pend.d = 0; pend.b = 0; if (d0 != null) aWrite(d0); r.lb = ib; prune(r); return;
+      }
+      var d = diaNow(), b = BA() ? BA().get() : invB(p) + (whB || 0), mv = mvNew(); pend.b += mv;
+      if (d != null && lastD != null) { var dd = d - lastD; if (dd > 0) { h[0] += dd; h[1] += Math.min(dd, pend.d); if (dd > pend.d) anom(r, 'dia', dd - pend.d, '沒有正規來源'); } }
+      else if (pend.d > 0) h[1] += pend.d;
+      if (lastB != null) { var db = b - lastB; if (db > 0) { h[2] += db; h[3] += Math.min(db, pend.b); if (db > pend.b) anom(r, 'blood', db - pend.b, '沒有正規來源'); } }
+      lastD = d; lastB = b; pend.d = 0; pend.b = 0; if (d != null) aWrite(d); r.lb = invB(p); prune(r);
+    };
+    setInterval(function () { try { check(); } catch (e) {} }, 30000);
+    W.addEventListener('load', function () { setTimeout(function () { try { check(); } catch (e) {} }, 6000); });
+    W.__afkCurLog = {
+      check: check,
+      report: function () { if (!unlocked && !isOwner(P())) return '需要管理密碼。'; var p = P(); if (!p) return null; var r = recOf(p); return { hours: Object.keys(r.h).sort().map(function (k) { var v = r.h[k]; return new Date(Number(k) * 3600000).toLocaleString('zh-TW') + '  龍鑽 +' + v[0] + '（正規 ' + v[1] + '）  血龍鑽 +' + v[2] + '（正規 ' + v[3] + '）'; }), anomalies: r.an.map(function (x) { return new Date(x[0]).toLocaleString('zh-TW') + ' ' + (x[1] === 'dia' ? '龍鑽' : '血龍鑽') + ' +' + x[2] + ' ' + x[3]; }) }; }
+    };
+  })();
   W.__afkAntiCheat = { scan: scan, costOf: costOf, isOwner: isOwner, hours: hours, external: external, store: store, sKind: sKind, sealOf: sealOf, stampOk: stampOk, acct: acct, acctSave: acctSave };
 })(window);

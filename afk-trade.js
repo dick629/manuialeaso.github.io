@@ -310,7 +310,7 @@
   var tleft = function (t) { var ms = t - Date.now(); if (ms <= 0) return '已到期'; var h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000); return (h ? h + ' 小時 ' : '') + m + ' 分'; };
   var rulesHtml = function () {
     return '<details><summary>規則</summary><div class="dim" style="line-height:1.7">'
-      + '‧用<b>血龍鑽</b>一口價買賣，從目前角色的背包扣、入帳。<br>'
+      + '‧用<b>血龍鑽</b>一口價買賣（血龍鑽所有角色共用）。<br>'
       + '‧定價最少 ' + fmt(RULE.minPrice) + ' 顆；上架費 ' + Math.round(RULE.postFee * 100) + '%（按下上架就扣、不退）；賣出時扣成交手續費 ' + Math.round(RULE.saleFee * 100) + '%。<br>'
       + '‧上架 24 小時，沒賣掉自動退回；同時最多 ' + RULE.maxActive + ' 件；每天上架 ' + RULE.postPerDay + ' 次、購買 ' + RULE.buyPerDay + ' 件（台灣時間 00:00 換日）。<br>'
       + '‧可以賣：武器、防具、飾品（+15 以下）、遺物、席琳遺骸、怪物卡片（一次最多 10 張）、8 級以上的法術書（一次最多 10 本）、卷軸（一次最多 100 張）。上鎖的要先解鎖。<br>'

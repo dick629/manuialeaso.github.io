@@ -16,7 +16,7 @@
   var ID = 'afk_blood_dia', RATE = 50;
   if (!DB.items[ID]) DB.items[ID] = { n: '血龍鑽', type: 'etc', req: 'all', p: 0, gachaWeight: 0, noSell: true, noJunk: true, c: 'text-rose-400',
     img: (DB.items.diamond && DB.items.diamond.img) || 'assets/icons/items/龍之鑽石.png',
-    d: '浸過龍血的龍之鑽石。在潘朵拉黑市用龍之鑽石 50 顆換 1 顆。' };
+    d: '浸過龍血的龍之鑽石。在潘朵拉黑市用龍之鑽石 50 顆換 1 顆。所有角色共用一份，數量顯示在潘朵拉黑市上方。' };
   var on = function () { return !T || T.enabled('blooddia'); };
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var act = function () { var p = P(); return on() && !!p && !p.classicMode; };
@@ -124,4 +124,87 @@
     try { (0, eval)('pandoraRenderMarket = window.pandoraRenderMarket'); } catch (e) {}
   } else console.warn('[AFK-blooddia] 找不到潘朵拉黑市面板，兌換分頁停用');
   console.log('[AFK-blooddia] 已啟用：潘朵拉黑市血龍鑽兌換');
+})();
+
+/* ============================================================================
+ * 血龍鑽改成帳號共用貨幣（Ping 11-23 15:24）
+ *   ‧所有角色共用一份數字（存瀏覽器 afk_blood_acct_v1，加簽章），跟龍之鑽石一樣。
+ *   ‧搬家：每個角色第一次讀進來時，背包裡的血龍鑽加進共用帳戶（同一個存檔位＋角色名只搬一次，讀舊存檔不會重複加）；
+ *          倉庫裡的血龍鑽在第一次啟動時整批搬進去、從倉庫拿掉。
+ *   ‧做法（不改各系統的扣款程式）：背包裡留一疊「鏡像」，數量永遠等於共用帳戶；
+ *     各系統照舊從背包扣、用 gainItem 給，鏡像的增減會同步寫回共用帳戶（每 0.5 秒、存檔前、換角色前都會同步）。
+ *     鏡像不顯示在背包，黑市上方跟龍之鑽石一起顯示數量。經典模式不受影響。
+ * ========================================================================== */
+(function () {
+  'use strict';
+  var W = window, ID = 'afk_blood_dia', KEY = 'afk_blood_acct_v1', SALT = 'bda:4k2:';
+  if (typeof DB === 'undefined' || !DB.items || !DB.items[ID]) return;
+  var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
+  var ok = function (p) { return !!p && !p.classicMode; };
+  var fnv = function (s) { var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; } return h.toString(36); };
+  var sig = function (a) { return fnv(SALT + a.b + '|' + (a.wh ? 1 : 0) + '|' + Object.keys(a.mig || {}).sort().join(',')); };
+  var read = function () { var a = null; try { a = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {} if (!a || typeof a !== 'object') a = { b: 0, wh: 0, mig: {} }; a.b = Math.max(0, Math.floor(Number(a.b) || 0)); if (!a.mig || typeof a.mig !== 'object') a.mig = {}; a.bad = !!a.k && a.k !== sig(a); return a; };
+  var write = function (a) { var o = { b: Math.max(0, Math.floor(a.b)), wh: a.wh ? 1 : 0, mig: a.mig || {} }; o.k = sig(o); try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
+  var invCount = function (p) { return (p.inv || []).reduce(function (n, i) { return n + (i && i.id === ID ? (Number(i.cnt) || 1) : 0); }, 0); };
+  var setInv = function (p, n) {
+    var keep = null; p.inv = (p.inv || []).filter(function (i) { if (!i || i.id !== ID) return true; if (!keep) { keep = i; return true; } return false; });
+    if (n <= 0) { if (keep) p.inv.splice(p.inv.indexOf(keep), 1); return; }
+    if (!keep) { keep = { id: ID, cnt: n, uid: 'bd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }; p.inv.push(keep); }
+    keep.cnt = n; delete keep.lock; delete keep.junk;
+  };
+  var slotKey = function (p) { var s = ''; try { s = String(currentSlot); } catch (e) {} return s + ':' + String(p.name || ''); };
+  var curP = null, last = 0, busy = false, movedIn = 0;
+  var migrateWh = function (a) {
+    if (a.wh) return;
+    try {
+      if (typeof loadWarehouse !== 'function' || typeof saveWarehouse !== 'function') return;
+      var w = loadWarehouse(); if (typeof _whLoadOk !== 'undefined' && !_whLoadOk) return;   // 倉庫讀不到就先不搬（下次再試）
+      var n = 0; w.items = (w.items || []).filter(function (it) { if (it && it.id === ID) { n += Number(it.cnt) || 1; return false; } return true; });
+      if (n > 0) saveWarehouse(w);
+      a.b += n; a.wh = 1; movedIn += n;
+      if (n > 0) try { logSys('<span class="text-rose-300">倉庫裡的血龍鑽 ' + n.toLocaleString() + ' 顆已搬進帳號共用（所有角色共用）。</span>'); } catch (e) {}
+    } catch (e) { console.warn('[AFK-blooddia] 倉庫搬家', e); }
+  };
+  var sync = W.__afkBloodSync = function () {
+    if (busy || (W.__afkBloodAcct && W.__afkBloodAcct.pause)) return; var p = P(); if (!ok(p)) { curP = null; return; }
+    busy = true;
+    try {
+      var a = read();
+      if (curP !== p) {   // 剛讀檔／換角色
+        migrateWh(a);
+        var k = slotKey(p);
+        if (!a.mig[k] && !p.afkBloodMig) { var n = invCount(p); a.b += n; movedIn += n; if (n > 0) try { logSys('<span class="text-rose-300">背包裡的血龍鑽 ' + n.toLocaleString() + ' 顆已搬進帳號共用（所有角色共用）。</span>'); } catch (e) {} }
+        a.mig[k] = 1; p.afkBloodMig = 1;
+        write(a); setInv(p, a.b); last = a.b; curP = p; return;
+      }
+      var c = invCount(p);
+      if (c !== last) { a.b = Math.max(0, a.b + (c - last)); write(a); }
+      if (invCount(p) !== a.b) setInv(p, a.b);
+      last = a.b;
+    } finally { busy = false; }
+  };
+  W.__afkBloodAcct = { get: function () { return read().b; }, sync: sync, read: read, moved: function () { return movedIn; } };
+  // 存檔前、換角色前先同步
+  if (typeof W.saveGame === 'function') { var oS = W.saveGame; W.saveGame = function () { try { sync(); } catch (e) {} return oS.apply(this, arguments); }; }
+  if (typeof W.loadGame === 'function') { var oL = W.loadGame; W.loadGame = function () { try { sync(); } catch (e) {} curP = null; var r = oL.apply(this, arguments); try { sync(); } catch (e) {} return r; }; Object.keys(oL).forEach(function (k) { if (!(k in W.loadGame)) W.loadGame[k] = oL[k]; }); }
+  if (typeof W.gainItem === 'function') { var oG = W.gainItem; W.gainItem = function (id) { var r = oG.apply(this, arguments); if (id === ID) try { sync(); } catch (e) {} return r; }; }
+  setInterval(function () { try { sync(); } catch (e) {} }, 500);
+  try { W.addEventListener('storage', function (e) { if (e && e.key === KEY) try { sync(); } catch (x) {} }); } catch (e) {}
+  // 背包不顯示鏡像
+  if (typeof W.renderTabs === 'function') {
+    var oT = W.renderTabs;
+    W.renderTabs = function () {
+      var p = P(); if (!ok(p) || !(p.inv || []).some(function (i) { return i && i.id === ID; })) return oT.apply(this, arguments);
+      var isB = function (i) { return i && i.id === ID; }, bloods = p.inv.filter(isB);
+      p.inv = p.inv.filter(function (i) { return !isB(i); });
+      try { return oT.apply(this, arguments); } finally { p.inv = p.inv.filter(function (i) { return !isB(i); }).concat(bloods); }
+    };
+    try { (0, eval)('renderTabs = window.renderTabs'); } catch (e) {}
+  }
+  // 黑市上方：跟龍之鑽石一起顯示
+  if (typeof W.pandoraRelicBalanceHTML === 'function') {
+    var oB = W.pandoraRelicBalanceHTML;
+    W.pandoraRelicBalanceHTML = function () { var h = oB.apply(this, arguments); try { var p = P(); if (ok(p)) h = String(h || '') + '<div class="text-sm" style="color:#fda4af;font-weight:700;margin-top:2px">🩸 血龍鑽：' + read().b.toLocaleString() + ' 顆（所有角色共用）</div>'; } catch (e) {} return h; };
+  }
+  W.addEventListener('load', function () { setTimeout(function () { try { sync(); } catch (e) {} }, 1500); });
 })();

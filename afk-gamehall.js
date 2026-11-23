@@ -39,6 +39,7 @@
   var CUR_ICON = { gold: '💰', dia: '💎', blood: '🩸' };
   var LIM = {
     bac: { gold: [50000, 100000000], dia: [10, 5000], blood: [1, 1000] },
+    duel: { gold: [50000, 10000000], dia: [10, 1000], blood: [1, 100] },
     slot: { gold: [50000, 5000000], dia: [10, 500], blood: [1, 50] },
     mary: { gold: [50000, 5000000], dia: [1, 500], blood: [1, 50] },
     sg: { dia: [100, 10000], blood: [10, 1000] }   // 沙暴之神的祭壇：只收龍鑽、血龍鑽（Ping 2026-11-19）   // 小瑪莉每局最少 1 分（單押一格也能開）；金幣 1 分＝5 萬（Ping 2026-11-05）
@@ -551,7 +552,7 @@
     return '<div class="gh-cur" role="group" aria-label="幣別">' + ['gold', 'dia', 'blood'].filter(function (c) { return !!lim[c]; }).map(function (c) {
       var ok = curReady(c);
       return '<button type="button" data-gh="cur:' + c + '"' + (ui.cur === c ? ' class="on"' : '') + (ok && !ui.busy ? '' : ' disabled') + '>' + CUR_ICON[c] + ' ' + CURS[c] + '<br><span class="gh-sm">' + (ok ? fmtS(shownBal(c)) : '—') + '</span></button>';
-    }).join('') + '</div><div class="gh-sm">' + (game === 'bac' ? '每局下注' : '每轉注額') + '：' + fmt(lim[ui.cur][0]) + '～' + fmt(lim[ui.cur][1]) + (ui.cur === 'gold' ? ' 金幣' : ' 顆') + '</div>';
+    }).join('') + '</div><div class="gh-sm">' + (game === 'bac' ? '每局下注' : game === 'duel' ? '注金' : '每轉注額') + '：' + fmt(lim[ui.cur][0]) + '～' + fmt(lim[ui.cur][1]) + (ui.cur === 'gold' ? ' 金幣' : ' 顆') + '</div>';
   }
   function render() {
     var w = el('afk-gh-win'); if (!w || w.style.display === 'none') return;
@@ -562,6 +563,7 @@
     else if (ui.view === 'slot' && !classic()) h = renderSlot();
     else if (ui.view === 'sg' && !classic() && SG) h = renderSg();
     else if (ui.view === 'mary' && !classic()) h = renderMary();
+    else if (ui.view === 'duel' && !classic()) h = renderDuel();
     else if (ui.view === 'stats') h = renderStats();
     else h = renderHome();
     w.innerHTML = h;
@@ -571,6 +573,7 @@
     h += '<div class="gh-cards">';
     if (!cl && W.__afkPoker && W.__afkPoker.on && W.__afkPoker.on()) h += '<button type="button" class="gh-card" data-gh="poker"><span class="ico">♠︎</span><b>德州撲克</b><span>無限注，對 3～5 位 NPC；有超難桌</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:bac"><span class="ico">🃏</span><b>百家樂</b><span>押莊、閒、和、對子；8 副牌</span></button>';
+    if (!cl) h += '<button type="button" class="gh-card" data-gh="go:duel"><span class="ico">⚔️</span><b>百家樂對賭（傳奇）</b><span>跟傳奇賭客各拿 1,000 分打 20 局，最後分數高的贏</span></button>';
     if (!cl) h += '<button type="button" class="gh-card" data-gh="go:slot"><span class="ico">🔺</span><b>' + SLOT_NAME + '</b><span>埃及拉霸：消除連鎖、太陽倍數、免費遊戲</span></button>';
     if (!cl && SG) h += '<button type="button" class="gh-card" data-gh="go:sg"><span class="ico">⚡</span><b>' + SG.NAME + '</b><span>沙暴之神：連鎖越多倍數越高、6 連線送免費轉、倍數球最高 ×10,000</span></button>';
     if (!cl && W.__afkFish && W.__afkFish.on()) h += '<button type="button" class="gh-card" data-gh="fish"><span class="ico">🐟</span><b>' + W.__afkFish.NAME + '</b><span>捕魚機：法利昂、幽靈船長、特殊武器、JP 轉盤</span></button>';
@@ -587,7 +590,7 @@
     var d = hallData() || { st: {} }, td = today(), h = head('📊 遊戲廳戰績', '', true) + '<div class="gh-body">';
     var games = [['poker', '♠︎ 德州撲克'], ['bac', '🃏 百家樂'], ['slot', '🔺 ' + SLOT_NAME]].concat(SG ? [['sg', '⚡ ' + SG.NAME]] : [])
       .concat([['fish', '🐟 ' + ((W.__afkFish && W.__afkFish.NAME) || '捕魚機')], ['mary', '🍒 ' + MARY_NAME], ['dog', '🐕 賽狗場'],
-        ['arcade-tian-normal', '🀄 四人打天九（一般桌）'], ['arcade-tian-expert', '🀄 四人打天九（超強 AI）'], ['arcade-bj-normal', '♠ 21 點（一般桌）'], ['arcade-bj-expert', '♠ 21 點（超強 AI 擂台）']]);
+        ['arcade-tian-normal', '🀄 四人打天九（一般桌）'], ['arcade-tian-expert', '🀄 四人打天九（超強 AI）'], ['arcade-bj-normal', '♠ 21 點（一般桌）'], ['arcade-bj-expert', '♠ 21 點（超強 AI 擂台）'], ['bacduel', '⚔️ 百家樂對賭（傳奇）'], ['arcade-tian-legend', '🀄 四人打天九（傳奇桌）'], ['arcade-bj-legend', '♠ 21 點（傳奇擂台）']]);
     var PIN = { p99: 1, p199: 1, p319: 1 }, PIN_N = { p99: '翠玉物語', p199: '黃金騎士', p319: '赤龍降臨' }; Object.keys(d.st).forEach(function (k) { var m = /^arcade-pin-(.+):/.exec(k); if (m) PIN[m[1]] = 1; });
     var pinName = function (id) { try { var M = W.LineagePachinkoCore && W.LineagePachinkoCore.MACHINES[id]; return (M && (M.name || M.n)) || PIN_N[id] || id; } catch (e) { return PIN_N[id] || id; } };
     var pins = Object.keys(PIN); games = games.concat(pins.length ? pins.map(function (id) { return ['arcade-pin-' + id, '● 柏青哥（' + pinName(id) + '）']; }) : [['arcade-pin-', '● 柏青哥']]);
@@ -697,6 +700,86 @@
     return true;
   }
   function stopAuto() { ui.auto = 0; ui.autoLeft = 0; }
+
+  // ════════════════ 百家樂對賭（傳奇；Ping 11-23）════════════════
+  //   付一筆注金入場；你和傳奇賭客「莉亞」各拿 1,000 分，同一副牌打 20 局，各自押莊／閒／和（50～500 分），最後分數高的贏。
+  //   贏：拿回注金 ×1.95；平手：退回注金；輸：沒收。莉亞跟你同時下注、不偷看牌，也看不到你這一局押什麼：她會照你前幾局的習慣猜，領先時跟你押一樣保住差距，落後時押另一邊、加大注碼追分。
+  //   進行中的對賭存在存檔（重新整理也能接著打）。
+  var DU_N = 20, DU_PTS = 1000, DU_AMT = [50, 100, 200, 500], DU_PAY = 1.95;
+  var du = { side: 'B', amt: 100, stake: {} };
+  function duelData() { var d = hallData(); return d ? d.duel : null; }
+  function aiBet(D, my) {
+    var left = DU_N - D.r, diff = D.ai - D.me;
+    if (diff > 0) { var a = Math.min(D.ai, my.amt); return { side: my.side, amt: Math.max(50, a) }; }   // 領先：跟你一樣，差距不變
+    var opp = my.side === 'B' ? 'P' : 'B';
+    var need = -diff + 50, per = Math.ceil(need / Math.max(1, left) / 50) * 50;
+    var amt = Math.min(D.ai, Math.max(100, left <= 3 ? Math.ceil(need / 50) * 50 : per * 2), 500);
+    if (diff === 0) return { side: 'B', amt: Math.min(D.ai, 100) };
+    return { side: opp, amt: Math.max(50, amt) };
+  }
+  function duelPay(bet, r) { if (!bet || !bet.amt) return 0; if (r.win === 'T') return bet.side === 'T' ? bet.amt * 8 : 0; if (bet.side === 'T') return -bet.amt; if (bet.side === r.win) return bet.side === 'B' ? Math.floor(bet.amt * 0.95) : bet.amt; return -bet.amt; }
+  function renderDuel() {
+    var D = duelData(), cur = ui.cur, h = head('⚔️ 百家樂對賭（傳奇）', '對手：傳奇賭客 莉亞', true) + '<div class="gh-body">';
+    if (!D) {
+      h += curBar('duel');
+      var st = du.stake[cur] || CHIPS[cur][1] || CHIPS[cur][0];
+      h += '<div class="gh-msg">' + esc(ui.msg || '你和莉亞各拿 ' + fmt(DU_PTS) + ' 分，同一副牌打 ' + DU_N + ' 局。每局各自押莊、閒或和（50～500 分）；20 局後分數高的贏：拿回注金 ×' + DU_PAY + '，平手退回注金。') + '</div>';
+      h += '<div class="bc-chips" role="group" aria-label="注金">' + CHIPS[cur].map(function (c) { return '<button type="button" data-gh="du:stake:' + c + '"' + (c === st ? ' class="on"' : '') + '>' + fmtS(c) + '</button>'; }).join('') + '</div>';
+      h += '<div class="gh-btns"><button type="button" class="go" data-gh="du:start">付 ' + esc(amtTxt(cur, st)) + ' 開始對賭</button></div>';
+      return h + '</div>';
+    }
+    var last = D.log[D.log.length - 1];
+    h += '<div style="display:flex;gap:8px;justify-content:space-around;font-weight:800;margin:4px 0"><div style="color:#93c5fd">你 ' + fmt(D.me) + ' 分</div><div style="color:#fde68a">第 ' + Math.min(DU_N, D.r + 1) + '／' + DU_N + ' 局</div><div style="color:#fca5a5">莉亞 ' + fmt(D.ai) + ' 分</div></div>';
+    if (last) h += '<div class="gh-sm" style="text-align:center">上一局：閒 ' + last.pv + '・莊 ' + last.bv + '（' + ({ P: '閒贏', B: '莊贏', T: '和局' })[last.w] + '）　你押' + ({ P: '閒', B: '莊', T: '和' })[last.ms] + ' ' + last.ma + ' → ' + (last.md >= 0 ? '+' : '') + last.md + '　莉亞押' + ({ P: '閒', B: '莊', T: '和' })[last.as] + ' ' + last.aa + ' → ' + (last.ad >= 0 ? '+' : '') + last.ad + '</div>';
+    if (D.r >= DU_N) {
+      h += '<div class="gh-msg">' + esc(ui.msg || '') + '</div><div class="gh-btns"><button type="button" class="go" data-gh="du:end">結算</button></div>';
+      return h + '</div>';
+    }
+    h += '<div class="gh-msg">' + esc(ui.msg || '選好押哪邊和分數，按「開牌」。莉亞會同時下注，看不到你這一局押什麼。') + '</div>';
+    h += '<div class="bc-chips" role="group" aria-label="押哪邊">' + [['P', '閒 1:1'], ['B', '莊 0.95:1'], ['T', '和 8:1']].map(function (x) { return '<button type="button" data-gh="du:side:' + x[0] + '"' + (du.side === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>';
+    h += '<div class="bc-chips" role="group" aria-label="分數">' + DU_AMT.map(function (a) { return '<button type="button" data-gh="du:amt:' + a + '"' + (du.amt === a ? ' class="on"' : '') + (a > D.me ? ' disabled' : '') + '>' + a + ' 分</button>'; }).join('') + '</div>';
+    h += '<div class="gh-btns"><button type="button" class="go" data-gh="du:deal"' + (D.me <= 0 ? ' disabled' : '') + '>開牌</button></div>';
+    h += '<div class="gh-sm">注金：' + esc(amtTxt(D.cur, D.stake)) + '　贏了拿回 ' + esc(amtTxt(D.cur, Math.floor(D.stake * DU_PAY))) + '</div>';
+    return h + '</div>';
+  }
+  function duelClick(p) {
+    var D = duelData(), cur = ui.cur;
+    if (p[1] === 'stake') { du.stake[cur] = Number(p[2]); return render(); }
+    if (p[1] === 'side') { du.side = p[2]; return render(); }
+    if (p[1] === 'amt') { du.amt = Number(p[2]); return render(); }
+    if (p[1] === 'start') {
+      if (D) return render();
+      var st = du.stake[cur] || CHIPS[cur][1] || CHIPS[cur][0];
+      if (balance(cur) < st) { ui.msg = CURS[cur] + '不夠。'; return render(); }
+      if (!debit(cur, st)) { ui.msg = '扣款失敗。'; return render(); }
+      hallData().duel = { cur: cur, stake: st, me: DU_PTS, ai: DU_PTS, r: 0, shoe: newShoe(rng), log: [] };
+      statAdd('bacduel', cur, st, 0, 0, false); ui.msg = ''; safeSave(); return render();
+    }
+    if (!D) return render();
+    if (p[1] === 'deal') {
+      if (D.r >= DU_N) return render();
+      var my = { side: du.side, amt: Math.min(du.amt, D.me) }; if (my.amt <= 0) { ui.msg = '你已經沒有分數了，按結算。'; D.r = DU_N; return render(); }
+      var ai = aiBet(D, D.lastMy || { side: 'B', amt: 100 }); ai.amt = Math.min(ai.amt, D.ai);   // 莉亞跟你同時下注：只看得到你上一局怎麼押
+      D.lastMy = my;
+      if (!D.shoe || D.shoe.cards.length - D.shoe.pos < 10) D.shoe = newShoe(rng);
+      var r = bacDeal(D.shoe), md = duelPay(my, r), ad = duelPay(ai, r);
+      D.me = Math.max(0, D.me + md); D.ai = Math.max(0, D.ai + ad); D.r++;
+      D.log.push({ w: r.win, pv: r.pv, bv: r.bv, ms: my.side, ma: my.amt, md: md, as: ai.side, aa: ai.amt, ad: ad }); if (D.log.length > DU_N) D.log.shift();
+      if (D.me <= 0 || D.ai <= 0) D.r = DU_N;
+      ui.msg = D.r >= DU_N ? '20 局打完了，按結算。' : ''; safeSave(); return render();
+    }
+    if (p[1] === 'end') {
+      if (D.r < DU_N) return render();
+      var win = D.me > D.ai, tie = D.me === D.ai, back = win ? Math.floor(D.stake * DU_PAY) : tie ? D.stake : 0;
+      delete hallData().duel;
+      if (back > 0 && !credit(D.cur, back)) console.warn('[AFK-gamehall] 對賭入帳失敗');
+      statAdd('bacduel', D.cur, 0, back, back / D.stake, true);
+      if (win) { var hd = hallData(); hd.legend = Object.assign({}, hd.legend, { duel: ((hd.legend && hd.legend.duel) || 0) + 1 }); }
+      ui.msg = '你 ' + fmt(D.me) + ' 分、莉亞 ' + fmt(D.ai) + ' 分：' + (win ? '你贏了！拿回 ' + amtTxt(D.cur, back) + '。' : tie ? '平手，注金退回。' : '莉亞贏了。');
+      safeSave(); return render();
+    }
+    return render();
+  }
 
   // ── 拉霸畫面 ──
   function slBet(cur) { var b = sl.bet[cur]; return STEPS[cur].indexOf(b) >= 0 ? b : STEPS[cur][0]; }
@@ -1185,6 +1268,7 @@
     if (a === 'dbl') { var tot = betTotal(bac.bets), lim = LIM.bac[ui.cur]; if (tot * 2 > lim[1]) { ui.msg = '加倍後超過這局上限 ' + fmt(lim[1]) + '。'; return render(); } SPOTS.forEach(function (s) { if (bac.bets[s.id]) bac.bets[s.id] *= 2; }); return render(); }
     if (a === 'rebet') { if (!bac.last) return; if (bac.last.cur !== ui.cur) { ui.msg = '上一注是用' + CURS[bac.last.cur] + '押的，先切換幣別。'; return render(); } bac.bets = JSON.parse(JSON.stringify(bac.last.bets)); return render(); }
     if (a === 'deal') return bacDealRound(false);
+    if (p[0] === 'du') return duelClick(p);
     if (p[0] === 'auto') {
       var tt = betTotal(bac.bets);
       if (!tt && bac.last && bac.last.cur === ui.cur) bac.bets = JSON.parse(JSON.stringify(bac.last.bets));

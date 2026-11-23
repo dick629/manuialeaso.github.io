@@ -4,7 +4,7 @@
  const STAKES={tian:{gold:[10000,50000,100000,500000,1000000],dia:[20,100,200,1000,2000],blood:[2,10,20,100,200]},bj:{gold:[10000,50000,100000,500000,1000000],dia:[20,100,200,1000,2000],blood:[2,10,20,100,200]},pin:{gold:[50000],dia:[100],blood:[10]}};
  const P=()=>typeof player!=='undefined'&&player&&player.cls?player:null;
  let busy=false,blocked=false;
- function data(){const p=P();if(!p)throw Error('請先進入角色');if(p.afkArcade===undefined)p.afkArcade={v:1,seq:0,round:null,frac:{gold:0,dia:0,blood:0},history:[],stats:{},banker:{normal:0,expert:0},shoes:{}};
+ function data(){const p=P();if(!p)throw Error('請先進入角色');if(p.afkArcade===undefined)p.afkArcade={v:1,seq:0,round:null,frac:{gold:0,dia:0,blood:0},history:[],stats:{},banker:{normal:0,expert:0,legend:0},shoes:{}};
   const d=p.afkArcade;if(!d||d.v!==1||!d.frac||!d.history||!d.stats||!d.banker||!d.shoes)throw Error('小遊戲資料版本異常，請保留存檔並使用存檔修復');return d;
  }
  function seed(){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0];}
@@ -21,8 +21,9 @@
   catch(e){if(/回復失敗/.test(e.message))blocked=true;throw e;}
   finally{if(typeof log==='function')W.logSys=log;busy=false;}
  }
- function settle(d,r){if(r.settled)return;const raw=r.game==='tian'?r.reserve+r.g.scores[0]*r.stake:r.game==='bj'?r.reserve+r.g.pNet*r.stake:r.g.v===2?r.g.s.balls*r.stake/100:r.stake*r.g.mult;
+ function settle(d,r){if(r.settled)return;let raw=r.game==='tian'?r.reserve+r.g.scores[0]*r.stake:r.game==='bj'?r.reserve+r.g.pNet*r.stake:r.g.v===2?r.g.s.balls*r.stake/100:r.stake*r.g.mult;
   if(!Number.isFinite(raw)||raw<0||raw>Number.MAX_SAFE_INTEGER/100)throw Error('派彩金額超出安全範圍');
+  if(r.mode==='legend'&&raw>r.reserve){const bn=(raw-r.reserve)*0.05;raw+=bn;r.legendBonus=bn;d.legendWins=(d.legendWins||0)+1;}
   const cents=Math.round(raw*100)+(d.frac[r.cur]||0),pay=Math.floor(cents/100);d.frac[r.cur]=cents%100;
   if(pay&&!H.credit(r.cur,pay))throw Error('派彩入帳失敗');r.settled=true;r.returned=pay;r.finished=Date.now();
   const key=r.game+':'+r.mode+':'+r.cur,s=d.stats[key]||(d.stats[key]={rounds:0,net:0,win:0,playerPoints:0,aiPoints:0});s.rounds++;s.net+=raw-r.reserve;if(raw>r.reserve)s.win++;
@@ -31,7 +32,7 @@
   H.statAdd('arcade-'+r.game+'-'+r.mode,r.cur,bet,won,bet?won/bet:0,true);
   d.history.unshift({id:r.id,game:r.game,mode:r.mode,cur:r.cur,net:raw-r.reserve,at:r.finished});d.history=d.history.slice(0,30);
  }
- function start(game,mode,cur,stake,power=55,machine='p99'){check();if(active())throw Error('請先完成目前已付款的牌局');if(!NAMES[game]||!(game==='pin'?!!W.LineagePachinkoCore.MACHINES[machine]:['normal','expert'].includes(mode))||!STAKES[game][cur]?.includes(stake))throw Error('下注選項不符');if(game==='pin')mode=machine;
+ function start(game,mode,cur,stake,power=55,machine='p99'){check();if(active())throw Error('請先完成目前已付款的牌局');if(!NAMES[game]||!(game==='pin'?!!W.LineagePachinkoCore.MACHINES[machine]:['normal','expert','legend'].includes(mode))||!STAKES[game][cur]?.includes(stake))throw Error('下注選項不符');if(game==='pin')mode=machine;
   const reserve=stake*(game==='tian'?256:game==='bj'?2:1);if(!H.curReady(cur)||H.balance(cur)<reserve)throw Error('餘額不足，本局需預留 '+reserve.toLocaleString()+' '+H.CURS[cur]);
   const d=C.copy(data()),randomSeed=seed(),rng=C.seeded(randomSeed),r={id:Date.now().toString(36)+'-'+(++d.seq)+'-'+randomSeed,game,mode,cur,stake,reserve,created:Date.now(),settled:false};
   if(game==='tian')r.g=C.tianNew(rng,d.banker[mode]||0);

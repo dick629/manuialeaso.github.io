@@ -66,7 +66,7 @@
  // Information boundary: opponent hands, shoe order and face-down discards are never passed to AI.
  function tianView(g,seat){const v=copy(g);v.hands=g.hands.map((h,i)=>i===seat?h.slice():h.map(()=>null));v.seat=seat;return v;}
  function aiSearch(view,rng=seeded(1)){
-  const seat=view.seat,choices=tianActions(view,seat).sort((a,b)=>quickScore(view,seat,b)-quickScore(view,seat,a)).slice(0,16),sums=choices.map(()=>0),counts=choices.map(()=>0);let iteration=0;
+  const seat=view.seat,choices=tianActions(view,seat).sort((a,b)=>quickScore(view,seat,b)-quickScore(view,seat,a)).slice(0,view.legend?32:16),sums=choices.map(()=>0),counts=choices.map(()=>0);let iteration=0;
   const known=new Set(view.hands[seat].concat(view.seen)),unknown=TILES.map(t=>t.id).filter(id=>!known.has(id));
   return{step(samples=1){for(let z=0;z<samples;z++){
     const ci=iteration++%choices.length,sim=copy(view),pool=shuffle(unknown,rng);let at=0;
@@ -80,7 +80,8 @@
  function bjValue(cards){let total=cards.reduce((n,c)=>n+val(c),0),soft=cards.some(c=>rank(c)===1)&&total+10<=21;if(soft)total+=10;return{total,soft,bust:total>21,natural:cards.length===2&&total===21};}
  function bjShoe(rng){return{cards:shuffle(Array.from({length:312},(_,i)=>i%52),rng),pos:0,seen:[]};}
  function draw(shoe,publicCard=true){if(shoe.pos>=shoe.cards.length)throw Error('牌靴已空');const c=shoe.cards[shoe.pos++];if(publicCard)shoe.seen.push(c);return c;}
- function bjNew(shoe,mode){const g={player:[],npc:[],dealer:[],mode,pMult:1,nMult:1,phase:'player',npcLog:[]};g.player.push(draw(shoe));g.npc.push(draw(shoe));g.dealer.push(draw(shoe));g.player.push(draw(shoe));g.npc.push(draw(shoe));g.dealer.push(draw(shoe,false));g.dealerNatural=bjValue(g.dealer).natural;return g;}
+ function hiLoTrue(shoe){let rc=0;for(const c of shoe.seen){const v=val(c);if(v>=2&&v<=6)rc++;else if(v===1||v===10)rc--;}const left=Math.max(52,shoe.cards.length-shoe.pos);return rc/(left/52);}
+ function bjNew(shoe,mode){const g={player:[],npc:[],dealer:[],mode,pMult:1,nMult:1,nBase:mode==='legend'?Math.max(1,Math.min(4,Math.floor(1+hiLoTrue(shoe)))):1,phase:'player',npcLog:[]};g.player.push(draw(shoe));g.npc.push(draw(shoe));g.dealer.push(draw(shoe));g.player.push(draw(shoe));g.npc.push(draw(shoe));g.dealer.push(draw(shoe,false));g.dealerNatural=bjValue(g.dealer).natural;return g;}
  function bjReturn(cards,dealer){const a=bjValue(cards),b=bjValue(dealer);if(a.bust)return 0;if(b.natural)return a.natural?1:0;if(a.natural)return 2.5;return b.bust||a.total>b.total?2:a.total===b.total?1:0;}
  function unseen(shoe){const n=Array(11).fill(24);n[0]=0;n[10]=96;for(const c of shoe.seen)n[val(c)]--;return n;}
  function bjAdvice(cards,up,counts,canDouble){
@@ -97,9 +98,9 @@
   const choices=[['stand',stand(v.total)],['hit',hit]];if(canDouble)choices.push(['double',dbl]);choices.sort((a,b)=>b[1]-a[1]);return{action:choices[0][0],stand:stand(v.total),hit,double:dbl};
  }
  function bjFinish(g,shoe){if(g.phase==='done')return;
-  if(!g.dealerNatural&&!bjValue(g.npc).natural){let n=0;while(!bjValue(g.npc).bust&&n++<18){const v=bjValue(g.npc),a=g.mode==='expert'?bjAdvice(g.npc,g.dealer[0],unseen(shoe),g.npc.length===2).action:(v.total<17?'hit':'stand');g.npcLog.push(a);if(a==='stand')break;g.npc.push(draw(shoe));if(a==='double'){g.nMult=2;break;}}}
+  if(!g.dealerNatural&&!bjValue(g.npc).natural){let n=0;while(!bjValue(g.npc).bust&&n++<18){const v=bjValue(g.npc),a=g.mode!=='normal'?bjAdvice(g.npc,g.dealer[0],unseen(shoe),g.npc.length===2).action:(v.total<17?'hit':'stand');g.npcLog.push(a);if(a==='stand')break;g.npc.push(draw(shoe));if(a==='double'){g.nMult=2;break;}}}
   shoe.seen.push(g.dealer[1]);if(!g.dealerNatural)while(bjValue(g.dealer).total<17)g.dealer.push(draw(shoe));
-  g.pReturn=bjReturn(g.player,g.dealer);g.nReturn=bjReturn(g.npc,g.dealer);g.pNet=(g.pReturn-1)*g.pMult;g.nNet=(g.nReturn-1)*g.nMult;g.phase='done';
+  g.pReturn=bjReturn(g.player,g.dealer);g.nReturn=bjReturn(g.npc,g.dealer);g.pNet=(g.pReturn-1)*g.pMult;g.nNet=(g.nReturn-1)*g.nMult*(g.nBase||1);g.phase='done';
  }
  function bjAct(g,shoe,action){if(g.phase!=='player')throw Error('牌局已結束');if(!['hit','stand','double'].includes(action))throw Error('未知操作');if(action==='double'&&g.player.length!==2)throw Error('只有起手兩張可以加倍');
   if(action!=='stand')g.player.push(draw(shoe));if(action==='double')g.pMult=2;

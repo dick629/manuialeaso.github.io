@@ -116,6 +116,11 @@
   PERS.hard = { tag: '超難', tight: 1, aggr: 0.6, bluff: 0.1, callMul: 1 };
   var HARD_NPCS = [{ n: '賭神 維克多', p: 'hard' }, { n: '冷面 賽琳', p: 'hard' }, { n: '職業牌手 奧斯卡', p: 'hard' }, { n: '鐵面 卡珊', p: 'hard' },
     { n: '狐狸 雷文', p: 'hard' }, { n: '莊家之子 洛克', p: 'hard' }, { n: '算牌師 伊芙', p: 'hard' }];
+  // 傳奇桌（Ping 11-23）：同樣不偷看；勝率試算 ×4、對你的打法紀錄跨場次記住；你在傳奇桌攤牌贏的池子另外 +5%
+  PERS.legend = { tag: '傳奇', tight: 1, aggr: 0.6, bluff: 0.1, callMul: 1 };
+  var LEGEND_NPCS = [{ n: '牌王 亞爾德', p: 'legend' }, { n: '無面者 諾克斯', p: 'legend' }, { n: '女帝 瑟蕾娜', p: 'legend' }, { n: '影賭師 卡茲', p: 'legend' },
+    { n: '老狐 貝爾蒙', p: 'legend' }, { n: '計算者 歐米加', p: 'legend' }, { n: '絕對零度 菲雅', p: 'legend' }];
+  var LEGEND_BONUS = 0.05;
   var RAKE = 0.03;   // 抽水 3%：每個池子（有翻牌才抽；沒人跟的下注先退回、不抽）
   // 抽水用整數算：floor(amt×3/100)＝(amt 的百位以上)×3 ＋ 零頭×3/100 捨去。不寫 amt*0.03——0.03 不是精確的二進位小數，
   //   池子上億之後 floor 可能差 1；也不寫 amt*3（無上限桌的池子再大一點就會超過精確整數範圍）。
@@ -267,7 +272,7 @@
       // 平分；除不盡的零頭從莊家左手邊開始一人一枚
       var order = win.slice().sort(function (a, b) { return ((a - tb.button - 1 + n) % n) - ((b - tb.button - 1 + n) % n); });
       var share = Math.floor(net / win.length), rem = net - share * win.length;
-      order.forEach(function (i, k) { var g = share + (k < rem ? 1 : 0); seats[i].stack += g; seats[i].won += g; });
+      order.forEach(function (i, k) { var g = share + (k < rem ? 1 : 0); if (tb.legend && seats[i].human && g > 0 && p.el.length > 1) { var bn = Math.floor(g * LEGEND_BONUS); g += bn; res.legendBonus = (res.legendBonus || 0) + bn; try { var hd = W.__afkGameHall && W.__afkGameHall.hallData(); if (hd) hd.legend = Object.assign({}, hd.legend, { poker: ((hd.legend && hd.legend.poker) || 0) + 1 }); } catch (e) {} } seats[i].stack += g; seats[i].won += g; });
       res.pots.push({ amt: p.amt, net: net, rake: rk, el: p.el.slice(), win: order, hand: showdown && p.el.length > 1 ? handName(seats[win[0]].score) : '' });
     });
     seats.forEach(function (s) { s.bet = 0; });
@@ -324,7 +329,7 @@
     return { t: 'fold' };
   }
   // ════════════════ 超難 AI（不偷看：只用自己的牌、公牌、這手大家怎麼下注、以及這張桌上過去的打法紀錄） ════════════════
-  function modelOf(tb, s) { var m = tb.model || (tb.model = {}); return m[s.name] || (m[s.name] = { h: 0, vpip: 0, pfr: 0, agg: 0, calls: 0, checks: 0, fb: 0, ftb: 0, pfb: 0, pftb: 0, sdAgg: 0, sdBluff: 0 }); }
+  function modelOf(tb, s) { if (tb.legend && s && s.human) { var pp = P(); if (pp) { var pm = pp.afkPkModel; if (!pm || typeof pm !== 'object') pm = pp.afkPkModel = { h: 0, vpip: 0, pfr: 0, agg: 0, calls: 0, checks: 0, fb: 0, ftb: 0, pfb: 0, pftb: 0, sdAgg: 0, sdBluff: 0 }; return pm; } } var m = tb.model || (tb.model = {}); return m[s.name] || (m[s.name] = { h: 0, vpip: 0, pfr: 0, agg: 0, calls: 0, checks: 0, fb: 0, ftb: 0, pfb: 0, pftb: 0, sdAgg: 0, sdBluff: 0 }); }
   // 攤牌時大家都看得到的牌：記下「下注／加注過的人攤出來是真牌還是詐唬」
   function learnShowdown(tb) {
     var H = tb.hand; if (!H || !H.hist || H.board.length < 5) return;
@@ -394,6 +399,7 @@
   // ifCalled＝假設對手只用「會跟注的牌」繼續（用來判斷值不值得下注拿價值）
   function rangeEquity(tb, i, iters, ifCalled) {
     var H = tb.hand, me = tb.seats[i], board = H.board, rng = tb.rng, pf = pfTable();
+    if (me.pers === 'legend') iters *= 4;
     var ps = []; tb.seats.forEach(function (o, j) { if (j !== i && inHand(o)) { var q = oppParams(tb, j), m = modelOf(tb, o); q.fold = rate(m.ftb, m.fb, 0.4, 6); ps.push(q); } });
     if (!ps.length) return 1;
     var used = new Uint8Array(52), deck = [], c;
@@ -510,14 +516,17 @@
     if (L.canRaise && H.street < 3 && opps.length === 1 && foldR > 0.55 && (draw || rng() < 0.08)) return sizeTo(tb, i, 1);
     return { t: 'fold' };
   }
+  // 傳奇：打法骨架同超難，但勝率試算 ×4（判斷更準），而且記得你跨場次的打法（入池率、加注、棄牌、攤牌詐唬）。
+  //   11-23 實測（各 9,600 手，傳奇對超難）：傳奇每手多贏約 0.19 個大盲；另一版「逐一算期望值」反而輸，沒採用。
+  function legendDecide(tb, i) { return hardDecide(tb, i); }
   function npcAct(tb, i) {
-    var d = tb.seats[i].pers === 'hard' ? hardDecide(tb, i) : npcDecide(tb, i), r = act(tb, i, d.t, d.to);
+    var pe = tb.seats[i].pers, d = pe === 'legend' ? legendDecide(tb, i) : pe === 'hard' ? hardDecide(tb, i) : npcDecide(tb, i), r = act(tb, i, d.t, d.to);
     if (!r.ok) { tb.illegal = (tb.illegal || 0) + 1; console.warn('[AFK-poker] NPC 動作不合法', d, r.err); r = act(tb, i, legal(tb, i).canCheck ? 'check' : 'fold'); }
     return d;
   }
   var npcUsed = function (tb) { return tb.seats.map(function (s) { return s.name; }); };
   function newNpc(tb) {
-    var src = tb.hard ? HARD_NPCS : NPCS, pool = src.filter(function (x) { return npcUsed(tb).indexOf(x.n) < 0; });
+    var src = tb.legend ? LEGEND_NPCS : tb.hard ? HARD_NPCS : NPCS, pool = src.filter(function (x) { return npcUsed(tb).indexOf(x.n) < 0; });
     var d = pool[Math.floor(tb.rng() * pool.length)] || src[0];
     var bbs = 60 + Math.floor(tb.rng() * 91);   // 60～150 個大盲
     // 無上限桌的底：買入下限的 1.2～3 倍（下限＝50 個大盲的龍鑽／血龍鑽桌剛好就是 60～150 個大盲；
@@ -529,7 +538,7 @@
     return newSeat({ name: d.n, pers: d.p, stack: st, human: false });
   }
   function newTable(def, humanStack, nNpc, rng, hard) {
-    var tb = { def: def, seats: [], button: -1, handNo: 0, hand: null, rng: rng || Math.random, hard: !!hard, model: {} };
+    var tb = { def: def, seats: [], button: -1, handNo: 0, hand: null, rng: rng || Math.random, hard: !!hard, legend: hard === 2, model: {} };
     tb.seats.push(newSeat({ name: '你', human: true, stack: humanStack }));
     for (var k = 0; k < nNpc; k++) tb.seats.push(newNpc(tb));
     tb.button = Math.floor(tb.rng() * tb.seats.length) - 1;
@@ -635,7 +644,7 @@
     var p = P();
     if (!debit(def.cur, amt)) return { ok: false, msg: CURS[def.cur] + '扣不下來，沒有入座' };
     var nNpc = (opt && opt.nNpc) || cfg.nNpc || (3 + Math.floor(Math.random() * 3));
-    tb = newTable(def, amt, nNpc, opt && opt.rng, !!(opt && opt.hard));
+    tb = newTable(def, amt, nNpc, opt && opt.rng, opt && opt.hard === 2 ? 2 : !!(opt && opt.hard));
     tb.owner = p;
     try { if (W.__afkGameHall) W.__afkGameHall.statAdd('poker', def.cur, amt, 0, 0, false); } catch (e) {}   // 換籌碼＝投入
     if (def.cur === 'dia') {
@@ -685,7 +694,7 @@
   }
   // 「補到…」的目標：一般桌補到買入上限；無上限桌補回買入下限（不會一按就把全身的錢推上桌）
   function topTarget(def) { return def.nomax ? def.min : def.max; }
-  function tblName() { return tb ? tb.def.n + (tb.hard ? '・超難' : '') : ''; }
+  function tblName() { return tb ? tb.def.n + (tb.legend ? '・傳奇' : tb.hard ? '・超難' : '') : ''; }
   function closeTable() { stopTimer(); heartbeat(false); tb = null; hideWin(); }
 
   // ════════════════ 牌局推進（計時） ════════════════
@@ -721,6 +730,7 @@
       else lines.push(names + (pt.win.length > 1 ? ' 以' + pt.hand + '平分' : ' 以' + pt.hand + '贏得') + (k === 0 ? '底池 ' : '邊池 ') + fmt(pt.net));
     });
     if (res.rake > 0) lines.push('抽水 ' + fmt(res.rake));
+    if (res.legendBonus > 0) lines.push('擊敗傳奇加贈 ' + fmt(res.legendBonus));
     var fresh = refillNpcs(tb);
     ui.msg = lines.concat(fresh).join('；');
     persist();
@@ -1038,7 +1048,7 @@
         + '<div class="ax-desc">盲注 ' + fmt(t.sb) + '／' + fmt(t.bb) + '　買入 ' + (t.nomax ? fmt(t.min) + ' 起，無上限' : fmt(t.min) + '～' + fmt(t.max)) + '　抽水 3%</div>'
         + '<div class="ax-note">你有' + esc(amtTxt(t.cur, bal)) + '</div>'
         + (why && !tb ? '<div class="ax-req"><span class="no" style="font-size:12px">' + esc(why) + '</span></div>' : '') + '</div></div>'
-        + (tb ? '' : '<div class="ax-act"><span class="pk-lv" role="group" aria-label="對手">對手：<button type="button" data-pkn="lv:' + t.id + ':0" class="n' + (selHard[t.id] ? '' : ' on') + '">一般</button><button type="button" data-pkn="lv:' + t.id + ':1"' + (selHard[t.id] ? ' class="on"' : '') + '>超難</button></span><input type="number" inputmode="numeric" min="' + t.min + '"' + (t.nomax ? '' : ' max="' + t.max + '"') + ' step="' + t.bb + '" value="' + v + '" data-pkin="' + t.id + '" aria-label="' + esc(t.n) + '買入金額">'
+        + (tb ? '' : '<div class="ax-act"><span class="pk-lv" role="group" aria-label="對手">對手：<button type="button" data-pkn="lv:' + t.id + ':0" class="n' + (selHard[t.id] ? '' : ' on') + '">一般</button><button type="button" data-pkn="lv:' + t.id + ':1"' + (selHard[t.id] === 1 ? ' class="on"' : '') + '>超難</button><button type="button" data-pkn="lv:' + t.id + ':2"' + (selHard[t.id] === 2 ? ' class="on"' : '') + '>傳奇</button></span><input type="number" inputmode="numeric" min="' + t.min + '"' + (t.nomax ? '' : ' max="' + t.max + '"') + ' step="' + t.bb + '" value="' + v + '" data-pkin="' + t.id + '" aria-label="' + esc(t.n) + '買入金額">'
           + '<button type="button" data-pkn="set:' + t.id + ':min">最少</button><button type="button" data-pkn="set:' + t.id + ':max">最多</button>'
           + '<button type="button" data-pkn="sit:' + t.id + '"' + (why ? ' disabled' : '') + '>入座</button></div>') + '</div>';
     });
@@ -1051,9 +1061,9 @@
       if (a[0] === 'open') return openWin();
       if (a[0] === 'gh') { try { if (typeof W.closeNpcInteraction === 'function') W.closeNpcInteraction(); } catch (e) {} try { W.__afkGameHall.open(a[1]); } catch (e) {} return; }
       if (a[0] === 'set') { var t = TBL[a[1]], bal = balance(t.cur); sel[a[1]] = a[2] === 'min' ? t.min : Math.max(t.min, Math.min(t.max, bal)); return panel(div); }
-      if (a[0] === 'lv') { selHard[a[1]] = a[2] === '1'; return panel(div); }
+      if (a[0] === 'lv') { selHard[a[1]] = Number(a[2]) || 0; return panel(div); }
       if (a[0] === 'sit') {
-        var r = buyIn(a[1], sel[a[1]] != null ? sel[a[1]] : (div.querySelector('[data-pkin="' + a[1] + '"]') || {}).value, { hard: !!selHard[a[1]] });
+        var r = buyIn(a[1], sel[a[1]] != null ? sel[a[1]] : (div.querySelector('[data-pkin="' + a[1] + '"]') || {}).value, { hard: selHard[a[1]] === 2 ? 2 : !!selHard[a[1]] });
         if (!r.ok) { var e = div.querySelector('#pk-npc-err'); if (e) e.textContent = r.msg; return; }
         panel(div); openWin(); dealNext();
       }
