@@ -376,7 +376,7 @@
     //   例：+0→+1＝3 個 +0、1,500 龍鑽、1.5 億金幣、席琳結晶 500 顆
     if (base && DB.items[base] && DB.items[base].type === 'acc') { c.need = 3; c.dia *= 3; c.gold *= 3; c.crystal = 500; }
     // 飾品 +6～+10：改成 2 個同款同強化值合成，成功率 50%；失敗時兩件都還在，只扣龍鑽、金幣、結晶（玩家 2026-10-23）
-    if (base && DB.items[base] && DB.items[base].type === 'acc' && target >= 6) { c.need = 2; c.rate = 0.5; }
+    if (base && DB.items[base] && DB.items[base].type === 'acc' && target >= 6) { c.need = 2; c.rate = 0.5; c.pairAny = true; }
     // 武器／防具 +6～+10（玩家 2026-10-26 改，取代原本「2 件同級」的翻倍制）：
     //   +6～+9：本體 1 件＋同款 +1 三件，成功率 80%／70%／60%／50%；失敗時本體保留、三件 +1 消耗（龍鑽、金幣照扣）
     //   +10：本體 +9＋同款 +5 三件，100%
@@ -522,6 +522,13 @@
     try { if (window.__afkAcStamp) window.__afkAcStamp(it); } catch (e) {}   // 正規合成做出來的 S 級：蓋正當來源印記（本體已經有印記就沿用，重抽、強化不再重算時數）
   }
   var saveOk = function () { try { return typeof saveGame === 'function' && saveGame() === true; } catch (e) { return false; } };
+  // 11-23 21:10 Ping：飾品 +6～+10 的第二件不用同一個第二詞綴——同款同強化值、沒昇華的任一件都行；做出來的照本體（選的那件）的詞綴
+  //   本體那一組只有 1 件時，改成「本體＋1 件同款同強化值的別組」，失敗時兩件都還在（照原本飾品規則）
+  var pairFix = function (g, c) {
+    if (!c || !c.pairAny || !g || g.cnt >= c.need) return c;
+    var o = {}; for (var k in c) o[k] = c[k];
+    o.need = 1; o.matNeed = 1; o.matLv = g.n; o.keepMat = true; return o;
+  };
   var adjustDia = function (delta) { try { var r = window.pandoraAdjustSharedDiamonds(delta) || {}; return r.ok ? { ok: true } : { ok: false, error: r.error || '龍之鑽石不足。' }; } catch (e) { return { ok: false, error: '龍之鑽石系統未就緒。' }; } };
 
   // 執行一次合成／強化；回傳 { ok, success, msg }
@@ -535,10 +542,10 @@
     if (g.asc != null) return { ok: false, msg: '這件遺物已昇華，請使用昇華支配強化。' };
     var mx = maxOf(g.base);
     if (g.n >= mx) return { ok: false, msg: '已經是 +' + mx + '（最高）。' };
-    var target = g.n + 1, c = costOf(target, g.base);
+    var target = g.n + 1, c = pairFix(g, costOf(target, g.base));
     if (g.cnt < c.need) return { ok: false, msg: '需要 ' + c.need + ' 個相同的 ' + (g.n ? '+' + g.n : '+0') + '。' };
     var mg = c.matNeed ? matGroup(g, c.matLv) : null;
-    if (c.matNeed && (!mg || mg.cnt < c.matNeed)) return { ok: false, msg: '需要 ' + c.matNeed + ' 個同款的 +' + c.matLv + '（目前 ' + (mg ? mg.cnt : 0) + ' 個）。' };
+    if (c.matNeed && (!mg || mg.cnt < c.matNeed)) return { ok: false, msg: c.keepMat ? '需要 2 個同款的 +' + g.n + '。' : '需要 ' + c.matNeed + ' 個同款的 +' + c.matLv + '（目前 ' + (mg ? mg.cnt : 0) + ' 個）。' };
     if (c.crystal && crystals() < c.crystal) return { ok: false, msg: '席琳結晶不足（需要 ' + c.crystal + ' 顆）。' };
     if (diamonds() < c.dia) return { ok: false, msg: '龍之鑽石不足（需要 ' + c.dia.toLocaleString() + '）。' };
     if (gold() < c.gold) return { ok: false, msg: '金幣不足（需要 ' + c.gold.toLocaleString() + '）。' };
@@ -560,6 +567,7 @@
       g = groups().filter(function (x) { return x.key === key; })[0];
       if (!g) { restoreMats(); if (undoCrystal) undoCrystal(); p.gold = gold0; adjustDia(c.dia); return { ok: false, msg: '背包資料變動，什麼都沒有改變。' }; }
     }
+    if (!success && c.keepMat && restoreMats) { restoreMats(); restoreMats = null; }   // 飾品：失敗時兩件都還在
     if (success) {
       tk = take(g, c.need);
       if (tk.got.length < c.need) { tk.restore(); if (restoreMats) restoreMats(); if (undoCrystal) undoCrystal(); p.gold = gold0; adjustDia(c.dia); return { ok: false, msg: '背包資料變動，什麼都沒有改變。' }; }
@@ -1229,6 +1237,7 @@
         ascTxt = '<div class="rp-sub" style="color:#f0abfc">昇華支配 +' + A + '：' + esc(pretty(statLine(nd2, g.base))) + '</div><div class="rp-sub">需要：' + need.join('、') + '</div>';
       }
     } else {
+      c = pairFix(g, c);
       var mg0 = c.matNeed ? matGroup(g, c.matLv) : null, matHave = mg0 ? mg0.cnt : 0;
       var enough = g.cnt >= c.need && (!c.matNeed || matHave >= c.matNeed) && diamonds() >= c.dia && gold() >= c.gold && (!c.crystal || crystals() >= c.crystal);
       var ap = (!enough && !(g.cnt >= c.need && (!c.matNeed || matHave >= c.matNeed))) ? autoPlan(g) : null, apOk = !!(ap && ap.cost.afford), cs = apOk ? ap.cost : c;
@@ -1236,8 +1245,11 @@
       // 2026-11-03：材料不夠時寫清楚缺什麼（玩家：不要只是灰色）
       var nm0 = esc(bd.n), needL = [], shortL = [];
       var addNeed = function (label, have, want) { var ok = have >= want; needL.push('<span class="' + (ok ? '' : 'rp-miss') + '">' + label + ' ' + have.toLocaleString() + '/' + want.toLocaleString() + (ok ? '' : '（還差 ' + (want - have).toLocaleString() + '）') + '</span>'); if (!ok) shortL.push(label + ' 還差 ' + (want - have).toLocaleString()); };
+      if (c.keepMat) addNeed('同款 +' + g.n + ' ' + nm0 + '（第二詞綴不限）', g.cnt + matHave, 2);
+      else {
       addNeed((c.matNeed ? '本體 +' : '同款 +') + g.n + ' ' + nm0, g.cnt, c.need);
       if (c.matNeed) addNeed('同款 +' + c.matLv + ' ' + nm0, matHave, c.matNeed);
+      }
       addNeed('龍之鑽石', diamonds(), c.dia);
       if (c.gold) addNeed('金幣', gold(), c.gold);
       if (c.crystal) addNeed('席琳結晶', crystals(), c.crystal);
@@ -1651,9 +1663,9 @@
 
   function ask(key) {
     var g = groups().filter(function (x) { return x.key === key; })[0]; if (!g) return render();
-    var t = g.n + 1, c = costOf(t, g.base), nm = DB.items[g.base].n;
+    var t = g.n + 1, c = pairFix(g, costOf(t, g.base)), nm = DB.items[g.base].n;
     var msg = c.merge
-      ? (c.matNeed ? '用 ' + (g.n ? '+' + g.n + ' ' : '') + nm + '，加上 ' + c.matNeed + ' 個同款 +' + c.matLv + '，衝 +' + t + '，' : '用 ' + c.need + ' 個 ' + (g.n ? '+' + g.n + ' ' : '') + nm + ' 合成 +' + t + '，') + '花費 ' + c.dia.toLocaleString() + ' 龍鑽＋' + c.gold.toLocaleString() + ' 金幣' + (c.crystal ? '＋席琳結晶 ' + c.crystal + ' 顆' : '') + '。' + (c.rate < 1 ? '\n成功率 ' + Math.round(c.rate * 100) + '%，' + (c.matNeed ? '失敗時本體保留，三件 +' + c.matLv + ' 與費用會扣掉。' : '失敗時遺物都還在，費用會扣掉。') : '') + (t === 10 ? '\n+10 會隨機繼承一種同部位遺物的特效。' : '')
+      ? (c.keepMat ? '用這件 +' + g.n + ' ' + nm + '，加上另一件同款 +' + g.n + '（第二詞綴不限，做出來保留這件的詞綴），合成 +' + t + '，' : c.matNeed ? '用 ' + (g.n ? '+' + g.n + ' ' : '') + nm + '，加上 ' + c.matNeed + ' 個同款 +' + c.matLv + '，衝 +' + t + '，' : '用 ' + c.need + ' 個 ' + (g.n ? '+' + g.n + ' ' : '') + nm + ' 合成 +' + t + '，') + '花費 ' + c.dia.toLocaleString() + ' 龍鑽＋' + c.gold.toLocaleString() + ' 金幣' + (c.crystal ? '＋席琳結晶 ' + c.crystal + ' 顆' : '') + '。' + (c.rate < 1 ? '\n成功率 ' + Math.round(c.rate * 100) + '%，' + (c.matNeed ? '失敗時本體保留，三件 +' + c.matLv + ' 與費用會扣掉。' : '失敗時遺物都還在，費用會扣掉。') : '') + (t === 10 ? '\n+10 會隨機繼承一種同部位遺物的特效。' : '')
       : '強化 +' + g.n + ' ' + nm + ' → +' + t + '，花費 ' + c.dia.toLocaleString() + ' 龍鑽，成功率 ' + Math.round(c.rate * 100) + '%。\n失敗時龍鑽會扣掉，遺物不會消失；每失敗一次，下一次衝 +' + t + ' 的成功率 +2%（最高 50%，成功後歸零）。';
     var direct = g.cnt >= c.need && (!c.matNeed || ((matGroup(g, c.matLv) || {}).cnt || 0) >= c.matNeed), plan = direct ? null : autoPlan(g);
     if (plan) {
