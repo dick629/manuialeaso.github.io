@@ -433,7 +433,7 @@
     };
     if (!p) return out;
     scan(p.eq, '');
-    (p.allies || []).forEach(function (a, i) { if (a && a.eq) scan(a.eq, 'ally' + i + ':'); });
+    // 11-23 20:18 Ping：傭兵身上的裝備不再列進來（要強化傭兵的遺物，切換到那位傭兵的角色再來）
     petList().forEach(function (pt, i) { if (pt && pt.eq) scan(pt.eq, 'pet' + i + ':', pt); });
     return out;
   };
@@ -1146,7 +1146,7 @@
       + '<dt>昇華支配</dt><dd>武器、防具 +15，飾品 +10 後開放。每 +1：武器大小型傷害各 +10、原有能力各 +5；防具、飾品六項能力各 +1、防禦 −1、魔法防禦／遠距迴避／減傷各 +1、四屬性抗性各 +2；防具另加生命、魔力自然恢復各 50。</dd>'
       + '<dt>注意</dt><dd>只用背包裡未鎖定的遺物與材料；穿戴中、倉庫內或上鎖的不列入。第 029 件昇華後即達終階；GM 測試道具不能合成。</dd>'
       + '</dl></div></details>'
-      + '<div class="ax-h">① 選擇遺物</div><div class="rp-list" id="rp-list"></div>'
+      + '<p style="margin:6px 0 10px;padding:8px 10px;border:1px solid #f59e0b;border-radius:8px;background:rgba(120,53,15,.35);color:#fde68a;font-size:14px;line-height:1.5">⚠️ 請勿拿傭兵身上的裝備來強化。要強化傭兵的遺物，請先切換到那位傭兵的角色，再來找哈瑪大師。</p><div class="ax-h">① 選擇遺物</div><div class="rp-list" id="rp-list"></div>'
       + '<div class="ax-h">② 熔煉與兌換</div><div class="rp-svc" id="rp-tools"></div></div></div>';
     document.body.appendChild(m);
     m.addEventListener('click', function (e) { if (e.target === m) close(); });
