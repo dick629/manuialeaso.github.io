@@ -232,7 +232,7 @@
     W.recomputeStats = function () {
       var r = oRe.apply(this, arguments);
       try {
-        var p = P(); FX = build(p); if (!p || !p.d) return r; if (!p._allyName) { syncFlags(); syncSoul(); }
+        var p = P(); FX = build(p); if (!p || !p.d) return r; try { libUnseal(p.eq && p.eq.wpn); } catch (e) {} if (!p._allyName) { syncFlags(); syncSoul(); }
         FX.sum('stat').forEach(function (e) { if (e[1] === 'mhpPct') return; (STATK[e[1]] || [e[1]]).forEach(function (k) { p.d[k] = (Number(p.d[k]) || 0) + e[2]; }); });
         if (eDR) eDR[1] = Math.min(2, FX.v('erode')); if (eFL) eFL[1] = FX.v('floor');
       } catch (e) { console.warn('[AFK-dimrelic] stats', e); }
@@ -496,7 +496,14 @@
   var isSup = function (it) { var d = it && DB.items[it.id]; return !!(d && d.type === 'wpn' && d.relicEvo != null); };
   var libMats = function () {
     var used = {}, out = {};
-    WTYPES.forEach(function (t) { out[t] = inv().filter(function (x) { return x && !x.lock && !used[x.uid] && catalogSlot(x.id) === t; })[0] || null; if (out[t]) used[out[t].uid] = 1; });
+    // 11-23 17:57 Ping：奇古獸遺物全部都算（原本只認目錄裡的曼陀羅之靈、阿茲特獻祭亡靈）。
+    //   先用目錄裡的，再用其他奇古獸遺物，回響遺物（王的）排最後，免得先被拿去當材料。
+    var qiguRank = function (x) { var d = DB.items[x.id]; if (!d || d.type !== 'wpn' || !d.qigu || !d.relic || d.relicPlus != null || d.relicAsc != null || d.relicEvo != null || d.gmOnly || d.dimRelic || /~/.test(String(x.id)) || (Number(x.en) || 0) !== 0) return 0; return catalogSlot(x.id) === '奇古獸' ? 1 : /^relic_echo_/.test(String(x.id)) ? 3 : 2; };
+    WTYPES.forEach(function (t) {
+      var c = inv().filter(function (x) { return x && !x.lock && !used[x.uid] && (catalogSlot(x.id) === t || (t === '奇古獸' && qiguRank(x) > 0)); });
+      if (t === '奇古獸') c.sort(function (a, b) { return qiguRank(a) - qiguRank(b); });
+      out[t] = c[0] || null; if (out[t]) used[out[t].uid] = 1;
+    });
     return out;
   };
   function liberate() {
@@ -504,7 +511,7 @@
     if (w.dimLib) { sys('<span class="text-amber-300">已經是次元支配了。</span>'); return; }
     var m = libMats(), miss = WTYPES.filter(function (t) { return !m[t]; }); if (miss.length) { sys('<span class="text-amber-300">還缺 +0、未昇華的遺物：' + esc(miss.join('、')) + '。</span>'); return; }
     WTYPES.forEach(function (t) { var x = m[t], i = p.inv.indexOf(x); if (i >= 0) { if ((x.cnt || 1) > 1) x.cnt--; else p.inv.splice(i, 1); } });
-    w.dimLib = 1; w.dimLibEn = 0;
+    w.dimLib = 1; w.dimLibEn = 0; try { libUnseal(w); } catch (e) {}
     sys('<span class="font-bold" style="color:#67e8f9">✦ ' + esc(DB.items[w.id].n) + ' 掙開了封印——它成了「次元支配」。</span>'); syncFlags(); try { calcStats(); saveGame(); } catch (e) {}
   }
   function libEnhance() { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;   // 暫停次元裂縫材料的製作（afk-craftlock）
@@ -526,6 +533,8 @@
     sys('<span class="font-bold" style="color:#fde047">✦ 阿納金的號角 ' + r.hornLv + ' 級：次元裂縫裡聖十字之盾擋 ' + HORN.block[r.hornLv] + '%。</span>'); try { saveGame(); } catch (e) {}
   }
   function pickStone(k) { if (W.__afkCraftLock && W.__afkCraftLock.stop()) return;  if (cnt('afk_rd_pick') < 1 || STONES.indexOf(k) < 0) return; take('afk_rd_pick', 1); gainItem(k, 1, true, true); sys('<span style="color:#67e8f9">換到了 ' + esc(DB.items[k].n) + '。</span>'); }
+  // 11-23 17:59 Ping：解放成次元支配的武器＝解除封印（跟「做成次元遺物就解除」同一條規則）；已經解放過、還在封印的，穿上時補解
+  var libUnseal = function (w) { if (w && w.dimLib && W.__afkAcSealedItem && W.__afkAcStampFree && W.__afkAcSealedItem(w)) W.__afkAcStampFree(w); };
   function syncFlags() { var p = P(), r = drec(); if (!p || !r) return; var w = wpnOf(p); r.dimWpn = !!(w && w.dimLib); r.athena = r.dimWpn; r.dimWpn5 = !!(w && w.dimLib && (w.dimLibEn || 0) >= 5); r.supWpn = !!(w && isSup(w) && !w.dimLib); r.libEn = w && w.dimLib ? (w.dimLibEn || 0) : 0; }
 
   // ── 裂縫淬鍊：席琳遺骸（夢域效果 ×1.2）、之魂憶起（decisions-1107 1.8） ──
@@ -719,7 +728,7 @@
       if (!w) h += K.rowHtml({ key: 'lib', name: '沒有裝備武器', color: '#94a3b8', desc: '先裝上「至高支配・封」武器再來。', off: true, btns: [] }, 'data-dr');
       else if (!isSup(w)) h += K.rowHtml({ key: 'lib', ico: K.invIco(w, 'eq'), name: K.fullName(w), desc: '裝備中的這把不是「至高支配・封」，不能解放。', off: true, btns: [] }, 'data-dr');
       else if (!w.dimLib) {
-        h += '<div class="ax-h">解放材料（14 種武器遺物）</div><div class="ax-socks" style="margin-bottom:10px">' + WTYPES.map(function (t) { return '<span class="ax-sock ' + (mt[t] ? 'filled' : '') + '">' + (mt[t] ? '✓ ' : '✗ ') + esc(t) + '</span>'; }).join('') + '</div>';
+        h += '<div class="ax-h">解放材料（14 種武器遺物）</div><div class="ax-socks" style="margin-bottom:10px">' + WTYPES.map(function (t) { return '<span class="ax-sock ' + (mt[t] ? 'filled' : '') + '"' + (mt[t] ? ' title="會用掉：' + esc((DB.items[mt[t].id] || {}).n || '') + '"' : '') + '>' + (mt[t] ? '✓ ' : '✗ ') + esc(t) + '</span>'; }).join('') + '</div>';
         var nOk = WTYPES.filter(function (t) { return mt[t]; }).length;
         h += K.rowHtml({ key: 'lib', ico: K.invIco(w, 'eq'), name: K.fullName(w), color: '#fde047', desc: '至高支配・封 → 次元支配', req: K.reqTxt(nOk, WTYPES.length, '種武器遺物'), btns: [['lib:', '解放', nOk === WTYPES.length]] }, 'data-dr');
       } else {
@@ -839,6 +848,6 @@
   K.addNpc('town_sherine', { id: 'npc_afk_dimsmith', n: '次元的鍛造師', title: '次元遺物', type: 'quest', classicHide: true, d: '把遺物丟進裂縫裡重新鍛造的鍛造師。次元遺物的製作、強化、重抽都在這裡。' });
   K.hookNpc('npc_afk_dimsmith', '次元的鍛造師', '次元遺物', render);
 
-  W.__afkDimRelic.craft = craft; W.__afkDimRelic.enhance = enhance; W.__afkDimRelic.reroll = reroll; W.__afkDimRelic.synth = synth; W.__afkDimRelic.evolveDragon = evolveDragon; W.__afkDimRelic.B = B; W.__afkDimRelic.build = build; W.__afkDimRelic.COST = COST; W.__afkDimRelic.liberate = liberate; W.__afkDimRelic.libEnhance = libEnhance; W.__afkDimRelic.hornUp = hornUp; W.__afkDimRelic.libMats = libMats;
+  W.__afkDimRelic.libMats = libMats;  W.__afkDimRelic.craft = craft; W.__afkDimRelic.enhance = enhance; W.__afkDimRelic.reroll = reroll; W.__afkDimRelic.synth = synth; W.__afkDimRelic.evolveDragon = evolveDragon; W.__afkDimRelic.B = B; W.__afkDimRelic.build = build; W.__afkDimRelic.COST = COST; W.__afkDimRelic.liberate = liberate; W.__afkDimRelic.libEnhance = libEnhance; W.__afkDimRelic.hornUp = hornUp; W.__afkDimRelic.libMats = libMats;
   try { console.log('[AFK-dimrelic] 已載入：次元遺物 ' + LIST.length + ' 件'); } catch (e) {}
 })();
