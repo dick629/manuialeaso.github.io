@@ -104,6 +104,15 @@
       // 11-21 Ping：跟其他遺物同一個樣子（收合、編號、部位），不再用另一種卡片
       var evoBase=out.reduce(function(m,r){return Math.max(m,r.id||0);},base),row={id:0,key:k,n:d.n,type:TY[d.type]||'',slot:SLOTN[d.slot]||TY[d.type]||'',lore:String(d.d||'').replace(/^【遺物】/,'').split(' 〔')[0],stages:[null].concat(st.map(function(x){return x[1]||null;}))};
       row.id=evoBase+1;row.search=[row.id,String(row.id).padStart(3,'0'),row.n,row.type,row.slot,row.lore,'進階特效'].concat(st.map(function(x){return x[1];})).join(' ').toLowerCase();out.push(row);});
+    // 11-23 Ping：原作者的回響遺物（100 件）與其他特殊遺物原本沒收進來 → 補上（各階效果讀 afk-relicmech 的說明）
+    var RM=window.__afkRelicMech,seen={};(W.AFK_RELIC_CATALOG||[]).forEach(function(c){seen[c.key]=1;});out.forEach(function(r){seen[r.key]=1;});
+    var more=Object.keys(DB.items).filter(function(k){var d=DB.items[k];return d&&d.relic&&!seen[k]&&!(d.relicBase&&d.relicBase!==k)&&k.indexOf('~')<0&&['wpn','arm','acc'].indexOf(d.type)>=0&&!d.dimRelic&&d.dimDragon==null&&d.relicEvo==null&&!d.gmOnly;});
+    more.sort(function(x,y){var a=DB.items[x],b=DB.items[y];return (b.relicEcho?1:0)-(a.relicEcho?1:0)||String(x).localeCompare(String(y));});
+    more.forEach(function(k){var d=DB.items[k],full=String(d.d||'').replace(/^【遺物】/,''),i=full.indexOf('〔'),lore=i>0?full.slice(0,i):full.split('。')[0]+'。',body=i>0?full.slice(i):full.slice(lore.length);
+      var tx=function(s){try{return RM&&RM.textFor?RM.textFor(k,d,s)||null:null;}catch(e){return null;}};
+      if(i<0&&![1,2,3,4].some(function(s){return tx(s);}))return;   // 只有數值、沒有特殊效果的（屍魂套裝等）不列
+      var idn=out.reduce(function(m,r){return Math.max(m,r.id||0);},base),row={id:idn+1,key:k,n:d.n,type:TY[d.type]||'',slot:SLOTN[d.slot]||TY[d.type]||'',lore:lore,stages:[body||null,tx(1),tx(2),tx(3),tx(4)]};
+      row.search=[row.id,String(row.id).padStart(3,'0'),row.n,row.type,row.slot,row.lore,d.relicEcho?'回響遺物':''].concat(row.stages).join(' ').toLowerCase();out.push(row);});
     return extraCache=out;
   }
   // 原本沒有進階特效的遺物（afk-relicevo.js）：+5 起每階加一層效果

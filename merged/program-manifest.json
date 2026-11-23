@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-060057e83848",
+  "build": "merge-0.4-d15229ffd08e",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "b9f2a46cee2504643ad6711afd8614eb1f5c508289e31aeb283b35d73d30447c",
+      "sha256": "a0a7ace5e2e318f16f9db989d3738795a340350d6d2ca62b03f2cdedb2fe7ea0",
       "type": "text/html; charset=utf-8"
     },
     {
