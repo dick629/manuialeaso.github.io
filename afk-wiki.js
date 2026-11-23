@@ -1542,7 +1542,7 @@
   var CASTLE_EXTRA_CITY = { windwood_dungeon: '風木城' };   // 🏰 攻城後開放的城堡狩獵區 → 要攻下哪座城(作者新增別的城堡狩獵區時補這裡;掉落查詢 afk-dex 亦有一份)
   function renderMap() {
     if (typeof MAP_REGIONS === 'undefined') return '<div class="m-wiki-note">讀不到地圖資料。</div>';
-    var h = '<div class="m-wiki-note">遊戲移動方式：打開<b>地圖選單</b>→ 左邊選<b>領域</b> → 右邊選該領域的<b>地圖</b>直接傳送（受進入條件擋）。「<b>回村</b>」按鈕回到你<b>最近待過的村莊／安全區</b>（沒紀錄才回職業家鄉；血盟持有城堡期間改回城堡）。</div>';
+    var h = '<div class="m-wiki-note">遊戲移動方式：打開<b>地圖選單</b>→ 左邊選<b>領域</b> → 右邊選該領域的<b>地圖</b>直接傳送（受進入條件擋）。「<b>回村</b>」按鈕回到<b>目前地區的村莊</b>；這個地區有你血盟的城堡就回城堡。地區裡沒有村莊時（例如副本、裂縫），回你最近待過的村莊（血盟持有城堡期間改回城堡；沒紀錄才回職業家鄉）。</div>';
     var entryOf = (typeof mapEntryOf === 'function') ? mapEntryOf : function () { return null; };   // 由地圖 v 取 MAP_CATEGORIES 原定義(進入條件)
     MAP_REGIONS.forEach(function (reg) {
       if (!reg.maps || !reg.maps.length) return;

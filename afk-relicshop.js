@@ -328,3 +328,18 @@
   }
   W.__afkBmRelic = { infDay: infDay, infMult: infMult, info: info, coolLeft: coolLeft, acct: acct, RATE: RATE, CAP: CAP, CD_MS: CD_MS, BAND: BAND, BOOST: BOOST, _roll: roll, _priceOf: priceOf };
 })();
+
+/* ============================================================================
+ * 潘朵拉黑市金幣價格 ×3（Ping 11-23 10:57／11:19：金幣商品提高 200%，收購單一起漲）
+ *   ‧卡片價格區間 ×3（陳列與收購單共用）；一般商品陳列價 ×3；收購單擲的市價基準 ×3。
+ *   ‧黑市收購價提示讀同一組函式，區間自動跟著變。已在架上的商品維持上架時的價格。
+ * ========================================================================== */
+(function () {
+  'use strict';
+  var W = window, K = 3;
+  var oRange = W.pandoraCardPriceRange, oPrice = W.pandoraPrice, oProf = W.pandoraBuyOrderPriceProfile;
+  if (typeof oRange === 'function') W.pandoraCardPriceRange = function (d) { var r = oRange.apply(this, arguments); return r ? { min: r.min * K, max: r.max * K } : r; };
+  if (typeof oPrice === 'function') W.pandoraPrice = function (id) { var d = DB.items[id]; var v = oPrice.apply(this, arguments); return (d && d.eff === 'card') ? v : Math.max(1, Math.round(v * K)); };   // 卡片已經在區間 ×3 了
+  if (typeof oProf === 'function') W.pandoraBuyOrderPriceProfile = function (id) { var r = oProf.apply(this, arguments); if (r) r = Object.assign({}, r, { base: r.base * K }); return r; };
+  W.__afkPandoraGoldK = K;
+})();

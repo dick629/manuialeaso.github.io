@@ -137,7 +137,10 @@
   // 守護者之戒今天的次數已經用完的那幾項：直接跳過
   function skipUsed(r){while(r.index<r.queue.length){const q=r.queue[r.index],n=special(q);if(!n||!/^gr:/.test(q))break;let w='';try{w=n.check();}catch(e){w='';}if(!/用完/.test(w))break;(r.skipped=r.skipped||[]).push(r.index);r.completed.push(q);r.index++;}if(r.index>=r.queue.length){r.status='done';r.reason='本輪完成';saveGame();return true;}return false;}
   function scheduleNext(id){setTimeout(()=>{const r=round();if(!r||r.id!==id||r.status!=='between')return;if(skipUsed(r))return;try{state.antharas=0;state._afkDragon=null;activityTransaction('進入遠征下一項',()=>enter(r.queue[r.index]));}catch(e){const current=round();current.status='paused';current.reason=e.message;saveGame();}},1800);}
+  // 裂縫副本這一項打完了沒（四龍各自記；11-18 Ping）
+  function rdCleared(id,q){if(!String(id).startsWith('rd:')||!W.__afkRiftDg)return false;const [did,pk]=rdParts(id),d=W.__afkRiftDg.BYID[did];return W.__afkRiftDg.store().clear[did+(d&&d.pickChain&&pk?pk:pk?'@'+pk:'')]>=(q.itemAt||q.created);}
   function checkRound(){const r=round();if(!r)return;if(r.status==='running'){
+    if(rdCleared(r.queue[r.index],r)){finishJob();return;}   // 11-23 Ping：燃燼礦坑這種「撐滿時間」的副本是計時結算、不是打倒怪時結算 → 原本只在打倒怪時檢查，結算後回村就被當成「離開副本」暫停
     const native=special(r.queue[r.index]);if(native&&native.clears()>r.clearBefore){finishJob();return;}
     if(player.dead||player.hp<=0){pause('隊伍戰敗，復活後重新進場仍受每日次數限制',!!native);return;}
     if(!(r.maps||[r.map]).includes(mapState.current)){pause('已離開副本，繼續時重新進場',!!native);return;}
@@ -153,7 +156,7 @@
   const oKill=W.killMob;W.killMob=function(i){const m=mapState.mobs[i],d=W.__afkRiftDg&&W.__afkRiftDg.run(),before=d?{id:d.id,si:d.si,wave:d.wave}:null;
     const r=oKill.apply(this,arguments);if(m&&m._dead&&!seen.has(m)){seen.add(m);W.LineageTalents.killed(player,m);const q=round();if(q&&q.status==='running'){
       const id=q.queue[q.index],boss=bosses[id];if(boss&&(m.mobId===boss||m.n===(DB.mobs[boss]||{}).n))finishJob();
-      else if(id.startsWith('rd:')&&W.__afkRiftDg.store().clear[(()=>{const [did,pk]=rdParts(id),d=W.__afkRiftDg.BYID[did];return did+(d&&d.pickChain&&pk?pk:pk?'@'+pk:'');})()]>=(q.itemAt||q.created))finishJob();   // 11-18 Ping：四龍原本共用一個通關紀錄→打完第一條龍，後面三條一進場殺第一隻怪就被當成打完
+      else if(rdCleared(id,q))finishJob();   // 11-18 Ping：四龍原本共用一個通關紀錄→打完第一條龍，後面三條一進場殺第一隻怪就被當成打完
       else {const native=special(id);if(native&&native.clears()>q.clearBefore)finishJob();}
     }if(before&&G.read(player))shortcut(before);}return r;
   };

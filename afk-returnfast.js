@@ -107,3 +107,37 @@
   W.__afkReturnFast = { stats: function () { return Object.assign({ pending: pending, running: running }, st); }, flush: function () { if (pending) return run(); } };
   console.log('[AFK-returnfast] 已啟用：回城先換畫面，隊員刷新延到下一個空檔');
 })();
+
+/* ==========================================================================
+ * 回城目的地（Ping 11-23 11:00／11:19）：
+ *   ‧目前地圖所屬地區有「自己血盟的城堡」→ 回那座城堡
+ *   ‧否則回該地區的村莊（就算血盟在別的地區有城堡也一樣）
+ *   ‧地區沒有村莊（副本、裂縫、攀塔、攻城區…）→ 照原本規則（有城堡回城堡，否則回上一個村莊）
+ *   做法：包 returnToTown，只把它第一次 setMapSelectors 的目的地換掉；其他限制（石化、裂痕、軍王之室…）照舊。
+ * ========================================================================== */
+(function () {
+  'use strict';
+  var W = window;
+  var destOf = function () {
+    try {
+      var cur = mapState.current; if (!cur || /^town_/.test(cur)) return null;
+      var key = typeof mapRegionOf === 'function' ? mapRegionOf(cur) : null; if (!key) return null;
+      var reg = (typeof MAP_REGIONS !== 'undefined' ? MAP_REGIONS : []).filter(function (r) { return r && r.key === key; })[0]; if (!reg) return null;
+      if (typeof siegeVictoryActive === 'function' && siegeVictoryActive()) { var cs = victoryCityCfg().castle; if (cs && (mapRegionOf(cs) === key || reg.castleCity === victoryCityCfg().key)) return cs; }   // 這個地區有自己血盟的城堡
+      var towns = (reg.maps || []).map(function (m) { return m && m.v; }).filter(function (v) { return typeof v === 'string' && /^town_/.test(v) && !/_castle$/.test(v) && (DB.towns[v] || DB.maps[v]); });
+      var last = player && player.lastTownVisited;   // 地區有好幾個村莊：上一個待過的村莊在這個地區就回那裡，否則回地區的第一個村莊
+      var town = towns.indexOf(last) >= 0 ? last : towns[0];
+      return town || null;
+    } catch (e) { return null; }
+  };
+  var oRet = W.returnToTown;
+  if (typeof oRet !== 'function') return;
+  W.returnToTown = function () {
+    var dest = destOf();
+    if (!dest || typeof W.setMapSelectors !== 'function') return oRet.apply(this, arguments);
+    var oSel = W.setMapSelectors, once = true;
+    W.setMapSelectors = function (v) { var a = Array.prototype.slice.call(arguments); if (once) { once = false; a[0] = dest; } return oSel.apply(this, a); };
+    try { return oRet.apply(this, arguments); } finally { W.setMapSelectors = oSel; }
+  };
+  W.__afkReturnDest = destOf;
+})();
