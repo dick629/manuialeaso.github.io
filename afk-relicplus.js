@@ -1869,6 +1869,13 @@
     } catch (e) { return dmg; }
   };
 
+  // 11-23 17:27 Ping：這一秒的持續傷害額度已經被別的出血層／中毒用完時，核心還是會印「受到出血傷害 0 點（5 層）」→ 0 點的不印
+  if (typeof window.logCombat === 'function') {
+    var oLogCombat = window.logCombat;
+    window.logCombat = function (h, kind) { if (kind === 'dot' && typeof h === 'string' && (/受到(出血|中毒)傷害 0 點/.test(h) || /受到出血傷害 1 點（(?:[2-9]|\d\d) 層）/.test(h))) return;   /* 多層卻只有 1 點＝額度用完後的保底，也不印 */ return oLogCombat.apply(this, arguments); };
+    try { (0, eval)('logCombat = window.logCombat'); } catch (e) {}
+  }
+
   // 幸運暴走兔腳：可以戴兩個，遺物掉落判定 ×2 → 兩個 ×4（核心補丁 16 讀這個函式）
   window.__afkRelicDropMult = function () {
     if (!enabled()) return 1;
