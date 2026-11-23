@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-c92eba451152",
+  "build": "merge-0.4-fbfd6f848729",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -23,8 +23,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-allypoly.js?v=1b96ead58570",
-      "sha256": "1b96ead5857081c4ed08469ee0e9ae02b82f9b3221cee3db7007cdf532d5e62e",
+      "url": "afk-allypoly.js?v=09e5b2bc4d14",
+      "sha256": "09e5b2bc4d149bdd5ed32a4a036be30bf38518dd11afb5fa3bfe0a93d64fad98",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -308,8 +308,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-card-ascension.js?v=680024e8fe27",
-      "sha256": "680024e8fe27cf4cc622ac8254d73816353d7691211dfe0f47dd247916f1fd91",
+      "url": "afk-card-ascension.js?v=fac2231756cb",
+      "sha256": "fac2231756cbf2149140a4334b7f462a0ea860d17deff532cbe35a01d1646451",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1363,8 +1363,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-relicshop.js?v=8412caa24706",
-      "sha256": "8412caa247062174539f2d2079f55eaee9c5d5f021f91ee383c910b3032b6eed",
+      "url": "afk-relicshop.js?v=8961e97be7ca",
+      "sha256": "8961e97be7ca0fc46124a6c394a82f5449c07388f81e42c34006fcfb3783d8c5",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1718,8 +1718,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-ttmi-items.js?v=3afe936a29a8",
-      "sha256": "3afe936a29a83dc190a68d6d8e134bb9b5f69d499ff75eb44c5157eba64170a6",
+      "url": "afk-ttmi-items.js?v=12f1c97a5928",
+      "sha256": "12f1c97a5928dd3e7fdd8bd9bb3fc8110be922c6bf79b3348fd9a14d23ab2a32",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "625d115df9b6881879da2fc053d34bcb3c061c72745f360857bd1883a43636aa",
+      "sha256": "0e92ad1ad69ede2a95a9cc41120374eb65eb07b4af2b03238e53c67a6c9b8536",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1858,8 +1858,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/02-stats-recompute.js?v=8cefe7e46f92",
-      "sha256": "8cefe7e46f92120cea129f7fa406843bb875d7b9d39e269b8bf1758475d5e591",
+      "url": "js/02-stats-recompute.js?v=77d8fe2b4d2d",
+      "sha256": "77d8fe2b4d2d3c8faaf5192e9c3f4db5840185d79c5b67d32a1a2f7b4f6d8025",
       "type": "text/javascript; charset=utf-8"
     },
     {

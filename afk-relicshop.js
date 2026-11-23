@@ -127,10 +127,10 @@
   if (typeof DB === 'undefined' || !DB.items || !W.__afkRelicShop) return;
   var KEY = 'afk_bmrelic_v1', RATE = 0.01, CAP = 5, CD_MS = 12 * 3600000, BOOST = 0.30, BLOOD = 'afk_blood_dia';
   var BAND = {
-    mob: { cur: 'blood', lo: 200000, hi: 550000 },     // 11-23 10:32 Ping：全部改血龍鑽；原本血龍鑽的兩級 ×1.5
-    high: { cur: 'blood', lo: 550000, hi: 1050000 },
-    king: { cur: 'blood', lo: 300000, hi: 525000 },
-    boss: { cur: 'blood', lo: 825000, hi: 1575000 }
+    mob: { cur: 'blood', lo: 350000, hi: 850000 },     // 11-23 15:47 Ping 調價（全部血龍鑽）
+    high: { cur: 'blood', lo: 850000, hi: 1550000 },
+    king: { cur: 'blood', lo: 1000000, hi: 2525000 },
+    boss: { cur: 'blood', lo: 1825000, hi: 3575000 }
   };
   var CUR_N = { dia: '龍之鑽石', blood: '血龍鑽' };
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };

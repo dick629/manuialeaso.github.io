@@ -181,5 +181,21 @@
     try { (0, eval)('closePolyModal = window.closePolyModal'); } catch (e) {}
   }
 
+  // 11-23 Ping：幫隊員選的變身（例如聖衣）暫時不能用而被解除，或被換成別的變身 → 能用了就自動換回來（照原本到期續買的規則付一張卷軸）
+  var restoreTick = function () {
+    var p = P(); if (!p || !Array.isArray(p.allies)) return;
+    p.allies.forEach(function (a) {
+      if (!a || a._downed || !a._mercPolyAuto || !a._afkPolyPick) return;
+      var pick = a._afkPolyPick; if (polyOn(a) && a.poly.n === pick) return;
+      var r = null; try { r = asAlly(a, null, function () { return buildState(pick); }); } catch (e) { r = null; }
+      if (!r || r.err || !r.st) return;
+      var paid = polyOn(a) ? '（換回原本選的變身）' : null;
+      if (!paid) { var got = takeScroll(); if (!got) return; paid = '（花費 ' + got + '）'; }
+      a.buffs = a.buffs || {}; a.poly = JSON.parse(JSON.stringify(r.st)); a.buffs.poly = Math.max(Number(a.buffs.poly) || 0, Math.floor((DB.items.scroll_poly && DB.items.scroll_poly.dur) || 1800)); delete a._afkPolyLost;
+      try { if (typeof _allyLevelRecompute === 'function') _allyLevelRecompute(a); } catch (e) {}
+      sys('<span class="text-emerald-300">' + esc(nameOf(a)) + ' 恢復變身為 <span class="' + esc(r.st.c || '') + '">' + esc(r.st.n) + '</span>' + paid + '。</span>');
+    });
+  };
+  setInterval(function () { try { restoreTick(); } catch (e) {} }, 30000);
   W.__afkAllyPoly = { pick: pick, cancel: cancel, apply: apply, row: rowHtml, _target: function (s) { target = s == null ? null : String(s); } };
 })();

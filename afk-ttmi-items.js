@@ -799,7 +799,7 @@
     if(typeof document!=='undefined')closeRiftSupplies();
     if(!playerReady())return false;var before=player.inv.length;var RS=window.__afkRiftSupply;player.inv=player.inv.filter(function(it){return riftIds.indexOf(it.id)<0||!!(RS&&RS.keep&&RS.keep(it.id));});   /* afk-riftsupply：加速、魔力藥水（裂痕專用）可帶出裂痕（玩家 2026-11-03） */
     var buffs=player.ttmiRiftBuffs||{};
-    Object.keys(buffs).forEach(function(k){var rec=buffs[k],elapsed=Math.max(0,(finite(state.ticks)-rec.at)/10);player.buffs[k]=Math.max(0,rec.before-elapsed);if(k==='poly'&&player.buffs[k]>0)player.poly=rec.poly;});
+    Object.keys(buffs).forEach(function(k){var rec=buffs[k],elapsed=Math.max(0,(finite(state.ticks)-rec.at)/10);player.buffs[k]=Math.max(0,rec.before-elapsed);if(k==='poly')player.poly=player.buffs[k]>0?rec.poly:null;});   /* 11-23：裂痕裡喝的變身（可能是隨機的）出裂痕一定換回原本的；原本的已到期就解除，不留著裂痕的變身 */
     delete player.ttmiRiftBuffs;delete player.ttmiRiftRunKey;
     if(typeof document!=='undefined'){var b=document.getElementById('ttmi-rift-button');if(b)b.remove();}
     return before!==player.inv.length||Object.keys(buffs).length>0;

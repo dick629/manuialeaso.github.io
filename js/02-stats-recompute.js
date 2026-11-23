@@ -632,7 +632,7 @@ d.mr += (baseMr + bonusMr);
     // 變形卷軸變身依目前武器分流：遠距離武器只能使用遠距離變身，其餘（含空手）只能使用近距離變身。
     // 換武器時 calcStats 會立即重抽相符類型；套裝／武器強制變身 _setPoly 仍保留原本專屬形態。
     // 此正規化對玩家與傭兵換身重算皆執行（player 為可換身全域·buildAlly/_allyLevelRecompute 期間指向傭兵）。
-    if(p.poly && p.buffs.poly > 0 && !polyFormMatchesEquippedWeapon(p.poly)) p.poly = getPolyState();
+    if(p.poly && p.buffs.poly > 0 && !polyFormMatchesEquippedWeapon(p.poly)) p.poly = (typeof window.__afkPolyMismatch === 'function') ? window.__afkPolyMismatch(p) : getPolyState();   /* 🔌 加掛版補丁:卡片變身不合時不亂抽 */
     // 變身：套裝變身（_setPoly，僅穿著套裝時生效、卸下立即消失）優先於藥水變身（buffs.poly 計時）
     if (typeof window.__afkPolyOverride === 'function') { try { if (window.__afkPolyOverride(p)) p._setPoly = null; } catch (e) {} }   /* 🔌 加掛版補丁:指定變身優先 */
     if(window.AFK_RELIC_GM) window.AFK_RELIC_GM.mergeForms(p);

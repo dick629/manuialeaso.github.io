@@ -452,6 +452,8 @@
     var old=oldFind.apply(this,arguments);if(old)return old;
     var f=monsterForm(name);return f?{form:f,color:'c-card-diamond'}:null;
   };
+  // 11-23 Ping：重算時卡片變身／聖衣不能用了（冷卻、碎裂、沒收集、武器不合）→ 解除變身，不要亂抽一個隨機變身（傭兵常變成骷髏弓箭手）
+  window.__afkPolyMismatch=function(p){try{if(enabled()&&p&&p.poly&&relevant(p.poly)){p._afkPolyLost=p.poly.n;if(p.buffs)p.buffs.poly=0;return null;}}catch(e){}return getPolyState();};
   var oldMatches=window.polyFormMatchesEquippedWeapon;
   window.polyFormMatchesEquippedWeapon=function(form){if(enabled()&&relevant(form))return canUseForm(form,player);return oldMatches.apply(this,arguments);};
   var oldCandidates=window.polyRandomCandidates;
