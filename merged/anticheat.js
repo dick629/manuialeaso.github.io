@@ -186,6 +186,22 @@
       Object.keys(p.eq || {}).forEach(function (k) { push(p.eq[k]); });
       (p.inv || []).forEach(push);
       (p.allies || []).forEach(function (al) { if (al && al.eq) Object.keys(al.eq).forEach(function (k) { push(al.eq[k]); }); });
+      // 11-24 03:09：創世密奧卡（裝在密奧欄、印記記在 afkMio.acg）原本不在自動解除範圍 → 沒印記的補正當印記；太快的照遊玩時數解除
+      [p].concat((p.allies || []).filter(Boolean)).forEach(function (ac) {
+        var m = ac && ac.afkMio; if (!m || !m.cards) return;
+        Object.keys(m.cards).forEach(function (i) {
+          if (!(Number(m.cards[i]) >= 6)) return;
+          m.acg = m.acg || {}; var x = m.acg[i], cost = SEAL_H.genesis;
+          if (stampOk(x)) return;
+          if (!x) { m.acg[i] = mkStamp(cost, true); fixed++; return; }
+          if (x.k !== stSig(x)) return;
+          var need = cost - (Number(x.c) || 0), a = acct();
+          if (need > 0 && a.sh + need > a.ms / 3600000) return;
+          if (need > 0) { a.sh += need; acctSave(a); }
+          x.c = Math.max(Number(x.c) || 0, cost); x.f = 0; x.k = stSig(x); fixed++;
+          try { sys('<span class="text-emerald-300">密奧卡的封印解除了。</span>'); } catch (e) {}
+        });
+      });
       var n = 0; list.forEach(function (it) { if (unsealOne(it)) { n++; try { sys('<span class="text-emerald-300">「' + (DB.items[it.id] ? DB.items[it.id].n : it.id) + '」的封印解除了。</span>'); } catch (e) {} } });
       if (n || fixed) { sealCache = new WeakMap(); try { if (typeof saveGame === 'function') saveGame(); } catch (e) {} }
     } catch (e) {}
@@ -236,9 +252,38 @@
   (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent) { var v = ent && ent.cls ? sealOf(ent) : null; return v ? 1 + v.inn : 1; });
   W.__afkAcSealInfo = function (actor) { var v = sealOf(actor); return v ? { out: v.out, inn: v.inn, n: v.n } : null; };   // 木人場細項用
   W.__afkAcSealedItem = function (it) { try { if (!it || exempt()) return false; if (it.afkDup && sKind(it.id)) return true; return !!(sKind(it.id) && !stampOk(it.acs));   /* 11-21 22:45：複本封印只算 S 級 */ } catch (e) { return false; } };   // 11-18：封印中的道具（寄賣攤不能上架）
+  // 11-24 03:20 Ping：密奧卡也顯示封印；封印標記旁邊寫還要再遊玩幾小時才自動解除（照自動解除的順序累計：密奧卡→身上→背包→傭兵）
+  var mioIdx = function (it) { var m = /^afk_mio_(\d\d)$/.exec((it && it.id) || ''); return m ? Number(m[1]) : -1; };
+  var mioSealed = function (it) { var p = P(), i = mioIdx(it); if (i < 0 || !p || exempt()) return false; var m = p.afkMio; return !!(m && m.cards && Number(m.cards[i]) >= 6 && !stampOk((m.acg || {})[i])); };
+  var sealLeft = function (target, mioI) {   // 回傳 { h: 還要幾小時 } 或 { never: 原因 }
+    var p = P(); if (!p) return null;
+    var a = acct(), have = a.ms / 3600000 - a.sh, acc = 0, found = null;
+    var step = function (x, cost, isT) {
+      if (found) return;
+      if (!x) { if (isT) found = { h: 0 }; return; }
+      if (x.k !== stSig(x)) { if (isT) found = { never: '印記不符' }; return; }
+      if (!x.f) return;
+      var need = Math.max(0, cost - (Number(x.c) || 0)); acc += need;
+      if (isT) found = { h: Math.max(0, acc - have) };
+    };
+    [p].concat((p.allies || []).filter(Boolean)).forEach(function (ac) { var m = ac && ac.afkMio; if (!m || !m.cards) return; Object.keys(m.cards).forEach(function (i) { if (Number(m.cards[i]) >= 6) step((m.acg || {})[i], SEAL_H.genesis, ac === p && mioI === Number(i)); }); });
+    var list = []; Object.keys(p.eq || {}).forEach(function (k) { list.push(p.eq[k]); }); (p.inv || []).forEach(function (x) { list.push(x); });
+    (p.allies || []).forEach(function (al) { if (al && al.eq) Object.keys(al.eq).forEach(function (k) { list.push(al.eq[k]); }); });
+    list.forEach(function (it) { if (!it || typeof it !== 'object' || it.afkDup || !sKind(it.id) || stampOk(it.acs)) return; step(it.acs, costNow(it), it === target); });
+    if (!found && target && target.afkDup) found = { never: '複本' };
+    return found;
+  };
+  var sealTagHTML = function (item) {
+    var mi = mioIdx(item), on = mi >= 0 ? mioSealed(item) : (W.__afkAcSealedItem && W.__afkAcSealedItem(item));
+    if (!on) return '';
+    var L = null; try { L = mi >= 0 ? sealLeft(null, mi) : sealLeft(item, -1); } catch (e) {}
+    var t = !L ? '' : L.never ? (L.never === '複本' ? '同一件道具出現在兩處，不會自動解除' : '不會自動解除') : L.h > 0 ? '再遊玩約 ' + Math.ceil(L.h).toLocaleString() + ' 小時自動解除' : '一分鐘內自動解除';
+    return '<span class="font-bold" style="color:#f87171;border:1px solid #f87171;border-radius:4px;padding:0 6px;margin-right:4px">封印</span>' + (t ? '<span style="color:#fca5a5;font-size:12px">' + t + '</span>' : '') + '<br>';
+  };
+  W.__afkAcSealTag = sealTagHTML;
   var tagHook = function () {
     var o = W.buildItemDescHTML; if (typeof o !== 'function' || o.__afkSealTag) return;
-    var f = function (item) { var r = o.apply(this, arguments); try { if (item && W.__afkAcSealedItem && W.__afkAcSealedItem(item)) r = '<span class="font-bold" style="color:#f87171;border:1px solid #f87171;border-radius:4px;padding:0 6px;margin-right:4px">封印</span><br>' + r; } catch (e) {} return r; };
+    var f = function (item) { var r = o.apply(this, arguments); try { if (item) r = sealTagHTML(item) + r; } catch (e) {} return r; };
     f.__afkSealTag = true; W.buildItemDescHTML = f; try { (0, eval)('buildItemDescHTML = window.buildItemDescHTML'); } catch (e) {}
   };
   try { W.addEventListener('load', function () { setTimeout(tagHook, 3500); }); } catch (e) {}

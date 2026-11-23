@@ -498,9 +498,40 @@
     var used = {}, out = {};
     // 11-23 17:57 Ping：奇古獸遺物全部都算（原本只認目錄裡的曼陀羅之靈、阿茲特獻祭亡靈）。
     //   先用目錄裡的，再用其他奇古獸遺物，回響遺物（王的）排最後，免得先被拿去當材料。
+    // 目錄外遺物武器的種類（11-24 03:20 Ping：具體分類，不再靠名稱猜）；『單手劍/武士刀』＝兩格都能填
+    var REL_WT = {
+      '單手劍': 'relic_goblin_blade relic_gladiator_scimitar relic_orc_cleaver relic_hobgoblin_grinder relic_orc_butcher relic_pirate_scimitar relic_boss_odi relic_boss_crypt18 relic_fill_m12 relic_fill_m69 relic_fill_b01 relic_echo_sanct_cursed_knight relic_echo_iv_deathsword relic_echo_iv_hatin relic_echo_de_elder_andis relic_echo_sanct_giltas relic_true_dk_flameblade relic_nemesis_runesword',
+      '魔杖': 'relic_zombie_shin relic_beholder_gaze relic_boss_melo relic_boss_orcelder relic_boss_pan relic_boss_naga relic_boss_bast relic_boss_desire relic_fill_m14 relic_fill_m31 relic_fill_m42 relic_fill_m47 relic_fill_m70 relic_fill_b09 relic_fill_b19 relic_fill_b34 relic_fill_b40 relic_fill_b48 relic_fill_b74 relic_echo_flame_baless relic_echo_iv_blackelder relic_echo_iv_baless relic_echo_iv_baphomet relic_echo_de_elder_balos relic_echo_de_elder_balud',
+      '匕首': 'relic_doberman_fang relic_orc_nail relic_boss_kajie relic_boss_sadtio relic_boss_rat relic_fill_m18 relic_fill_m29 relic_fill_m64 relic_fill_b37 relic_fill_b61 relic_echo_demon_assassin relic_echo_pride_phantom_boss relic_echo_ice_demon relic_echo_chaos_boss',
+      '弓': 'relic_giantant_antenna relic_boss_red relic_boss_griffin relic_fill_m13 relic_fill_b33 relic_fill_b69 relic_fill_b76 relic_echo_phoenix',
+      '雙手劍': 'relic_venom_fang relic_parrot_beak relic_elmore_greatsword relic_boss_skelwar relic_fill_m25 relic_fill_m43 relic_fill_b17 relic_fill_b22 relic_fill_b42 relic_fill_b66 relic_fill_b75 relic_echo_giant_ancient relic_echo_nm_034 relic_echo_de_elder_taimas',
+      '奇古獸': 'relic_croc_soul relic_dream_mushroom_soul relic_dream_flamesoul relic_mini_darkelf relic_echo_ant_kama_king relic_echo_valakas',
+      '十字弓': 'relic_whirlwind_xbow relic_modded_crossbow relic_echo_ant_queen',
+      '矛': 'relic_bk_lance relic_boss_saka relic_boss_reaper relic_boss_necro relic_fill_m04 relic_fill_m24 relic_fill_m55 relic_fill_b07 relic_fill_b36 relic_fill_b56 relic_fill_b78 relic_echo_skel_spear',
+      '鎖鏈劍': 'relic_boss_dela relic_boss_tamer relic_boss_warden relic_fill_b57 relic_echo_pride_marcus_vampire',
+      '雙刀': 'relic_boss_scar relic_fill_m19 relic_fill_b15 relic_fill_b71 relic_echo_sanct_cursed_fighter relic_echo_de_elder_captain relic_echo_de_king_slayer relic_echo_iv_demonshadow relic_echo_pride_reaper_boss relic_echo_de_elder_batas',
+      '鋼爪': 'relic_boss_wag relic_boss_ghoulking relic_fill_m16 relic_fill_m59 relic_fill_b18 relic_fill_b59 relic_echo_sanct_scavenger relic_echo_chaos_priest_beast relic_echo_flame_demon relic_echo_de_king_baranka relic_echo_pride_panther_boss relic_echo_de_elder_ramas relic_echo_ant_antharas_mad',
+      '單手劍/武士刀': 'relic_boss_ronin relic_fill_m20 relic_fill_b77 relic_echo_pride_vander_mob relic_echo_pride_vander_boss',
+      '雙手鈍器': 'relic_boss_dwarfgen relic_boss_dudama relic_boss_aruba relic_fill_m48 relic_fill_m71 relic_fill_b04 relic_fill_b30 relic_fill_b73 relic_echo_flame_avatar relic_echo_iv_imp',
+      '單手鈍器': 'relic_echo_death_boss'
+    }, REL_WT_BY = {};
+    Object.keys(REL_WT).forEach(function (k) { REL_WT[k].split(' ').forEach(function (id) { REL_WT_BY[id] = k.split('/'); }); });
+    // 11-24 03:09：目錄裡沒有的遺物武器（日出版、王的、補充的…）照遊戲判定的武器種類算（原本完全不認）
+    var libSlots = function (x) {
+      var cs = catalogSlot(x.id); if (cs) return [cs];
+      var d = DB.items[x.id]; if (!d || d.type !== 'wpn' || !d.relic || d.relicPlus != null || d.relicAsc != null || d.relicEvo != null || d.gmOnly || d.dimRelic || d.dimDragon != null || /~/.test(String(x.id)) || (Number(x.en) || 0) !== 0) return [];
+      if (REL_WT_BY[x.id]) return REL_WT_BY[x.id];
+      var out = [], fam = null, tg = [];
+      try { fam = typeof atkSpdFamily === 'function' ? atkSpdFamily(x.id) : null; } catch (e) {}
+      try { tg = typeof getWeaponTags === 'function' ? getWeaponTags(x.id) : []; } catch (e) {}
+      if (fam === '單手矛' || fam === '雙手矛') fam = '矛';
+      if (fam && WTYPES.indexOf(fam) >= 0) out.push(fam);
+      if (tg.indexOf('武士刀') >= 0 && out.indexOf('武士刀') < 0) out.push('武士刀');
+      return out;
+    };
     var qiguRank = function (x) { var d = DB.items[x.id]; if (!d || d.type !== 'wpn' || !d.qigu || !d.relic || d.relicPlus != null || d.relicAsc != null || d.relicEvo != null || d.gmOnly || d.dimRelic || /~/.test(String(x.id)) || (Number(x.en) || 0) !== 0) return 0; return catalogSlot(x.id) === '奇古獸' ? 1 : /^relic_echo_/.test(String(x.id)) ? 3 : 2; };
     WTYPES.forEach(function (t) {
-      var c = inv().filter(function (x) { return x && !x.lock && !used[x.uid] && (catalogSlot(x.id) === t || (t === '奇古獸' && qiguRank(x) > 0)); });
+      var c = inv().filter(function (x) { return x && !x.lock && !used[x.uid] && (libSlots(x).indexOf(t) >= 0 || (t === '奇古獸' && qiguRank(x) > 0)); });
       if (t === '奇古獸') c.sort(function (a, b) { return qiguRank(a) - qiguRank(b); });
       out[t] = c[0] || null; if (out[t]) used[out[t].uid] = 1;
     });
