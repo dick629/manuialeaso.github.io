@@ -517,22 +517,26 @@
     }, REL_WT_BY = {};
     Object.keys(REL_WT).forEach(function (k) { REL_WT[k].split(' ').forEach(function (id) { REL_WT_BY[id] = k.split('/'); }); });
     // 11-24 03:09：目錄裡沒有的遺物武器（日出版、王的、補充的…）照遊戲判定的武器種類算（原本完全不認）
+    // 11-24 03:29 Ping：符合武器種類就可以——強化過、昇華過的也算（至高支配、次元遺物、GM 不算）；同一格先用強化值最低的、昇華的排最後
+    var libBase = function (x) { var d = x && DB.items[x.id]; if (!d || d.type !== 'wpn' || !d.relic || d.relicEvo != null || d.gmOnly || d.dimRelic || d.dimDragon != null || x.dimV || x.dimLib) return null; return d.relicBase || String(x.id).split('~')[0]; };
+    var libRank = function (x) { var d = DB.items[x.id] || {}; return (d.relicAsc != null ? 100 + (Number(d.relicAsc) || 0) : 0) + (Number(d.relicPlus) || 0); };
     var libSlots = function (x) {
-      var cs = catalogSlot(x.id); if (cs) return [cs];
-      var d = DB.items[x.id]; if (!d || d.type !== 'wpn' || !d.relic || d.relicPlus != null || d.relicAsc != null || d.relicEvo != null || d.gmOnly || d.dimRelic || d.dimDragon != null || /~/.test(String(x.id)) || (Number(x.en) || 0) !== 0) return [];
-      if (REL_WT_BY[x.id]) return REL_WT_BY[x.id];
+      var bid = libBase(x); if (!bid || !DB.items[bid]) return [];
+      var cs = catalogSlot(bid); if (cs) return [cs];
+      if (REL_WT_BY[bid]) return REL_WT_BY[bid];
       var out = [], fam = null, tg = [];
-      try { fam = typeof atkSpdFamily === 'function' ? atkSpdFamily(x.id) : null; } catch (e) {}
-      try { tg = typeof getWeaponTags === 'function' ? getWeaponTags(x.id) : []; } catch (e) {}
+      try { fam = typeof atkSpdFamily === 'function' ? atkSpdFamily(bid) : null; } catch (e) {}
+      try { tg = typeof getWeaponTags === 'function' ? getWeaponTags(bid) : []; } catch (e) {}
       if (fam === '單手矛' || fam === '雙手矛') fam = '矛';
       if (fam && WTYPES.indexOf(fam) >= 0) out.push(fam);
       if (tg.indexOf('武士刀') >= 0 && out.indexOf('武士刀') < 0) out.push('武士刀');
       return out;
     };
-    var qiguRank = function (x) { var d = DB.items[x.id]; if (!d || d.type !== 'wpn' || !d.qigu || !d.relic || d.relicPlus != null || d.relicAsc != null || d.relicEvo != null || d.gmOnly || d.dimRelic || /~/.test(String(x.id)) || (Number(x.en) || 0) !== 0) return 0; return catalogSlot(x.id) === '奇古獸' ? 1 : /^relic_echo_/.test(String(x.id)) ? 3 : 2; };
+    var qiguRank = function (x) { var bid = libBase(x), d = bid && DB.items[bid]; if (!d || !d.qigu) return 0; return (catalogSlot(bid) === '奇古獸' ? 1 : /^relic_echo_/.test(bid) ? 3 : 2) * 1000 + libRank(x); };
     WTYPES.forEach(function (t) {
       var c = inv().filter(function (x) { return x && !x.lock && !used[x.uid] && (libSlots(x).indexOf(t) >= 0 || (t === '奇古獸' && qiguRank(x) > 0)); });
       if (t === '奇古獸') c.sort(function (a, b) { return qiguRank(a) - qiguRank(b); });
+      else c.sort(function (a, b) { return libRank(a) - libRank(b); });
       out[t] = c[0] || null; if (out[t]) used[out[t].uid] = 1;
     });
     return out;
@@ -540,7 +544,7 @@
   function liberate() {
     var p = P(), w = wpnOf(p); if (!w || !isSup(w)) { sys('<span class="text-amber-300">要先裝備「至高支配・封」的武器。</span>'); return; }
     if (w.dimLib) { sys('<span class="text-amber-300">已經是次元支配了。</span>'); return; }
-    var m = libMats(), miss = WTYPES.filter(function (t) { return !m[t]; }); if (miss.length) { sys('<span class="text-amber-300">還缺 +0、未昇華的遺物：' + esc(miss.join('、')) + '。</span>'); return; }
+    var m = libMats(), miss = WTYPES.filter(function (t) { return !m[t]; }); if (miss.length) { sys('<span class="text-amber-300">還缺這些種類的遺物武器（背包裡、沒上鎖）：' + esc(miss.join('、')) + '。</span>'); return; }
     WTYPES.forEach(function (t) { var x = m[t], i = p.inv.indexOf(x); if (i >= 0) { if ((x.cnt || 1) > 1) x.cnt--; else p.inv.splice(i, 1); } });
     w.dimLib = 1; w.dimLibEn = 0; try { libUnseal(w); } catch (e) {}
     sys('<span class="font-bold" style="color:#67e8f9">✦ ' + esc(DB.items[w.id].n) + ' 掙開了封印——它成了「次元支配」。</span>'); syncFlags(); try { calcStats(); saveGame(); } catch (e) {}
@@ -755,7 +759,7 @@
       [['w', '武器'], ['a', '防具'], ['c', '飾品']].forEach(function (c) { h += '<div class="ax-h">遺物絕技・' + c[1] + '（+5 隨機一招）</div>' + ULT[c[0]].map(function (u) { return K.rowHtml({ key: u.k, name: esc(u.n), color: '#f0abfc', desc: esc(u.d), btns: [] }, 'data-dr'); }).join(''); });
     } else if (VIEW.tab === 'lib') {
       var w = wpnOf(p), mt = libMats();
-      h += '<ul class="ax-note dr-ul"><li><b>解放材料</b>：14 種武器遺物各 1 件（+0、未昇華、背包裡沒上鎖的）；不用龍鑽、金幣，100% 成功；保留強化值、星數、雅典娜的祝福。</li><li><b>次元裂縫裡</b>：次元支配武器效果完整、對裂縫敵人傷害 +30%，並得到雅典娜的祝福（抵銷裂縫傷害懲罰 15%）；沒解放的至高支配・封武器效果打折（造成的傷害 −10%）。</li><li><b>縫天★</b>：異化星塵 ' + LIB.en.join('／') + '，成功率 ' + LIB.rate.join('／') + '%（失敗不降級、不扣材料）；每一顆星打倒怪物恢復 5 點五屬性抗性，★5 侵蝕最低保留 +100。</li></ul>';
+      h += '<ul class="ax-note dr-ul"><li><b>解放材料</b>：14 種武器遺物各 1 件（符合該武器種類就可以，強化過、昇華過的也算，會先用強化值最低的；背包裡沒上鎖的才算，不想被用掉請上鎖）；不用龍鑽、金幣，100% 成功；保留強化值、星數、雅典娜的祝福。</li><li><b>次元裂縫裡</b>：次元支配武器效果完整、對裂縫敵人傷害 +30%，並得到雅典娜的祝福（抵銷裂縫傷害懲罰 15%）；沒解放的至高支配・封武器效果打折（造成的傷害 −10%）。</li><li><b>縫天★</b>：異化星塵 ' + LIB.en.join('／') + '，成功率 ' + LIB.rate.join('／') + '%（失敗不降級、不扣材料）；每一顆星打倒怪物恢復 5 點五屬性抗性，★5 侵蝕最低保留 +100。</li></ul>';
       if (!w) h += K.rowHtml({ key: 'lib', name: '沒有裝備武器', color: '#94a3b8', desc: '先裝上「至高支配・封」武器再來。', off: true, btns: [] }, 'data-dr');
       else if (!isSup(w)) h += K.rowHtml({ key: 'lib', ico: K.invIco(w, 'eq'), name: K.fullName(w), desc: '裝備中的這把不是「至高支配・封」，不能解放。', off: true, btns: [] }, 'data-dr');
       else if (!w.dimLib) {
