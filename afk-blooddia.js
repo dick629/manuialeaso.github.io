@@ -262,7 +262,7 @@
   var fnv = function (s) { var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; } return h.toString(36); };
   var sig = function (a) { return fnv(SALT + a.b + '|' + (a.wh ? 1 : 0) + '|' + Object.keys(a.mig || {}).sort().join(',')); };
   var read = function () { var a = null; try { a = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {} if (!a || typeof a !== 'object') a = { b: 0, wh: 0, mig: {} }; a.b = Math.max(0, Math.floor(Number(a.b) || 0)); if (!a.mig || typeof a.mig !== 'object') a.mig = {}; a.bad = !!a.k && a.k !== sig(a); return a; };
-  var write = function (a) { var o = { b: Math.max(0, Math.floor(a.b)), wh: a.wh ? 1 : 0, mig: a.mig || {} }; o.k = sig(o); try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
+  var write = function (a) { var o = { b: Math.max(0, Math.floor(a.b)), wh: a.wh ? (Number(a.wh) >= 2 ? 2 : 1) : 0, mig: a.mig || {} }; o.k = sig(o); try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
   var invCount = function (p) { return (p.inv || []).reduce(function (n, i) { return n + (i && i.id === ID ? (Number(i.cnt) || 1) : 0); }, 0); };
   var setInv = function (p, n) {
     var keep = null; p.inv = (p.inv || []).filter(function (i) { if (!i || i.id !== ID) return true; if (!keep) { keep = i; return true; } return false; });
@@ -275,13 +275,14 @@
   var MIG_END = Date.UTC(2026, 11, 22, 16, 0);   // 搬家截止：2026-12-23 00:00（台灣時間）；之後才第一次讀進來的舊存檔，背包裡的血龍鑽不再搬
   var curP = null, last = 0, busy = false, movedIn = 0, loading = false, loadGain = 0;
   var migrateWh = function (a) {
-    if (a.wh) return;
+    // 11-24：改版後又被存進倉庫的（當時存進去會從帳號扣掉）再搬回帳號一次（wh2）
+    if (Number(a.wh) >= 2) return;
     try {
       if (typeof loadWarehouse !== 'function' || typeof saveWarehouse !== 'function') return;
       var w = loadWarehouse(); if (typeof _whLoadOk !== 'undefined' && !_whLoadOk) return;   // 倉庫讀不到就先不搬（下次再試）
       var n = 0; w.items = (w.items || []).filter(function (it) { if (it && it.id === ID) { n += Number(it.cnt) || 1; return false; } return true; });
       if (n > 0) saveWarehouse(w);
-      a.b += n; a.wh = 1; movedIn += n;
+      a.b += n; a.wh = 2; movedIn += n;
       if (n > 0) try { logSys('<span class="text-rose-300">倉庫裡的血龍鑽 ' + n.toLocaleString() + ' 顆已搬進帳號共用（所有角色共用）。</span>'); } catch (e) {}
     } catch (e) { console.warn('[AFK-blooddia] 倉庫搬家', e); }
   };
@@ -313,17 +314,23 @@
   if (typeof W.gainItem === 'function') { var oG = W.gainItem; W.gainItem = function (id, n) { var r = oG.apply(this, arguments); if (id === ID) { if (loading && curP === null) { if (r) loadGain += Math.max(1, Math.floor(Number(n) || 1)); } else try { sync(); } catch (e) {} } return r; }; }
   setInterval(function () { try { sync(); } catch (e) {} }, 500);
   try { W.addEventListener('storage', function (e) { if (e && e.key === KEY) try { sync(); } catch (x) {} }); } catch (e) {}
-  // 背包不顯示鏡像
-  if (typeof W.renderTabs === 'function') {
-    var oT = W.renderTabs;
-    W.renderTabs = function () {
-      var p = P(); if (!ok(p) || !(p.inv || []).some(function (i) { return i && i.id === ID; })) return oT.apply(this, arguments);
+  // 背包不顯示鏡像：主背包以外，倉庫、商店（賣）、各 NPC 的背包清單也一起藏（11-24 Ping：倉庫還看得到、還能存）
+  var hideIn = function (name) {
+    var o = W[name]; if (typeof o !== 'function' || o.__afkBloodHide) return;
+    var f = function () {
+      var p = P(); if (!ok(p) || !(p.inv || []).some(function (i) { return i && i.id === ID; })) return o.apply(this, arguments);
       var isB = function (i) { return i && i.id === ID; }, bloods = p.inv.filter(isB);
       p.inv = p.inv.filter(function (i) { return !isB(i); });
-      try { return oT.apply(this, arguments); } finally { p.inv = p.inv.filter(function (i) { return !isB(i); }).concat(bloods); }
+      try { return o.apply(this, arguments); } finally { p.inv = p.inv.filter(function (i) { return !isB(i); }).concat(bloods); }
     };
-    try { (0, eval)('renderTabs = window.renderTabs'); } catch (e) {}
-  }
+    f.__afkBloodHide = true; Object.keys(o).forEach(function (k) { if (!(k in f)) f[k] = o[k]; });
+    W[name] = f; try { (0, eval)(name + ' = window.' + name); } catch (e) {}
+  };
+  var HIDE_IN = ['renderTabs', 'renderWarehouseNPC', 'renderTownShop', 'renderShopItems', 'renderAllyEquipmentManager', 'renderUniversalCraft', 'renderIsmaelExchange', 'renderArkataBuyback', 'renderLachesisSplit', 'renderIoExchange', 'renderShimizheExchange'];
+  HIDE_IN.forEach(hideIn);
+  W.addEventListener('load', function () { setTimeout(function () { HIDE_IN.forEach(hideIn); }, 4000); });
+  // 不能存進倉庫（存進去會變成倉庫裡的道具、帳號餘額跟著變少）
+  try { if (typeof WH_NO_STORE !== 'undefined' && WH_NO_STORE.indexOf(ID) < 0) WH_NO_STORE.push(ID); } catch (e) {}
   // 黑市上方：跟龍之鑽石一起顯示
   if (typeof W.pandoraRelicBalanceHTML === 'function') {
     var oB = W.pandoraRelicBalanceHTML;

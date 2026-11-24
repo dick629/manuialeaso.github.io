@@ -415,6 +415,8 @@
     if(root.childElementCount)root.querySelectorAll(discoverSelector).forEach(register);
   }
   function nativeClose(r) {
+    // 11-24：視窗已經被換掉（重畫時先移除舊的、再放新的）就不要再「關閉」——舊視窗的關閉鈕會把新開的那個一起關掉、還原草稿（手機版自動販賣例外加不進去）
+    if(!r.el.isConnected)return;
     if(r.el.id==='afk-gh-win'&&window.__afkGameHall?.close){window.__afkGameHall.close();return;}
     if(r.el.id==='afk-radio-menu'&&window.__afkRadio?.close){window.__afkRadio.close();return;}
     const settingsClose={'afk-toggles-overlay':'afk-tg-close','afk-ms-overlay':'afk-ms-close'}[r.el.id];

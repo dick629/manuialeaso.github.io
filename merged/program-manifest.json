@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-e44ced0c8cd5",
+  "build": "merge-0.4-c7da08298c83",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -198,8 +198,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-blooddia.js?v=5bac260d71b9",
-      "sha256": "5bac260d71b98c9d5d0c452240761cb1bfc01b5791546890efafb35754b0dcaa",
+      "url": "afk-blooddia.js?v=8640728bd602",
+      "sha256": "8640728bd60292f9975de17a1fcc809a6d3a1d0677240bf4596cea86fdc824b8",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "603147faf8879dcbf75db38f3ddc4c8915cfe278e1261af94c200d7723524160",
+      "sha256": "60ef89c12e44a2830c9e62a1dca3a08eea342145eb8efbd566e5f84b671ad6e0",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2233,8 +2233,8 @@
       "type": "text/css; charset=utf-8"
     },
     {
-      "url": "merged/mobile-shell.js?v=0a7114db4ed4",
-      "sha256": "0a7114db4ed456d6fb9356f0208ee795dcfdee7ebad8e297f1356124dabf7389",
+      "url": "merged/mobile-shell.js?v=eb6bedc07b36",
+      "sha256": "eb6bedc07b36da92c0275fe4d7775256892675738f5075dcacbad4f1ce903de8",
       "type": "text/javascript; charset=utf-8"
     },
     {
