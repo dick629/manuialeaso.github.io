@@ -178,6 +178,12 @@
     if (need > 0) { a.sh += need; acctSave(a); }
     x.c = Math.max(Number(x.c) || 0, cost); x.f = 0; x.k = stSig(x); return true;
   };
+  var petGear = function () {
+    var out = [], ro = null;
+    try { ro = typeof petRoster === 'function' ? petRoster() : null; } catch (e) {}
+    (Array.isArray(ro) ? ro : []).forEach(function (pt) { if (pt && pt.eq) ['wpn', 'arm'].forEach(function (k) { if (pt.eq[k] && typeof pt.eq[k] === 'object') out.push(pt.eq[k]); }); });
+    return out;
+  };
   var unsealTick = function () {
     try {
       var p = P(); if (!p || p.classicMode) return;
@@ -202,8 +208,12 @@
           try { sys('<span class="text-emerald-300">密奧卡的封印解除了。</span>'); } catch (e) {}
         });
       });
+      // 11-24 11:15 Ping：寵物身上的遺物裝備原本不在自動解除範圍（沒印記的一直封著）→ 一起處理，處理完存寵物名冊
+      var petN = list.length; petGear().forEach(push); petN = list.length - petN;
+      var petList = petN ? list.slice(list.length - petN) : [];
       var n = 0; list.forEach(function (it) { if (unsealOne(it)) { n++; try { sys('<span class="text-emerald-300">「' + (DB.items[it.id] ? DB.items[it.id].n : it.id) + '」的封印解除了。</span>'); } catch (e) {} } });
       if (n || fixed) { sealCache = new WeakMap(); try { if (typeof saveGame === 'function') saveGame(); } catch (e) {} }
+      if (petList.some(function (it) { return it.acs; })) try { (0, eval)('_petRosterDirty = true'); if (typeof petRosterSave === 'function') petRosterSave(); } catch (e) {}
     } catch (e) {}
   };
   setInterval(unsealTick, 60000); setTimeout(unsealTick, 8000);
@@ -269,6 +279,7 @@
     [p].concat((p.allies || []).filter(Boolean)).forEach(function (ac) { var m = ac && ac.afkMio; if (!m || !m.cards) return; Object.keys(m.cards).forEach(function (i) { if (Number(m.cards[i]) >= 6) step((m.acg || {})[i], SEAL_H.genesis, ac === p && mioI === Number(i)); }); });
     var list = []; Object.keys(p.eq || {}).forEach(function (k) { list.push(p.eq[k]); }); (p.inv || []).forEach(function (x) { list.push(x); });
     (p.allies || []).forEach(function (al) { if (al && al.eq) Object.keys(al.eq).forEach(function (k) { list.push(al.eq[k]); }); });
+    petGear().forEach(function (x) { list.push(x); });
     list.forEach(function (it) { if (!it || typeof it !== 'object' || it.afkDup || !sKind(it.id) || stampOk(it.acs)) return; step(it.acs, costNow(it), it === target); });
     if (!found && target && target.afkDup) found = { never: '複本' };
     return found;
