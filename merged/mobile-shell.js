@@ -417,6 +417,8 @@
   function nativeClose(r) {
     // 11-24：視窗已經被換掉（重畫時先移除舊的、再放新的）就不要再「關閉」——舊視窗的關閉鈕會把新開的那個一起關掉、還原草稿（手機版自動販賣例外加不進去）
     if(!r.el.isConnected)return;
+    // 11-24 13:05：視窗自己藏起來了（例如遊戲廳縮成小球）也不要再「關閉」——不然會連小球一起關掉，手機版縮小後就回不去
+    if(r.el.hidden||r.el.classList.contains('hidden')||r.el.style.display==='none')return;
     if(r.el.id==='afk-gh-win'&&window.__afkGameHall?.close){window.__afkGameHall.close();return;}
     if(r.el.id==='afk-radio-menu'&&window.__afkRadio?.close){window.__afkRadio.close();return;}
     const settingsClose={'afk-toggles-overlay':'afk-tg-close','afk-ms-overlay':'afk-ms-close'}[r.el.id];
