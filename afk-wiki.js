@@ -1130,6 +1130,7 @@
     { k: 'relicstages', n: '遺物進階' },
     { k: 'relicforge', n: '遺物強化' },
     { k: 'cardforms', n: '變身卡' },
+    { k: 'goddess', n: '女神戰' },
     { k: 'reborn', n: '輪迴轉生' },
     { k: 'rebirtharts', n: '轉生技藝' },
     { k: 'growthguide', n: '天賦巔峰' },
@@ -1452,6 +1453,7 @@
     { key: 'relicstages', cls: false, label: '遺物進階', search: function(terms,max) { return window.AFK_GAME_GUIDE ? AFK_GAME_GUIDE.searchRelics(terms,max) : []; } },
     { key: 'relicforge', cls: false, label: '遺物強化' },
     { key: 'cardforms', cls: false, label: '變身卡' },
+    { key: 'goddess', cls: false, label: '女神戰' },
     { key: 'reborn', cls: false, label: '輪迴轉生' },
     { key: 'rebirtharts', cls: true, label: '轉生技藝' },   // 2026-10-28：比照職業專精可選職業
     { key: 'growthguide', cls: false, label: '天賦巔峰' },
@@ -4473,11 +4475,12 @@
       wDesc('席琳世界每次刷怪 1% 機率（每 3 分鐘最多一次），隨機一隻普通怪變「恩賜精英」（紅綠光暈＋紅底綠字徽章）；恩賜精英更兇但報酬更高。<b>已恩賜的怪不會再被選中第二次</b>（同一隻不會疊加恩賜）。') +
       wTbl(['恩賜怪', '倍率／機率'], [['HP', '×10（並回滿）'], ['經驗', '×10'], ['金錢', '×10'], ['掉落', '×10'], ['席琳結晶掉率', '不受恩賜影響']]));
 
-    out += goddess3Card('goddess');
+    out += wDesc('死亡女神 席琳的各場挑戰（一轉女神、二轉決戰、單人試煉、終焉階層）請看「女神戰」分頁。');
     // 織星者是隱藏稱號：小百科不列條件、不顯示進度（玩家 2026-11-04 03:58）
     return out;
   }
   // 女神與夢域鏡四龍的新機制（afk-goddess3，2026-11-03）：免疫怎麼破、斬殺、幽影、狂暴、雅典娜之杖
+  window.__afkWikiGoddess3 = function (w) { return goddess3Card(w); };   // 「女神戰」分頁（afk-game-guide）用
   function goddess3Card(which) {
     var G = window.__afkGoddess3, T0 = window.AFK_TOGGLES, en = function (id) { return !T0 || T0.enabled(id); };
     if (!G || !en('goddess3')) return '';

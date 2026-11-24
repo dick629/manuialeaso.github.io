@@ -246,6 +246,34 @@
     for (var i = 0; i < FB.gates.length; i++) { var g = FB.gates[i]; if (!(g[0] > 0)) continue; if (age < g[1] * SEC) return g; }   // 最後一道（倒下）不再等：打到 0 就算贏、當場離開（玩家 2026-10-31 14:11）
     return null;
   };
+  // ── 玩家CJ的祝福（Ping 11-24 15:50）：只在二轉決戰。席琳 HP 降到 75%／50%／25% 各觸發一次：
+  //    1 秒內不受任何傷害；這 1 秒內打她的攻擊反彈回去，每下 1,000 真實傷害、最多 5 下（合計最多 5,000）。不回血。
+  //    反彈打誰：玩家、傭兵各自吃；寵物、召喚物、守衛打的算到主人（玩家）身上。
+  var CJ = { at: [0.75, 0.50, 0.25], sec: 1, dmg: 1000, max: 5 };
+  var cjStep = function (m, t) {
+    var i = m._cjI || 0;
+    if (m._cjUntil && t >= m._cjUntil) {
+      if (m._cjHits) log(tag('CJ 的祝福', '#fde68a') + '反彈了 ' + m._cjHits + ' 下攻擊，共 ' + (m._cjHits * CJ.dmg).toLocaleString() + ' 點真實傷害。');
+      m._cjUntil = 0;
+    }
+    if (i < CJ.at.length && !m._cjUntil && m.curHp <= Math.ceil(m.hp * CJ.at[i])) {
+      m._cjI = i + 1; m._cjUntil = t + CJ.sec * SEC; m._cjHits = 0;
+      sys('<span class="font-bold" style="color:#fde68a">✨ 由於 玩家CJ 獻上祝福，' + BOSS_NAME + ' 1 秒內不受任何傷害，打向她的攻擊會被反彈回去。</span>');
+    }
+  };
+  var cjReflect = function (actor) {
+    var who = actor === player ? player : (player && (player.allies || []).indexOf(actor) >= 0 ? actor : player);
+    if (!who) return;
+    if (who === player) { if (player.dead) return; player.hp -= CJ.dmg; if (player.hp <= 0 && typeof killPlayer === 'function') killPlayer(); }
+    else { if (who._downed) return; who.curHp = Math.max(0, (Number(who.curHp) || 0) - CJ.dmg); if (who.curHp <= 0) { who._downed = true; who._reviveCd = 150; log('<span class="text-amber-400 font-bold">協力傭兵 ' + (who._allyName || '') + ' 被 CJ 的祝福反彈擊倒。</span>'); } }
+  };
+  (window.LineageAbsoluteDamageGates = window.LineageAbsoluteDamageGates || []).unshift(function (actor, target, amount) {
+    if (!target || !target._afkFinal || !target._cjUntil || !on() || mode() !== 'second') return amount;
+    if ((S().ticks || 0) >= target._cjUntil) return amount;
+    if ((target._cjHits || 0) < CJ.max && amount > 0) { target._cjHits = (target._cjHits || 0) + 1; try { cjReflect(actor); } catch (e) {} }
+    try { if (window.__afkZeroMark) window.__afkZeroMark('CJ 的祝福，暫時打不到'); } catch (e) {}
+    return 0;
+  });
   var seal = function (m, g) {
     if (m._fbSealGate === g[1]) return;
     m._fbSealGate = g[1];
@@ -314,6 +342,7 @@
     if (mode() === 'practice' && S()._afkFinalSpawned && !bossOf()) { finish('win', '打倒席琳'); return; }   // 練習：席琳倒下就結算
     var m = bossOf(); if (!m) return;
     var t = S().ticks || 0, age = ageOf(m);
+    if (mode() === 'second') cjStep(m, t);
     if (mode() === 'practice') {   // 單人練習（11-24 Ping：照單人試煉實戰——凝視、使徒召喚與減傷、擁抱回血都有，席琳一樣不出手；只差時間可選、沒獎勵）
       if (!m._afkBrk) { m._afkBrk = true; S()._afkPracT0 = t; }
       if (age >= (S()._afkPracSec || 1200) * SEC) { finish('time', '時間到'); return; }
