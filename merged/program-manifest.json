@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-2c1ee0f1fb68",
+  "build": "merge-0.4-b9daa1b18c5a",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -613,8 +613,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-evolve.js?v=c8346a9cb965",
-      "sha256": "c8346a9cb965d8465dadd7de6b69ae4ca3b557cdd82d8b4d2122dea05daa32a6",
+      "url": "afk-evolve.js?v=b54711e2ef9b",
+      "sha256": "b54711e2ef9b03de0d44fd5fd7aa5af7b65d8e81c4e5642398760abcfd73ef96",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "96320b74c5572a8c2a0911873933ceb3de011e246a9b068d30bee54462b664d7",
+      "sha256": "e3e2b91254758f534cfb8a02a49b2ac7636e868abe7e98537b74f0b33b74de8b",
       "type": "text/html; charset=utf-8"
     },
     {

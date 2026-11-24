@@ -292,7 +292,7 @@
   // 意志：學會全職業的增益技能（裝備給的技能每次重算都會重建，這裡跟著加回去）
   var WILL_SKIP = /^sk_helm_/;
   var willSkills = null;
-  var willList = function () { if (willSkills) return willSkills; willSkills = Object.keys(DB.skills).filter(function (k) { var s = DB.skills[k]; return s && s.type === 'buff' && !s.summon && !WILL_SKIP.test(k); }); return willSkills; };
+  var willList = function () { if (willSkills) return willSkills; willSkills = Object.keys(DB.skills).filter(function (k) { var s = DB.skills[k]; return s && s.type === 'buff' && !s.summon && !s.awCls && !WILL_SKIP.test(k); }); return willSkills; };   // 11-24 Ping：覺醒職業的增益（復仇屏障、黃金盔甲…）只有覺醒職業能放，不列進王者意志
   if (typeof W.recomputeStats === 'function') {
     var oRe2 = W.recomputeStats;
     W.recomputeStats = function () {
@@ -300,7 +300,11 @@
       if (isLeader && has(p0, 'royal_will', 1)) { p0.grantedSkills = p0.grantedSkills || []; }
       var r = oRe2.apply(this, arguments);
       try {
-        var p = P(); if (p && isLeader && has(p, 'royal_will', 1)) { p.grantedSkills = p.grantedSkills || []; willList().forEach(function (k) { if ((p.skills || []).indexOf(k) < 0) { p.grantedSkills.push(k); p.skills.push(k); } }); }
+        var p = P(); if (p && isLeader && has(p, 'royal_will', 1)) { p.grantedSkills = p.grantedSkills || []; willList().forEach(function (k) { if ((p.skills || []).indexOf(k) < 0) { p.grantedSkills.push(k); p.skills.push(k); } });
+          // 之前意志帶進來的覺醒職業增益：放不出來（一直跳「不是你的技能」）→ 拿掉
+          var awDrop = p.grantedSkills.filter(function (k) { var x = DB.skills[k]; return x && x.awCls && x.awCls !== p.cls; });
+          if (awDrop.length) { p.grantedSkills = p.grantedSkills.filter(function (k) { return awDrop.indexOf(k) < 0; }); p.skills = p.skills.filter(function (k) { return awDrop.indexOf(k) < 0; }); }
+        }
         // Ping 11-12 17:48：轉成新版流派（或沒有意志）後，意志加進來的別職業增益技能要拿掉——原本會一直留在技能清單、自動施放清單裡
         else if (p && isLeader && Array.isArray(p.skills)) {
           var gmOn = !(p.classPath && p.classPath.route) || !!(p.eq && p.eq.wpn && String(p.eq.wpn.id) === '99999'), /* 只有轉成流派的角色才清 GM 學到的 */ g = p.grantedSkills || [], gmSum = gmOn ? [] : (p._afkGmLearned || []).filter(function (k) { var x = DB.skills[k]; return x && x.type === 'buff' && x.summon && !WILL_SKIP.test(k); }), drop = willList().concat(gmSum).filter(function (k) { var sk = DB.skills[k]; if (p.skills.indexOf(k) < 0 || g.indexOf(k) >= 0) return false; if ((gmOn && (p._afkGmLearned || []).indexOf(k) >= 0) || (p._afkRulerLearned || []).indexOf(k) >= 0) return false; /* 主宰者學到的保留；GM 武器學到的只有拿著 GM 武器時保留（Ping 11-13 02:40） */ var lv; try { lv = typeof skillReqLv === 'function' ? skillReqLv(sk, k) : 0; } catch (e) { lv = 0; } return lv === undefined; });
