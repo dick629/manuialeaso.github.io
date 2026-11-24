@@ -266,7 +266,7 @@
     return 0;
   };
   // 11-22 Ping：二轉「單人試煉」也吃 S 級的造成傷害 +10%（其他三項在單人試煉沒意義：席琳方傷害本來就 −100%）
-  var soloOn = function () { var FB = W.__afkFinalBoss; try { return !!(FB && FB.on() && FB.mode() === 'solo'); } catch (e) { return false; } };
+  var soloOn = function () { var FB = W.__afkFinalBoss; try { return !!(FB && FB.on() && (FB.mode() === 'solo' || FB.mode() === 'practice')); } catch (e) { return false; } };   // 11-24：單人練習照實戰，S 級 +10% 也算
   W.__afkFbOutMod = function (actor, target, r) { return ((tierOn() || soloOn()) && sOf(actor)) ? r * (1 + S_BUFF.atk) : r; };
   W.__afkFbGazeMod = function (actor, pct) { return (tierOn() && sOf(actor)) ? pct * S_BUFF.gazeCut : pct; };
   W.__afkFbHurtMod = function (t, dmg, why) { if (!tierOn() || !sOf(t)) return dmg; return shield(t, dmg * (1 - S_BUFF.dr), why); };
