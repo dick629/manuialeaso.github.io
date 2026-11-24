@@ -118,7 +118,7 @@
   var won = function (p) { var r = rec(p); return !!(r && r.result === 'win' && !r.pending); };
   var lost = function (p) { var r = rec(p); return !!(r && r.result === 'lose' && !r.pending); };
   var on = function () { return !!(S()._afkFinal && mapState && mapState.current === MAP); };
-  // 2026-10-26 二轉：'first'＝第一次決戰；'second'＝二轉決戰（席琳方傷害 +5%）；'solo'＝次元突破者單人重打（席琳方傷害 −100%、防禦與抗性 −50%）
+  // 2026-10-26 二轉：'first'＝第一次決戰；'second'＝二轉決戰（席琳方傷害 +5%）；'solo'＝次元突破者單人重打（席琳方傷害 −100%；HP 與防禦用 TDEF.solo 固定值）
   var mode = function () { return S()._afkFinalMode || 'first'; };
   // 2026-10-29 晚：終焉三階層——'first'＝第一階層「席琳夢境」、'tier2'＝第二階層「席琳幻影」（HP、傷害 ×1.25）、'tier3'＝第三階層「席琳伴身」（×1.5625，只能挑戰一次）
   // 2026-11-04 03:14（玩家）：第二階層的席琳 HP 再 ×0.70（hpK；傷害照 ×1.25，使徒 HP 照 ×1.25）→ 席琳 HP 合計 ×0.875

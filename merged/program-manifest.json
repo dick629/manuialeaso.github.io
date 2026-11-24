@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-5e8ddf370bff",
+  "build": "merge-0.4-414239c2b2e3",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -653,8 +653,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-finalboss.js?v=3119cbcfc5ff",
-      "sha256": "3119cbcfc5ff0fa0d58c5c18adc08d973b0f36b0cdf931acb7a7aadfe6127630",
+      "url": "afk-finalboss.js?v=90768d82b05a",
+      "sha256": "90768d82b05aa693245ba89f63575d291f49bace17007c5c4a809fe20dfc57c6",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1233,8 +1233,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-rebirth2.js?v=57061ae2b829",
-      "sha256": "57061ae2b82903748ab5ff857a267cbde15834bfba18b6867b9d562d109e42cc",
+      "url": "afk-rebirth2.js?v=aab8411c807f",
+      "sha256": "aab8411c807f225529fd4f064c3883ceb899a6f7a5f0b851eb3e955c674dcdbd",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "1dc1e52bf75ce68cb66789b026554d20f097d0dd4662026c043d1f92b84fa571",
+      "sha256": "c903df97f75cf2f7d73680f8f790e756978e2481297b110cc36e6c698173a9b0",
       "type": "text/html; charset=utf-8"
     },
     {
