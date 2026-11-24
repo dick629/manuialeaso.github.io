@@ -207,5 +207,20 @@
     try { (0, eval)('tick = window.tick'); } catch (e) {}
   }
 
+  // 倒下＝恐慌／汙濁之水（全體）一起結束（11-24 Ping：信念之塔中了全部負面狀態後倒下，原地復活起來還是全身異常、動不了）
+  //   倒下的期間遊戲時間停住，upkeep 跑不到「倒下就解除」那一段，鎖定一直留著，復活後又被套回去。
+  //   改成：倒下當下、以及任何方式復活之前，都把鎖定拿掉（狀態本身由復活清掉）。
+  var dropLock = function (x) { try { if (x && x._afkBaLock) delete x._afkBaLock; } catch (e) {} };
+  if (typeof W.killPlayer === 'function') {
+    var oKP = W.killPlayer;
+    W.killPlayer = function () { var r = oKP.apply(this, arguments); try { var p = P(); if (p && p.dead) dropLock(p); } catch (e) {} return r; };
+    try { (0, eval)('killPlayer = window.killPlayer'); } catch (e) {}
+  }
+  ['reviveInPlace', 'revive', '_reviveAllyDone'].forEach(function (fn) {
+    var o = W[fn]; if (typeof o !== 'function') return;
+    W[fn] = function (ally) { try { dropLock(fn === '_reviveAllyDone' ? ally : P()); } catch (e) {} return o.apply(this, arguments); };
+    try { (0, eval)(fn + ' = window.' + fn); } catch (e) {}
+  });
+
   W.__afkBossArts = { CFG: CFG, KEYS: KEYS, ARTS: ARTS, on: on, inScope: inScope, instance: instance, doArt: doArt, lock: lock, clearLock: clearLock, bossTick: bossTick, upkeep: upkeep };
 })();
