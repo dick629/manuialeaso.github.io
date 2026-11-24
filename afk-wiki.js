@@ -63,7 +63,7 @@
     _hideModal();
     if (h && window.AFK_NAV) AFK_NAV.handoff(h);   // 寄放歷史層給對方 claim,整段跨頁切換只佔一格
   }
-  window.AFK_WIKI_API = { goto: gotoWiki, close: closeForNav, isOpen: _isModalClosable, searchHits: searchHits, searchHitsAsync: searchHitsAsync, searchReady: cacheFresh, warmSearch: function () { buildHitCache(); } };   // goto 通用跨頁前往小百科;close/isOpen 供跨頁切換(關閉來源、接手歷史層);searchHits 供掉落查詢統一搜尋
+  window.AFK_WIKI_API = { snap: function () { var bd = document.getElementById('m-wiki-body'); return { q: state.q || '', tab: state.tab, cls: state.cls, sc: bd ? bd.scrollTop : 0 }; }, scrollTo: function (y) { var bd = document.getElementById('m-wiki-body'); if (bd) bd.scrollTop = y || 0; }, goto: gotoWiki, close: closeForNav, isOpen: _isModalClosable, searchHits: searchHits, searchHitsAsync: searchHitsAsync, searchReady: cacheFresh, warmSearch: function () { buildHitCache(); } };   // goto 通用跨頁前往小百科;close/isOpen 供跨頁切換(關閉來源、接手歷史層);searchHits 供掉落查詢統一搜尋
   // 獨立頁:狀態(搜尋字/分頁/職業)←→ 網址,方便複製連結分享(replaceState,不灌爆瀏覽記錄)
   function _wikiParam(n) { try { return new URLSearchParams(location.search).get(n); } catch (e) { return null; } }
   var _tabSet = null, _clsSet = null;

@@ -55,8 +55,32 @@
   })();
   // 🔗 通用「前往掉落查詢」(供小百科等任何跨頁連結重用):模態連模態、網址連網址。
   //    opts.q = 預設搜尋字。獨立頁 → 導去 ?view=dex&q=(dex 初始化讀 q 自動搜);模態(遊戲內) → 開 dex 模態並搜尋。
+  // ◀ 上一步（11-24 Ping：從搜尋結果點進怪物／物品後，回不到剛剛的清單）
+  //   每次點名字連結跳轉前，記下目前在看什麼（掉落查詢的搜尋字與捲動位置，或小百科的搜尋字／分頁／捲動位置）；掉落查詢上方的「◀」一層一層退回去。
+  var navStack = [], _navLink = false;
+  function navSnap() {
+    var dm = document.getElementById('m-dex-modal');
+    if (dm && _isOpenNow()) { var di = document.getElementById('m-dex-input'), dr = document.getElementById('m-dex-results'); return { w: 'dex', q: di ? di.value : '', sc: dr ? dr.scrollTop : 0 }; }
+    if (window.AFK_WIKI_API && AFK_WIKI_API.isOpen && AFK_WIKI_API.isOpen() && AFK_WIKI_API.snap) { var s = AFK_WIKI_API.snap(); s.w = 'wiki'; return s; }
+    return null;
+  }
+  function navPush() { var s = navSnap(); if (!s) return; var top = navStack[navStack.length - 1]; if (top && top.w === s.w && top.q === s.q && top.tab === s.tab) top.sc = s.sc; else navStack.push(s); if (navStack.length > 30) navStack.shift(); navBtn(); }
+  function navBtn() { var b = document.getElementById('m-dex-back'); if (b) b.style.display = navStack.length ? '' : 'none'; }
+  function navBack() {
+    var s = navStack.pop(); navBtn(); if (!s) return;
+    if (s.w === 'dex') {
+      var i = document.getElementById('m-dex-input'); if (i) i.value = s.q || '';
+      doSearch();
+      setTimeout(function () { var r = document.getElementById('m-dex-results'); if (r) r.scrollTop = s.sc || 0; }, 60);
+    } else if (window.AFK_WIKI_API && AFK_WIKI_API.goto) {
+      AFK_WIKI_API.goto({ q: s.q, tab: s.tab, cls: s.cls });
+      var y = s.sc || 0; [80, 400, 1200].forEach(function (ms) { setTimeout(function () { try { AFK_WIKI_API.scrollTo(y); } catch (e) {} }, ms); });
+    }
+  }
+  function _isOpenNow() { var m = document.getElementById('m-dex-modal'); return !!(m && m.style.display !== 'none' && getComputedStyle(m).display !== 'none'); }
   function gotoDex(opts) {
     opts = opts || {};
+    _navLink = true;
     if (inStandaloneView()) {   // 網址連網址
       location.href = location.href.split('?')[0].split('#')[0] + '?view=' + VIEW + (opts.q ? '&q=' + encodeURIComponent(opts.q) : '');
       return;
@@ -1078,6 +1102,7 @@
     m.innerHTML =
       '<div id="m-dex-card-wrap">' +
         '<div id="m-dex-head">' +
+          '<button id="m-dex-back" type="button" title="回到上一步" aria-label="回到上一步" style="display:none">◀</button>' +
           '<span id="m-dex-inwrap">' +
             '<input id="m-dex-input" type="text" placeholder="搜尋 怪物 / 地圖 / 掉落物 / 物品…" autocomplete="off">' +
             '<button id="m-dex-clear" type="button" title="清除" aria-label="清除">✕</button>' +
@@ -1093,7 +1118,8 @@
     document.body.appendChild(m);
     document.getElementById('m-dex-input').addEventListener('input', debouncedSearch);
     document.getElementById('m-dex-mode').addEventListener('change', doSearch);
-    document.getElementById('m-dex-close').addEventListener('click', userCloseTop);
+    document.getElementById('m-dex-close').addEventListener('click', function () { navStack = []; navBtn(); userCloseTop(); });
+    document.getElementById('m-dex-back').addEventListener('click', navBack);
     document.getElementById('m-dex-clear').addEventListener('click', function () {
       var i = document.getElementById('m-dex-input');
       i.value = ''; doSearch(); i.focus();
@@ -1117,6 +1143,7 @@
     document.addEventListener('click', function (e) {
       var b = e.target.closest ? e.target.closest('.m-dex-pop-search,[data-dexq]') : null;
       if (!b) return;
+      navPush();
       gotoDex({ q: b.getAttribute('data-dexq') || b.getAttribute('data-item') || '' });
     });
     // 📚 統一搜尋:點「小百科相關內容」列 → 前往小百科開同字搜尋(gotoWiki 會關本模態/獨立頁走網址)
@@ -1137,6 +1164,7 @@
   function ensureFresh() { var s = dataSig(); if (s !== _dataSig) { var first = !_dataSig; _dataSig = s; if (!first) refreshIndexes(); } }
   function openModal(adopt) {
     var m = document.getElementById('m-dex-modal'); if (!m) return;
+    if (!_navLink) navStack = []; _navLink = false; navBtn();   // 不是從名字連結跳過來（自己打開掉落查詢）＝重新開始
     try { ensureFresh(); } catch (e) {}
     // Keep feature-dependent rules current after a toggle changes on this page.
     var oldRules = document.getElementById('m-dex-special');
@@ -1183,6 +1211,7 @@
       '#m-dex-clear{display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:none;background:#475569;color:#e2e8f0;border-radius:50%;font-size:12px;line-height:1;cursor:pointer;padding:0;}',
       '#m-dex-clear.show{display:block;}',
       '#m-dex-clear:active{background:#64748b;}',
+      '#m-dex-back{flex:0 0 auto;width:42px;border:1px solid #0e7490;background:#164e63;color:#e0f2fe;border-radius:8px;font-size:16px;cursor:pointer;font-family:inherit;}',
       '#m-dex-close{flex:0 0 auto;width:42px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;border-radius:8px;font-size:16px;cursor:pointer;font-family:inherit;}',
       '#m-dex-close:active{background:#334155;}',
       '#m-dex-sherine-row{display:flex;align-items:center;gap:8px;padding:9px 14px;color:#cbd5e1;font-size:14px;border-bottom:1px solid #1e293b;flex:0 0 auto;}',

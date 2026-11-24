@@ -624,5 +624,27 @@
   }
 
   window.__afkCorrupt = { DRAGONS: DRAGONS, areasOf: areasOf, finals: finals, cur: cur, debuff: function (t) { return debuff.get(t); }, pulse: pulse, withCtx: withCtx };
+  // ── 讀檔後接回副本進度（11-24 Ping：深淵巴拉卡斯巢穴通道打一小時還在半路）──
+  //   副本進度（第幾區、哪一座龍）只放在執行中的狀態、不進存檔；重新整理／自動更新後人還在巢穴地圖裡，但進度歸零，
+  //   打倒區域頭目不會再往前推，就卡在原地。這裡依「目前所在的巢穴地圖」把進度接回去（四大龍副本都適用；存檔內容不變）。
+  //   通關次數仍在打倒最終龍時才檢查與扣除，所以接回進度不會多拿通關。
+  var resumeRun = function () {
+    try {
+      var s = S(), mp = mapState && mapState.current;
+      if (!mp || s.antharas || typeof ANTHARAS_AREA_BOSS === 'undefined' || !ANTHARAS_AREA_BOSS[mp]) return;
+      var key = keyOfMap[mp] || null, list = key ? areasOf[key] : (0, eval)('ANTHARAS_AREAS');
+      var i = list ? list.indexOf(mp) : -1; if (i < 0) return;
+      s.antharas = i + 1; s._antAdvance = false; s._afkDragon = key;
+      var nm = key ? DRAGONS[key].pre + '的' + DRAGONS[key].dragon + '巢穴' : '侵蝕的安塔瑞斯巢穴';
+      logSys('<span class="text-amber-200">你仍在' + nm + '（' + ((typeof ANTHARAS_AREA_NAMES !== 'undefined' && ANTHARAS_AREA_NAMES[mp]) || '') + '），挑戰繼續；擊敗這一區的頭目就會往更深處前進。</span>');
+    } catch (e) { console.warn('[AFK-corrupt] 接回進度', e); }
+  };
+  if (typeof window.loadGame === 'function') {
+    var oLoad = window.loadGame;
+    window.loadGame = function () { var r = oLoad.apply(this, arguments); resumeRun(); return r; };
+    try { (0, eval)('loadGame = window.loadGame'); } catch (e) {}
+  }
+  setTimeout(resumeRun, 0);
+
   console.log('[AFK-corrupt] 已啟用：破滅法利昂／深淵巴拉卡斯／災厄林德拜爾巢穴');
 })();
