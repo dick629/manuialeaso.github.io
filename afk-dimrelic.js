@@ -516,6 +516,7 @@
       '單手鈍器': 'relic_echo_death_boss'
     }, REL_WT_BY = {};
     Object.keys(REL_WT).forEach(function (k) { REL_WT[k].split(' ').forEach(function (id) { REL_WT_BY[id] = k.split('/'); }); });
+    relWtBy = REL_WT_BY;
     // 11-24 03:09：目錄裡沒有的遺物武器（日出版、王的、補充的…）照遊戲判定的武器種類算（原本完全不認）
     // 11-24 03:29 Ping：符合武器種類就可以——強化過、昇華過的也算（至高支配、次元遺物、GM 不算）；同一格先用強化值最低的、昇華的排最後
     var libBase = function (x) { var d = x && DB.items[x.id]; if (!d || d.type !== 'wpn' || !d.relic || d.relicEvo != null || d.gmOnly || d.dimRelic || d.dimDragon != null || x.dimV || x.dimLib) return null; return d.relicBase || String(x.id).split('~')[0]; };
@@ -629,7 +630,25 @@
   var catalogSlot = function (id) { var d = DB.items[id]; if (!d || !d.relic || d.relicPlus != null || d.relicAsc != null) return null; var c = (W.AFK_RELIC_CATALOG || []).filter(function (x) { return x.name === d.n; })[0]; return c ? c.slot : null; };
   var mySlot = function (row) { return row.slotName === '盾牌' ? /^(盾牌|臂甲)$/ : new RegExp('^' + row.slotName + '$'); };
   // 製作材料（第二版）：「至高的支配」遺物；武器要先在「次元支配」分頁解放（經過至高支配・封那一段）。背包與身上都算。
-  var srcSlot = function (it) { var d = it && DB.items[it.id]; return d ? catalogSlot(d.relicBase || it.id) : null; };
+  // 11-25 Ping：目錄外的遺物（王的、補充的、回響…）做成至高支配後也能做次元遺物——防具、飾品照部位，武器照武器種類（同次元支配解放材料的分類）
+  var relWtBy = null;
+  var ARM_SLOT = { helm: '頭盔', armor: '盔甲', tshirt: '內衣', cloak: '斗篷', gloves: '手套', boots: '長靴', shin: '脛甲', amulet: '項鍊', ring: '戒指', ear: '耳環', belt: '腰帶' };
+  var srcSlot = function (it) {
+    var d = it && DB.items[it.id]; if (!d) return null;
+    var bid = d.relicBase || String(it.id).split('~')[0], cs = catalogSlot(bid); if (cs) return cs;
+    var bd = DB.items[bid] || d;
+    if (bd.type === 'arm' || bd.type === 'acc') { if (bd.slot === 'shield') return /臂甲/.test(bd.n || '') ? '臂甲' : '盾牌'; return ARM_SLOT[bd.slot] || null; }
+    if (bd.type !== 'wpn') return null;
+    try { if (!relWtBy) libMats(); } catch (e) {}
+    if (relWtBy && relWtBy[bid]) return relWtBy[bid][0];
+    var fam = null, tg = [];
+    try { fam = typeof atkSpdFamily === 'function' ? atkSpdFamily(bid) : null; } catch (e) {}
+    try { tg = typeof getWeaponTags === 'function' ? getWeaponTags(bid) : []; } catch (e) {}
+    if (fam === '單手矛' || fam === '雙手矛') fam = '矛';
+    if (fam && WTYPES.indexOf(fam) >= 0) return fam;
+    if (tg.indexOf('武士刀') >= 0) return '武士刀';
+    return null;
+  };
   var srcOk = function (it) { var d = it && DB.items[it.id]; if (!d || it.lock || it.dimV || BY[it.id] || d.relicEvo == null || !srcSlot(it)) return false; return d.type !== 'wpn' || !!it.dimLib; };
   var mats = function (uid) { var p = P(), all = inv().concat(p && p.eq ? Object.keys(p.eq).map(function (k) { return p.eq[k]; }) : []); var a = all.filter(srcOk); return uid ? a.filter(function (x) { return x.uid === uid; })[0] : a; };
   var supWpnNotLib = function () { var p = P(), all = inv().concat(p && p.eq ? Object.keys(p.eq).map(function (k) { return p.eq[k]; }) : []); return all.filter(function (x) { var d = x && DB.items[x.id]; return d && d.type === 'wpn' && d.relicEvo != null && !x.dimLib && !x.dimV; }); };
@@ -883,6 +902,6 @@
   K.addNpc('town_sherine', { id: 'npc_afk_dimsmith', n: '次元的鍛造師', title: '次元遺物', type: 'quest', classicHide: true, d: '把遺物丟進裂縫裡重新鍛造的鍛造師。次元遺物的製作、強化、重抽都在這裡。' });
   K.hookNpc('npc_afk_dimsmith', '次元的鍛造師', '次元遺物', render);
 
-  W.__afkDimRelic.libMats = libMats;  W.__afkDimRelic.craft = craft; W.__afkDimRelic.enhance = enhance; W.__afkDimRelic.reroll = reroll; W.__afkDimRelic.synth = synth; W.__afkDimRelic.evolveDragon = evolveDragon; W.__afkDimRelic.B = B; W.__afkDimRelic.build = build; W.__afkDimRelic.COST = COST; W.__afkDimRelic.liberate = liberate; W.__afkDimRelic.libEnhance = libEnhance; W.__afkDimRelic.hornUp = hornUp; W.__afkDimRelic.libMats = libMats;
+  W.__afkDimRelic.libMats = libMats;  W.__afkDimRelic.srcSlot = srcSlot; W.__afkDimRelic.mats = mats; W.__afkDimRelic.craft = craft; W.__afkDimRelic.enhance = enhance; W.__afkDimRelic.reroll = reroll; W.__afkDimRelic.synth = synth; W.__afkDimRelic.evolveDragon = evolveDragon; W.__afkDimRelic.B = B; W.__afkDimRelic.build = build; W.__afkDimRelic.COST = COST; W.__afkDimRelic.liberate = liberate; W.__afkDimRelic.libEnhance = libEnhance; W.__afkDimRelic.hornUp = hornUp; W.__afkDimRelic.libMats = libMats;
   try { console.log('[AFK-dimrelic] 已載入：次元遺物 ' + LIST.length + ' 件'); } catch (e) {}
 })();
