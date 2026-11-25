@@ -393,7 +393,7 @@
     DB.items[id] = { n: '不屈的命運(' + f[1] + ')', type: 'etc', p: 0, c: 'text-amber-200', noUse: true, noSell: true, gachaWeight: 0, img: 'assets/icons/items/不屈的命運.png',
       d: '一枚刻著' + f[2] + '紋樣的命運碎片——' + f[1] + '的靈魂一次次倒下，又一次次站起。暗夢星迴・星迴試煉的頭目必定掉落一顆（隨機職業）。八職業各一顆全部集齊，時空裂痕-冥王域會為走過輪迴的人再次開門（第二次轉生，內容暫無）。' };
   });
-  var fateHave = function () { return FATE_IDS.filter(function (id) { return invCnt(id) > 0; }).length; };
+  var fateHave = function () { var M = window.__afkMatWh, mw = M && M.on && M.on() ? M : null; return FATE_IDS.filter(function (id) { return invCnt(id) > 0 || (mw && mw.wh(id) > 0); }).length; };   // 11-25 Ping：倉庫裡的也算
   var pickW = function (arr) { var tot = 0; arr.forEach(function (x) { tot += x[1]; }); var r = Math.random() * tot; for (var i = 0; i < arr.length; i++) { r -= arr[i][1]; if (r < 0) return arr[i][0]; } return arr[arr.length - 1][0]; };
   var addDia = function (n) { try { if (typeof window.pandoraAdjustSharedDiamonds === 'function') return !!(window.pandoraAdjustSharedDiamonds(n) || {}).ok; } catch (e) {} return false; };
   // （舊規格的 1% 昇華支配遺物已依 2026-10-21 新規格移除；relicBases/randomAscRelic 保留給測試與日後使用）

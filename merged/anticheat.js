@@ -184,6 +184,38 @@
     (Array.isArray(ro) ? ro : []).forEach(function (pt) { if (pt && pt.eq) ['wpn', 'arm'].forEach(function (k) { if (pt.eq[k] && typeof pt.eq[k] === 'object') out.push(pt.eq[k]); }); });
     return out;
   };
+  // 11-25 Ping：封印期滿全部解除。
+  //   舊帳號（帳號裡任一角色在 11/15 00:00 開始擋 S 級之前就玩過）：從封印上線 11/11 00:36 起算 400 小時＝11/27 16:36，封印中的全部解除。
+  //   之後才建立的帳號：帳號遊玩時數累積滿 400 小時（同原本的帳號時數，掛機打對折）那一刻，封印中的全部解除。
+  //   只解「在期滿之前就被封印」的（印記時間早於期滿）；期滿之後才被封印的照原本「遊玩時數依序解除」。複本、印記被竄改的不解。
+  //   舊帳號標記另存一筆（有簽章），新帳號期滿的那一刻也另存一筆；時間用時鐘防護過的 Date.now。
+  var OLD_KEY = 'lineage_ac_old_v1', DUE_KEY = 'lineage_ac_due_v1', SS_H = 400, OLD_DUE = LAUNCH + SS_H * 3600000;
+  var kSig = function (tag, v) { return fnv(ACCT_SALT + tag + '|' + v); };
+  var kGet = function (key, tag) { var o = null; try { o = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) {} return (o && o.v > 0 && o.k === kSig(tag, o.v)) ? Number(o.v) : 0; };
+  var kSet = function (key, tag, v) { try { localStorage.setItem(key, JSON.stringify({ v: v, k: kSig(tag, v) })); } catch (e) {} };
+  var oldSeen = function (q) { var x = q && q.afkPlay; return !!(x && x.since > 0 && x.since < S_FROM && x.sig === signOf(q, x)); };
+  var isOldAcct = function () {
+    if (kGet(OLD_KEY, 'old')) return true;
+    var hit = false;
+    try { if (oldSeen(P())) hit = true; } catch (e) {}
+    try { var mx = typeof SAVE_SLOT_MAX !== 'undefined' ? SAVE_SLOT_MAX : 16; for (var s = 1; !hit && s <= mx; s++) { var q = typeof _roleReadSavePlayer === 'function' ? _roleReadSavePlayer(s) : null; if (q && q.cls && oldSeen(q)) hit = true; } } catch (e) {}
+    if (hit) kSet(OLD_KEY, 'old', 1);
+    return hit;
+  };
+  var acctH = function () { return acct().ms / 3600000; };
+  var dueAt = function () {   // 期滿時間（0＝還沒到、新帳號）
+    if (isOldAcct()) return OLD_DUE;
+    var d = kGet(DUE_KEY, 'due'); if (d) return d;
+    if (acctH() >= SS_H) { d = Date.now(); kSet(DUE_KEY, 'due', d); return d; }
+    return 0;
+  };
+  var sealedStamp = function (x) { return !!(x && x.k === stSig(x) && !stampOk(x)); };
+  var dueCache = { t: 0, v: null };
+  W.__afkAcSealDue = function () {   // { at: 期滿時間 } 或 { h: 新帳號還要遊玩幾小時 }
+    if (dueCache.v && Date.now() - dueCache.t < 5000) return dueCache.v;
+    var v; try { var d = dueAt(); v = d ? { at: d } : { h: Math.max(0, SS_H - acctH()) }; } catch (e) { v = null; }
+    dueCache = { t: Date.now(), v: v }; return v;
+  };
   var unsealTick = function () {
     try {
       var p = P(); if (!p || p.classicMode) return;
@@ -211,6 +243,14 @@
       // 11-24 11:15 Ping：寵物身上的遺物裝備原本不在自動解除範圍（沒印記的一直封著）→ 一起處理，處理完存寵物名冊
       var petN = list.length; petGear().forEach(push); petN = list.length - petN;
       var petList = petN ? list.slice(list.length - petN) : [];
+      var mioXs = []; [p].concat((p.allies || []).filter(Boolean)).forEach(function (ac) { var m = ac && ac.afkMio; if (m && m.cards && m.acg) Object.keys(m.cards).forEach(function (i) { if (Number(m.cards[i]) >= 6 && m.acg[i]) mioXs.push(m.acg[i]); }); });
+      var due = 0, freed = 0; try { due = dueAt(); } catch (e) {}
+      if (due && Date.now() >= due) {
+        var free = function (x, cost) { if (!(Number(x.t) < due)) return; x.c = Math.max(Number(x.c) || 0, cost); x.f = 0; x.k = stSig(x); freed++; };
+        list.forEach(function (it) { if (it && !it.afkDup && sKind(it.id) && it.acs && sealedStamp(it.acs)) free(it.acs, costNow(it)); });
+        mioXs.forEach(function (x) { if (sealedStamp(x)) free(x, SEAL_H.genesis); });
+        if (freed) { fixed += freed; dueCache.v = null; try { sys('<span class="text-emerald-300 font-bold">封印期滿，封印中的道具（' + freed + ' 件）全部解除了。</span>'); } catch (e) {} }
+      }
       var n = 0; list.forEach(function (it) { if (unsealOne(it)) { n++; try { sys('<span class="text-emerald-300">「' + (DB.items[it.id] ? DB.items[it.id].n : it.id) + '」的封印解除了。</span>'); } catch (e) {} } });
       if (n || fixed) { sealCache = new WeakMap(); try { if (typeof saveGame === 'function') saveGame(); } catch (e) {} }
       if (petList.some(function (it) { return it.acs; })) try { (0, eval)('_petRosterDirty = true'); if (typeof petRosterSave === 'function') petRosterSave(); } catch (e) {}
@@ -282,13 +322,20 @@
     petGear().forEach(function (x) { list.push(x); });
     list.forEach(function (it) { if (!it || typeof it !== 'object' || it.afkDup || !sKind(it.id) || stampOk(it.acs)) return; step(it.acs, costNow(it), it === target); });
     if (!found && target && target.afkDup) found = { never: '複本' };
+    try {
+      var D = W.__afkAcSealDue(), tx = target ? target.acs : (mioI >= 0 && p.afkMio && p.afkMio.acg ? p.afkMio.acg[mioI] : null);
+      if (found && !found.never && D) {
+        if (D.at && (!tx || Number(tx.t) < D.at)) { var hh = Math.max(0, (D.at - Date.now()) / 3600000); if (hh < found.h) found = { h: found.h, t: hh, due: D.at }; }
+        else if (D.h != null && D.h < found.h) found = { h: D.h };
+      }
+    } catch (e) {}
     return found;
   };
   var sealTagHTML = function (item) {
     var mi = mioIdx(item), on = mi >= 0 ? mioSealed(item) : (W.__afkAcSealedItem && W.__afkAcSealedItem(item));
     if (!on) return '';
     var L = null; try { L = mi >= 0 ? sealLeft(null, mi) : sealLeft(item, -1); } catch (e) {}
-    var t = !L ? '' : L.never ? (L.never === '複本' ? '同一件道具出現在兩處，不會自動解除' : '不會自動解除') : L.h > 0 ? '再遊玩約 ' + Math.ceil(L.h).toLocaleString() + ' 小時自動解除' : '一分鐘內自動解除';
+    var t = !L ? '' : L.never ? (L.never === '複本' ? '同一件道具出現在兩處，不會自動解除' : '不會自動解除') : L.due != null ? (L.t > 0 ? '約 ' + Math.ceil(L.t).toLocaleString() + ' 小時後（' + (new Date(L.due).getMonth() + 1) + '/' + new Date(L.due).getDate() + ' ' + ('0' + new Date(L.due).getHours()).slice(-2) + ':' + ('0' + new Date(L.due).getMinutes()).slice(-2) + '）自動解除' : '一分鐘內自動解除') : L.h > 0 ? '再遊玩約 ' + Math.ceil(L.h).toLocaleString() + ' 小時自動解除' : '一分鐘內自動解除';
     return '<span class="font-bold" style="color:#f87171;border:1px solid #f87171;border-radius:4px;padding:0 6px;margin-right:4px">封印</span>' + (t ? '<span style="color:#fca5a5;font-size:12px">' + t + '</span>' : '') + '<br>';
   };
   W.__afkAcSealTag = sealTagHTML;

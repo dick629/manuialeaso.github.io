@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-7d1ca8c234b4",
+  "build": "merge-0.4-a09389c4d3d5",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -13,8 +13,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-affix-plus.js?v=b0b181fe4514",
-      "sha256": "b0b181fe4514c85c2d5d82f400db8bece7dd2a4ebad1752c123ca268a01c1674",
+      "url": "afk-affix-plus.js?v=075c5a64ea77",
+      "sha256": "075c5a64ea7780ef0e6fc97868e0c575193befdf60d685ffb1b67ef2ef53a8db",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -553,8 +553,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamstar.js?v=539d0e1cb3cd",
-      "sha256": "539d0e1cb3cd0a3774164cd952279b4350d06ef8e2d6f27fb0b12397bdbea843",
+      "url": "afk-dreamstar.js?v=486a362e7337",
+      "sha256": "486a362e73370c29f0f3bbb74eeb1d5f75b7c57f10c7a9c3363001a7b414bcae",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1233,8 +1233,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-rebirth2.js?v=a3893801f135",
-      "sha256": "a3893801f135792a56b8192fbad6f705b199753ffdd893245ad125ad039818d3",
+      "url": "afk-rebirth2.js?v=f8e8afebf510",
+      "sha256": "f8e8afebf51006de188609776eca76fe292971240cd8602603241d7ce2cdd925",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "b45d5e132c35ad280dfbdb501ee00423d044952b062c8aed17da1c4cc947b596",
+      "sha256": "d5694245900cd67fe4d8078aa65c697a3a40129307286e1a71c4ed0b9804a8ab",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2023,8 +2023,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/anticheat.js?v=ccfe5da643fe",
-      "sha256": "ccfe5da643fe40839f469496430e2fdec5cbf6f97795c544dbf3224e927071b4",
+      "url": "merged/anticheat.js?v=4b0afe47443d",
+      "sha256": "4b0afe47443db3fbc4f0168fec90447c5af61a21b5de458af929cf0c64736636",
       "type": "text/javascript; charset=utf-8"
     },
     {

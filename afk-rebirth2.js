@@ -118,9 +118,10 @@
     if (!Number.isFinite(p.lv) || p.lv < 150) return '第二次轉生需要 Lv150。';
     if (typeof state !== 'undefined' && (state.riftRun || state._afkFinal || state.antharas || state.prideClimb)) return '請先離開目前副本，再進入冥王域。';
     var ids = DS.FATE_IDS;
+    var MW = window.__afkMatWh, mw = MW && MW.on && MW.on() ? MW : null;   // 11-25 Ping：倉庫裡的也算（轉生時從倉庫拿）
     if (!Array.isArray(ids) || ids.length !== 8 || new Set(ids).size !== 8 || !Array.isArray(p.inv) || !ids.every(function (id) {
-      return p.inv.some(function (x) { return hasFateCount(x, id); });
-    })) return '八職業的不屈的命運不齊。';
+      return p.inv.some(function (x) { return hasFateCount(x, id); }) || (mw && mw.wh(id) > 0);
+    })) return '八職業的不屈的命運不齊（背包＋倉庫）。';
     return '';
   };
   var oHades = window.enterHades;
@@ -140,7 +141,10 @@
   };
   window.unlockHades = window.enterHades;
   var doRebirth2 = function () {
-    var p = P(), why = rebirthReason(p);
+    var p = P();
+    try { var MW = window.__afkMatWh; if (p && MW && MW.on && MW.on()) { DS.FATE_IDS.forEach(function (id) { if (!p.inv.some(function (x) { return hasFateCount(x, id); })) MW.pull(id, 1, 0); }); MW.flush(); } } catch (e) {}
+    var why = rebirthReason(p);
+    if (!why && !DS.FATE_IDS.every(function (id) { return p.inv.some(function (x) { return hasFateCount(x, id); }); })) why = '從倉庫取出不屈的命運失敗，請稍後再試。';
     if (why) { sys('<span class="text-red-400">' + why + '</span>'); return { ok: false, reason: why }; }
     var ids = DS.FATE_IDS;
     var consumed = new Set();

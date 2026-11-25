@@ -389,6 +389,12 @@
     return true;
   };
   var fates = function () { var p = P(); return p ? p.inv.filter(function (it) { return it && /^afk_fate_/.test(it.id) && !it.lock && cnt(it) > 0; }) : []; };
+  // 11-25 Ping：不屈的命運也讀倉庫（倉庫上鎖的不算）；賦予時背包沒有就從倉庫拿 1 顆（afk-matwh 的倉庫交易流程）
+  var FATE_IDS = ['royal', 'knight', 'elf', 'mage', 'dark', 'dragon', 'illusion', 'warrior'].map(function (c) { return 'afk_fate_' + c; });
+  var MW = function () { var m = W.__afkMatWh; return m && m.on && m.on() ? m : null; };
+  var fateWh = function () { var m = MW(); return m ? FATE_IDS.reduce(function (n, id) { return n + (m.wh(id) || 0); }, 0) : 0; };
+  var fateTotal = function () { return fates().reduce(function (n, it) { return n + cnt(it); }, 0) + fateWh(); };
+  var fatePull = function () { var m = MW(); if (!m) return false; for (var i = 0; i < FATE_IDS.length; i++) if ((m.wh(FATE_IDS[i]) || 0) > 0 && m.pull(FATE_IDS[i], 1, 0)) { m.flush(); return true; } return false; };
 
   // ── 選裝備 ──
   var SLOT_N = { wpn: '主手', offwpn: '副手', shield: '盾牌', armor: '盔甲', helm: '頭盔', cloak: '斗篷', tshirt: 'T恤', gloves: '手套', boots: '長靴', shin: '脛甲', amulet: '項鍊', belt: '腰帶', ring1: '戒指1', ring2: '戒指2', ring3: '戒指3', ring4: '戒指4', ear1: '耳環1', ear2: '耳環2' };
@@ -484,8 +490,8 @@
       var p = P();
       if (!WILL[kind]) return '請選擇意志。';
       if (!willOk(p)) return sealed(p) ? '封印輪迴光環封住了你的意志，無法賦予。' : '需要已經轉生，或能進入席琳夢域鏡（Lv80）。';
-      var f = fates(); if (!f.length) return '需要 1 顆不屈的命運（任何職業都可以）。';
       var x = resolveRef(ref); if (!x) return '找不到這件武器。';
+      var f = fates(); if (!f.length && fatePull()) f = fates(); if (!f.length) return '需要 1 顆不屈的命運（任何職業都可以；背包或倉庫）。';
       var it = f[0]; it.cnt = cnt(it) - 1; p.inv = p.inv.filter(function (z) { return cnt(z) > 0; });
       x.it.will = kind;
       done('<span class="font-bold" style="color:#fca5a5;">不屈的命運碎裂，「' + esc(plain(x.it)) + '」承接了' + WILL[kind].n + '：' + WILL[kind].d + '。</span>'); return null;
@@ -604,7 +610,7 @@
   };
   // 每一項賦予：圖示、名稱、效果、材料（持有／需要）、這件能不能做
   var services = function (p, x) {
-    var sh = have(SHARD), st = have(STONE), dc = diaHave(), dr = have(DRES), fc = fates().reduce(function (n, it) { return n + cnt(it); }, 0);
+    var sh = have(SHARD), st = have(STONE), dc = diaHave(), dr = have(DRES), fc = fateTotal();
     var d = x && x.d, it = x && x.it;
     var isW = !!(d && KIND.weapon(d)), isScar = !!(d && KIND.scar(d)), isArm = !!(d && KIND.armor(d)), any = !!(d && KIND.any(d));
     var noSel = '先在上面選一件裝備';
@@ -673,7 +679,7 @@
       + '<div class="ax-mats">'
       + mats.map(function (m) { return '<div class="ax-mat">' + itemIco(m[0], true) + '<span>' + esc(DB.items[m[0]].n) + ' <b>' + m[1].toLocaleString() + '</b></span></div>'; }).join('')
       + '<div class="ax-mat">' + icoTag(ICON.dia, '', true) + '<span>怪物鑽石卡 <b>' + diaHave().toLocaleString() + '</b></span></div>'
-      + '<div class="ax-mat">' + icoTag(ICON.fate, '', true) + '<span>不屈的命運 <b>' + fates().reduce(function (n, it) { return n + cnt(it); }, 0).toLocaleString() + '</b></span></div>'
+      + '<div class="ax-mat">' + icoTag(ICON.fate, '', true) + '<span>不屈的命運 <b>' + fateTotal().toLocaleString() + '</b></span></div>'
       + '</div>'
       + '<div class="ax-h">① 選擇裝備</div>'
       + '<div class="ax-filter">' + Object.keys(SLOT_KIND).map(function (k) { return '<button type="button" data-axf="' + k + '"' + (ui.filter === k ? ' class="on"' : '') + '>' + SLOT_KIND[k] + '</button>'; }).join('')
