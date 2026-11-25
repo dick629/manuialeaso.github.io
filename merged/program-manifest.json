@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-9d67be5b0d15",
+  "build": "merge-0.4-718c5fe30fcf",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -1538,8 +1538,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-soulstone.js?v=143f1a8c8961",
-      "sha256": "143f1a8c8961bcfe617215a2b0487e7b3999f598cf49a85925c4b5925607e2d6",
+      "url": "afk-soulstone.js?v=508d6fd81b43",
+      "sha256": "508d6fd81b438275cb9ae44ab907c42c38365caf7db771a18ce3ee86908c3361",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "0e750225cef7b86c3b70e4156b07e2f4295b411ba78c3d273358a109e282d598",
+      "sha256": "02057f33b75308e49eeb520eb5ddac4726d937c827995379c97d568154809790",
       "type": "text/html; charset=utf-8"
     },
     {

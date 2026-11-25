@@ -79,7 +79,8 @@
   try { if (DB.items[SHARD]) DB.items[SHARD].d = '製作材料。席琳神殿的扎爾收 150 個，換一顆隨機的靈魂石。'; } catch (e) {}
   var isStone = function (id) { var d = id && DB.items[id]; return !!(d && d.eff === 'afk_soulstone' && d.soulBoss && !d.soulLegacy); };
   var isLegacy = function (id) { var d = id && DB.items[id]; return !!(d && d.eff === 'afk_soulstone' && d.soulLegacy); };
-  var randomStone = function () { var pool = BOSSES.filter(function (id) { return !MB.test(id); }); return PREFIX + pool[Math.floor(Math.random() * pool.length)]; };
+  // 11-25 Ping 選 B：隨機靈魂石（怪物掉落、碎片、失去光芒的傳說裝備）改成全部頭目一起平均抽，王者系列也抽得到
+  var randomStone = function () { var pool = BOSSES; return PREFIX + pool[Math.floor(Math.random() * pool.length)]; };
 
   // ── 背包小工具 ──
   var countOf = function (id) { var p = P(); return p ? (p.inv || []).reduce(function (s, i) { return s + (i && i.id === id ? Math.max(1, Number(i.cnt) || 1) : 0); }, 0) : 0; };
@@ -433,8 +434,8 @@
         + '‧遊戲原本的頭目（野外王、軍王、傲慢之塔與支配者、冰之女王、底比斯、提卡爾、日出之國…）與謀叛者的低語、哈汀的時空的頭目，以及王者系列（地圖王、副本王），各有一種靈魂石，共 <b>' + BOSSES.length + '</b> 種（四龍、世界事件、地區霸主沒有）。<br>'
         + '‧使用＝進入<b>' + ROOM_N + '</b>，自己一個人挑戰那隻頭目；傭兵留在外面，打完或離開就歸隊。頭目的能力、掉落物跟原本一樣（訓練所裡不會再掉靈魂石）。<br>'
         + '‧打倒後 3 秒回到原本的地方；倒下或自己換地圖＝挑戰結束。<br>'
-        + '‧取得：Lv' + RATE.minLv + ' 以上的怪物 ' + (RATE.stone * 100) + '% 掉隨機靈魂石、' + (RATE.shard * 100) + '% 掉靈魂石碎片；頭目 ' + (RATE.boss * 100) + '% 掉隨機靈魂石；王者系列（地圖王、副本王）' + (RATE.boss * 100) + '% 掉牠自己的靈魂石（攻城、時空裂痕、暗夢星迴不掉；隨機靈魂石抽不到王者系列）。<br>'
-        + '‧製作：碎片 ×' + COST.shard + '，或失去光芒的傳說裝備 ×' + COST.legend + '，各換一顆隨機靈魂石（所有頭目平均抽）。'
+        + '‧取得：Lv' + RATE.minLv + ' 以上的怪物 ' + (RATE.stone * 100) + '% 掉隨機靈魂石、' + (RATE.shard * 100) + '% 掉靈魂石碎片；頭目 ' + (RATE.boss * 100) + '% 掉隨機靈魂石；王者系列（地圖王、副本王）' + (RATE.boss * 100) + '% 掉牠自己的靈魂石（攻城、時空裂痕、暗夢星迴不掉）。<br>'
+        + '‧製作：碎片 ×' + COST.shard + '，或失去光芒的傳說裝備 ×' + COST.legend + '，各換一顆隨機靈魂石（全部 ' + BOSSES.length + ' 種平均抽，王者系列也抽得到）。'
         + (p.afkSoulStats ? '<br>‧你已經用過 ' + p.afkSoulStats.used + ' 顆，打倒 ' + p.afkSoulStats.won + ' 次。' : '') + '</div>';
     }
     h += '</div>';
