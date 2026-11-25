@@ -24,7 +24,8 @@
     if(side.every(x=>x==='after')){await S.finish(p.token,true);return {status:'committed'};}
     if(side.every(x=>x==='before')){await S.finish(p.token,false);return {status:'rolled-back'};}
    }
-   if(p.changes.some(c=>{const v=localStorage.getItem(c.key);return v!==c.before&&v!==c.after;}))throw Error('中斷後資料又有變更，不能自動覆蓋；請保留備份 ID：'+p.backupId);
+   // 11-25 Ping（手機卡在「中斷後資料又有變更，不能自動覆蓋」）：中斷之後遊戲已經用目前的資料繼續存檔，這份就是玩家正在玩的進度 → 不覆蓋、保留目前資料，只把這筆中斷紀錄結案（交易前的備份仍在，ID 照列），之後的保存、轉職、刪角不再被擋。
+   if(p.changes.some(c=>{const v=localStorage.getItem(c.key);return v!==c.before&&v!==c.after;})){await S.finish(p.token,false);return {status:'kept-current',backupId:p.backupId};}
    const changes=p.changes.filter(c=>localStorage.getItem(c.key)!==c.before).map(c=>({key:c.key,before:localStorage.getItem(c.key),after:c.before,reason:'INTERRUPTED_ROLLBACK'}));
    await R.transact(localStorage,changes,s=>W.LineageBackups.save(s,'integrity-recovery'),{canWrite:()=>R.scan(R.capture(localStorage)).canRepair});await S.finish(p.token,false);return {status:'rolled-back'};
   }finally{busy=false;}

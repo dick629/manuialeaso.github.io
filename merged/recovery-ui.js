@@ -42,7 +42,7 @@
  async function mutate(changes,kind='repair'){
   return locked(async()=>R.transact(store,changes,s=>V.save(s,kind),{canWrite}));
  }
- $('recover-integrity').onclick=()=>run(async()=>{const r=await locked(()=>LineageIntegrity.recover());status(r.status==='clean'?'沒有中斷的保護交易。':r.status==='committed'?'已確認上次保存完成。':'已回復中斷交易前的資料。');await showBackups();});
+ $('recover-integrity').onclick=()=>run(async()=>{const r=await locked(()=>LineageIntegrity.recover());status(r.status==='clean'?'沒有中斷的保護交易。':r.status==='committed'?'已確認上次保存完成。':r.status==='kept-current'?'上次中斷的保存之後遊戲又存過檔，已保留你目前的進度並結束這筆中斷紀錄（中斷前的備份仍保留，ID：'+r.backupId+'）。':'已回復中斷交易前的資料。');await showBackups();});
  $('scan').onclick=()=>run(async()=>{const r=R.scan(current());display(r);status(r.issues.some(x=>['critical','blocking'].includes(x.severity))?'已完成檢查，請依下方提示處理。':'檢查完成。');});
  $('repair').onclick=()=>run(async()=>{
   status('正在檢查…');const r=R.scan(current());display(r);

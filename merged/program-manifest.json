@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-d2bbe9f9b387",
+  "build": "merge-0.4-9d67be5b0d15",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "308ff4921230e29eb9ca86417a31f800160a46cc8d0beff74737342107ac853a",
+      "sha256": "0e750225cef7b86c3b70e4156b07e2f4295b411ba78c3d273358a109e282d598",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2183,8 +2183,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/integrity-runtime.js?v=7852370293f7",
-      "sha256": "7852370293f72d0fdbdbc0058cf3ceb37a4eb5c371a51c3ec4dac1ed297f0ebe",
+      "url": "merged/integrity-runtime.js?v=4d440dde168c",
+      "sha256": "4d440dde168cb8b6cbaee4b89c53809342ea59e1410e20ea9bf1a9e21e53b056",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2288,8 +2288,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/recovery-ui.js?v=0a1e40b0e442",
-      "sha256": "0a1e40b0e442d1ce595ead0863a386ba179634e87b042cfa731bb1a2cee41e1b",
+      "url": "merged/recovery-ui.js?v=7c6a2ab42c5c",
+      "sha256": "7c6a2ab42c5c5cd819e3f75c93f1ee9d461827b7c9590aca126c9a0b02261b69",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2349,7 +2349,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "d295a723e211c4d5dc9db0a0f93c72ab1c2fe763f7c61c7e738bd754c48b05c1",
+      "sha256": "b8cb4e5408381e632cf6fbcea25cc6d14a7cc32b68101146829ed69be8888c30",
       "type": "text/html; charset=utf-8"
     }
   ]
