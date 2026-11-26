@@ -360,3 +360,14 @@ html body.giran-chrome.afk-invlist #giran-console[data-panel=bag] .classic-inven
   margin: 0;
 }
 #squad-tab-skill .giran-hp-thresholds { flex-wrap: wrap; }
+
+/* 11-27 Ping：電腦版日誌字體放大到 18px（原 12px）。行高 18→26px，可見行數 12→9，面板高度大致不變。手機版另有自己的設定，不受影響。 */
+html body.giran-chrome .ga-chat:not(.ga-folded){--chat-line:26px}
+html body.giran-chrome .ga-chat :is(#world-log,#gr-chat,#ga-chat-feed),
+html body.giran-chrome .ga-chat :is(#world-log,#gr-chat,#ga-chat-feed) :where(*){font-size:18px!important}
+:is(.giran-guest,.giran-running) .ga-chat.ga-chat:not(.ga-folded) :is(#world-log,#gr-chat,#ga-chat-feed){height:calc(9 * var(--chat-line))!important}
+@media(max-height:520px){
+  html body.giran-chrome .ga-chat:not(.ga-folded){--chat-line:22px}
+  html body.giran-chrome .ga-chat :is(#world-log,#gr-chat,#ga-chat-feed),
+  html body.giran-chrome .ga-chat :is(#world-log,#gr-chat,#ga-chat-feed) :where(*){font-size:15px!important}
+}

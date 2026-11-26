@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-3b21d7fd8c07",
+  "build": "giran-0.8.25-4fd1e682ae9c",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1398,8 +1398,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-returnfast.js?v=5e4d623175c9",
-      "sha256": "5e4d623175c926f2e777a6628d4dbbafc1853fb29c471a22ebe0fee5c6ba0049",
+      "url": "afk-returnfast.js?v=3d1ba0515df3",
+      "sha256": "3d1ba0515df33436679eb08c3f7b70d2ae2e63c6e8698774833234fc3e72ddb1",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1908,8 +1908,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "dimension-map/stride-view.js?v=1c575f31eb71",
-      "sha256": "1c575f31eb718bcac5775aae55de1d46103d3bd1d4f4f9486c03eafcccfa9a92",
+      "url": "dimension-map/stride-view.js?v=fe0ebb011801",
+      "sha256": "fe0ebb011801de06456c9384287a05da288146c0c89278da3b9712d205313c71",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1949,7 +1949,7 @@
     },
     {
       "url": "dimension.html",
-      "sha256": "6beeb45c7de89a414759f237d9ca641ce0516d53ce501b12eb0e50a77f4647c2",
+      "sha256": "6b44569c18ba06f24a85360f66f00db91b1a9b09447e6f6de1a66be587efdae1",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "7507c9e38d1c7f20575f9ba55be33cefa8ad121c1cd4f2b9df793130ed631f6b",
+      "sha256": "15931ce12372b1bea179bb2631e56454afa711928331c818159e6a083ecc0550",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1993,8 +1993,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/06-status-allies.js?v=4f7f47d4ce3a",
-      "sha256": "4f7f47d4ce3ab8e44af66cd2923efc09919d7b780d6842ba75a2d5b48304242b",
+      "url": "js/06-status-allies.js?v=6ba5b6583d63",
+      "sha256": "6ba5b6583d636d74a9a13a4606dc440a115cdc1c7169f54edf4aae6659845b25",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2008,8 +2008,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/09-vfx-render.js?v=1c0980f0ff16",
-      "sha256": "1c0980f0ff16d08fee0ccc297cc83dc7d4358be8c898c2418a7134909636898c",
+      "url": "js/09-vfx-render.js?v=60449a45620f",
+      "sha256": "60449a45620f8d34e6afd31130890ace151df5620f53100bdda3a61196dee28d",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2514,7 +2514,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "37a5780fac6f0c75181125342d50579993dd4ec50fd65626805ee4c22ff4b070",
+      "sha256": "47ccfc04b785e7c80f1b749ff410ab98091b25d8e4882b7d47e56b394da485ed",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2568,8 +2568,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/classic-interface.css?v=5a5ef2e15945",
-      "sha256": "5a5ef2e159450798c590d3d55b5a2b6b4c6ff6ae17a301863fc7dd3fa926d171",
+      "url": "world/classic-interface.css?v=fc2ff31ced03",
+      "sha256": "fc2ff31ced03947c290b6fc85ff97f0f2b531ce15f4822fa2093826adfc9c89e",
       "type": "text/css; charset=utf-8"
     },
     {
@@ -2618,8 +2618,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/field.js?v=6bdc386d47f8",
-      "sha256": "6bdc386d47f8b6ad785dc5bf5da162ea990a79a72f8dc4c1470d4893bdfc6f1e",
+      "url": "world/field.js?v=fbcded40dc66",
+      "sha256": "fbcded40dc665b72593ad62272cd1fcb56de555b6849bfa5026946b20075b28b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2643,8 +2643,8 @@
       "type": "application/json; charset=utf-8"
     },
     {
-      "url": "world/hunt.js?v=a5be365dd8e7",
-      "sha256": "a5be365dd8e741e7911105bf62a17083b8f621360270036e36ee9c77ac02af30",
+      "url": "world/hunt.js?v=0646f922a519",
+      "sha256": "0646f922a5191eaf2ecdf7f36c7f0e80c455c7780524c0f266de1896c1745363",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2693,8 +2693,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/open-world.js?v=b736c48d4b59",
-      "sha256": "b736c48d4b598bc3f24d2abfa037d48b063b020600eff6f53ef04a1c6502c78a",
+      "url": "world/open-world.js?v=08c9f8748cf1",
+      "sha256": "08c9f8748cf1805c71fe9a774bd2755221b6e5d26dcfce87e02d7eb2d3cb1afc",
       "type": "text/javascript; charset=utf-8"
     },
     {

@@ -305,8 +305,10 @@ window.GiranRoam=(()=>{
   function ai(m,actor,nearest,now,roaming){
     if(!m._giranSpawn||!roaming)return 'engage';
     const home=m._giranSpawn.home||m._giranSpawn.cell,h={x:home[0],y:home[1]};
-    const alert=gap(actor,nearest),chasing=m.curHp<m.hp||m.beh==='主動'||m.aggro||m.boss;
-    if(chasing&&alert<=(actor.alert?12:6)&&gap(actor,h)<13){actor.alert=true;return 'engage';}
+    // 11-27 Ping：所有地圖的怪都主動追擊（新兵訓練場維持原樣）；發現 10 格、追到 15 格、離出生點 16 格放棄
+    const calm=mapState.current==='training',reach=calm?[6,12,13]:[10,15,16];
+    const alert=gap(actor,nearest),chasing=!calm||m.curHp<m.hp||m.beh==='主動'||m.aggro||m.boss;
+    if(chasing&&alert<=(actor.alert?reach[1]:reach[0])&&gap(actor,h)<reach[2]){actor.alert=true;return 'engage';}
     actor.alert=false;
     if(gap(actor,h)>4)return home;
     if(actor.step||actor.path.length||now<(actor.roamAt||0))return null;

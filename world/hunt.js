@@ -67,7 +67,7 @@ window.GiranHunt=(()=>{
     const h=player.giranHunt;
     if(!h||!m||!normal())return true;
     const f=context(),p=f?.point(m);
-    if(f&&p&&(m.beh==='主動'||m.aggro)&&distance(p,f.leader)<=2)return true;
+    if(f&&p&&(mapState.current!=='training'||m.beh==='主動'||m.aggro)&&distance(p,f.leader)<=2)return true;   // 11-27 Ping：所有地圖怪都主動（訓練場除外），貼上來就還手
     const l=h.lists?.[listKey()];
     return !resting&&!(l?.ignore?.includes(m.n)||l?.avoid?.includes(m.n))&&!(h.radius&&p&&center&&distance(p,center)>h.radius);
   }

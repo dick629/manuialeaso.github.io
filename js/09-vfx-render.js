@@ -1831,8 +1831,27 @@ function mobStillImg(name, staticUrl, preferSpawn) {
 // 通用 img onerror：依 data-fb（|分隔清單）逐張退回，用盡則停。
 function _mobImgErr(img) {
     try {
+        // 11-27：圖片改從素材站載入後可能暫時失敗（被限流）。同一張先重試一次；整串都失敗就先隱藏、隔幾秒整串重來，最多 3 輪，真的沒有才顯示缺圖。
+        const missing = u => /missing-icon/.test(u || '');
+        const cur = img.getAttribute('src') || '';
+        if (!img.hasAttribute('data-fb0')) img.setAttribute('data-fb0', [cur].concat((img.getAttribute('data-fb') || '').split('|')).filter(Boolean).join('|'));
+        if (!img._fbLoad) { img._fbLoad = true; img.addEventListener('load', function () { img.style.visibility = ''; }); }
+        if (!img._fbRetried && cur && !missing(cur)) {
+            img._fbRetried = true; img.style.visibility = 'hidden';
+            setTimeout(function () { try { if (img.isConnected && img.getAttribute('src') === cur) { img.removeAttribute('src'); img.setAttribute('src', cur); } } catch (e) {} }, 600);
+            return;
+        }
+        img._fbRetried = false;
         let fb = (img.getAttribute('data-fb') || '').split('|').filter(Boolean);
-        if (fb.length) { img.setAttribute('data-fb', fb.slice(1).join('|')); img.src = fb[0]; }
+        if (fb.length && missing(fb[0]) && (img._fbRound || 0) < 3) {
+            const all = (img.getAttribute('data-fb0') || '').split('|').filter(Boolean);
+            if (all.length > 1) {
+                img._fbRound = (img._fbRound || 0) + 1; img.style.visibility = 'hidden';
+                setTimeout(function () { try { if (!img.isConnected) return; img.setAttribute('data-fb', all.slice(1).join('|')); img.removeAttribute('src'); img.setAttribute('src', all[0]); } catch (e) {} }, 2500 * img._fbRound);
+                return;
+            }
+        }
+        if (fb.length) { img.style.visibility = 'hidden'; img.setAttribute('data-fb', fb.slice(1).join('|')); img.src = fb[0]; }
         else { img.onerror = null; }
     } catch (e) { img.onerror = null; }
 }

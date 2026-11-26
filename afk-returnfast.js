@@ -126,6 +126,8 @@
       var key = typeof mapRegionOf === 'function' ? mapRegionOf(cur) : null; if (!key) return null;
       var reg = (typeof MAP_REGIONS !== 'undefined' ? MAP_REGIONS : []).filter(function (r) { return r && r.key === key; })[0]; if (!reg) return null;
       if (typeof siegeVictoryActive === 'function' && siegeVictoryActive()) { var cs = victoryCityCfg().castle; if (cs && (mapRegionOf(cs) === key || reg.castleCity === victoryCityCfg().key)) return cs; }   // 這個地區有自己血盟的城堡
+      // 11-27 Ping：有城堡回城堡——這個地區的城堡只要是自己血盟持有（不限主城）就回那座城堡
+      try { if (typeof SIEGE_CITY !== 'undefined' && typeof ownsCastle === 'function') { for (var ck in SIEGE_CITY) { var sc = SIEGE_CITY[ck]; if (sc && sc.castle && ownsCastle(sc.key || ck) && (mapRegionOf(sc.castle) === key || reg.castleCity === (sc.key || ck))) return sc.castle; } } } catch (e2) {}
       var towns = (reg.maps || []).map(function (m) { return m && m.v; }).filter(function (v) { return typeof v === 'string' && /^town_/.test(v) && !/_castle$/.test(v) && (DB.towns[v] || DB.maps[v]); });
       var last = player && player.lastTownVisited;   // 地區有好幾個村莊：上一個待過的村莊在這個地區就回那裡，否則回地區的第一個村莊
       var town = towns.indexOf(last) >= 0 ? last : towns[0];

@@ -240,6 +240,8 @@ function nativeGeometry(el,isMob) {
   const src=img.currentSrc || img.src;
   const path=decodeURIComponent(new URL(window.__afkFrameSource?.(src)||src).pathname);
   const match=/\/assets\/(classanim|anim|morphanim)\/([^/]+)\/(.*)_(\d+)\.(?:png|webp)$/.exec(path);
+  // 11-27：圖片載入失敗時畫面上是缺圖替代圖，拿它量尺寸會把之後載到的真圖放得很大
+  if(isMob&&/\/assets\/ui\/missing-icon\.png$/.test(path))return null;
   const ref=isMob?monsterReference(match,img):img;
   if(!ref)return null;
   const ratio=Math.min(w/ref.naturalWidth,h/ref.naturalHeight);
@@ -251,7 +253,7 @@ function nativeGeometry(el,isMob) {
   const sourceHeight=silhouette(ref);
   // Some sprites (particularly flying dragons) have a world origin above their visible feet.
   const headRatio=(p[1]-foot(ref)[1]+sourceHeight)/sourceHeight;
-  return {x,y,ratio,height:sourceHeight*ratio,sourceHeight,headRatio,
+  return {fallback:isMob&&!match,x,y,ratio,height:sourceHeight*ratio,sourceHeight,headRatio,
     offset:[Math.round(el.offsetWidth/2-x),Math.round((isMob||el.hasAttribute('data-pet')?el.offsetHeight:0)-y)],
     image:local(ir),box:isMob?local(img.parentElement.getBoundingClientRect()):null};
 }
@@ -270,12 +272,16 @@ function measureActors() {
     if(!el.isConnected)continue;
     const g=(key && monsterGeometry.get(key)) || nativeGeometry(el,isMob);
     if(!g || !(g.height>0))continue;
-    if(key&&!monsterGeometry.has(key)){
+    // 有動畫的怪卻量到靜態後備圖（動畫圖還沒載到）：先暫用，不記進快取，之後每幀再量，最多 120 次
+    const temporary=!!(g.fallback&&isMob&&(meta?.MANIFEST?.['assets/anim/'+appearance]||typeof ANIM_MANIFEST!=='undefined'&&ANIM_MANIFEST['assets/anim/'+appearance])&&(actor.geometryTries=(actor.geometryTries||0)+1)<=120);
+    if(key&&!temporary&&!monsterGeometry.has(key)){
       if(monsterGeometry.size>=256)monsterGeometry.delete(monsterGeometry.keys().next().value);
       monsterGeometry.set(key,g);
     }
     actor.nativeAnchor=g;actor.footOffset=g.offset;
-    actor.footKey=appearance;actor.footView=geometryGeneration;actor.figureKind=kind;
+    actor.footKey=temporary?null:appearance;actor.temporaryKey=temporary?appearance:null;
+    if(!temporary)actor.geometryTries=0;
+    actor.footView=geometryGeneration;actor.figureKind=kind;
     actor.inkHeight=figureHeight(terrain,kind,g.sourceHeight);
   }
   pendingGeometry.clear();
@@ -288,11 +294,13 @@ function alignFeet(actor,el,isMob,appearance,kind='character',terrain=null) {
     if(!g){
       pendingGeometry.set(el,{actor,isMob,appearance,kind,terrain,key});
       if(!geometryFrame)geometryFrame=requestAnimationFrame(measureActors);
-      return;
+      // 暫用中的尺寸繼續套用，直到量到真正的動畫圖
+      if(actor.temporaryKey!==appearance||!actor.nativeAnchor||actor.footView!==geometryGeneration||actor.figureKind!==kind)return;
+    } else {
+      actor.nativeAnchor=g;actor.footOffset=g.offset;actor.temporaryKey=null;actor.geometryTries=0;
+      actor.footKey=appearance;actor.footView=geometryGeneration;actor.figureKind=kind;
+      actor.inkHeight=figureHeight(terrain,kind,g.sourceHeight);
     }
-    actor.nativeAnchor=g;actor.footOffset=g.offset;
-    actor.footKey=appearance;actor.footView=geometryGeneration;actor.figureKind=kind;
-    actor.inkHeight=figureHeight(terrain,kind,g.sourceHeight);
   }
   // During a hit the native HP card may be rebuilt. Its actor retains the measured standing pose.
   const g=actor.nativeAnchor;
