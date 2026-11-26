@@ -382,20 +382,20 @@
     if (!c.n || remaining(d,pick) || c.n >= 6) return null;
     // A save from the two-admission rules may already have spent its second free entry today.
     var extra = c.bought || 0;
-    return {price:(extra + 1)*100, next:c.n + 1};
+    return {price:(extra + 1)*100, blood:(extra + 1)*500, next:c.n + 1};   // 11-26 Ping：另外要血龍鑽 500／1000／1500…
   }
   function redeem(id,pick) {
     var d = BYID[id], p = P();
     if (!d || !p || !dailyGate(d) || entryGate(d,pick)) return false;
     var offer = reentry(d,pick), proof = W.TwistedSpace.proof;
-    if (!offer || cnt(proof) < offer.price) return false;
+    if (!offer || cnt(proof) < offer.price || cnt(BLOOD) < offer.blood) return false;
     var c = admission(d,pick);
-    questConsumeId(proof,offer.price);
+    questConsumeId(proof,offer.price); take(BLOOD, offer.blood);
     c.bought = (c.bought || 0) + 1;
     c.extra = c.n; // one unused admission, also honoring old saves which already entered twice
     store(p).c[useKey(d,pick)] = c;
     saveGame();
-    sys('已消耗 ' + offer.price + ' 張次元獵殺證明，可再進入「' + esc(d.n) + '」一次。');
+    sys('已消耗 ' + offer.price + ' 張次元獵殺證明、' + offer.blood.toLocaleString() + ' 血龍鑽，可再進入「' + esc(d.n) + '」一次。');
     return true;
   }
   var mark = function (d,pick) { var c=admission(d,pick); c.n++; store().c[useKey(d,pick)] = c; };
@@ -639,7 +639,7 @@
     var box = div.querySelector('#afk-rd-gate'); if (!box) return; var p = P(); if (!p) return;
     var rp = DR.recoverPct(p), pf = DR.panelF ? Math.round(DR.panelF(p) * 100) : 50 + rp;   // 11-16（Ping）：寫出目前的力量（壓縮後 50%＋已取回）
     var h = '<div class="ax-note">目前的力量：<b>' + pf + '%</b>（裂縫裡面板壓到 50%，已取回 ' + rp + '%／最多 40%）　血龍鑽：' + cnt(BLOOD).toLocaleString() + (DR.on() ? '' : '　<span class="no">次元裂縫沒有打開</span>') + '</div>';
-    if (DR.on()) h += '<div class="ax-note">次元獵殺證明：<b>' + cnt(W.TwistedSpace.proof).toLocaleString() + '</b> 張。每日副本各有一次入場，用完後可依序兌換五次，每次仍需原入場材料。證明在席琳神殿地區的扭亂時空掉落。</div>';
+    if (DR.on()) h += '<div class="ax-note">次元獵殺證明：<b>' + cnt(W.TwistedSpace.proof).toLocaleString() + '</b> 張。每日副本各有一次入場，用完後可依序用證明與血龍鑽兌換五次，每次仍需原入場材料。證明在席琳神殿地區的扭亂時空掉落。</div>';
     if (DR.RANKS) { var rk = DR.rec(p).rank || 0, nx = DR.RANKS[rk + 1], rw = DR.rankWhy(p); h += K.rowHtml({ key: 'drank', name: '遠征位階（裂縫）：' + DR.RANKS[rk].n, color: '#67e8f9', desc: nx ? '下一階「' + nx.n + '」：' + (nx.cur === 'exped' ? '遠征點數 ' : '裂縫點數 ') + nx.cost + '。' + nx.d : '已經是最高位階。', note: '裂縫點數 ' + (DR.rec(p).pts || 0) + '（每個副本最後頭目每天第一次 10 點，一天最多 60）', why: nx ? rw : '', btns: nx ? [['rank:', '升階', !rw]] : [] }, 'data-rd'); }
     TIERS.forEach(function (tr) {
       h += '<div class="ax-h" style="margin-top:8px">' + tr[1] + '</div>';
@@ -649,9 +649,9 @@
           var choice = pk[0] || undefined, why = canEnter(d,choice), cap = remaining(d,choice);
           var buttons = [['go:' + d.id + ':' + pk[0], '進入', !why]], fee = reentry(d,choice);
           if (fee && !entryGate(d,choice)) {
-            var canBuy = cnt(W.TwistedSpace.proof) >= fee.price;
-            buttons.push(['extra:' + d.id + ':' + pk[0], '兌換第 ' + fee.next + ' 次入場 · ' + fee.price + ' 張證明',canBuy]);
-            why = canBuy ? '' : '次元獵殺證明不足。';
+            var okProof = cnt(W.TwistedSpace.proof) >= fee.price, okBlood = cnt(BLOOD) >= fee.blood, canBuy = okProof && okBlood;
+            buttons.push(['extra:' + d.id + ':' + pk[0], '兌換第 ' + fee.next + ' 次入場 · ' + fee.price + ' 張證明＋' + fee.blood.toLocaleString() + ' 血龍鑽',canBuy]);
+            why = canBuy ? '' : !okProof ? '次元獵殺證明不足。' : '血龍鑽不足。';
           }
           h += K.rowHtml({ key: d.id + pk[0], name: esc(d.n) + (pk[1] ? '・' + esc(pk[1]) : '') + (s.clear[d.id + (d.pickChain ? pk[0] : '')] ? '　<span style="color:#86efac">✓</span>' : ''), color: '#67e8f9', desc: pk === picks[0] ? esc(d.lore) : '', note: '入場：' + esc(feeTxt(d)) + '　' + (d.per === 'week' ? '本週' : '今天') + '剩 ' + Math.max(0, cap) + ' 次' + (d.min ? '　時限 ' + d.min + ' 分鐘' : '') + (d.endless && s.best ? '　最高第 ' + s.best + ' 層' : ''), why: why, btns: buttons }, 'data-rd');
         });

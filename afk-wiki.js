@@ -4198,7 +4198,7 @@
       wTbl(['副本', '入場', '次數', '時限', '內容'], G.D.filter(function (d) { return !d.noRift; }).map(function (d) {
         var fee = []; if (d.fee.blood) fee.push('血龍鑽 ' + fm(d.fee.blood)); (d.fee.items || []).forEach(function (x) { fee.push(nm(x[0]) + ' ×' + x[1]); });
         return ['<b style="color:#67e8f9">' + esc(d.n) + '</b>' + (d.needClear ? '<br><span style="font-size:11px;color:#94a3b8">先通關「' + esc(d.needClear === 'anakin5' ? '阿納金第 5 形態' : (G.BYID[d.needClear] || {}).n || '') + '」</span>' : ''),
-          fee.join('＋'), (d.per === 'day' && !d.npc && !d.noRift && window.TwistedSpace ? '每天 1 次；用完可用次元獵殺證明再換 5 次' : (d.per === 'week' ? '每週 ' : '每天 ') + (d.limit || 1) + ' 次'), d.min ? d.min + ' 分鐘' : '—', esc(d.lore || '')];
+          fee.join('＋'), (d.per === 'day' && !d.npc && !d.noRift && window.TwistedSpace ? '每天 1 次；用完可用次元獵殺證明＋血龍鑽再換 5 次' : (d.per === 'week' ? '每週 ' : '每天 ') + (d.limit || 1) + ' 次'), d.min ? d.min + ' 分鐘' : '—', esc(d.lore || '')];
       })));
     if (window.TwistedSpace) out += wCard('🌌 扭亂時空', wDesc('席琳神殿地區的一張狩獵地圖。<b>只有次元裂縫開著的時候</b>，地圖清單裡才會出現「扭亂時空」，也才進得去；退回夢域時，人在扭亂時空會被送回席琳神殿。') +
       wTbl(['項目', '說明'], [
@@ -4211,7 +4211,7 @@
         ['次元獵殺證明', '每次擊殺 1% 掉 1 張；掉寶加成對它無效'],
         ['離線', '離線結算照同一套規則：一樣只掉證明、遺物、卡片']
       ]) +
-      wDesc('<b>證明怎麼用</b>：裂縫之門的每日副本，每一種每天有 1 次入場。用完之後，可以用次元獵殺證明依序再換 5 次——第 2 次 100 張、第 3 次 200 張、第 4 次 300 張、第 5 次 400 張、第 6 次 500 張（每天最多 6 次）。換到的那一次照樣要付原本的入場費用。分形態、分龍的副本，每一種各自計算；每週一次的副本不能換。'));
+      wDesc('<b>證明怎麼用</b>：裂縫之門的每日副本，每一種每天有 1 次入場。用完之後，可以用次元獵殺證明加血龍鑽依序再換 5 次——第 2 次 100 張＋500 血龍鑽、第 3 次 200 張＋1,000、第 4 次 300 張＋1,500、第 5 次 400 張＋2,000、第 6 次 500 張＋2,500（每天最多 6 次）。換到的那一次照樣要付原本的入場費用。分形態、分龍的副本，每一種各自計算；每週一次的副本不能換。'));
     if(window.LineageSherineForge)out += wCard('席琳新舊界約',LineageSherineForge.description()+wTbl(['新系','2件','3件','5件'],LineageSherineCatalog.fresh.map(x=>[esc(x.name),esc(x.tier2),esc(x.tier3),esc(x.tier5)])));
     out += wCard('⚒️ 次元的鍛造師（次元遺物）', wTbl(['項目', '說明'], [
       ['製作', '拿一件「至高的支配」遺物來（武器要先在「次元支配」把至高支配・封解放），再選一個主題，加上' + nm('afk_dim_xcrystal') + '，就能把它鍛成次元遺物。原本的強化、昇華、詞綴、屬性、符文孔都會留下來，「至高的支配」那一段則被裂縫換成「次元」'],
