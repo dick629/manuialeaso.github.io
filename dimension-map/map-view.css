@@ -185,3 +185,6 @@ body.m-unified.dm-viewing #vfx-layer .vfx-boss-name {
   font-size:clamp(15px,4.8vw,22px);line-height:1.2;letter-spacing:.025em;
 }
 body.m-unified.dm-viewing #vfx-layer .vfx-boss-sub { font-size:11px;letter-spacing:.16em; }
+
+/* 自由走動：席琳恩賜光暈每隻怪每幀重算濾鏡，是高階地圖掉幀主因，這裡停用（固定站位不受影響） */
+#battle-view.dm-map .grace-glow { animation: none !important; filter: none !important; }
