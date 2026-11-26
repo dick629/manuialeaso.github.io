@@ -2,7 +2,8 @@
 window.LineagePlayMode = (() => {
   const current = document.documentElement.dataset.playMode;
   const picker = document.getElementById('play-mode');
-  const preference = 'giran.playMode';
+  // 11-27 Ping：預設改成舊版次元（固定站位），自由走動要玩家自己選；換新鍵，讓上線頭幾個小時自動記下的「融合版」不再生效
+  const preference = 'giran.playMode.v2';
   const entries = {fusion:'index.html', dimension:'dimension.html'};
   const url = new URL(location.href);
   const roomKey = 'giran.room.v1';
@@ -22,7 +23,7 @@ window.LineagePlayMode = (() => {
     location.replace(room.href);
     return;
   }
-  let preferred = current;
+  let preferred = 'dimension';
   try {
     const saved = localStorage.getItem(preference);
     if (Object.hasOwn(entries, saved)) preferred = saved;
