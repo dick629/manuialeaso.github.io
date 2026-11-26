@@ -59,7 +59,9 @@ window.TwistedSpace = (() => {
   // 11-26 Ping（次元）：場上王必定 3 隻（5 格的 60%）——空格補怪時，活著的王不到 3 隻就補王
   const BOSS_KEEP = 3;
   function pickBossOrMob(force, chance) {
-    const liveBoss = mapState.mobs.filter(m => live(m) && m.boss).length;
+    // 11-26 19:03 Ping：只算常駐王；區域霸主、世界事件、克特討伐（含手下）另外出場，不占 3 隻的名額
+    const resident = m => !!m && !m._afkWe && !m._afkRb && m._afkKurt !== 'hunt' && !m._afkKurtMinion;
+    const liveBoss = mapState.mobs.filter(m => live(m) && m.boss && resident(m)).length;
     if ((force || liveBoss < BOSS_KEEP) && bosses.length) {
       const aliveNames = new Set(mapState.mobs.filter(live).map(m => m.n));
       const candidates = bosses.filter(id => !aliveNames.has(DB.mobs[id].n));

@@ -136,7 +136,7 @@
   // 無盡的裂縫（Ping 11-17）：面板再壓 25%（取回滿 90% → 65%）
   var endlessOn = function () { try { return !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn()); } catch (e) { return false; } };
   var twisted = function () { return !!W.TwistedSpace?.here(); };
-  var noErosionFloor = function () { return endlessOn(); };   // 11-26 16:19 Ping：扭亂時空改成有上限、最低 0（見 TWX）
+  var noErosionFloor = function () { return !twisted() && endlessOn(); };   // 11-26 16:19 Ping：扭亂時空改成有上限、最低 0（見 TWX）
   var TWX = 5;   // 扭亂時空：侵蝕上限＝一般裂縫的 5 倍（AC、魔防 1,500，抗性 2,500），魔防、抗性最低 0、AC 最多加到 0
   var panelF = function (p) { var f = BASE + recoverPct(p) / 100; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) f = Math.min(f, 0.75); } catch (e) {} if (endlessOn()) f = Math.max(0.1, f - 0.25); return twisted() ? Math.min(0.50,f) : f; };   // 11-26 Ping：扭亂時空面板最多 50%
   var recoverPct = function (p) { return Math.min(40, RECOVER.reduce(function (s, x) { return s + (Number(x[1](p)) || 0); }, 0)); };
@@ -245,7 +245,7 @@
           var eAc = Math.max(0,Math.min(ero, noFloor ? Infinity : R.acMax * (tw ? TWX : 1))-(W.LineageSherine?.erosionBack(p)||0));
           if (tw) { if ((d.ac || 0) < 0) d.ac = Math.min(0, d.ac + eAc); } else d.ac = (d.ac || 0) + eAc;
           var cut = function (k) { var v = Number(d[k]) || 0; if (noFloor) { d[k] = v - eAc; return; } if (v <= 0) return; var floor = Math.max(keep, Math.floor(v * wc)); var low = Math.min(v, floor); d[k] = Math.max(low, v - eAc); };
-          cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; var e2 = ero - rb; if (noFloor) { d[k] = v - e2; return; } var floor = Math.max(keep, Math.floor(v * wc)); var growthFloor = W.LineageGrowth ? W.LineageGrowth.pct(p, 'curse') : 0; var eyeF = 0; try { eyeF = typeof W.__afkEroFloorEle === 'function' ? (Number(W.__afkEroFloorEle(p, k)) || 0) : 0; } catch (e) {} d[k] = Math.max(Math.min(v,floor+growthFloor+eyeF),v-e2); });   /* __afkEroFloorEle：次元魔眼的對應屬性最低保留（afk-eyetier） */
+          cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; var e2 = ero - rb; if (tw) { if (v > 0) d[k] = Math.max(0, v - Math.min(e2, R.resMax * TWX)); return; }   /* 11-26 19:03 Ping：扭亂時空抗性一律最低 0（魔眼、成長的最低保留不算） */ if (noFloor) { d[k] = v - e2; return; } var floor = Math.max(keep, Math.floor(v * wc)); var growthFloor = W.LineageGrowth ? W.LineageGrowth.pct(p, 'curse') : 0; var eyeF = 0; try { eyeF = typeof W.__afkEroFloorEle === 'function' ? (Number(W.__afkEroFloorEle(p, k)) || 0) : 0; } catch (e) {} d[k] = Math.max(Math.min(v,floor+growthFloor+eyeF),v-e2); });   /* __afkEroFloorEle：次元魔眼的對應屬性最低保留（afk-eyetier） */
         }
       } catch (e) { console.warn('[AFK-dimrift] stats', e); }
       return r;
