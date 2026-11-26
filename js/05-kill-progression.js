@@ -324,7 +324,7 @@ function monsterGoldRange(mob) {
         if (mob && mob._grace) worldMult *= 10;
         gMin = Math.round(mean * 0.65 * diffMult * worldMult);
         gMax = Math.round(mean * 1.35 * diffMult * worldMult);
-        if (mob?._twisted) { gMin *= 5; gMax *= 5; }
+        if (mob?._twisted) { const _tg = (window.TwistedSpace && TwistedSpace.X && TwistedSpace.X.gold) || 5; gMin *= _tg; gMax *= _tg; }
     }
     return { min: Math.max(1, gMin), max: Math.max(Math.max(1, gMin), gMax) };
 }
