@@ -50,14 +50,17 @@ window.TwistedSpace = (() => {
       // Regional lords and world events have their own timers, parties and encounter scripts.
       if (m.afkRb || m.afkWe) continue;
       if (m.boss) bosses.push(id);
-      else if (m.lv >= 85 && m.exp > 0) ordinary.push(id);
+      else if (m.exp > 0) ordinary.push(id);   // 11-26 Ping（次元）：全部怪都會出現，不限 Lv85
     }
     DB.maps[map] = ordinary.concat(bosses);
   }
   rebuild();
   window.addEventListener('load', rebuild);
+  // 11-26 Ping（次元）：場上王必定 3 隻（5 格的 60%）——空格補怪時，活著的王不到 3 隻就補王
+  const BOSS_KEEP = 3;
   function pickBossOrMob(force, chance) {
-    if ((force || Math.random() < chance) && bosses.length) {
+    const liveBoss = mapState.mobs.filter(m => live(m) && m.boss).length;
+    if ((force || liveBoss < BOSS_KEEP) && bosses.length) {
       const aliveNames = new Set(mapState.mobs.filter(live).map(m => m.n));
       const candidates = bosses.filter(id => !aliveNames.has(DB.mobs[id].n));
       if (candidates.length) return candidates[Math.floor(Math.random() * candidates.length)];

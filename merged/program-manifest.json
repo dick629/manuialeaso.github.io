@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-2ea7917c077c",
+  "build": "merge-0.4-8b578444b2d5",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -483,8 +483,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dimrift.js?v=e42a1f011de4",
-      "sha256": "e42a1f011de488085c46043bf0e2d15bac8c910603d1e8acc2eac62a50a9d718",
+      "url": "afk-dimrift.js?v=0f8a5738cad1",
+      "sha256": "0f8a5738cad1e403f87b7ab2ad03ebdba942b2918b8746f7e6695c50ec7e6aef",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -543,8 +543,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamhell.js?v=87c1c779ebdc",
-      "sha256": "87c1c779ebdc08b06169b12c25032d8e45e43778d3ec86b77a1bbadef55e83c0",
+      "url": "afk-dreamhell.js?v=85e68b80eb20",
+      "sha256": "85e68b80eb20567487bcae035305c6b5ecbe7ab5bb27c6532835f0d59dcb0147",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1538,8 +1538,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-soulstone.js?v=508d6fd81b43",
-      "sha256": "508d6fd81b438275cb9ae44ab907c42c38365caf7db771a18ce3ee86908c3361",
+      "url": "afk-soulstone.js?v=5b0ca35e6aa6",
+      "sha256": "5b0ca35e6aa627f79f799f8e9f38e1a6f3025610571964b80ab5eaf2f99a7b6d",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "623401727a2ee7b4de8660aad743da55ba0f9181afc129f8d21e281edcee9ff4",
+      "sha256": "fb46128fe9e4e420124f1ed857cea8db070695b7bde1695dff6ddf1f058f1b21",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2353,8 +2353,8 @@
       "type": "text/html; charset=utf-8"
     },
     {
-      "url": "world/twisted-space.js?v=d5b46de6dd3e",
-      "sha256": "d5b46de6dd3eb96de48caa05d500c13bb8b7845107dccbc506cc98b0fc476651",
+      "url": "world/twisted-space.js?v=584c14cdf106",
+      "sha256": "584c14cdf106f63cbe055658f3595df551d140eb84b071d8beaddfb0ee927937",
       "type": "text/javascript; charset=utf-8"
     }
   ]

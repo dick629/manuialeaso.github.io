@@ -194,17 +194,19 @@
   var reborn = function () { try { return !!(player && player.rebirth > 0); } catch (e) { return false; } };
   // 王登場先給全隊一波真實傷害：最大 HP 10%；傳送控制戒指找來的王 15%
   //   玩家 2026-10-24：不分是否轉生，席琳夢域鏡的王每次登場都算（原本只有轉生者）
-  var bossEntryBlast = function (nm, pct) {
+  // 11-26 Ping：扭亂時空每一隻王出場都打 10%；出場衝擊最多打掉最大 HP 80%（打不到剩 20% 以下）＝floor 0.2
+  var bossEntryBlast = function (nm, pct, floor) {
     pct = pct || 0.1;
+    var cut = function (cur, mx) { var d = Math.max(1, Math.floor(mx * pct)); if (floor) d = Math.min(d, Math.max(0, Math.floor(cur - mx * floor))); return d; };
     try {
       var hit = [];
       if (!player.dead) {
-        var d0 = Math.max(1, Math.floor((player.mhp || 1) * pct)); player.hp -= d0; hit.push('你 ' + d0);
+        var d0 = cut(player.hp, player.mhp || 1); player.hp -= d0; hit.push('你 ' + d0);
         if (player.hp <= 0 && typeof killPlayer === 'function') killPlayer();
       }
       (player.allies || []).forEach(function (x) {
         if (!x || x._downed || !(x.curHp > 0)) return;
-        var d = Math.max(1, Math.floor((x.mhp || x.curHp || 1) * pct)); x.curHp -= d; hit.push((x._allyName || '傭兵') + ' ' + d);
+        var d = cut(x.curHp, x.mhp || x.curHp || 1); x.curHp -= d; hit.push((x._allyName || '傭兵') + ' ' + d);
         if (x.curHp <= 0) { x.curHp = 0; x._downed = true; x._reviveCd = 150; }
       });
       // 寵物
@@ -212,7 +214,7 @@
         (typeof petsOutList === 'function' ? petsOutList() : []).forEach(function (pt) {
           if (!pt || pt._downed || !(pt.hp > 0)) return;
           var mh = typeof petMhpEff === 'function' ? petMhpEff(pt) : (pt.mhp || pt.hp);
-          var d = Math.max(1, Math.floor(mh * pct)); pt.hp -= d; hit.push('寵物' + pt.form + ' ' + d);
+          var d = cut(pt.hp, mh); pt.hp -= d; hit.push('寵物' + pt.form + ' ' + d);
           if (pt.hp <= 0 && typeof _petDown === 'function') _petDown(pt, nm.n + '降臨的衝擊');
         });
         if (typeof petMarkDirty === 'function') petMarkDirty();
@@ -221,7 +223,7 @@
       try {
         (player.summonsV2 || []).forEach(function (sm) {
           if (!sm || sm._downed || !(sm.hp > 0)) return;
-          var d = Math.max(1, Math.floor((sm.mhp || sm.hp) * pct)); sm.hp -= d; hit.push('召喚' + sm.form + ' ' + d);
+          var d = cut(sm.hp, sm.mhp || sm.hp); sm.hp -= d; hit.push('召喚' + sm.form + ' ' + d);
           if (sm.hp <= 0) { sm.hp = 0; sm._downed = true; sm._diedAt = Date.now(); }
         });
         if (!state.ff && typeof renderSummonPanel === 'function') renderSummonPanel();
@@ -240,6 +242,7 @@
         if (!m || !m.boss || m._dead || !(m.curHp > 0) || m._afkEntryBlast || m.race === '血盟' || m.race === '建築') continue;
         m._afkEntryBlast = true; any = true;
         // 時空裂痕裡頭目一半機率出場、很快就一隻接一隻：登場衝擊最多每 10 秒一次（2026-10-29 晚，裂痕有自己的暴走與崩塌）
+        if (window.TwistedSpace && TwistedSpace.here()) { bossEntryBlast(m, 0.10, 0.2); continue; }   // 11-26 Ping：扭亂時空每隻王都打
         if (state.riftRun) { if ((state.ticks || 0) < (state._dhBlastCd || 0)) continue; state._dhBlastCd = (state.ticks || 0) + 100; }
         if (typeof window.__afkBossRankOk === 'function' && !window.__afkBossRankOk(m)) continue;   // 多王：第二、三隻不放（afk-bossrules）
         // 2026-10-31 12:53：夢域鏡頭目強化（afk-dreamboss）開著、這隻王歸它管時，只吃那邊的出場傷害（30 秒冷卻），不再兩種疊加

@@ -198,6 +198,12 @@
     if (run.done || bossAlive()) return;
     run.done = true;
     p.afkSoulStats = p.afkSoulStats || { used: 0, won: 0 }; p.afkSoulStats.won++;
+    // 11-26 Ping：訓練所的王也掉卡片——王者系列（地圖王、副本王）照打倒牠本人時的王者卡冊機率擲一次（一般王的怪物卡、變身卡本來就照掉）
+    try {
+      var bk = run.boss && MB.test(run.boss) && W.__afkMapBoss && W.__afkMapBoss.BY ? W.__afkMapBoss.BY[run.boss.replace(MB, '')] : null;
+      var dm = (mapState.mobs || []).filter(function (x) { return x && x._afkSoul; })[0] || null;
+      if (bk && W.__afkBossCardKill) W.__afkBossCardKill(bk, dm || { _afkSoul: true });
+    } catch (e) { console.warn('[AFK-soulstone] card', e); }
     var sid = PREFIX + run.boss, left = run.boss ? countOf(sid) : 0, r0 = run;
     if (chainOn() && left > 0 && DB.mobs[run.boss]) {
       sys('<span class="text-yellow-300 font-bold">🏆 ' + esc(DB.mobs[run.boss].n) + ' 的魂魄散成了紫色的煙。</span>還有 ' + left + ' 顆它的靈魂石——3 秒後再叫出來。');

@@ -137,7 +137,7 @@
   var endlessOn = function () { try { return !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn()); } catch (e) { return false; } };
   var twisted = function () { return !!W.TwistedSpace?.here(); };
   var noErosionFloor = function () { return twisted() || endlessOn(); };
-  var panelF = function (p) { var f = BASE + recoverPct(p) / 100; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) f = Math.min(f, 0.75); } catch (e) {} if (endlessOn()) f = Math.max(0.1, f - 0.25); return twisted() ? Math.min(0.60,f) : f; };
+  var panelF = function (p) { var f = BASE + recoverPct(p) / 100; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) f = Math.min(f, 0.75); } catch (e) {} if (endlessOn()) f = Math.max(0.1, f - 0.25); return twisted() ? Math.min(0.50,f) : f; };   // 11-26 Ping：扭亂時空面板最多 50%
   var recoverPct = function (p) { return Math.min(40, RECOVER.reduce(function (s, x) { return s + (Number(x[1](p)) || 0); }, 0)); };
   function clearErosion(p, all) { var r = rec(p); r.ero = 0; if (all) { /* 光蝕不因回村清除 */ } }
   var members = function () { var p = P(), out = []; if (!p) return out; if (!p.dead) out.push(p); (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); }); return out; };
@@ -158,6 +158,8 @@
     });
     // AC、魔防、抗性
     var endless = noErosionFloor();   // 11-16：無盡的裂縫沒有上限、沒有最低保留
+    // 11-26 Ping：扭亂時空侵蝕堆疊變慢、量維持 5 倍——每 5 秒一次、每次 ×5（AC +25、魔防 −25、四屬性 −25），沒有上限
+    if (twisted()) { r._twEro = ((r._twEro || 0) + 1) % 5; if (r._twEro) return; }
     if (endless || (r.ero || 0) < R.resMax) { var step = R.eroStep * (twisted() ? 5 : 1); try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) step *= 2; } catch (e) {} r.ero = endless ? (r.ero || 0) + step : Math.min(R.resMax, (r.ero || 0) + step); try { calcStats(); } catch (e) {} }   // Ping 11-13 14:29：每秒 AC +5、魔防 −5、四屬性 −5；GD之子的期待 ×2
   }
   var L = W.__afkLore;
@@ -326,7 +328,7 @@
     var prevDF = W.__afkDropListFilter; if (prevDF && prevDF.__afkDimOnly) return;
     var f = function (mob, list) {
       if (typeof prevDF === 'function') list = prevDF(mob, list) || list;
-      try { if (mob && mob._dimRift && on() && list && list.length) { var rf = inRiftBattle(); return list.filter(function (x) { if (!x) return false; if (DIM_KEEP(x[0])) return true; if (!rf) return false; var d = DB.items[x[0]]; return !!(d && d.relic); }); } } catch (e) {}   // 11-19 Ping：時空裂痕裡（GD、次元模式的裂痕）怪物專屬遺物照掉
+      try { if (mob && mob._dimRift && on() && list && list.length) { return list.filter(function (x) { if (!x) return false; if (DIM_KEEP(x[0])) return true; var d = DB.items[x[0]]; return !!(d && d.relic); });   /* 11-26 Ping：次元裂縫的一般地圖也掉遺物（卡片本來就照掉） */ } } catch (e) {}   // 11-19 Ping：時空裂痕裡（GD、次元模式的裂痕）怪物專屬遺物照掉
       return list;
     };
     f.__afkDimOnly = true; W.__afkDropListFilter = f;
