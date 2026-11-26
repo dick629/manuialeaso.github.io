@@ -324,6 +324,7 @@ function monsterGoldRange(mob) {
         if (mob && mob._grace) worldMult *= 10;
         gMin = Math.round(mean * 0.65 * diffMult * worldMult);
         gMax = Math.round(mean * 1.35 * diffMult * worldMult);
+        if (mob?._twisted) { gMin *= 5; gMax *= 5; }
     }
     return { min: Math.max(1, gMin), max: Math.max(Math.max(1, gMin), gMax) };
 }
@@ -432,6 +433,9 @@ function killMob(idx) {
     _giltasWandTriggered.forEach(a => { if (a !== player && typeof _allyLevelRecompute === 'function') _allyLevelRecompute(a); });
 
     // === 🔧 卡瑞：擊殺後扣除四樣任務道具各一個 ===
+    if (window.TwistedSpace?.here()) {
+        TwistedSpace.killRewards(mob);
+    } else {
     if (mob.n === '卡瑞') {
         ['item_dragon_claw', 'item_lizard_horn', 'item_crystal_ball', 'item_orc_amulet'].forEach(q => {
             let st = player.inv.find(i => i.id === q && i.cnt > 0);
@@ -597,6 +601,7 @@ function killMob(idx) {
         }
     }
     
+    } // normal map loot
     } finally {
         _combatSrc = _svKillSrc;   // 🩹 v3.3.25 還原擊殺前的來源情境（寵物/召喚/傭兵 tick 的 _dps 歸屬不受污染）
         _sherineLootCtx = null;   // 🔮 掉落判定結束，清除上下文（try/finally：縱使中途拋例外也必清，杜絕 _tradLootCtx 殘留洩漏到兌換/任務/其他 forceNormal=false 獎勵）

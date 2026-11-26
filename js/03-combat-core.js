@@ -1978,6 +1978,8 @@ function pledgeBlessTick() {
 
 function spawnMob(idx) {
     if (mapState.current === 'rift_battle') { spawnRiftMob(idx); return; }   // 🌀 時空裂痕：自訂動態出怪（不靠 DB.maps）
+    const twisted = window.TwistedSpace?.here();
+    if (twisted && !TwistedSpace.canPlace(idx)) return;
     let pool = DB.maps[mapState.current];
     if(!pool) return;
     // 🐉 v3.7.57 侵蝕的安塔瑞斯巢穴：棲息地=中央「被侵蝕的安塔瑞斯」+其餘「大地荒龍」；入口/通道/深處=中央固定區域頭目（場上無王時）、其餘格走 DB.maps 池
@@ -2018,6 +2020,16 @@ function spawnMob(idx) {
     let siegeArea = isSiegeArea(mapState.current);
     let npcClanBattle = !_antharasDungeon && typeof npcClanGroupBattleActive === 'function' && npcClanGroupBattleActive();
     let wcMassTauntBattle = !_antharasDungeon && typeof wcMassTauntGroupBattleActive === 'function' && wcMassTauntGroupBattleActive();
+    let wantBoss = false;
+    if (twisted) {
+        const summonBossByItem = !!mapState.forceBoss;
+        const baseChance = Math.max(0.01, Math.min(1, (player.d?.bossEncounterPct || 1)/100));
+        mobId = TwistedSpace.pickBossOrMob(summonBossByItem, window.__afkBossChanceAdj?.(baseChance) ?? baseChance);
+        wantBoss = !!DB.mobs[mobId]?.boss;
+        if (summonBossByItem) mapState.forceBoss = false;
+        const fieldBoss = DB.mobs[mobId]?.afkMb;
+        if (fieldBoss && window.__afkMapBoss?.spawnAt(fieldBoss,idx)) return;
+    } else {   // 扭亂時空以外：原本的出怪流程
     let allowMultiBoss = backSlotsActive() && !siegeArea;   // 🆕 一般5格地圖可同時出現多隻頭目；攻城雖改為5格，仍維持單一城門／守護塔
     // 🏛️ 長老之室 BOSS 節流：場上最多同時 2 隻長老 BOSS；已有 1 隻時須該 BOSS 存活滿 3 分鐘才可能出現第 2 隻
     let _elderRoom = mapState.current === 'elder_room';
@@ -2029,7 +2041,7 @@ function spawnMob(idx) {
     }
     let _normalBossChance = Math.max(0.01, Math.min(1, (((player && player.d && player.d.bossEncounterPct) || 1) / 100)));
     if (typeof window.__afkBossChanceAdj === 'function') _normalBossChance = window.__afkBossChanceAdj(_normalBossChance);   /* 🔌 加掛版補丁:出王機率掛點 */
-    let wantBoss = !npcClanBattle && !wcMassTauntBattle && (allowMultiBoss || !bossInBattle) && bossPool.length > 0 && (!_elderRoom || _elderBossOk) && (mapState.forceBoss || (siegeArea ? (!mapState.suppressSiegeBoss && Math.random() < 0.10) : (_elderRoom ? Math.random() < 0.05 : Math.random() < _normalBossChance)));
+    wantBoss = !npcClanBattle && !wcMassTauntBattle && (allowMultiBoss || !bossInBattle) && bossPool.length > 0 && (!_elderRoom || _elderBossOk) && (mapState.forceBoss || (siegeArea ? (!mapState.suppressSiegeBoss && Math.random() < 0.10) : (_elderRoom ? Math.random() < 0.05 : Math.random() < _normalBossChance)));
     if(mapState.forceBoss) mapState.forceBoss = false;   // 強制旗標只作用於下一次生怪
     if(wantBoss) {
         // 🔧 同名BOSS限制：場上已有同名BOSS時不再抽到該名→需地圖池有 2 種以上「不同名」BOSS 才可能同時出現多隻；若無不同名可出則退回一般怪
@@ -2154,6 +2166,7 @@ function spawnMob(idx) {
             mapState._trollSpawn = _groupPvp;
         }
     }
+    } // 扭亂時空以外
     if (mapState._trollSpawn && (!DB.mobs[mobId] || !DB.mobs[mobId].trollPlayer)) delete mapState._trollSpawn;
     let base = DB.mobs[mobId];
     if(!base) return;

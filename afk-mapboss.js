@@ -175,11 +175,11 @@
   var ALL_MECH = ['summon', 'enrage', 'quake', 'regen', 'shieldM', 'shieldP', 'root', 'block', 'ambush', 'adds', 'poison', 'invuln', 'curse'];
   var riftOn = function () { try { return !!(W.__afkDimRiftOn && W.__afkDimRiftOn()); } catch (e) { return false; } };
   var slotFor = function () { var ms = mapState.mobs || [], i; for (i = 0; i < ms.length; i++) if (!ms[i] || ms[i]._dead) return i; for (i = 0; i < ms.length; i++) if (ms[i] && !ms[i].boss) return i; return -1; };
-  var start = function (b) {
-    var idx = slotFor(); if (idx < 0) return false;
+  var start = function (b, slot) {
+    var idx = slot == null ? slotFor() : slot; if (idx < 0) return false;
     var Lv = Math.max(10, Math.min(130, mapMaxLv(mapState.current) + 5));
     var m = scale(DB.mobs[b.mobId], Lv, 1.5 * (1 + 0.15 * allyCount()));
-    var rf = riftOn(); if (rf) { m.hp = Math.round(m.hp * 1.5); if (m.hit) m.hit = Math.round(m.hit * 4 / 3); }
+    var rf = riftOn(); if (rf && !W.TwistedSpace?.here()) { m.hp = Math.round(m.hp * 1.5); if (m.hit) m.hit = Math.round(m.hit * 4 / 3); }
     var mob = L.boss.place(idx, m, { mobId: b.mobId, _afkMb: b.id, _mbBoss: true, _mbL: Lv, _dimRift: rf });
     if (!mob) return false;
     var t = tk();
@@ -237,8 +237,8 @@
     if (L.boss.halted(m)) { ['summonAt', 'quakeAt', 'regenAt', 'shieldAt', 'rootAt', 'ambushAt', 'stealAt', 'poisonAt', 'invulnAt', 'curseAt'].forEach(function (k) { act[k]++; }); return; }
     if (has('enrage') && !act.enraged && m.curHp <= m.hp * 0.3) { act.enraged = true; m._mbEnraged = true; m.atkSpd = Math.max(0.3, (Number(m.atkSpd) || 1.6) / 1.5); clog('<span class="font-bold" style="color:#f87171">【狂暴】</span>' + esc(m.n) + ' 怒吼起來——攻擊速度 ×1.5、傷害 ×1.3！'); }
     if (has('summon') && t >= act.summonAt) { act.summonAt = t + 450; var mid = mobIdByName(b.minion); if (mid && onField('minion').length < 2) { var n = L.boss.summon(mid, 2, { _afkMb: act.id, _mbMinion: true }); if (n) clog('<span class="font-bold" style="color:#fcd34d">【召喚】</span>' + esc(m.n) + ' 叫來了 ' + n + ' 名' + esc(b.minion) + '。'); } }
-    if (has('quake') && t >= act.quakeAt) { act.quakeAt = t + 300; party().forEach(function (x) { L.boss.hurt(x, mhpOf(x) * 0.06); }); clog('<span class="font-bold" style="color:#fb923c">【震地】</span>' + esc(m.n) + '——全隊受到最大 HP 6% 的傷害。'); }
-    if (has('curse') && t >= act.curseAt) { act.curseAt = t + 200; party().forEach(function (x) { L.boss.hurt(x, mhpOf(x) * 0.08); }); clog('<span class="font-bold" style="color:#c084fc">【詛咒】</span>' + esc(m.n) + '——全隊受到最大 HP 8% 的傷害。'); }
+    if (has('quake') && t >= act.quakeAt) { act.quakeAt = t + 300; party().forEach(function (x) { L.boss.hurt(x, mhpOf(x) * 0.06, true, m); }); clog('<span class="font-bold" style="color:#fb923c">【震地】</span>' + esc(m.n) + '——全隊受到最大 HP 6% 的傷害。'); }
+    if (has('curse') && t >= act.curseAt) { act.curseAt = t + 200; party().forEach(function (x) { L.boss.hurt(x, mhpOf(x) * 0.08, true, m); }); clog('<span class="font-bold" style="color:#c084fc">【詛咒】</span>' + esc(m.n) + '——全隊受到最大 HP 8% 的傷害。'); }
     if (has('regen') && t >= act.regenAt) { act.regenAt = t + 100; if (m.curHp < m.hp) m.curHp = Math.min(m.hp, m.curHp + Math.ceil(m.hp * 0.02)); }
     if ((has('shieldM') || has('shieldP')) && t >= act.shieldAt) {
       act.shieldAt = t + 400; var kinds = ['shieldM', 'shieldP'].filter(has), k = kinds[act.shieldKind++ % kinds.length], magic = k === 'shieldM';
@@ -248,12 +248,12 @@
     if (has('root') && t >= act.rootAt) { act.rootAt = t + 250; var ps = party(), v = ps[Math.floor(Math.random() * ps.length)]; if (v) { stun(v, 30); clog('<span class="font-bold" style="color:#86efac">【纏繞】</span>' + esc(m.n) + ' 困住了 ' + esc(v === P() ? '你' : (v._allyName || '傭兵')) + '（3 秒）。'); } }
     if (has('ambush')) {
       if (!act.hideUntil && t >= act.ambushAt) { act.hideUntil = t + 30; clog('<span class="font-bold" style="color:#94a3b8">【伏擊】</span>' + esc(m.n) + ' 消失了……'); }
-      else if (act.hideUntil && t >= act.hideUntil) { act.hideUntil = 0; act.ambushAt = t + 250; var ps2 = party(), v2 = ps2[Math.floor(Math.random() * ps2.length)]; if (v2) { L.boss.hurt(v2, mhpOf(v2) * 0.3); clog('<span class="font-bold" style="color:#f87171">【伏擊】</span>' + esc(m.n) + ' 從背後出手——' + esc(v2 === P() ? '你' : (v2._allyName || '傭兵')) + ' 受到最大 HP 30% 的傷害！'); } }
+      else if (act.hideUntil && t >= act.hideUntil) { act.hideUntil = 0; act.ambushAt = t + 250; var ps2 = party(), v2 = ps2[Math.floor(Math.random() * ps2.length)]; if (v2) { L.boss.hurt(v2, mhpOf(v2) * 0.3, true, m); clog('<span class="font-bold" style="color:#f87171">【伏擊】</span>' + esc(m.n) + ' 從背後出手——' + esc(v2 === P() ? '你' : (v2._allyName || '傭兵')) + ' 受到最大 HP 30% 的傷害！'); } }
     }
     if (has('steal') && t >= act.stealAt) { act.stealAt = t + 600; var p = P(), g = Math.min(1000000, Math.floor((Number(p.gold) || 0) * 0.02)); if (g > 0) { p.gold -= g; act.stolen += g; clog('<span class="font-bold" style="color:#fcd34d">【偷竊】</span>' + esc(m.n) + ' 摸走了 ' + g.toLocaleString() + ' 金幣（打倒牠就拿得回來）。'); } }
     if (has('poison')) {
       if (t >= act.poisonAt) { act.poisonAt = t + 100; act.layers = Math.min(10, act.layers + 1); }
-      if (act.layers && t % 10 === 0) party().forEach(function (x) { L.boss.hurt(x, mhpOf(x) * 0.003 * act.layers); });
+      if (act.layers && t % 10 === 0) party().forEach(function (x) { L.boss.hurt(x, mhpOf(x) * 0.003 * act.layers, true, m); });
     }
     if (has('invuln') && t >= act.invulnAt) { act.invulnAt = t + 300; act.invulnUntil = t + 30; clog('<span class="font-bold" style="color:#94a3b8">【遁形】</span>' + esc(m.n) + ' 遁形了——3 秒內不受傷害。'); }
   };
@@ -304,8 +304,8 @@
         if (m && !wasDead) countKill(m);
         if (m && m._dead && m._mbBoss && !m._mbPaid && act && m._afkMb === act.id) {
           m._mbPaid = true; var b = BY[act.id];
-          gainItem(BADGE, 1, true, true); stat(act.id).kills++;
-          sys('<span class="font-bold" style="color:#fcd34d">👑 ' + esc(b.n) + ' 倒下了！</span><span class="text-amber-300">得到 王之徽章 ×1</span>');
+          if (!m._twisted) gainItem(BADGE, 1, true, true); stat(act.id).kills++;
+          sys('<span class="font-bold" style="color:#fcd34d">👑 ' + esc(b.n) + ' 倒下了！</span>' + (m._twisted ? '' : '<span class="text-amber-300">得到 王之徽章 ×1</span>'));
           try { if (W.__afkBossCardKill) W.__afkBossCardKill(b, m); } catch (e2) {}   // 王者卡冊（afk-bosscard.js）
           end('kill');
         }
@@ -322,6 +322,6 @@
     var lv = 0; (b.maps || []).forEach(function (mp) { lv = Math.max(lv, mapMaxLv(mp)); });
     return scale(DB.mobs[mobId], Math.max(10, Math.min(130, (lv || REF) + 5)), 1.5);
   };
-  W.__afkMapBoss = { scaledFor: scaledFor, LIST: K, BY: BY, BYMAP: BYMAP, MECH_N: MECH_N, MECH_D: MECH_D, KILLS: KILLS, active: function () { return act; }, store: store, stats: stat, start: function (id) { var b = BY[id]; return b ? start(b) : false; }, end: end, step: step };
+  W.__afkMapBoss = { scaledFor: scaledFor, LIST: K, BY: BY, BYMAP: BYMAP, MECH_N: MECH_N, MECH_D: MECH_D, KILLS: KILLS, spawnAt: function (id,slot) { return !!(!act && BY[id] && start(BY[id],slot)); }, active: function () { return act; }, store: store, stats: stat, start: function (id) { var b = BY[id]; return b ? start(b) : false; }, end: end, step: step };
   try { console.log('[AFK-mapboss] 已載入：地圖王 ' + K.filter(function (x) { return x.type === 'field'; }).length + ' 隻、副本王 ' + K.filter(function (x) { return x.type === 'dungeon'; }).length + ' 隻'); } catch (e) {}
 })();

@@ -245,7 +245,7 @@
     }
     if (has('quake') && t >= act.quakeAt) {
       act.quakeAt = t + 300;
-      L.boss.party().forEach(function (x) { if (!x || x.dead || x._downed) return; var mx = x === P() ? (x.mhp || 1) : (x.mhp || x.curHp || 1); L.boss.hurt(x, mx * 0.06); });
+      L.boss.party().forEach(function (x) { if (!x || x.dead || x._downed) return; var mx = x === P() ? (x.mhp || 1) : (x.mhp || x.curHp || 1); L.boss.hurt(x, mx * 0.06, true, m); });
       clog('<span class="font-bold" style="color:#fb923c">【震地】</span>' + esc(m.n) + ' 重重踏地——全隊受到最大 HP 6% 的傷害。');
     }
     if (has('regen') && t >= act.regenAt) { act.regenAt = t + 100; if (m.curHp < m.hp) m.curHp = Math.min(m.hp, m.curHp + Math.ceil(m.hp * 0.02)); }
@@ -292,11 +292,13 @@
         if (m && m._dead && m._rbBoss && !m._rbPaid && act && m._afkRb === act.r) {
           m._rbPaid = true;
           var b = BY[act.r], st = stat(act.r), got = [];
+          if (!m._twisted) {
           gainItem(BOX, 1, true, true); got.push(DB.items[BOX].n);
           try { var p = P(), bx = p && p.inv.filter(function (x) { return x && x.id === BOX; }).pop(); if (bx && !bx.rbLv) bx.rbLv = m._rbL; } catch (e) {}
           gainItem(b.trophyId, 1, true, true); got.push(b.trophy);
+          }
           st.kills++; if (!st.first) st.first = Date.now();
-          sys('<span class="text-amber-300">' + esc(m.n) + ' 留下了：' + got.join('、') + '</span>');
+          if (got.length) sys('<span class="text-amber-300">' + esc(m.n) + ' 留下了：' + got.join('、') + '</span>');
           if (!onField('boss').length) end('kill');   // 霸主群：全部倒下才算打倒
         }
       } catch (e) { console.warn('[AFK-region-boss] kill', e); }

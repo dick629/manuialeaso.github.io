@@ -792,7 +792,7 @@
     //   而結算耗時「幾乎沒變快」(19→20s / 16→10s):王房的內容就是 BOSS 對打本身,首打+5% 抽驗全是真打,
     //   沒有可跳過的小怪 farming → 快速模式無利可圖。全模擬跑王房本來就快(24h ≈ 75 秒)。
     //   (事件迴圈仍保留 _kbRespawnAt 時間軸與 kingLeftRoom 偵測——若日後重啟,把下行 !isKing 拿掉即可。)
-    var fastEligible = !isClimb && !isKing && (!isObl || (preObl && preObl.phase === 'island'))
+    var fastEligible = !window.TwistedSpace?.here() && !isClimb && !isKing && (!isObl || (preObl && preObl.phase === 'island'))
       && totalTicks >= (FAST_SAMPLE_TICKS + FAST_MIN_REMAIN) && !_forceNoFast;
     var fastMode = false, fastOff = false;   // fastOff = 本次補跑永久退出快速段
     // 📝 快轉狀態代碼(寫進離線紀錄的 fastWhy,供離線掛機紀錄／診斷檔顯示為什麼慢)。

@@ -1931,6 +1931,7 @@
     }
 
     function pandoraAdjustSharedDiamonds(delta) {
+        if (delta > 0 && window.TwistedSpace?.blockingSideRewards()) return {ok:false};
         delta = Math.trunc(Number(delta) || 0);
         if (!delta) return { ok: true, diamonds: _readState().diamonds };
         let result = _withStateLock(st => {

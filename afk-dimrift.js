@@ -100,7 +100,7 @@
       p.sherineWorld = true; p.sherineMad = true; p.sherineDream = true;
       r.on = true; r.at = Date.now(); r.ever = 1;
       sys('<span class="font-bold" style="color:#67e8f9">🌀 你踏進了次元裂縫。縫隙的光一點一點落下來……</span>');
-    } else { r.on = false; clearErosion(p, true); sys('<span style="color:#67e8f9">🌀 你退回了夢域。</span>'); }
+    } else { r.on = false; clearErosion(p, true); if (W.TwistedSpace?.here()) { setMapSelectors('town_sherine'); changeMap(true); } sys('<span style="color:#67e8f9">🌀 你退回了夢域。</span>'); }
     try { if (typeof calcStats === 'function') calcStats(); } catch (e) {}
     try { saveGame(); } catch (e) {}
   }
@@ -135,7 +135,9 @@
   // 面板保留比例：GD之子的期待裡最多 75%，取回力量到 90% 也壓回 75%（Ping 11-12 17:30 80%；11-13 16:53 改 75%）
   // 無盡的裂縫（Ping 11-17）：面板再壓 25%（取回滿 90% → 65%）
   var endlessOn = function () { try { return !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn()); } catch (e) { return false; } };
-  var panelF = function (p) { var f = BASE + recoverPct(p) / 100; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) f = Math.min(f, 0.75); } catch (e) {} if (endlessOn()) f = Math.max(0.1, f - 0.25); return f; };
+  var twisted = function () { return !!W.TwistedSpace?.here(); };
+  var noErosionFloor = function () { return twisted() || endlessOn(); };
+  var panelF = function (p) { var f = BASE + recoverPct(p) / 100; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) f = Math.min(f, 0.75); } catch (e) {} if (endlessOn()) f = Math.max(0.1, f - 0.25); return twisted() ? Math.min(0.60,f) : f; };
   var recoverPct = function (p) { return Math.min(40, RECOVER.reduce(function (s, x) { return s + (Number(x[1](p)) || 0); }, 0)); };
   function clearErosion(p, all) { var r = rec(p); r.ero = 0; if (all) { /* 光蝕不因回村清除 */ } }
   var members = function () { var p = P(), out = []; if (!p) return out; if (!p.dead) out.push(p); (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); }); return out; };
@@ -150,13 +152,13 @@
     members().forEach(function (x) {
       var mx = x === p ? (rec(p).hp50 || Math.floor((p.mhp || 1) / (panelF(p)) * BASE)) : (x._dimBase ? Math.floor(x._dimBase.mhp * BASE) : (x.mhp || 1));
       if (net <= 0) { var heal = Math.floor(mx * (-net) / 100); if (heal > 0) { if (x === p) p.hp = Math.min(p.mhp, p.hp + heal); else x.curHp = Math.min(x.mhp || x.curHp, x.curHp + heal); } return; }
-      var dmg = (endlessOn() ? 2 : 1) * mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p)) * (W.__afkErodeCuts || []).reduce(function (m, f) { try { return m * (1 - Math.max(0, Math.min(0.9, Number(f(p, x)) || 0))); } catch (e) { return m; } }, 1);   // 黃道星卡・水瓶、七階以上娃娃（堅壁、統御）
+      var dmg = (twisted() ? 5 : endlessOn() ? 2 : 1) * mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p)) * (W.__afkErodeCuts || []).reduce(function (m, f) { try { return m * (1 - Math.max(0, Math.min(0.9, Number(f(p, x)) || 0))); } catch (e) { return m; } }, 1);   // 黃道星卡・水瓶、七階以上娃娃（堅壁、統御）
       if (x === p) W.__afkDrainHit = (Number(W.__afkDrainHit) || 0) + dmg;   // 聖十字之盾（禁衛軍）在裂縫只擋一部分：見 afk-castle-guards
       if (L && L.boss) L.boss.hurt(x, dmg);
     });
     // AC、魔防、抗性
-    var endless = !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn());   // 11-16：無盡的裂縫沒有上限、沒有最低保留
-    if (endless || (r.ero || 0) < R.resMax) { var step = R.eroStep; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) step *= 2; } catch (e) {} r.ero = endless ? (r.ero || 0) + step : Math.min(R.resMax, (r.ero || 0) + step); try { calcStats(); } catch (e) {} }   // Ping 11-13 14:29：每秒 AC +5、魔防 −5、四屬性 −5；GD之子的期待 ×2
+    var endless = noErosionFloor();   // 11-16：無盡的裂縫沒有上限、沒有最低保留
+    if (endless || (r.ero || 0) < R.resMax) { var step = R.eroStep * (twisted() ? 5 : 1); try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) step *= 2; } catch (e) {} r.ero = endless ? (r.ero || 0) + step : Math.min(R.resMax, (r.ero || 0) + step); try { calcStats(); } catch (e) {} }   // Ping 11-13 14:29：每秒 AC +5、魔防 −5、四屬性 −5；GD之子的期待 ×2
   }
   var L = W.__afkLore;
   function lightSecond() {
@@ -164,7 +166,7 @@
     var t = tk(), boss = bossOnField();
     if (boss) {
       if (!r.lightAt || t >= r.lightAt) {
-        if (r.lightAt) { r.light = Math.min(Math.max(1, R.lightMax - hsum('lightMaxCut', p)), (r.light || 0) + (endlessOn() ? 2 : 1)); clog('<span class="font-bold" style="color:#fde68a">【光蝕】</span>頭目的光落在全隊身上——光蝕 ' + r.light + ' 層（最大 HP −' + (r.light * R.lightHp) + '%、受到的治療 −' + (r.light * R.lightHeal) + '%）。'); try { calcStats(); } catch (e) {} }
+        if (r.lightAt) { r.light = Math.min(Math.max(1, R.lightMax - hsum('lightMaxCut', p)), (r.light || 0) + (twisted() ? 5 : endlessOn() ? 2 : 1)); clog('<span class="font-bold" style="color:#fde68a">【光蝕】</span>頭目的光落在全隊身上——光蝕 ' + r.light + ' 層（最大 HP −' + (r.light * R.lightHp) + '%、受到的治療 −' + (r.light * R.lightHeal) + '%）。'); try { calcStats(); } catch (e) {} }
         r.lightAt = t + R.lightEvery;
       }
       if (!r.execAt || t >= r.execAt) {
@@ -182,11 +184,11 @@
     var oTick = W.tick;
     W.tick = function () {
       var t0 = tk(), r = oTick.apply(this, arguments);
-      try { if (on() && tk() !== t0 && tk() % 10 === 0) { var off = typeof W.__afkOfflineNow === 'function' && W.__afkOfflineNow(); var trn = false; try { trn = !!(W.__afkTrainIn && W.__afkTrainIn()); } catch (e) {} if (!off && !trn) { erodeSecond(); lightSecond(); }   /* 木人場不算侵蝕、光蝕、斬殺線 */ bossRegen(); allyPanel(); sealDebuff(); } else if (!on() && tk() % 10 === 0) allyPanel(); } catch (e) { console.warn('[AFK-dimrift] tick', e); }
+      try { if (on() && tk() !== t0 && tk() % 10 === 0) { var off = typeof W.__afkOfflineNow === 'function' && W.__afkOfflineNow(); var trn = false; try { trn = !!(W.__afkTrainIn && W.__afkTrainIn()); } catch (e) {} if ((!off || twisted()) && !trn) { erodeSecond(); lightSecond(); }   /* 木人場不算侵蝕、光蝕、斬殺線 */ bossRegen(); allyPanel(); sealDebuff(); } else if (!on() && tk() % 10 === 0) allyPanel(); } catch (e) { console.warn('[AFK-dimrift] tick', e); }
       return r;
     };
   }
-  function bossRegen() { (mapState.mobs || []).forEach(function (m) { if (m && m.boss && m._dimRift && !m._dead && m.curHp > 0 && m.curHp < m.hp) m.curHp = Math.min(m.hp, m.curHp + Math.ceil(m.hp * R.bossRegen)); }); }
+  function bossRegen() { (mapState.mobs || []).forEach(function (m) { if (m && m.boss && m._dimRift && !m._twisted && !m._dead && m.curHp > 0 && m.curHp < m.hp) m.curHp = Math.min(m.hp, m.curHp + Math.ceil(m.hp * R.bossRegen)); }); }
   // 相消術卷軸：手動使用也清光蝕
   if (typeof W.useItem === 'function') {
     var oUse = W.useItem;
@@ -236,7 +238,7 @@
         // 侵蝕：AC 往上加（越高越差），魔防、抗性往下扣到最低保留
         var ero = Math.floor((rec(p).ero || 0) * (typeof W.__afkEroMult === 'function' ? (Number(W.__afkEroMult(p)) || 1) : 1) * hmul('eroMult', p));   // 龍息娃娃：侵蝕的下降打折
         if (ero) {
-          var keep = floorSum(p), wc = weightCut(p), noFloor = !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn());
+          var keep = floorSum(p), wc = weightCut(p), noFloor = noErosionFloor();
           var eAc = Math.max(0,Math.min(ero, noFloor ? Infinity : R.acMax)-(W.LineageSherine?.erosionBack(p)||0));
           d.ac = (d.ac || 0) + eAc;
           var cut = function (k) { var v = Number(d[k]) || 0; if (noFloor) { d[k] = v - eAc; return; } if (v <= 0) return; var floor = Math.max(keep, Math.floor(v * wc)); var low = Math.min(v, floor); d[k] = Math.max(low, v - eAc); };
@@ -287,7 +289,7 @@
       return r;
     };
   }
-  (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) { return mob && mob._dimRift && on() ? (mob.boss ? R.bossDmg * (endlessOn() ? 2 : 1) : R.mobDmg) : 1; });   // 無盡的裂縫：王的傷害 ×2
+  (W.__afkTakenMods = W.__afkTakenMods || []).push(function (ent, mob) { if (mob?._twisted) return 1; return mob && mob._dimRift && on() ? (mob.boss ? R.bossDmg * (endlessOn() ? 2 : 1) : R.mobDmg) : 1; });   // 無盡的裂縫：王的傷害 ×2
   // 造成的傷害 −30%
   var hooked = false;
   var hookDamage = function () {
@@ -303,6 +305,7 @@
   var party = function () { var p = P(); return Math.min(16, 1 + ((p && p.allies) || []).filter(function (a) { return a && !a._downed; }).length); };
   var roll = function (r) { return Math.random() < r; };
   function drops(m) {
+    if (m._twisted) return;
     var p = P(), got = [];
     var give = function (id, n) { if (!DB.items[id] || !(n > 0)) return; try { gainItem(id, n, true, true); if (W.__afkGuardTwin) W.__afkGuardTwin(id, n); } catch (e) {} got.push((DB.items[id].n || id) + (n > 1 ? ' ×' + n : '')); };
     if (roll(0.05)) give('afk_dim_crystal', 1);   // 11-23 Ping：每隻 5%（王也一樣）
@@ -349,7 +352,7 @@
     var oKill = W.killMob;
     W.killMob = function (idx) {
       var m = mapState.mobs ? mapState.mobs[idx] : null, was = !!(m && m._dead);
-      var dimKill = !!(m && !was && m._dimRift && on());
+      var dimKill = !!(m && !was && !m._twisted && m._dimRift && on());
       if (dimKill) sideBlock.n++;
       var r; try { r = oKill.apply(this, arguments); } finally { if (dimKill) sideBlock.n--; }
       try { if (m && !was && m._dead && m._dimRift && on()) drops(m); } catch (e) { console.warn('[AFK-dimrift] drop', e); }
@@ -367,7 +370,7 @@
       var b = a._dimBase, light = (rec(p).light || 0) * R.lightHp / 100 * (1 - lightCut(p));
       a.mhp = Math.max(1, Math.floor(b.mhp * f * (1 - light))); a.mmp = Math.floor((b.mmp || 0) * f);
       if (a.curHp > a.mhp) a.curHp = a.mhp; if (a.mp > a.mmp) a.mp = a.mmp;
-      var nf = !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn()), acCap = nf ? Infinity : R.acMax;   // 無盡的裂縫：沒有上限、沒有最低保留
+      var nf = noErosionFloor(), acCap = nf ? Infinity : R.acMax;   // 無盡的裂縫：沒有上限、沒有最低保留
       Object.keys(b.d).forEach(function (k) { var v = b.d[k]; if (k === 'ac') a.d.ac = (v < 0 ? Math.ceil(v * f) : v) + Math.max(0,Math.min(ero, acCap)-(W.LineageSherine?.erosionBack(a)||0)); else a.d[k] = v > 0 ? Math.floor(v * f) : v; });
       if (ero) ['mr'].concat(RES4).forEach(function (k) { var v = Number(a.d[k]) || 0; var e = k === 'mr' ? Math.max(0,Math.min(ero, acCap)-(W.LineageSherine?.erosionBack(a)||0)) : ero; if (nf) { a.d[k] = v - e; return; } if (v <= 0) return; a.d[k] = Math.max(Math.min(v, keep), v - e); });
     });

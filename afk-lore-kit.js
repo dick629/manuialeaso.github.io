@@ -287,8 +287,9 @@
 
   // ── Boss 小工具 ──
   var party = function () { var p = P(); if (!p) return []; var out = []; if (!p.dead) out.push(p); (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); }); return out; };
-  var hurt = function (t, dmg, trueDmg) {
+  var hurt = function (t, dmg, trueDmg, source) {
     var p = P(); if (!t || !(dmg > 0)) return 0;
+    if (source?._twisted) dmg = W.TwistedSpace.monsterDamage(source,dmg);
     if (trueDmg !== false && typeof W.__afkTrueCut === 'function') dmg = W.__afkTrueCut(t, dmg);
     if (typeof W.__afkIncomingMod === 'function') { try { dmg = W.__afkIncomingMod(t, dmg); } catch (e) {} }   // 隱藏規則「命運」等：受到的傷害（afk-fate.js）
     dmg = Math.max(1, Math.floor(dmg));
@@ -297,6 +298,7 @@
     return dmg;
   };
   var place = function (idx, base, extra) {
+    if (W.TwistedSpace?.here() && (!TwistedSpace.canPlace(idx) || (!(extra?.boss || base.boss) && (base.lv || 0) < 85))) return null;
     var o = Object.assign(JSON.parse(JSON.stringify(base)), extra || {});
     mapState.mobs[idx] = Object.assign(o, { curHp: o.hp, uid: uid(), _born: ++_mobBornSeq, _bornMs: Date.now(), _magCd: {}, justHit: false, st: newMobStatus() });
     try { if (typeof applySherineBuff === 'function') applySherineBuff(idx); } catch (e) {}
@@ -311,7 +313,7 @@
       var ms = mapState.mobs, j = -1;
       for (var q = 0; q < ms.length; q++) if (!ms[q] || ms[q]._dead) { j = q; break; }
       if (j < 0) break;
-      place(j, base, Object.assign({ mobId: id }, extra || {})); got++;
+      if (place(j, base, Object.assign({ mobId: id }, extra || {}))) got++;
     }
     try { if (got && !S().ff) renderMobs(); } catch (e) {}
     return got;

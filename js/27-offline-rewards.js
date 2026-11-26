@@ -1229,6 +1229,16 @@
     }
 
     function _offlineRollMobLoot(mob, kills, map, loot) {
+        if (map === window.TwistedSpace?.map) {
+            if (!TwistedSpace.open()) return;
+            TwistedSpace.settle(mob,kills,_offlineBinomial,
+                (id,n) => _offlineGainItem(id,n,mob,loot),
+                (name,tier,n) => { acquireCard(name,tier,n); _offlineTrackCard(loot,name,tier,n); });
+            const king = TwistedSpace.cardBoss(mob);
+            if (king) window.__afkBossCardKill(king,{_twisted:true,_dimRift:true},kills,_offlineBinomial,
+                (id,n) => _offlineTrackItem(loot,id,n));
+            return;
+        }
         let dropBase = mob.grace ? 10 : (mob.sherine ? (mob.sherineMad ? 5 : 3) : 1);
         let classic = typeof classicDropMult === 'function' ? classicDropMult() : 1;
         let party = typeof partyRewardMult === 'function' ? Math.max(1, Number(partyRewardMult()) || 1) : 1;

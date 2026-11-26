@@ -27,7 +27,7 @@
   var MIN_LV = 75, CATS = ['wild', 'dungeon', 'rift', 'tower'];
   var buildAll = function () {
     try {
-      var ok = {}; CATS.forEach(function (c) { (MAP_CATEGORIES[c] || []).forEach(function (o) { if (o && o.v && o.v !== MAP) ok[o.v] = 1; }); });
+      var ok = {}; CATS.forEach(function (c) { (MAP_CATEGORIES[c] || []).forEach(function (o) { if (o && o.v && o.v !== MAP && !o.requiresDimRift) ok[o.v] = 1; }); });
       var out = [];
       Object.keys(ok).forEach(function (m) { (DB.maps[m] || []).forEach(function (id) { var d = DB.mobs[id]; if (d && !d.boss && (d.lv || 0) >= MIN_LV && (Number(d.exp) || 0) > 0 && out.indexOf(id) < 0) out.push(id); }); });
       if (out.length) { ids = out; DB.maps[MAP] = out; if (W.__afkTimeRoom) W.__afkTimeRoom.mobs = out; }

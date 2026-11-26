@@ -148,6 +148,7 @@
   var lordCity = function () { var c = null; try { c = typeof castleOwnerCity === 'function' ? castleOwnerCity() : null; } catch (e) {} if (!c) { try { var h = W.__afkCastleWar && W.__afkCastleWar.held ? W.__afkCastleWar.held() : []; if (h.length) c = h[0]; } catch (e) {} } return c; };   // 七城清單也算（2026-11-02 修：血盟沒記主城時一直不觸發）
   var targets = function (id, alive) {
     var p = P(); if (!p) return [];
+    if (W.TwistedSpace?.here() && (!alive || !p.dead)) return alive ? L.boss.party() : [p].concat((p.allies || []).filter(Boolean));
     var who = EV[id].who, out = [];
     if (who === 'lord') { if (lordCity() && (!alive || !p.dead)) out.push(p); return out; }
     if ((who === 'all' || p.cls === who) && (!alive || !p.dead)) out.push(p);
@@ -297,7 +298,7 @@
       if (act.chill !== lvl) { var was = act.chill; act.chill = lvl; curseApply(); if (was === 2 && lvl === 1) clog('<span class="font-bold" style="color:#86efac">【寒冬】</span>侍女倒下了，風雪變小了一些（攻擊速度 −20%、凍傷 2%）。', 'player'); }
       if (t >= act.frostAt) {
         act.frostAt = t + 100;
-        party().forEach(function (m) { if (!m || m.dead || m._downed) return; var mx = m === P() ? (m.mhp || 1) : (m.mhp || m.curHp || 1); L.boss.hurt(m, mx * 0.02 * lvl); });
+        party().forEach(function (m) { if (!m || m.dead || m._downed) return; var mx = m === P() ? (m.mhp || 1) : (m.mhp || m.curHp || 1); L.boss.hurt(m, mx * 0.02 * lvl, true, b); });
         if (t % 300 < 100) clog('<span class="font-bold" style="color:#7dd3fc">【凍傷】</span>寒風割過皮膚——全隊受到最大 HP ' + (2 * lvl) + '% 的傷害。');
       }
       if (t >= act.freezeAt) { act.freezeAt = t + 300; var all = targets('winter', true); if (all.length) { var k2 = all[Math.floor(Math.random() * all.length)]; freeze(b, k2, '女王的冰封'); clog('<span class="font-bold" style="color:#7dd3fc">【女王的冰封】</span>冰之女王指向 ' + nameOf(k2) + '——冰封 3 秒。'); } }
@@ -307,7 +308,7 @@
       if (act.mark && t >= act.mark.end) {
         var mk2 = act.mark; act.mark = null; var p = P();
         if (mk2.hp0 - b.curHp >= b.hp * 0.05) clog('<span class="font-bold" style="color:#86efac">【懸賞令】</span>猛攻逼退了刺客頭目——懸賞令被打斷！', 'player');
-        else if (p && !p.dead) { clog('<span class="font-bold" style="color:#ef4444">【懸賞令】</span>刺客頭目的刀落下——你受到重創！'); L.boss.hurt(p, (p.mhp || 1) * 0.3); }
+        else if (p && !p.dead) { clog('<span class="font-bold" style="color:#ef4444">【懸賞令】</span>刺客頭目的刀落下——你受到重創！'); L.boss.hurt(p, (p.mhp || 1) * 0.3, true, b); }
       } else if (!act.mark && t >= act.markAt) {
         act.markAt = t + 450; act.mark = { end: t + 50, hp0: b.curHp };
         clog('<span class="font-bold" style="color:#ef4444">【懸賞令】</span>刺客頭目盯上了城主：「你的頭值一座城。」（5 秒內打掉他 5% HP 可以打斷）');
@@ -397,9 +398,9 @@
         if (m && m._dead && m._weBoss && !m._wePaid && act && m._afkWe === act.id) {
           m._wePaid = true;
           var got = [];
-          gainItem(BAG, 1, true, true); got.push(DB.items[BAG].n);
+          if (!m._twisted) { gainItem(BAG, 1, true, true); got.push(DB.items[BAG].n); }
           if (act.id === 'kenn') { var g = (m._weL || 30) * 2000, p = P(); p.gold = (Number(p.gold) || 0) + g; got.push('懸賞金 ' + g.toLocaleString() + ' 金幣'); }
-          sys('<span class="text-amber-300">' + esc(m.n) + ' 留下了：' + got.join('、') + '</span>');
+          if (got.length) sys('<span class="text-amber-300">' + esc(m.n) + ' 留下了：' + got.join('、') + '</span>');
           end('kill');
         }
       } catch (e) { console.warn('[AFK-world-events] kill', e); }

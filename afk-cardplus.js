@@ -150,7 +150,7 @@
       var before = mapState.mobs[idx];
       var r = oTrans.apply(this, arguments);
       try {
-        if (enabled() && before && mapState.mobs[idx] !== before && CARD_MOB_INFO[before.n]) {
+        if (!window.TwistedSpace?.here() && enabled() && before && mapState.mobs[idx] !== before && CARD_MOB_INFO[before.n]) {
           var stage = Object.assign({}, before); delete stage.transformTo;
           rollCardDrops(stage);
         }
@@ -344,7 +344,7 @@
     };
   }
 
-  window.__afkCardPlus = { platFull: platFull, equipFull: equipFull, miscFull: miscFull, pickCard: pickCard, openPick: openPick, closePick: closePick, bump: bump, HAMA: HAMA, T5: T5 };
+  window.__afkCardPlus = { enabled:enabled, baseRates:PLUS.map(x => [x.t,x.rate]), platFull: platFull, equipFull: equipFull, miscFull: miscFull, pickCard: pickCard, openPick: openPick, closePick: closePick, bump: bump, HAMA: HAMA, T5: T5 };
   console.log('[AFK-cardplus] 資料已登錄；功能依白金／鑽石卡開關啟停。');
   }
   if (T && typeof T.set === 'function') {

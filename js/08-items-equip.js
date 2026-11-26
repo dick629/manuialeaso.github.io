@@ -85,6 +85,7 @@ function _rememberCatchupGainItemStack(item) {
     cache.last = item;
 }
 function gainItem(id, cnt=1, silent=false, forceNormal=false, affixOld=false, deferUi=false, fixedAffixes=null, blessRate=null) {   // ⚠️ 第 7 參供既定詞綴來源；第 8 參供製作等來源指定祝福率
+    if (window.TwistedSpace?.blockItem(id)) return null;
     let _deferCatchupUi = !deferUi && typeof state !== 'undefined' && !!state.ff;
     // 卷軸變祝福／詛咒機率：各 1%（互斥）
     if (!forceNormal && (id === 'scroll_weapon' || id === 'scroll_armor')) {

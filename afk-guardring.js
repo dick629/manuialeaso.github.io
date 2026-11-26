@@ -692,8 +692,8 @@
   var nearest = function (list, lv) { var best = null, bd = 1e9; list.forEach(function (id) { var d = Math.abs((Number(DB.mobs[id].lv) || 1) - lv); if (d < bd) { bd = d; best = id; } }); return best; };
   var idByName = function (n) { for (var id in DB.mobs) if (DB.mobs[id] && DB.mobs[id].n === n) return id; return null; };
   var ELE_MOB = { wind: 'wind', fire: 'fire', water: 'water', earth: 'earth', all: null };
-  var tpl = function (k, boss) {
-    var p = P(), lv = Math.min(120, Math.max(30, Number(p && p.lv) || 1)), pl = pools();
+  var tpl = function (k, boss, fieldLevel) {
+    var p = P(), lv = Math.min(120, Math.max(30, fieldLevel || Number(p && p.lv) || 1)), pl = pools();
     var ref = nearest(boss ? pl.boss : pl.mob, lv); if (!ref) return null;
     var o = JSON.parse(JSON.stringify(DB.mobs[ref]));
     var name = boss ? DGK[k].boss : DGK[k].mobs[Math.floor(rnd() * DGK[k].mobs.length) % DGK[k].mobs.length];
@@ -1106,6 +1106,7 @@
     needOf: needOf, needHave: needHave, needLabel: needLabel, refineName: refineName, refineCount: refineCount, canUp: canUp, upgrade: upgrade, canWear: canWear, wear: wear, setFace: setFace,
     questDone: questDone, questStep: questStep, qOf: qOf, mapOf: mapOf, canEnter: canEnter, enter: enter, leave: leave, run: function () { return run; }, tokenId: tokenId, ringId: ringId, syncTokens: syncTokens,
     removed: removed, regLines: regLines, openView: openView, closeView: closeView, renderInto: renderInto, estiName: estiName, stageN: stageN,
+    fieldBoss: function (key,level) { return tpl(key,true,level)?.base; },
     roll: function () { return Math.random(); }, now: function () { return Date.now(); }, testRift: false
   };
 })();

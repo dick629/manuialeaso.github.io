@@ -125,15 +125,22 @@
   var dreamOn = function () { try { return !!(W.__afkDreamHell && W.__afkDreamHell.on && W.__afkDreamHell.on()); } catch (e) { return false; } };
   var riftOn = function () { try { return !!(typeof W.__afkDimRiftOn === 'function' && W.__afkDimRiftOn()); } catch (e) { return false; } };
   var partyN = function () { var p = P(); var n = 1 + ((p && p.allies) || []).filter(function (a) { return a && a.enSeed && !a._downed; }).length; return Math.min(8, n); };
-  W.__afkBossCardKill = function (b, m) {
+  W.__afkBossCardKill = function (b, m, kills, sample, report) {
     if (!b || classic()) return;
+    if (m?._twisted && m._twistedBossCardPaid) return;
+    if (m?._twisted) m._twistedBossCardPaid = true;
     var d = load(); if (!d.k[b.id]) { d.k[b.id] = 1; save(); }
-    var mult = partyN(), rift = riftOn() || !!(m && m._dimRift), dream = dreamOn() && !rift;
-    for (var i = TIERS.length - 1; i >= 0; i--) {
+    var mult = m?._twisted ? 1 : partyN(), rift = riftOn() || !!(m && m._dimRift), dream = dreamOn() && !rift;
+    var remaining = kills == null ? 1 : kills;
+    for (var i = TIERS.length - 1; i >= 0 && remaining > 0; i--) {
       var x = TIERS[i];
       if (x.t === 4 && !dream) continue;
       if (x.t === 5 && !rift) continue;
-      if (rnd() < x.rate * mult) { acquire(b.id, x.t, 1, '打倒掉落'); break; }
+      var count = sample ? sample(remaining,x.rate*mult) : Number(rnd() < x.rate*mult);
+      if (!count) continue;
+      acquire(b.id, x.t, count, '打倒掉落');
+      if (report) report(cid(b.id,x.t),count);
+      remaining -= count;
     }
     if (isOpen()) render();
   };

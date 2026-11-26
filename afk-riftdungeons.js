@@ -162,7 +162,7 @@
     meterTick: function (run, t) { if (t % 10 === 0) run.meter -= 0.5 * alive(function (x) { return x._rdWorm; }).length; },
     reward: function (r) { return [give('afk_rd_sand', rr(3, 5) + (r.meter >= 80 ? 2 : 0)), Math.random() < 0.2 ? give('afk_rd_water', 1) : '', give('afk_rift_shard', rr(30, 50)), give('afk_dream_crystal', 30)]; } });
 
-  def({ id: 'clock', n: 'A 沉默的鐘樓', tier: 1, fee: { blood: 200 }, min: 20, limit: 2, lore: '10 層，每層打倒鐘擺守衛拿鑰匙上樓；第 5 層鏽蝕的鐘匠、第 10 層停擺之主 克羅諾斯塔（每 60 秒敲鐘，全隊時間停止 2 秒）。剩下的時間越多寶箱越好（>10 分、>5 分、其他）。',
+  def({ id: 'clock', n: 'A 沉默的鐘樓', tier: 1, fee: { blood: 200 }, min: 20, lore: '10 層，每層打倒鐘擺守衛拿鑰匙上樓；第 5 層鏽蝕的鐘匠、第 10 層停擺之主 克羅諾斯塔（每 60 秒敲鐘，全隊時間停止 2 秒）。剩下的時間越多寶箱越好（>10 分、>5 分、其他）。',
     stages: (function () { var a = []; for (var i = 1; i <= 10; i++) a.push({ n: '第 ' + i + ' 層', waves: 1, per: 3, boss: i === 10 ? { n: '停擺之主 克羅諾斯塔', re: '時|鐘|守護', hpX: 14, final: true, mech: function (run, b, t, M) {
         if (!M.bell) M.bell = t + 600;
         if (!M.gear && t >= M.bell - 50) { M.gear = 1; M.safe = false; summonRd('afk_rd_base', 1, { _rd: true, _dimRift: true, _rdGear: true, n: '發光的齒輪', hp: Math.max(1000, Math.floor(b.hp * 0.004)), noAutoTeleport: true }); clog(tag('#fde047', '齒輪') + '發光的齒輪轉起來了——5 秒內打倒它，鐘聲就停不住你們。'); }
@@ -255,7 +255,7 @@
     onKill: function (r, m) { if (r.si === 1 && (m._rdBoss || (m._rdAdd && !m._rdEye))) { r.mirBuff += 0.1; clog('<span class="text-emerald-300">收回了' + esc(m.n) + '——全隊造成的傷害 +' + Math.round(r.mirBuff * 100) + '%。</span>'); } if (m._rdCore) { var b = bossOf(); if (b) { b.curHp = 0; b._rdForce = true; clog('<span class="text-yellow-200 font-bold">最早的那一點光熄滅了。天空被縫上了。</span>'); } } },
     reward: function (r) { var s = store(), a = []; if (!s.sealFirst) { s.sealFirst = Date.now(); a.push(give('afk_rd_remnant', 1), give('afk_rd_thread', 10)); a.push('稱號「代理之人」'); try { var dr = DR.rec(P()); dr.agent = true; } catch (e) {} } a.push(give('afk_rd_thread', rr(3, 5)), Math.random() < 0.1 ? give('afk_rd_remnant', 1) : '', give('afk_rift_shard', 200)); return a; } });
 
-  def({ id: 'endless', n: '無盡的裂縫', tier: 3, fee: { blood: 500, items: [['afk_star_core', 15], ['afk_rift_shard', 50]] }, min: 0, limit: 2, needClear: 'seal', endless: true, lore: '沒有時間上限，每 5 分鐘一層，每層最後一隻頭目。怪物 HP、傷害 ×（1＋0.15×層數）。侵蝕沒有上限、也沒有最低保留：AC、魔防、抗性會一直被扣下去。面板再壓 25%（取回滿的 90% 進來剩 65%）；侵蝕扣血、光蝕疊層、王的傷害都 ×2。你倒下或自己撤離就結束，記最高層數。每層頭目碎光 10＋層數；第 5 層起每層 5% 天空的縫線；第 10 層起每隻頭目 0.5% 殷海薩的殘光。',
+  def({ id: 'endless', n: '無盡的裂縫', tier: 3, fee: { blood: 500, items: [['afk_star_core', 15], ['afk_rift_shard', 50]] }, min: 0, needClear: 'seal', endless: true, lore: '沒有時間上限，每 5 分鐘一層，每層最後一隻頭目。怪物 HP、傷害 ×（1＋0.15×層數）。侵蝕沒有上限、也沒有最低保留：AC、魔防、抗性會一直被扣下去。面板再壓 25%（取回滿的 90% 進來剩 65%）；侵蝕扣血、光蝕疊層、王的傷害都 ×2。你倒下或自己撤離就結束，記最高層數。每層頭目碎光 10＋層數；第 5 層起每層 5% 天空的縫線；第 10 層起每隻頭目 0.5% 殷海薩的殘光。',
     stages: [], reward: function (r) { var s = store(); s.best = Math.max(s.best || 0, r.floor || 0); return ['最高到第 ' + (r.floor || 0) + ' 層（紀錄 ' + s.best + '）']; } });
   def({ id: 'doom', n: '屠龍者的劍塚', npc: 'doom', tier: 0, noRift: true, fee: {}, min: 15, lore: '只有修習「絕望屠龍者」的龍騎士能進入（一轉後、席琳夢域鏡）。三段：劍塚的亡者 → 斷劍的龍騎士 → 握劍的回憶。最後的頭目每 15 秒「龍之咆哮」全隊受到最大 HP 10%；HP 50% 召喚兩把「不肯放下的劍」，劍還在時他受到的傷害 −50%。通關後就能在絕望屠龍者下拿起武器（拿著武器時一般攻擊的倍率從 ×10 變 ×5）。',
     stages: [
@@ -364,25 +364,63 @@
 
   // ── 記錄 ──
   var store = function (p) { p = p || P(); if (!p) return {}; var s = p.afkRiftDg && typeof p.afkRiftDg === 'object' ? p.afkRiftDg : (p.afkRiftDg = {}); s.c = s.c || {}; s.clear = s.clear || {}; return s; };
-  var useKey = function (d, pick) { return d.id + (pick && !d.pickChain ? ':' + pick : ''); };
-  var used = function (d, pick) { var s = store(), k = useKey(d, pick) + (d.pickChain ? ':' + pick : ''), c = s.c[k], now = d.per === 'week' ? weekKey() : dayKey(); return c && c.at === now ? c.n : 0; };
-  var mark = function (d, pick) { var s = store(), k = useKey(d, pick) + (d.pickChain ? ':' + pick : ''), now = d.per === 'week' ? weekKey() : dayKey(); var c = s.c[k]; if (!c || c.at !== now) c = s.c[k] = { at: now, n: 0 }; c.n++; };
+  // Dragons and Anakin's forms already have individual daily counters in existing saves.
+  var dailyGate = d => d.per === 'day' && !d.npc && !d.noRift;
+  var useKey = (d,pick) => d.id + (pick ? ':' + pick : '');
+  function admission(d,pick) {
+    var key = useKey(d,pick), at = d.per === 'week' ? weekKey() : dayKey();
+    var c = store().c[key];
+    return c && c.at === at ? c : {at:at,n:0};
+  }
+  function remaining(d,pick) {
+    var c = admission(d,pick);
+    return Math.max(0,(dailyGate(d) ? 1 + (c.extra || 0) : d.limit) - c.n);
+  }
+  function reentry(d,pick) {
+    if (!dailyGate(d)) return null;
+    var c = admission(d,pick);
+    if (!c.n || remaining(d,pick) || c.n >= 6) return null;
+    // A save from the two-admission rules may already have spent its second free entry today.
+    var extra = c.bought || 0;
+    return {price:(extra + 1)*100, next:c.n + 1};
+  }
+  function redeem(id,pick) {
+    var d = BYID[id], p = P();
+    if (!d || !p || !dailyGate(d) || entryGate(d,pick)) return false;
+    var offer = reentry(d,pick), proof = W.TwistedSpace.proof;
+    if (!offer || cnt(proof) < offer.price) return false;
+    var c = admission(d,pick);
+    questConsumeId(proof,offer.price);
+    c.bought = (c.bought || 0) + 1;
+    c.extra = c.n; // one unused admission, also honoring old saves which already entered twice
+    store(p).c[useKey(d,pick)] = c;
+    saveGame();
+    sys('已消耗 ' + offer.price + ' 張次元獵殺證明，可再進入「' + esc(d.n) + '」一次。');
+    return true;
+  }
+  var mark = function (d,pick) { var c=admission(d,pick); c.n++; store().c[useKey(d,pick)] = c; };
   var tierNeed = function (d) { return d.tier === 3 ? 40 : d.tier === 2 ? 20 : 0; };
   var feeTxt = function (d) { var a = []; if (d.fee.blood) a.push('血龍鑽 ' + d.fee.blood.toLocaleString()); (d.fee.items || []).forEach(function (x) { a.push(nm(x[0]) + ' ×' + x[1]); }); return a.join('＋'); };
-  var canEnter = function (d, pick) {
+  var entryGate = function (d, pick) {
     var p = P(); if (!p) return '請先進入遊戲。'; if (p.classicMode) return '經典模式沒有。';
+    if (d.pick ? !d.pick.some(x => x[0] === pick) : !!pick) return '請選擇有效的副本入口。';
     if (d.id === 'doom') { if (p.cls !== 'dragon' || p.rebirthArt !== 'k_doom') return '只有修習絕望屠龍者的龍騎士能進入。'; if (!(Math.floor(p.rebirth || 0) >= 1)) return '一轉後才能進入。'; if (!(p.sherineDream && p.sherineMad)) return '要在席琳夢域鏡。'; if (p.afkDoomWield) return '你已經握回了劍。'; }
     else if (!d.anyWorld) { if (!DR.on()) return '要先在席琳那裡打開次元裂縫。'; if (DR.recoverPct(p) < tierNeed(d)) return '要取回 ' + tierNeed(d) + '% 以上的力量。'; }
     var s = store(p); if (d.needClear && !s.clear[d.needClear]) return '要先通關「' + (d.needClear === 'anakin5' ? '阿納金第 5 形態' : BYID[d.needClear].n) + '」。';
     if (d.pickChain && +pick > 1 && !s.clear['anakin' + (+pick - 1)]) return '要先打倒前一個形態。';
-    if (used(d, pick) >= d.limit) return d.per === 'week' ? '這週已經挑戰過了。' : '今天的次數用完了。';
-    if (d.fee.blood && cnt(BLOOD) < d.fee.blood) return '血龍鑽不夠。';
-    var lack = (d.fee.items || []).filter(function (x) { return cnt(x[0]) < x[1]; })[0]; if (lack) return nm(lack[0]) + '不夠。';
     var st = S(); if (st.riftRun || st._afkFinal || st.antharas || st.prideClimb) return '你正身在其他副本之中。';
     if (d.id === 'doom') { if (typeof mapState !== 'undefined' && mapState.current !== DOOM_TOWN) return '要在貝希摩斯（劍塚的守墓人在那裡）。'; }   // Ping 11-12：守墓人搬到龍騎士出生地
     else if (d.town) { if (typeof mapState !== 'undefined' && mapState.current !== d.town) return '要在' + ((DB.towns && DB.towns[d.town] && DB.towns[d.town].n) || '對應的村莊') + '。'; }
     else if (typeof mapState !== 'undefined' && mapState.current !== TOWN) return '要在席琳神殿。';
     return '';
+  };
+  var canEnter = function (d,pick) {
+    var why = entryGate(d,pick);
+    if (why) return why;
+    if (!remaining(d,pick)) return d.per === 'week' ? '這週已經挑戰過了。' : '今天的入場次數已用完。';
+    if (d.fee.blood && cnt(BLOOD) < d.fee.blood) return '血龍鑽不夠。';
+    var lack = (d.fee.items || []).find(x => cnt(x[0]) < x[1]);
+    return lack ? nm(lack[0]) + '不夠。' : '';
   };
 
   // ── 地圖 ──
@@ -601,14 +639,21 @@
     var box = div.querySelector('#afk-rd-gate'); if (!box) return; var p = P(); if (!p) return;
     var rp = DR.recoverPct(p), pf = DR.panelF ? Math.round(DR.panelF(p) * 100) : 50 + rp;   // 11-16（Ping）：寫出目前的力量（壓縮後 50%＋已取回）
     var h = '<div class="ax-note">目前的力量：<b>' + pf + '%</b>（裂縫裡面板壓到 50%，已取回 ' + rp + '%／最多 40%）　血龍鑽：' + cnt(BLOOD).toLocaleString() + (DR.on() ? '' : '　<span class="no">次元裂縫沒有打開</span>') + '</div>';
+    if (DR.on()) h += '<div class="ax-note">次元獵殺證明：<b>' + cnt(W.TwistedSpace.proof).toLocaleString() + '</b> 張。每日副本各有一次入場，用完後可依序兌換五次，每次仍需原入場材料。證明在席琳神殿地區的扭亂時空掉落。</div>';
     if (DR.RANKS) { var rk = DR.rec(p).rank || 0, nx = DR.RANKS[rk + 1], rw = DR.rankWhy(p); h += K.rowHtml({ key: 'drank', name: '遠征位階（裂縫）：' + DR.RANKS[rk].n, color: '#67e8f9', desc: nx ? '下一階「' + nx.n + '」：' + (nx.cur === 'exped' ? '遠征點數 ' : '裂縫點數 ') + nx.cost + '。' + nx.d : '已經是最高位階。', note: '裂縫點數 ' + (DR.rec(p).pts || 0) + '（每個副本最後頭目每天第一次 10 點，一天最多 60）', why: nx ? rw : '', btns: nx ? [['rank:', '升階', !rw]] : [] }, 'data-rd'); }
     TIERS.forEach(function (tr) {
       h += '<div class="ax-h" style="margin-top:8px">' + tr[1] + '</div>';
       D.filter(function (d) { return d.tier === tr[0] && !d.npc; }).forEach(function (d) {
         var picks = d.pick || [['', '']], s = store(p);
         picks.forEach(function (pk) {
-          var why = canEnter(d, pk[0] || undefined), cap = d.limit - used(d, pk[0] || undefined);
-          h += K.rowHtml({ key: d.id + pk[0], name: esc(d.n) + (pk[1] ? '・' + esc(pk[1]) : '') + (s.clear[d.id + (d.pickChain ? pk[0] : '')] ? '　<span style="color:#86efac">✓</span>' : ''), color: '#67e8f9', desc: pk === picks[0] ? esc(d.lore) : '', note: '入場：' + esc(feeTxt(d)) + '　' + (d.per === 'week' ? '本週' : '今天') + '剩 ' + Math.max(0, cap) + ' 次' + (d.min ? '　時限 ' + d.min + ' 分鐘' : '') + (d.endless && s.best ? '　最高第 ' + s.best + ' 層' : ''), why: why, btns: [['go:' + d.id + ':' + pk[0], '進入', !why]] }, 'data-rd');
+          var choice = pk[0] || undefined, why = canEnter(d,choice), cap = remaining(d,choice);
+          var buttons = [['go:' + d.id + ':' + pk[0], '進入', !why]], fee = reentry(d,choice);
+          if (fee && !entryGate(d,choice)) {
+            var canBuy = cnt(W.TwistedSpace.proof) >= fee.price;
+            buttons.push(['extra:' + d.id + ':' + pk[0], '兌換第 ' + fee.next + ' 次入場 · ' + fee.price + ' 張證明',canBuy]);
+            why = canBuy ? '' : '次元獵殺證明不足。';
+          }
+          h += K.rowHtml({ key: d.id + pk[0], name: esc(d.n) + (pk[1] ? '・' + esc(pk[1]) : '') + (s.clear[d.id + (d.pickChain ? pk[0] : '')] ? '　<span style="color:#86efac">✓</span>' : ''), color: '#67e8f9', desc: pk === picks[0] ? esc(d.lore) : '', note: '入場：' + esc(feeTxt(d)) + '　' + (d.per === 'week' ? '本週' : '今天') + '剩 ' + Math.max(0, cap) + ' 次' + (d.min ? '　時限 ' + d.min + ' 分鐘' : '') + (d.endless && s.best ? '　最高第 ' + s.best + ' 層' : ''), why: why, btns: buttons }, 'data-rd');
         });
       });
     });
@@ -618,7 +663,7 @@
     if (!div) return; K.css();
     div.innerHTML = '<div class="afk-ax"><div class="ax-lore">那道縫在神殿的角落裡呼吸。「這扇門只能從外面開。」有人在門框上刻過這行字，又被劃掉了一半。</div></div>';
     var box = document.createElement('div'); box.className = 'afk-ax'; box.id = 'afk-rd-gate'; div.appendChild(box); paint(div);
-    if (!div.__afkRdBound) { div.__afkRdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-rd]'); if (!b || b.disabled || !(div.querySelector('#afk-rd-gate') || div.querySelector('#afk-rd-doom'))) return; var k = (b.getAttribute('data-rd') || '').split(':'); if (k[0] === 'go') enter(k[1], k[2] || undefined); else if (k[0] === 'rank') DR.rankUp(); paint(div); }); }
+    if (!div.__afkRdBound) { div.__afkRdBound = true; div.addEventListener('click', function (ev) { var b = ev.target.closest('button[data-rd]'); if (!b || b.disabled || !(div.querySelector('#afk-rd-gate') || div.querySelector('#afk-rd-doom'))) return; var k = (b.getAttribute('data-rd') || '').split(':'); if (k[0] === 'go') enter(k[1], k[2] || undefined); else if (k[0] === 'extra') redeem(k[1],k[2] || undefined); else if (k[0] === 'rank') DR.rankUp(); paint(div); }); }
   };
   K.addNpc(TOWN, { id: NPC_ID, n: NPC_N, title: '次元裂縫', type: 'quest', classicHide: true, d: '神殿角落一道會呼吸的縫。次元裂縫打開時，從這裡進入裂縫的副本。' });
   // Ping 11-12：裂縫之門是一道傳送門，不是人（assets/npc/rift_gate：石框裡旋轉的紫藍裂縫，12 格）
@@ -662,7 +707,7 @@
       return r;
     };
   }
-  W.__afkRiftDg = { growthCanShortcut:growthCanShortcut,growthShortcut:growthShortcut,growthCheckpoint:growthCheckpoint,growthRestore:growthRestore, D: D, BYID: BYID, R: R, canEnter: canEnter, enter: enter, run: function () { return run; }, store: store, MAP: MAP, findBase: findBase, nextStage: nextStage };
+  W.__afkRiftDg = { growthCanShortcut:growthCanShortcut,growthShortcut:growthShortcut,growthCheckpoint:growthCheckpoint,growthRestore:growthRestore, D: D, BYID: BYID, R: R, reentry:reentry, redeem:redeem, remaining:remaining, canEnter: canEnter, enter: enter, run: function () { return run; }, store: store, MAP: MAP, findBase: findBase, nextStage: nextStage };
   try { console.log('[AFK-riftdg] 已載入：次元裂縫的副本 ' + D.length + ' 個'); } catch (e) {}
 
   // ── 11-12（Ping）：GPT 重繪的次元裂縫頭目與小怪、黃道十二宮、守護者之戒的王上線（assets/anim/<名字>/idle、attack、skill、hurt、death）──

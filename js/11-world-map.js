@@ -182,7 +182,7 @@ function regionMapList(rk) {
         let _at = reg.castleAt || 0;
         out = out.slice(0, _at).concat(getCastleAreas(), out.slice(_at));
     }
-    return out;
+    return out.filter(m => !m.requiresDimRift || window.TwistedSpace?.open());
 }
 // 地區在目前模式下是否有可見地圖（經典模式隱藏整個只剩席琳神殿的地區，避免空分類）
 function regionHasVisible(rk) { return regionMapList(rk).some(m => !(m.classicHide && player.classicMode)); }
@@ -289,6 +289,7 @@ function prideHasTalisman(tier, kinds) {
     return player.inv.some(i => { let d = DB.items[i.id]; return d && d.prideTier === tier && d.prideKind && allow.includes(d.prideKind) && (i.cnt || 1) >= 1; });
 }
 function mapOptDisabled(m) {
+    if (m.requiresDimRift && !window.TwistedSpace?.open()) return true;
     if (m.disabled) return true;
     // 🧑‍🤝‍🧑 v3.7.84 受僱為其他角色的傭兵期間＝只能停留在安全區 → 下拉中所有非 town_ 地圖一律灰階不可選
     //    （與 changeMap 的 mercenaryRoleBattleBlocked 同一條規則·此處只是把它前推到 UI 上；快取版避免每個選項都掃 localStorage）
@@ -333,6 +334,7 @@ function onMapCategoryChange() {
     else if (typeof mercRoleSafeAreaOnly === 'function' && mercRoleSafeAreaOnly() && typeof mercenaryRoleNotifySafeAreaOnly === 'function') mercenaryRoleNotifySafeAreaOnly();
 }
 function setMapSelectors(mapKey) {
+    if (mapKey === window.TwistedSpace?.map && !TwistedSpace.open()) mapKey = 'town_sherine';
     // 將「分類選單 + 地圖選單」同步到指定地圖
     rebuildMapCategoryOptions();
     let cat = mapRegionOf(mapKey);   // 🗺️ 下拉改用「地區」分類（mapCategoryOf 仍為型別分類，供掉落/追蹤/背景等邏輯）
@@ -1125,6 +1127,9 @@ function changeMap(force) {
         return;
     }
     let _changeTarget = document.getElementById('map-select').value;
+    if (_changeTarget === window.TwistedSpace?.map && !TwistedSpace.open()) {
+        syncMapSelectors(); return false;
+    }
     if (_changeTarget !== mapState.current && typeof mercenaryRoleBattleBlocked === 'function' && mercenaryRoleBattleBlocked(_changeTarget)) {
         syncMapSelectors();
         return false;
@@ -1180,7 +1185,13 @@ function changeMap(force) {
     }
     if (_changeTarget !== mapState.current && typeof npcClanOnLeaveBattleArea === 'function') npcClanOnLeaveBattleArea(!force);
     if (typeof giltasKeepOnLeave === 'function' && document.getElementById('map-select').value !== mapState.current) giltasKeepOnLeave();   // 🌑 v3.4.16 離開受詛咒聖地（回村/戰敗復活/切圖統一經此·helper 自帶地圖 gate）→ 吉爾塔斯 HP 保留判定＋提示
+    const _twPrevMap = mapState.current;
     mapState.current = document.getElementById('map-select').value;
+    if (window.TwistedSpace && _twPrevMap !== mapState.current &&
+        [_twPrevMap,mapState.current].includes(TwistedSpace.map)) {
+        if (player.afkDimRift && !TwistedSpace.here()) player.afkDimRift.ero = Math.min(player.afkDimRift.ero || 0, window.__afkDimRift.R.resMax);
+        calcStats(); window.__afkDimRift.allyPanel();
+    }
     if (!mapState.current.startsWith('town_')) player.lastBattleMap = mapState.current;   // 🔧 記住最後所在的戰鬥地圖，供村莊「出發」按鈕一鍵返回
     { let _c = mapRegionOf(mapState.current); if(_c) { if(!player.lastMapByCat) player.lastMapByCat = {}; player.lastMapByCat[_c] = mapState.current; } }   // 記住各「地區」分類最後到過的地圖（與下拉同鍵）
     mapState.mobs = [null, null, null, null, null];

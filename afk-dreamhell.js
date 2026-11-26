@@ -153,16 +153,17 @@
     m.er = (m.er || 0) + DREAM_EVA; m._dreamEva = DREAM_EVA;   // 玩家 2026-11-03：迴避 +15 → +20%（打的角色面板命中 800 以上時只算 +18%，見上方 dreamEvaFor）
     // 傷害：複製後再改，避免動到 DB.mobs 共用的陣列與物件
     var k = boss ? 5 : 2;
+    var dotMult = window.TwistedSpace?.here() ? 75 : 5;
     if (Array.isArray(m.dmg)) m.dmg = m.dmg.slice();
     scaleAtk(m, k);
     Object.keys(m).forEach(function (f) {
       if (/^mag\d*$/.test(f) && m[f] && typeof m[f] === 'object') {
         m[f] = JSON.parse(JSON.stringify(m[f]));
         scaleAtk(m[f], k);
-        scaleDot(m[f], 5);
+        scaleDot(m[f], dotMult);
       }
     });
-    if (m.onHitPoison && typeof m.onHitPoison === 'object') { m.onHitPoison = JSON.parse(JSON.stringify(m.onHitPoison)); if (typeof m.onHitPoison.d === 'number') m.onHitPoison.d = Math.round(m.onHitPoison.d * 5); }
+    if (m.onHitPoison && typeof m.onHitPoison === 'object') { m.onHitPoison = JSON.parse(JSON.stringify(m.onHitPoison)); if (typeof m.onHitPoison.d === 'number') m.onHitPoison.d = Math.round(m.onHitPoison.d * dotMult); }
     // 隨時狂暴（吉爾塔斯：命中與傷害 ×1.2）
     m.rageHpPct = 1.01; m.rageHitMult = Math.max(Number(m.rageHitMult) || 1, 1.2); m.rageDmgMult = Math.max(Number(m.rageDmgMult) || 1, 1.2);
     // 報酬
@@ -180,7 +181,7 @@
   var oBuff = window.applySherineBuff;
   window.applySherineBuff = function (idx) {
     var r = oBuff.apply(this, arguments);
-    try { if (dreamOn()) applyDream(mapState.mobs[idx]); } catch (e) {}
+    try { if (dreamOn()) { applyDream(mapState.mobs[idx]); if (window.TwistedSpace?.here()) TwistedSpace.scale(mapState.mobs[idx]); } } catch (e) {}
     return r;
   };
   // 恩賜每次刷新的 1%：席琳夢域鏡全部已是恩賜，不再重複 ×10
@@ -338,7 +339,7 @@
     };
     window.spawnMob = function (idx) {
       var args = arguments;
-      if (!dreamOn() || siege()) return oSpawn.apply(this, args);
+      if (!dreamOn() || siege() || window.TwistedSpace?.here()) return oSpawn.apply(this, args);
       if (exemptArea()) { var re = oSpawn.apply(this, args); if (reborn()) scanBossEntry(); return re; }
       if (instanceArea()) return oldRule(idx, args);
       var ms = mapState.mobs, ring = !!mapState.forceBoss;
@@ -400,7 +401,7 @@
           for (var i = 0; i < mapState.mobs.length; i++) {
             var m = mapState.mobs[i];
             if (!m || !m._dream || m._dead || m.curHp <= 0 || m.curHp >= m.hp || m._noBossRegen) continue;   // 暗夢星迴試煉頭目不回血
-            var add = m.boss ? Math.max(1, Math.floor(m.hp * 0.001)) : (m._dreamRegen || 0);
+            var add = m.boss ? (m._twisted ? 5 * Math.max(1, Math.floor(m.hp / 10 * 0.001)) : Math.max(1, Math.floor(m.hp * 0.001))) : (m._dreamRegen || 0);
             m.curHp = Math.min(m.hp, m.curHp + add);
           }
         }
@@ -447,7 +448,7 @@
     try { r = oKill.apply(this, arguments); }
     finally { if (dream) dreamKill--; }
     try {
-      if (m && m._dead && !m._afkDreamPaid) {
+      if (m && m._dead && !m._twisted && !m._afkDreamPaid) {
         m._afkDreamPaid = true;
         if (m.n === (window.__afkAntFinal || '被侵蝕的瘋狂安塔瑞斯') && !(typeof window.__afkDimRiftOn === 'function' && window.__afkDimRiftOn())) gainItem('afk_contempt_earth', 1);
         // 境滅亡域鑰匙：四大龍副本——瘋狂席琳 0.01%、席琳夢域鏡 1%（固定，不吃倍率）

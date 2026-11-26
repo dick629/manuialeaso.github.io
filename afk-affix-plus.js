@@ -259,6 +259,7 @@
   // 核心補丁 46：扣血前的受傷掛點（技藝減傷、最終減傷、龍的傷痕、席琳模式都在這裡一次算完；小數連乘、最後取整）
   W.__afkTaken = function (ent, dmg, mob, kind) {
     if (!(dmg > 0)) return dmg;
+    if (mob?._twisted) dmg = W.TwistedSpace.monsterDamage(mob,dmg);
     var m = multFor(ent, mob, kind), v;
     if (typeof W.__afkArtsTaken === 'function') v = W.__afkArtsTaken(ent, dmg, mob, kind, m);   // 百分比減傷合計最多 75%（在技藝那邊一起夾）
     else v = dmg * Math.max(0.25, m);

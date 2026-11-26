@@ -161,6 +161,7 @@
     if(typeof W.renderSquadPanel==='function')W.renderSquadPanel();return true;
   }
   function incoming(e,amount,enemy,opt){
+    if(enemy?._twisted)amount=W.TwistedSpace.monsterDamage(enemy,amount);
     if(!enabled())return amount;opt=opt||{};
     var value=R.incoming(e,amount,enemy,opt);
     var B=W.AFK_RELIC_WEAPON_BRIDGE;if(B&&B.companionIncoming)value=B.companionIncoming(e,value,enemy,opt.kind);
