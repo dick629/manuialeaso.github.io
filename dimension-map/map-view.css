@@ -92,7 +92,8 @@ body:not(.m-unified) #battle-view:has(.dm-switch:not([hidden])) #status-icon-bar
 #giran-mob-heads .giran-head-hp[hidden] ~ .afk-rr-sh { display:none!important; }
 #battle-view.dm-map #mob-list .giran-projected-head > :is(.mob-name,.mob-hp-bar,.afk-rr-sh) { display:none!important; }
 #giran-mob-heads .giran-head-name {
-  padding:1px 4px;border-radius:3px;background:#191714;text-align:center;
+  padding:1px 4px;background:transparent;text-align:center;color:#fff;
+  text-shadow:1px 1px 0 #000,-1px 1px 0 #000,1px -1px 0 #000,-1px -1px 0 #000,0 0 3px #000;
   font:700 14px/1.15 "Microsoft JhengHei",sans-serif;overflow-wrap:anywhere;
 }
 #giran-mob-heads .giran-head-name span { font-size:inherit;line-height:inherit; }

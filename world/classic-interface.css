@@ -371,3 +371,6 @@ html body.giran-chrome .ga-chat :is(#world-log,#gr-chat,#ga-chat-feed) :where(*)
   html body.giran-chrome .ga-chat :is(#world-log,#gr-chat,#ga-chat-feed),
   html body.giran-chrome .ga-chat :is(#world-log,#gr-chat,#ga-chat-feed) :where(*){font-size:15px!important}
 }
+
+/* 11-27 Ping：電腦版日誌放大後一行放不下，改成自動換行，不再用「…」截斷。 */
+html body.giran-chrome:not(.m-unified) .ga-chat #world-log>.log-entry{height:auto!important;white-space:normal!important;overflow-wrap:anywhere;text-overflow:clip}

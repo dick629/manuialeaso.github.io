@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-f58b4f2558ad",
+  "build": "giran-0.8.25-af6665533d7d",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1898,8 +1898,8 @@
       "type": "application/json; charset=utf-8"
     },
     {
-      "url": "dimension-map/map-view.css?v=c327986e9ec6",
-      "sha256": "c327986e9ec6817d34ba86258b32a108c6129b92918d9c381728a5316746a9bc",
+      "url": "dimension-map/map-view.css?v=8d89f919a532",
+      "sha256": "8d89f919a532c48f4af4014b3108660d98878234059144a805cdd749d97c376d",
       "type": "text/css; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "ef4d16a284345826ad495ef033dfa7163a7b3dc544b1ec17fea02fa611ad4a8a",
+      "sha256": "9c2eeeb8cb5b2da74b301f6e41d911b9988f223569c09f1fb51ab9bef044bf0c",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2568,8 +2568,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/classic-interface.css?v=fc2ff31ced03",
-      "sha256": "fc2ff31ced03947c290b6fc85ff97f0f2b531ce15f4822fa2093826adfc9c89e",
+      "url": "world/classic-interface.css?v=953e09094c6f",
+      "sha256": "953e09094c6fde34109656690837ce151dcb64c874a470846073a7bc4a660fea",
       "type": "text/css; charset=utf-8"
     },
     {
