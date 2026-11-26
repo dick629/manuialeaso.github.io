@@ -124,7 +124,7 @@ function initHardSkin(m) {
         let per = ['安塔瑞斯', '法利昂', '巴拉卡斯', '林德拜爾'].includes(m.n) ? 2 : (m.boss ? 1 : 0.5);   // 四大龍×2、其餘頭目×1、一般怪×0.5
         mx = Math.max(1, Math.floor((m.lv || 1) * per));   // 席琳的世界 ×1（不再加成；攻城區不觸發 _sherine，城門/守護塔不受影響）
     }
-    if (m._twisted) mx *= 5;
+    if (m._twisted) mx *= (window.TwistedSpace && TwistedSpace.X ? TwistedSpace.X.def : 5);
     m.hardSkinMax = mx;
     m.hardSkin = mx;
 }

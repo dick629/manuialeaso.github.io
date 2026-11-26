@@ -70,17 +70,20 @@ window.TwistedSpace = (() => {
   // applySherineBuff is shared by native spawns, transformations and the scripted boss placer.
   // It has already applied Dream Mirror before this step. Leave level, dice, cooldowns and
   // probabilities intact. Attack damage uses the same outgoing multiplier as the rift.
+  // 11-26 16:15 Ping（次元）：難度約時光屋 3.5 倍、收益比時光屋低——HP ×2、防禦類 ×1.5、命中 ×4/3、怪物傷害 ×2.5、經驗 ×1.5、金幣 ×3（原本 ×10／×5／×5／×15／×5／×5）
+  const X = {hp:1, bossHp:0.35, def:1.2, hit:4/3, dmg:2.5, drain:2, exp:1.5, gold:3};
   function scale(m) {
     if (!m || m._twisted || !m._dream) return;
     m._twisted = true;
     m._dimRift = true;
     const ratio = dynamicBossHp.get(m.n);
-    m.hp = Math.round(m.hp * (ratio ? ratio() : 1)) * 10;
+    m.hp = Math.max(1, Math.round(m.hp * (ratio ? ratio() : 1) * (m.boss ? X.bossHp : X.hp)));
     m.curHp = m.hp;
-    for (const key of ['ac','mr','dr','hit','er','_dreamEva','_dreamRegen','regenHp',
-      'resFire','resWater','resWind','resEarth','exp','goldMin','goldMax']) {
-      if (typeof m[key] === 'number') m[key] *= 5;
-    }
+    for (const key of ['ac','mr','dr','er','_dreamEva','_dreamRegen','regenHp','resFire','resWater','resWind','resEarth'])
+      if (typeof m[key] === 'number') m[key] = Math.round(m[key] * X.def);
+    if (typeof m.hit === 'number') m.hit = Math.round(m.hit * X.hit);
+    if (typeof m.exp === 'number') m.exp = Math.round(m.exp * X.exp);
+    for (const key of ['goldMin','goldMax']) if (typeof m[key] === 'number') m[key] = Math.round(m[key] * X.gold);
   }
   function relics(m) {
     const name = DB.mobs[m.mobId]?.n || m.n;
@@ -163,7 +166,7 @@ window.TwistedSpace = (() => {
   window.__afkRbRegionOf = (id,keys) => id === map && keys.length ?
     keys[Math.floor(Math.random()*keys.length)] : regional?.(id,keys);
   return {map,proof,limit,here,open,canPlace,pickBossOrMob,scale,settle,killRewards,preview,cardBoss,
-    monsterDamage:(m,dmg) => m?._twisted ? dmg*15 : dmg,
+    X, monsterDamage:(m,dmg) => m?._twisted ? dmg*X.dmg : dmg,
     blockItem(id) {
       if (!killDepth) return false;
       const d = DB.items[id];

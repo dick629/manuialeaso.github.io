@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-8b578444b2d5",
+  "build": "merge-0.4-67f404e61523",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -483,8 +483,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dimrift.js?v=0f8a5738cad1",
-      "sha256": "0f8a5738cad1e403f87b7ab2ad03ebdba942b2918b8746f7e6695c50ec7e6aef",
+      "url": "afk-dimrift.js?v=600bb444b4b7",
+      "sha256": "600bb444b4b7121d501ae25b11eac81cb72276c7c14066b059dd28de84167c46",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -543,8 +543,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamhell.js?v=85e68b80eb20",
-      "sha256": "85e68b80eb20567487bcae035305c6b5ecbe7ab5bb27c6532835f0d59dcb0147",
+      "url": "afk-dreamhell.js?v=a10414550b97",
+      "sha256": "a10414550b97e7743a937f32bcf48079d9b17f89474504a3945df7095f37a836",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "fb46128fe9e4e420124f1ed857cea8db070695b7bde1695dff6ddf1f058f1b21",
+      "sha256": "bd447835ba07d61fbb3844d693e2e0fa17408cfee3c50a2e9ab3eac4e84d6b4e",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1878,8 +1878,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/06-status-allies.js?v=03738ac80c5d",
-      "sha256": "03738ac80c5d2e3fd5a1886ae173211b9368b5e5c876a1469f0ec98396905021",
+      "url": "js/06-status-allies.js?v=f52e81dafadc",
+      "sha256": "f52e81dafadcfed52546d9d8c329b6d94395932567e1e48091eea864bd1ff803",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2353,8 +2353,8 @@
       "type": "text/html; charset=utf-8"
     },
     {
-      "url": "world/twisted-space.js?v=584c14cdf106",
-      "sha256": "584c14cdf106f63cbe055658f3595df551d140eb84b071d8beaddfb0ee927937",
+      "url": "world/twisted-space.js?v=586b599b5257",
+      "sha256": "586b599b525711a788f2a946e3d5452e183ecab9490386522411f02dd0bffaf2",
       "type": "text/javascript; charset=utf-8"
     }
   ]

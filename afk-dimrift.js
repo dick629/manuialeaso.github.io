@@ -136,7 +136,8 @@
   // 無盡的裂縫（Ping 11-17）：面板再壓 25%（取回滿 90% → 65%）
   var endlessOn = function () { try { return !!(W.__afkRdEndlessOn && W.__afkRdEndlessOn()); } catch (e) { return false; } };
   var twisted = function () { return !!W.TwistedSpace?.here(); };
-  var noErosionFloor = function () { return twisted() || endlessOn(); };
+  var noErosionFloor = function () { return endlessOn(); };   // 11-26 16:19 Ping：扭亂時空改成有上限、最低 0（見 TWX）
+  var TWX = 5;   // 扭亂時空：侵蝕上限＝一般裂縫的 5 倍（AC、魔防 1,500，抗性 2,500），魔防、抗性最低 0、AC 最多加到 0
   var panelF = function (p) { var f = BASE + recoverPct(p) / 100; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) f = Math.min(f, 0.75); } catch (e) {} if (endlessOn()) f = Math.max(0.1, f - 0.25); return twisted() ? Math.min(0.50,f) : f; };   // 11-26 Ping：扭亂時空面板最多 50%
   var recoverPct = function (p) { return Math.min(40, RECOVER.reduce(function (s, x) { return s + (Number(x[1](p)) || 0); }, 0)); };
   function clearErosion(p, all) { var r = rec(p); r.ero = 0; if (all) { /* 光蝕不因回村清除 */ } }
@@ -152,7 +153,7 @@
     members().forEach(function (x) {
       var mx = x === p ? (rec(p).hp50 || Math.floor((p.mhp || 1) / (panelF(p)) * BASE)) : (x._dimBase ? Math.floor(x._dimBase.mhp * BASE) : (x.mhp || 1));
       if (net <= 0) { var heal = Math.floor(mx * (-net) / 100); if (heal > 0) { if (x === p) p.hp = Math.min(p.mhp, p.hp + heal); else x.curHp = Math.min(x.mhp || x.curHp, x.curHp + heal); } return; }
-      var dmg = (twisted() ? 5 : endlessOn() ? 2 : 1) * mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p)) * (W.__afkErodeCuts || []).reduce(function (m, f) { try { return m * (1 - Math.max(0, Math.min(0.9, Number(f(p, x)) || 0))); } catch (e) { return m; } }, 1);   // 黃道星卡・水瓶、七階以上娃娃（堅壁、統御）
+      var dmg = (twisted() ? ((W.TwistedSpace && TwistedSpace.X && TwistedSpace.X.drain) || 5) : endlessOn() ? 2 : 1) * mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p)) * (W.__afkErodeCuts || []).reduce(function (m, f) { try { return m * (1 - Math.max(0, Math.min(0.9, Number(f(p, x)) || 0))); } catch (e) { return m; } }, 1);   // 黃道星卡・水瓶、七階以上娃娃（堅壁、統御）
       if (x === p) W.__afkDrainHit = (Number(W.__afkDrainHit) || 0) + dmg;   // 聖十字之盾（禁衛軍）在裂縫只擋一部分：見 afk-castle-guards
       if (L && L.boss) L.boss.hurt(x, dmg);
     });
@@ -160,7 +161,7 @@
     var endless = noErosionFloor();   // 11-16：無盡的裂縫沒有上限、沒有最低保留
     // 11-26 Ping：扭亂時空侵蝕堆疊變慢、量維持 5 倍——每 5 秒一次、每次 ×5（AC +25、魔防 −25、四屬性 −25），沒有上限
     if (twisted()) { r._twEro = ((r._twEro || 0) + 1) % 5; if (r._twEro) return; }
-    if (endless || (r.ero || 0) < R.resMax) { var step = R.eroStep * (twisted() ? 5 : 1); try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) step *= 2; } catch (e) {} r.ero = endless ? (r.ero || 0) + step : Math.min(R.resMax, (r.ero || 0) + step); try { calcStats(); } catch (e) {} }   // Ping 11-13 14:29：每秒 AC +5、魔防 −5、四屬性 −5；GD之子的期待 ×2
+    var eMax = R.resMax * (twisted() ? TWX : 1); if (endless || (r.ero || 0) < eMax) { var step = R.eroStep * (twisted() ? 5 : 1); try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) step *= 2; } catch (e) {} r.ero = endless ? (r.ero || 0) + step : Math.min(eMax, (r.ero || 0) + step); try { calcStats(); } catch (e) {} }   // Ping 11-13 14:29：每秒 AC +5、魔防 −5、四屬性 −5；GD之子的期待 ×2
   }
   var L = W.__afkLore;
   function lightSecond() {
@@ -240,9 +241,9 @@
         // 侵蝕：AC 往上加（越高越差），魔防、抗性往下扣到最低保留
         var ero = Math.floor((rec(p).ero || 0) * (typeof W.__afkEroMult === 'function' ? (Number(W.__afkEroMult(p)) || 1) : 1) * hmul('eroMult', p));   // 龍息娃娃：侵蝕的下降打折
         if (ero) {
-          var keep = floorSum(p), wc = weightCut(p), noFloor = noErosionFloor();
-          var eAc = Math.max(0,Math.min(ero, noFloor ? Infinity : R.acMax)-(W.LineageSherine?.erosionBack(p)||0));
-          d.ac = (d.ac || 0) + eAc;
+          var tw = twisted(), keep = tw ? 0 : floorSum(p), wc = tw ? 0 : weightCut(p), noFloor = noErosionFloor();
+          var eAc = Math.max(0,Math.min(ero, noFloor ? Infinity : R.acMax * (tw ? TWX : 1))-(W.LineageSherine?.erosionBack(p)||0));
+          if (tw) { if ((d.ac || 0) < 0) d.ac = Math.min(0, d.ac + eAc); } else d.ac = (d.ac || 0) + eAc;
           var cut = function (k) { var v = Number(d[k]) || 0; if (noFloor) { d[k] = v - eAc; return; } if (v <= 0) return; var floor = Math.max(keep, Math.floor(v * wc)); var low = Math.min(v, floor); d[k] = Math.max(low, v - eAc); };
           cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; var e2 = ero - rb; if (noFloor) { d[k] = v - e2; return; } var floor = Math.max(keep, Math.floor(v * wc)); var growthFloor = W.LineageGrowth ? W.LineageGrowth.pct(p, 'curse') : 0; var eyeF = 0; try { eyeF = typeof W.__afkEroFloorEle === 'function' ? (Number(W.__afkEroFloorEle(p, k)) || 0) : 0; } catch (e) {} d[k] = Math.max(Math.min(v,floor+growthFloor+eyeF),v-e2); });   /* __afkEroFloorEle：次元魔眼的對應屬性最低保留（afk-eyetier） */
         }
@@ -372,8 +373,8 @@
       var b = a._dimBase, light = (rec(p).light || 0) * R.lightHp / 100 * (1 - lightCut(p));
       a.mhp = Math.max(1, Math.floor(b.mhp * f * (1 - light))); a.mmp = Math.floor((b.mmp || 0) * f);
       if (a.curHp > a.mhp) a.curHp = a.mhp; if (a.mp > a.mmp) a.mp = a.mmp;
-      var nf = noErosionFloor(), acCap = nf ? Infinity : R.acMax;   // 無盡的裂縫：沒有上限、沒有最低保留
-      Object.keys(b.d).forEach(function (k) { var v = b.d[k]; if (k === 'ac') a.d.ac = (v < 0 ? Math.ceil(v * f) : v) + Math.max(0,Math.min(ero, acCap)-(W.LineageSherine?.erosionBack(a)||0)); else a.d[k] = v > 0 ? Math.floor(v * f) : v; });
+      var nf = noErosionFloor(), tw = twisted(), acCap = nf ? Infinity : R.acMax * (tw ? TWX : 1); if (tw) keep = 0;   // 無盡的裂縫：沒有上限、沒有最低保留；扭亂時空：上限 ×5、最低 0
+      Object.keys(b.d).forEach(function (k) { var v = b.d[k]; if (k === 'ac') { var ac0 = v < 0 ? Math.ceil(v * f) : v, eA = Math.max(0,Math.min(ero, acCap)-(W.LineageSherine?.erosionBack(a)||0)); a.d.ac = tw ? (ac0 < 0 ? Math.min(0, ac0 + eA) : ac0) : ac0 + eA; } else a.d[k] = v > 0 ? Math.floor(v * f) : v; });
       if (ero) ['mr'].concat(RES4).forEach(function (k) { var v = Number(a.d[k]) || 0; var e = k === 'mr' ? Math.max(0,Math.min(ero, acCap)-(W.LineageSherine?.erosionBack(a)||0)) : ero; if (nf) { a.d[k] = v - e; return; } if (v <= 0) return; a.d[k] = Math.max(Math.min(v, keep), v - e); });
     });
   }

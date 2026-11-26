@@ -153,7 +153,7 @@
     m.er = (m.er || 0) + DREAM_EVA; m._dreamEva = DREAM_EVA;   // 玩家 2026-11-03：迴避 +15 → +20%（打的角色面板命中 800 以上時只算 +18%，見上方 dreamEvaFor）
     // 傷害：複製後再改，避免動到 DB.mobs 共用的陣列與物件
     var k = boss ? 5 : 2;
-    var dotMult = window.TwistedSpace?.here() ? 75 : 5;
+    var dotMult = window.TwistedSpace?.here() ? 5 * ((TwistedSpace.X && TwistedSpace.X.dmg) || 15) : 5;
     if (Array.isArray(m.dmg)) m.dmg = m.dmg.slice();
     scaleAtk(m, k);
     Object.keys(m).forEach(function (f) {
@@ -404,7 +404,7 @@
           for (var i = 0; i < mapState.mobs.length; i++) {
             var m = mapState.mobs[i];
             if (!m || !m._dream || m._dead || m.curHp <= 0 || m.curHp >= m.hp || m._noBossRegen) continue;   // 暗夢星迴試煉頭目不回血
-            var add = m.boss ? (m._twisted ? 5 * Math.max(1, Math.floor(m.hp / 10 * 0.001)) : Math.max(1, Math.floor(m.hp * 0.001))) : (m._dreamRegen || 0);
+            var add = m.boss ? (m._twisted ? 5 * Math.max(1, Math.floor(m.hp / ((window.TwistedSpace && TwistedSpace.X && TwistedSpace.X.hp) || 10) * 0.001)) : Math.max(1, Math.floor(m.hp * 0.001))) : (m._dreamRegen || 0);
             m.curHp = Math.min(m.hp, m.curHp + add);
           }
         }
