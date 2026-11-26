@@ -53,7 +53,7 @@
         var d0 = Math.floor(Math.max(0, player.hp || 0) * pct); if (d0 > 0) { player.hp -= d0; hit.push('你 ' + d0); }
         if (player.hp <= 0 && typeof killPlayer === 'function') killPlayer();
       }
-      (player.allies || []).forEach(function (x) {
+      GiranPartyView.combatAllies().forEach(function (x) {
         if (!x || x._downed || !(x.curHp > 0)) return;
         var d = Math.floor(Math.max(0, x.curHp || 0) * pct); if (d <= 0) return; x.curHp -= d; hit.push((x._allyName || '傭兵') + ' ' + d);
         if (x.curHp <= 0) { x.curHp = 0; x._downed = true; x._reviveCd = 150; }
@@ -84,7 +84,7 @@
     try {
       var eat = function (e, d) { return typeof window.__afkShieldEat === 'function' ? window.__afkShieldEat(e, d) : d; };   // 11-18 Ping：一般怪先扣護盾（王的詛咒照舊真實傷害）
       if (!player.dead && !shielded(player)) { var d0 = eat(player, Math.max(1, Math.floor((player.mhp || 0) * 0.01))); if (d0 > 0) player.hp -= d0; if (player.hp <= 0 && typeof killPlayer === 'function') killPlayer(); }
-      (player.allies || []).forEach(function (x) {
+      GiranPartyView.combatAllies().forEach(function (x) {
         if (!x || x._downed || !(x.curHp > 0) || shielded(x)) return;
         x.curHp -= eat(x, Math.max(1, Math.floor((x.mhp || 0) * 0.01)));
         if (x.curHp <= 0) { x.curHp = 0; x._downed = true; x._reviveCd = 150; }
@@ -104,7 +104,7 @@
         if (m.boss && (typeof window.__afkRiftOnce !== 'function' || window.__afkRiftOnce('bossCurse'))) {
           var hit = teamHit(0.10, m.n + '的死亡詛咒'), mp = [];
           var d0 = Math.floor((player.mp || 0) * 0.1); if (d0 > 0 && !player.dead) { player.mp -= d0; mp.push('你 ' + d0); }
-          (player.allies || []).forEach(function (x) { if (!x || x._downed) return; var d = Math.floor((x.mp || 0) * 0.1); if (d > 0) { x.mp -= d; mp.push((x._allyName || '傭兵') + ' ' + d); } });
+          GiranPartyView.combatAllies().forEach(function (x) { if (!x || x._downed) return; var d = Math.floor((x.mp || 0) * 0.1); if (d > 0) { x.mp -= d; mp.push((x._allyName || '傭兵') + ' ' + d); } });
           clog('<span class="text-fuchsia-300 font-bold">' + m.n + ' 倒下時吐出最後的詛咒。</span>全隊當前 HP 10% 真實傷害（' + hit.join('、') + '）' + (mp.length ? '，並吸走 MP 10%（' + mp.join('、') + '）' : ''));
         }
       }
@@ -150,7 +150,7 @@
   var seen = typeof WeakSet === 'function' ? new WeakSet() : null;
   var scanDowns = function () {
     if (!seen) return;
-    var all = [].concat(player.allies || [], player.summonsV2 || [], player.guardsV2 || []);
+    var all = [].concat(GiranPartyView.combatAllies(), player.summonsV2 || [], player.guardsV2 || []);
     try { all = all.concat(typeof petsOutList === 'function' ? petsOutList() : []); } catch (e) {}
     all.forEach(function (x) {
       if (!x) return;

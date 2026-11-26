@@ -77,7 +77,7 @@
         return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
     function activeMercs() {
-        return (player.allies || []).filter(a => a && !a._downed && num(a.curHp, 0) > 0);
+        return GiranPartyView.combatAllies().filter(a => a && !a._downed && num(a.curHp, 0) > 0);
     }
     function stageOf(s) { return STAGE_BY_ID[s && s.stageId] || STAGES[0]; }
     function isV2(s) { return !!(s && s.active && s.version === VERSION); }

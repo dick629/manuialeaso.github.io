@@ -27,7 +27,7 @@
   var inCombat = function () {
     try { var key = mapState.current || ''; if (/^town_/.test(key)) return false; return (mapState.mobs || []).some(function (m) { return m && !m._dead && m.curHp > 0; }); } catch (e) { return false; }
   };
-  var party = function () { var p = P(); return p ? Math.min(16, 1 + (p.allies || []).filter(function (a) { return a && !a._downed; }).length) : 1; };
+  var party = function () { var p = P(); return p ? Math.min(16, 1 + GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed; }).length) : 1; };
 
   // ── 浮字 ──
   var css = function () {
@@ -42,6 +42,7 @@
   var pop = function (key, img, text, color) {
     try {
       if (S().ff || (typeof _vfxMute === 'function' && _vfxMute())) return;
+      if (W.__dimMapProc && W.__dimMapProc(key,img,text,color,arguments[4])) return;
       var t = Date.now(); if (lastPop[key] && t - lastPop[key] < 800) return; lastPop[key] = t;
       var bv = document.getElementById('battle-view'), r = bv ? bv.getBoundingClientRect() : null;
       if (!r || !(r.width > 0)) return;

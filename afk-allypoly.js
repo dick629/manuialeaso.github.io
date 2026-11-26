@@ -89,7 +89,16 @@
   };
   try { (0, eval)('_allyAutoBuffChips = window._allyAutoBuffChips'); } catch (e) {}
   setInterval(function () {   // 變身名稱／剩餘時間（技能分頁只在名單變動時重建，這裡另外更新）
-    try { var p = P(); if (!p) return; (p.allies || []).forEach(function (a) { var el = a && document.getElementById('afk-apoly-cur-' + a._slot); if (el) el.innerHTML = curText(a); }); } catch (e) {}
+    try {
+      var p = P(); if (!p) return;
+      (p.allies || []).forEach(function (a) {
+        var el = a && document.getElementById('afk-apoly-cur-' + a._slot); if (!el) return;
+        var html = curText(a);
+        if (el._allyPolyText === html) return;
+        if (el.innerHTML !== html) el.innerHTML = html;
+        el._allyPolyText = html;
+      });
+    } catch (e) {}
   }, 2000);
 
   // ── 選擇：用隊員的身分打開原本的變身選單 ──

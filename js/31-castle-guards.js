@@ -257,6 +257,7 @@ function castleGuardTick() {
 }
 
 function guardAttackOnce(s, d, t) {
+    if(window.GiranCombat && !GiranCombat.permits(s,t,'basic'))return;
     if (typeof _petAnimAct === 'function') _petAnimAct(s, 'attack', t.uid);
     // 🛡️ v3.8.4 護衛比照寵物/召喚物吃「全隊攻擊光環」（用戶：護衛一併補齊）：teamIlluAura(自身, forMinion=true)
     //    → eh 進命中、ed 進傷害（灼熱武器+5/+5·幻覺化身+10/歐吉+4+4 等）、mel 進近距離傷害（舞躍之火+3）。
@@ -277,6 +278,7 @@ function guardAttackOnce(s, d, t) {
 
 // 怪物一般攻擊打護衛（js/04 受害者池呼叫·比照 enemyAttackSummon）
 function enemyAttackGuard(mob, s) {
+    if(window.GiranCombat && !GiranCombat.permits(mob,s,'basic'))return;
     if (!mob || mob.curHp <= 0 || !s || s._downed || (s.hp || 0) <= 0) return;
     if (typeof _mobAnimTrigger === 'function') _mobAnimTrigger(mob, 'attack');
     let d = guardDerive(s);

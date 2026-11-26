@@ -53,6 +53,7 @@
   wrap('_procWeaponSpellHit',function(old){return function(){var w=weapon(player);if(W.AFK_RELIC_WEAPON_BRIDGE&&w&&w.relicCatalogId<=131)return old.apply(this,arguments);return procAction(old,this,arguments,null);};});
   wrap('rollHealingSpell',function(old){return function(sk,stats,caster,target){var v=old.apply(this,arguments),a=R.action();return enabled()&&a&&a.actor===caster&&a.healMult?Math.floor(v*a.healMult):v;};});
   wrap('_supHeal',function(old){return function(target,amount){
+    if(target?._noHeal)return 0;
     if(!enabled()||!target)return old.apply(this,arguments);
     var c=R.context();if(c&&c.sourceId&&R.byKey[c.sourceId])return api.heal(target,amount,{owner:c.actor,source:c.sourceId});
     var n=R.foreignHeal(target,amount,'spell',{healer:(R.action()&&R.action().actor)||player});

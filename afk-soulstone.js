@@ -66,7 +66,9 @@
         : '封著「' + m.n + '」（Lv' + m.lv + '）魂魄的石頭。使用後進入靈魂石訓練所，自己一個人（傭兵留在外面）挑戰這隻頭目；頭目的能力與掉落物跟原本相同。' };
     try { if (typeof ITEM_WEIGHTS !== 'undefined' && ITEM_WEIGHTS[DB.items[sid].n] == null) ITEM_WEIGHTS[DB.items[sid].n] = 5; } catch (e) {}
   };
+  var indexedMapBosses;
   var build = function () {
+    indexedMapBosses = W.__afkMapBoss;
     Object.keys(DB.mobs).forEach(function (id) {
       if (!bossLike(id) && !eligible(id)) return;
       if (eligible(id)) { if (DB.items[PREFIX + id] && DB.items[PREFIX + id].soulLegacy) delete DB.items[PREFIX + id]; mkStone(id, false); if (BOSSES.indexOf(id) < 0) BOSSES.push(id); }
@@ -80,7 +82,12 @@
   var isStone = function (id) { var d = id && DB.items[id]; return !!(d && d.eff === 'afk_soulstone' && d.soulBoss && !d.soulLegacy); };
   var isLegacy = function (id) { var d = id && DB.items[id]; return !!(d && d.eff === 'afk_soulstone' && d.soulLegacy); };
   // 11-25 Ping 選 B：隨機靈魂石（怪物掉落、碎片、失去光芒的傳說裝備）改成全部頭目一起平均抽，王者系列也抽得到
-  var randomStone = function () { var pool = BOSSES; return PREFIX + pool[Math.floor(Math.random() * pool.length)]; };
+  function currentPool() {
+    // 地圖王模組載入得比較晚。玩家能操作時，背景圖片可能仍在下載。
+    if (W.__afkMapBoss && W.__afkMapBoss !== indexedMapBosses) build();
+    return BOSSES;
+  }
+  var randomStone = function () { var pool = currentPool(); return PREFIX + pool[Math.floor(Math.random() * pool.length)]; };
 
   // ── 背包小工具 ──
   var countOf = function (id) { var p = P(); return p ? (p.inv || []).reduce(function (s, i) { return s + (i && i.id === id ? Math.max(1, Number(i.cnt) || 1) : 0); }, 0) : 0; };
@@ -198,12 +205,6 @@
     if (run.done || bossAlive()) return;
     run.done = true;
     p.afkSoulStats = p.afkSoulStats || { used: 0, won: 0 }; p.afkSoulStats.won++;
-    // 11-26 Ping：訓練所的王也掉卡片——王者系列（地圖王、副本王）照打倒牠本人時的王者卡冊機率擲一次（一般王的怪物卡、變身卡本來就照掉）
-    try {
-      var bk = run.boss && MB.test(run.boss) && W.__afkMapBoss && W.__afkMapBoss.BY ? W.__afkMapBoss.BY[run.boss.replace(MB, '')] : null;
-      var dm = (mapState.mobs || []).filter(function (x) { return x && x._afkSoul; })[0] || null;
-      if (bk && W.__afkBossCardKill) W.__afkBossCardKill(bk, dm || { _afkSoul: true });
-    } catch (e) { console.warn('[AFK-soulstone] card', e); }
     var sid = PREFIX + run.boss, left = run.boss ? countOf(sid) : 0, r0 = run;
     if (chainOn() && left > 0 && DB.mobs[run.boss]) {
       sys('<span class="text-yellow-300 font-bold">🏆 ' + esc(DB.mobs[run.boss].n) + ' 的魂魄散成了紫色的煙。</span>還有 ' + left + ' 顆它的靈魂石——3 秒後再叫出來。');
@@ -297,6 +298,7 @@
     var cat = 'wild'; try { if (typeof mapCategoryOf === 'function') cat = mapCategoryOf(cur); } catch (e) {}
     if (m.boss) {
       if (BAD_CAT[cat] || m.siegeEnemy || m.noAttack || m.race === '建築') return;   // 2026-11-03：傲慢之塔的「往上層的樓梯」、遺忘之島傳送門算頭目，每層 5% 送靈魂石
+      currentPool();
       var mbId = m._afkMb ? 'afk_mb_' + m._afkMb : m.mobId, own = mbId && MB.test(mbId) && DB.items[PREFIX + mbId] ? PREFIX + mbId : null;   // 王者系列：掉牠自己的靈魂石
       if (Math.random() < RATE.boss) { var sid = own || randomStone(); give(sid, 1); sys(esc(m.n) + ' 的身上掉出了 ' + stoneLine(sid) + '！'); }
       return;
@@ -344,7 +346,10 @@
     var oKill = W.killMob;
     W.killMob = function (idx) {
       var m = (typeof mapState !== 'undefined' && mapState && mapState.mobs) ? mapState.mobs[idx] : null;
+      var trainingBoss = m && !m._dead && m._afkSoul && inRoom() && MB.test(m.mobId)
+        ? W.__afkMapBoss?.BY[m.mobId.replace(MB, '')] : null;
       var r = oKill.apply(this, arguments);
+      if (trainingBoss && m._dead) W.__afkBossCardKill?.(trainingBoss, m);
       try { if (m && (m._dead || !(m.curHp > 0) || mapState.mobs[idx] !== m)) { roll(m); rollDull(m); } } catch (e) {}
       return r;
     };
@@ -409,6 +414,7 @@
     return out;
   };
   var render = function (div) {
+    currentPool();
     var p = P(); if (!div || !p) return;
     if (!ok()) { div.innerHTML = '<div class="text-sm text-slate-300">「……今天不做生意。」</div>'; return; }
     css();
@@ -467,6 +473,6 @@
     try { (0, eval)('interactNPC = window.interactNPC'); } catch (e) {}
   }
 
-  W.__afkSoulStone = { PREFIX: PREFIX, ROOM: ROOM, NPC_ID: NPC_ID, RATE: RATE, COST: COST, bosses: function () { return BOSSES.slice(); }, eligible: eligible, enter: enter, leave: leave, step: step,
+  W.__afkSoulStone = { PREFIX: PREFIX, ROOM: ROOM, NPC_ID: NPC_ID, RATE: RATE, COST: COST, bosses: function () { return currentPool().slice(); }, eligible: eligible, enter: enter, leave: leave, step: step,
     roll: roll, craftShard: craftShard, craftDull: craftDull, dullCount: dullCount, dullSrc: function () { return dullSrc; }, DULL: DULL, isLegacy: isLegacy, randomStone: randomStone, busy: busy, render: render, run: function () { return run; }, unbench: unbench, swapLegacy: swapLegacy };
 })();

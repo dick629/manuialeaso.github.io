@@ -7,8 +7,7 @@ const RELIC_EGG_PETS = {
     calamityegg: { pet: '災厄蜥蜴', aura: '災厄' }
 };
 
-// 戰鬥掉落的 gainItem 熱路徑：同一背包以完整 itemSig 建一次索引。
-// 補跑與一般戰鬥共用；_lockMergeOff 製作流程仍走原本線性搜尋。未命中一律回退掃描，避免中途改裝造成漏合併。
+// 大批離線補跑共用完整簽章索引。即時掉落直接查看背包裡同款道具的完整簽章。
 let _catchupGainItemIndex = null;
 let _catchupAutoSortPending = false;
 function resetCatchupGainItemIndex() { _catchupGainItemIndex = null; }
@@ -20,7 +19,8 @@ function flushCatchupAutoSort() {
 }
 function discardCatchupAutoSort() { _catchupAutoSortPending = false; }
 function _catchupGainItemIndexActive() {
-    return !_lockMergeOff && typeof state !== 'undefined' && !!state.running;
+    return !_lockMergeOff && typeof state !== 'undefined' && state.running && state.ff &&
+        !(typeof _ffAcc !== 'undefined' && _ffAcc?.fg && _ffAcc.spatial);
 }
 function _buildCatchupGainItemIndex() {
     let inv = player && Array.isArray(player.inv) ? player.inv : [];
@@ -41,6 +41,22 @@ function _buildCatchupGainItemIndex() {
     return _catchupGainItemIndex;
 }
 const _sameItemSigCore = sameItemSig;   /* 🔌 加掛版補丁:撿物堆疊少掃一輪 */
+function _findLiveGainItemStack(probe) {
+    const inv = player.inv;
+    if (sameItemSig !== _sameItemSigCore) {
+        return inv.find(item => item && !item.gw && (!_lockMergeOff || !item.lock) && sameItemSig(item, probe));
+    }
+    // All native signatures begin with the item's ID. Compare the full signature
+    // only for matching IDs, in inventory order, including legacy numeric IDs.
+    const id = String(probe.id);
+    let signature;
+    for (const item of inv) {
+        if (!item || item.gw || (_lockMergeOff && item.lock) || String(item.id) !== id) continue;
+        if (signature === undefined) signature = itemSig(probe);
+        if (itemSig(item) === signature) return item;
+    }
+    return null;
+}
 function _findCatchupGainItemStack(probe) {
     let inv = player.inv;
     let cache = _catchupGainItemIndex;
@@ -159,7 +175,7 @@ function gainItem(id, cnt=1, silent=false, forceNormal=false, affixOld=false, de
     if (!_fastGainIndex && _catchupGainItemIndex && !(typeof catchupActive === 'function' && catchupActive())) resetCatchupGainItemIndex();
     let ex = _gw ? null : (_fastGainIndex
         ? _findCatchupGainItemStack(_probe)
-        : player.inv.find(i => !i.gw && (!_lockMergeOff || !i.lock) && sameItemSig(i, _probe)));   // 🔧 架構#3：統一簽章比對（itemSig 已含 en→+0 只併 +0、+3 只併 +3，永不誤併不同強化值）；⚠️ 巨靈願望戒指(gw)每只獨立·簽章不含 gw 故顯式排除
+        : _findLiveGainItemStack(_probe));   // 巨靈願望戒指每只獨立，不與其他堆疊合併。
     if(ex) ex.cnt += cnt;   // 僅加數量、不更動既有堆疊的廢品狀態
     else { let _push = { id: id, uid: uid(), cnt: cnt, en: _tEn, bless: bless, anc: anc, attr: attr, seteff: seteff, lock: false, junk: !!(player.junkPrefs && player.junkPrefs[itemSig(_probe)]) && !(d && d.noJunk) }; if (_gw) _push.gw = _gw; player.inv.push(_push); if (_fastGainIndex) _rememberCatchupGainItemStack(_push); }   // 🔧 廢品記憶改以完整簽章比對：詞綴物品也可自動標記，但僅限「完全相同詞綴」者；🎴 noJunk(收集冊)永不自動標記
 
@@ -367,6 +383,7 @@ function elementCounterMult(atkEle, defEle) {
 
 function getItemColor(item) {
     let d = DB.items[item.id];
+
     // 🏺 遺物：海藍色名稱（遺物永無詞綴/套裝，優先判定）
     if (d && d.relic) return 'c-relic';
     // 🏅 傳說武器：琥珀金，優先於套裝與所有詞綴（即使帶套裝效果，名稱仍為琥珀金）
@@ -518,6 +535,16 @@ function batchUseItem(u) {
     renderTabs(); updateUI(); saveGame();
     if (!document.getElementById('item-modal').classList.contains('hidden')) closeModal();
 }
+function skillBookIssue(skId) {
+    const sd=DB.skills[skId];
+    if(!sd)return '這本書缺少對應的技能。';
+    const level=skillReqLv(sd,skId);
+    if(level===undefined)return `你的職業無法學習「${sd.n}」。`;
+    if(player.lv<level)return `等級不足，需要等級 ${level} 才能學習「${sd.n}」。`;
+    if(sd.reqEle && player.elfEle!==sd.reqEle)return `屬性不符，無法學習「${sd.n}」。`;
+    if(sd.reqEleAny&&!player.elfEle)return `尚未選擇屬性，無法學習「${sd.n}」。`;
+    return player.skills.includes(skId)?'你已經學過這個技能了。':'';
+}
 function useItem(u, silent = false, keepModal = false) {   // 🔌 加掛版補丁 keepModal:自動觸發(如外掛自動瞬移)非 silent 使用時,不關玩家開著的物品視窗
     let item = player.inv.find(i => i.uid === u);
     if (!item) return;
@@ -525,6 +552,12 @@ function useItem(u, silent = false, keepModal = false) {   // 🔌 加掛版補�
     if (inAbsBarrier()) { if(!silent) logSys('絕對屏障期間與世界隔絕，無法使用藥水與道具。'); return; }   // 🛡️ 絕對屏障：禁止使用任何道具（自動使用 silent 亦略過）
     if (item.id === 'scroll_revive') { if(!silent) logSys(`復活卷軸無法從道具欄使用，死亡時可於畫面下方點選『原地復活』。`); return; }
     let d = DB.items[item.id];
+    const recallIds=window.GiranAtlasData?.itemIds;
+    if(recallIds && item.id===recallIds[40079]){
+        if(mapState.current.startsWith('town_') || !returnToTown())return;
+        consume(item);updateUI();saveGame();return;
+    }
+    if (!d) return;
     if (d.noUse) { if(!silent) logSys(`此物品無法直接使用。`); return; }
 
     // 🌅 巨大骷髏的妖魂（eff:'expsoul'·expGain）：使用後獲得經驗值（批量走 batchUseItem）
@@ -705,15 +738,11 @@ function useItem(u, silent = false, keepModal = false) {   // 🔌 加掛版補�
             if (state.oblivion) { if (!silent) logSys('<span class="text-red-400">遺忘之島的迷霧壓制了傳送，瞬間移動卷軸無法生效。</span>'); return; }
             // 🐉 v3.7.57 侵蝕的安塔瑞斯巢穴：禁瞬間移動卷軸（不消耗卷軸）
             if (state.antharas) { if (!silent) logSys('<span class="text-red-400">侵蝕的龍氣壓制了傳送，瞬間移動卷軸無法生效。</span>'); return; }
-            // 瞬間移動卷軸：效果同傳送術。手動(非silent)+傳送控制戒指 → 必定遭遇BOSS；自動使用(silent) → 必定無戒指效果。
-            if (!silent && HIDDEN_AREA_PARENT[mapState.current]) {   // 🏛️ 對應地圖手動用卷軸→進入隱藏狩獵區域（自動瞬移 silent 不進入、照常逃離頭目）；下方仍 consume 卷軸
-                enterHiddenArea(HIDDEN_AREA_PARENT[mapState.current]);
-            } else {
-                let forceBoss = !silent && hasTeleportRing();
-                doTeleport(forceBoss);
-                if(!silent) logSys(`使用瞬間移動卷軸，當前的怪物消失了${forceBoss ? '；傳送控制戒指引動了強敵的氣息……' : ''}。`);
-            }
-            // 落到下方 consume(item)，消耗一張卷軸
+            return GiranBookmarks.randomScroll(item,silent,()=>{
+                consume(item);calcStats();updateUI();
+                const modal=document.getElementById('item-modal');
+                if(!silent&&!keepModal&&modal.dataset.itemUid===String(u)&&!modal.classList.contains('hidden'))closeModal();
+            });
         } else if (d.eff === 'panacea') {
             const STAT_CN = { str:'力量', dex:'敏捷', con:'體質', int:'智力', wis:'精神', cha:'魅力' };
             let st = d.pstat, cap = 60;
@@ -739,22 +768,14 @@ function useItem(u, silent = false, keepModal = false) {   // 🔌 加掛版補�
     //    就被攔截處理，而真正的強化卷軸（js/00-data.js）根本沒有 type 欄位 → 此分支不可達。
     //    現行強化唯一入口＝ showEnhanceOptions / doEnhance。
     } else if (d.type === 'skillbk') {
-        let sd = DB.skills[d.sk];
-        let reqLv = skillReqLv(sd, d.sk);   // 🏅 集中化：含魔導精通特例（妖精可學四項法師法術）
-        if(reqLv === undefined) { logSys(`你的職業無法學習「${sd.n}」。`); return; }
-        if(player.lv < reqLv) { logSys(`等級不足，需要等級 ${reqLv} 才能學習「${sd.n}」。`); return; }
-        
-        // 👇 補上這兩行：確保屬性相符才能吃水晶！
-        if(sd.reqEle && player.elfEle !== sd.reqEle) { logSys(`屬性不符，無法學習「${sd.n}」。`); return; }
-        if(sd.reqEleAny && !player.elfEle) { logSys(`尚未選擇屬性，無法學習「${sd.n}」。`); return; }
-
-        if(!player.skills.includes(d.sk)) {
+        const issue=skillBookIssue(d.sk);
+        if(!issue) {
             player.skills.push(d.sk);
             logSys(`學習了技能: <span class="text-cyan-300">${DB.skills[d.sk].n}</span>`);
             consume(item);
             renderTabs();
             renderSkillSelects();
-        } else logSys(`你已經學過這個技能了。`);
+        } else { logSys(issue); return; }
     }
     updateUI();
     if(!silent && !keepModal && document.getElementById('item-modal').classList.contains('hidden') === false && (d.type !== 'scroll' || d.eff === 'poly' || d.eff === 'magicbarrier' || d.eff === 'teleport_scroll')) {
@@ -919,6 +940,10 @@ function royalEquipOk(d, id) {
 }
 function checkCanEquip(item) {
     let d = DB.items[item.id];
+    if(d?.giranId){
+        if((d.giranMinLv && player.lv<d.giranMinLv)||(d.giranMaxLv && player.lv>d.giranMaxLv))return false;
+        if(['royal','knight','elf','mage','dark'].includes(player.cls) && reqAllowsClass(d,player.cls))return true;
+    }
     if (d && d.reqAvatar && player && ((d.strictAvatar && player.avatar !== d.reqAvatar) || (!d.strictAvatar && player.avatar && player.avatar !== d.reqAvatar))) return false;   // 👸 性別頭像限定；strictAvatar（純潔少女的憐愛）要求必須明確為女妖精，舊檔缺 avatar 亦不放行
     // 🏺 遺物：職業限制純以 req 白名單為準＝略過各職業專屬 *EquipOk 武器/防具清單（否則戰士等會被拒）。
     //    ⚠️ v3.7.83 修：原本這裡是 `return reqAllowsClass(...)` 直接早退，連帶把下方共用尾段的**劍術精通例外**也跳過了
@@ -1285,6 +1310,7 @@ const STATUS_ICON_SKILLS = {
 };
 function renderStatusIconBar() {
     let bar=document.getElementById('status-icon-bar'); if(!bar||!player||!player.buffs)return;
+    if(bar.classList.contains('ga-buffs-hidden'))return;
     let rows=[],seen=new Set();
     // player.buffs 的數值單位就是「秒」，主迴圈每 10 tick（1 秒）扣 1；不可再除以 10。
     let add=(name,seconds,label,icon,ally)=>{if(!name||seen.has(name))return;seen.add(name);let sec=Math.max(0,Math.ceil(Number(seconds)||0));rows.push({name,ticks:Number(seconds)||0,label:label||name,sec,icon:icon||name,ally:!!ally});};   // 🐾 v3.2.17 icon 參數：多狀態共用同一圖示檔（如 7 種誘捕）；🤝 ally 旗標：隊友提供的全隊光環（圖示加藍點區別）
@@ -1300,6 +1326,9 @@ function renderStatusIconBar() {
     Object.keys(STATUS_ICON_SKILLS).forEach(id=>{if((player.buffs[id]||0)>0)add(STATUS_ICON_SKILLS[id],player.buffs[id],DB.skills[id]?DB.skills[id].n:STATUS_ICON_SKILLS[id]);});
     // 🤝 v3.5.36 全隊光環（大地祝福/灼熱武器/閃亮之盾等 TEAM_AURA_SKILLS）：玩家未自持 buff 但隊友維持中→也亮圖示（標「隊友提供」·倒數取隊友最長剩餘）。玩家自持時上方主迴圈已加(seen 去重)→此段只補「純受益」情形。TEAM_SHARE_BUFFS 類會給玩家自己一份 buff·已由主迴圈顯示故不列入。寵物/召喚無此圖示列不涵蓋。
     if(typeof TEAM_AURA_SKILLS!=='undefined'&&typeof _teamAuraHas==='function'){TEAM_AURA_SKILLS.forEach(sid=>{if((player.buffs[sid]||0)>0||!STATUS_ICON_SKILLS[sid]||!_teamAuraHas(sid))return;let remain=0,al=player.allies||[];for(let i=0;i<al.length;i++){let a=al[i];if(a&&!a._downed&&a.buffs&&(a.buffs[sid]||0)>remain)remain=a.buffs[sid];}add(STATUS_ICON_SKILLS[sid],remain,(DB.skills[sid]?DB.skills[sid].n:STATUS_ICON_SKILLS[sid])+'（隊友提供）',STATUS_ICON_SKILLS[sid],true);});}
+    if(window.GiranMagicMerchant)for(const [key,name] of Object.entries(GiranMagicMerchant.effects)){
+        const sec=GiranMagicMerchant.seconds(player,key);if(sec>0)add(name,sec,BUFF_NAMES[key],'world/art/interface/'+key+'.png');
+    }
     // 持續治療不存於 player.buffs，而是以 0.1 秒 tick 記在 player.hots；換算成真正剩餘秒數後顯示。
     [['sk_regen','體力回復術'],['sk_elf_lifebless','生命的祝福']].forEach(([id,name])=>{let h=player.hots&&player.hots[id];if(h&&h.ticksLeft>0){let remainTicks=Math.max(0,(h.ticksLeft-1)*(h.interval||0)+(h.cd||0));add(name,Math.ceil(remainTicks/10),DB.skills[id]?DB.skills[id].n:name);}});
     // 🌩️ v3.5.94 玩家異常狀態（PLAYER_DEBUFF_ICON 有對應美術者）也進圖示列，排在增益之後；沒對應圖的異常仍走 renderStatusEffects 的文字。
@@ -1308,19 +1337,42 @@ function renderStatusIconBar() {
     // 🔧 v2.7.5 合併 2683「狀態圖示狂閃修正」：renderStatusEffects 每 tick(0.1秒) 呼叫本函式；原本每次都重建整排 innerHTML→所有 <img> 反覆重新解碼/重繪而狂閃。
     //   改「簽章式重建」：sig 只含 狀態種類/順序，不含秒數→種類/順序不變時不重建 DOM，僅更新 title(圖片保持不動、不閃)。
     // 🔧 v2.7.9 用戶要求：移除圖示上的動態倒數文字(.status-icon-time 不再產生)——剩餘秒數只留 hover title 提示；sig 隨之不需 T/P 位。
-    let sig=rows.map(x=>x.name+'|'+x.label).join('||');
-    if(bar.dataset.statusSig!==sig){
-        bar.dataset.statusSig=sig;
-        bar.innerHTML=rows.map((x,i)=>{let title=x.label+(x.ticks>0?'｜剩餘 '+x.sec+' 秒':'');return `<button type="button" aria-label="${title}" class="status-icon${x.ally?' status-icon--ally':''}" data-status-index="${i}" title="${title}"><img src="assets/state-icons/${encodeURIComponent(x.icon||x.name)}.jpg" alt="${x.label}"></button>`;}).join('');
-    } else {
-        rows.forEach((x,i)=>{let icon=bar.querySelector(`[data-status-index="${i}"]`);if(!icon)return;let _t=x.label+(x.ticks>0?'｜剩餘 '+x.sec+' 秒':'');if(icon.title!==_t){icon.title=_t;icon.setAttribute('aria-label',_t);}});
+    bar.statusRows=rows;
+    const signature=rows.map(row=>row.name+'|'+row.label).join('||');
+    if (bar.dataset.statusSig!==signature) {
+        bar.dataset.statusSig=signature;
+        const previous=bar.statusButtons||new Map(), next=new Map();
+        for (const [index,row] of rows.entries()) {
+            let button=previous.get(row.name);
+            if (!button) {
+                button=document.createElement('button');
+                button.type='button';
+                button.appendChild(document.createElement('img'));
+            }
+            button.className=row.ally?'status-icon status-icon--ally':'status-icon';
+            button.dataset.statusIndex=String(index);
+            const icon=button.firstElementChild;
+            const src=row.icon.startsWith('world/art/interface/')?row.icon:'assets/state-icons/'+encodeURIComponent(row.icon||row.name)+'.jpg';
+            if(icon.getAttribute('src')!==src)icon.setAttribute('src',src);
+            if(icon.alt!==row.label)icon.alt=row.label;
+            if (bar.children[index]!==button) bar.insertBefore(button,bar.children[index]||null);
+            next.set(row.name,button);
+        }
+        for(const [key,button] of previous) if(!next.has(key))button.remove();
+        bar.statusButtons=next;
+    }
+    for(const row of rows){
+        const button=bar.statusButtons?.get(row.name);
+        if(!button)continue;
+        const title=row.label+(row.ticks>0?'｜剩餘 '+row.sec+' 秒':'');
+        if(button.title!==title){button.title=title;button.setAttribute('aria-label',title);}
     }
 }
 
 // 統一渲染「狀態」欄：魔法/藥水增益(buff) + 受到的減益(debuff)
 function renderStatusEffects() {
     if(state.ff) return; // 補跑期間不刷新畫面
-    let el = document.getElementById('dt-buffs');
+    let el = window.__afkBuffTextTarget || document.getElementById('dt-buffs');
     if(!el) return;
     renderStatusIconBar();
 
@@ -1412,8 +1464,16 @@ function renderStatusEffects() {
     el.innerHTML = html;
 }
 
-function _updateUIImpl() {
-    if(state.ff) return; // 補跑期間不刷新畫面
+let nativeStatusOwner, nativeStatusMap, nativeStatusTime = -Infinity;
+function _updateUIImpl(force) {
+    if(state.ff) return;
+    const now=performance.now(), fused=document.body.classList.contains('giran-running');
+    if(!force && fused && player===nativeStatusOwner && mapState.current===nativeStatusMap &&
+       !document.body.dataset.giranPane && now-nativeStatusTime<1200){
+        updateSummonLock();
+        return;
+    }
+    nativeStatusOwner=player;nativeStatusMap=mapState.current;nativeStatusTime=now; // 補跑期間不刷新畫面
     updatePrideFloorIndicator();   // 🗼 攀登中右上角顯示目前樓層（背景補跑後回到前景時同步）
     try { if (typeof updateMercRoleHint === 'function') updateMercRoleHint(); } catch (e) {}   // 🧑‍🤝‍🧑 v3.7.84 「目前擔任隊員中」提示（受僱/解散由其他分頁造成→靠這裡每輪自動同步）
     try { renderPandoraBanner(); } catch (e) {}   // 🔧 潘朵拉黑市稀有商品公告橫幅
@@ -1421,7 +1481,7 @@ function _updateUIImpl() {
     try { renderSyslogPandora(); } catch (e) {}   // 🔧 系統日誌標題列右側：黑市拍賣中商品
     document.getElementById('st-lv').innerText = player.lv;
     { let _inTown = mapState.current.startsWith('town_');   // 🔧 村莊→藍色「出發」一鍵回上一張戰鬥地圖；戰鬥地圖→綠色回村/回城
-      let _txt = _inTown ? '出發' : (siegeVictoryActive() ? '回城' : '回村');
+      let _txt = _inTown ? '出發' : '回最近村莊';
       let _fn  = _inTown ? departToLastBattle : returnToTown;
       let _riftLock = (state.riftRun && mapState.current === 'rift_battle');   // 🌀 裂痕內：回村/出發 → 紫色「撤離」（主動結算，照樣記時間＋發獎勵；不可一般回村/傳送）
       if (_riftLock) { _txt = '撤離'; _fn = riftEvacuate; }
@@ -1455,7 +1515,7 @@ function _updateUIImpl() {
     if(document.getElementById('st-classname')) document.getElementById('st-classname').innerText = clsDisplayName;   // 🏅 精通徽記已移除，僅顯示職業名
     let _nameEl = document.getElementById('st-class');
     if(_nameEl) {
-        if(!window._editingName) _nameEl.innerText = (player.name || '');   // 未取名則不顯示任何文字（仍可點擊命名）
+        if(!window._editingName) _nameEl.innerText = player.name || '點擊取名';
         if (typeof pvpAlignmentColor === 'function') {
             _nameEl.style.color = pvpAlignmentColor(player.alignmentValue);
             _nameEl.style.textShadow = '0 0 6px rgba(0,0,0,.75)';

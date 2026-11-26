@@ -320,9 +320,10 @@
   // ── 技能書加一頁「傳承」：這個流派全部的傳承法術（已學、未學、要幾級）──
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var hookBook = function () {
-    if (typeof W.renderClassicSkillBook !== 'function' || W.renderClassicSkillBook.__afkHyBook) return;
+    if (W.LineageClassUI || typeof W.renderClassicSkillBook !== 'function' || W.renderClassicSkillBook.__afkHyBook) return;
     var o = W.renderClassicSkillBook;
     var f = function (sDiv) {
+      if (W.LineageClassUI) return o.apply(this, arguments);
       var p = P(), st = typeof classicSkillBookState !== 'undefined' ? classicSkillBookState : null;
       var ids = (p && !W.__afkHybridOff) ? legacy(p) : [];
       if (!ids.length || !st) { if (st && st.mode === 'legacy') st.mode = 'general'; return o.apply(this, arguments); }

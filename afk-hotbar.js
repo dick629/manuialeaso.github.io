@@ -67,7 +67,7 @@
       '#afk-hotbar .hb-cnt{position:absolute;right:3px;bottom:1px;font-size:11px;color:#fde68a;text-shadow:1px 1px 0 #000;font-weight:700}',
       '#afk-hotbar .hb-slot.flash{animation:afkHbFlash .25s}',
       '#afk-hotbar .hb-auto{position:absolute;right:1px;top:1px;font-size:8px;letter-spacing:.2px;line-height:11px;padding:0 2px;border-radius:3px;background:#14532d;color:#bbf7d0;font-weight:700;box-shadow:0 0 0 1px #000}',
-      '#afk-hotbar .hb-cdv{position:absolute;inset:0;background:rgba(0,0,0,.55);transform-origin:bottom;transform:scaleY(0);pointer-events:none}',
+      '#afk-hotbar .hb-cdv{position:absolute;inset:0;background:#171222b8;z-index:2;transform-origin:bottom;transform:scaleY(0);transition:transform .1s linear;pointer-events:none}#afk-hotbar .hb-remaining{position:absolute;inset:0;z-index:3;display:grid;place-items:center;font:bold 13px/1 Arial;color:white;text-shadow:0 1px 3px black;pointer-events:none}#afk-hotbar :is(.hb-key,.hb-auto,.hb-cnt){z-index:4}',
       '#afk-hotbar .hb-slot.hb-q{border-color:#fbbf24;box-shadow:inset 0 0 0 1px #000,0 0 6px #fbbf24}',
       '#afk-hotbar-pick .hc{padding:8px 14px;border-bottom:1px solid #3b3238;display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:#d9c08c}',
       '#afk-hotbar-pick .hc select{background:#0f0e12;border:1px solid #3b3238;border-radius:4px;color:#e5e7eb;padding:2px 6px;font-size:12px}',
@@ -202,6 +202,36 @@
   var MQ = '(max-width: 768px), (max-height: 520px) and (pointer: coarse)';
   var mobileGeom = function () { try { return document.body.classList.contains('m-unified') || (document.body.classList.contains('m-mobile') && W.matchMedia(MQ).matches); } catch (e) { return false; } };
   var lastHtml = '';
+  var lockButton;
+  function placeLock(host, isLocked) {
+    if (!lockButton) {
+      lockButton = document.createElement('button');
+      lockButton.type = 'button';
+      lockButton.className = 'hb-lock';
+      lockButton.setAttribute('aria-label', '鎖定熱鍵配置');
+      var icon = document.createElement('i');
+      icon.setAttribute('aria-hidden', 'true');
+      lockButton.appendChild(icon);
+      lockButton.addEventListener('click', function () {
+        var current = P();
+        if (!current || !on()) return;
+        current._afkHotbarLock = !current._afkHotbarLock;
+        render();
+        save();
+      });
+    }
+    var vitals = document.body.classList.contains('m-unified') && document.body.classList.contains('giran-chrome') && document.getElementById('giran-vitals');
+    var parent = vitals || host.firstElementChild;
+    if (lockButton.parentElement !== parent) {
+      parent.insertBefore(lockButton, vitals ? vitals.querySelector('.ga-mp') : null);
+    }
+    if (lockButton.getAttribute('aria-pressed') !== String(isLocked)) {
+      lockButton.setAttribute('aria-pressed', String(isLocked));
+      lockButton.classList.toggle('on', isLocked);
+      lockButton.firstChild.textContent = isLocked ? '🔒' : '🔓';
+      lockButton.title = isLocked ? '已鎖住：F5～F12 交還瀏覽器；仍可點格子使用及滑動，但不能換內容。' : '右鍵或長按格子可配置；點鎖頭避免誤改。';
+    }
+  }
   // 流派自動施放 8 格（Ping 11-13 03:22）：有流派時熱鍵變四組，第三、四組是流派專用（merged/class-ui 的 hotbarPages 給內容、處理點擊與冷卻）
   var clsPages = function () { try { var U = W.LineageClassUI; return U && U.hotbarPages ? U.hotbarPages() : null; } catch (e) { return null; } };
   var nPages = function () { return clsPages() ? 4 : 2; };
@@ -213,18 +243,17 @@
   };
   var render = function () {
     var host = document.getElementById('afk-hotbar'); var p = P();
-    if (!on() || !p) { if (host) host.style.display = 'none'; return; }
-    if(p!==pageOwner){pageOwner=p;pageIndex=0;lastHtml='';}
+    if (!on() || !p) { if (host) host.style.display = 'none'; if (lockButton) lockButton.remove(); return; }
+    if(p!==pageOwner){pageOwner=p;pageIndex=0;lastHtml='';if(HC)HC.reset();}
     if(dragging||touchBusy)return;
     if (!host) {
       var col = document.getElementById('col-left'); if (!col) return; css();
       host = document.createElement('div'); host.id = 'afk-hotbar'; col.appendChild(host);
       host.addEventListener('click', function (ev) {
-        if(Date.now()<suppressClickUntil){ev.preventDefault();return;}
+        if(Date.now()<suppressClickUntil&&ev.target.closest('.hb-pages')){ev.preventDefault();return;}
         var pg=ev.target.closest('[data-hb-page]');if(pg){pageTo(Number(pg.dataset.hbPage));return;}
         if (ev.target.closest('.hb-cls')) return;   // 流派格：class-ui 自己處理
         if (ev.target.closest('.hb-moon')) { if (W.AFK_SCREEN) W.AFK_SCREEN.start(); return; }
-        if (ev.target.closest('.hb-lock')) { var cp = P(); if (!cp) return; cp._afkHotbarLock = !cp._afkHotbarLock; render(); save(); return; }   // 用「現在」的角色（玩家 2026-10-27：換角色後鎖頭按了沒反應＝改到上一個角色身上）
         var s = ev.target.closest('.hb-slot'); if (!s) return; fire(Number(s.getAttribute('data-i')));
       });
       host.addEventListener('contextmenu', function (ev) { if (ev.target.closest('.hb-cls')) return; var s = ev.target.closest('.hb-slot'); if (!s) return; ev.preventDefault(); pick(Number(s.getAttribute('data-i'))); });
@@ -233,7 +262,11 @@
       ['touchend', 'touchmove', 'touchcancel'].forEach(function (t) { host.addEventListener(t, function () { if (pressT) { clearTimeout(pressT); pressT = null; } }, { passive: true }); });
       ['touchend','touchcancel'].forEach(function(t){host.addEventListener(t,function(){touchBusy=false;schedule();},{passive:true});});
       var pointer=null;
-      host.addEventListener('pointerdown',function(ev){var pages=ev.target.closest('.hb-pages');if(!pages||ev.button!==0)return;pointer={x:ev.clientX,left:pages.scrollLeft,pages:pages,type:ev.pointerType};});
+      host.addEventListener('pointerdown',function(ev){
+        var pages=ev.target.closest('.hb-pages');if(!pages||ev.button!==0||!ev.isPrimary)return;
+        // A fresh press can use the new group's slot immediately after a swipe.
+        suppressClickUntil=0;pointer={x:ev.clientX,left:pages.scrollLeft,pages:pages,type:ev.pointerType};
+      });
       W.addEventListener('pointermove',function(ev){if(!pointer)return;var dx=ev.clientX-pointer.x;if(Math.abs(dx)>10){dragging=true;suppressClickUntil=Date.now()+700;if(pressT){clearTimeout(pressT);pressT=null;}}if(dragging&&pointer.type==='mouse'){pointer.pages.scrollLeft=pointer.left-dx;ev.preventDefault();}},{passive:false});
       var endDrag=function(){if(!pointer)return;var was=dragging,type=pointer.type,left=pointer.pages.scrollLeft,width=pointer.pages.clientWidth;pointer=null;dragging=false;if(was){suppressClickUntil=Date.now()+400;if(type==='mouse')pageTo(Math.round(left/Math.max(1,width)));}schedule();};
       W.addEventListener('pointerup',endDrag);W.addEventListener('pointercancel',endDrag);
@@ -241,19 +274,19 @@
     }
     host.style.display = '';
     // 手機（玩家 2026-10-27）：放到戰鬥畫面正下方那塊空白，戰鬥時一眼看到藥水等道具還剩多少；桌機照舊在左欄最底下
-    var want = mobileGeom() ? document.getElementById('col-center') : document.getElementById('col-left');
+    var want = document.getElementById('ga-hot-dock') || (mobileGeom() ? document.getElementById('col-center') : document.getElementById('col-left'));
     if (want && host.parentElement !== want) { want.appendChild(host); host.classList.toggle('hb-mobile', want.id === 'col-center'); }
     try { var cc = document.getElementById('col-center'); if (cc) cc.classList.toggle('hb-host', host.parentElement === cc); } catch (e) {}
     var b = bar(), lk = locked();
     var cp = clsPages(); if (!cp && pageIndex > 1) pageIndex = 0;
-    var h = '<div class="hb-top">' + (W.AFK_SCREEN ? '<button type="button" class="hb-moon" aria-label="休眠掛網" title="休眠掛網">☾</button>' : '<div style="width:22px"></div>') + '<div class="hb-pager" role="tablist" aria-label="左右滑動切換熱鍵"><button type="button" role="tab" data-hb-page="0" aria-label="第一組熱鍵 F5 至 F8" title="第一組 F5–F8" aria-selected="'+(pageIndex===0)+'"></button><button type="button" role="tab" data-hb-page="1" aria-label="第二組熱鍵 F9 至 F12" title="第二組 F9–F12" aria-selected="'+(pageIndex===1)+'"></button>'+(cp?'<button type="button" role="tab" data-hb-page="2" aria-label="流派自動施放 1 至 4" title="流派 1–4" aria-selected="'+(pageIndex===2)+'"></button><button type="button" role="tab" data-hb-page="3" aria-label="流派自動施放 5 至 8" title="流派 5–8" aria-selected="'+(pageIndex===3)+'"></button>':'')+'</div><button type="button" aria-label="鎖定熱鍵配置" aria-pressed="' + lk + '" class="hb-lock' + (lk ? ' on' : '') + '" title="' + (lk ? '已鎖住：F5～F12 交還瀏覽器；仍可點格子使用及滑動，但不能換內容。' : '右鍵或長按格子可配置；點鎖頭避免誤改。') + '">' + (lk ? '🔒' : '🔓') + '</button></div><div class="hb-pages"><div class="hb-page" aria-label="第一組 F5 至 F8"><div class="hb-row">';
+    var h = '<div class="hb-top">' + (W.AFK_SCREEN ? '<button type="button" class="hb-moon" aria-label="休眠掛網" title="休眠掛網">☾</button>' : '<div style="width:22px"></div>') + '<div class="hb-pager" role="tablist" aria-label="左右滑動切換熱鍵"><button type="button" role="tab" data-hb-page="0" aria-label="第一組熱鍵 F5 至 F8" title="第一組 F5–F8" aria-selected="'+(pageIndex===0)+'"></button><button type="button" role="tab" data-hb-page="1" aria-label="第二組熱鍵 F9 至 F12" title="第二組 F9–F12" aria-selected="'+(pageIndex===1)+'"></button>'+(cp?'<button type="button" role="tab" data-hb-page="2" aria-label="流派自動施放 1 至 4" title="流派 1–4" aria-selected="'+(pageIndex===2)+'"></button><button type="button" role="tab" data-hb-page="3" aria-label="流派自動施放 5 至 8" title="流派 5–8" aria-selected="'+(pageIndex===3)+'"></button>':'')+'</div></div><div class="hb-pages"><div class="hb-page" aria-label="第一組 F5 至 F8"><div class="hb-row">';
     for (var i = 0; i < N; i++) {
       if(i===4)h+='</div><div class="hb-names">'+b.slice(0,4).map(function(id){var d=id&&(skOf(id)||DB.items[id]);return '<span>'+(d?esc(d.n):'')+'</span>';}).join('')+'</div></div><div class="hb-page" aria-label="第二組 F9 至 F12"><div class="hb-row">';
       var id = b[i], skd = skOf(id);
       if (skd) {
         var lr = learned(id.slice(3)), mpc = 0; try { mpc = P().d && P().d.getMpCost ? P().d.getMpCost(skd.mp || 0, skd.tier) : (skd.mp || 0); } catch (e) { mpc = skd.mp || 0; }
         var au = HC.on() && HC.lane(skd) && autoArr()[i], qd = HC.on() && HC.queued() === id.slice(3);
-        h += '<div class="hb-slot' + (lr ? '' : ' none') + (qd ? ' hb-q' : '') + '" data-i="' + i + '" data-sk="' + esc(id.slice(3)) + '" title="' + esc(skd.n) + '（魔法' + (mpc ? '，MP ' + mpc : '') + (au ? '，自動：' + COND_N[condArr()[i]] : '') + '）"><span class="hb-key">F' + (5 + i) + '</span>' + (au ? '<span class="hb-auto">AUTO</span>' : '') + '<i class="hb-cdv"></i><img src="' + esc(skIcon(skd)) + '" alt="" onerror="this.style.visibility=\'hidden\'">' + (mpc ? '<span class="hb-cnt">' + mpc + '</span>' : '') + '</div>';
+        h += '<div class="hb-slot' + (lr ? '' : ' none') + (qd ? ' hb-q' : '') + '" data-i="' + i + '" data-sk="' + esc(id.slice(3)) + '" title="' + esc(skd.n) + '（魔法' + (mpc ? '，MP ' + mpc : '') + (au ? '，自動：' + COND_N[condArr()[i]] : '') + '）"><span class="hb-key">F' + (5 + i) + '</span>' + (au ? '<span class="hb-auto">AUTO</span>' : '') + '<i class="hb-cdv"></i><span class="hb-remaining"></span><img src="' + esc(skIcon(skd)) + '" alt="" onerror="this.style.visibility=\'hidden\'">' + (mpc ? '<span class="hb-cnt">' + mpc + '</span>' : '') + '</div>';
         continue;
       }
       var d = id ? DB.items[id] : null;
@@ -267,6 +300,7 @@
       host.querySelector('.hb-pages').addEventListener('scroll',function(){if(!this.clientWidth)return;pageIndex=Math.round(this.scrollLeft/this.clientWidth);host.querySelectorAll('[data-hb-page]').forEach(function(b){b.setAttribute('aria-selected',String(Number(b.dataset.hbPage)===pageIndex));});},{passive:true});
       pageTo(pageIndex);
     }
+    placeLock(host, lk);
   };
   var pending = false;
   var schedule = function () { if (pending) return; pending = true; requestAnimationFrame(function () { pending = false; try { render(); } catch (e) {} }); };
@@ -280,6 +314,7 @@
     var hcOn = function () { return on() && (!T || T.enabled('hotcast')); };
     var CD = 15, QWAIT = 50;   // 1.5 秒；插隊最多等 5 秒（tick＝0.1 秒）
     var cdUntil = Object.create(null), queue = null, stats = { lane: 0, hot: 0, queued: 0 };
+    var displayed = new Map(), previousSpell = '';
     var tk = function () { return (typeof state !== 'undefined' && state && Number(state.ticks)) || 0; };
     var lane = function (sk) { return !!(sk && sk.type === 'atk'); };
     var magic = function (sk) { return !!(sk && sk.type === 'atk' && sk.dmgType === 'magic'); };
@@ -290,6 +325,13 @@
       var own = Math.max(0, u - t), b = BAL(), g = b ? b.aoeLeft(player, sid) : 0;   // 範圍魔法的冷卻記在施法者身上（攻擊技能、手動放的也算）
       return Math.max(own, g);
     };
+    function observed(sid) {
+      var sk=DB.skills[sid], p=P();
+      if(!p||!sk)return;
+      var laneName={atk:'atkSk',heal:'healSk',convert:'convertSk',purify:'purifySk',buff:'buffSk'}[sk.type];
+      var ticks=Math.max(p.manualCd?.[sid]||0,p.cds?.[laneName]||0,cdLeft(sid));
+      if(ticks>0)displayed.set(sid,{end:tk()+ticks,duration:ticks});
+    }
     var targetOk = function (sid, tg) {   // 照核心自動施法的判斷（即死標籤、標籤需求、不重複上狀態）
       var sk = DB.skills[sid]; if (!sk || !tg) return false;
       var ik = sk.instakill && sk.instakill.tag, need = sk.tagReq;
@@ -310,7 +352,7 @@
       if (ok) {
         try { player.cds.castLock = getAutoCastInterval(player, false, player.cds.castLock); } catch (e) { player.cds.castLock = 10; }
         var _bf = BAL(); if (magic(DB.skills[sid]) && !(_bf && _bf.freeNow && _bf.freeNow(player, sid))) cdUntil[sid] = tk() + cdLen(sid);   // 這一次免 3 秒冷卻（背神者、聖紋 E）就不記
-        stats.lane++; stats.hot++;
+        observed(sid);stats.lane++; stats.hot++;
         var el = document.querySelector('#afk-hotbar .hb-slot[data-sk="' + sid + '"]'); if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
       }
       return ok;
@@ -332,14 +374,21 @@
       try { thr = parseInt(document.getElementById('set-mp-atk').value, 10) || 0; } catch (e) {}
       if (mpPct < thr) return;
       var atk = ''; try { atk = document.getElementById('sel-atk-skill').value || ''; } catch (e) {}
-      if (atk && lane(DB.skills[atk]) && learned(atk) && !cdLeft(atk) && targetOk(atk, tg) && cast(atk, true)) return;   // 第一順位：攻擊技能
-      for (var i = 0; i < N; i++) {
-        var id = b[i], sk = skOf(id); if (!au[i] || !sk || !lane(sk)) continue;
-        var sid = id.slice(3);
-        if (!learned(sid) || cdLeft(sid) || !condOk(cd[i], tg) || !targetOk(sid, tg)) continue;
-        if (cast(sid, true)) return;
+      // All assigned attacks share the native casting lane. Resume after the last
+      // successful spell so a short-cooldown main skill cannot starve the slots.
+      var choices=[];
+      if(atk && lane(DB.skills[atk]))choices.push(atk);
+      for(var i=0;i<N;i++){
+        var id=b[i], sk=skOf(id);
+        if(au[i]&&lane(sk)&&condOk(cd[i],tg)&&!choices.includes(id.slice(3)))choices.push(id.slice(3));
       }
-      // 都在冷卻／不能放：交給原本的自動施法放「攻擊技能」補上（不看 1.5 秒）
+      var start=choices.indexOf(previousSpell)+1;
+      for(var offset=0;offset<choices.length;offset++){
+        var sid=choices[(start+offset)%choices.length];
+        if(learned(sid)&&!cdLeft(sid)&&targetOk(sid,tg)&&cast(sid,true)){
+          previousSpell=sid;return;
+        }
+      }
     };
     var press = function (sid) {
       if (!learned(sid)) return;
@@ -355,13 +404,18 @@
     setInterval(function () {   // 冷卻遮罩
       if (!hcOn()) return;
       document.querySelectorAll('#afk-hotbar .hb-slot[data-sk]').forEach(function (el) {
-        var v = el.querySelector('.hb-cdv'); if (!v) return; var l = cdLeft(el.getAttribute('data-sk'));
-        v.style.transform = 'scaleY(' + (l > 0 ? Math.min(1, l / cdLen(el.getAttribute('data-sk'))).toFixed(2) : 0) + ')';
+        var sid=el.dataset.sk, v=el.querySelector('.hb-cdv');if(!v)return;
+        var record=displayed.get(sid), remaining=Math.max(0,cdLeft(sid),P()?.manualCd?.[sid]||0,(record?.end||0)-tk());
+        var total=Math.max(remaining,record?.duration||cdLen(sid));
+        v.style.transform='scaleY('+(remaining/total).toFixed(3)+')';
+        var label=el.querySelector('.hb-remaining');
+        if(label)label.textContent=remaining>0?(remaining>=10?Math.ceil(remaining/10):(remaining/10).toFixed(1)):'';
+        if(!remaining)displayed.delete(sid);
         el.classList.toggle('hb-q', !!(queue && queue.sk === el.getAttribute('data-sk')));
       });
     }, 100);
-    return { on: hcOn, lane: lane, magic: magic, press: press, step: step, queued: function () { return queue && queue.sk; }, cdLeft: cdLeft, stats: stats, CD: CD,
-      reset: function () { cdUntil = Object.create(null); queue = null; } };
+    return { on: hcOn, lane: lane, magic: magic, press: press, step: step, queued: function () { return queue && queue.sk; }, cdLeft: cdLeft, stats: stats, CD: CD, observed: observed,
+      reset: function () { cdUntil = Object.create(null); displayed.clear();previousSpell='';queue = null; } };
   })();
   W.__afkHotcast = HC;
 
@@ -377,6 +431,7 @@
   }, true);
 
   W.addEventListener('resize', schedule);
+  W.addEventListener('giran-mobile-layout', schedule);
   W.AFK_HOTBAR = { fire: fire, pick: pick, render: render, bar: bar, page:pageTo };
   schedule();
   console.log('[AFK-hotbar] 已啟用：道具熱鍵列 F5～F12');

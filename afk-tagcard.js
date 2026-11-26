@@ -226,7 +226,7 @@
     X.on('resist', function () { var a = agg(P()); return !!(a && a.resist && Math.random() * 100 < a.resist); });
     X.on('kill', function () {
       var p = P(); if (!p) return;
-      [p].concat(p.allies || []).forEach(function (e) {
+      [p].concat(GiranPartyView.combatAllies(p)).forEach(function (e) {
         if (!e || e._downed || (e === p && p.dead)) return; var a = agg(e); if (!a) return;
         if (a.killHeal) heal(e, N(e.mhp) * a.killHeal / 100);
         if (a.killMp) { if (e === p) p.mp = Math.min(N(p.mmp), N(p.mp) + a.killMp); else if (e.mp != null) e.mp = Math.min(N(e.mmp), N(e.mp) + a.killMp); }
@@ -247,7 +247,7 @@
       }
       if (tk() % 50 !== 0) return;
       var p = P(); if (!p || p.dead) return;
-      [p].concat(p.allies || []).forEach(function (e) {
+      [p].concat(GiranPartyView.combatAllies(p)).forEach(function (e) {
         if (!e || e._downed) return; var a = agg(e); if (!a) return;
         if (a.regen) heal(e, N(e.mhp) * a.regen / 100);
         if (a.mpTick) { if (e === p) p.mp = Math.min(N(p.mmp), N(p.mp) + a.mpTick); else if (e.mp != null) e.mp = Math.min(N(e.mmp), N(e.mp) + a.mpTick); }

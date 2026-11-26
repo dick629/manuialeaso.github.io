@@ -57,7 +57,7 @@
   // ── 隊伍 ──
   var isP = function (x) { return x === P(); };
   var alive = function (x) { return isP(x) ? (!x.dead && x.hp > 0) : (!!x && !x._downed && (x.curHp || 0) > 0); };
-  var party = function () { var p = P(); if (!p) return []; return [p].concat(p.allies || []).filter(function (x) { return x && alive(x); }); };
+  var party = function () { var p = P(); if (!p) return []; return [p].concat(GiranPartyView.combatAllies(p)).filter(function (x) { return x && alive(x); }); };
   var who = function (x) { return isP(x) ? '你' : '協力·' + esc(x._allyName || '傭兵'); };
   var stOf = function (x) { return x.statuses || (x.statuses = {}); };
   var recalc = function (x) {
@@ -121,7 +121,7 @@
     W.teamCleanseOne = function (kinds) {
       var isCancel = Array.isArray(kinds) && kinds.indexOf('foulWater') >= 0 && kinds.indexOf('freeze') >= 0;
       if (isCancel) {
-        var p = P(), panicked = p ? [p].concat(p.allies || []).filter(function (x) { return x && alive(x) && x._afkBaLock && x._afkBaLock.cancel; }) : [];
+        var p = P(), panicked = p ? [p].concat(GiranPartyView.combatAllies(p)).filter(function (x) { return x && alive(x) && x._afkBaLock && x._afkBaLock.cancel; }) : [];
         if (panicked.length) {
           var m = panicked[0];
           clearLock(m);
@@ -137,7 +137,7 @@
     var oTHC = W.teamHasCurableStatus;
     W.teamHasCurableStatus = function (kinds) {
       if (Array.isArray(kinds) && kinds.indexOf('foulWater') >= 0 && kinds.indexOf('freeze') >= 0) {
-        var p = P(); if (p && [p].concat(p.allies || []).some(function (x) { return x && alive(x) && x._afkBaLock && x._afkBaLock.cancel; })) return true;
+        var p = P(); if (p && [p].concat(GiranPartyView.combatAllies(p)).some(function (x) { return x && alive(x) && x._afkBaLock && x._afkBaLock.cancel; })) return true;
       }
       return oTHC.apply(this, arguments);
     };
@@ -186,7 +186,7 @@
   var upkeep = function () {
     var p = P(); if (!p) return;
     var t = now();
-    [p].concat(p.allies || []).forEach(function (x) {
+    [p].concat(GiranPartyView.combatAllies(p)).forEach(function (x) {
       if (!x) return;
       if (!alive(x)) { if (x._afkBaLock) delete x._afkBaLock; }
       else if (x._afkBaLock) applyLock(x);

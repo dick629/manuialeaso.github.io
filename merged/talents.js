@@ -10,7 +10,7 @@
   function live(p){return p&&!p.dead&&!p._downed&&N(p===player?p.hp:p.curHp==null?p.hp:p.curHp)>0;}
   function hp(p){return N(p===player?p.hp:p.curHp==null?p.hp:p.curHp);}
   function maxhp(p){if(p===player||p&&p.cls)return N(p.mhp)||1;return W.AFK_RELIC_COMPANIONS?W.AFK_RELIC_COMPANIONS.maxHp(p):N(p.mhp||p.maxHp||p.hp)||1;}
-  function team(){return [player].concat(player.allies||[]).filter(live);}
+  function team(){return [player].concat(GiranPartyView.combatAllies()).filter(live);}
   function companions(p){return R.api.pets(p).concat(R.api.summons(p)).filter(live);}
   function lowest(xs){return xs.slice().sort((a,b)=>hp(a)/maxhp(a)-hp(b)/maxhp(b))[0];}
   function buff(p,key,values,sec){if(!p)return;st(p).buffs[key]={...values,until:now()+sec};if(values.move||values.hit||values.mr)R.recalc(p);}

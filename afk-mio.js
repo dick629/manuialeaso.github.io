@@ -216,10 +216,10 @@
   W.__afkMioRefresh = function () { cache = null; };
   var A = function (k) { var a = cur().act[K[k]]; return a ? a.v : null; };
   var refresh = function () { cache = null; try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {} };
-  var fire = function (k, extra) {
+  var fire = function (k, extra, detail) {
     var i = K[k]; if (!X) return;
     var img = (DB.items[idOf(i)] || {}).img;
-    X.pop('mio' + i, img, CARDS[i][0] + (extra ? ' ' + extra : ''), '#f0abfc');
+    X.pop('mio' + i, img, CARDS[i][0] + (extra ? ' ' + extra : ''), '#f0abfc', detail || {owner:P(),verb:'密奧觸發'});
     // 11-16（Ping：女皇一直跑出來）：喝水觸發的卡（女皇、節制）戰鬥日誌 60 秒最多一行，其他照舊 5 秒
     if (QUIET[k]) { var t = (typeof state !== 'undefined' && state && Number(state.ticks)) || 0; if (quietAt[k] != null && t >= quietAt[k] && t - quietAt[k] < 600) return; quietAt[k] = t; }
     X.note('mio' + i, '<span style="color:#f0abfc">🃏【' + CARDS[i][0] + '】</span>' + esc(descOf(i, (cur().act[i] || {}).st || 1)));
@@ -270,7 +270,7 @@
   }
   // 高塔：頭目的百分比機制傷害
   var prevIn = W.__afkIncomingMod;
-  W.__afkIncomingMod = function (t, dmg) { var v = typeof prevIn === 'function' ? prevIn.apply(this, arguments) : dmg; try { var p = P(), tw = A('tower'); if (tw && t === p && v > 0) { v = v * (1 - tw.pct / 100); fire('tower'); } } catch (e) {} return v; };
+  W.__afkIncomingMod = function (t, dmg) { var v = typeof prevIn === 'function' ? prevIn.apply(this, arguments) : dmg; try { var p = P(), tw = A('tower'); if (tw && t === p && v > 0) { v = v * (1 - tw.pct / 100); fire('tower',null,{owner:p,kind:'guard',targets:[t],verb:'減傷'}); } } catch (e) {} return v; };
 
   // ── 受到傷害的百分比（核心合併、上限 75%）──
   var wheel = { kind: -1, until: 0, next: 0 };
@@ -296,9 +296,9 @@
     X.on('taken', function (ent, dmg, mob) {
       var p = P(); if (!p || ent !== p || !(dmg > 0) || !on(p)) return dmg;
       var f = A('fool');
-      if (f && tk() >= fool.at) { fool.at = tk() + f.cd * 10; dmg = dmg * (1 - f.red / 100); fire('fool'); }
+      if (f && tk() >= fool.at) { fool.at = tk() + f.cd * 10; dmg = dmg * (1 - f.red / 100); fire('fool',null,{owner:p,kind:'guard',targets:[ent],verb:'減傷'}); }
       var j = A('justice');
-      if (j && mob && !mob._dead && tk() >= just.at) { just.at = tk() + 10; if (X.hitMob(mob, dmg * j.pct / 100) > 0) fire('justice'); }
+      if (j && mob && !mob._dead && tk() >= just.at) { just.at = tk() + 10; if (X.hitMob(mob, dmg * j.pct / 100) > 0) fire('justice',null,{owner:p,kind:'strike',targets:[mob],verb:'反擊'}); }
       return dmg;
     });
     // 造成傷害
@@ -306,10 +306,10 @@
       var p = P(); if (!p || actor !== p || !on(p)) return v;
       var c = cur(), m = 1;
       if (c.set.dmg) m *= 1 + c.set.dmg / 100;
-      var mg = A('magician'); if (mg && opt.kind === 'magic' && rnd() < mg.ch / 100) { m *= 2; fire('magician'); }
+      var mg = A('magician'); if (mg && opt.kind === 'magic' && rnd() < mg.ch / 100) { m *= 2; fire('magician',null,{owner:p,kind:'strike',targets:[target],verb:'魔法增傷'}); }
       var ch = A('chariot');
       if (ch && opt.packet) { if (chariot.t === target) chariot.n = Math.min(ch.max, chariot.n + 1); else { chariot.t = target; chariot.n = 0; } if (chariot.n > 0) m *= 1 + ch.per * chariot.n / 100; }
-      var sg = A('strength'); if (sg && opt.packet && opt.packet.crit) { m *= 1 + sg.pct / 100; fire('strength'); }
+      var sg = A('strength'); if (sg && opt.packet && opt.packet.crit) { m *= 1 + sg.pct / 100; fire('strength',null,{owner:p,kind:'strike',targets:[target],verb:'爆擊強化'}); }
       var hm = A('hermit'); if (hm) m *= 1 + hm.per * Math.max(0, 16 - X.party()) / 100;
       var wh = A('wheel'); if (wh && wheel.kind === 0 && tk() < wheel.until) m *= 1 + wh.dmg / 100;
       var jg = A('judgement'); if (jg && target.boss && target.hp > 0 && target.curHp < target.hp * 0.5) m *= 1 + jg.pct / 100;
@@ -335,10 +335,10 @@
       var lv = A('lovers');
       if (lv && t >= lov.next && X.inCombat()) {
         lov.next = t + 50;
-        var ents = [p].concat((p.allies || []).filter(function (a) { return a && !a._downed; })).map(function (e) { return { e: e, r: (e === p ? p.hp : e.curHp) / (e.mhp || 1) }; })
+        var ents = [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed; })).map(function (e) { return { e: e, r: (e === p ? p.hp : e.curHp) / (e.mhp || 1) }; })
           .filter(function (x) { return x.r < 1; }).sort(function (a, b) { return a.r - b.r; }).slice(0, Math.max(1, lv.n || 1));
         ents.forEach(function (x) { var best = x.e, amt = Math.floor((best.mhp || 0) * lv.pct / 100); if (best === p) p.hp = Math.min(p.mhp, p.hp + amt); else best.curHp = Math.min(best.mhp, best.curHp + amt); });
-        if (ents.length) fire('lovers');
+        if (ents.length) fire('lovers',null,{owner:p,kind:'heal',targets:ents.map(function(x){return x.e;}),verb:'治療'});
       }
       var wh = A('wheel');
       if (wh && X.inCombat()) {
@@ -363,7 +363,7 @@
     X.on('potion', function (d, est, hp0) {
       var p = P(); if (!p || !on(p)) return;
       var e = A('empress');
-      if (e) { var a = Math.floor(est * e.pct / 100); (p.allies || []).forEach(function (x) { if (x && !x._downed && x.curHp > 0) x.curHp = Math.min(x.mhp, x.curHp + a); }); fire('empress'); }
+      if (e) { var a = Math.floor(est * e.pct / 100); GiranPartyView.combatAllies(p).forEach(function (x) { if (x && !x._downed && x.curHp > 0) x.curHp = Math.min(x.mhp, x.curHp + a); }); fire('empress'); }
       var tp = A('temperance');
       if (tp) { var over = est - Math.max(0, (p.mhp || 0) - hp0); if (over > 0) { X.shield.add(over, Math.floor(p.mhp * tp.cap / 100)); fire('temperance'); } }
     });
@@ -635,7 +635,7 @@
 
   // ── 起源／創世：裝著的那張卡改用起源規則（玩家 2026-11-11 19:16 確認上線）──
   var OG = function (k) { var c = cur(); return c.origin && c.origin.i === K[k] ? c.origin.v : null; };
-  var ofire = function (k) { var i = K[k]; if (!X) return; X.pop('mioo' + i, (DB.items[idOf(i)] || {}).img, CARDS[i][0], '#22d3ee'); X.note('mioo' + i, '<span style="color:#22d3ee">🃏【' + CARDS[i][0] + '・起源】</span>' + esc(descOf(i, cur().origin.st))); };
+  var ofire = function (k) { var i = K[k]; if (!X) return; X.pop('mioo' + i, (DB.items[idOf(i)] || {}).img, CARDS[i][0], '#22d3ee', {owner:P(),verb:'起源密奧'}); X.note('mioo' + i, '<span style="color:#22d3ee">🃏【' + CARDS[i][0] + '・起源】</span>' + esc(descOf(i, cur().origin.st))); };
   var twHour = function () { return new Date(Date.now() + 8 * 3600000).getUTCHours(); };
   var isNight = function () { var h = twHour(); return h >= 18 || h < 6; };
   // 數值類：女祭司（MP 消耗）、月亮（夜晚迴避、命中）
@@ -689,7 +689,7 @@
       var p = P(); if (!p || !on(p) || p.dead) return;
       var c = cur(); if (!c.origin) return;
       var t = tk();
-      var em = OG('empress'); if (em && t >= og.regAt) { og.regAt = t + 50; p.hp = Math.min(p.mhp, (p.hp || 0) + em.hp); (p.allies || []).forEach(function (a) { if (a && !a._downed && a.curHp > 0) a.curHp = Math.min(a.mhp, a.curHp + em.hp); }); }
+      var em = OG('empress'); if (em && t >= og.regAt) { og.regAt = t + 50; p.hp = Math.min(p.mhp, (p.hp || 0) + em.hp); GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed && a.curHp > 0) a.curHp = Math.min(a.mhp, a.curHp + em.hp); }); }
       var hi = OG('hierophant');
       if (hi && t >= og.hierAt && X.inCombat()) {
         og.hierAt = t + hi.cd * 10; var any = false;

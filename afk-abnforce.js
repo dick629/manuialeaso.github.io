@@ -25,7 +25,7 @@
     try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) return true; } catch (e) {}
     try { return !!(W.__afkDimRift && W.__afkDimRift.on() && !inTown()); } catch (e) { return false; }
   };
-  var party = function () { var p = P(); if (!p) return []; return [p].concat((p.allies || []).filter(function (a) { return a && !a._downed; })); };
+  var party = function () { var p = P(); if (!p) return []; return [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed; })); };
   var isOurs = function (x) { var p = P(); return !!(x && p && (x === p || (p.allies || []).indexOf(x) >= 0)); };
   var RESF = { freeze: 'freezeResist', stun: 'stunResist', paralyze: 'paralyzeResist', sleep: 'sleepResist', slow: 'slowResist', poison: 'poisonResist' };
   // 抵抗＝全身的異常狀態抵抗＋該種類的抵抗（＋王者加護、鯤），不算免疫，最多 80%
@@ -56,8 +56,8 @@
     ['playerStatusResisted', 'allyStatusResisted'].forEach(function (fn) {
       var o = W[fn]; if (typeof o !== 'function' || o.__afkForce) return;
       var f = fn === 'playerStatusResisted'
-        ? function (kind) { if (!scope()) return o.apply(this, arguments); if (blockOnce(P(), kind)) return true; return Math.random() * 100 < resistOf(P(), kind); }
-        : function (ally, kind) { if (!scope()) return o.apply(this, arguments); if (blockOnce(ally, kind)) return true; return Math.random() * 100 < resistOf(ally, kind); };
+        ? function (kind, attacker, options) { if (options?.respectImmunity || !scope()) return o.apply(this, arguments); if (blockOnce(P(), kind)) return true; return Math.random() * 100 < resistOf(P(), kind); }
+        : function (ally, kind, attacker, options) { if (options?.respectImmunity || !scope()) return o.apply(this, arguments); if (blockOnce(ally, kind)) return true; return Math.random() * 100 < resistOf(ally, kind); };
       f.__afkForce = true; W[fn] = f;
       try { (0, eval)(fn + ' = window.' + fn); } catch (e) {}
     });
@@ -68,7 +68,8 @@
   var hookSet = function () {
     var B = W.AFK_RELIC_DEFENSE_BRIDGE; if (!B || typeof B.setStatus !== 'function' || B.__afkForce) return;
     var o = B.setStatus;
-    B.setStatus = function (actor, key, ticks, attacker) {
+    B.setStatus = function (actor, key, ticks, attacker, options) {
+      if (options?.respectImmunity) return o.apply(this, arguments);
       try {
         if (N(ticks) > 0 && isOurs(actor) && DEBUFFS.indexOf(key) >= 0 && scope()) {
           var r = resistOf(actor, key), st = actor.statuses || actor._statuses || actor.st || (actor.statuses = {});

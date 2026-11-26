@@ -55,7 +55,7 @@ body.m-unified :is(#town-interaction-container,#warehouse-window-frame,#collecti
 body.m-unified :is(#town-interaction-header,#warehouse-window-drag,#collection-panel>div>div:first-child,#equip-book>div>div:first-child,#misc-book>div>div:first-child,#card-book>div>div:first-child,#relic-book>div>div:first-child,#afk-poly-book>div>div:first-child,#afk-special-book>div>div:first-child){background:var(--lm-metal)!important;border-color:#615849!important;padding:15px!important}
 body.m-unified :is(#collection-panel button,.lm-currency-transfer button,#tab-automation select,#tab-automation input[type="number"],#warehouse-window-content select,#warehouse-window-content input){background:#27231d!important;border-color:#5d5649!important;color:#d6c69e!important;border-radius:3px!important;box-shadow:none!important}
 body.m-unified :is(.lm-shop-row,.lm-currency-transfer,.lm-warehouse-columns>div,#tab-automation>div){background:var(--lm-leather)!important;border-color:#474138!important;border-radius:4px!important;box-shadow:none!important}
-body.m-unified :is(.lm-book-grid>div:has(img),.afk-pc-tile,.afk-cb-tile,.afk-sc-tile){background:linear-gradient(145deg,#2d2923,#191714)!important;border-color:#534c3f!important;border-radius:3px!important;box-shadow:inset 0 1px #c5bb8e0d!important}
+body.m-unified :is(.lm-book-grid>.lm-book-tile,.afk-pc-tile,.afk-cb-tile,.afk-sc-tile){background:linear-gradient(145deg,#2d2923,#191714)!important;border-color:#534c3f!important;border-radius:3px!important;box-shadow:inset 0 1px #c5bb8e0d!important}
 body.m-unified :is(.afk-pc-tile.t3,.afk-sc-tile.got){border-color:#9e8b53!important;background:linear-gradient(145deg,#373128,#211e18)!important}
 body.m-unified :is(#afk-poly-codex details,.afk-sc-sec,#afk-codex){background:#1b1814!important;border-color:#575043!important;border-radius:3px!important}
 body.m-unified :is(#afk-poly-codex summary,.afk-sc-sec>summary){background:var(--lm-metal);color:#d6c392;padding:13px 11px}
@@ -117,8 +117,8 @@ body.m-unified #afk-npclist .afk-npcl-desc{line-height:1.7;color:#b0aa9a}
 body.m-unified #lm-status-toggle{display:flex;position:absolute;top:6px;right:8px;z-index:76;align-items:center;justify-content:center;gap:2px;width:44px;height:40px;padding:0;border:1px solid #a49774;background:#171b1de6;color:#e3d3a4;border-radius:3px;box-shadow:inset 0 0 8px #b2a87c22}
 body.m-unified #lm-status-toggle>span{font:26px/1 Georgia,serif}
 body.m-unified #lm-status-toggle small{font:11px/1 Arial}
-body.m-unified #battle-view:not(.lm-status-expanded) #status-icon-bar{display:none!important}
-body.m-unified #battle-view.lm-status-expanded #status-icon-bar{display:flex!important;flex-flow:row wrap!important;align-content:flex-start;gap:6px;padding:12px;background:#131614f5;border:1px solid #8c7d5c;max-height:184px;overflow-y:auto;pointer-events:auto;touch-action:pan-y;box-shadow:0 6px 16px #0008}
+body.m-unified :is(#battle-view,.ga-phone-status):not(.lm-status-expanded) #status-icon-bar{display:none!important}
+body.m-unified :is(#battle-view,.ga-phone-status).lm-status-expanded #status-icon-bar{display:flex!important;flex-flow:row wrap!important;align-content:flex-start;gap:6px;padding:12px;background:#131614f5;border:1px solid #8c7d5c;max-height:184px;overflow-y:auto;pointer-events:auto;touch-action:pan-y;box-shadow:0 6px 16px #0008}
 body.m-unified #status-icon-bar .status-icon{position:relative;display:block;width:30px;height:30px;flex:0 0 30px;opacity:1;border:1px solid #766c57;border-radius:2px;background:#252824;padding:0}
 body.m-unified #status-icon-bar .status-icon img{display:block;width:100%;height:100%;object-fit:cover}
 body.m-unified #status-icon-bar .lm-status-selected{border-color:#e1c98e}
@@ -399,7 +399,7 @@ body.m-unified #lm-detail-header h2{font-family:var(--lm-title);color:#e2d1a2;le
 body.m-unified #lm-detail-header button{background:var(--lm-metal);border-color:#948f8b;border-radius:1px;box-shadow:var(--lm-bevel);color:#ddd3b4}
 body.m-unified :is(#town-interaction-container,#warehouse-window-frame,#collection-panel>div,#equip-book>div,#misc-book>div,#card-book>div,#relic-book>div,#afk-poly-book>div,#afk-special-book>div){background:var(--lm-leather)!important;border-color:#827d7a!important;border-radius:0!important}
 body.m-unified :is(#town-interaction-header,#warehouse-window-drag,#equip-book-tabs,#misc-book-tabs,#card-book-tabs,#relic-book-tabs,#afk-poly-codex summary,.afk-sc-sec>summary){background:var(--lm-metal)!important;border-color:#77726f!important;color:#daceaa}
-body.m-unified :is(.lm-shop-row,.lm-currency-transfer,.lm-warehouse-columns>div,#tab-automation>div,.lm-book-grid>div:has(img),.afk-pc-tile,.afk-cb-tile,.afk-sc-tile,#afk-codex,#afk-poly-codex details,.afk-sc-sec){background:var(--lm-leather)!important;border-color:#65615e!important;border-radius:1px!important;box-shadow:inset 0 1px #c2bbb51a!important}
+body.m-unified :is(.lm-shop-row,.lm-currency-transfer,.lm-warehouse-columns>div,#tab-automation>div,.lm-book-grid>.lm-book-tile,.afk-pc-tile,.afk-cb-tile,.afk-sc-tile,#afk-codex,#afk-poly-codex details,.afk-sc-sec){background:var(--lm-leather)!important;border-color:#65615e!important;border-radius:1px!important;box-shadow:inset 0 1px #c2bbb51a!important}
 body.m-unified :is(.afk-pc-tile.t3,.afk-sc-tile.got){border-color:#b6a16e!important;background:linear-gradient(#3b3937,#262524)!important}
 body.m-unified #tab-automation{background:transparent;color:var(--lm-ink)}
 body.m-unified #tab-automation .lm-settings-heading{font-family:var(--lm-title);color:var(--lm-gold);border-color:#6a6764}
@@ -498,7 +498,7 @@ body.m-unified #lm-recovery{min-height:38px;color:#b1a47c;font-size:9px}
 body.m-unified #lm-recovery svg{width:18px;height:18px}
 /* The native 334 x 34 dual gauge places numeric values directly inside the two wells. */
 body.m-unified #lm-header .lm-vitals-row{display:block;width:100%;margin-top:2px}
-body.m-unified #lm-header .lm-vitals{display:block;position:relative;width:100%;max-width:none;height:38px;background:url('../assets/character/血條底圖.webp') center/100% 100% no-repeat}
+body.m-unified #lm-header .lm-vitals{display:block;position:relative;width:100%;max-width:none;height:38px;background:var(--lm-0502a2f8a6aa,url('../assets/character/血條底圖.webp')) center/100% 100% no-repeat}
 body.m-unified #lm-header .lm-vital{position:absolute;top:50%;transform:translateY(-50%);width:41.2%;height:13px;min-width:0;border:0;border-radius:8px;background:#120c0c;box-shadow:inset 0 1px #000b;overflow:hidden;font:11px/13px Arial,sans-serif}
 body.m-unified #lm-header .lm-hp{left:3.3%}
 body.m-unified #lm-header .lm-mp{left:55.5%;background:#080d18}
@@ -525,11 +525,11 @@ body.m-unified #lm-nav .lm-nav-icon img{width:27px;height:27px;filter:sepia(.24)
 body.m-unified #game-screen{background:#0e0d0b!important}
 body.m-unified #game-screen :is(.panel,#map-view-panel,#afk-hotbar,#tab-content-panel){border-image:none!important;border:1px solid var(--lm-edge)!important;border-radius:1px!important;box-shadow:inset 0 1px #c1a36715,0 2px 5px #0005!important;background:var(--lm-leather)!important}
 body.m-unified #game-screen #tab-content-panel.equipment-panel-host{border:0!important;background:transparent!important}
-/* Native map selectors are always available; there is no duplicate location heading. */
+/* Native map selectors follow the current encounter's navigation state. */
 body.m-unified #game-screen #map-view-panel>.panel-header{padding:5px!important;background:#14120ef0;border-bottom-color:#65512d}
 body.m-unified #game-screen #lm-map-controls{padding:0!important;gap:5px!important}
 body.m-unified #map-view-panel #afk-ev-badges{display:none!important}
-body.m-unified #game-screen #lm-map-controls :is(#map-category,#map-select){display:block!important;min-height:32px!important;height:32px!important;font-size:13px!important;background:#0c0c0b!important;color:#e2d8bb!important;border-color:#6a5b3e!important}
+body.m-unified #game-screen #lm-map-controls :is(#map-category,#map-select){min-height:32px!important;height:32px!important;font-size:13px!important;background:#0c0c0b!important;color:#e2d8bb!important;border-color:#6a5b3e!important}
 body.m-unified #game-screen #map-view-panel #lm-map-controls :is(#btn-pandora-shortcut,#btn-teleport,#btn-return-town){background:var(--lm-metal)!important;border-color:#756039;color:#dfd2aa;box-shadow:var(--lm-bevel)}
 body.m-unified #game-screen .afk-npcl-row{background:linear-gradient(90deg,#31291b55,#11100e88)!important;border-bottom-color:#65543966!important}
 body.m-unified #afk-npclist .afk-npcl-desc{color:#b7b09c}
@@ -553,7 +553,7 @@ body.m-unified #lm-detail-header h2{color:#e4d6ad;font-size:16px;letter-spacing:
 body.m-unified #lm-detail-header button{background:var(--lm-metal);border:1px solid var(--lm-edge);border-radius:1px;box-shadow:var(--lm-bevel);color:var(--lm-ink)}
 body.m-unified :is(#town-interaction-container,#warehouse-window-frame,#collection-panel>div,#equip-book>div,#misc-book>div,#card-book>div,#relic-book>div,#afk-poly-book>div,#afk-special-book>div){background:var(--lm-leather)!important;border:1px solid var(--lm-edge)!important;border-image:none!important;border-radius:1px!important}
 body.m-unified :is(#town-interaction-header,#warehouse-window-drag,#equip-book-tabs,#misc-book-tabs,#card-book-tabs,#relic-book-tabs,#afk-poly-codex summary,.afk-sc-sec>summary){background:var(--lm-metal)!important;border-color:var(--lm-edge)!important;color:var(--lm-gold)}
-body.m-unified :is(.lm-shop-row,.lm-currency-transfer,.lm-warehouse-columns>div,#tab-automation>div,.lm-book-grid>div:has(img),.afk-pc-tile,.afk-cb-tile,.afk-sc-tile,#afk-codex,#afk-poly-codex details,.afk-sc-sec){background:#1b1913!important;border-color:var(--lm-edge)!important;border-radius:1px!important;box-shadow:none!important}
+body.m-unified :is(.lm-shop-row,.lm-currency-transfer,.lm-warehouse-columns>div,#tab-automation>div,.lm-book-grid>.lm-book-tile,.afk-pc-tile,.afk-cb-tile,.afk-sc-tile,#afk-codex,#afk-poly-codex details,.afk-sc-sec){background:#1b1913!important;border-color:var(--lm-edge)!important;border-radius:1px!important;box-shadow:none!important}
 body.m-unified :is(.afk-pc-tile.t3,.afk-sc-tile.got){background:var(--lm-selected)!important;border-color:#b59c5b!important}
 body.m-unified #lm-detail-body :is(.pandora-market-panel,.afk-hb-box,#afk-radio-menu,#m-wiki-wrap,#afk-ms-card,#afk-toggles-overlay>div){background:var(--lm-leather)!important;border-color:var(--lm-edge)!important}
 body.m-unified #lm-detail-body :is(.pandora-market-card,.pandora-buy-box,.pandora-relic-board,.pandora-relic-slot,.afk-bd,.dmgf-card,.afk-hb-foot,.afk-hb-side,.m-wiki-sec,.m-wiki-note,.m-wiki-card,.m-wiki-table,.m-eq-filter,#m-wiki-searchrow){background:#1b1913!important;border-color:var(--lm-edge)!important}
@@ -629,7 +629,7 @@ body.m-unified .lm-menu-group h3::after{content:"";height:1px;flex:1;background:
 body.m-unified #lm-logs #afk-hb-btn{min-height:30px;padding:4px 9px;border:1px solid var(--lm-edge);border-radius:1px;background:var(--lm-metal);color:var(--lm-ink);font-size:12px;box-shadow:var(--lm-bevel)}
 
 /* Forged pewter / slate redesign. Real reusable material art; native controls stay intact. */
-body.m-unified{--lm-stone:url('../assets/ui/medieval-slate-v3.webp');--lm-forged:url('../assets/ui/medieval-pewter-frame-v3.webp');--lm-ink:#e7e3d6;--lm-muted:#a5afa8;--lm-gold:#cfbd90;--lm-edge:#777b6d;--lm-soft-edge:#3d4743;--lm-deep:#0e1414;--lm-surface:#1a2423;--lm-leather:linear-gradient(115deg,#26323170,#11191aba),var(--lm-stone) center/384px repeat;--lm-metal:linear-gradient(#424b46,#262f2c 42%,#192321 52%,#29342f);--lm-recess:#0b1314;--lm-info:linear-gradient(130deg,#1b2f36,#111f25);--lm-selected:linear-gradient(#605844,#3d3b2e 46%,#282d24 52%,#454536);--lm-bevel:inset 0 1px #e1dfc83d,inset 0 -1px #050b0a,0 2px 3px #0008;--lm-title:"PMingLiU","Noto Serif TC",serif}
+body.m-unified{--lm-stone:var(--lm-8b9dfc8bc472,url('../assets/ui/medieval-slate-v3.webp'));--lm-forged:var(--lm-5c5751b09592,url('../assets/ui/medieval-pewter-frame-v3.webp'));--lm-ink:#e7e3d6;--lm-muted:#a5afa8;--lm-gold:#cfbd90;--lm-edge:#777b6d;--lm-soft-edge:#3d4743;--lm-deep:#0e1414;--lm-surface:#1a2423;--lm-leather:linear-gradient(115deg,#26323170,#11191aba),var(--lm-stone) center/384px repeat;--lm-metal:linear-gradient(#424b46,#262f2c 42%,#192321 52%,#29342f);--lm-recess:#0b1314;--lm-info:linear-gradient(130deg,#1b2f36,#111f25);--lm-selected:linear-gradient(#605844,#3d3b2e 46%,#282d24 52%,#454536);--lm-bevel:inset 0 1px #e1dfc83d,inset 0 -1px #050b0a,0 2px 3px #0008;--lm-title:"PMingLiU","Noto Serif TC",serif}
 body.m-unified :is(#lm-header,#lm-nav,#lm-detail-header,.lm-menu-banner){background:var(--lm-leather);border-color:#929380;box-shadow:inset 0 1px #d4d0ba66,inset 0 -2px #060d0d,0 3px 8px #0009}
 body.m-unified #lm-header{padding:10px 12px 6px;border-bottom:3px double #8a8d79}
 body.m-unified .lm-hud{grid-template-columns:42px minmax(0,1fr) 30px;gap:8px}
@@ -672,11 +672,11 @@ body.m-unified #game-screen #afk-hotbar :is(.hb-moon,.hb-lock),body.m-unified #l
 body.m-unified[data-mobile-tab="skill"] #game-screen #tab-content-panel,body.m-unified[data-mobile-page="bag"] #game-screen #tab-content-panel{border:0!important;background:transparent!important;box-shadow:none!important}
 body.m-unified #tab-skill .classic-skill-window{gap:8px;padding:12px 10px 9px;background:var(--lm-leather)!important;border:1px solid transparent!important;border-image:var(--lm-forged) 16% stretch!important;border-image-width:10px!important;box-shadow:inset 0 0 30px #061013cc!important}
 body.m-unified #tab-skill .classic-skill-heading{min-height:32px;font-size:17px;padding:0 3px 6px;color:#e3d8bb;border-bottom:3px double #8c9175;letter-spacing:.07em;text-shadow:0 2px 2px #000}
-body.m-unified #tab-skill .classic-skill-heading::before{content:"";width:19px;height:23px;flex:none;background:url('../assets/icons/items/古代的卷軸.png') center/contain no-repeat;filter:saturate(.5) brightness(1.3)}
+body.m-unified #tab-skill .classic-skill-heading::before{content:"";width:19px;height:23px;flex:none;background:var(--lm-a9ccfa27a254,url('../assets/icons/items/古代的卷軸.png')) center/contain no-repeat;filter:saturate(.5) brightness(1.3)}
 body.m-unified #tab-skill .classic-skill-mode{background:#091416aa;border:1px solid #687560;gap:2px;padding:2px}
 body.m-unified #tab-skill .classic-skill-mode button{height:32px;min-height:32px;background:var(--lm-metal)!important;border:1px solid #85907a;border-bottom-color:#0b1411;box-shadow:var(--lm-bevel)!important;color:#b8c2b0!important}
 body.m-unified #tab-skill .classic-skill-mode button.active{background:var(--lm-selected)!important;border:1px solid #c3b583;color:#fff0c8!important;box-shadow:inset 0 0 0 1px #1b2118,inset 0 -2px #bbaa73!important}
-body.m-unified #tab-skill .classic-skill-tier-strip{display:none!important}
+body.m-unified #tab-skill .classic-skill-window:not([data-skill-mode="general"]) .classic-skill-tier-strip,body.m-unified #tab-skill .class-tabmode .classic-skill-tier-strip{display:none!important}
 body.m-unified #tab-skill .classic-skill-tier-hit{background:linear-gradient(#25332e,#101c1c)!important;border-color:#66745e!important;color:#bfcbba!important;box-shadow:inset 0 1px #a1ad8c44,inset 0 -1px #030b08!important}
 body.m-unified #tab-skill .classic-skill-tier-hit[aria-pressed="true"]:not(:disabled){background:var(--lm-selected)!important;border-color:#d8c98c!important;color:#ffedbb!important;box-shadow:inset 0 0 0 1px #2c3020,inset 0 1px #f2e2a166!important}
 body.m-unified #tab-skill .classic-skill-tier-hit:disabled{color:#68756a!important;background:#0c1718!important;border-color:#35463e!important}
@@ -716,7 +716,7 @@ body.m-unified #lm-detail-header button{background:var(--lm-metal);border-color:
 body.m-unified #lm-detail,body.m-unified #lm-detail-body .lm-surface{background:linear-gradient(#0d191a99,#091415b8),var(--lm-stone) center/384px repeat!important}
 body.m-unified :is(#town-interaction-container,#warehouse-window-frame,#collection-panel>div,#equip-book>div,#misc-book>div,#card-book>div,#relic-book>div,#afk-poly-book>div,#afk-special-book>div){background:var(--lm-leather)!important;border:1px solid transparent!important;border-image:var(--lm-forged) 16% stretch!important;border-image-width:8px!important}
 body.m-unified :is(#town-interaction-header,#warehouse-window-drag,#equip-book-tabs,#misc-book-tabs,#card-book-tabs,#afk-poly-codex summary,.afk-sc-sec>summary){background:var(--lm-metal)!important;color:#ddd8b9!important;border-color:#839274!important}
-body.m-unified :is(.lm-shop-row,.lm-currency-transfer,.lm-warehouse-columns>div,#tab-automation>div,.lm-book-grid>div:has(img),.afk-pc-tile,.afk-cb-tile,.afk-sc-tile,#afk-codex,#afk-poly-codex details,.afk-sc-sec){background:linear-gradient(120deg,#25342dc9,#111f21e6)!important;border-color:#687f65!important;box-shadow:inset 0 1px #bbcc9f24!important}
+body.m-unified :is(.lm-shop-row,.lm-currency-transfer,.lm-warehouse-columns>div,#tab-automation>div,.lm-book-grid>.lm-book-tile,.afk-pc-tile,.afk-cb-tile,.afk-sc-tile,#afk-codex,#afk-poly-codex details,.afk-sc-sec){background:linear-gradient(120deg,#25342dc9,#111f21e6)!important;border-color:#687f65!important;box-shadow:inset 0 1px #bbcc9f24!important}
 body.m-unified #lm-detail-body :is(.pandora-market-panel,.afk-hb-box,#afk-radio-menu,#m-wiki-wrap,#afk-ms-card,#afk-toggles-overlay>div){background:var(--lm-leather)!important;border-color:#8b9b7b!important}
 body.m-unified #lm-detail-body :is(.pandora-market-card,.pandora-buy-box,.pandora-relic-board,.pandora-relic-slot,.afk-bd,.dmgf-card,.afk-hb-foot,.afk-hb-side,.m-wiki-sec,.m-wiki-note,.m-wiki-card,.m-wiki-table,.m-eq-filter,#m-wiki-searchrow){background:#172729!important;border-color:#61795f!important}
 body.m-unified #game-screen #lm-logs :is(#combat-log,#sys-log,#world-log){background:#0b171aeb!important;border-color:#697f66;color:#c4cebb}
@@ -727,7 +727,7 @@ body.m-unified #warehouse-window-content{background:#0e1b1d;color:#c7cfbb}
 body.m-unified.afk-ms-lite{--lm-leather:linear-gradient(#27322d,#122022);--lm-stone:none}
 
 /* Black marble outer shell; calligraphic headings with plain, stable numerals. */
-body.m-unified{--lm-marble:url('../assets/ui/black-marble-v4.webp');--lm-title:"DFKai-SB","BiauKai","Kaiti TC","KaiTi","Songti TC","Noto Serif TC",serif;--lm-outer:var(--lm-marble) center top/512px repeat #080909}
+body.m-unified{--lm-marble:var(--lm-95c7b10d9272,url('../assets/ui/black-marble-v4.webp'));--lm-title:"DFKai-SB","BiauKai","Kaiti TC","KaiTi","Songti TC","Noto Serif TC",serif;--lm-outer:var(--lm-marble) center top/512px repeat #080909}
 body.m-unified,body.m-unified.lm-phone-display{background:var(--lm-outer)}
 body.m-unified #game-screen{background:var(--lm-outer)!important}
 body.m-unified :is(#lm-header,#lm-nav,#lm-subnav,#lm-detail-header){background:var(--lm-outer)}
@@ -760,7 +760,7 @@ body.m-unified #game-screen #afk-hotbar .hb-lock{font-size:20px}
 body.m-unified #tab-skill .classic-skill-unlearned img{opacity:.55}
 
 /* Silver marble belongs to the skill book; other panels retain their green slate. */
-body.m-unified #tab-skill{--lm-stone:url('../assets/ui/silver-marble-v5.webp');--lm-leather:linear-gradient(115deg,#10141d38,#0a0c1450),var(--lm-stone) center/384px repeat;--lm-metal:linear-gradient(#72777b,#52585d 42%,#343a40 52%,#535a60);--lm-selected:linear-gradient(#8c7e5b,#605a45 46%,#414137 52%,#676348)}
+body.m-unified #tab-skill{--lm-stone:var(--lm-370bf5589b37,url('../assets/ui/silver-marble-v5.webp'));--lm-leather:linear-gradient(115deg,#10141d38,#0a0c1450),var(--lm-stone) center/384px repeat;--lm-metal:linear-gradient(#72777b,#52585d 42%,#343a40 52%,#535a60);--lm-selected:linear-gradient(#8c7e5b,#605a45 46%,#414137 52%,#676348)}
 body.m-unified.afk-ms-lite #tab-skill{--lm-stone:none;--lm-leather:linear-gradient(#555c62,#333940)}
 body.m-unified[data-mobile-page="character"] #lm-subnav button:nth-child(1){--lm-tab-ink:#ebcb83}
 body.m-unified[data-mobile-page="character"] #lm-subnav button:nth-child(2){--lm-tab-ink:#99cdec}
@@ -773,7 +773,7 @@ body.m-unified #tab-skill .classic-skill-mode button:nth-child(3){--lm-tab-ink:#
 body.m-unified #tab-skill .classic-skill-mode button,body.m-unified #tab-skill .classic-skill-mode button.active{color:var(--lm-tab-ink)!important}
 
 /* High-resolution painted icons use smooth downsampling; legacy pixel sprites retain their own rendering. */
-body.m-unified img[src*='assets/icons/hd/'],body.m-unified img[data-hd-icon]{image-rendering:auto!important}
+body.m-unified img[data-art-raster~='hd'],body.m-unified img[data-hd-icon]{image-rendering:auto!important}
 
 /* Item labels use the same calligraphic family and weight as the navigation. */
 body.m-unified #tab-content-panel .classic-name-box{font-family:var(--lm-title)!important;font-weight:400!important;letter-spacing:.015em;text-shadow:0 1px 2px #0009!important}

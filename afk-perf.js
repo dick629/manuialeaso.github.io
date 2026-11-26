@@ -53,27 +53,42 @@
     // 看不到的日誌框（手機收起來的日誌、別的分頁）不量 scrollHeight：量一次就是一次強制排版。
     //   用 IntersectionObserver 記可見與否（不會觸發排版）；重新看得到時，若沒被玩家往上捲住就捲到底一次。
     var logVis = {}, logPend = {}, logIO = null;
+    var hiddenJournal = function (id) {
+      if(logVis[id]!==false||!document.body.classList.contains('giran-running'))return false;
+      if(id==='world-log')return document.body.classList.contains('m-unified');
+      return (id==='combat-log'||id==='sys-log')&&!!window.GiranJournal;
+    };
     try {
       if (typeof IntersectionObserver === 'function') logIO = new IntersectionObserver(function (ents) {
         ents.forEach(function (en) {
           var id = en.target.id; logVis[id] = en.isIntersecting;
-          if (en.isIntersecting && logPend[id]) { logPend[id] = false; var el = en.target, q = queues[id]; try { if (!q || !q.locked()) el.scrollTop = el.scrollHeight; } catch (e) {} }
+          if (en.isIntersecting && logPend[id]) {
+            logPend[id] = false;
+            var q = queues[id];
+            if (q && q.html.length) flushOne(id);
+            if (!q || !q.locked()) en.target.scrollTop = 0x7fffffff;
+          }
         });
       });
     } catch (e) { logIO = null; }
-    var flushAll = function () {
+    var flushAll = function (force) {
       scheduled = false;
       var scroll = [];
       // Finish every channel's DOM writes before reading any layout. Otherwise
       // combat's scrollHeight flushes layout, then system/world invalidate it
       // again. Keep the same nodes, trimming, lock checks and flush timing.
-      for (var id in queues) { try { var el = flushOne(id); if (el) {
+      for (var id in queues) { try {
+        // The fusion journal records combat at enqueue time. Keep the bounded
+        // native log in memory while its panel is hidden, then paint on reveal.
+        if (force !== true && hiddenJournal(id)) {
+          logPend[id] = true; continue;
+        }
+        var el = flushOne(id); if (el) {
         if (logIO && !(id in logVis)) { logVis[id] = null; try { logIO.observe(el); } catch (e) {} }
-        if (logVis[id] === false) { logPend[id] = true; continue; }
+        if (logIO && logVis[id] !== true) { logPend[id] = true; continue; }
         scroll.push({ el: el });
       } } catch (e) {} }
-      for (var i = 0; i < scroll.length; i++) { try { scroll[i].top = scroll[i].el.scrollHeight; scroll[i].ready = true; } catch (e) {} }
-      for (var j = 0; j < scroll.length; j++) { if (scroll[j].ready) { try { scroll[j].el.scrollTop = scroll[j].top; } catch (e) {} } }
+      for (var i = 0; i < scroll.length; i++) { try { scroll[i].el.scrollTop = 0x7fffffff; } catch (e) {} }
     };
     var schedule = function () {
       if (scheduled) return;
@@ -86,10 +101,15 @@
     };
     var enqueue = function (id, html, locked, max) {
       var q = queues[id] || (queues[id] = { html: [], locked: locked, max: max });
-      q.html.push(html);
+      q.html.push(window.GiranJournal ? window.GiranJournal.markup(id,html) : html);
       var cap = max();
       if (q.html.length > cap) q.html.splice(0, q.html.length - cap);
-      schedule();
+      if (hiddenJournal(id)) logPend[id] = true;
+      else schedule();
+    };
+    window.__afkDiscardPendingStockLog = function () {
+      var q = queues['sys-log'];
+      if (q) q.html = q.html.filter(function (row) { return !row.includes('class="pandora-stock-log"'); });
     };
     document.addEventListener('visibilitychange', function () { if (!document.hidden && !scheduled) { scheduled = true; requestAnimationFrame(flushAll); } });
 
@@ -135,7 +155,7 @@
     window.logSys = perfLogSys;
     if (typeof window.logWorld === 'function') window.logWorld = perfLogWorld;
     // 供除錯/測試：立刻把佇列寫進 DOM
-    window.__afkPerfFlushLogs = flushAll;
+    window.__afkPerfFlushLogs = function () { flushAll(true); };
   }
 
   // ──────────────────────────────────────────────────────────────────────
@@ -234,7 +254,7 @@
     };
     // The merged phone uses #game-screen as its only scroll container.
     // Its 56px rows plus 2px gaps match merged/mobile-shell.css; details keep the full name.
-    var phoneWindow = function () { return document.body.classList.contains('m-unified') && document.body.classList.contains('afk-invlist'); };
+    var phoneWindow = function () { return document.body.classList.contains('m-unified') && document.body.classList.contains('afk-invlist') && !document.body.classList.contains('giran-chrome'); };
     var scrollInfo = function (tab) {
       var vp = vpOf(tab);
       if (!phoneWindow()) return { top: vp ? vp.scrollTop : 0, height: vp ? vp.clientHeight : 400 };
@@ -355,17 +375,18 @@
     var installBuffStage = function () {
       var orig = window.renderStatusEffects;
       if (typeof orig !== 'function' || orig.__afkPerfStage) return;
+      var stage = document.createElement('div');
       var staged = function () {
         var real = document.getElementById('dt-buffs');
         if ((typeof state !== 'undefined' && state.ff) || !real || !real.parentNode) return orig.apply(this, arguments);
-        var stage = real.cloneNode(false), r;
-        stage.style.display = 'none';
-        real.id = 'dt-buffs__live';
-        real.parentNode.insertBefore(stage, real);
-        try { r = orig.apply(this, arguments); }
-        finally {
-          stage.remove(); real.id = 'dt-buffs';
-          if (stage.innerHTML !== real.innerHTML) { var frag = document.createDocumentFragment(); while (stage.firstChild) frag.appendChild(stage.firstChild); real.replaceChildren(frag); }
+        if (window.__afkBuffTextTarget) return orig.apply(this, arguments);
+        window.__afkBuffTextTarget = stage;
+        var r;
+        try {
+          r = orig.apply(this, arguments);
+          if (stage.innerHTML !== real.innerHTML) real.replaceChildren(...stage.childNodes);
+        } finally {
+          delete window.__afkBuffTextTarget;
         }
         return r;
       };
@@ -401,7 +422,11 @@
       if (!v || depth > 6) return out;
       if (v instanceof HTMLImageElement) { out.push(v); return out; }
       if (Array.isArray(v)) { for (var i = 0; i < v.length; i++) imagesOf(v[i], out, depth + 1); return out; }
-      if (typeof v === 'object') for (var k in v) imagesOf(v[k], out, depth + 1);
+      // A memory census must never start loading a pose that has not been played.
+      if (typeof v === 'object') for (var k of Object.keys(v)) {
+        var descriptor=Object.getOwnPropertyDescriptor(v,k);
+        if ('value' in descriptor) imagesOf(descriptor.value,out,depth+1);
+      }
       return out;
     };
     var bytesOf = function (v, imgs) {
@@ -456,47 +481,13 @@
   // ⑤ 特效讀位置合併到下一幀（perf-vfx，2026-10-21 量測）
   //    8 人隊伍 30 秒取樣：getBoundingClientRect 佔 2.65%（大多是 _vfxFlush 在每次重建怪物格「之後立刻」量座標
   //    ＝每個 tick 都強迫瀏覽器多排版一次）。改成：
-  //      ・_vfxFlush（傷害數字／濺血）與 vfxMiss（未命中）延到下一幀開頭一起量、一起畫——一幀最多排版一次
+  //      ・傷害、護盾、未命中及致命數字由 09-vfx-render.js 的共用佇列於下一幀繪製。
   //      ・_vfxSlotRect（法術拋射物起點）同一幀內同一格只量一次
   //      ・寵物圖層的戰場寬高改用 ResizeObserver 快取，不再每秒 8 次重新量（需核心補丁 21）
   //    飄字位置照舊是怪物圖層的實際位置，只是晚最多一幀（約 16 毫秒）出現。
   // ──────────────────────────────────────────────────────────────────────
   if (on('perf-vfx')) {
     var raf = function (fn) { if (document.hidden) setTimeout(fn, 0); else requestAnimationFrame(fn); };
-    if (typeof window._vfxFlush === 'function') {
-      var oFlush = window._vfxFlush, flushQ = false;
-      window._vfxFlush = function () {
-        if (flushQ) return;
-        flushQ = true;
-        raf(function () { flushQ = false; try { oFlush(); } catch (e) {} });
-      };
-    }
-    if (typeof window.vfxMiss === 'function' && typeof window._vfxNumber === 'function') {
-      var missQ = [], missSched = false;
-      var flushMiss = function () {
-        missSched = false;
-        var q = missQ; missQ = [];
-        if (document.hidden || window.__vfxNumOff || !q.length) return;
-        var ml = document.getElementById('mob-list'); if (!ml) return;
-        var pts = [];
-        for (var i = 0; i < q.length; i++) {   // 先全部量完
-          var slot = ml.querySelector('.mob-target[data-uid="' + q[i] + '"]'); if (!slot) continue;
-          var box = slot.querySelector('.mob-img-inner') || slot.querySelector('.mob-img-wrap') || slot;
-          var r = box.getBoundingClientRect(); if (r.width === 0) continue;
-          pts.push([r.left + r.width / 2, r.top + r.height * 0.40]);
-        }
-        var layer = _vfxLayer();
-        for (var j = 0; j < pts.length; j++) {   // 再一起畫
-          if (layer.childElementCount >= 200) break;
-          _vfxNumber(pts[j][0] + (Math.random() * 18 - 9), pts[j][1], '未命中', 'miss');
-        }
-      };
-      window.vfxMiss = function (mob) {
-        if (window.__vfxNumOff || !mob || document.hidden || (typeof state !== 'undefined' && state.ff)) return;
-        if (missQ.length < 60) missQ.push(mob.uid);
-        if (!missSched) { missSched = true; raf(flushMiss); }
-      };
-    }
     var pickRect = { on: false, at: 0, m: {} };
     if (typeof window._vfxSlotRect === 'function') {
       var oRect = window._vfxSlotRect, rectCache = null;
@@ -542,6 +533,8 @@
     if (typeof window._petPickTarget === 'function' && !window._petPickTarget.__afkPerf) {
       var oPick = window._petPickTarget, pickMemo = new WeakMap();
       window._petPickTarget = function (pet) {
+        // Walking-map targeting uses tile positions already maintained by the battlefield.
+        if (window.GiranCombat?.inWorld() || window.GiranRoam?.manual()) return oPick.apply(this, arguments);
         if (!pet || typeof pet !== 'object' || typeof state === 'undefined' || typeof mapState === 'undefined' || !mapState.mobs) return oPick.apply(this, arguments);
         var t = state.ticks, m = pickMemo.get(pet), g = m && m.tgt;
         if (g && m.map === mapState.current && t >= m.at && t - m.at < 5 && g.curHp > 0 && !g._dead && mapState.mobs.indexOf(g) >= 0) return g;
@@ -666,12 +659,17 @@
     };
     if (typeof window._vfxBlood === 'function') {
       var oBlood = window._vfxBlood, bloodLive = null;
-      window._vfxBlood = function () {
+      window._vfxBlood = function (cx, cy, big, layer, fieldReady) {
         try {
-          if (!bloodLive) bloodLive = document.getElementsByClassName('vfx-blood');
-          if (bloodLive.length >= 40) return;
+          if (fieldReady === undefined) fieldReady = !!window.GiranCombat?.field?.ready();
+          if (fieldReady) {
+            if (_fieldBloodCount >= 40) return;
+          } else {
+            if (!bloodLive) bloodLive = document.getElementsByClassName('vfx-blood');
+            if (bloodLive.length >= 40) return;
+          }
         } catch (e) {}
-        return oBlood.apply(this, arguments);
+        return oBlood(cx, cy, big, layer, fieldReady);
       };
     }
   }

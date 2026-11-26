@@ -393,6 +393,9 @@
     levelup:        '重新取樣：離線期間升級，戰力變了要重量殺速',
     dry:            '重新取樣：消耗品用完又補不到貨，戰局質變',
     'king-left':    '快轉收尾：鑰匙用完被傳回村莊',
+    'hunt-orders':  '依隊長狩獵設定逐拍結算',
+    'twisted-fee':  '金幣不足，扭亂時空的狩獵已結束，已回到席琳神殿',
+    'hunt-home':    '隊長啟動保護，全隊已回村',
     error:          '完整模擬：快轉途中發生異常，安全起見退回',
     debug:          '完整模擬：除錯強制'
   };
@@ -406,7 +409,7 @@
       var d = (after.inv[id] || 0) - (before.inv[id] || 0);
       if (d > 0) {
         var dd = (typeof DB !== 'undefined' && DB.items && DB.items[id]) ? DB.items[id] : null;
-        out.push({ n: dd ? dd.n : id, cnt: d, c: itemColorClass(id) });
+        out.push({ id: id, n: dd ? dd.n : id, cnt: d, c: itemColorClass(id) });
       }
     }
     out.sort(function (a, b) { return b.cnt - a.cnt; });
@@ -733,7 +736,11 @@
       state._oblivionAdvance = false;
       enterOblivionMap(huntMap);
     } else {
+      // Loading a slot briefly shows the home town. Restore the deadline from
+      // the saved map only when resuming that same hunt.
+      var feeDue = huntMap === window.TwistedSpace?.map ? mapState.twistedFeeDue : null;
       gotoMap(huntMap);
+      if (Number.isSafeInteger(feeDue) && mapState.current === huntMap) mapState.twistedFeeDue = feeDue;
       // 🌑 聖地 BOSS 房離線續戰：視同「繼續打你關遊戲時正在打的那隻（已付過入場費）」→ 第一隻免費、之後每次復活扣 1 入場道具
       //   （sanctBossRespawnCharge 於 state.ff 照扣；扣光被踢回長老會議廳、後續空轉自然停）。
       if (typeof SANCT_RESPAWN_COST !== 'undefined' && SANCT_RESPAWN_COST[huntMap]) mapState._sanctBossSpawned = false;
@@ -792,14 +799,16 @@
     //   而結算耗時「幾乎沒變快」(19→20s / 16→10s):王房的內容就是 BOSS 對打本身,首打+5% 抽驗全是真打,
     //   沒有可跳過的小怪 farming → 快速模式無利可圖。全模擬跑王房本來就快(24h ≈ 75 秒)。
     //   (事件迴圈仍保留 _kbRespawnAt 時間軸與 kingLeftRoom 偵測——若日後重啟,把下行 !isKing 拿掉即可。)
+    var useHuntOrders=!!(window.GiranRoam?.manual() || window.GiranHunt?.exactSettlement()),orderTown=null;
     var fastEligible = !window.TwistedSpace?.here() && !isClimb && !isKing && (!isObl || (preObl && preObl.phase === 'island'))
-      && totalTicks >= (FAST_SAMPLE_TICKS + FAST_MIN_REMAIN) && !_forceNoFast;
+      && totalTicks >= (FAST_SAMPLE_TICKS + FAST_MIN_REMAIN) && !_forceNoFast && !useHuntOrders;
     var fastMode = false, fastOff = false;   // fastOff = 本次補跑永久退出快速段
     // 📝 快轉狀態代碼(寫進離線紀錄的 fastWhy,供離線掛機紀錄／診斷檔顯示為什麼慢)。
     //   語意=「本次結算最後一次決定快轉狀態的原因」:不合格的當下就定案;合格的先記 sampling,
     //   之後由快取命中 / evalSample / 各退出分支改寫。順序不可調——不合格的原因要由「最specific」往下判,
     //   遺忘之島本島但時間太短該記 short 而非 obl-travel。
     var fastWhy = fastEligible ? 'sampling'
+      : useHuntOrders ? 'hunt-orders'
       : _forceNoFast ? 'debug'
       : isClimb ? 'climb'
       : isKing ? 'king'
@@ -1095,7 +1104,7 @@
     //   快速段不跑 tick → 冷卻不倒數、卷軸不會用,取樣或 BOSS 真打時倒下的傭兵會整晚躺著。這裡照推進的拍數倒數,直接呼叫原作那支函式。
     function fastAllyRevive(adv) {
       if (!(adv > 0)) return;
-      (player.allies || []).forEach(function (a) {
+      GiranPartyView.combatAllies().forEach(function (a) {
         if (!a || !a._downed) return;
         if ((a._reviveCd || 0) > 0) a._reviveCd = Math.max(0, a._reviveCd - adv);
         try { if (typeof tryAutoReviveMercScroll === 'function') tryAutoReviveMercScroll(a); } catch (e) {}
@@ -1194,7 +1203,7 @@
     // stamp() 在 catchingUp 期間一律跳過(心跳/存檔/落點 changeMap 都蓋不了錨點),錨點只由這裡推進。
     // debug forceCatchup 無 timing → 不做檢查點、不動錨點(維持既有 debug 行為:不寫紀錄、結束才 stamp)。
     var _ckptLastMs = performance.now();
-    function buildHistRec() {   // 組一筆離線紀錄:檢查點=「進行中」版本、結算完成=最終版本;同 closeTs 由 recordHistory 覆寫
+    function buildHistRec(checkpoint) {   // 同 closeTs 的最終結算會取代檢查點。
       var a2 = snapshot();
       var hKills = [];
       for (var kn in killTally) hKills.push({ n: kn, cnt: killTally[kn] });
@@ -1211,7 +1220,7 @@
       var hExp = expTotal(a2.lv, a2.exp) - expTotal(before.lv, before.exp); if (hExp < 0) hExp = 0;
       var loginTs2 = (timing && timing.loginTs) || Date.now();
       return {
-        v: 1,
+        v: 1, roleSeed: player.enSeed, checkpoint: !!checkpoint, source: timing.source || 'offline',
         closeTs: timing.closeTs,            // 關閉(離線開始)時間
         loginTs: loginTs2,                  // 登入(離線結束)時間
         realMs: Math.max(0, loginTs2 - timing.closeTs),   // 真實離線時間(未封頂)→ 顯示「共 X 時 Y 分」
@@ -1274,7 +1283,7 @@
         try { if (typeof saveGame === 'function') saveGame(); } finally { _saveSquelch = _sq; wallHoldsApply(); }   // ff 下 logSys 靜音,不會洗「進度已儲存」;saveGame 尾端的 offlineStamp 被 catchingUp 擋掉,不影響錨點
         stampCore(timing.closeTs + done * TICK_MS);       // 錨點=已結算到的時間點(絕不用 now,剩餘離線時間才不會被吃掉)
         _ckptN++; _ckptMs += performance.now() - _ck0;    // 先累計再寫紀錄,這一次的成本才會進到這筆紀錄裡
-        recordHistory(buildHistRec());                    // 已結算部分先寫進離線紀錄(同 closeTs 覆寫,不會多筆)
+        recordHistory(buildHistRec(true));                // 已結算部分先寫進離線紀錄(同 closeTs 覆寫,不會多筆)
       } catch (eCk) {}
       _ckptLastMs = performance.now();
     }
@@ -1282,7 +1291,7 @@
 
     _saveSquelch = true;   // ⚡ 補跑迴圈期間擋核心逐殺 saveGame(檢查點/結算尾照存,見 doCheckpoint 與迴圈後)
     try {
-      while (done < totalTicks && !_abortCatchup) {
+      while (done < totalTicks && !_abortCatchup && !orderTown) {
         if (player.dead || !state.running) { died = !!player.dead; break; }
         var t0 = performance.now(), _evBefore = _fastEvents;
         while (done < totalTicks && !player.dead && state.running && !_abortCatchup &&
@@ -1357,6 +1366,11 @@
           tick();
           settleDeadMobs();
           done++; _realSimTicks++;
+          if (huntMap === window.TwistedSpace?.map && mapState.current === 'town_sherine' && TwistedSpace.hasFeeReturn()) {
+            orderTown = mapState.current;
+            fastWhy = 'twisted-fee';
+            break;
+          }
           // 🏝️ 途中→本島(原作 settleDeadMobs 打倒傳送門後改的 mapState.current):過場結束,本島與一般圖同等待遇 → 開放快轉。
           //   取樣一律從這裡重新起算(beginSample 會把 busyTicks/deathEvents/背包等基準點全部重設),
           //   途中那段的怪組不會混進本島的殺速樣本——這正是「途中不快轉」原本要保護的東西。
@@ -1380,7 +1394,7 @@
             // 🤝 傭兵也算進血量門檻(還站著的才算;倒地的照線上規則留在地上):快速段不模擬任何人的 HP 軌跡,
             //   線上會把傭兵慢慢磨倒的圖,要靠取樣這段真模擬撐過門檻才放行快轉——否則只有隊長安全就快轉,傭兵的危險被跳過。
             if (!player.classicMode) {
-              var _al = player.allies;
+              var _al = GiranPartyView.combatAllies();
               if (_al) for (var _ai = 0; _ai < _al.length; _ai++) {
                 var _a = _al[_ai];
                 if (!_a || _a._downed || !(_a.mhp > 0)) continue;
@@ -1395,6 +1409,7 @@
             }
           }
           if (isKing && !kingLeftRoom && mapState && mapState.current !== huntMap) kingLeftRoom = true;   // 鑰匙用完→原作已把人傳出軍王之室
+          if(useHuntOrders&&mapState.current.startsWith('town_')){orderTown=mapState.current;fastWhy='hunt-home';break;}
           if (climbSegs) {
             var nf = state.prideFloor || 0;
             if (nf !== segFloor) {   // 樓層變了(爬上去或攀登結束)→ 結算剛剛那一層
@@ -1468,6 +1483,8 @@
         state.ff = prevFf0; state.inTick = prevInTick0;   // 先還原 ff,enterOblivionMap 才會渲染戰鬥畫面
         enterOblivionMap(mapState.current);
       }
+    } else if(orderTown){
+      gotoMap(orderTown);
     } else if (!died && huntMap) {
       // 🔧 軍王之室:只有「補跑期間真的因鑰匙用完被原作傳回村(kingLeftRoom)」才把落點放村莊。
       //   不要只看「背包 0 鑰匙」——用最後一把鑰匙進場(進場即扣→0 鑰匙)、軍王還沒打死就短暫離線回來的人,
@@ -1482,6 +1499,7 @@
       gotoMap(homeTown());
     }
     if (state.ff !== prevFf0) { state.ff = prevFf0; state.inTick = prevInTick0; }   // 還原 ff(攀登存活分支上面已還原 → 此處不動作)
+    if (fastWhy === 'twisted-fee') TwistedSpace.reportFeeReturn();
     wallHoldsRestore();   // ⏳ 還原追蹤／追殺的原到期時間(見補跑開頭;一定要在下方 saveGame 之前)
     // 🗑️ 補跑期間自動賣出被節流(見 installOfflineHooks),收尾強制跑一次,免得最後一段的廢品沒賣到
     try { if (typeof window.__afkAutoSellFlush === 'function') window.__afkAutoSellFlush(); } catch (e) {}
@@ -1542,13 +1560,6 @@
     } catch (e) { console.warn('[AFK] 寫離線紀錄失敗:', e); }
     try { if (typeof updateUI === 'function') updateUI(); } catch (e) {}
     try { if (typeof renderTabs === 'function') renderTabs(true); } catch (e) {}
-    // 手機:離線結算摘要寫在系統日誌,自動打開日誌浮動面板(切到系統)讓玩家一進來就看到
-    try {
-      if (window.__afkm && window.__afkm.isMobile && window.__afkm.isMobile()) {
-        if (window.__afkm.setLog) window.__afkm.setLog('sys');
-        if (window.__afkm.openLog) window.__afkm.openLog();
-      }
-    } catch (e) {}
 
     } catch (eRun) {   // 🛡️ 結算流程例外:已結算的收益由檢查點/期間的 saveGame 保留,絕不讓旗標卡死
       console.error('[AFK] 離線結算發生例外，已中止:', eRun);
@@ -1673,7 +1684,7 @@
   };
   // js/13 loadGame 成功載入(state.running=true 之後)呼叫:決定要不要結算離線
   window.offlineAfterLoad = function (pre) {
-    if (!pre) return;
+    if (!pre || player?.dead) return;
     try { maybeCatchup(pre.map, pre.ts, pre.pride, pre.obl); } catch (e) { console.warn('[AFK] offlineAfterLoad error:', e); }
   };
 
@@ -1724,7 +1735,8 @@
       _tickDebt = 0;
       var now = Date.now();
       console.info('[AFK] 背景欠 ' + Math.round(debt / 60000) + ' 分鐘 → 改用離線結算（快轉）');
-      runCatchup(ticks, true, m, null, null, { closeTs: now - ticks * TICK_MS, loginTs: now });
+      var closeTs = now - ticks * TICK_MS;
+      runCatchup(ticks, true, m, null, null, { closeTs: closeTs, loginTs: now, source:'background' });
       return true;
     } catch (e) { console.warn('[AFK] handover', e); return false; }
   }

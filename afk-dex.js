@@ -747,7 +747,49 @@
     return '<div class="m-dex-craft"><div class="m-dex-craft-mats" style="color:#94a3b8;">目前沒有固定取得途徑</div></div>' + csec;
   }
   function refreshIndexes(){_craftIndex=null;_craftUses=null;_npcInfo=null;_shopIndex=null;_dropBy=null;_boxBy=null;_trialBy=null;buildIndexes();buildItemIndex();}
+  // Query the actual encounter pool by ID. A text search also finds similarly named areas and items.
+  function areaDrops(map, living, refresh) {
+    if (!map || /^town_/.test(map)) return [];
+    if(refresh)ensureFresh();
+    const pool=new Set(DB.maps[map] || []);
+    const king=typeof KING_ROOMS!=='undefined' && KING_ROOMS[map];
+    if (king) for (const id of king.bosses || [king.boss]) if(id) pool.add(id);
+    const rows=new Map(), active=new Map();
+    for (const h of INDEX) if (pool.has(h.id)) rows.set(h.mob.n,h);
+    for (const m of living) {
+      if (!m || m.trollPlayer || m.siegeV2) continue;
+      active.set(m.n,m);
+      if(rows.has(m.n))continue;
+      const h=INDEX.find(row=>row.id===m.mobId && row.mob.n===m.n) || INDEX.find(row=>row.mob.n===m.n);
+      if(h)rows.set(m.n,h);
+      else rows.set(m.n,{mob:m,drops:[]});
+    }
+    const result=[];
+    for(const h of rows.values()){
+      const mob=h.mob;
+      const instance=active.get(mob.n)||mob;
+      if(king && !instance.boss)continue;
+      if (map === window.TwistedSpace?.map) {
+        result.push({mob:instance,drops:TwistedSpace.preview(instance)}); continue;
+      }
+      const primary=instance._giranGeneralLoot?[]:(MOB_DROPS[mob.n]||[]);
+      const primaryIds=new Set(primary.map(row=>row[0]));
+      const preview={...instance,_areaDropPreview:true};
+      const filtered=window.__afkDropListFilter?.(preview,primary) || primary;
+      const main=filtered.map(([id,pct])=>[id,itemNameOf(id),pct,trialClassNote(id),false]);
+      const mergedIds=new Set([...primaryIds,...filtered.map(row=>row[0])]);
+      // Dex entries outside the primary table include independent rolls, scripted rewards
+      // and transformation chains. Preserve their published conditions.
+      const sources=main.concat(instance._giranGeneralLoot?[]:h.drops.filter(d=>!mergedIds.has(d[0])));
+      const drops=sources.filter(([id,,pct])=>DB.items[id] && Number.isFinite(pct) && pct>0 &&
+        (!window.LineageDropPolicy || LineageDropPolicy.allows(mob,id)) &&
+        !(player.classicMode && CL()?.itemOutOfEra(id)));
+      if(drops.length)result.push({mob,drops:drops.sort((a,b)=>b[2]-a[2])});
+    }
+    return result;
+  }
   window.AFK_DEX_API = { acquireHTML: acquireHTML, itemDetailHTML: itemDetailHTML, goto: gotoDex, close: closeForNav, isOpen: _isModalClosable, searchSummary: searchSummary, refresh:refreshIndexes };   // goto({q}) 通用跨頁前往掉落查詢;close/isOpen 供跨頁切換(關閉來源、接手歷史層);searchSummary 供小百科統一搜尋
+  window.AFK_DEX_API.areaDrops=areaDrops;
 
   // ----- 物品詳情彈窗(點掉落物名字 → 顯示遊戲內數值與圖示) ------------------
   var IT_TYPE = { wpn: '武器', arm: '防具', acc: '飾品', pot: '藥水', scroll: '卷軸', skillbk: '魔法書', misc: '道具', etc: '道具' };

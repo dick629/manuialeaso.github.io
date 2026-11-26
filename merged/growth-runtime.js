@@ -18,7 +18,8 @@
   function sync(){const g=read(P());if(g&&W.LineageGrowthUI)W.LineageGrowthUI.refreshSummary();return g;}
   function gainOfflineXP(petExp){let n=Number(petExp)||0;const p=P();if(typeof W.__afkTtmiExpMult==='function')n*=W.__afkTtmiExpMult(p);if(typeof W.__afkExpShare==='function')n*=W.__afkExpShare(p);gainXP(Math.floor(n));}
   function gainXP(n){const p=P(),g=read(p);if(g){n=Math.floor(N(n)*(1+C.value(g,'pexp')/100)*(typeof W.__afkPgBuffMult==='function'?W.__afkPgBuffMult(p):1));C.gain(g,n,N(p.rebirth),N(p.lv),W.getExpReq(100));}}   // 11-23：巔峰經驗節點＋巔峰祝福藥水
-  function snapshot(){const out={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k!==backupKey)out[k]=localStorage.getItem(k);}return out;}
+  const trackedKey=k=>k!==backupKey&&k!=='afk_clock_v1';
+  function snapshot(){const out={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(trackedKey(k))out[k]=localStorage.getItem(k);}return out;}
   function restore(before,writes,put,remove){
     for(const [k,last] of writes){if(localStorage.getItem(k)!==last)throw Error('另一個視窗已修改資料，保留較新資料並提供交易備份');}
     for(const [k] of writes){if(k in before)put.call(localStorage,k,before[k]);else remove.call(localStorage,k);}
@@ -30,8 +31,8 @@
     // 玩家 11-11：整份存檔備份寫進瀏覽器會讓容量爆掉（The quota has been exceeded）→ 不再寫；失敗時用記憶體裡的 before 回復
     try{localStorage.removeItem(backupKey);}catch(e){}
     const writes=new Map(),proto=Storage.prototype,put=proto.setItem,remove=proto.removeItem;
-    proto.setItem=function(k,v){const r=put.call(this,k,v);if(this===localStorage&&String(k)!==backupKey)writes.set(String(k),String(v));return r;};
-    proto.removeItem=function(k){const r=remove.call(this,k);if(this===localStorage&&String(k)!==backupKey)writes.set(String(k),null);return r;};
+    proto.setItem=function(k,v){const r=put.call(this,k,v);if(this===localStorage&&trackedKey(String(k)))writes.set(String(k),String(v));return r;};
+    proto.removeItem=function(k){const r=remove.call(this,k);if(this===localStorage&&trackedKey(String(k)))writes.set(String(k),null);return r;};
     busy=true;
     try {
       const result=fn();if(saveGame()!==true)throw Error('存檔失敗');

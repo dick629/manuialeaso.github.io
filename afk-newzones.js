@@ -830,7 +830,7 @@
     return h;
   };
 
-  W.__afkNewZones = { soloWhy: soloWhy, leave: leave, wiki: wiki, NZ_CARD: NZ_CARD, ZONES: ZONES, ZBY: ZBY, TOWNS: TOWNS, SOLO: SOLO, SBY: SBY, DROPS: DROPS, BOSS_DROP: BOSS_DROP, BID: BID, clone: clone, sandOpen: sandOpen, mode: mode, enter: enter, run: function () { return run; }, nemRec: nemRec,
+  W.__afkNewZones = { gateWhy: gateWhy, soloWhy: soloWhy, leave: leave, wiki: wiki, NZ_CARD: NZ_CARD, ZONES: ZONES, ZBY: ZBY, TOWNS: TOWNS, SOLO: SOLO, SBY: SBY, DROPS: DROPS, BOSS_DROP: BOSS_DROP, BID: BID, clone: clone, sandOpen: sandOpen, mode: mode, enter: enter, run: function () { return run; }, nemRec: nemRec,
     // 11-17（Ping）：遠征可以付費代打單人副本（每個副本照舊每天一次、入場費照舊另付）
     exped: {
       check: function (id, md) { var d = SBY[id]; if (!d) return '未知副本'; var m = mode(); if (m !== md) return md === 'rift' ? '需要開啟次元裂縫模式' : '需要開啟夢域鏡模式（不是次元裂縫）'; return soloWhy(d, !/^afk_solo_/.test(String(cur() || ''))); },

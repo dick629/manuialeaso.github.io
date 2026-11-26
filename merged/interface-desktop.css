@@ -4,9 +4,24 @@ body:not(.m-unified) #game-screen :is(#col-left,#col-center,#col-right){min-widt
 body:not(.m-unified) #col-left{max-width:25%}
 body:not(.m-unified) #col-right{max-width:30%}
 body:not(.m-unified) #town-view{max-width:100%}
-body:not(.m-unified) #map-view-panel>.panel-header{flex-wrap:wrap;gap:6px}
-body:not(.m-unified) #map-view-panel>.panel-header>div{min-width:0;max-width:100%;flex-wrap:wrap}
+body:not(.m-unified) #map-view-panel>.panel-header{flex-wrap:wrap;gap:6px 12px;padding:8px 10px;flex-shrink:0}
+body:not(.m-unified) #map-view-panel>.panel-header>div{min-width:0;max-width:100%;flex-wrap:wrap;gap:6px 8px}
+body:not(.m-unified) #map-adventure-heading{gap:4px 10px}
+body:not(.m-unified) #map-adventure-heading>#status-alerts:empty{display:none}
 body:not(.m-unified) #map-view-panel select{min-width:0;max-width:100%}
+@container (max-width:850px){
+ body:not(.m-unified) #map-view-panel>.panel-header:has(.dm-town-actions:not([hidden]))>div{flex-basis:100%}
+}
+@container (max-width:535px){
+ body:not(.m-unified) #map-view-panel>.panel-header>div{display:grid;flex-basis:100%;grid-template-columns:repeat(6,minmax(0,1fr))}
+ body:not(.m-unified) #map-view-panel>.panel-header>div>button{grid-column:span 2}
+ body:not(.m-unified) #map-view-panel #map-category{grid-column:1 / span 3}
+ body:not(.m-unified) #map-view-panel #map-select{grid-column:4 / -1}
+ body:not(.m-unified) #map-view-panel :is(#btn-revive,#btn-revive-inplace,#pride-floor-indicator,#merc-role-hint){grid-column:1 / -1}
+}
+@container (max-width:355px){
+ body:not(.m-unified) #map-view-panel :is(#map-category,#map-select){grid-column:1 / -1}
+}
 body:not(.m-unified) #attribute-help section{width:760px;max-height:calc(100dvh - 48px)}
 body:not(.m-unified) #attribute-help .attribute-layout{display:grid;grid-template-columns:190px minmax(0,1fr)}
 body:not(.m-unified) #attribute-help .attribute-portrait{border-bottom:0;border-right:1px solid #6c624c;justify-content:flex-start;padding-top:30px}

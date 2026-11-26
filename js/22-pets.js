@@ -197,13 +197,13 @@ const _petAuraTick = { t: -1, sig: -1, m: Object.create(null) };   /* 🔌 加�
 function petAuraSum(field) {
     let _live = typeof state !== 'undefined' && state && (state.inTick || state.ff) && typeof player !== 'undefined' && player, _sig = 0;
     if (_live) {   // 鍵＝這一拍＋傭兵人數與站著的人數（倒地、復活、換人都會變）；拍外（介面操作）照舊每次重算
-        let al = player.allies || []; _sig = al.length * 64; for (let i = 0; i < al.length; i++) if (al[i] && !al[i]._downed) _sig++;
+        let al = GiranPartyView.combatAllies(); _sig = al.length * 64; for (let i = 0; i < al.length; i++) if (al[i] && !al[i]._downed) _sig++;
         if (_petAuraTick.t !== state.ticks || _petAuraTick.sig !== _sig) { _petAuraTick.t = state.ticks; _petAuraTick.sig = _sig; _petAuraTick.m = Object.create(null); }
         let c0 = _petAuraTick.m[field]; if (c0 !== undefined) return c0;
     }
     let s = 0;
     let _scan = function (c) { if (!c || !c.eq) return; let v = _petAuraVals(c, field); for (let i = 0; i < v.length; i++) s += v[i]; };   /* 🔌 加掛版補丁:寵物光環快取 */
-    if (typeof player !== 'undefined' && player) { _scan(player); (player.allies || []).forEach(a => { if (a && !a._downed) _scan(a); }); }
+    if (typeof player !== 'undefined' && player) { _scan(player); GiranPartyView.combatAllies().forEach(a => { if (a && !a._downed) _scan(a); }); }
     if (_live) _petAuraTick.m[field] = s;
     return s;
 }
@@ -217,13 +217,31 @@ function petRandomPhysicalDr(p, d) {
     let min = Math.floor(max / 3);
     return min + Math.floor(Math.random() * (max - min + 1));
 }
-// 🎬 v3.2.73 寵物/召喚物 sprite 動作動畫單一設定點：背景補跑(state.ff)期間不設 _animAct→切分頁回來不會全隊寵/召同步爆播（比照 v3.2.72 _mobAnimTrigger 對怪物的處理）。
-//   死亡不需另播——渲染層 _petAnimApply 對 _downed 者以 _animAct.t||0 推算→無 _animAct 時直接 hold 死亡末幀（顯示倒地）。共用於 js/22（寵物）與 js/23（召喚物·同欄位協定）。
+// A busy visible battlefield can settle several attacks between two browser paints.
+// Each companion keeps its own playback cursor and at most one following pose.
+const _petPlayback = new WeakMap();
+function _petStartPose(p, event) {
+    p._animAct = event;
+    _petPlayback.set(p, { event, started: null, frame: -1, readable: false, next: null });
+}
 function _petAnimAct(o, k, faceUid) {
-    if (!o) return;
-    if (typeof state !== 'undefined' && state.ff) return;   // 補跑中：純視覺·不設動畫（傷害/狀態邏輯不經此·照跑）
-    o._animAct = { k: k, t: Date.now() };
-    if (faceUid !== undefined) o._faceMobUid = faceUid;
+    if (!o || document.hidden || (state.ff && !window.GiranCombat?.inWorld())) return;
+    if (faceUid !== undefined) {
+        o._faceMobUid = faceUid;
+        const actor = window.GiranCombat?.point(o);
+        const victim = actor && GiranCombat.point(mapState.mobs.find(m => m?.uid === faceUid));
+        if (victim && !actor.step) {
+            const heading = GiranGeometry.directions.findIndex(([x,y]) => x === Math.sign(victim.x-actor.x) && y === Math.sign(victim.y-actor.y));
+            if (heading >= 0) actor.heading = heading;
+        }
+    }
+    const event = { k, t: Date.now() };
+    const active = _petPlayback.get(o);
+    if (k !== 'death' && active && active.event === o._animAct && (!active.readable || active.next) && event.t-active.event.t < 2000) {
+        if (k !== active.event.k && (!active.next || (active.next.k === 'hurt' && k !== 'hurt'))) active.next = event;
+        return;
+    }
+    _petStartPose(o, event);
 }
 
 // ---------- 三、寵物保管（同模式共通·localStorage 共用桶·_lz+SIG1）----------
@@ -280,6 +298,7 @@ function petRoster() {
         if (arr === null) { try { let bak = _petRosterRead(key + '_bak'); if (bak !== null) arr = bak; } catch (e) {} }
         _petRoster = (arr || []).filter(p => p && PET_BOOK[p.form]);
         _petRoster.forEach(p => {
+            if (window.GiranAtlas?.archiveActor(p)) { p.eqV = _petNowStamp(); _petRosterDirty = true; }
             if (petMigrateExpReqV3(p)) _petRosterDirty = true;
             // 🩸 v3.5.94 夾擠只套用在「非倒地」的寵物：倒地寵桶內存的就是 hp:0，無條件夾成 1 會讓牠在
             //    重新整理／換角後免費原地復活（滿血、不耗復活卷軸、不等冷卻、異常全清）。配合 _petPersist
@@ -894,24 +913,30 @@ function petsTick() {
         let pst = p._statuses || {};
         if ((pst.freeze || 0) > 0 || (pst.stun || 0) > 0 || (pst.stone || 0) > 0 || (pst.sleep || 0) > 0 || (pst.paralyze || 0) > 0) return;
         if ((p._actionCd || 0) > 0) p._actionCd--;
-        // 選目標：最近的敵人（依戰場座標；無座標退 getTarget）
-        let tgt = _petPickTarget(p);
-        if (!tgt) return;
         // 技能（依施法速度節奏·MP 足夠才放）
         if (d.castItv > 0 && def.sk.length && !((pst.silence || 0) > 0 || (pst.magicseal || 0) > 0)) {
-            p._castCd = (p._castCd != null ? p._castCd : (d.castItv - 1)) - 1;
+            p._castCd = Math.max(0, (p._castCd ?? (d.castItv - 1)) - 1);
             if (p._castCd <= 0 && (p._actionCd || 0) <= 0) {
-                let _ok; if (typeof threatWrap === 'function') threatWrap(p, () => { _ok = petCastSkill(p, d, tgt); }); else _ok = petCastSkill(p, d, tgt);   // 🎯 v3.7.97 仇恨：寵物技能傷害→記給該寵物
-                if (_ok) { p._castCd = window.AFK_RELIC_COMPANIONS?window.AFK_RELIC_COMPANIONS.nextPetSkillWait(p,d.castItv):d.castItv; /* relic-companion:pet-next-wait */ p._actionCd = 4; }
-                else p._castCd = Math.min(10, d.castItv);
+                const tgt = _petPickTarget(p) || _petPickTarget(p, 'magic');
+                if (tgt) {
+                    let cast;
+                    if (typeof threatWrap === 'function') threatWrap(p, () => { cast = petCastSkill(p, d, tgt); });
+                    else cast = petCastSkill(p, d, tgt);
+                    if (cast) {
+                        p._castCd = window.AFK_RELIC_COMPANIONS ? window.AFK_RELIC_COMPANIONS.nextPetSkillWait(p,d.castItv) : d.castItv; /* relic-companion:pet-next-wait */
+                        p._actionCd = 4;
+                    } else p._castCd = Math.min(10, d.castItv);
+                }
             }
         }
         // 一般攻擊（依攻擊速度）
-        p._atkCd = (p._atkCd != null ? p._atkCd : (d.atkItv - 1)) - 1;
+        p._atkCd = Math.max(0, (p._atkCd ?? (d.atkItv - 1)) - 1);
         p._stunCycle = false;
         if (p._atkCd <= 0 && (p._actionCd || 0) <= 0) {
-            tgt = _petPickTarget(p);   // 技能可能已擊殺
-            if (tgt) { if (typeof threatWrap === 'function') threatWrap(p, () => petAttackOnce(p, d, tgt)); else petAttackOnce(p, d, tgt); p._actionCd = 3; }   // 🎯 v3.7.97 仇恨：寵物普攻傷害→記給該寵物
+            const tgt = _petPickTarget(p);   // 技能可能已擊殺
+            if (!tgt) return;
+            if (typeof threatWrap === 'function') threatWrap(p, () => petAttackOnce(p, d, tgt)); else petAttackOnce(p, d, tgt);
+            p._actionCd = 3;
             p._atkCd = Math.ceil(d.atkItv * ((pst.slowAtk || 0) > 0 ? 2 : 1));
         }
     });
@@ -933,14 +958,19 @@ function _petStatusTick(p) {
     ['freeze','stun','stone','sleep','paralyze','silence','magicseal','slowAtk','poison','burn','scald','bleed','weaken','disease','blind','potionFrost','foulWater'].forEach(k => { if ((st[k] || 0) > 0) st[k]--; });   // 🌊 v3.6.20 含汙濁之水
     if (p.hp <= 0) _petDown(p, '持續傷害');
 }
-function _petPickTarget(p) {
+function _petPickTarget(p, mode = 'basic') {
+    if (window.GiranCombat && (GiranCombat.inWorld() || window.GiranRoam?.manual())) {
+        const focus = getTarget();
+        const victim = GiranCombat.target(p, focus, mode);
+        return victim && GiranCombat.permits(p, victim, mode) ? victim : null;
+    }
     if (typeof mapState === 'undefined' || !mapState.mobs) return null;
     let alive = mapState.mobs.filter(m => m && m.curHp > 0);
     if (!alive.length) return null;
     // 最近的敵人：以寵物戰場位置 vs 怪物卡片位置（無渲染資訊時退最早出生）
     // 🐾 v3.2.42 稽核修：距離選出的目標與出生序備援分開存——原本剛出生尚未渲染的怪會以出生序「搶走」已依距離選定的目標
     let best = null, bd = Infinity, fb = null;
-    let pr = p._px != null ? { x: p._px, y: p._py } : null;
+    let pr = window.__dimMapCompanionPoint?.(p) ?? (p._px != null ? { x: p._px, y: p._py } : null);
     let _hrOnce = null;   // 同一次挑目標的迴圈裡只有讀版面、沒有寫入：容器矩形量一次就好 /* 🔌 加掛版補丁:第二輪效能 */
     for (let m of alive) {
         let r = (pr && typeof _vfxSlotRect === 'function') ? _vfxSlotRect(m.uid) : null;
@@ -959,6 +989,7 @@ function _petPickTarget(p) {
     return best || fb;
 }
 function petAttackOnce(p, d, target, forceCrit, addDmg, skName) {
+    if(window.GiranCombat && !GiranCombat.permits(p,target,'basic'))return;
     if (!target || target.curHp <= 0) return;
     _combatSrc = 'pet';
     let _snap = (typeof _dpsSnap === 'function') ? _dpsSnap() : null;
@@ -967,7 +998,7 @@ function petAttackOnce(p, d, target, forceCrit, addDmg, skName) {
         let cb = petCharmCombatBonus();
         let _ia = (typeof teamIlluAura === 'function') ? teamIlluAura(p, true) : null;   // 🩹 v3.2.67 幻覺攻擊光環（化身+10傷／歐吉+4傷+4命）全隊生效→注入出戰寵物普攻
         let _pst = p._statuses || {};
-        let rawHit = p.lv + d.hit + cb.hit + pg.hit + (_ia ? _ia.eh : 0) - target.lv + mobEffAC(target) + (typeof _relicPartnerHit === 'function' ? _relicPartnerHit(p.form) : 0) - (_pst.weaken > 0 ? 2 : 0) - (_pst.disease > 0 ? 4 : 0) - (_pst.blind > 0 ? 6 : 0);
+        let rawHit = p.lv + d.hit + cb.hit + pg.hit + (_ia ? _ia.eh : 0) + (window.LineageClassCombat?.value(p,'hit',target,{kind:'melee'})||0) - target.lv + mobEffAC(target) + (typeof _relicPartnerHit === 'function' ? _relicPartnerHit(p.form) : 0) - (_pst.weaken > 0 ? 2 : 0) - (_pst.disease > 0 ? 4 : 0) - (_pst.blind > 0 ? 6 : 0);
         let hv = Math.min(window.__afkHitHv || 20, stretchHitValue(rawHit)); /* 🔌 加掛版補丁:命中上限 */
         let r = roll(1, 20);
         let heavy = (r === 20) || !!forceCrit;
@@ -980,7 +1011,7 @@ function petAttackOnce(p, d, target, forceCrit, addDmg, skName) {
             dmg = Math.max(1, (d.attackMult || 1) > 1 ? Math.ceil(dmg * atkMult) : Math.floor(dmg * atkMult));   // 🦎 蜥蜴普攻以同級黃金龍為底再套角色倍率；其餘寵物維持原取整
             if (skName && typeof _relicPetSkillMult === 'function') dmg = Math.max(1, Math.floor(dmg * _relicPetSkillMult()));
             markBossPhysicalHit(target);
-            if (window.AFK_RELIC_RUNTIME) dmg=window.AFK_RELIC_RUNTIME.companionDamage(player,p,target,dmg,{kind:'pet',skillId:skName||null,element:'none'}); target.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(player,target,dmg,{nativeRefund:'terror',kind:'melee'}):dmg)); /* card-combat:refund-petAttackOnce */ /* card-combat:settle-petAttackOnce */ /* relic-companion:pet-hit */ if (typeof terrorVisageOnDamage === 'function') terrorVisageOnDamage(target, dmg, skName ? 'magic' : 'melee'); target.justHit = 'none'; mobWake(target);   // 🌅 巨大骷髏：寵物普攻＝近距離、寵物技能＝魔法
+            if (window.AFK_RELIC_RUNTIME) dmg=window.AFK_RELIC_RUNTIME.companionDamage(player,p,target,dmg,{kind:'pet',skillId:skName||null,element:'none',heavy:heavy}); target.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(player,target,dmg,{nativeRefund:'terror',kind:'melee'}):dmg)); /* card-combat:refund-petAttackOnce */ /* card-combat:settle-petAttackOnce */ /* relic-companion:pet-hit */ if (typeof terrorVisageOnDamage === 'function') terrorVisageOnDamage(target, dmg, skName ? 'magic' : 'melee'); target.justHit = 'none'; mobWake(target);   // 🌅 巨大骷髏：寵物普攻＝近距離、寵物技能＝魔法
             let _pw = p && p.eq && p.eq.wpn ? DB.items[p.eq.wpn.id] : null;
             if (_pw && _pw.petBleed && target.curHp > 0 && typeof applyBleed === 'function') applyBleed(target, dmg, 5, 'pet');   // 🏺 遺物 仿製小惡魔尖牙套：寵物一般攻擊命中造成出血；🎯 DPS 歸夥伴
             _petAnimAct(p, 'attack', target.uid);
@@ -1008,6 +1039,7 @@ function petCastSkill(p, d, target) {
     let sk;
     if (usable.length === 1) sk = usable[0];
     else { let tw = usable.reduce((s, x) => s + (x.w || 100 / usable.length), 0); let rr = Math.random() * tw; for (let x of usable) { rr -= (x.w || 100 / usable.length); if (rr < 0) { sk = x; break; } } sk = sk || usable[usable.length - 1]; }
+    if (window.GiranCombat && !GiranCombat.permits(p,target,sk.kind === 'extra' ? 'basic' : 'magic')) return false;
     p.mp -= window.AFK_RELIC_COMPANIONS?window.AFK_RELIC_COMPANIONS.petSkillCost(p,sk.mp):sk.mp; /* relic-companion:pet-pay */
     _combatSrc = 'pet';
     let _snap = (sk.kind !== 'extra' && typeof _dpsSnap === 'function') ? _dpsSnap() : null;
@@ -1063,7 +1095,7 @@ function petCastSkill(p, d, target) {
                 dmg = Math.max(1, (d.magicMult || 1) > 1 ? Math.ceil(dmg * magicMult) : Math.floor(dmg * magicMult));   // 🦎 蜥蜴魔法以同級黃金龍為底再套角色倍率；其餘寵物維持原取整
                 if (typeof _relicPetSkillMult === 'function') dmg = Math.max(1, Math.floor(dmg * _relicPetSkillMult()));   // 🏺 馴獸師的訓狗棒：寵物技能×1.5
                 if (sk.n && sk.n.includes('冰錐') && typeof equipSkillDmgMult === 'function') dmg = Math.max(1, Math.floor(dmg * equipSkillDmgMult(DB.skills.sk_ice_spike, 'sk_ice_spike')));   // 🏺 v3.2.35 暴走兔最愛的胡蘿蔔：攜帶的暴走兔/高等暴走兔施放的冰錐也 ×1.5（掃玩家裝備 skillDmgMult.sk_ice_spike·與訓狗棒相乘）
-                if (window.AFK_RELIC_RUNTIME) dmg=window.AFK_RELIC_RUNTIME.companionDamage(player,p,m,dmg,{kind:'pet',skillId:sk.n,element:sk.ele||'none'}); m.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(player,m,dmg,{nativeRefund:'terror',kind:'magic'}):dmg)); /* card-combat:refund-petCastSkill */ /* card-combat:settle-petCastSkill */ /* relic-companion:pet-magic */ if (typeof terrorVisageOnDamage === 'function') terrorVisageOnDamage(m, dmg, 'magic'); m.justHit = sk.ele || 'none'; mobWake(m);   // 🌅 巨大骷髏：寵物傷害技能視為魔法
+                if (window.AFK_RELIC_RUNTIME) dmg=window.AFK_RELIC_RUNTIME.companionDamage(player,p,m,dmg,{kind:'pet',damageType:'magic',skillId:sk.n,element:sk.ele||'none'}); m.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(player,m,dmg,{nativeRefund:'terror',kind:'magic'}):dmg)); /* card-combat:refund-petCastSkill */ /* card-combat:settle-petCastSkill */ /* relic-companion:pet-magic */ if (typeof terrorVisageOnDamage === 'function') terrorVisageOnDamage(m, dmg, 'magic'); m.justHit = sk.ele || 'none'; mobWake(m);   // 🌅 巨大骷髏：寵物傷害技能視為魔法
                 let _fz = false;   // 🦎 v3.6.43 詛咒蜥蜴冰雪暴：freezeCh% 機率冰凍 4 秒（頭目免疫冰凍·比照 js/04 BOSS_IMMUNE）
                 if (sk.freezeCh && m.curHp > 0 && Math.random() * 100 < sk.freezeCh && (window.__afkDebuffAllOff || typeof abnormalMagicHit !== 'function' || abnormalMagicHit(m)) /* 🔌 加掛版補丁:負面效果抵抗 */ && !(m.boss && typeof BOSS_IMMUNE !== 'undefined' && BOSS_IMMUNE.includes('freeze'))) {
                     m.st = m.st || newMobStatus(); m.st.freeze = Math.max(m.st.freeze || 0, 40); _fz = true;
@@ -1087,6 +1119,7 @@ function _petAfterDamage(m) {
 function petHardenDr(p) { return (p && p._hardenUntil && (state.ticks || 0) < p._hardenUntil) ? (p._hardenDr || 10) : 0; }
 // 怪物一般攻擊打寵物（js/04 enemyAttackChooseVictim 掛點）
 function enemyAttackPet(mob, p) {
+    if(window.GiranCombat && !GiranCombat.permits(mob,p,'basic'))return;
     if (!mob || mob.curHp <= 0 || !p || p._downed || (p.hp || 0) <= 0) return;
     if (typeof _mobAnimTrigger === 'function') _mobAnimTrigger(mob, 'attack');
     mob._facePartyKey = null; delete mob._faceTgt;   // 面向寵物暫不支援（寵物位置動態）→ 用預設
@@ -1127,7 +1160,8 @@ function applyMobMagicToPet(mob, sk, p) {
     let mr = d.mr || 0, nm = '寵物·' + p.form;
     let shMul = (mob._sherine ? (mob._sherineMad ? 3 : 2) : 1) * (mob._grace ? 2 : 1);
     let chance = (base, src) => Math.random() * 100 < Math.max(0, (((src && src.pbase) !== undefined ? src.pbase : (sk.pbase !== undefined ? sk.pbase : base)) - mr) / 2);
-    let applyPure = (type, dur, label, base) => { if (chance(base)) { st[type] = Math.max(st[type] || 0, dur); logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 施放${sk.skn || '魔法'}，${nm}${label}！`, 'enemy'); } };
+    const ordinary = dur => Math.max(1,Math.round(dur*(1-Math.min(.75,window.LineageClassCombat?.value(p,'control')||0))));
+    let applyPure = (type, dur, label, base) => { if (chance(base)) { st[type] = Math.max(st[type] || 0, ordinary(dur)); logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 施放${sk.skn || '魔法'}，${nm}${label}！`, 'enemy'); } };
     if (sk.type === 'stone') { applyPure('stone', 60, '被石化了', 100); return; }
     if (sk.type === 'paralyze') { applyPure('paralyze', 60, '被麻痺了', 50); return; }
     if (sk.type === 'silence') { applyPure('silence', 60, '被沉默了', 60); return; }
@@ -1160,11 +1194,11 @@ function applyMobMagicToPet(mob, sk, p) {
     if (sk.vamp || sk.vampFull) { let heal = sk.vampFull ? dmg : roll(sk.vamp[0], sk.vamp[1]); mob.curHp = Math.min(mob.hp, mob.curHp + heal); }
     if (sk.sec) {
         let s = sk.sec;
-        if (s.type === 'blind' && chance(200, s)) st.blind = (s.dur || 15) * 10;
-        else if (s.type === 'freeze' && chance(200, s)) st.freeze = (s.dur || 6) * 10;
-        else if (s.type === 'stun' && chance(150, s)) st.stun = (s.dur || 6) * 10;
-        else if (s.type === 'sleep' && chance(150, s)) st.sleep = (s.dur || 6) * 10;
-        else if (s.type === 'paralyze' && chance(50, s)) st.paralyze = (s.dur || 6) * 10;
+        if (s.type === 'blind' && chance(200, s)) st.blind = ordinary((s.dur || 15) * 10);
+        else if (s.type === 'freeze' && chance(200, s)) st.freeze = ordinary((s.dur || 6) * 10);
+        else if (s.type === 'stun' && chance(150, s)) st.stun = ordinary((s.dur || 6) * 10);
+        else if (s.type === 'sleep' && chance(150, s)) st.sleep = ordinary((s.dur || 6) * 10);
+        else if (s.type === 'paralyze' && chance(50, s)) st.paralyze = ordinary((s.dur || 6) * 10);
         else if (s.type === 'burn' && chance(100, s)) { st.burn=(s.dur||6)*10; st.burnDmg=shMul*(s.d||1); st.burnTick=(s.tick||1)*10; }
         else if (s.type === 'scald' && chance(200, s)) { st.scald=(s.dur||6)*10; st.scaldDmg=shMul*(s.d||1); st.scaldTick=(s.tick||1)*10; }
         else if (s.type === 'bleed' && chance(200, s)) { st.bleed=(s.dur||6)*10; st.bleedDmg=shMul*(s.d||1); st.bleedTick=(s.tick||1)*10; }
@@ -1391,7 +1425,7 @@ function _pet8Probe(form, dir) {
     let pending = acts.length * 2;
     let finish = () => { if (--pending > 0) return; _pet8Cache[key] = out.idle ? out : null; };
     let probeSeq = (target, k, pfx, minF) => {   // 🚀 v3.4.37 平行探測（滑動窗口·共用 js/09 _probeFramesWin）
-        _probeFramesWin(i => folder + pfx + i + '.png', PET_ANIM_MAXF, minF || 2, frames => { target[k] = frames; finish(); });
+        _probeFramesWin(i => folder + pfx + i + '.png', PET_ANIM_MAXF, minF || 2, frames => { target[k] = frames; finish(); }, true);
     };
     acts.forEach(a => { probeSeq(out, a, a + '_', a === 'hurt' ? 1 : 2); probeSeq(out.shadow, a, a + '_s_', 1); });
 }
@@ -1460,6 +1494,11 @@ function _petWanderStep(p, host, hostRect) {
     }
     p._px = Math.max(0.03, Math.min(0.97, p._px)); p._py = Math.max(0.52, Math.min(0.97, p._py));
 }
+function _petFieldRoster() {
+    if (typeof player === 'undefined' || !player?.cls) return [];
+    return petsOutList().concat(typeof summonRenderList === 'function' ? summonRenderList() : [],
+        typeof guardRenderList === 'function' ? guardRenderList() : []);
+}
 function _petAnimApply() {
     try {
         if (typeof document !== 'undefined' && document.hidden) return;
@@ -1467,17 +1506,17 @@ function _petAnimApply() {
         let host = _petLayerHost();
         let layer = _petLayerEl();
         if (!host || !layer) return;
-        let outs = (typeof player !== 'undefined' && player && player.cls) ? petsOutList() : [];
-        if (typeof summonRenderList === 'function') outs = outs.concat(summonRenderList());   // 🧙 v3.2.19 召喚物 v2 共用寵物圖層（同欄位協定：uid/form/_px/_py/_dir/_animAct/_downed）
-        if (typeof guardRenderList === 'function') outs = outs.concat(guardRenderList());   // 🏰 城堡護衛 v2 共用寵物圖層（同欄位協定·八方向 assets/anim/<form>/d<dir>）
+        let outs = _petFieldRoster();
         let show = _petInWild() && !(bv && bv.classList.contains('hidden'));
         // 清掉不在場的
         layer.querySelectorAll('[data-pet]').forEach(el => { if (!show || !outs.some(p => p.uid === el.getAttribute('data-pet'))) el.remove(); });
         if (!show) return;
         let hostRect = (typeof window.__afkHostRect === 'function') ? window.__afkHostRect(host) : host.getBoundingClientRect();   /* 🔌 加掛版補丁:戰場大小快取 */
+        const mapped = window.__dimMapCompanions?.(outs);
         for (let p of outs) {
-            if (!p._downed) _petWanderStep(p, host, hostRect);   // 倒地/死亡殘影不再移動（v3.2.19 修：原本倒地仍會閒晃漂移）
-            let dir = (p._dir != null) ? p._dir : 6;
+            const pose = mapped?.get(p.uid);
+            if (!mapped && !p._downed) _petWanderStep(p, host, hostRect);   // 倒地/死亡殘影不再移動（v3.2.19 修：原本倒地仍會閒晃漂移）
+            let dir = pose?.heading ?? p._dir ?? 6;
             let gfxForm = p.formGfx || p.form;   // 👑 v3.2.25 動態別名：顯示名≠圖檔資料夾（精靈王借用強力精靈圖·強力精靈改用一般精靈圖）
             let a = _pet8Cache[gfxForm + '#' + dir];
             if (a === undefined) _pet8Probe(gfxForm, dir);
@@ -1488,23 +1527,40 @@ function _petAnimApply() {
                 if (!a || a === 'probing') continue;
             } else p._dirLoaded = dir;
             let el = _petSpriteEl(layer, p);
-            el.style.left = (p._px * 100) + '%';
-            el.style.top = (p._py * 100) + '%';
+            if (!mapped) {
+                el.style.left = (p._px * 100) + '%';
+                el.style.top = (p._py * 100) + '%';
+            }
             // 動作選擇：倒地=death 末幀 hold；單次動作(attack/skill/hurt/death)播完回 walk/idle
             let act = null, f = 0;
             if (p._downed) {
                 let seq = a.death;
                 if (seq) { let ff = Math.floor((Date.now() - ((p._animAct && p._animAct.t) || 0)) / (1000 / PET_ANIM_FPS)); act = 'death'; f = Math.min(seq.length - 1, ff); }
             } else if (p._animAct) {
+                let playback = _petPlayback.get(p);
+                if (playback?.event === p._animAct && playback.readable && playback.next) {
+                    _petStartPose(p, playback.next);
+                    playback = _petPlayback.get(p);
+                }
                 let k = p._animAct.k, seq = a[k] || (k === 'skill' ? a.attack : null);
                 if (seq) {
-                    let ff = Math.floor((Date.now() - p._animAct.t) / (1000 / PET_ANIM_FPS));
+                    const now = Date.now();
+                    const live = playback?.event === p._animAct;
+                    if (live && playback.started === null) playback.started = now;
+                    let ff = Math.floor((now - (live ? playback.started : p._animAct.t)) / (1000 / PET_ANIM_FPS));
+                    if (live && !playback.readable) ff = Math.min(ff, seq.length - 1);
+                    if (live && ff < seq.length) {
+                        playback.readable ||= seq.length === 1 || (playback.frame >= 0 && ff !== playback.frame);
+                        playback.frame = ff;
+                    }
                     if (ff < seq.length) { act = a[k] ? k : 'attack'; f = ff; } else p._animAct = null;
-                } else p._animAct = null;
+                } else if (playback?.event === p._animAct && playback.next) _petStartPose(p, playback.next);
+                else p._animAct = null;
             }
             if (act === null) {
-                let seq = (p._moving && a.walk) ? a.walk : a.idle;
-                act = (p._moving && a.walk) ? 'walk' : 'idle';
+                const moving = mapped ? pose?.walking : p._moving;
+                let seq = (moving && a.walk) ? a.walk : a.idle;
+                act = (moving && a.walk) ? 'walk' : 'idle';
                 let ofs = 0; { let s = String(p.uid); for (let j = 0; j < s.length; j++) ofs += s.charCodeAt(j); }
                 f = (Math.floor(Date.now() / (1000 / PET_ANIM_FPS)) + ofs) % seq.length;
             }

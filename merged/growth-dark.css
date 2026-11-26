@@ -1,65 +1,65 @@
 ﻿/* growth-dark.css — 天賦・巔峰・遠征：中古世紀暗黑風＋流亡黯道感（Ping 11-12；GPT 新圖 assets/ui/growth-v5）。
    排在 progression-desktop.css／progression-mobile.css 之後，那兩支有 !important，所以這裡也全部 !important。 */
-html body #growth-overlay>section{background:#0b0a0c !important;border:24px solid transparent !important;border-image:url('../assets/ui/growth-v5/growth_frame.webp') 96 / 24px stretch !important;padding:0 !important;box-shadow:0 0 0 1px #000,0 18px 60px #000c !important}
+html body #growth-overlay>section{background:#0b0a0c !important;border:24px solid transparent !important;border-image:var(--lm-68789a919e1e,url('../assets/ui/growth-v5/growth_frame.webp')) 96 / 24px stretch !important;padding:0 !important;box-shadow:0 0 0 1px #000,0 18px 60px #000c !important}
 html body #growth-overlay>section:before,html body #growth-overlay>section:after{display:none !important}
-html body #growth-overlay .growth-body{background:linear-gradient(#0a090ccc,#0a090ccc),url('../assets/ui/growth-v5/growth_bg.webp') center/cover !important}
+html body #growth-overlay .growth-body{background:linear-gradient(#0a090ccc,#0a090ccc),var(--lm-428e69e5c6e2,url('../assets/ui/growth-v5/growth_bg.webp')) center/cover !important}
 html body #growth-overlay header,html body #growth-overlay nav,html body #growth-overlay footer{background:linear-gradient(#1b1715,#0e0c0d) !important;border-color:#000 !important;border-bottom-color:#5b4325 !important}
 html body #growth-overlay nav{gap:6px !important;padding:6px 12px !important;background:#0b0a0b !important}
-html body #growth-overlay nav button{flex:0 1 200px !important;min-height:40px !important;border:0 !important;border-radius:0 !important;background:url('../assets/ui/growth-v5/growth_tab.webp') center/100% 100% no-repeat !important;color:#9c8e7c !important;text-shadow:0 1px 2px #000 !important}
-html body #growth-overlay nav [aria-current=page]{background:url('../assets/ui/growth-v5/growth_tab_on.webp') center/100% 100% no-repeat !important;color:#f0d79f !important;box-shadow:none !important}
-html body #growth-overlay .growth-primary,html body #growth-overlay .growth-actions>button{border:0 !important;border-radius:0 !important;background:url('../assets/ui/growth-v5/growth_button.webp') center/100% 100% no-repeat !important;color:#f3dcae !important;text-shadow:0 1px 2px #000 !important;box-shadow:none !important;padding:8px 22px !important;min-height:40px !important}
-html body #growth-overlay .growth-primary:active:not(:disabled),html body #growth-overlay .growth-actions>button:active:not(:disabled){background-image:url('../assets/ui/growth-v5/growth_button_on.webp') !important}
+html body #growth-overlay nav button{flex:0 1 200px !important;min-height:40px !important;border:0 !important;border-radius:0 !important;background:var(--lm-e4b26657b561,url('../assets/ui/growth-v5/growth_tab.webp')) center/100% 100% no-repeat !important;color:#9c8e7c !important;text-shadow:0 1px 2px #000 !important}
+html body #growth-overlay nav [aria-current=page]{background:var(--lm-c378758e1b80,url('../assets/ui/growth-v5/growth_tab_on.webp')) center/100% 100% no-repeat !important;color:#f0d79f !important;box-shadow:none !important}
+html body #growth-overlay .growth-primary,html body #growth-overlay .growth-actions>button{border:0 !important;border-radius:0 !important;background:var(--lm-afce301e385e,url('../assets/ui/growth-v5/growth_button.webp')) center/100% 100% no-repeat !important;color:#f3dcae !important;text-shadow:0 1px 2px #000 !important;box-shadow:none !important;padding:8px 22px !important;min-height:40px !important}
+html body #growth-overlay .growth-primary:active:not(:disabled),html body #growth-overlay .growth-actions>button:active:not(:disabled){background-image:var(--lm-fdbc0106298d,url('../assets/ui/growth-v5/growth_button_on.webp')) !important}
 /* 天賦：七個方向的星盤底圖 */
-html body #growth-overlay .growth-tree{background:url('../assets/ui/growth-v5/tal_bg_melee.webp') center/100% 100% no-repeat !important;border-radius:4px !important;box-shadow:inset 0 0 40px #000 !important}
-html body #growth-overlay .growth-dir--melee .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_melee.webp') !important}
-html body #growth-overlay .growth-dir--ranged .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_ranged.webp') !important}
-html body #growth-overlay .growth-dir--magic .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_magic.webp') !important}
-html body #growth-overlay .growth-dir--defense .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_defense.webp') !important}
-html body #growth-overlay .growth-dir--support .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_support.webp') !important}
-html body #growth-overlay .growth-dir--minions .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_minions.webp') !important}
-html body #growth-overlay .growth-dir--movement .growth-tree{background-image:url('../assets/ui/growth-v5/tal_bg_movement.webp') !important}
+html body #growth-overlay .growth-tree{background:var(--lm-6c01c8b4458e,url('../assets/ui/growth-v5/tal_bg_melee.webp')) center/100% 100% no-repeat !important;border-radius:4px !important;box-shadow:inset 0 0 40px #000 !important}
+html body #growth-overlay .growth-dir--melee .growth-tree{background-image:var(--lm-6c01c8b4458e,url('../assets/ui/growth-v5/tal_bg_melee.webp')) !important}
+html body #growth-overlay .growth-dir--ranged .growth-tree{background-image:var(--lm-002e95d1d011,url('../assets/ui/growth-v5/tal_bg_ranged.webp')) !important}
+html body #growth-overlay .growth-dir--magic .growth-tree{background-image:var(--lm-14b12f351e73,url('../assets/ui/growth-v5/tal_bg_magic.webp')) !important}
+html body #growth-overlay .growth-dir--defense .growth-tree{background-image:var(--lm-513068268be3,url('../assets/ui/growth-v5/tal_bg_defense.webp')) !important}
+html body #growth-overlay .growth-dir--support .growth-tree{background-image:var(--lm-6f4989c3554f,url('../assets/ui/growth-v5/tal_bg_support.webp')) !important}
+html body #growth-overlay .growth-dir--minions .growth-tree{background-image:var(--lm-05708d8b52ba,url('../assets/ui/growth-v5/tal_bg_minions.webp')) !important}
+html body #growth-overlay .growth-dir--movement .growth-tree{background-image:var(--lm-92a8d889c41e,url('../assets/ui/growth-v5/tal_bg_movement.webp')) !important}
 /* 節點：鐵環框（未解鎖／可點亮／已點亮），中間放方向徽記 */
-html body #growth-overlay button.growth-node,html body #growth-overlay button.growth-node.locked,html body #growth-overlay button.growth-node.available,html body #growth-overlay button.growth-node.lit{width:40px !important;height:40px !important;border:0 !important;border-radius:50% !important;box-shadow:none !important;background:url('../assets/ui/growth-v5/tal_node_lock.webp') center/contain no-repeat !important;color:#cbbd9a !important}
-html body #growth-overlay button.growth-node.available{background-image:url('../assets/ui/growth-v5/tal_node_open.webp') !important}
-html body #growth-overlay button.growth-node.lit{background-image:url('../assets/ui/growth-v5/tal_node_on.webp') !important;color:#2a1d10 !important;filter:drop-shadow(0 0 6px #e0a64a90) !important}
-html body #growth-overlay button.growth-node.notable{width:48px !important;height:48px !important;background-image:url('../assets/ui/growth-v5/tal_notable_lock.webp') !important}
-html body #growth-overlay button.growth-node.notable.available{background-image:url('../assets/ui/growth-v5/tal_notable_open.webp') !important}
-html body #growth-overlay button.growth-node.notable.lit{background-image:url('../assets/ui/growth-v5/tal_notable_on.webp') !important}
-html body #growth-overlay button.growth-node.keystone,html body #growth-overlay button.growth-node.keystone.lit{width:70px !important;height:70px !important;box-shadow:none !important;background-image:url('../assets/ui/growth-v5/tal_key_lock.webp') !important}
-html body #growth-overlay button.growth-node.keystone.available{background-image:url('../assets/ui/growth-v5/tal_key_open.webp') !important}
-html body #growth-overlay button.growth-node.keystone.lit{background-image:url('../assets/ui/growth-v5/tal_key_on.webp') !important;filter:drop-shadow(0 0 10px #f0b04caa) !important}
+html body #growth-overlay button.growth-node,html body #growth-overlay button.growth-node.locked,html body #growth-overlay button.growth-node.available,html body #growth-overlay button.growth-node.lit{width:40px !important;height:40px !important;border:0 !important;border-radius:50% !important;box-shadow:none !important;background:var(--lm-501778db9f4f,url('../assets/ui/growth-v5/tal_node_lock.webp')) center/contain no-repeat !important;color:#cbbd9a !important}
+html body #growth-overlay button.growth-node.available{background-image:var(--lm-096b42c4071c,url('../assets/ui/growth-v5/tal_node_open.webp')) !important}
+html body #growth-overlay button.growth-node.lit{background-image:var(--lm-d83f2488726d,url('../assets/ui/growth-v5/tal_node_on.webp')) !important;color:#2a1d10 !important;filter:drop-shadow(0 0 6px #e0a64a90) !important}
+html body #growth-overlay button.growth-node.notable{width:48px !important;height:48px !important;background-image:var(--lm-80d88edf9448,url('../assets/ui/growth-v5/tal_notable_lock.webp')) !important}
+html body #growth-overlay button.growth-node.notable.available{background-image:var(--lm-7e1d31c9cd4d,url('../assets/ui/growth-v5/tal_notable_open.webp')) !important}
+html body #growth-overlay button.growth-node.notable.lit{background-image:var(--lm-e691982d3776,url('../assets/ui/growth-v5/tal_notable_on.webp')) !important}
+html body #growth-overlay button.growth-node.keystone,html body #growth-overlay button.growth-node.keystone.lit{width:70px !important;height:70px !important;box-shadow:none !important;background-image:var(--lm-e46a688c5fba,url('../assets/ui/growth-v5/tal_key_lock.webp')) !important}
+html body #growth-overlay button.growth-node.keystone.available{background-image:var(--lm-e8c8b518090c,url('../assets/ui/growth-v5/tal_key_open.webp')) !important}
+html body #growth-overlay button.growth-node.keystone.lit{background-image:var(--lm-d094ca1bce7e,url('../assets/ui/growth-v5/tal_key_on.webp')) !important;filter:drop-shadow(0 0 10px #f0b04caa) !important}
 html body #growth-overlay .growth-node:after{display:none !important}
 html body #growth-overlay .growth-node-emblem{width:22px !important;height:22px}#growth-overlay .notable .growth-node-emblem{width:26px !important;height:26px}#growth-overlay .keystone .growth-node-emblem{width:36px !important;height:36px !important}
 html body #growth-overlay .growth-wire{stroke:#5a4630 !important;opacity:.75 !important;stroke-width:2.4 !important}
 html body #growth-overlay .growth-wire.available{stroke:#9b7a45 !important;opacity:.9 !important}
 html body #growth-overlay .growth-wire.lit{stroke:#f0c66e !important;stroke-width:3 !important;filter:drop-shadow(0 0 4px #e6a443) !important}
 /* 方向徽記 */
-html body #growth-overlay .growth-emblem--melee{background-image:url('../assets/ui/growth-v5/tal_icon_melee.webp') !important}
-html body #growth-overlay .growth-emblem--ranged{background-image:url('../assets/ui/growth-v5/tal_icon_ranged.webp') !important}
-html body #growth-overlay .growth-emblem--magic{background-image:url('../assets/ui/growth-v5/tal_icon_magic.webp') !important}
-html body #growth-overlay .growth-emblem--defense{background-image:url('../assets/ui/growth-v5/tal_icon_defense.webp') !important}
-html body #growth-overlay .growth-emblem--support{background-image:url('../assets/ui/growth-v5/tal_icon_support.webp') !important}
-html body #growth-overlay .growth-emblem--minions{background-image:url('../assets/ui/growth-v5/tal_icon_minions.webp') !important}
-html body #growth-overlay .growth-emblem--movement{background-image:url('../assets/ui/growth-v5/tal_icon_movement.webp') !important}
+html body #growth-overlay .growth-emblem--melee{background-image:var(--lm-2448b8b74d28,url('../assets/ui/growth-v5/tal_icon_melee.webp')) !important}
+html body #growth-overlay .growth-emblem--ranged{background-image:var(--lm-c656b3c2fbb6,url('../assets/ui/growth-v5/tal_icon_ranged.webp')) !important}
+html body #growth-overlay .growth-emblem--magic{background-image:var(--lm-ba689f13739c,url('../assets/ui/growth-v5/tal_icon_magic.webp')) !important}
+html body #growth-overlay .growth-emblem--defense{background-image:var(--lm-3ebf4457da07,url('../assets/ui/growth-v5/tal_icon_defense.webp')) !important}
+html body #growth-overlay .growth-emblem--support{background-image:var(--lm-c7d8e0aabeb7,url('../assets/ui/growth-v5/tal_icon_support.webp')) !important}
+html body #growth-overlay .growth-emblem--minions{background-image:var(--lm-b74a7b4b5edb,url('../assets/ui/growth-v5/tal_icon_minions.webp')) !important}
+html body #growth-overlay .growth-emblem--movement{background-image:var(--lm-57b21e2e70ad,url('../assets/ui/growth-v5/tal_icon_movement.webp')) !important}
 /* 巔峰：十種屬性圖示、等級徽章 */
-html body #growth-overlay .growth-para--movement{background-image:url('../assets/ui/growth-v5/para_move.webp') !important}
-html body #growth-overlay .growth-para--trueDamage{background-image:url('../assets/ui/growth-v5/para_truedmg.webp') !important}
-html body #growth-overlay .growth-para--trueDefense{background-image:url('../assets/ui/growth-v5/para_truedef.webp') !important}
-html body #growth-overlay .growth-para--hp{background-image:url('../assets/ui/growth-v5/para_tough.webp') !important}
-html body #growth-overlay .growth-para--mp{background-image:url('../assets/ui/growth-v5/para_mind.webp') !important}
-html body #growth-overlay .growth-para--physical{background-image:url('../assets/ui/growth-v5/para_valor.webp') !important}
-html body #growth-overlay .growth-para--magic{background-image:url('../assets/ui/growth-v5/para_arcane.webp') !important}
-html body #growth-overlay .growth-para--companions{background-image:url('../assets/ui/growth-v5/para_bond.webp') !important}
-html body #growth-overlay .growth-para--healing{background-image:url('../assets/ui/growth-v5/para_pray.webp') !important}
-html body #growth-overlay .growth-para--curse{background-image:url('../assets/ui/growth-v5/para_ward.webp') !important}
+html body #growth-overlay .growth-para--movement{background-image:var(--lm-81249d55039a,url('../assets/ui/growth-v5/para_move.webp')) !important}
+html body #growth-overlay .growth-para--trueDamage{background-image:var(--lm-4285d05f5f44,url('../assets/ui/growth-v5/para_truedmg.webp')) !important}
+html body #growth-overlay .growth-para--trueDefense{background-image:var(--lm-6852ef00e7fe,url('../assets/ui/growth-v5/para_truedef.webp')) !important}
+html body #growth-overlay .growth-para--hp{background-image:var(--lm-18d6c11edc03,url('../assets/ui/growth-v5/para_tough.webp')) !important}
+html body #growth-overlay .growth-para--mp{background-image:var(--lm-425f044471f2,url('../assets/ui/growth-v5/para_mind.webp')) !important}
+html body #growth-overlay .growth-para--physical{background-image:var(--lm-6e5e08db6253,url('../assets/ui/growth-v5/para_valor.webp')) !important}
+html body #growth-overlay .growth-para--magic{background-image:var(--lm-dadafd1c0e87,url('../assets/ui/growth-v5/para_arcane.webp')) !important}
+html body #growth-overlay .growth-para--companions{background-image:var(--lm-c6dd656d7f8c,url('../assets/ui/growth-v5/para_bond.webp')) !important}
+html body #growth-overlay .growth-para--healing{background-image:var(--lm-fa4ad452c44d,url('../assets/ui/growth-v5/para_pray.webp')) !important}
+html body #growth-overlay .growth-para--curse{background-image:var(--lm-4413a431fad6,url('../assets/ui/growth-v5/para_ward.webp')) !important}
 html body #growth-overlay .growth-stat-title i{width:46px !important;height:46px !important;padding:0 !important;border:0 !important;border-radius:0 !important;background:none !important;box-shadow:none !important}
-html body #growth-overlay .growth-rank-seal{background:url('../assets/ui/growth-v5/paragon_medal.webp') center/contain no-repeat !important}
+html body #growth-overlay .growth-rank-seal{background:var(--lm-3921ed8cd3a2,url('../assets/ui/growth-v5/paragon_medal.webp')) center/contain no-repeat !important}
 /* 秘境與遠征：橫幅、目的地小圖 */
 html body #growth-overlay .growth-banner{position:relative !important;height:clamp(84px,14vw,150px) !important;margin:6px 0 10px !important;display:flex !important;align-items:center !important;padding:0 18px !important;background:center/cover no-repeat !important;border:1px solid #5b4325 !important;box-shadow:inset 0 0 30px #000 !important}
 html body #growth-overlay .growth-banner h3{margin:0 !important;font-size:clamp(18px,3vw,26px) !important;color:#f1d9a6 !important;text-shadow:0 2px 4px #000,0 0 12px #000 !important}
-html body #growth-overlay .growth-banner--mushroom{background-image:linear-gradient(90deg,#000a,#0000 55%),url('../assets/ui/growth-v5/exp_banner_mushroom.webp') !important}
-html body #growth-overlay .growth-banner--dream{background-image:linear-gradient(90deg,#000a,#0000 55%),url('../assets/ui/growth-v5/exp_banner_dream.webp') !important}
-html body #growth-overlay .growth-banner--rift{background-image:linear-gradient(90deg,#000a,#0000 55%),url('../assets/ui/growth-v5/exp_banner_rift.webp') !important}
+html body #growth-overlay .growth-banner--mushroom{background-image:linear-gradient(90deg,#000a,#0000 55%),var(--lm-7028f4974706,url('../assets/ui/growth-v5/exp_banner_mushroom.webp')) !important}
+html body #growth-overlay .growth-banner--dream{background-image:linear-gradient(90deg,#000a,#0000 55%),var(--lm-49e11cccf58b,url('../assets/ui/growth-v5/exp_banner_dream.webp')) !important}
+html body #growth-overlay .growth-banner--rift{background-image:linear-gradient(90deg,#000a,#0000 55%),var(--lm-6cb7a0495c7d,url('../assets/ui/growth-v5/exp_banner_rift.webp')) !important}
 html body #growth-overlay .growth-queue label{align-items:center !important}
 html body #growth-overlay .growth-thumb{flex:none !important;width:96px !important;height:54px !important;background-color:#111 !important;background-position:center !important;background-size:cover !important;background-repeat:no-repeat !important;border:1px solid #5b4325 !important;box-shadow:0 1px 3px #000 !important}
 html body #growth-overlay .growth-thumb--card{background-size:contain !important;background-color:#0d0b10 !important}
@@ -72,42 +72,42 @@ html body #growth-overlay .growth-bottom{background:linear-gradient(#120e0cf2,#0
 /* 限界解放（Ping 11-13） */
 .growth-lb{display:flex;flex-direction:column;gap:2px;margin:8px 0;padding:8px 12px;border:1px solid #6b5636;border-radius:4px;background:linear-gradient(90deg,#2a160e,#120d0a)}.growth-lb b{color:#f0c674;font-size:15px}.growth-lb small{color:#cbbfa8;font-size:12px;line-height:1.5}.growth-lb em{font-style:normal;color:#8fd18a;font-size:13px}
 /* 巔峰新能力（Ping 11-13；GPT 圖 11-13 13:45） */
-html body #growth-overlay .growth-para--spread{background-image:url('../assets/ui/growth-v5/para2_spread.webp') !important}
-html body #growth-overlay .growth-para--debuff{background-image:url('../assets/ui/growth-v5/para2_debuff.webp') !important}
-html body #growth-overlay .growth-para--dot{background-image:url('../assets/ui/growth-v5/para2_bleed.webp') !important}
-html body #growth-overlay .growth-para--weak{background-image:url('../assets/ui/growth-v5/para2_weak.webp') !important}
-html body #growth-overlay .growth-para--boss{background-image:url('../assets/ui/growth-v5/para2_boss.webp') !important}
-html body #growth-overlay .growth-para--bossDef{background-image:url('../assets/ui/growth-v5/para2_bossdef.webp') !important}
-html body #growth-overlay .growth-para--stats{background-image:url('../assets/ui/growth-v5/para2_stats.webp') !important}
-html body #growth-overlay .growth-para--cdr1{background-image:url('../assets/ui/growth-v5/para2_cdr.webp') !important}
-html body #growth-overlay .growth-para--lbUp{background-image:url('../assets/ui/growth-v5/para3_lbup.webp') !important}
-html body #growth-overlay .growth-para--chase{background-image:url('../assets/ui/growth-v5/para3_chase.webp') !important}
-html body #growth-overlay .growth-para--critDmg{background-image:url('../assets/ui/growth-v5/para3_critdmg.webp') !important}
-html body #growth-overlay .growth-para--cdr2{background-image:url('../assets/ui/growth-v5/para2_cdr.webp') !important}
-html body #growth-overlay .growth-para--finalDef{background-image:url('../assets/ui/growth-v5/para3_finaldef.webp') !important}
-html body #growth-overlay .growth-para--finalDmg{background-image:url('../assets/ui/growth-v5/para3_finaldmg.webp') !important}
-html body #growth-overlay .growth-para--leech{background-image:url('../assets/ui/growth-v5/para3_leech.webp') !important}
+html body #growth-overlay .growth-para--spread{background-image:var(--lm-0f8059bee324,url('../assets/ui/growth-v5/para2_spread.webp')) !important}
+html body #growth-overlay .growth-para--debuff{background-image:var(--lm-b9b0d124c816,url('../assets/ui/growth-v5/para2_debuff.webp')) !important}
+html body #growth-overlay .growth-para--dot{background-image:var(--lm-a3e84ed892f1,url('../assets/ui/growth-v5/para2_bleed.webp')) !important}
+html body #growth-overlay .growth-para--weak{background-image:var(--lm-20c81666c565,url('../assets/ui/growth-v5/para2_weak.webp')) !important}
+html body #growth-overlay .growth-para--boss{background-image:var(--lm-2b9d11b5e243,url('../assets/ui/growth-v5/para2_boss.webp')) !important}
+html body #growth-overlay .growth-para--bossDef{background-image:var(--lm-0febfe562fe5,url('../assets/ui/growth-v5/para2_bossdef.webp')) !important}
+html body #growth-overlay .growth-para--stats{background-image:var(--lm-9d20a3bee385,url('../assets/ui/growth-v5/para2_stats.webp')) !important}
+html body #growth-overlay .growth-para--cdr1{background-image:var(--lm-114f7eeb727b,url('../assets/ui/growth-v5/para2_cdr.webp')) !important}
+html body #growth-overlay .growth-para--lbUp{background-image:var(--lm-0aa2d381c66c,url('../assets/ui/growth-v5/para3_lbup.webp')) !important}
+html body #growth-overlay .growth-para--chase{background-image:var(--lm-961110f4b874,url('../assets/ui/growth-v5/para3_chase.webp')) !important}
+html body #growth-overlay .growth-para--critDmg{background-image:var(--lm-30d0a4377232,url('../assets/ui/growth-v5/para3_critdmg.webp')) !important}
+html body #growth-overlay .growth-para--cdr2{background-image:var(--lm-114f7eeb727b,url('../assets/ui/growth-v5/para2_cdr.webp')) !important}
+html body #growth-overlay .growth-para--finalDef{background-image:var(--lm-e5797f5b099c,url('../assets/ui/growth-v5/para3_finaldef.webp')) !important}
+html body #growth-overlay .growth-para--finalDmg{background-image:var(--lm-c6c47862c43c,url('../assets/ui/growth-v5/para3_finaldmg.webp')) !important}
+html body #growth-overlay .growth-para--leech{background-image:var(--lm-4784ffe3a430,url('../assets/ui/growth-v5/para3_leech.webp')) !important}
 /* 巔峰 3000／4000、命脈、繼承繁星（GPT 圖 11-15） */
-html body #growth-overlay .growth-para--abnDur{background-image:url('../assets/ui/growth-v5/para4_abndur.webp') !important}
-html body #growth-overlay .growth-para--abnRes{background-image:url('../assets/ui/growth-v5/para4_abnres.webp') !important}
-html body #growth-overlay .growth-para--dmgAll{background-image:url('../assets/ui/growth-v5/para4_dmgall.webp') !important}
-html body #growth-overlay .growth-para--finalDmg2{background-image:url('../assets/ui/growth-v5/para4_finaldmg2.webp') !important}
-html body #growth-overlay .growth-para--minDef{background-image:url('../assets/ui/growth-v5/para4_mindef.webp') !important}
-html body #growth-overlay .growth-para--minDmg{background-image:url('../assets/ui/growth-v5/para4_mindmg.webp') !important}
-html body #growth-overlay .growth-para--minChase{background-image:url('../assets/ui/growth-v5/para4_minchase.webp') !important}
-html body #growth-overlay .growth-para--minRecast{background-image:url('../assets/ui/growth-v5/para4_minrecast.webp') !important}
-html body #growth-overlay .growth-para--minFinalDef{background-image:url('../assets/ui/growth-v5/para4_minfinaldef.webp') !important}
-html body #growth-overlay .growth-para--dmgTaken{background-image:url('../assets/ui/growth-v5/para5_dmgtaken.webp') !important}
-html body #growth-overlay .growth-para--antiCrit{background-image:url('../assets/ui/growth-v5/para5_anticrit.webp') !important}
-html body #growth-overlay .growth-para--heavyDef{background-image:url('../assets/ui/growth-v5/para5_heavydef.webp') !important}
-html body #growth-overlay .growth-para--critDef{background-image:url('../assets/ui/growth-v5/para5_critdef.webp') !important}
-html body #growth-overlay .growth-para--finalDef2{background-image:url('../assets/ui/growth-v5/para5_finaldef2.webp') !important}
-html body #growth-overlay .growth-para--minHeavyDef{background-image:url('../assets/ui/growth-v5/para5_minheavydef.webp') !important}
-html body #growth-overlay .growth-para--minCritDef{background-image:url('../assets/ui/growth-v5/para5_mincritdef.webp') !important}
-html body #growth-overlay .growth-para--minAntiCrit{background-image:url('../assets/ui/growth-v5/para5_minanticrit.webp') !important}
-html body #growth-overlay .growth-para--cdr3{background-image:url('../assets/ui/growth-v5/para5_cdr3.webp') !important}
-html body #growth-overlay .growth-para--bloodline{background-image:url('../assets/ui/growth-v5/para_bloodline.webp') !important}
-html body #growth-overlay .growth-para--starInherit{background-image:url('../assets/ui/growth-v5/para_starinherit.webp') !important}
+html body #growth-overlay .growth-para--abnDur{background-image:var(--lm-7cc25b425b09,url('../assets/ui/growth-v5/para4_abndur.webp')) !important}
+html body #growth-overlay .growth-para--abnRes{background-image:var(--lm-affaf38bb45a,url('../assets/ui/growth-v5/para4_abnres.webp')) !important}
+html body #growth-overlay .growth-para--dmgAll{background-image:var(--lm-27e31e16bc22,url('../assets/ui/growth-v5/para4_dmgall.webp')) !important}
+html body #growth-overlay .growth-para--finalDmg2{background-image:var(--lm-31a7ff188437,url('../assets/ui/growth-v5/para4_finaldmg2.webp')) !important}
+html body #growth-overlay .growth-para--minDef{background-image:var(--lm-9006b9c27f06,url('../assets/ui/growth-v5/para4_mindef.webp')) !important}
+html body #growth-overlay .growth-para--minDmg{background-image:var(--lm-7080c3588bbc,url('../assets/ui/growth-v5/para4_mindmg.webp')) !important}
+html body #growth-overlay .growth-para--minChase{background-image:var(--lm-bf38a53f8157,url('../assets/ui/growth-v5/para4_minchase.webp')) !important}
+html body #growth-overlay .growth-para--minRecast{background-image:var(--lm-59b864f7ebdb,url('../assets/ui/growth-v5/para4_minrecast.webp')) !important}
+html body #growth-overlay .growth-para--minFinalDef{background-image:var(--lm-09bc4ed7c419,url('../assets/ui/growth-v5/para4_minfinaldef.webp')) !important}
+html body #growth-overlay .growth-para--dmgTaken{background-image:var(--lm-7c467eab1c84,url('../assets/ui/growth-v5/para5_dmgtaken.webp')) !important}
+html body #growth-overlay .growth-para--antiCrit{background-image:var(--lm-ea973d02331a,url('../assets/ui/growth-v5/para5_anticrit.webp')) !important}
+html body #growth-overlay .growth-para--heavyDef{background-image:var(--lm-99dfaf8ba611,url('../assets/ui/growth-v5/para5_heavydef.webp')) !important}
+html body #growth-overlay .growth-para--critDef{background-image:var(--lm-a7178679164d,url('../assets/ui/growth-v5/para5_critdef.webp')) !important}
+html body #growth-overlay .growth-para--finalDef2{background-image:var(--lm-6cbe69f9f4b3,url('../assets/ui/growth-v5/para5_finaldef2.webp')) !important}
+html body #growth-overlay .growth-para--minHeavyDef{background-image:var(--lm-1cb753565d23,url('../assets/ui/growth-v5/para5_minheavydef.webp')) !important}
+html body #growth-overlay .growth-para--minCritDef{background-image:var(--lm-ff7a153ed4be,url('../assets/ui/growth-v5/para5_mincritdef.webp')) !important}
+html body #growth-overlay .growth-para--minAntiCrit{background-image:var(--lm-e9fe10123935,url('../assets/ui/growth-v5/para5_minanticrit.webp')) !important}
+html body #growth-overlay .growth-para--cdr3{background-image:var(--lm-01abf5768268,url('../assets/ui/growth-v5/para5_cdr3.webp')) !important}
+html body #growth-overlay .growth-para--bloodline{background-image:var(--lm-e55259bf7648,url('../assets/ui/growth-v5/para_bloodline.webp')) !important}
+html body #growth-overlay .growth-para--starInherit{background-image:var(--lm-8dc8f7137d45,url('../assets/ui/growth-v5/para_starinherit.webp')) !important}
 .growth-para-sec{grid-column:1/-1;margin:14px 0 2px;color:#e5c07b;font-size:15px;letter-spacing:.08em;border-bottom:1px solid #4b3a22;padding-bottom:4px}.growth-para-sec small{color:#9a8a70;margin-left:8px;font-size:12px}.growth-stat.is-locked{opacity:.45;filter:grayscale(.6)}
 /* 極意（afk-talent2，Ping 11-13） */
 .t2-note{color:#b9ab92;font-size:13px;margin:6px 0 10px}
@@ -128,6 +128,6 @@ html body #growth-overlay .growth-para--starInherit{background-image:url('../ass
 @media (max-width:700px){.t2-dirs{grid-template-columns:repeat(3,minmax(0,1fr))}.t2-sec{grid-template-columns:1fr}}
 /* 限界解放圖示、極意的方向圖示與星盤底圖（GPT 11-13） */
 .growth-lb{position:relative;padding-left:72px !important;min-height:64px}.growth-lb::before{content:'';position:absolute;left:10px;top:50%;width:52px;height:52px;margin-top:-26px;background:var(--lb-ico) center/contain no-repeat}
-.growth-lb--mage{--lb-ico:url('../assets/ui/growth-v5/lb_mage.webp')}.growth-lb--knight{--lb-ico:url('../assets/ui/growth-v5/lb_knight.webp')}.growth-lb--warrior{--lb-ico:url('../assets/ui/growth-v5/lb_warrior.webp')}.growth-lb--dragon{--lb-ico:url('../assets/ui/growth-v5/lb_dragon.webp')}.growth-lb--illusion{--lb-ico:url('../assets/ui/growth-v5/lb_illusion.webp')}.growth-lb--royal{--lb-ico:url('../assets/ui/growth-v5/lb_royal.webp')}.growth-lb--elf{--lb-ico:url('../assets/ui/growth-v5/lb_elf.webp')}.growth-lb--dark{--lb-ico:url('../assets/ui/growth-v5/lb_dark.webp')}
+.growth-lb--mage{--lb-ico:var(--lm-488fb743c9c3,url('../assets/ui/growth-v5/lb_mage.webp'))}.growth-lb--knight{--lb-ico:var(--lm-83801e48bdd5,url('../assets/ui/growth-v5/lb_knight.webp'))}.growth-lb--warrior{--lb-ico:var(--lm-85985a0af3b0,url('../assets/ui/growth-v5/lb_warrior.webp'))}.growth-lb--dragon{--lb-ico:var(--lm-aa1c0a459595,url('../assets/ui/growth-v5/lb_dragon.webp'))}.growth-lb--illusion{--lb-ico:var(--lm-79375a2aff92,url('../assets/ui/growth-v5/lb_illusion.webp'))}.growth-lb--royal{--lb-ico:var(--lm-d39980ebc78c,url('../assets/ui/growth-v5/lb_royal.webp'))}.growth-lb--elf{--lb-ico:var(--lm-d245601229cb,url('../assets/ui/growth-v5/lb_elf.webp'))}.growth-lb--dark{--lb-ico:var(--lm-257ba0c75047,url('../assets/ui/growth-v5/lb_dark.webp'))}
 .t2-dirs button i{display:block;width:40px;height:40px;background:center/contain no-repeat;margin-bottom:2px}
 .t2-tree{background-size:cover !important;background-position:center !important;background-blend-mode:multiply}

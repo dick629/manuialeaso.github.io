@@ -28,7 +28,7 @@
   var enabled=function(){return !!W.AFK_CARD_ASCENSION&&(!W.AFK_TOGGLES||W.AFK_TOGGLES.enabled('card-ascension'));};
   var hp=function(a){return a?Math.max(0,Number(a.curHp!=null?a.curHp:a.hp)||0):0;};
   var live=function(a){return !!(a&&!a.dead&&!a._dead&&!a._downed&&hp(a)>0);};
-  function members(){var p=playerNow();return p?[p].concat(p.allies||[]).filter(live):[];}
+  function members(){var p=playerNow();return p?[p].concat(GiranPartyView.combatAllies(p)).filter(live):[];}
   function active(actor){
     if(!enabled())return null;
     var row=W.AFK_CARD_ASCENSION.active(actor);
@@ -91,6 +91,7 @@
     if(last&&last.target===target&&last.damage===before)last.damage=after;
   }
   function damage(actor,target,amount,opt){
+    if(!GiranPartyView.canFight(actor))return 0;
     opt=opt||{};
     if(!enabled()||!actor||!actor.cls||!enemy(target)||!(amount>0)||!Number.isFinite(Number(amount))||actor===target||reflected(opt)||immune(target,opt))return amount;
     var s=memory(actor),identity=targetIdentity(target),first=!s.seen.has(identity);
@@ -207,7 +208,7 @@
   var wasDungeon=null;
   function partyHeal(pct){
     var p=playerNow();if(!p)return;
-    (p.allies||[]).forEach(function(a){if(a&&!a._downed&&a.mhp>0&&a.curHp>0)a.curHp=Math.min(a.mhp,a.curHp+Math.ceil(a.mhp*pct));});
+    GiranPartyView.combatAllies(p).forEach(function(a){if(a&&!a._downed&&a.mhp>0&&a.curHp>0)a.curHp=Math.min(a.mhp,a.curHp+Math.ceil(a.mhp*pct));});
     try{(typeof W.petsOutList==='function'?W.petsOutList():[]).forEach(function(x){if(x&&!x._downed&&x.mhp>0&&x.hp>0)x.hp=Math.min(x.mhp,x.hp+Math.ceil(x.mhp*pct));});}catch(e){}
     (p.summonsV2||[]).forEach(function(x){if(x&&!x._downed&&x.mhp>0&&x.hp>0)x.hp=Math.min(x.mhp,x.hp+Math.ceil(x.mhp*pct));});
   }

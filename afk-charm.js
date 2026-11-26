@@ -146,7 +146,7 @@
   var party = function () {
     var p = P(), out = []; if (!p) return out;
     if (!p.dead && p.hp > 0) out.push(p);
-    (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); });
+    GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); });
     return out;
   };
   var who = function (x) { return x === P() ? '你' : '協力·' + (x._allyName || '傭兵'); };

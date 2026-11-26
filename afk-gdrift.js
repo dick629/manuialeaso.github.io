@@ -204,7 +204,7 @@
     if (en && en.pct > 0) ['iron', 'spring'].forEach(function (k) { if (!buf(k, p) && cdLeft(p, k) <= 0) { var it = find(p, k); if (it) use(it, true); } });
     if (buf('spring', p)) {
       var hm = W.__afkGdHealMult();
-      [p].concat(p.allies || []).forEach(function (t) {
+      [p].concat(GiranPartyView.combatAllies(p)).forEach(function (t) {
         if (!t || t._downed || t.dead) return; var mh = Number(t.mhp) || 0, add = Math.max(1, Math.floor(mh * SUP.spring.v * hm));
         if (t === p) p.hp = Math.min(p.mhp, (p.hp || 0) + add); else if ((t.curHp || 0) > 0) t.curHp = Math.min(mh, (t.curHp || 0) + add);
       });

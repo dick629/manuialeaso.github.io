@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW" data-mobile-shell="unified">
+<html lang="zh-TW" data-mobile-shell="unified" data-play-mode="fusion">
 <head>
     <meta charset="UTF-8">
     <!-- 🚀 v3.0.74 移植參考版優化：禁止瀏覽器快取 HTML→改檔後玩家重整即拿到新版 js/css（免手動硬重載/清快取） -->
@@ -11,23 +11,31 @@
          DESIGN_W/isMobileDevice/window.__mobileScaling 全專案零呼叫；唯一實際效果 viewport-fit=cover 直接併入上方 meta。
          （width=1180 手機縮放已於桌機專注決策時移除·本作 desktop-only） -->
 
-    <title>放置天堂 - 次元時空</title>
+    <title>次元融合</title>
+    <script src="merged/recovery-boot.js?v=b87a059e557e"></script>
+<script src="site-config.js"></script>
+<script src="merged/media-paths.js?v=087942200dae"></script>
+<script src="merged/media-router.js?v=c072390f3de8"></script>
+<script src="merged/media-dom.js?v=e591ed95353d"></script>
+<script src="merged/save-summary.js?v=a8254966822e"></script>
+<script src="merged/transfer-client.js?v=966f71f59c41"></script>
+    <script defer src="merged/play-mode.js?v=1ec59bf6b718"></script>
+    <link rel="stylesheet" href="merged/play-mode.css?v=ba92e4a384b5">
     <!-- 11-11 玩家：App 第一次開要等很久、整片白 → 先上深色底與載入畫面，程式全部載完才拿掉 -->
     <style>html,body{background:#0f141d}#afk-boot{position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0f141d;color:#e8d8b6;font:15px/1.5 system-ui,sans-serif;transition:opacity .3s}#afk-boot img{width:88px;height:88px;border-radius:18px}#afk-boot .bar{width:180px;height:4px;border-radius:2px;background:#2a2f3a;overflow:hidden}#afk-boot .bar i{display:block;height:100%;width:0;background:#c9a55a;transition:width .2s}</style>
     <!-- 11-12 玩家：手機開網頁到主選單要 3.5 分鐘 → 記錄每次開機各階段花多久（快取診斷「開機耗時」看得到） -->
     <script>(function(){var P=window.performance;if(!P||!P.now)return;try{P.setResourceTimingBufferSize&&P.setResourceTimingBufferSize(3000);}catch(e){}var L={n:0,ms:0,top:{}};try{new PerformanceObserver(function(l){l.getEntries().forEach(function(e){L.n++;L.ms+=e.duration;});}).observe({type:"longtask",buffered:true});}catch(e){}window.__afkBootLong=L;var mark={};window.__afkBootMark=function(k){if(!(k in mark))mark[k]=Math.round(P.now());};document.addEventListener("DOMContentLoaded",function(){__afkBootMark("dom");});window.addEventListener("load",function(){__afkBootMark("load");});var save=function(){try{var rs=P.getEntriesByType("resource"),agg={js:[0,0,0,0],css:[0,0,0,0],img:[0,0,0,0],audio:[0,0,0,0],other:[0,0,0,0]},slow=[],lastJs=0;rs.forEach(function(r){var u=r.name,k=/\/(bgm|sfx)\//.test(u)?"audio":/\.js(\?|$)/.test(u)?"js":/\.css(\?|$)/.test(u)?"css":/\.(webp|png|jpe?g|gif)(\?|$)/.test(u)?"img":"other",a=agg[k];a[0]++;a[1]+=r.transferSize||0;if(!r.transferSize)a[2]++;a[3]=Math.max(a[3],Math.round(r.responseEnd));if(k==="js")lastJs=Math.max(lastJs,r.responseEnd);var nm=u.replace(/^.*\//,"").replace(/\?.*$/,"");try{nm=decodeURIComponent(nm);}catch(e){}slow.push([Math.round(r.duration),nm]);});slow.sort(function(a,b){return b[0]-a[0];});var nav=(P.getEntriesByType("navigation")||[])[0]||{};var rec={at:Date.now(),mark:mark,nav:{ttfb:Math.round(nav.responseStart||0),html:Math.round(nav.responseEnd||0),sw:Math.round(nav.workerStart||0)},agg:agg,lastJs:Math.round(lastJs),slow:slow.slice(0,8),long:{n:L.n,ms:Math.round(L.ms)},sw:!!(navigator.serviceWorker&&navigator.serviceWorker.controller),mem:(navigator.deviceMemory||0),cpu:(navigator.hardwareConcurrency||0)};var arr=[];try{arr=JSON.parse(localStorage.getItem("afk_diag_boot")||"[]")||[];}catch(e){}arr.unshift(rec);localStorage.setItem("afk_diag_boot",JSON.stringify(arr.slice(0,3)));try{localStorage.removeItem("lineage_boot_times");localStorage.removeItem("afk_boot_times");}catch(e){}}catch(e){}};var iv=setInterval(function(){if(typeof loadGame==="function"&&!document.getElementById("afk-boot")&&document.readyState!=="loading"){clearInterval(iv);__afkBootMark("menu");setTimeout(save,3000);}},250);})();</script>
-    <script src="merged/recovery-boot.js?v=20af40f8411b"></script>
-    <link rel="icon" type="image/png" href="assets/favicon.png">   <!-- 🖼️ 瀏覽器分頁圖示(favicon)：把你的圖放到 assets/favicon.png 即生效；可改 href 路徑或副檔名(.ico/.svg) -->
+    <link rel="icon" type="image/png" data-lm-href="assets/favicon.png">   <!-- 🖼️ 瀏覽器分頁圖示(favicon)：把你的圖放到 assets/favicon.png 即生效；可改 href 路徑或副檔名(.ico/.svg) -->
 
-    <link rel="stylesheet" href="css/style.css?v=b74c8c865c05">
+    <link rel="stylesheet" href="css/style.css?v=11385e3a5c96">
     <link rel="stylesheet" href="css/floating-ui.css?v=bc8be4ac7f11">
     <link rel="stylesheet" href="css/tailwind-built.css?v=932535789fee"><!-- 🔧 預編譯 Tailwind（取代執行期 JIT tailwind.js）：只含實際用到的 class，省 407KB runtime + 移除持續掃描 DOM 的成本。置於 style.css 之後以保留原 cascade（utility 平手時勝過自訂 class，與舊 JIT 注入順序一致） -->
     <link rel="stylesheet" href="merged/mobile-shell.css?v=8e12010f76a0">
-    <link rel="stylesheet" href="merged/mobile-theme.css?v=54bf1614a1fd">
-    <link rel="stylesheet" href="merged/mobile-finish.css?v=26891f9611a9">
-    <link rel="stylesheet" href="merged/interface-materials.css?v=df4d36674acd">
-    <link rel="stylesheet" href="merged/interface-desktop.css?v=c44e95eefc59" media="(min-width:821px)">
-    <link rel="stylesheet" href="merged/interface-mobile.css?v=ac93b25f27b7" media="(max-width:820px)">
+    <link rel="stylesheet" href="merged/mobile-theme.css?v=b976380e0987">
+    <link rel="stylesheet" href="merged/mobile-finish.css?v=ad30ee32c642">
+    <link rel="stylesheet" href="merged/interface-materials.css?v=481fa3b33ff5">
+    <link rel="stylesheet" href="merged/interface-desktop.css?v=b392c2686490" media="(min-width:821px)">
+    <link rel="stylesheet" href="merged/interface-mobile.css?v=75d60158e379" media="(max-width:820px)">
 </head>
 <body class="h-screen w-screen overflow-hidden">
     <div id="afk-boot" aria-live="polite"><img src="pwa-icon-192.png" alt=""><div id="afk-boot-t">載入中…</div><div class="bar"><i id="afk-boot-bar"></i></div></div>
@@ -40,23 +48,27 @@
     <!-- 創角畫面（🎨 v3.0.40 起始UI：310.png 固定底圖＋273~300 左下逐幀動畫·標題/選單/版號絕對定位於 4:3 藝術舞台上） -->
     <div id="creation-screen">
       <div id="login-art-stage">
-        <img id="login-bg-image" src="public/assets/login/310.webp" alt="登入畫面背景">
-        <img id="login-anim-image" src="public/assets/login/273.webp" alt="登入畫面動畫">
+        <img id="login-bg-image" data-lm-src="public/assets/login/310.webp" alt="登入畫面背景">
+        <img id="login-anim-image" data-lm-src="public/assets/login/273.webp" alt="登入畫面動畫">
         <div id="login-title-layer" class="text-center">
-            <h1 class="text-4xl font-bold text-yellow-400 mb-2">放置天堂 - 次元時空</h1>
-            <p class="text-base text-slate-400">創造您的角色並開始冒險</p>
+            <h1 class="text-4xl font-bold text-yellow-400 mb-2">次元融合</h1>
+            <p id="login-version" data-giran-release="0.8.25">v0.8.25</p>
         </div>
 
         <div id="main-menu" class="flex flex-col gap-5 items-center my-12">
-            <button onclick="openLoadSelect()" id="btn-start-menu" class="btn text-xl w-72 py-4 bg-blue-700 hover:bg-blue-600 border-blue-500">開始遊戲</button>
+            <label class="play-mode-picker">遊玩模式
+                <select id="play-mode">
+                    <option value="fusion">融合版（自由走動）</option>
+                    <option value="dimension">舊版次元（固定站位）</option>
+                </select>
+            </label>
+            <button onclick="LineagePlayMode.start()" id="btn-start-menu" class="btn text-xl w-72 py-4 bg-blue-700 hover:bg-blue-600 border-blue-500">開始遊戲</button>
             <button onclick="toggleVfxPref()" id="btn-vfx-toggle" class="btn text-base w-72 py-2.5 bg-slate-700 hover:bg-slate-600 border-slate-500">✨ 戰鬥特效：開啟</button>
             <button onclick="toggleVfxNumPref()" id="btn-vfxnum-toggle" class="btn text-base w-72 py-2.5 bg-slate-700 hover:bg-slate-600 border-slate-500">🔢 傷害數字：開啟</button>
             <p class="text-xs text-slate-500 -mt-2 w-72 text-center">效果較弱/卡頓的裝置可關閉戰鬥特效；「傷害數字」可獨立關閉、其餘特效保留（開始前設定，遊戲中不再提供）</p>
         </div>
 
         <div id="login-meta-layer">
-            <!-- 🏷️ 版本號（由 js/14 window.onload 依 GAME_VERSION 填入；此處 v2.4.0 僅為 JS 失效時的後備文字） -->
-            <div id="login-version" class="text-center text-sm text-slate-300 font-medium tracking-wide select-none">v2.4.0</div>
             <div id="login-disclaimer" class="text-center text-xs text-slate-400 leading-relaxed mx-auto">本遊戲為非官方免費同人作品，絕無營利意圖；遊戲內圖片與音樂版權歸原權利方 NCSOFT 所有，其餘程式為獨立開發，嚴禁商業販售。</div>
         </div>
       </div>
@@ -65,9 +77,9 @@
 
         <div id="load-select-panel" class="hidden" aria-label="角色選擇">
           <div id="load-art-stage">
-            <img id="load-select-bg" src="public/assets/login/load.webp" alt="角色選擇背景" draggable="false">
+            <img id="load-select-bg" data-lm-src="public/assets/login/load.webp" alt="角色選擇背景" draggable="false">
             <div id="load-slot-grid" aria-label="存檔角色"></div>
-            <img id="load-select-overlay" src="public/assets/login/load1.webp" alt="" aria-hidden="true" draggable="false">
+            <img id="load-select-overlay" data-lm-src="public/assets/login/load1.webp" alt="" aria-hidden="true" draggable="false">
             <div id="load-page-tabs" aria-label="存檔頁切換">
                 <button onclick="loadSetPage(1)" id="load-page-1" type="button" aria-label="存檔 1 到 4"></button>
                 <button onclick="loadSetPage(2)" id="load-page-2" type="button" aria-label="存檔 5 到 8"></button>
@@ -100,7 +112,7 @@
         </div>
 
                 <div id="creation-panel" class="hidden" aria-label="創建角色">
-            <img id="creation-bg-image" src="public/assets/login/824.webp" alt="創角背景" draggable="false">
+            <img id="creation-bg-image" data-lm-src="public/assets/login/824.webp" alt="創角背景" draggable="false">
 
             <section id="creation-class-desc-frame" aria-live="polite">
                 <h2 id="creation-class-title">王子</h2>
@@ -108,17 +120,17 @@
             </section>
 
             <div id="creation-avatar-stage" aria-hidden="true">
-                <img id="class-preview-img" src="assets/start/prince/714.webp" alt="職業預覽" draggable="false">
+                <img id="class-preview-img" data-lm-src="assets/start/prince/714.webp" alt="職業預覽" draggable="false">
             </div>
             <nav id="creation-class-list" aria-label="職業選擇">
-                <button onclick="selectClassBase('royal')" id="btn-class-base-royal" class="creation-class-btn class-left class-pos-1" type="button" title="王族"><img src="assets/logo/王族logo.webp" alt="王族"></button>
-                <button onclick="selectClassBase('knight')" id="btn-class-base-knight" class="creation-class-btn class-left class-pos-2" type="button" title="騎士"><img src="assets/logo/騎士logo.webp" alt="騎士"></button>
-                <button onclick="selectClassBase('mage')" id="btn-class-base-mage" class="creation-class-btn class-left class-pos-3" type="button" title="法師"><img src="assets/logo/法師logo.webp" alt="法師"></button>
-                <button onclick="selectClassBase('elf')" id="btn-class-base-elf" class="creation-class-btn class-left class-pos-4" type="button" title="妖精"><img src="assets/logo/妖精logo.webp" alt="妖精"></button>
-                <button onclick="selectClassBase('dark')" id="btn-class-base-dark" class="creation-class-btn class-right class-pos-1" type="button" title="黑暗妖精"><img src="assets/logo/黑暗妖精logo.webp" alt="黑暗妖精"></button>
-                <button onclick="selectClassBase('illusionist')" id="btn-class-base-illusionist" class="creation-class-btn class-right class-pos-2" type="button" title="幻術士"><img src="assets/logo/幻術士logo.webp" alt="幻術士"></button>
-                <button onclick="selectClassBase('Dknight')" id="btn-class-base-Dknight" class="creation-class-btn class-right class-pos-3" type="button" title="龍騎士"><img src="assets/logo/龍騎士logo.webp" alt="龍騎士"></button>
-                <button onclick="selectClassBase('warrior')" id="btn-class-base-warrior" class="creation-class-btn class-right class-pos-4" type="button" title="戰士"><img src="assets/logo/戰士logo.webp" alt="戰士"></button>
+                <button onclick="selectClassBase('royal')" id="btn-class-base-royal" class="creation-class-btn class-left class-pos-1" type="button" title="王族"><img data-lm-src="assets/logo/王族logo.webp" alt="王族"></button>
+                <button onclick="selectClassBase('knight')" id="btn-class-base-knight" class="creation-class-btn class-left class-pos-2" type="button" title="騎士"><img data-lm-src="assets/logo/騎士logo.webp" alt="騎士"></button>
+                <button onclick="selectClassBase('mage')" id="btn-class-base-mage" class="creation-class-btn class-left class-pos-3" type="button" title="法師"><img data-lm-src="assets/logo/法師logo.webp" alt="法師"></button>
+                <button onclick="selectClassBase('elf')" id="btn-class-base-elf" class="creation-class-btn class-left class-pos-4" type="button" title="妖精"><img data-lm-src="assets/logo/妖精logo.webp" alt="妖精"></button>
+                <button onclick="selectClassBase('dark')" id="btn-class-base-dark" class="creation-class-btn class-right class-pos-1" type="button" title="黑暗妖精"><img data-lm-src="assets/logo/黑暗妖精logo.webp" alt="黑暗妖精"></button>
+                <button onclick="selectClassBase('illusionist')" id="btn-class-base-illusionist" class="creation-class-btn class-right class-pos-2" type="button" title="幻術士"><img data-lm-src="assets/logo/幻術士logo.webp" alt="幻術士"></button>
+                <button onclick="selectClassBase('Dknight')" id="btn-class-base-Dknight" class="creation-class-btn class-right class-pos-3" type="button" title="龍騎士"><img data-lm-src="assets/logo/龍騎士logo.webp" alt="龍騎士"></button>
+                <button onclick="selectClassBase('warrior')" id="btn-class-base-warrior" class="creation-class-btn class-right class-pos-4" type="button" title="戰士"><img data-lm-src="assets/logo/戰士logo.webp" alt="戰士"></button>
             </nav>
 
             <div id="creation-gender-panel" aria-label="性別選擇">
@@ -135,6 +147,11 @@
                 <div class="creation-stat-control stat-int"><span id="c-int" class="creation-stat-value"></span><button class="creation-stat-btn" onclick="adjStat('int', -1)">-</button><button class="creation-stat-btn" onclick="adjStat('int', 1)">+</button></div>
             </div>
 
+            <div id="creation-name-control">
+                <label for="creation-name">角色名稱</label>
+                <input id="creation-name" type="text" required autocomplete="off" aria-describedby="creation-name-hint" oninput="updateCreateUI()">
+                <small id="creation-name-hint" aria-live="polite">請輸入角色名稱</small>
+            </div>
             <label id="classic-mode-control" title="開啟後此角色永久套用經典規則，無法事後關閉">
                 <input type="checkbox" id="create-classic-toggle" onchange="onToggleClassic(this)">
                 <span>經典模式</span>
@@ -145,31 +162,31 @@
     </div>
 
     <script>
-      // 登入頁逐幀動畫：273.png～300.png，使用相對路徑，GitHub Pages 可直接部署。
+      // Only the visible login screen needs the next frame. Keep one decoded frame ahead.
       (function(){
-        var first=273,last=300,frame=first,lastAt=0,stepMs=90,ready=false;
-        var base='public/assets/login/';
-        // 首頁 BGM 優先；頁面載入完成後再逐張載入動畫，避免 28 張圖片同時與音樂搶讀取／解碼資源。
-        function preloadFrame(n){
-          if(n>last){ready=true;return;}
-          var p=new Image();
-          p.onload=p.onerror=function(){preloadFrame(n+1);};
-          p.src=base+n+'.webp';
+        const screen=document.getElementById('creation-screen'),image=document.getElementById('login-anim-image');
+        const motion=matchMedia('(prefers-reduced-motion: reduce)');
+        let frame=273,timer=0,next=null;
+        const visible=()=>!document.hidden&&!screen.classList.contains('hidden')&&!motion.matches;
+        function schedule(delay){
+          clearTimeout(timer);
+          if(visible())timer=setTimeout(advance,delay);
         }
-        function beginPreload(){setTimeout(function(){preloadFrame(first+1);},500);}
-        if(document.readyState==='complete') beginPreload();
-        else window.addEventListener('load',beginPreload,{once:true});
-        function animateLogin(now){
-          var screen=document.getElementById('creation-screen');
-          var img=document.getElementById('login-anim-image');
-          if(ready&&img&&screen&&!screen.classList.contains('hidden')&&now-lastAt>=stepMs){
-            frame=frame>=last?first:frame+1;
-            img.src=base+frame+'.webp';
-            lastAt=now;
+        function advance(){
+          if(!visible())return;
+          if(next?.complete&&next.naturalWidth){image.src=next.src;next=null;}
+          if(!next){
+            frame=frame>=300?273:frame+1;
+            next=new Image();
+            next.onerror=()=>{next=null;schedule(180);};
+            next.src='public/assets/login/'+frame+'.webp';
           }
-          (window.__afkIdleRaf || requestAnimationFrame)(animateLogin);   /* 🔌 加掛版補丁:進遊戲後動畫迴圈降頻 */
+          schedule(90);
         }
-        requestAnimationFrame(animateLogin);
+        const resume=()=>schedule(180);
+        new MutationObserver(resume).observe(screen,{attributes:true,attributeFilter:['class']});
+        document.addEventListener('visibilitychange',resume);motion.addEventListener('change',resume);
+        schedule(350);
       })();
     </script>
 
@@ -187,7 +204,7 @@
         <div id="col-left" class="w-[340px] flex flex-col gap-4">
             <!-- 新增了 id="status-panel"，並加入去底色與加深背景的樣式確保文字可讀 -->
             <div id="status-panel" class="panel bg-cover bg-top bg-no-repeat" style="background-blend-mode: multiply; background-color: rgba(30, 41, 59, 0.85);">
-                <div class="panel-header text-center flex justify-between bg-transparent border-b border-slate-700"><span class="flex items-center shrink-0"><span id="st-classname">職業</span><span id="classic-badge" class="hidden font-bold ml-1" style="color:#fbbf24;text-shadow:0 0 5px rgba(251,191,36,0.7);font-size:0.85rem;line-height:1;" title="經典模式（硬核）：死亡損失該等級 5% 最大經驗（不降等）、無祝福/精通/席琳；掉落率、經驗與金幣獲得與一般模式相同">⚔經典</span></span><span id="victory-badge" class="hidden font-bold" style="color:#fde68a;text-shadow:0 0 6px rgba(253,230,138,0.85);font-size:1.05rem;line-height:1;align-items:center;gap:0.15rem;white-space:nowrap;flex-shrink:0;" title="城主：血盟持有城堡，全商店 8 折、開放城堡"><img id="victory-badge-crown" src="assets/ui/castle-crown.gif?v=v3.6.36" alt="" draggable="false" style="width:16px;height:12px;object-fit:contain;image-rendering:pixelated;position:relative;top:-0.08em;filter:drop-shadow(0 1px 1px rgba(69,26,3,.95)) drop-shadow(0 0 3px rgba(250,204,21,.82));"><span id="victory-badge-text" style="line-height:1;">城主</span></span><span id="st-class" class="text-white text-lg font-bold cursor-pointer hover:bg-slate-700/50 rounded px-2 inline-block min-w-[2.5rem] text-right" title="點擊此處修改名稱" onclick="startEditName()"></span></div>
+                <div class="panel-header text-center flex justify-between bg-transparent border-b border-slate-700"><span class="flex items-center shrink-0"><span id="st-classname">職業</span><span id="classic-badge" class="hidden font-bold ml-1" style="color:#fbbf24;text-shadow:0 0 5px rgba(251,191,36,0.7);font-size:0.85rem;line-height:1;" title="經典模式（硬核）：死亡損失該等級 5% 最大經驗（不降等）、無祝福/精通/席琳；掉落率、經驗與金幣獲得與一般模式相同">⚔經典</span></span><span id="victory-badge" class="hidden font-bold" style="color:#fde68a;text-shadow:0 0 6px rgba(253,230,138,0.85);font-size:1.05rem;line-height:1;align-items:center;gap:0.15rem;white-space:nowrap;flex-shrink:0;" title="城主：血盟持有城堡，全商店 8 折、開放城堡"><img id="victory-badge-crown" data-lm-src="assets/ui/castle-crown.gif?v=v3.6.36" alt="" draggable="false" style="width:16px;height:12px;object-fit:contain;image-rendering:pixelated;position:relative;top:-0.08em;filter:drop-shadow(0 1px 1px rgba(69,26,3,.95)) drop-shadow(0 0 3px rgba(250,204,21,.82));"><span id="victory-badge-text" style="line-height:1;">城主</span></span><span id="st-class" class="text-white text-lg font-bold cursor-pointer hover:bg-slate-700/50 rounded px-2 inline-block min-w-[2.5rem] text-right" title="點擊此處修改名稱" onclick="startEditName()"></span></div>
                 <div class="status-compact-body text-base">
                     <div class="status-level-row text-slate-400">
                         <span>等級</span><span class="text-white font-bold text-xl" id="st-lv">1</span>
@@ -231,7 +248,7 @@
         <button onclick="revive()" id="btn-revive" class="hidden bg-red-800 hover:bg-red-700 px-6 py-1.5 text-white font-bold border border-red-500 rounded anim-flash text-base shadow-md">祈求復活</button>
         <button onclick="reviveInPlace()" id="btn-revive-inplace" class="hidden bg-yellow-700 hover:bg-yellow-600 px-6 py-1.5 text-white font-bold border border-yellow-500 rounded anim-flash text-base shadow-md">原地復活</button>
         <button onclick="openPandoraShortcut()" id="btn-pandora-shortcut" class="bg-amber-950 hover:bg-amber-900 px-3 py-1 text-amber-200 font-bold border border-amber-700 rounded text-sm shadow-md whitespace-nowrap min-w-[3.25rem] text-center" title="與潘朵拉對話，開啟黑市">黑市</button>
-        <button onclick="playerTeleport()" id="btn-teleport" class="hidden bg-fuchsia-800 hover:bg-fuchsia-700 px-3 py-1 text-white font-bold border border-fuchsia-500 rounded text-sm shadow-md whitespace-nowrap min-w-[3.25rem] text-center" title="傳送術／瞬間移動卷軸（於對應地圖可進入隱藏狩獵區域）">瞬移</button>
+        <button onclick="playerTeleport()" id="btn-teleport" class="hidden bg-fuchsia-800 hover:bg-fuchsia-700 px-3 py-1 text-white font-bold border border-fuchsia-500 rounded text-sm shadow-md whitespace-nowrap min-w-[3.25rem] text-center" title="優先使用卷軸，在本圖隨機移動">瞬移</button>
         <button onclick="returnToTown()" id="btn-return-town" class="bg-emerald-800 hover:bg-emerald-700 px-3 py-1 text-white font-bold border border-emerald-500 rounded text-sm shadow-md whitespace-nowrap min-w-[3.25rem] text-center">回村</button>
         <select id="map-category" class="bg-slate-800 border border-slate-600 text-white px-3 py-1.5 text-base rounded outline-none" onchange="onMapCategoryChange()">
             <option value="village">村莊</option>
@@ -406,6 +423,33 @@
                 <div id="tab-clan" class="p-3 overflow-y-auto h-full hidden flex-col gap-2"></div>
                 <!-- 🔧 v2.6.74 自動化設定改「分頁內嵌」（原 v2.6.73 浮動視窗取消）：與 能力/技能 同框架，switchTab(automation) 切換；set-* 控制項恆在 DOM 供 saveGame/自動化讀取 -->
                 <div id="tab-automation" class="p-4 text-base overflow-y-auto h-full hidden">
+                    <details data-fusion-only id="giran-bookmarks">
+                        <summary>位置書籤</summary>
+                        <div><input type="text" maxlength="32" aria-label="新地點名稱" placeholder="地點名稱"><button type="button">記住目前位置</button></div>
+                        <ul></ul><output aria-live="polite"></output>
+                    </details>
+                    <details id="giran-hunt-options">
+                        <summary>自動狩獵</summary>
+                        <div class="g-hunt-fields">
+                            <label><input type="checkbox" id="set-captain-vitals" onchange="setCaptainVitals(this.checked)">顯示隊長頭頂 HP／MP</label>
+                        </div>
+                        <fieldset data-fusion-only class="g-hunt-fields">
+                            <label><input type="checkbox" name="bossFirst">自動狩獵優先攻擊可接近的頭目</label>
+                            <label><input type="checkbox" id="giran-show-mob-hp" onchange="toggleMobHp(this.checked)">顯示怪物頭頂血條</label>
+                            <label>野外與副本普通怪數量<select name="population"></select></label>
+                            <p data-population-count></p>
+                            <label>HP 低於此值回村（%）<input name="home" type="number" min="0" max="90" value="0"></label>
+                            <label>巡邏半徑（格）<input name="radius" type="number" min="0" max="60" value="0"></label>
+                            <label>無目標時瞬移（秒）<input name="idle" type="number" min="0" max="120" value="0"></label>
+                            <label>法師／妖精休息 MP（%）<input name="rest" type="number" min="0" max="95" value="0"></label>
+                            <label>恢復攻擊 MP（%）<input name="resume" type="number" min="1" max="100" value="60"></label>
+                            <label><input type="checkbox" name="escape">HP 低於 25% 先瞬移，一分鐘內第三次回村</label>
+                            <p>門檻填 0 可停用。保護回村會使用回家卷軸或傳送石，缺少時依商店價格購買。</p>
+                            <div class="g-hunt-area">狩獵名單　<output></output></div>
+                            <label>略過的怪物<input name="ignore" type="text" maxlength="700" placeholder="怪物名稱以頓號分隔"></label>
+                            <label>遇見時瞬移<input name="avoid" type="text" maxlength="700" placeholder="怪物名稱以頓號分隔"></label>
+                        </fieldset>
+                    </details>
                     <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 flex flex-col gap-2">
                         <h3 class="lm-settings-heading">聲音與互動</h3>
                         <div class="flex items-center gap-2 mb-2">
@@ -432,7 +476,7 @@
                             <option value="potion_strong" class="text-orange-300">橙色藥水</option>
                             <option value="potion_ult" class="text-white">白色藥水</option>
                         </select>
-                        <span class="text-sm">HP &lt; <input type="number" id="set-hp-pot" value="70" class="w-14 bg-slate-900 border border-slate-600 text-center text-white rounded">%</span>
+                        <span class="text-sm">HP &lt; <input type="number" id="set-hp-pot" aria-label="自動補血 HP 百分比" value="70" class="w-14 bg-slate-900 border border-slate-600 text-center text-white rounded">%</span>
                     </div>
                             <label class="cursor-pointer flex items-center gap-2 mt-1 border-t border-slate-700 pt-2"><input type="checkbox" id="set-auto-buy-pot" class="w-4 h-4"><span class="text-sm text-slate-300">藥水不足自動買至100</span></label>
                         </div>
@@ -567,40 +611,41 @@
     </script>
 
     <script src="js/anim-manifest.js?v=a019551c2ef4"></script>
-    <script src="js/00-data.js?v=579471450eea"></script>
-<script src="js/01-drops-config.js?v=af9e6cc15042"></script>
-<script src="js/02-stats-recompute.js?v=77d8fe2b4d2d"></script>
-    <script src="js/03-combat-core.js?v=f66c016a60d6"></script>
-    <script src="js/04-combat-attack.js?v=2daca231ca06"></script>
-<script src="js/05-kill-progression.js?v=40e6fa8b1efc"></script>
-    <script src="js/06-status-allies.js?v=f52e81dafadc"></script>
-    <script src="js/07-skills-cast.js?v=246cde45ce08"></script>
-<script src="js/08-items-equip.js?v=82e2213cdd4c"></script>
-<script src="js/09-vfx-render.js?v=e13af1b34657"></script>
-    <script src="js/10-ui-tabs.js?v=93496c71eaa5"></script>
-<script src="js/11-world-map.js?v=8eb47f13c24b"></script>
-<script src="js/12-npc-quests.js?v=cdfb391b85a0"></script>
-<script src="js/13-shop-save.js?v=98460a8fb3da"></script>
-<script src="js/14-craft-pandora.js?v=eb8cd190b61a"></script>
-<script src="js/15-cards.js?v=1dba66f22dd3"></script>
-<script src="js/16-equip-book.js?v=db30ba2eab50"></script>
-<script src="js/18-misc-book.js?v=6f78dfd0f141"></script>
+    <script src="world/party-lineup.js?v=3f291e0157a9"></script>
+    <script src="js/00-data.js?v=53419fdcc4e2"></script>
+<script src="js/01-drops-config.js?v=214b07caa152"></script>
+<script src="js/02-stats-recompute.js?v=570a23d036e4"></script>
+    <script src="js/03-combat-core.js?v=4c464380121e"></script>
+    <script src="js/04-combat-attack.js?v=a4c4e0dd1228"></script>
+<script src="js/05-kill-progression.js?v=1de205ec4e9d"></script>
+    <script src="js/06-status-allies.js?v=4f7f47d4ce3a"></script>
+    <script src="js/07-skills-cast.js?v=00c282327ddf"></script>
+<script src="js/08-items-equip.js?v=9e6f9cdaf184"></script>
+<script src="js/09-vfx-render.js?v=1c0980f0ff16"></script>
+    <script src="js/10-ui-tabs.js?v=5f1f6db0fd44"></script>
+<script src="js/11-world-map.js?v=2b9de3210a49"></script>
+<script src="js/12-npc-quests.js?v=f5d76213b0d0"></script>
+<script src="js/13-shop-save.js?v=3f4b5f27bf6f"></script>
+<script src="js/14-craft-pandora.js?v=c70e9635e692"></script>
+<script src="js/15-cards.js?v=b23b33a60b1e"></script>
+<script src="js/16-equip-book.js?v=dc36fce0c460"></script>
+<script src="js/18-misc-book.js?v=6b4d7427692f"></script>
 <script src="js/17-audio.js?v=ed981226d063"></script>
-<script src="js/19-equipment-window.js?v=a1ba606b5a75"></script>
+<script src="js/19-equipment-window.js?v=186d9171c24c"></script>
 <script src="js/20-warehouse-window.js?v=92e5e1d96a5a"></script>
-<script src="js/21-relic-book.js?v=2cf7d69f2832"></script>
-    <script src="js/23-summons.js?v=7261e4984b15"></script>
-    <script src="js/22-pets.js?v=a12594ba1603"></script>
-    <script src="js/24-pandora-relic-market.js?v=7575e043ce0c"></script>
+<script src="js/21-relic-book.js?v=6aa0c4e456b6"></script>
+    <script src="js/23-summons.js?v=48ae6bcf8675"></script>
+    <script src="js/22-pets.js?v=3a44f676553a"></script>
+    <script src="js/24-pandora-relic-market.js?v=5cd98ef37566"></script>
     <script src="js/25-clan-system.js?v=9f104b862b0f"></script>
     <script src="js/26-world-channel.js?v=f03d4f92d3f4"></script>
-<script src="js/28-pvp-arena.js?v=735b3ed78942"></script>
+<script src="js/28-pvp-arena.js?v=8736041e5e38"></script>
 <script src="js/29-siege-v2-data.js?v=9e6e76f0aade"></script>
-<script src="js/30-siege-v2.js?v=a02956537917"></script>
-<script src="js/31-castle-guards.js?v=87769e9e8dd0"></script>
-<script src="js/32-threat.js?v=2d4b566d7053"></script>
+<script src="js/30-siege-v2.js?v=8a077a240cf8"></script>
+<script src="js/31-castle-guards.js?v=b23efd4474a3"></script>
+<script src="js/32-threat.js?v=9df8772926f8"></script>
     <!-- ═══════════ 加掛版外掛層（核心永遠是原作者原版；我們的功能全部是外掛疊上去） ═══════════ -->
-    <!-- 此區塊由 scripts/sync-upstream.mjs 於「拉上游 index.html 後」自動注入到 </body> 之前。?v= 由 stamp-code-versions 補。 -->
+
     <!-- 🌓 宣告「這頁本來就是深色」：沒宣告的話 Android Chrome 的「自動深色主題」會自己疊一層反轉，
          把 NPC/怪物 sprite 反成白色人形（每張圖各自判定，所以只有部分中；重繪、重新登入、清快取都無效）。
          無開關：這是顯示正確性，不是功能。實測 forceDarkModeEnabled+darkModeImagePolicy=smart 可重現、加這行即解。 -->
@@ -609,14 +654,14 @@
     <script src="afk-toggles.js?v=a248e4258a15"></script>
     <!-- afk-dup-frames：重複動畫幀改指向同一張圖（公開版只留一張；清單由 scripts/build-dup-frames.py 產生） -->
     <!-- afk-webp-frames-data：動畫幀改讀 WebP 的開關（開發版關、公開版部署時換成開；scripts/build-webp-frames.py） -->
-    <script src="afk-webp-frames-data.js?v=c9e44b02f76f"></script>
+    <script src="afk-webp-frames-data.js?v=fab41eefb426"></script>
     <!-- afk-anim-sheets-data：動畫幀改讀合成大圖的開關與座標表（開發版關、公開版部署時換成開；scripts/build-anim-sheets.py） -->
-    <script src="afk-anim-sheets-data.js?v=9b9fe8e81d7f"></script>
+    <script src="afk-anim-sheets-data.js?v=9f267e28e980"></script>
     <script src="afk-dup-frames-data.js?v=bbe6b7979d4c"></script>
-    <script src="afk-dup-frames.js?v=b37c185d4cb9"></script>
+    <script src="afk-dup-frames.js?v=5ba22b5f1ea6"></script>
     <!-- afk-gptart-icons：GPT新美術——裝備圖示光影修補 837 張（原圖 → assets/icons/gpt/）；要早於其他外掛，開關 art-v3 -->
     <script src="afk-gptart-icons-data.js?v=e1f62a94f46b"></script>
-    <script src="afk-gptart-icons.js?v=489fa62e51a8"></script>
+    <script src="afk-gptart-icons.js?v=6fab114ff7cb"></script>
     <!-- afk-artfix：圖檔修復版（圖示＋法術特效逐格 → art-fix/）；開關 artfix 預設關；要在 afk-gptart-icons 之後 -->
     <script src="afk-artfix-data.js?v=e70ae7477047"></script>
     <script src="afk-artfix.js?v=a0078bb31ab5"></script>
@@ -627,7 +672,7 @@
     <!-- afk-fpscap：畫面幀率上限（省電模式選 15／30／60 FPS：rAF 排隊放行、CSS／Web 動畫改由這裡按頻率推進）；要早載入，讓之後的外掛呼叫 requestAnimationFrame 都經過它 -->
     <script src="afk-fpscap.js?v=4307a6e458d0"></script>
     <!-- afk-fglag：前景跟不上時照常重畫（手機一刻＋重畫超過 100ms 時不再整段卡在補跑：怪物動畫、攻擊特效、傷害數字照常，進度一刻都不少；需核心補丁 patchFgLag） -->
-    <script src="afk-fglag.js?v=cea6981cafc9"></script>
+    <script src="afk-fglag.js?v=f4e560c777da"></script>
     <!-- afk-bgboost：分頁在背景、遊戲跟不上時多算一點（每秒合計約 300ms，原本 80ms）；沒落後不動 -->
     <script src="afk-bgboost.js?v=f84ad0c89a45"></script>
     <!-- afk-classic-core：經典版先記住原版的能力值計算、NPC 名單與變身表（必須排在其他外掛之前） -->
@@ -639,7 +684,7 @@
     <!-- 存檔解壓快取：必須排在所有會讀 localStorage 的外掛之前（核心每殺一隻怪都重解壓一次血盟狀態） -->
     <script src="afk-lzcache.js?v=c466838d97c0"></script>
     <!-- afk-perf：卡頓修正（日誌批次寫入／背包分頁按需重建）。必須排在 afk-toast（包 logSys）與 afk-itemsearch（包 renderTabs）之前 -->
-    <script src="afk-perf.js?v=b54f445f4864"></script>
+    <script src="afk-perf.js?v=98a7690377f7"></script>
     <script src="afk-display.js?v=d126f73ab790"></script>
     <!-- afk-mapsync：地圖下拉自我校正（回城／出發後地區/地圖下拉與所在地不符時自動校正） -->
     <script src="afk-mapsync.js?v=3349ebbc7cc1"></script>
@@ -648,7 +693,7 @@
     <!-- afk-update：網站有新版本時提示更新（按一下存檔重整回原角色；閒置時由 afk-autoreload 自動更新） -->
     <script src="afk-update.js?v=850c0917fa5c"></script>
     <!-- afk-dreamhell：瘋狂席琳席琳夢域鏡模式（需核心補丁 18）；排在 afk-droplog／afk-dropcount 之前，讓它們看得到新掉落 -->
-    <script src="afk-dreamhell.js?v=6baa6d61fcbf"></script>
+    <script src="afk-dreamhell.js?v=23d98c2f116e"></script>
     <!-- afk-cardplus：白金／鑽石卡、圖鑑全滿夢域 ×3、鑽白金幻化（需核心補丁 20）；排在 afk-dropcount 之前，讓掉落統計數得到白金／鑽石卡 -->
     <script src="afk-cardplus.js?v=a2ff2e19fa79"></script>
     <!-- afk-droplog：短暫卡頓補跑中的擊殺／掉落照常顯示（原版 <3 秒補跑完全不印） -->
@@ -684,7 +729,7 @@
     <script src="afk-ui.js?v=7702f0d7ad30"></script>
     <script src="afk-extradata.js?v=0929c517dcf2"></script>
     <!-- 離線快速結算（自己 monkey-patch 包核心 saveGame/loadGame/changeMap/killMob/gainItem；搭配 maybeSpawnMobs 補丁） -->
-    <script src="afk-offline.js?v=8c83d6c61804"></script>
+    <script src="afk-offline.js?v=42212c6e9ece"></script>
     <!-- 手機版面 / 返回鍵 -->
     <script src="afk-mobile.js?v=f9d88805f34b"></script>
     <!-- afk-uiscale：畫面調整（只縮放遊戲畫面 60～100%、每個框都能拖曳調整；外掛開關，預設關；手機版禁用）；排在 afk-mobile 之後 -->
@@ -704,16 +749,16 @@
     <!-- 資訊頁 / 查詢頁 -->
     <script src="afk-slotinfo.js?v=b518493dbcc2"></script>
     <script src="afk-loadslots.js?v=a892a09a295b"></script>
-    <script src="afk-dex.js?v=459362ff9f60"></script>
+    <script src="afk-dex.js?v=9c43f8fdef08"></script>
     <!-- afk-illufix：幻術士修補（疼痛的歡愉 −50%、反彈、蝕刻印記；立方：燃燒 每 2 秒 5～50 火傷、灼熱印記、吸血回魔；立方：和諧回 MP 5 → 15，原 afk-classtweak）；排在 afk-wiki 之前（小百科說明跟著改）；需核心補丁 69 -->
     <script src="afk-illufix.js?v=d4806c4f9e9b"></script>
     <!-- 小百科：用到才載入（afk-lazy.js，Ping 11-13） -->
-    <script>window.__AFK_LAZY_SRC={bosslines:["afk-bosslines-data.js?v=baaf7ca125"],wiki:["afk-game-guide.js?v=fd8e0d436d","afk-wiki.js?v=74e97ce90c"]};</script>
+    <script>window.__AFK_LAZY_SRC={bosslines:["afk-bosslines-data.js?v=c9359c48f4b3"],wiki:["afk-game-guide.js?v=0b79d03f86ea","afk-wiki.js?v=87834d5b057f"]};</script>
     <script src="afk-lazy.js?v=f24c307989d7"></script>
     <!-- 設定選單 / 存檔 / 診斷 / 離線紀錄 -->
     <script src="afk-storage.js?v=a2831ae70fbf"></script>
     <!-- 整包備份／還原（本機檔案）：入口掛在 afk-storage 的設定選單裡，必須排在它之後 -->
-    <script src="afk-fullsave.js?v=f51b21574436"></script>
+    <script src="afk-fullsave.js?v=cce302169c9e"></script>
     <!-- 存檔空間警告：localStorage 用量 >80% 時首頁紅色警告(唯讀;與 afk-storage 同一套估算) -->
     <script src="afk-quotawarn.js?v=450a384d648c"></script>
     <!-- 首頁公告卡（通用框架：檔頭 NOTICE 設成 null 就不顯示，要發公告時填一組設定即可） -->
@@ -721,7 +766,7 @@
     <script src="afk-history.js?v=d66edd2d5320"></script>
     <script src="afk-reissueid.js?v=87f3531cd0ff"></script>
     <script src="afk-diag.js?v=750ef33a77b0"></script>
-    <script src="afk-powersave.js?v=07f3a1fb3429"></script>
+    <script src="afk-powersave.js?v=fae33a985888"></script>
     <!-- afk-lowend：低階電腦第一次自動套用「流暢顯示」（需 afk-powersave、afk-perf） -->
     <script src="afk-lowend.js?v=64a939dd2ea3"></script>
     <!-- 遊戲內小工具 -->
@@ -746,12 +791,12 @@
     <script src="afk-stackdot.js?v=0b731f34239a"></script>
     <!-- afk-relicplus：遺物合成（武器 +1～+15，需核心補丁 15 的出血加成）；排在 afk-relicbatch 之後 -->
     <!-- afk-relicfx：遺物特效隨強化成長（玩家的遺物特殊效果清單；需核心補丁 35；必須排在 afk-relicplus 之前） -->
-    <script src="afk-relicfx.js?v=a00443d4e88f"></script>
+    <script src="afk-relicfx.js?v=11b85f767f04"></script>
     <!-- 完整遺物階段與事件規則；資料與設定先於遺物合成載入。 -->
     <script src="afk-relic-catalog.js?v=347a231cb7e3"></script>
     <script src="afk-relic-weapons.js?v=cff2a350921a"></script>
     <script src="afk-relic-defense.js?v=86c0ec7fc393"></script>
-    <script src="afk-relic-runtime.js?v=ecee41d46c04"></script>
+    <script src="afk-relic-runtime.js?v=3b5f2ee104cd"></script>
     <script src="afk-summoncloth.js?v=5807ef78ab79"></script>
     <!-- afk-npc-kit：NPC 服務面板共用外觀（哈瑪大師、艾格尼絲、佐爾頓、艾彼迪爾）；排在這些 NPC 外掛之前 -->
     <script src="afk-npc-kit.js?v=d22d6d56d5e9"></script>
@@ -761,39 +806,39 @@
     <!-- afk-geniewish：巨靈的三個願望——沒有願望的（合成、昇華、舊存檔、被併成一疊）補抽三個（依 uid 固定）；願望不同不再併成一疊 -->
     <script src="afk-geniewish.js?v=3c4a797c3572"></script>
     <!-- afk-dreamstar：暗夢星迴（單機版）；需 afk-dreamhell、afk-relicplus，排在 afk-relicplus 之後 -->
-    <script src="afk-dreamstar.js?v=486a362e7337"></script>
+    <script src="afk-dreamstar.js?v=9e5057b13f74"></script>
     <!-- afk-corrupt：侵蝕的法利昂／巴拉卡斯／林德拜爾巢穴（複製安塔瑞斯副本；需核心補丁 23） -->
-    <script src="afk-corrupt.js?v=28e822957806"></script>
+    <script src="afk-corrupt.js?v=8eda58cf17c0"></script>
     <!-- afk-relicsell：席琳夢域鏡遺物詞條、商人收遺物（龍鑽）、昇華支配分解；排在 afk-relicaffix／relicplus／dreamhell 之後 -->
     <script src="afk-relicsell.js?v=4e2039aa7866"></script>
     <!-- afk-rebirth：輪迴轉生（需核心補丁 20；裝備不限職業沿用 afk-anyclass） -->
-    <script src="afk-rebirth.js?v=2135520c08f0"></script>
+    <script src="afk-rebirth.js?v=b1e87dbd572c"></script>
     <!-- afk-ancient：古代藥水系列（天堂透視鏡古代體力恢復劑）、席琳夢域鏡藥水基礎補量 ×3 -->
     <script src="afk-ancient.js?v=23a1e1e107e2"></script>
     <!-- afk-arts：轉生技藝（奧拉奇里亞；需 afk-rebirth，排在它之後） -->
-    <script src="afk-arts.js?v=70354b43f07c"></script>
+    <script src="afk-arts.js?v=a28005319910"></script>
     <!-- afk-knight-shock：轉生騎士的衝擊之暈打全畫面（力量加傷害、敏捷加暈眩率，頭目也會暈） -->
     <script src="afk-knight-shock.js?v=18dd1bdb485f"></script>
     <!-- afk-uifix：切換地區優先飛到村莊 -->
-    <script src="afk-uifix.js?v=a13e531ef043"></script>
+    <script src="afk-uifix.js?v=e9a22fa2d407"></script>
     <!-- afk-castlewar：七城攻城、城堡收成、宣戰與統一伺服器（需核心補丁 27；排在 afk-dreamhell／afk-arts 之後） -->
-    <script src="afk-castlewar.js?v=cb26de68a6c4"></script>
+    <script src="afk-castlewar.js?v=14009158dd14"></script>
     <!-- afk-castle-guards：持有的每座城都能招該城部隊、四座新城部隊、統一七城後亞丁「聖十字近衛」（最多 8 名，湊滿 4 名可融合 ×4，融合體替玩家擋傷害） -->
-    <script src="afk-castle-guards.js?v=ba2ce88f911e"></script>
+    <script src="afk-castle-guards.js?v=537889617e0e"></script>
     <script src="afk-bmprice.js?v=02f6c2013918"></script>
     <!-- 只迴避指定頭目：把上游「迴避頭目(瞬移卷軸)」的範圍從「全部的王」縮小到玩家挑的那幾隻（每張地圖各自一份） -->
     <script src="afk-bossavoid.js?v=6caed21cf66f"></script>
-    <script src="afk-bossring.js?v=53e6885a8b51"></script>
+    <script src="afk-bossring.js?v=6a62383962c3"></script>
     <script src="afk-itemsearch.js?v=e0b00b61b402"></script>
     <script src="afk-invlist.js?v=8f771f385272"></script>
     <script src="afk-eqlist.js?v=6daa597c1fcc"></script>
-    <script src="afk-npclist.js?v=3f65625de5fe"></script>
+    <script src="afk-npclist.js?v=7d4799d8bc6e"></script>
     <!-- afk-npctext：NPC 與幾樣舊道具的說明寫清楚（只改文字） -->
     <script src="afk-npctext.js?v=ee73e663e104"></script>
     <!-- afk-npclabel：村莊 NPC 名牌不要跑出畫面 -->
     <script src="afk-npclabel.js?v=271145f7e68a"></script>
-    <script src="afk-mobname.js?v=807ec4cd7482"></script>
-    <script src="afk-trackinfo.js?v=2139ea505fd2"></script>
+    <script src="afk-mobname.js?v=35bd37cc034f"></script>
+    <script src="afk-trackinfo.js?v=6cd997e28b1d"></script>
     <!-- afk-trackmaps：追蹤選單補上選不到的圖（黑暗妖精聖地＝地獄奴隸唯一產地、傲慢之塔2~10樓、六張隱藏區域）；三批來歷不同,檔頭有表 -->
     <script src="afk-trackmaps.js?v=84f835107bb7"></script>
     <script src="afk-relicguard.js?v=a51667b886ce"></script>
@@ -813,7 +858,7 @@
     <!-- 防手滑賣掉裝備：①物品視窗剛開的 450ms 不吃點擊（雙擊裝備失手時第二下會打在販賣上）②賣好裝備前先問；排在 afk-cursebatch 之後＝在最外層包 openModal -->
     <script src="afk-sellguard.js?v=f00e93964f31"></script>
     <!-- 手機戰鬥框下方鏡射整條狀態欄：必須排在 afk-trackinfo 之後（要含它補的追蹤／龍裔／血盟／套裝那幾格） -->
-    <script src="afk-battlebuffs.js?v=90233dcfe744"></script>
+    <script src="afk-battlebuffs.js?v=ad08dd1f6ed5"></script>
     <!-- 手機戰鬥框下方的主動技能列：排在 afk-battlebuffs 之後 → 插入時看得到 #m-battle-buffs，才排得到它上面（那支關掉就直接接戰鬥框） -->
     <script src="afk-skillbar.js?v=6217154fbd80"></script>
     <script src="afk-toast.js?v=bab84264fb99"></script>
@@ -841,11 +886,11 @@
     <!-- 迷你遊戲（我方自製） -->
     <script src="afk-dograce.js?v=8ea33350062a"></script>
     <!-- PWA / SW / 統計 / 品牌（skin 固定排最後） -->
-    <script src="afk-pwa.js?v=74e56b974822"></script>
-    <script src="afk-sw.js?v=6a1669d3ffff"></script>
+    <script src="afk-pwa.js?v=b2bcb915bcbf"></script>
+    <script src="afk-sw.js?v=379b115bf243"></script>
     <script src="afk-syncinfo.js?v=296edf5c0a0f"></script>
     <script src="afk-analytics.js?v=7b355d576ce5"></script>
-    <script src="afk-skin.js?v=a4d43b848df0"></script>
+    <script src="afk-skin.js?v=a56c7ccdae31"></script>
     <!-- afk-sets：套裝補齊（天堂透視鏡；需核心補丁 34）、afk-polys：變身補齊 -->
     <script src="afk-sets.js?v=d606b8e80926"></script>
     <script src="afk-polys.js?v=2f6655743242"></script>
@@ -863,7 +908,7 @@
     <script src="afk-curves.js?v=34853bcce25c"></script>
     <script src="afk-resist.js?v=c1e195961122"></script>
     <!-- afk-dreamcost：席琳夢域鏡的死亡詛咒、轉生夢域技能／復活代價、寵物 MP 恢復吃玩家面板（需 afk-dreamhell） -->
-    <script src="afk-dreamcost.js?v=da1f0f7fff05"></script>
+    <script src="afk-dreamcost.js?v=1593ac2798ca"></script>
     <!-- afk-healstat：本圖效率統計的恢復統計、面板 HP恢復量完整算式（需 afk-arts） -->
     <script src="afk-healstat.js?v=8a91de174873"></script>
     <!-- afk-dpsdetail：統計頁 DPS 統計每一列可以點開看傷害細項（借用 afk-training 的細項記錄，點開才記）；要在 afk-training、afk-healstat 之後 -->
@@ -873,7 +918,7 @@
     <!-- 天堂透視鏡已核對物品；套裝與地圖資料就緒後加入配方與裂痕補給。 -->
     <script src="afk-ttmi-items-data.js?v=9773f1d960da"></script>
     <script src="afk-ttmi-icons-data.js?v=5d72adb1972a"></script>
-    <script src="afk-ttmi-items.js?v=12f1c97a5928"></script>
+    <script src="afk-ttmi-items.js?v=0010042831bf"></script>
     <!-- afk-exprebirth：轉生後經驗藥水、料理無效（娃娃、符文、聖紋、組隊照算）；要緊接在 afk-ttmi-items 之後、符文／聖紋包經驗倍率之前 -->
     <script src="afk-exprebirth.js?v=9c76549115ff"></script>
     <!-- afk-knightnames：守護騎士譯名（依詩蒂→伊席蘿蒂、朱利安→絲莉安、歐薇→歐文；怪物、NPC、物品、載入畫面）＋變身形態伊詩蒂→伊席蘿蒂（只改顯示，形態名、收集冊與存檔 key 照舊）。素材沿用舊名資料夾；排在 afk-castlewar、afk-ttmi-items 之後，afk-matprice、afk-poly-codex 之前 -->
@@ -881,13 +926,13 @@
     <!-- afk-junkquest：奇岩「古物學者 塞勒斯」——雜項素材的劇情委託與常駐委託（新手／中階／高階） -->
     <script src="afk-junkquest.js?v=62595c78e62f"></script>
     <!-- 遺物戰鬥掛接、同伴與固定終階 GM 測試道具。 -->
-    <script src="afk-relic-weapon-bridge.js?v=d888c3295818"></script>
-    <script src="afk-relic-companions.js?v=44d586d71878"></script>
+    <script src="afk-relic-weapon-bridge.js?v=8a6fe27a3a0b"></script>
+    <script src="afk-relic-companions.js?v=6799b2e3cf95"></script>
     <script src="afk-relic-defense-bridge.js?v=bbec977d32fe"></script>
     <script src="afk-relic-gm.js?v=12fc55e4da8f"></script>
     <!-- afk-gm-skills：魔改版裝備 GM 專屬武器自動學會全部魔法與技能（卸下也不會遺忘） -->
     <script src="afk-gm-skills.js?v=b8729b9ffd52"></script>
-    <script src="afk-relic-integration.js?v=5038689031fe"></script>
+    <script src="afk-relic-integration.js?v=af18c0dce9f3"></script>
     <!-- 鑽石卡變身與神話／天上／時空合成；保留原生變形卷軸入口。 -->
     <script src="afk-card-forms.js?v=96b917dd7d3d"></script>
     <!-- afk-card-fx：高階變身動態特效（SVG＋CSS，神話八主題／天上光翼／時空時鐘陣／聖衣星座陣） -->
@@ -898,22 +943,22 @@
     <script src="afk-itemguard.js?v=6e610087981d"></script>
     <!-- afk-forged-sprites：自製變身圖（沒有專屬圖的變身與神話／天上／時空／聖衣卡；由 scripts/forge-morph.py 產生） -->
     <script src="afk-forged-sprites.js?v=22ab08dfb41d"></script>
-    <script src="afk-card-ascension.js?v=fac2231756cb"></script>
+    <script src="afk-card-ascension.js?v=4ca7726dd45b"></script>
     <!-- afk-dollaffix：詞條娃娃合成（有詞條的娃娃不進一般合成；魔法娃娃商人專區：2 個同階 → 5%、無保底、詞條隨機繼承回一階） -->
     <script src="afk-dollaffix.js?v=158e288abc77"></script>
-    <script src="afk-card-combat.js?v=4e2970cf0ac8"></script>
+    <script src="afk-card-combat.js?v=3169c4e1b56e"></script>
     <!-- afk-saint-cloth：聖衣光輝（解除封印 5 次失去光輝、雅典娜祝福恢復）、光輝碎片升星（對最終頭目）、封印型態沒有翅膀；需 afk-card-ascension、afk-card-combat -->
     <script src="afk-saint-cloth.js?v=69e435749a77"></script>
     <!-- afk-magefix（要在 afk-rebirth-rules 之前，溢補護盾才算得到多回的量）：法師修補——體力回復術智力加成不封頂、另外回復目前 HP 5% -->
     <script src="afk-magefix.js?v=c12862830af7"></script>
     <!-- afk-rebirth-rules：轉生魔法消耗與 SP、溢補護盾、敗者榮光、聖衣補血、魔法武器加倍、百般武藝首擊（排在 afk-arts、afk-card-combat 之後） -->
-    <script src="afk-rebirth-rules.js?v=2496251334ea"></script>
+    <script src="afk-rebirth-rules.js?v=714f1920e38f"></script>
     <!-- afk-debuff-rules：負面效果一律計算抵抗、頭目不再免疫；污濁之水全體 15 秒、冷卻 30 秒（冷卻中改三重矢） -->
     <script src="afk-debuff-rules.js?v=855fffbc4678"></script>
     <!-- afk-finalboss：世界最終頭目「死亡女神 席琳」（死亡之海・席琳的沉沒神殿；瘋狂席琳＋席琳夢域鏡、每角色一次；挑戰後才能冥王域轉生；需 afk-dreamhell、afk-dreamstar、afk-rebirth） -->
-    <script src="afk-finalboss.js?v=8ffbf36d2106"></script>
+    <script src="afk-finalboss.js?v=29b55b5289c1"></script>
     <!-- afk-rebirth2：二轉決戰（席琳方傷害 +5%）、次元突破者／封印輪迴光環、第二次轉生（需 afk-finalboss、afk-dreamstar） -->
-    <script src="afk-rebirth2.js?v=f8e8afebf510"></script>
+    <script src="afk-rebirth2.js?v=35e998815d06"></script>
     <!-- afk-affix-plus：詞綴擴充（祝福／遠古三階只能打怪取得；燃柳村龍紋師艾格尼絲「龍紋賦予」：不屈者意志、龍的印記／傷痕、神樹者的讚禮、闇龍的抵抗者） -->
     <script src="afk-affix-plus.js?v=b4feabd1d2cc"></script>
     <!-- afk-lostshard：失去光輝的碎片（席琳夢域鏡掉落；哈瑪大師 100 碎片＋500 龍鑽＋1000 席琳結晶熔鑄成材料） -->
@@ -923,11 +968,11 @@
     <!-- afk-traitor：亞丁城副本「謀叛者的低語」（持有亞丁城＋統一七城，經由亞丁城的伊菈進入；冥皇丹特斯、反王肯恩、魔女賽尼斯＋四大軍王與長老）（需 afk-castlewar、afk-sets） -->
     <script src="afk-traitor.js?v=31cf0f5e4844"></script>
     <!-- afk-hidden：隱藏條件（謀叛三人組、王族之敵）；需 afk-card-combat、afk-affix-plus 的受傷掛點 -->
-    <script src="afk-hidden.js?v=dc2758d557d6"></script>
+    <script src="afk-hidden.js?v=17f5dee6d52e"></script>
     <!-- afk-dropcap：掉落種類下修 30%（必掉不算；需核心補丁 68） -->
     <script src="afk-dropcap.js?v=34bafa62417b"></script>
     <!-- afk-giltas：吉爾塔斯副本「異界祭壇」（長老會議廳・次元裂隙；鑰匙碎片、信仰的寶珠、四色反擊屏障、真．吉爾塔斯之劍、支配者吉爾塔斯變身卡）（需 afk-traitor、afk-card-ascension、afk-relicplus） -->
-    <script src="afk-giltas.js?v=fcb8c2f3b982"></script>
+    <script src="afk-giltas.js?v=e16ae9f393a1"></script>
     <!-- afk-aden-quests：亞丁的陰影（55～75 級任務，近衛隊長 雷歐）、佐姆格祝福卷軸強化亞丁近衛裝備（安定值 +9） -->
     <script src="afk-aden-quests.js?v=b9083865c4d6"></script>
     <!-- afk-class-saga：八職業 55～80 級專屬劇情（第二部；各職業試煉導師發派）、世界觀「八職業／主要人物的現況」資料 -->
@@ -939,36 +984,36 @@
     <!-- afk-screen：掛機模式（螢幕常亮＋全黑省電畫面，戰鬥照常；熱鍵列 🌙） -->
     <script src="afk-screen.js?v=6f1a3416654b"></script>
     <!-- afk-petinherit：寵物繼承主人 30% 面板與 HP／MP -->
-    <script src="afk-petinherit.js?v=d24747ba4f70"></script>
+    <script src="afk-petinherit.js?v=b9bedfa9280f"></script>
     <!-- afk-poly-codex：變身收集冊（普通／銀／金，打怪掉卡、登錄加能力、金卡合成神話）（需 afk-card-ascension） -->
-    <script src="afk-poly-codex.js?v=2c1021ba7f34"></script>
+    <script src="afk-poly-codex.js?v=7b13902f40e4"></script>
     <!-- afk-card-codex：變身卡冊（點亮／升星，五抗加成）與燃柳村 NPC「至幻者」（需 afk-card-ascension） -->
-    <script src="afk-card-codex.js?v=56b6df6c8120"></script>
+    <script src="afk-card-codex.js?v=b193adc9e013"></script>
     <!-- afk-cloth-art：十二星座聖衣的背飾（SVG，12 種各不相同） -->
     <script src="afk-cloth-art.js?v=97b0e6615b71"></script>
     <!-- 小百科從目前物品與變身資料生成分階說明。 -->
     <!-- afk-icon-fix：道具圖示對齊天堂透視鏡（由 scripts/gen-icon-fix.mjs 依 data/ttmi-icon-check.json 產生） -->
     <script src="afk-icon-fix.js?v=c5aeec7faab4"></script>
-    <script src="afk-readability.js?v=2de24dff82d3"></script>
+    <script src="afk-readability.js?v=0da98e850d33"></script>
     <!-- afk-craftinfo：製作清單每列多一行「成品能力」（點開看成品資料，手機不用長按）；手機版製作按鈕換到下一行 -->
     <script src="afk-craftinfo.js?v=2f6839046b8f"></script>
     <!-- afk-classic：經典模式補正（256K 撥接：斷線／LAG／怪中BUG、頭目皆不死系＋起死回生、古魯丁地監 1～7 樓攀爬與歐林、黑妖之後職業封印、影子打法、歐林房、無敵狗、開服夜爆機、等級上限、時代地圖、席琳神殿進入黑妖三部曲、原版經驗表／組隊分配／死亡懲罰／掉錢、一般轉經典、能力值上限、四人隊伍、贖回冷卻）；包 tick，放在後面 -->
-    <script src="afk-classic.js?v=9ab1db97239f"></script>
+    <script src="afk-classic.js?v=5806d57fe65e"></script>
     <!-- afk-hotbar：兩組道具熱鍵 F5～F12（左右滑動；可自動使用補給） -->
-    <script src="afk-hotbar.js?v=c8c74e082c77"></script>
+    <script src="afk-hotbar.js?v=11e757661c0b"></script>
     <script src="merged/hotbar-items.js?v=0534acb983c5"></script>
     <!-- afk-npcspace：村莊 NPC 名牌重疊時自動換到附近空位（包 renderTownNPCMap，排在所有加 NPC 的外掛之後） -->
     <script src="afk-npcspace.js?v=821735d54129"></script>
     <!-- afk-dex-extra：掉落查詢的「外掛掉落」登記表（副本／席琳夢域鏡等用程式發的掉落，不在掉落表裡；排在所有加怪加物品的外掛之後） -->
     <script src="afk-dex-extra.js?v=591048543ea5"></script>
     <!-- afk-heartbeat：旅人頻道（真人心跳聊天）——世界頻道旁的專屬按鈕＋獨立視窗；要自己加入才連線，後端見 backend/heartbeat -->
-    <script src="afk-heartbeat.js?v=e30a758a632f"></script>
+    <script src="afk-heartbeat.js?v=8d74dce7c3a8"></script>
     <!-- afk-itemui：物品資訊窗點外面就關＋特殊物品固定淡光（靜態背景漸層，不用動畫） -->
     <script src="afk-itemui.js?v=214a4720350d"></script>
     <!-- afk-killlog：同一隻怪的掉落合併成一行「擊敗 X：物品 ×數量、…」（包 killMob 最外層，必須放在所有包 killMob 的外掛之後） -->
     <script src="afk-killlog.js?v=b67c77a56158"></script>
     <!-- afk-sherine-dream：夢域席琳遺骸（伊奧夢域淬鍊，紅字、效果強化）與第 9 格遺骸「之魂」（謀叛者的低語頭目 5%；套裝件數 −1）；須在 afk-caps 之前 -->
-    <script src="afk-sherine-dream.js?v=4b3b1b984b81"></script>
+    <script src="afk-sherine-dream.js?v=f49760451c28"></script>
     <!-- afk-runes：說話之島符文師佐爾頓——武器的星蝕·解三個符文孔（墜蝕·解、刻解·骸、瘴骸·破）；需 afk-sherine-dream -->
     <script src="afk-runes.js?v=c8d83cbdb496"></script>
     <!-- afk-redguard：避免紅人持續追殺（席琳神殿「女神嘆息信徒 京」：10 龍鑽或 100 萬金幣，正義值歸 0、追殺散去、追殺永久解除）；需 afk-npc-kit -->
@@ -976,22 +1021,22 @@
     <!-- afk-kurt-hunt：世界事件「克特的追殺令」（隊伍有王族、Lv30+、每次出怪 5%、冷卻 15 分；地圖等級縮放；副本不出現）＋克特技能組 -->
     <script src="afk-kurt-hunt.js?v=0d632d7fc83f"></script>
     <!-- afk-lore-kit：劇情任務線與新 Boss 共用工具（試煉接取制、套裝、召喚） -->
-    <script src="afk-lore-kit.js?v=5f8a4b267b7d"></script>
+    <script src="afk-lore-kit.js?v=bb92a7cc4048"></script>
     <!-- afk-lore-main：主線劇情「紅獅之誓」Lv10～55（甘特）＋通緝犯庫傑；需 afk-lore-kit、afk-kurt-hunt（紅獅王的守護） -->
     <script src="afk-lore-main.js?v=09d2e7842d16"></script>
     <!-- afk-hardin：支線劇情「知識與背叛」Lv20～70（象牙塔 魔法師 喬）＋隊伍副本「哈汀的時空」＋大魔法師歐林＋四色／哈汀之影重做；需 afk-lore-kit、afk-npc-kit -->
-    <script src="afk-hardin.js?v=37a3cc813a47"></script>
+    <script src="afk-hardin.js?v=296a89794a2c"></script>
     <!-- afk-halpas：終章劇情「闇龍的低語」Lv85～100（燃柳村 奧拉奇里亞）＋火焰之影（真身）＋闇龍 哈爾巴斯＋反王肯恩／死亡騎士重做；需 afk-lore-kit、afk-npc-kit、afk-arts -->
-    <script src="afk-halpas.js?v=44da79a6b4e6"></script>
+    <script src="afk-halpas.js?v=000f4a363299"></script>
     <!-- afk-world-events：世界事件第二批（魔女賽尼斯「血的誓約詛咒」、暗殺軍王史雷佛「刺殺令」、魔族的獵龍隊、反王肯恩「篡位者的懸賞」）；需 afk-lore-kit，和 afk-kurt-hunt 共用規則 -->
-    <script src="afk-world-events.js?v=3925c10cb006"></script>
+    <script src="afk-world-events.js?v=5a3d0be50a51"></script>
     <script src="afk-ghostship.js?v=37ab1da5d865"></script>
     <!-- afk-region-boss：地區霸主（十五個地區各一名，該地區野外／地監每次出怪 1%、同地區 30 分鐘一次，守在原地 5 分鐘；寶箱＋霸主的證明）；需 afk-lore-kit -->
     <script src="afk-region-boss.js?v=d19a210c6c9f"></script>
     <!-- afk-hunter：魔物獵人模式（冒險者公會、冒險者等級 F～S、狩獵委託、冒險者套裝、S 級在終焉第二／三階層的加成）；需 afk-lore-kit -->
     <script src="afk-hunter.js?v=48de4ddc2458"></script>
     <!-- afk-fate：隱藏規則「命運」（同職業超過 3 位減傷害、王族＋騎士反轉成增傷與全隊減傷、沒有王族的隊伍全面下修）；需 afk-card-combat、afk-relic-runtime -->
-    <script src="afk-fate.js?v=40651c34a6d5"></script>
+    <script src="afk-fate.js?v=a00f7282c9a2"></script>
     <!-- afk-callally：王族「呼喚盟友」冷卻 3 秒＋每名傭兵被呼喚最多一秒一次 -->
     <script src="afk-callally.js?v=efae3df471ad"></script>
     <!-- afk-resonance：共鳴調整——共鳴光箭傷害與回魔 −50%（核心補丁 72 的倍率掛點） -->
@@ -999,11 +1044,11 @@
     <!-- afk-savelite：存檔減負——頭目擊殺存檔最多 30 秒一次＋存檔前角色檢查快取（要在包 saveGame 的外掛之後） -->
     <script src="afk-savelite.js?v=93b8a7efe0d9"></script>
     <!-- afk-dreamboss：夢域鏡頭目強化——出場全隊目前 HP 傷害＋流血（戒指王 30%、副本王 20%、一般 10%、霸主 5%）；副本王群體衝擊之暈、相消術、疼痛的歡愉、吸魔、蝕抗 -->
-    <script src="afk-dreamboss.js?v=73918f121091"></script>
+    <script src="afk-dreamboss.js?v=0ec3e12f35a4"></script>
     <!-- afk-revive：復活規則——復活卷軸自己復活 HP 100%；席琳夢域鏡同一張地圖最多自己復活 3 次 -->
-    <script src="afk-revive.js?v=f1c5a55bd0f4"></script>
+    <script src="afk-revive.js?v=73c69626fdca"></script>
     <!-- afk-bossrules：頭目開場規則——鑰匙／道具頭目房開場 2 秒無敵；多王時只有第一隻放全體 % 傷害 -->
-    <script src="afk-bossrules.js?v=3e382a85fdf0"></script>
+    <script src="afk-bossrules.js?v=9b63d1072c61"></script>
     <!-- afk-fix1030：第二輪 QA 修正——攻城 0 血結算、時空裂痕重複進場、最終決戰視窗與中途重整、手機版面提示、戰敗鎖住停用宣戰 -->
     <script src="afk-fix1030.js?v=11070b0ba469"></script>
     <!-- afk-arrowsmith：箭矢工匠 門蘇（歐瑞村莊）——屬性箭矢與一萬支箭矢袋；箭用完自動開同種箭矢袋 -->
@@ -1021,9 +1066,9 @@
     <!-- afk-novice-econ：新手曲線（無用掉落物 ×0.2、Lv30 以下必掉金幣、魔物追蹤收費依等級）；排在 afk-classic、afk-ttmi-items、afk-bosstrack 之後 -->
     <script src="afk-novice-econ.js?v=c6d9b03968d6"></script>
     <!-- afk-rift2：時空裂痕改用遊戲時間；席琳三模式新規則（80 分鐘完全通關、頭目暴走、60 分鐘起壓力牆、哀石系列、結算符文石、瘴骸·破材料）；需 afk-runedata、核心補丁 67 -->
-    <script src="afk-rift2.js?v=e433d10068ff"></script>
+    <script src="afk-rift2.js?v=8a68634bfc7c"></script>
     <!-- afk-runefx：符文石與符文之語的效果（減傷、藥水、寵物、套裝、攻擊、補助）；排在 afk-runes、afk-rift2、afk-caps、afk-sherine-dream 之後 -->
-    <script src="afk-runefx.js?v=02bd824faa6d"></script>
+    <script src="afk-runefx.js?v=b0e81a12eca4"></script>
     <!-- afk-finaltiers：終焉三階層（席琳夢境／席琳幻影 ×1.25／席琳伴身 ×1.5625 只能一次）；需 afk-finalboss -->
     <script src="afk-finaltiers.js?v=8e2bcbdd59de"></script>
     <!-- afk-caps：轉生雙持的副手武器固定加成計入能力；爆擊率上限 80%（包 recomputeStats 最外層，必須最後載入）；迴避上限見核心補丁 patchEvadeCap -->
@@ -1046,11 +1091,11 @@
     <!-- afk-returnprobe：回城卡頓偵測（只在回城那 3 秒量測，停頓超過 0.3 秒才在系統訊息回報） -->
     <script src="afk-returnprobe.js?v=88ef3cc5fff4"></script>
     <!-- afk-returnfast：回城不卡——主動回城先換好村莊畫面，隊員刷新（重建快照＋結算經驗＋存檔）延到下一個空檔 -->
-    <script src="afk-returnfast.js?v=9f928cfc2c68"></script>
+    <script src="afk-returnfast.js?v=5e4d623175c9"></script>
     <!-- afk-hdmobs：29 隻新怪物改用自己的動畫（寫實復古版；放最後：要等所有新怪物都登錄完借圖別名才拿掉） -->
     <script src="afk-hdmobs.js?v=e71049d36678"></script>
     <!-- afk-allypoly：隊伍與夥伴→技能設定，幫隊員選變身（照隊員的等級、武器、收集冊）；要在 afk-card-ascension、afk-ttmi-items 之後（最外層包 confirmPolySelect） -->
-    <script src="afk-allypoly.js?v=09e5b2bc4d14"></script>
+    <script src="afk-allypoly.js?v=de3f962c3113"></script>
     <!-- afk-balance1101：範圍魔法 3 秒冷卻（玩家與傭兵）、奇古獸額外傷害不乘魔法倍率（核心補丁 79）；要在其他包 castSkill／allyActWithSkillGate 的外掛之後 -->
     <script src="afk-balance1101.js?v=31e2697ab097"></script>
     <!-- afk-autosupply：技能設定藥水區多「三段加速藥水」「增益料理」自動喝／自動買（照洛依的售價）；要在 afk-ttmi-items 之後 -->
@@ -1059,27 +1104,27 @@
     <script src="afk-riftsupply.js?v=fba6bbf4cee8"></script>
     <script src="afk-autocancel.js?v=0cdc48e598d7"></script>
     <!-- afk-bufficons：料理、三段加速、古物增益、裂痕補給增益的狀態圖示（倒數、點一下看說明）；要在 afk-ttmi-items、afk-autosupply、afk-riftsupply 之後 -->
-    <script src="afk-bufficons.js?v=d60fa8cf2d3e"></script>
+    <script src="afk-bufficons.js?v=07aeb7a74e64"></script>
     <!-- afk-questweapon：說話之島新手指導員：新手任務（Lv40 以下用 +7 武器）、任務武器（Lv60 以下用 +7，30 級試煉或 5 枚狩獵徽章）；要在 afk-lore-kit、afk-hunter 之後 -->
-    <script src="afk-questweapon.js?v=9e3cc9aa24f5"></script>
+    <script src="afk-questweapon.js?v=3a5984249cad"></script>
     <!-- afk-expedition：轉生欄位（聖物、手環、刻印；核心補丁 83）、冒險者遠征點數與位階、刻印石；要在 afk-hunter、afk-finalboss、afk-card-combat 之後 -->
-    <script src="afk-expedition.js?v=14624d4e6834"></script>
+    <script src="afk-expedition.js?v=e7239eb4abc6"></script>
     <!-- afk-bracelet：手環系統（靈魂石訓練所的王掉深淵靈魂、意志抵抗精華；席琳神殿手環工匠換六種手環、升到 3 階）；要在 afk-expedition、afk-soulstone 之前也可以（只看 _afkSoul 旗標） -->
     <script src="afk-bracelet.js?v=7fbed2237cfc"></script>
     <!-- afk-procfx：觸發型特效的共用底層（密奧之卡、聖紋共用；沒有開關，本身不做事） -->
-    <script src="afk-procfx.js?v=87f7c33c579d"></script>
+    <script src="afk-procfx.js?v=9cb562b29755"></script>
     <!-- afk-mio：密奧之卡（22 張塔羅牌，夢域鏡掉密奧碎片；偉特→托特→馬賽；裝備視窗第二頁刻印下面那格）；要在 afk-rebirth（__afkMaxAdd）之後 -->
     <!-- afk-craftlock：暫停用到次元裂縫材料的製作（Ping 11-12 22:30） -->
     <script src="afk-craftlock.js?v=c9f67d1480ca"></script>
-    <script src="afk-mio.js?v=9a66dd79fadf"></script>
+    <script src="afk-mio.js?v=652e00828400"></script>
     <!-- afk-sigil：聖紋（25 個字母，Lv40～70 頭目與怪物掉；裝備視窗第二頁項鍊的位置，只能裝一個） -->
-    <script src="afk-sigil.js?v=d8c0873c9f89"></script>
+    <script src="afk-sigil.js?v=2d62625143e9"></script>
     <!-- afk-scarab：成長型遺物「日輪聖甲蟲」（說話之島莉娜給；聖物格；Lv1～100、三型態）；要在 afk-questweapon、afk-expedition、afk-procfx 之後 -->
     <script src="afk-scarab.js?v=64c3fbc98410"></script>
     <!-- afk-balance1102：11/02 戰鬥平衡（夢域鏡三重矢遞減、幻影箭連發遞減、新手保障 Lv1～49、9 人以上怪物 HP 與傷害 +7%/人）；要在 afk-mech1031、afk-procfx 之後 -->
-    <script src="afk-balance1102.js?v=61fd8da0cb65"></script>
+    <script src="afk-balance1102.js?v=578d4d4e3694"></script>
     <!-- afk-goddess3：女神與夢域鏡四龍的新機制（永久雙免疫＋汙濁之水／粉碎能量解除 30 秒、女神斬殺、二轉女神幽影與狂暴、次元裂縫龍之護甲）；要在 afk-finalboss、afk-finaltiers、afk-corrupt、afk-debuff-rules、afk-illufix、afk-hidden 之後 -->
-    <script src="afk-goddess3.js?v=5f3f6dca145f"></script>
+    <script src="afk-goddess3.js?v=749ca454cfd4"></script>
     <!-- afk-village：村長與地區聲望（王都傳令 米恩、懸殊、霸主出現率、商店 5 折）＋隱藏稱號；要在 afk-region-boss、afk-special-collection、afk-procfx 之後 -->
     <script src="afk-village.js?v=7834bc917847"></script>
     <!-- afk-starroad：副本「星途遠征」（席琳神殿 喬斯達）與純白的萬能藥水 -->
@@ -1099,7 +1144,7 @@
     <!-- afk-fix1102：滿等不給經驗、掉寶人數上限 ×16、夢域鏡 ×7（核心補丁 82）、多魯嘉給龍鑽、濃縮古代藥水配方、收藏冊清理、村莊 NPC 站位；要在 afk-classic、afk-ancient、afk-ttmi-items、afk-dropcut 之後 -->
     <script src="afk-fix1102.js?v=002143bd9e33"></script>
     <!-- afk-soulstone：靈魂石系統（席琳神殿的扎爾；每隻頭目一種靈魂石，訓練所單挑、掉落相同）；放最後：要等所有頭目都登錄完才建靈魂石 -->
-    <script src="afk-soulstone.js?v=5b0ca35e6aa6"></script>
+    <script src="afk-soulstone.js?v=896cb9a333e0"></script>
     <!-- afk-guardup：亞丁佐姆格用靈魂石強化城堡護衛（六種生存能力各 10 階）；要在 afk-castle-guards、afk-aden-quests、afk-soulstone 之後 -->
     <script src="afk-guardup.js?v=8b018f257d5b"></script>
     <!-- afk-nosell：系統專屬道具（聖紋、手環、密奧之卡、聖物、靈魂石、符文石、席琳遺骸、專屬材料）不能賣、不會被自動賣出；要在 afk-itemguard、afk-sellguard、afk-relicsell、afk-soulstone 之後（包它們包過的販賣函式） -->
@@ -1117,21 +1162,21 @@
     <!-- afk-fishing：🐟 海音深海獵場（捕魚機，遊戲廳裡）；要在 afk-gamehall 之後 -->
     <script src="afk-fishing.js?v=3e99f1535800"></script>
     <!-- afk-dmgfont：🔤 傷害字體（潘朵拉黑市「字體販賣所」分頁）；要在 afk-bmprice 等包黑市畫面的外掛之後 -->
-    <script src="afk-dmgfont.js?v=9273dda63244"></script>
+    <script src="afk-dmgfont.js?v=110972a677d7"></script>
     <!-- afk-matwh：進副本要交的材料背包不夠時直接從倉庫補足（星途遠征、時空裂痕、暗夢星迴、聖地、鑰匙地圖）；要在 afk-rift2、afk-dreamstar 之後 -->
     <script src="afk-matwh.js?v=128ebeb05d55"></script>
     <!-- afk-hadesinfo：時空裂痕入口的冥王域列出轉生要的材料；第一次打完死亡女神提醒去冥王域；要在 afk-dreamstar、afk-rebirth2 之後 -->
-    <script src="afk-hadesinfo.js?v=9e08277bcde6"></script>
+    <script src="afk-hadesinfo.js?v=15da8387119d"></script>
     <!-- afk-riftchain：時空裂痕連續挑戰 1～10 趟（每趟自動領獎再進下一趟）；要在 afk-rift2、afk-fix1101 之後 -->
     <script src="afk-riftchain.js?v=c3e2182f7c3c"></script>
     <!-- afk-partylead：傭兵管理畫面指定隊員當隊長（不用解散重組） -->
     <script src="afk-partylead.js?v=a505924b4992"></script>
     <!-- afk-bossdrain：副本與時空裂痕裡王倒下時吸走全隊 MP（王的殘響） -->
-    <script src="afk-bossdrain.js?v=8b0f2e8e8e95"></script>
+    <script src="afk-bossdrain.js?v=7d1fd22e50c9"></script>
     <!-- afk-charm：迷魅術改版（所有職業可學、頭目 5%、頭目反噬）；要在 afk-training、afk-dreamcost、afk-revive 之後 -->
-    <script src="afk-charm.js?v=eae8db4e4153"></script>
+    <script src="afk-charm.js?v=7008dc965a58"></script>
     <!-- afk-bossarts：副本／夢域鏡／終焉頭目每 45 秒施放秘技；要在 afk-riftsupply 之後（鎖定的負面狀態在補給清除之後補回） -->
-    <script src="afk-bossarts.js?v=8f01d6f0af94"></script>
+    <script src="afk-bossarts.js?v=3574a15f66c0"></script>
     <!-- afk-reflectcap：血壁空間減弱（反彈 −30%、每隻怪每秒最多 5 次、每人每秒最多最大 HP 20%）；包 reflectWallOnDamage 最外層，排在 afk-arts、afk-dreamhell、afk-training 之後 -->
     <script src="afk-reflectcap.js?v=16087e8f6d69"></script>
     <!-- afk-petbite：寵物傷口撕咬（一般攻擊打中疊 AC +5、魔防 −5、四屬性抗性 −1，最多 5 層、5 秒） -->
@@ -1141,19 +1186,20 @@
     <!-- afk-carve：歐瑞村莊刻印師邪迪克爾——武器、盔甲、頭盔、手套、長靴、斗篷各 1 孔的刻印（7 種 Lv1～5）與尤／鯤／彌之印記、3／6 格套裝；要在 afk-procfx、afk-overflow、afk-balance1101、afk-hidden、afk-matwh、afk-expedition、afk-sherine-dream 之後 -->
     <script src="afk-carve.js?v=809f519558eb"></script>
     <!-- afk-guardring：守護者之戒（五騎士的劇情、副本、上半部／完整 ★1～★3、主誓約、騎士之印、庇護者之戒、滿月；裝備視窗第二頁密奧上面那格；轉生後、經典模式沒有）；要在 afk-procfx、afk-lore-kit、afk-npc-kit、afk-npctabs、afk-carve 之後，afk-bosslines、afk-bosswatch 之前 -->
-    <script src="afk-guardring.js?v=be48b3c0299d"></script>
+    <script src="afk-guardring.js?v=cced9175ddb7"></script>
     <!-- afk-siege2：每週守城戰（每週五 20:00 集結、血盟頁可關、攻城頁放棄城堡、回防副本 25 波（倒下轉攻城）、失城 7 天鎖與城陷之恥、奪回戰鏡像敵人）；預設開；要在 afk-castlewar、afk-castle-guards、afk-guardup、afk-soulstone 之後 -->
-    <script src="afk-siege2.js?v=6a955f9ba750"></script>
+    <script src="afk-siege2.js?v=6ed8b79f45e4"></script>
     <!-- afk-guardmats：守護者之戒的材料先開始掉（四龍眼淚改在夢域鏡四龍副本的小怪掉、原本的掉落拿掉、古物學者常駐委託不抽）；包 killMob，要在各副本外掛之後 -->
     <script src="afk-guardmats.js?v=17a433d0e35f"></script>
     <!-- afk-pettank：寵物被動「頑強抵抗」（出戰寵物替隊伍其他人承受怪物傷害 10%／20%）；在 load 時包遺物受傷處理的最外層，排在 afk-fate、afk-hunter、afk-siege2 之後 -->
     <script src="afk-pettank.js?v=3135bd4efc00"></script>
     <!-- afk-bosslines：頭目台詞（登場、半血、四分之一、倒下各一句；資料在 afk-bosslines-data.js）；包 tick、killMob，要在各副本外掛之後 -->
-    <script src="afk-bosslines.js?v=2238e36047cb"></script>
+    <script src="afk-bosslines-data.js?v=c9359c48f4b3"></script>
+    <script src="afk-bosslines.js?v=1b420fb5efc6"></script>
     <!-- afk-bosswatch：頭目卡住保險（HP 0 卻沒倒下 3 秒→走正常 killMob；鎖定的頭目 60 秒 HP 沒變→清掉過期的免疫屏障）；要在所有包 tick、killMob 的外掛之後，afk-intdmg 之前 -->
     <script src="afk-bosswatch.js?v=e2a6fb63a45f"></script>
     <!-- afk-skillup：技能強化（席琳神殿 技藝導師 薇爾娜）；要在 afk-hidden、afk-callally、afk-card-combat 之後，afk-intdmg 之前 -->
-    <script src="afk-skillup.js?v=639a82c8ce89"></script>
+    <script src="afk-skillup.js?v=139014f645d1"></script>
     <!-- afk-dreamquest：夢域鏡任務線「水面下的證詞」7 章（伊奧、扎爾、喬、迷幻森林之母、奧拉奇里亞、無名的說書人）；要在 afk-lore-kit、afk-hardin、afk-rift2、afk-soulstone 之後 -->
     <script src="afk-dreamquest.js?v=9953a012dbfd"></script>
     <!-- afk-evolve：職業進化（席琳神殿 技藝導師 薇爾娜；第一批召喚、寵物、爆發流派＋意志）；要在 afk-skillup、afk-relic-runtime、afk-card-combat 之後 -->
@@ -1161,36 +1207,36 @@
     <!-- afk-mapboss：地圖王（野外打倒 300 隻）、副本王（地監待滿 10 分鐘）、王之徽章；要在 afk-lore-kit、afk-region-boss 之後 -->
     <script src="afk-mapboss.js?v=d8219c9b9c1c"></script>
     <script src="afk-bosscard.js?v=f17174c9c39a"></script>
-    <script src="afk-bossrelic.js?v=e4275766dc33"></script>
+    <script src="afk-bossrelic.js?v=251c988a57ee"></script>
     <!-- afk-echorelic：原作者 v3.9 的 100 件遺物（relic_echo_*），可合成／昇華／至高、列入遺物收集冊、黑市自選（Ping 11-20） -->
     <script src="afk-echorelic.js?v=67eebca10e7c"></script>
     <script src="afk-relicevo.js?v=3c76afd7296e"></script>
     <!-- afk-relicmech：遺物新機制（119 件重做、回響遺物階段＋五屬性＋原主之仇、種族獵手、原作者 26 件昇華 +5；Ping 11-20 21:19） -->
-    <script src="afk-relicmech.js?v=b6db1e358b5f"></script>
-<script src="afk-timeroom.js?v=28c090d3135b"></script>
+    <script src="afk-relicmech.js?v=38e71a9436dd"></script>
+<script src="afk-timeroom.js?v=dce4511234fb"></script>
 <script src="afk-avatar.js?v=645fd5dff69f"></script>
     <!-- afk-dimrift：次元裂縫（世界規則：侵蝕、光蝕、面板減半、怪物倍率、掉落）；要在 afk-rebirth、afk-relic-companions、afk-lore-kit、afk-mio、afk-bracelet 之後 -->
-    <script src="afk-dimrift.js?v=b965c6c6feed"></script>
+    <script src="afk-dimrift.js?v=2cb620138abf"></script>
     <!-- afk-zodiac：副本「黃道十二宮」（席琳神殿 星鑄師 艾琳娜）與聖衣 EX；要在 afk-saint-cloth、afk-dimrift、afk-npc-kit 之後 -->
-    <script src="afk-zodiac.js?v=50ab8e8a44e1"></script>
+    <script src="afk-zodiac.js?v=201968b3fa00"></script>
     <!-- afk-starcard：黃道星卡（星卡格；艾琳娜登錄、升級）；要在 afk-zodiac、afk-mio、afk-procfx 之後 -->
-    <script src="afk-starcard.js?v=8c863948be7e"></script>
-    <script src="afk-gdrift.js?v=0b1cee6cb299"></script>
+    <script src="afk-starcard.js?v=5316027dddaf"></script>
+    <script src="afk-gdrift.js?v=9ef7063ecb39"></script>
     <!-- afk-dollrift：魔法娃娃 7～10 階（次元裂縫 32 隻；魔法娃娃商人）；要在 afk-cardplus、afk-dollaffix、afk-bosscard、afk-dimrift、afk-procfx 之後 -->
     <script src="afk-dollrift.js?v=21551dcd9f63"></script>
     <!-- afk-riftdungeons：次元裂縫的副本（席琳神殿 裂縫之門）；要在 afk-dimrift、afk-lore-kit、afk-npc-kit 之後 -->
-    <script src="afk-riftdungeons.js?v=198e4641e325"></script>
+    <script src="afk-riftdungeons.js?v=3ceca32bef84"></script>
     <!-- afk-riftquest：次元裂縫任務線「吞噬天空的光」6 章＋伊娃支線「伊娃的水」3 章；要在 afk-lore-kit、afk-dreamquest、afk-dimrift、afk-riftdungeons、afk-finaltiers 之後 -->
-    <script src="afk-riftquest.js?v=c573e046803d"></script>
+    <script src="afk-riftquest.js?v=09da44328409"></script>
     <!-- afk-dimrelic：次元遺物 180 件與四龍專屬的次元時空武器（席琳神殿 次元的鍛造師）；要在 afk-relic-*、afk-dimrift、afk-riftdungeons 之後 -->
     <!-- afk-relic-newfx：遺物新特效（嫉妒、昏迷命中、施法速度、信念、近／遠距離減傷、猜忌；Ping 11-15）；次元遺物會用到，要在 afk-dimrelic 之前 -->
-    <script src="afk-relic-newfx.js?v=e48daa16f4e8"></script>
-    <script src="afk-dimrelic.js?v=c8da80cb945e"></script>
+    <script src="afk-relic-newfx.js?v=de8141d39963"></script>
+    <script src="afk-dimrelic.js?v=e904426f29fc"></script>
     <!-- afk-dimrelic24：次元遺物 +2／+4 新特效 -->
-    <script src="afk-dimrelic24.js?v=783f7adffbf2"></script>
+    <script src="afk-dimrelic24.js?v=9e6a29e44e3e"></script>
     <!-- afk-dimarts：次元藝能（席琳神殿 藝能的守門人） -->
-    <script src="afk-dimarts.js?v=fda7f099a4de"></script>
-    <script src="afk-dimarts2.js?v=c7a4036de4a0"></script>
+    <script src="afk-dimarts.js?v=dfbad55084e0"></script>
+    <script src="afk-dimarts2.js?v=66ef79edae0e"></script>
     <!-- afk-mobmagic：夢域鏡、次元裂縫的怪物放魔法＋屬性攻擊 -->
     <script src="afk-mobmagic.js?v=f4ea6442f8b6"></script>
     <!-- afk-breakskills：粉碎能量魔防 −150、污濁之水 AC +150 -->
@@ -1204,62 +1250,64 @@
 <!-- Unified save boundary: mandatory infrastructure, independent of optional feature toggles. -->
 <script src="merged/doll-policy.js?v=78965e06c4ed"></script>
 <script src="merged/legacy-codec.js?v=fe92258855d8"></script>
-<script src="merged/save-bridge.js?v=17db1378175b"></script>
-<script src="merged/recovery-core.js?v=cc0034aba24d"></script>
-<script src="merged/backup-store.js?v=f40a03e26107"></script>
+<script src="merged/save-bridge.js?v=c3b4d3abddbf"></script>
+<script src="merged/recovery-core.js?v=90417ba9defb"></script>
+<script src="merged/identity-digest.js?v=680002c20cf7"></script>
+<script src="merged/client-crypto.js?v=e09ff6f07060"></script>
+<script src="merged/local-action-lock.js?v=6d11b78cc142"></script>
+<script src="merged/backup-store.js?v=12667d7ca640"></script>
 <script src="merged/integrity-core.js?v=9d69d26e157a"></script>
-<script src="merged/integrity-store.js?v=3bae9d66d9d1"></script>
+<script src="merged/integrity-store.js?v=11dd49a4d0cd"></script>
 <script src="merged/integrity-runtime.js?v=4d440dde168c"></script>
 <script src="merged/save-gate.js?v=daac1ae5be3f"></script>
 <!-- afk-reloadguard：同一個角色讀回自己舊存檔的帳本（倉庫存入次數、讀回次數）；要在 js/12、merged/integrity-core、merged/save-gate 之後 -->
 <script src="afk-reloadguard.js?v=591fcee39605"></script>
-<script src="merged/mobile-adventure.js?v=d606d4cac5f9"></script>
-<script src="merged/mobile-shell.js?v=991c023c6bdd"></script>
-<script src="afk-bodyflags.js?v=5aec880878c0"></script>
-<link rel="stylesheet" href="merged/growth.css?v=e6dbac2c64a8">
+<script src="merged/mobile-adventure.js?v=e8b7d6fe26db"></script>
+<script src="merged/mobile-shell.js?v=db664de48433"></script>
+<script src="afk-bodyflags.js?v=57110a9af344"></script>
+<link rel="stylesheet" href="merged/growth.css?v=634c76226662">
 <script src="merged/dragon-workshop.js?v=a556ae60cf54"></script>
 <script src="merged/growth-core.js?v=f30f100d17ce"></script>
-<script src="merged/growth-runtime.js?v=a4849ca87ee9"></script>
-<script src="merged/clan-rewards.js?v=eb51d8cf2b4c"></script>
-<link rel="stylesheet" href="merged/medieval-frame.css?v=3153c149b11a">
+<script src="merged/growth-runtime.js?v=6deaa5d5fa23"></script>
+<script src="merged/clan-rewards.js?v=108ab332bcb5"></script>
+<link rel="stylesheet" href="merged/medieval-frame.css?v=d5cad514c6ac">
 <script src="merged/cloth-progression.js?v=999530321897"></script>
 <script src="merged/talent-catalog.js?v=7f642b81f4cb"></script>
-<script src="merged/talents.js?v=85c87fc7c5c7"></script>
+<script src="merged/talents.js?v=48b84f01c690"></script>
 <script src="merged/activities.js?v=dcf7c398a97f"></script>
 <script src="merged/growth-views.js?v=ed869880b6cf"></script>
 <script src="merged/growth-ui.js?v=eef209a615c1"></script>
 <script src="afk-shroomboost.js?v=86ad3d357b99"></script>
 <script src="afk-mercparagon.js?v=d576ddc81f85"></script>
-<script src="afk-awaken.js?v=34406b7d8e61"></script>
-<script src="afk-awkmerc.js?v=2236ddf68772"></script>
+<script src="afk-awaken.js?v=d4beee24dafa"></script>
+<script src="afk-awkmerc.js?v=566ae409df78"></script>
 <script src="afk-awaken-ext.js?v=28668fb71ec0"></script>
-<script src="afk-awaken-transfer.js?v=b349ad374eac"></script>
+<script src="afk-awaken-transfer.js?v=3648aebd5137"></script>
 <script src="afk-awaken-wiki.js?v=898eaff26408"></script>
 <script src="afk-awaken-road.js?v=a41d410b470d"></script>
-<script src="afk-newzones.js?v=d4644a0c55b3"></script>
-<link rel="stylesheet" href="merged/class-ui.css?v=13cc65dd10d2">
-<link rel="stylesheet" href="merged/progression-desktop.css?v=80ff2924c507" media="(min-width: 821px)">
-<link rel="stylesheet" href="merged/progression-mobile.css?v=df9be8980291" media="(max-width: 820px)">
-<link rel="stylesheet" href="merged/growth-dark.css?v=eed013bcbdfd">
+<script src="afk-newzones.js?v=29ad2ff57997"></script>
+<link rel="stylesheet" href="merged/class-ui.css?v=7b2995ac4112">
+<link rel="stylesheet" href="merged/progression-desktop.css?v=06d8032b656b" media="(min-width: 821px)">
+<link rel="stylesheet" href="merged/progression-mobile.css?v=d80f498480cf" media="(max-width: 820px)">
+<link rel="stylesheet" href="merged/growth-dark.css?v=796389004d0d">
 <script src="merged/class-catalog.js?v=a65731deed9a"></script>
-<script src="merged/class-core.js?v=326f3b7d6bff"></script>
-<script src="merged/class-runtime.js?v=8d2320918d8c"></script>
-<script src="merged/class-combat.js?v=540a1c8cfd55"></script>
+<script src="merged/class-core.js?v=267db78020c4"></script>
+<script src="merged/class-runtime.js?v=9984ffd4d018"></script>
+<script src="merged/class-combat.js?v=f51c927b795c"></script>
 <script src="merged/sherine-catalog.js?v=0c410293e90b"></script>
 <script src="merged/sherine-core.js?v=9e19403e14a4"></script>
-<script src="merged/sherine-runtime.js?v=b8773428751c"></script>
+<script src="merged/sherine-runtime.js?v=ccca8279450b"></script>
 <script src="merged/sherine-forge.js?v=273c3fd1d4ed"></script>
 <script src="merged/dimension-names.js?v=f253943eab0c"></script>
 <script src="merged/owner-policy.js?v=5d30b761f044"></script>
-<script src="merged/identity-digest.js?v=680002c20cf7"></script>
 <script src="merged/admin-guard.js?v=af0321ad96e9"></script>
 <script src="merged/class-native.js?v=8ec7cf4ccac5"></script>
-<script src="merged/class-ui.js?v=00171722f4e4"></script>
-<script src="merged/attribute-help.js?v=88730f581c82"></script>
+<script src="merged/class-ui.js?v=129c7691163f"></script>
+<script src="merged/attribute-help.js?v=833211d58841"></script>
 <!-- 本機測試員（merged/test-npc.js）：玩家 11-10 關閉，正式版不載入 -->
     <script src="merged/save-health.js?v=f6d5844a6394"></script>
     <script src="merged/drop-policy-data.js?v=b4cd7bd9db7b"></script>
-    <script src="merged/drop-policy.js?v=1ed88300cfc1"></script>
+    <script src="merged/drop-policy.js?v=cf9b9e0a1429"></script>
     <template id="arcade-assets">
       <link rel="stylesheet" href="merged/arcade.css?v=41ee3e85c6ed">
       <link rel="stylesheet" href="merged/pachinko.css?v=7b6dbceacfb3">
@@ -1270,7 +1318,7 @@
       <script src="merged/arcade-ui.js?v=3922b1cb4402"></script>
     </template>
     <script src="merged/arcade-entry.js?v=e5a72d16fa25"></script>
-    <script src="merged/anticheat.js?v=4b0afe47443d"></script>
+    <script src="merged/anticheat.js?v=548c5e21e8db"></script>
     <!-- afk-antisl：防 SL（點按鈕的結果先定好、女神挑戰紀錄點、道具身分證、帳號血盟編號）；要在 afk-finalboss／rebirth2／finaltiers、merged/integrity-*、anticheat 之後 -->
     <script src="afk-antisl.js?v=8f6857e03916"></script>
     <!-- afk-limitbreak：限界解放（二轉後八職業各一個被動；Ping 11-13）；要在 afk-hidden、afk-arts、afk-affix-plus、afk-card-combat 之後 -->
@@ -1282,43 +1330,100 @@
     <!-- afk-enemyx：敵人爆擊、重擊、追加攻擊、共鳴魔擊、王的即死、小怪回血（Ping 11-13）；要在 afk-talent2 之後 -->
     <script src="afk-enemyx.js?v=3d1af3b4266d"></script>
     <!-- afk-talent3：第三套天賦「匣之」＋匣之聖衣／血魔聖衣／鐵聖衣的數值（Ping 11-13）；要在 afk-talent2、afk-zodiac 之後 -->
-    <script src="afk-talent3.js?v=2fdba0faf74b"></script>
+    <script src="afk-talent3.js?v=a219a83b37d3"></script>
     <!-- afk-talent4：天賦「神聖衣」（巔峰 2000 等開放，變身中生效；Ping 11-14）；要在 afk-talent3 之後 -->
     <script src="afk-talent4.js?v=2a20b883609f"></script>
     <!-- afk-bloodline：巔峰「命脈」職業血脈＋「繼承繁星」（Ping 11-15）；要在 afk-talent4 之後 -->
-    <script src="afk-bloodline.js?v=57797f3b317e"></script>
+    <script src="afk-bloodline.js?v=be4eed25b661"></script>
     <script src="afk-nemesis.js?v=223a023ce5d9"></script>
     <!-- afk-abnforce：次元裂縫／GD之子的期待的強制異常（隱藏規則，Ping 11-13）；要在 afk-carve、afk-guardring 之後 -->
-    <script src="afk-abnforce.js?v=08c1533cec6e"></script>
+    <script src="afk-abnforce.js?v=89425fe81415"></script>
     <!-- afk-allygear：傭兵公會圖形換裝畫面、隊伍名單點名字的即時視窗（Ping 11-13） -->
-    <script src="afk-allygear.js?v=02e03941f896"></script>
+    <script src="afk-allygear.js?v=b246546ffdf5"></script>
     <!-- afk-raid：多人討伐（奇岩 次元討伐隊長 薇拉；非同步三人一隊、每天 20:00 結算；Ping 11-17）；要在 afk-lore-kit、afk-npc-kit、afk-heartbeat 之後 -->
     <script src="afk-raid.js?v=00bdadfb1008"></script>
     <!-- afk-mobtags：怪物標籤（頭目、神族、人形、不死…；對標籤增加傷害的掛鉤；Ping 11-17） -->
     <script src="afk-mobtags.js?v=793957dcb14e"></script>
     <!-- afk-diagreport：回報角色狀態給管理員（旅人頻道「📮 回報狀態」；Ping 11-17） -->
-    <script src="afk-diagreport.js?v=b2aca66d08dd"></script>
+    <script src="afk-diagreport.js?v=8eec8d4c94e4"></script>
     <!-- afk-cardregions：怪物卡冊補上新地圖、新地區、新副本（Ping 11-17）；要在 afk-newzones、afk-timeroom 等副本之後 -->
     <script src="afk-cardregions.js?v=4a398b3c1b29"></script>
     <!-- afk-riftrules：次元裂縫／夢域鏡的王屏障、死亡反噬、王減傷、70 等以上小怪（Ping 11-17）；要在 afk-card-combat、afk-mapboss、afk-dimrift 之後 -->
-    <script src="afk-riftrules.js?v=28d7330d12fe"></script>
+    <script src="afk-riftrules.js?v=71759e8d1d62"></script>
     <script src="afk-clanadmin.js?v=2dc642f1f4fe"></script>
     <!-- afk-dmglabel：物品說明的增傷種類標示〔近戰〕〔遠程〕〔魔法〕〔屬性〕〔通用〕（Ping 11-17） -->
     <script src="afk-dmglabel.js?v=1746ca026fbe"></script>
     <!-- afk-explog：經驗日誌分頁（Ping 11-17） -->
-    <script src="afk-explog.js?v=3c2f8081cf11"></script>
-    <script src="afk-hybrid.js?v=3a3d94445d65"></script>
+    <script src="afk-explog.js?v=234a06e7a1f0"></script>
+    <script src="afk-hybrid.js?v=fb006a9c4da7"></script>
     <!-- afk-relicmix：遺物武器特效混合（繼承共鳴／魔擊／第二攻擊施法，特效連鎖 1 層） -->
     <script src="afk-relicmix.js?v=00bb1c911b6d"></script>
     <!-- afk-statsrc：能力分頁點六大屬性，列出點數從哪裡來（Ping 11-18）；要在所有 __afkAttrBoost 外掛之後 -->
     <script src="afk-statsrc.js?v=7e6e742578a9"></script>
     <!-- afk-tagcard：標籤卡（卡片鑲嵌；至高的支配裝備開卡洞、鑽石卡做標籤卡；佩特拉後裔村 卡片工匠「命運」；Ping 11-18）；要在 afk-hybrid、afk-riftrules、afk-rebirth-rules、afk-dollrift、afk-newzones、afk-npc-kit 之後 -->
     <script src="afk-tagcard-data.js?v=a75096c3f86f"></script>
-    <script src="afk-tagcard.js?v=5007bf680149"></script>
+    <script src="afk-tagcard.js?v=cda0d0838efe"></script>
     <script src="afk-relicshop.js?v=fe9e38fdcf11"></script>
+    <!-- DIMENSION_BATTLE_BEGIN -->
+    <link data-fusion-only rel="stylesheet" href="dimension-map/map-view.css?v=c33c13c07048">
+    <script data-fusion-only src="dimension-map/portal-footpaths.js?v=c08d3b5008b8"></script>
+    <script data-fusion-only src="dimension-map/terrain-world.js?v=b121c67f6569"></script>
+    <script data-fusion-only src="dimension-map/field-catalog.js?v=3d1c9b66fa52"></script>
+    <script data-fusion-only src="dimension-map/hunting-field.js?v=f453f775d49e"></script>
+    <script data-fusion-only src="dimension-map/battle-formation.js?v=fc49b65fba3f"></script>
+    <script data-fusion-only src="dimension-map/terrain-view.js?v=2058866e3974"></script>
+    <script data-fusion-only src="dimension-map/stride-view.js?v=1c575f31eb71"></script>
+    <script data-fusion-only src="dimension-map/battle-actions.js?v=383794899279"></script>
+    <script src="world/spatial.js?v=84e5e93277e6"></script>
+    <script src="world/combat-world.js?v=9e8ef1434e93"></script>
+    <script src="world/hunt.js?v=a5be365dd8e7"></script>
+    <script src="world/bookmarks.js?v=3089291278c4"></script>
+    <script src="world/boar.js?v=20b5d933e413"></script><script src="world/creature-frames.js?v=675677f46a8f"></script><script src="world/giran-atlas-data.js?v=8acb6be9badb"></script>
+    <script data-fusion-only src="world/hunting-points.js?v=9eb5acc93818"></script>
+    <script src="world/boss-art.js?v=6040dd9616c0"></script>
+    <script src="world/shared-poses.js?v=4dfed25f419a"></script>
+    <script src="world/atlas-art.js?v=24a48834f72c"></script>
+    <script src="world/giran-atlas.js?v=90a32bd36511"></script>
+    <script src="world/set-data.js?v=5ed07671c5b2"></script>
+    <script src="world/training.js?v=f2195d4a97c6"></script>
+    <script src="world/spell-data.js?v=492e2db26aa5"></script>
+    <script src="world/spells.js?v=8892ffc25689"></script>
+    <script src="world/commerce.js?v=63ffb398946f"></script>
+    <script src="world/collections.js?v=d07419be3ac0"></script>
+    <link rel="stylesheet" href="world/commerce.css?v=a8c495e1b53e">
+    <script src="world/party-effects.js?v=55d5b5900b8d"></script>
+    <script data-fusion-only src="world/terrain-atlas.js?v=10812464bc53"></script>
+    <script src="world/gates.js?v=0bd02d3d9dea"></script>
+    <script src="world/travel-data.js?v=b018d8d990da"></script>
+    <script src="world/travel.js?v=ff17504c41b5"></script>
+    <script src="world/magic-merchant.js?v=d91f1a8d51c7"></script>
+    <script data-fusion-only src="world/boss-routes.js?v=eaa82d12b39d"></script>
+    <script data-fusion-only src="world/boss-rooms.js?v=4c48b1b1b06a"></script>
+    <script data-fusion-only src="world/bosses.js?v=6e4217f0fd5b"></script>
+    <script data-fusion-only src="world/open-world.js?v=b736c48d4b59"></script>
+    <script data-fusion-only src="world/field-ui.js?v=00f9b00c07bb"></script>
+    <script data-fusion-only src="world/field.js?v=6bdc386d47f8"></script>
+    <!-- DIMENSION_BATTLE_END -->
     <script src="afk-cjcharm.js?v=b43143d48115"></script>
     <!-- afk-tamper：直接改角色資料的作弊（隱藏規則，Ping 11-16）；要放在最後（最外層包 tick、recomputeStats、updateUI） -->
     <script src="afk-tamper.js?v=e07a1b266f03"></script>
-    <script src="world/twisted-space.js?v=e6fb6f9bf48d"></script>
+<link data-fusion-only rel="stylesheet" href="world/world.css?v=0257edc5d924">
+<link data-fusion-only rel="stylesheet" href="world/adventure-ui.css?v=ed4358910153">
+<link data-fusion-only rel="stylesheet" href="world/classic-interface.css?v=5a5ef2e15945">
+<link data-fusion-only rel="stylesheet" href="world/command-deck.css?v=0f3339e8d4ff">
+<link data-fusion-only rel="stylesheet" href="world/phone-interface.css?v=421a64a2e20b">
+    <script src="world/twisted-space.js?v=9a0e9b775361"></script>
+    <script data-fusion-only src="world/town-places.js?v=2ec169f8b49a"></script>
+    <script data-fusion-only src="world/town.js?v=706a98c0a188"></script>
+    <link rel="stylesheet" href="world/journal.css?v=adb6ed4fa075">
+    <script src="world/journal.js?v=7a212d00ed39"></script>
+    <script src="world/journal-view.js?v=d210b37a7612"></script>
+    <script src="world/sync.js?v=68f8df110592"></script>
+    <script data-fusion-only src="world/shell.js?v=ab19d5a65abe"></script>
+    <script data-fusion-only src="world/radar.js?v=27e82a836086"></script>
+    <script data-fusion-only src="world/directory.js?v=137f8410d4c3"></script>
+    <script data-fusion-only src="world/message-feed.js?v=5949cba3b00e"></script>
+    <script data-fusion-only src="world/adventure-ui.js?v=040e528a6985"></script>
+    <script data-fusion-only src="world/multiplayer.js?v=5454dd28f774"></script>
 </body>
 </html>

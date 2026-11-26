@@ -68,9 +68,9 @@
   W.__afkSigilSlotOn = function (p) { return on(p) && (!T || T.enabled('sigil')); };
 
   var cur = function () { var p = P(), e = p && on(p) && p.eq && p.eq.sigil, s = e && BY[e.id]; return s ? s[0] : null; };
-  var fire = function (L) {
+  var fire = function (L, detail) {
     if (!X) return; var s = BY[idOf(L)]; if (!s) return;
-    X.pop('sig' + L, (DB.items[idOf(L)] || {}).img, '「' + L + '」' + s[2], '#7dd3fc');
+    X.pop('sig' + L, (DB.items[idOf(L)] || {}).img, '「' + L + '」' + s[2], '#7dd3fc', detail || {owner:P(),verb:'聖紋觸發'});
     X.note('sig' + L, '<span style="color:#7dd3fc">✠【' + s[0] + ' ' + s[2] + '】</span>' + esc(s[3]));
   };
 
@@ -122,9 +122,9 @@
       v = v * m;
       if (L === 'P' && target.dr > 0) v += Math.floor(target.dr * 0.15);
       if (L === 'B') { var heal = Math.floor(Math.min(v, Math.max(0, target.curHp)) * 0.02); if (heal > 0) p.hp = Math.min(p.mhp, p.hp + heal); }
-      if (L === 'M' && rnd() < 0.05) { p.mp = Math.min(p.mmp, (p.mp || 0) + Math.floor((p.mmp || 0) * 0.03)); fire('M'); }
-      if (L === 'D' && !target.boss && target.st && rnd() < 0.05) { target.st.stun = Math.max(target.st.stun || 0, 10); fire('D'); }
-      if (L === 'F' && target.st && rnd() < 0.10) { target.st.slow = Math.max(target.st.slow || 0, 30); fire('F'); }
+      if (L === 'M' && rnd() < 0.05) { p.mp = Math.min(p.mmp, (p.mp || 0) + Math.floor((p.mmp || 0) * 0.03)); fire('M',{owner:p,kind:'mana',targets:[p],verb:'回魔'}); }
+      if (L === 'D' && !target.boss && target.st && rnd() < 0.05) { target.st.stun = Math.max(target.st.stun || 0, 10); fire('D',{owner:p,kind:'strike',targets:[target],verb:'暈眩'}); }
+      if (L === 'F' && target.st && rnd() < 0.10) { target.st.slow = Math.max(target.st.slow || 0, 30); fire('F',{owner:p,kind:'strike',targets:[target],verb:'緩速'}); }
       var base = v;
       if (L === 'C' && opt.kind === 'magic' && rnd() < 0.15) { var o = others(target); if (o.length) { X.hitMob(o[Math.floor(rnd() * o.length) % o.length], base * 0.5); fire('C'); } }
       if (L === 'Q' && pk && rnd() < 0.08) { var os = others(target); if (os.length) { os.forEach(function (x) { X.hitMob(x, base * 0.3); }); fire('Q'); } }
@@ -143,7 +143,7 @@
       if (!fight) { oath.used = false; zeal.start = -1; }
       else if (zeal.start < 0) zeal.start = t;
       if (!p || !L || p.dead) { dots.length = 0; return; }
-      if (L === 'G' && t >= guard.next) { guard.next = t + 200; if (fight) { X.shield.add(p.mhp * 0.05, Math.floor(p.mhp * 0.05)); fire('G'); } }
+      if (L === 'G' && t >= guard.next) { guard.next = t + 200; if (fight) { X.shield.add(p.mhp * 0.05, Math.floor(p.mhp * 0.05)); fire('G',{owner:p,kind:'guard',targets:[p],verb:'護盾'}); } }
       if (L === 'O' && fight && !oath.used && p.hp > 0 && p.hp < p.mhp * 0.2) { oath.used = true; p.hp = Math.min(p.mhp, p.hp + Math.floor(p.mhp * 0.3)); fire('O'); }
       for (var i = dots.length - 1; i >= 0; i--) {
         var d = dots[i]; if (!d.m || d.m._dead || !(d.m.curHp > 0) || d.left <= 0) { dots.splice(i, 1); continue; }

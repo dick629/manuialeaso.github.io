@@ -377,7 +377,7 @@
             tp.disabled = locked;
             tp.classList.toggle('opacity-50', locked);
             tp.classList.toggle('cursor-not-allowed', locked);
-            tp.title = locked ? '決鬥進行中無法使用瞬間移動' : '傳送術／瞬間移動卷軸（於對應地圖可進入隱藏狩獵區域）';
+            tp.title = locked ? '決鬥進行中無法使用瞬間移動' : '優先使用卷軸，在本圖隨機移動';
         }
         let rt = document.getElementById('btn-return-town');
         if (!rt) return;

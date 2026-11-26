@@ -46,7 +46,7 @@
             var a = actorState(typeof player !== 'undefined' ? player : null, false), el = typeof _pmState !== 'undefined' && _pmState.el;
             return base + '|' + (a && a.form ? a.form.key + ':' + cacheKey(a.cache) + ':' + a.down : 'none') + ':' + !!(el && el.isConnected);
         }
-        if (fn === '_allySpritesApply') return base + '|' + ((typeof player !== 'undefined' && player && player.allies) || []).map(function (actor, i) {
+        if (fn === '_allySpritesApply') return base + '|' + GiranPartyView.visibleAllies().map(function (actor, i) {
             var a = actorState(actor, i > 0), st = typeof _allySpriteStates !== 'undefined' && _allySpriteStates[String(actor._slot)];
             return actor._slot + ':' + (a && a.form ? a.form.key + ':' + cacheKey(a.cache) + ':' + a.down : 'none') + ':' + !!(st && st.el && st.el.isConnected);
         }).join('|');
@@ -69,7 +69,7 @@
     }
     function freezeSnapshot(fn) {
         if (fn === '_playerMorphApply' && typeof _pmState !== 'undefined') freezeActor(actorState(player, false), _pmState);
-        if (fn === '_allySpritesApply' && typeof _allySpriteStates !== 'undefined') (player.allies || []).forEach(function (a, i) { freezeActor(actorState(a, i > 0), _allySpriteStates[String(a._slot)]); });
+        if (fn === '_allySpritesApply' && typeof _allySpriteStates !== 'undefined') GiranPartyView.visibleAllies().forEach(function (a, i) { freezeActor(actorState(a, i > 0), _allySpriteStates[String(a._slot)]); });
         if (fn === '_petAnimApply' && typeof _petLayerEl === 'function' && typeof _pet8Cache !== 'undefined') {
             var layer = _petLayerEl(); if (!layer) return;
             var els = Array.from(layer.querySelectorAll('[data-pet]'));

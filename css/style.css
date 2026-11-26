@@ -1,7 +1,7 @@
         /* 🔤 字型：與網頁版一致，使用系統字型後備堆疊（Segoe UI / 微軟正黑體…），不內嵌自訂字型，確保打包版與網頁版排版完全相同。 */
         body {
     background-color: #374151;
-    background-image: url('../assets/background/background.webp'); /* 👈 在這裡填入你的圖片檔名 */
+    background-image: var(--lm-a70fcd75c25b,url('../assets/background/background.webp')); /* 👈 在這裡填入你的圖片檔名 */
     background-size: cover; 
     background-position: center; 
     background-repeat: no-repeat;
@@ -30,7 +30,7 @@
     aspect-ratio:400 / 825;
     container-type:inline-size;
     overflow:hidden;
-    background:url('../assets/ui/能力.webp') center/100% 100% no-repeat;
+    background:var(--lm-73f8adb757d1,url('../assets/ui/能力.webp')) center/100% 100% no-repeat;
     color:#e8e4dc;
     user-select:none;
 }
@@ -227,7 +227,7 @@
             --lineage-gold: #b18454;
             --lineage-edge: #c29a67;
         }
-        body.game-bg-dim { background-image: linear-gradient(rgba(35,33,40,0.84), rgba(22,21,26,0.9)), url('../assets/background/background.webp'); }  /* 參考天堂介面：炭灰紫黑底 */
+        body.game-bg-dim { background-image: linear-gradient(rgba(35,33,40,0.84), rgba(22,21,26,0.9)), var(--lm-a70fcd75c25b,url('../assets/background/background.webp')); }  /* 參考天堂介面：炭灰紫黑底 */
         .log-bg {
             border: 2px solid transparent;
             border-bottom-width: 1px;
@@ -332,7 +332,7 @@
         #doll-cursor-glow.active:not(.offscreen) { opacity: 0.5; }
         .mob-target:hover:not(.active) { background: #302d34; }
         /* 🔮 席琳的世界：深黑底色＋黑紅怪物框（透明度結構與原樣式一致） */
-        body.sherine-world, body.game-bg-dim.sherine-world { background-image: linear-gradient(rgba(8,8,10,0.88), rgba(0,0,0,0.94)), url('../assets/background/background.webp'); }
+        body.sherine-world, body.game-bg-dim.sherine-world { background-image: linear-gradient(rgba(8,8,10,0.88), rgba(0,0,0,0.94)), var(--lm-a70fcd75c25b,url('../assets/background/background.webp')); }
         body.sherine-world #map-view-panel {
             border-color: #315b43 !important;
             box-shadow: inset 0 0 0 1px rgba(8,20,13,.9), inset 0 0 10px rgba(35,87,57,.16), 0 0 8px rgba(30,83,53,.42), 0 8px 16px rgba(0,0,0,.62);
@@ -344,7 +344,7 @@
         body.sherine-world #battle-view.has-bg .mob-target.active { background: transparent !important; border-color: transparent !important; }   /* 🔴 紅色鎖定光暈改只套怪物圖(見上方 .mob-img-inner 規則)，不再套整卡→不影響名字 */
         body.sherine-world #battle-view.has-bg .mob-target:hover:not(.active) { background: transparent !important; }
         /* 🔥 瘋狂的席琳世界：更濃烈的猩紅主題（疊在 sherine-world 之上） */
-        body.sherine-mad, body.game-bg-dim.sherine-mad { background-image: linear-gradient(rgba(36,2,8,0.9), rgba(12,0,2,0.96)), url('../assets/background/background.webp'); }
+        body.sherine-mad, body.game-bg-dim.sherine-mad { background-image: linear-gradient(rgba(36,2,8,0.9), rgba(12,0,2,0.96)), var(--lm-a70fcd75c25b,url('../assets/background/background.webp')); }
         body.sherine-mad #map-view-panel {
             border-color: #6f3033 !important;
             box-shadow: inset 0 0 0 1px rgba(25,5,8,.94), inset 0 0 10px rgba(110,34,39,.18), 0 0 9px rgba(105,30,35,.46), 0 8px 16px rgba(0,0,0,.65);
@@ -475,11 +475,11 @@
            改回「單排站立帶(flex)」＝每隻怪吃滿條狀帶全高→怪圖 ~4-5× 大(13px→~69px)。DOM 順序 [front0,back3,front1,back4,front2](js/09 _order)於 flex 由左至右＝前,後,前,後,前 交錯；
            ⚠️v2.6.44 用戶要求「前後排統一大小＝取原前排1.55與後排1.02的平均1.285×」：前後排 scale 皆 1.285×，僅保留 translateY 位置差(後排 -30px 較高·前排 +2px)＝景深只靠位置不靠大小。頭目 boss-zoom＝1.78(不變·恆最大·仍 >1.285)。3 格地圖(單體純BOSS房/雙BOSS祭壇)無 .mob-back→走下方單排規則。 */
         #battle-view.area-fit #mob-list.afk-has-back { display: flex; align-items: flex-end; height: 242px; }   /* 🎯 v3.2.80 五怪前後排怪物站立帶固定 242px(同一般·釘 16:9 框底)；原 100% 會隨 16:9 框長成 ~418 使怪放大 1.7×＋景深位移相對變小→維持 242 保尺寸/景深一致 */
-        #battle-view.area-fit #mob-list.afk-has-back .mob-back .mob-img-inner { transform: translateY(-30px) scale(1.285); transform-origin: bottom center; }   /* 後排：上移 30px＋統一大小 1.285×→較高較遠(僅位置差·大小同前排) */
-        #battle-view.area-fit #mob-list.afk-has-back .mob-front:not(.boss-zoom) .mob-img-inner { transform: translateY(2px) scale(1.285); transform-origin: bottom center; }   /* 前排：統一大小 1.285×＝原前1.55與後1.02平均(<頭目 1.78) */
+        #battle-view.area-fit:not(.dm-map) #mob-list.afk-has-back .mob-back .mob-img-inner { transform: translateY(-30px) scale(1.285); transform-origin: bottom center; }   /* 後排：上移 30px＋統一大小 1.285×→較高較遠(僅位置差·大小同前排) */
+        #battle-view.area-fit:not(.dm-map) #mob-list.afk-has-back .mob-front:not(.boss-zoom) .mob-img-inner { transform: translateY(2px) scale(1.285); transform-origin: bottom center; }   /* 前排：統一大小 1.285×＝原前1.55與後1.02平均(<頭目 1.78) */
         /* 🆕 v2.7.47 動畫怪(.mob-anim)也套前後排「位置高低差」(translateY)但維持原生大小(不 scale)：覆蓋上方 .mob-anim{transform:none} → 動畫怪不再全部同一基線·後排較高前排較低·大小皆原始(含後排頭目) */
-        #battle-view.area-fit #mob-list.afk-has-back .mob-back .mob-img-inner.mob-anim { transform: translateY(-30px) !important; transform-origin: bottom center; }
-        #battle-view.area-fit #mob-list.afk-has-back .mob-front .mob-img-inner.mob-anim { transform: translateY(2px) !important; transform-origin: bottom center; }
+        #battle-view.area-fit:not(.dm-map) #mob-list.afk-has-back .mob-back .mob-img-inner.mob-anim { transform: translateY(-30px) !important; transform-origin: bottom center; }
+        #battle-view.area-fit:not(.dm-map) #mob-list.afk-has-back .mob-front .mob-img-inner.mob-anim { transform: translateY(2px) !important; transform-origin: bottom center; }
         /* ⚠️v2.6.44：怪名列固定單行→前後排「保留名稱高度」一致，怪圖區(.mob-img-wrap flex:1)吸收的剩餘高度才會等高＝前後排怪圖 base 尺寸相同，配合上方統一 1.285× 即渲染同大小。
            不加此列時：後排欄較窄(flex0.8)使長名折成兩行、多吃 ~20px→怪圖區被壓縮→後排怪偏小(即使 scale 相同)。單行溢出由 .mob-target overflow:hidden 收邊、span 補 ellipsis。僅套 5 怪前後排版面。 */
         #battle-view.area-fit #mob-list.afk-has-back .mob-name { white-space: nowrap; overflow: hidden; }
@@ -490,7 +490,7 @@
         #battle-view.area-fit #mob-list.afk-has-back .mob-target:hover .mob-name > span,
         #battle-view.area-fit #mob-list.afk-has-back .mob-target.name-show .mob-name > span { overflow: visible; text-overflow: clip; max-width: none; }
         /* 單排站立帶(3 格地圖·無 .mob-back)非頭目怪：套隨機大小變化(位置散佈由 .mob-target 的 inline transform 負責) */
-        #battle-view.area-fit #mob-list:not(.afk-has-back) .mob-target:not(.boss-slot):not(.boss-zoom) .mob-img-inner { transform: scale(var(--jit-scale, 1)); transform-origin: bottom center; }
+        #battle-view.area-fit:not(.dm-map) #mob-list:not(.afk-has-back) .mob-target:not(.boss-slot):not(.boss-zoom) .mob-img-inner { transform: scale(var(--jit-scale, 1)); transform-origin: bottom center; }
         #battle-view.area-fit .mob-target { height: 100%; min-height: 0; }
         #battle-view.area-fit .mob-target > div:not(.mob-img-wrap) { flex-shrink: 0; }   /* 🔧 固定列(名稱/徽章/狀態/血條)不可壓縮：大型怪圖的 intrinsic 高度會撐大 band 的 flex-basis→整欄溢出→所有列等比縮小致徽章/狀態字被切半；改由 mob-img-wrap 獨自吸收伸縮 */
         #battle-view.area-fit .mob-img-wrap { flex: 1 1 auto; min-height: 0; align-items: flex-end; }   /* 🦶 怪物圖貼齊框底(腳齊底)，供腳下接觸陰影對齊 */
@@ -526,6 +526,25 @@
         .party-sprite { position: absolute; bottom: 4px; height: 1px; z-index: 2; pointer-events: none; overflow: visible; }
         .party-sprite img { position: absolute; left: 0; bottom: 0; image-rendering: crisp-edges; image-rendering: pixelated; }
         .party-sprite .pm-shadow { mix-blend-mode: multiply; }
+        .captain-vitals {
+            position: absolute; left: 50%; transform: translateX(-50%); z-index: 7;
+            display: grid; grid-template-rows: 4px 4px; gap: 1px; box-sizing: border-box;
+            width: 46px; padding: 1px; background: #211613; border-radius: 2px;
+            box-shadow: 0 0 0 1px #e3cea180; pointer-events: none; overflow: hidden;
+        }
+        html:not(.show-captain-vitals) .captain-vitals { display: none; }
+        .captain-hp { background: #48201c; }
+        .captain-mp { background: #172942; }
+        .captain-vitals i {
+            display: block; width: 100%; height: 100%; transform-origin: left;
+        }
+        .captain-hp i { background: linear-gradient(#ff9c78, #df4c3e 55%, #bf3129); }
+        .captain-mp i { background: linear-gradient(#93ceff, #4489dd 55%, #2858a2); }
+        #giran-hunt-options { background: #22201d; color: #f1e4cb; border: 1px solid #594c36; border-radius: 5px; padding: .6em .75em; margin-bottom: .6em; }
+        #giran-hunt-options summary { color: #efcf90; cursor: pointer; font-weight: 600; }
+        .g-hunt-fields { display: grid; gap: .55em; margin: .8em 0 0; padding: 0; border: 0; min-width: 0; }
+        .g-hunt-fields label { display: flex; align-items: center; justify-content: space-between; gap: .6em; }
+        .g-hunt-fields label:has([type=checkbox]) { justify-content: flex-start; }
         #player-morph-sprite .pm-weapon { mix-blend-mode: screen; }
         #player-morph-sprite .pm-castle-crown {
             position: absolute; z-index: 6; width: 16px; height: 12px; object-fit: contain;
@@ -631,7 +650,7 @@
             display: block;
             width: 100%;
             aspect-ratio: 334 / 34;
-            background: url('../assets/character/血條底圖.webp') center / 100% 100% no-repeat;
+            background: var(--lm-0502a2f8a6aa,url('../assets/character/血條底圖.webp')) center / 100% 100% no-repeat;
         }
         .status-vitals-row > .compact-vital-bar {
             position: absolute;
@@ -705,33 +724,26 @@
         .log-cat-enemy  { border-left: 3px solid #865b56; padding-left: 8px; background: rgba(134,91,86,0.08);  border-radius: 0 3px 3px 0; }   /* 敵人傷害：灰紅 */
         .log-cat-dot    { border-left: 3px solid #66765f; padding-left: 8px; background: rgba(102,118,95,0.08);  border-radius: 0 3px 3px 0; }   /* 持續傷害：灰綠 */
         /* 天堂舊式日誌色階：暖灰白為主，只用低彩度色區分訊息性質。 */
-        #combat-log .log-entry, #sys-log .log-entry { color:#cbc7bd !important; text-shadow:1px 1px 1px rgba(0,0,0,.75); }
-        #combat-log span, #sys-log span { text-shadow:none !important; }
-        #combat-log [style*="color:"], #sys-log [style*="color:"] { filter:saturate(.58) brightness(.94); }
-        #combat-log .text-white, #combat-log .text-slate-100, #combat-log .text-slate-200,
-        #sys-log .text-white, #sys-log .text-slate-100, #sys-log .text-slate-200 { color:#d3cfc5 !important; }
-        #combat-log .text-slate-300, #combat-log .text-slate-400, #combat-log .text-gray-300, #combat-log .text-gray-400,
-        #sys-log .text-slate-300, #sys-log .text-slate-400, #sys-log .text-gray-300, #sys-log .text-gray-400 { color:#aaa69d !important; }
-        #combat-log .text-yellow-300, #combat-log .text-yellow-400, #combat-log .text-yellow-500, #combat-log .text-amber-200, #combat-log .text-amber-300, #combat-log .text-amber-400,
-        #sys-log .text-yellow-300, #sys-log .text-yellow-400, #sys-log .text-yellow-500, #sys-log .text-amber-200, #sys-log .text-amber-300, #sys-log .text-amber-400 { color:#d1c58f !important; }
-        #combat-log .text-red-300, #combat-log .text-red-400, #combat-log .text-red-500, #combat-log .text-rose-200, #combat-log .text-rose-300, #combat-log .text-rose-400,
-        #sys-log .text-red-300, #sys-log .text-red-400, #sys-log .text-red-500, #sys-log .text-rose-200, #sys-log .text-rose-300, #sys-log .text-rose-400 { color:#c98b84 !important; }
-        #combat-log .text-blue-200, #combat-log .text-blue-300, #combat-log .text-blue-400, #combat-log .text-sky-200, #combat-log .text-sky-300, #combat-log .text-cyan-200, #combat-log .text-cyan-300, #combat-log .text-indigo-300,
-        #sys-log .text-blue-200, #sys-log .text-blue-300, #sys-log .text-blue-400, #sys-log .text-sky-200, #sys-log .text-sky-300, #sys-log .text-cyan-200, #sys-log .text-cyan-300, #sys-log .text-indigo-300 { color:#aeb9c5 !important; }
-        #combat-log .text-green-300, #combat-log .text-green-400, #combat-log .text-emerald-300, #combat-log .text-teal-300,
-        #sys-log .text-green-300, #sys-log .text-green-400, #sys-log .text-emerald-300, #sys-log .text-teal-300 { color:#a9b9a3 !important; }
-        #combat-log .text-purple-300, #combat-log .text-violet-300, #combat-log .text-fuchsia-300, #combat-log .text-pink-300,
-        #sys-log .text-purple-300, #sys-log .text-violet-300, #sys-log .text-fuchsia-300, #sys-log .text-pink-300 { color:#b7aabd !important; }
-        #combat-log .text-orange-300, #sys-log .text-orange-300 { color:#c8ad89 !important; }
-        #combat-log .crit-hit { color:#d08b80 !important; text-shadow:none !important; }
-        #sys-log .sys-item-gain, #sys-log .sys-item-gain * { color:#d5d0a4 !important; filter:none !important; }
+        :is(#combat-log,#sys-log,.ga-log-colors) .log-entry { color:#cbc7bd !important; text-shadow:1px 1px 1px rgba(0,0,0,.75); }
+        :is(#combat-log,#sys-log,.ga-log-colors) span { text-shadow:none !important; }
+        :is(#combat-log,#sys-log,.ga-log-colors) [style*="color:"] { filter:saturate(.58) brightness(.94); }
+        :is(#combat-log,#sys-log,.ga-log-colors) :is(.text-white,.text-slate-100,.text-slate-200) { color:#d3cfc5 !important; }
+        :is(#combat-log,#sys-log,.ga-log-colors) :is(.text-slate-300,.text-slate-400,.text-gray-300,.text-gray-400) { color:#aaa69d !important; }
+        :is(#combat-log,#sys-log,.ga-log-colors) :is(.text-yellow-300,.text-yellow-400,.text-yellow-500,.text-amber-200,.text-amber-300,.text-amber-400) { color:#d1c58f !important; }
+        :is(#combat-log,#sys-log,.ga-log-colors) :is(.text-red-300,.text-red-400,.text-red-500,.text-rose-200,.text-rose-300,.text-rose-400) { color:#c98b84 !important; }
+        :is(#combat-log,#sys-log,.ga-log-colors) :is(.text-blue-200,.text-blue-300,.text-blue-400,.text-sky-200,.text-sky-300,.text-cyan-200,.text-cyan-300,.text-indigo-300) { color:#aeb9c5 !important; }
+        :is(#combat-log,#sys-log,.ga-log-colors) :is(.text-green-300,.text-green-400,.text-emerald-300,.text-teal-300) { color:#a9b9a3 !important; }
+        :is(#combat-log,#sys-log,.ga-log-colors) :is(.text-purple-300,.text-violet-300,.text-fuchsia-300,.text-pink-300) { color:#b7aabd !important; }
+        :is(#combat-log,#sys-log,.ga-log-colors) .text-orange-300 { color:#c8ad89 !important; }
+        :is(#combat-log,.ga-log-colors) .crit-hit { color:#d08b80 !important; text-shadow:none !important; }
+        :is(#sys-log,.ga-log-colors) :is(.sys-item-gain,.sys-item-gain *) { color:#d5d0a4 !important; filter:none !important; }
         /* ✦ v3.6.69 物品日誌亮點：只有傳說(橘)與遺物(藍)例外脫離上面那條統一米色壓色。
            ⚠️ 選擇器必須比 `#sys-log .sys-item-gain *`(1 id+1 class) 更高特異度 → 用 `.sys-item-gain .sys-drop-*`(1 id+2 class)。 */
-        #sys-log .sys-item-gain .sys-drop-rare { font-weight: 700; animation: sysDropPulse 1.6s ease-in-out infinite; }
+        :is(#sys-log,.ga-log-colors) .sys-item-gain .sys-drop-rare { font-weight: 700; animation: sysDropPulse 1.6s ease-in-out infinite; }
         /* ⚠️ text-shadow 必須 !important：上面 705 行有 `#sys-log span { text-shadow:none !important }` 會把光暈整個吃掉（特異度較低但 !important 勝出）。 */
         /* c-legend／c-relic 一併列入：掛機總結那行(js/01 flushAwaySummary)走 getItemColor，靠這兩個選擇器同樣脫離壓色。 */
-        #sys-log .sys-item-gain .sys-drop-legend, #sys-log .sys-item-gain .c-legend { color:#f0a020 !important; text-shadow: 0 0 5px rgba(240,160,32,.75), 0 0 12px rgba(217,138,4,.55) !important; }
-        #sys-log .sys-item-gain .sys-drop-relic,  #sys-log .sys-item-gain .c-relic  { color:#4cc9f0 !important; text-shadow: 0 0 5px rgba(76,201,240,.75), 0 0 12px rgba(56,189,248,.55) !important; }
+        :is(#sys-log,.ga-log-colors) .sys-item-gain :is(.sys-drop-legend,.c-legend) { color:#f0a020 !important; text-shadow: 0 0 5px rgba(240,160,32,.75), 0 0 12px rgba(217,138,4,.55) !important; }
+        :is(#sys-log,.ga-log-colors) .sys-item-gain :is(.sys-drop-relic,.c-relic) { color:#4cc9f0 !important; text-shadow: 0 0 5px rgba(76,201,240,.75), 0 0 12px rgba(56,189,248,.55) !important; }
         @keyframes sysDropPulse { 0%,100% { opacity: 1; } 50% { opacity: .72; } }
         #combat-log-panel .cf-pill { filter:saturate(.58) brightness(.92); }
         /* ⚔️ 戰鬥日誌來源過濾：點亮(顯示)/點暗(隱藏) 敵人/玩家/傭兵/召喚/夥伴 */
@@ -850,6 +862,11 @@
             filter:none;
             will-change:transform,opacity; animation:vfxFloat .85s ease-out forwards;
         }
+        #vfx-layer .vfx-dmg { --vfx-font-bonus: 6px; }
+        #vfx-layer .vfx-dmg:not(.vfx-miss) {
+            /* Allow for the critical-hit pulse (1.35x) at either screen edge. */
+            translate:clamp(calc(68% + 5px - var(--vfx-anchor-x)),0px,calc(100vw - var(--vfx-anchor-x) - 68% - 5px)) 0;
+        }
         .vfx-dmg.vfx-crit { animation:vfxCrit 1.05s cubic-bezier(.18,.85,.25,1) forwards; }
         .vfx-dmg.vfx-heavy {
             -webkit-text-stroke:1.25px #241600;
@@ -860,6 +877,7 @@
             text-shadow:0 1px 0 #260403,0 3px 3px rgba(0,0,0,.96),0 0 4px rgba(255,59,48,.55);
         }
         .vfx-dmg.vfx-miss {
+            --vfx-rise: 0px;
             font-weight:500; letter-spacing:.03em;
             -webkit-text-stroke:.15px rgba(15,23,42,.62);
             text-shadow:0 1px 1px rgba(0,0,0,.62);
@@ -880,15 +898,15 @@
         @keyframes vfxFloat {
             0%   { opacity: 0; transform: translate(-50%,-40%) scale(.55); }
             18%  { opacity: 1; transform: translate(-50%,-95%) scale(1.06); }
-            72%  { opacity: 1; transform: translate(-50%,-150%) scale(1); }
-            100% { opacity: 0; transform: translate(-50%,-200%) scale(.9); }
+            72%  { opacity: 1; transform: translate(-50%,calc(-150% - var(--vfx-rise, 30px))) scale(1); }
+            100% { opacity: 0; transform: translate(-50%,calc(-200% - var(--vfx-rise, 30px))) scale(.9); }
         }
         @keyframes vfxCrit {
             0%   { opacity: 0; transform: translate(-50%,-40%) scale(.65); }
             14%  { opacity: 1; transform: translate(-50%,-90%) scale(1.35); }
             32%  { transform: translate(-50%,-118%) scale(1.08); }
-            72%  { opacity: 1; transform: translate(-50%,-170%) scale(1.12); }
-            100% { opacity: 0; transform: translate(-50%,-235%) scale(1); }
+            72%  { opacity: 1; transform: translate(-50%,calc(-170% - 36px)) scale(1.12); }
+            100% { opacity: 0; transform: translate(-50%,calc(-235% - 36px)) scale(1); }
         }
         .vfx-particle { position: absolute; border-radius: 50%; transform: translate(-50%,-50%); will-change: transform,opacity; }
         .vfx-blood { position: absolute; border-radius: 50%; transform: translate(-50%,-50%); will-change: transform,opacity; pointer-events: none; }   /* 🩸 命中濺血小血滴：小顆、不上發光陰影→不搶眼 */
@@ -986,11 +1004,11 @@
 #log-row { flex: 0 0 340px; min-height: 0; }   /* 日誌列固定高度(並排)；其餘高度全給地圖/戰鬥面板 */
 /* ⚠️v2.6.37 狩獵區域改 1920/580 條狀後，戰鬥框變矮→地圖面板縮到內容(標題列+條狀框)、省下的高度由日誌列吸收長高。
    :has 掛在共同祖先 #col-center(其下 #map-view-panel 與 #log-row 為兄弟)；僅「狩獵中(battle-view 顯示且 area-fit)」套用→安全區(town-view·battle-view 隱藏)/攻城/裂痕(非 area-fit·仍 16:9 吃滿)維持原樣。 */
-#col-center:has(#battle-view.area-fit:not(.hidden)) #map-view-panel { flex: 0 0 auto; }
-#col-center:has(#battle-view.area-fit:not(.hidden)) #log-row { flex: 1 1 0; }
+#col-center.afk-fitted-field #map-view-panel { flex: 0 0 auto; }
+#col-center.afk-fitted-field #log-row { flex: 1 1 0; }
 /* 🏘️ v3.2.87 安全區(town-view 顯示·battle-view 隱藏)比照狩獵：地圖面板依內容(標題列+800×450地圖)自適、其餘高度全給日誌列→地圖下方不再被 flex:1 撐出深色空隙、日誌緊接地圖下方（修「安全區背景把日誌撐開」） */
-#col-center:has(#town-view:not(.hidden)) #map-view-panel { flex: 0 0 auto; }
-#col-center:has(#town-view:not(.hidden)) #log-row { flex: 1 1 0; }
+#col-center.afk-town-column #map-view-panel { flex: 0 0 auto; }
+#col-center.afk-town-column #log-row { flex: 1 1 0; }
 #combat-log-panel { flex: 1 1 0; min-width: 0; min-height: 0; }   /* 左半·覆寫原 .flex-1(原垂直堆疊) */
 #syslog-panel { flex: 1 1 0; height: auto; min-width: 0; min-height: 0; }   /* 右半·覆寫原 h-1/3 */
 /* 戰鬥框填滿地圖面板（村莊 town-view 已 flex-1 自動吃滿）；area-fit 怪物 height:100% 隨之等比放大 */
@@ -1025,7 +1043,7 @@
 .classic-inventory-tab:not(.hidden) { display:flex !important; flex-direction:column; align-items:center; }
 .classic-list-toolbar { flex:0 0 auto; margin:0 !important; padding:6px 8px !important; top:0 !important; background:#111827 !important; border-bottom:1px solid #6b5426; z-index:20; }
 .classic-list-toolbar { width:100%; }
-.classic-inventory-shell { position:relative; flex:0 0 auto; width:100%; max-width:100%; aspect-ratio:193/282; overflow:hidden; background:url('../assets/ui/武器防具道具欄位.webp') center/100% 100% no-repeat; }
+.classic-inventory-shell { position:relative; flex:0 0 auto; width:100%; max-width:100%; aspect-ratio:193/282; overflow:hidden; background:var(--lm-1db9a43fb9d9,url('../assets/ui/武器防具道具欄位.webp')) center/100% 100% no-repeat; }
 .classic-inventory-viewport { position:absolute; z-index:2; left:13.99%; top:10.64%; width:72.02%; height:70.21%; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); grid-auto-rows:16.666667%; align-content:start; overflow-y:auto; overflow-x:hidden; box-sizing:border-box; background:#07080a; scrollbar-width:none; overscroll-behavior:contain; }
 .classic-inventory-viewport::-webkit-scrollbar { width:0; height:0; }
 .classic-inventory-viewport > .list-item { position:relative; box-sizing:border-box; display:flex !important; align-items:center; justify-content:center; width:100%; height:100%; min-width:0; min-height:0; margin:0 !important; padding:2px !important; border:1px solid #454b47 !important; border-radius:0 !important; background:#090a0d !important; box-shadow:inset 0 0 6px #000 !important; overflow:hidden; }
@@ -1114,7 +1132,7 @@
 .classic-skill-window {
     position:relative; flex:0 0 auto; width:min(100%,510px); aspect-ratio:193/282;
     margin:0 auto; overflow:hidden; user-select:none;
-    background:url('../assets/ui/技能欄位.webp') center/100% 100% no-repeat;
+    background:var(--lm-a2845c760ec0,url('../assets/ui/技能欄位.webp')) center/100% 100% no-repeat;
 }
 .classic-skill-heading {
     position:absolute; z-index:4; left:18%; top:1.4%; width:64%; height:5.4%;
@@ -1570,6 +1588,17 @@ button.classic-skill-cell { cursor:pointer; }
     left:67.95%;
 }
 
+#creation-name-control {
+    position:absolute; z-index:7; left:10%; top:73%; width:31%;
+    display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center;
+    gap:3px .65em; color:#efd9a2; font-size:clamp(12px,1.25vw,18px);
+}
+#creation-name-control input {
+    width:100%; min-width:0; box-sizing:border-box; padding:.35em .6em; border:1px solid #997b4e;
+    border-radius:4px; background:#181410; color:#fff0cf; font:inherit;
+}
+#creation-name-control input:focus-visible { outline:2px solid #edc578; outline-offset:1px; }
+#creation-name-hint { grid-column:2; color:#f2d4a6; font-size:.86em; text-shadow:0 1px 3px #000; }
 /* ===== 開始遊戲角色選擇畫面 ===== */
 #load-select-panel:not(.hidden) {
     position:fixed;
@@ -2211,8 +2240,8 @@ button.classic-skill-cell { cursor:pointer; }
         top: 0;
         transform: none;
         width: 100%;
-        height: 1120px;
-        min-height: 1120px;
+        height: 1192px;
+        min-height: 1192px;
         max-height: none;
         aspect-ratio: auto;
         flex: 0 0 auto;
@@ -2290,9 +2319,17 @@ button.classic-skill-cell { cursor:pointer; }
     .creation-stat-control.stat-int { top: 948px; }
     .creation-stat-value { min-width: 30px; font-size: 14px; }
     .creation-stat-btn { width: 28px; height: 28px; font-size: 14px; }
+    #creation-name-control {
+        left:16px; top:1002px; width:calc(100% - 32px); font-size:16px;
+    }
+    #creation-name-control input { min-height:40px; }
+    body:has(#creation-screen:not(.hidden) #creation-panel:not(.hidden)) #merge-recovery-entry {
+        top: max(6px, env(safe-area-inset-top));
+        bottom: auto !important;
+    }
     #classic-mode-control {
         left: 16px;
-        top: 1011px;
+        top: 1083px;
         width: 116px;
         height: 48px;
         justify-content: flex-start;
@@ -2301,14 +2338,14 @@ button.classic-skill-cell { cursor:pointer; }
     #classic-mode-control input { width: 18px; height: 18px; }
     #btn-start.creation-start-button {
         left: 142px;
-        top: 1008px;
+        top: 1080px;
         width: calc(100% - 158px);
         height: 48px;
         font-size: 15px;
     }
     #creation-back-button {
         left: 142px;
-        top: 1064px;
+        top: 1136px;
         width: calc(100% - 158px);
         height: 42px;
         font-size: 14px;
@@ -3413,7 +3450,7 @@ button.classic-skill-cell { cursor:pointer; }
 #tab-clan .clan-dip-mutual, .clan-dip-mutual { color: #dc2626; text-shadow: 0 0 6px rgba(220,38,38,.55); }   /* 互相宣戰：深紅＋微光 */
 
 /* HD item paintings retain smooth edges at every display size. */
-img[src*='assets/icons/hd/']{image-rendering:auto!important}
+img[data-art-raster~='hd']{image-rendering:auto!important}
 
 /* 11-11：已裝備清單的名稱太長時換行顯示，不再被截掉 */
 body.afk-invlist .classic-inventory-viewport .classic-name-box > span:not(.classic-slot-name){white-space:normal;overflow:visible;text-overflow:clip}

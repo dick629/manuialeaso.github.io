@@ -17,7 +17,7 @@
   // 次數記在角色身上（存進存檔）：重新整理不會重算，換地圖才重算（2026-10-30 QA：原本重新整理就又有 3 次）
   var cur = function () { var p = player, m = (typeof mapState !== 'undefined' && mapState.current) || ''; var rec = p._afkRevive; if (!rec || typeof rec !== 'object') rec = p._afkRevive = { map: m, n: 0 }; if (rec.map !== m) { rec.map = m; rec.n = 0; } return rec; };
   var blocked = function () { return on() && dream() && cur().n >= LIMIT; };
-  var scrolls = function () { return (player.inv || []).reduce(function (s, i) { return s + (i && i.id === 'scroll_revive' ? (Number(i.cnt) || 0) : 0); }, 0); };
+  var scrolls = function () { return (player.inv || []).reduce(function (s, i) { return s + (i && i.id === 'scroll_revive' ? Math.max(0,Number(i.cnt??1)||0) : 0); }, 0); };
   if (typeof W.reviveInPlace === 'function') {
     var oRIP = W.reviveInPlace;
     W.reviveInPlace = function () {

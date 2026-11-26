@@ -188,7 +188,7 @@
   }
 
   function append() {
-    var el = document.getElementById('dt-buffs');
+    var el = (window.__afkBuffTextTarget || document.getElementById('dt-buffs'));
     if (!el || el.querySelector('.afk-statusadd')) return;   // 沒有面板／本輪已補過就不做
 
     var spans = buffRows().map(function (r) {

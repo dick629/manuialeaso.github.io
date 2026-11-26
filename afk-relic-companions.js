@@ -19,7 +19,7 @@
   function source(owner,id){return R.sources(owner).find(function(x){return x.catalogId===id;})||(inheritedFields[id]&&R.inheritedSource?R.inheritedSource(owner,id,inheritedFields[id]):null)||null;}
   function teamSource(id){var best=null;characters().forEach(function(owner){var s=source(owner,id);if(s&&(!best||s.stage>best.source.stage||s.stage===best.source.stage&&num(s.n)>num(best.source.n)))best={owner:owner,source:s};});return best;}
   // Loop forms of [p].concat(allies).filter(...) and uniq(characters().concat(guards)): same members, same order.
-  function characters(includeDown){var p=playerNow();if(!p)return [];var out=[],keep=includeDown?Boolean:live;if(keep(p))out.push(p);var al=p.allies||[];for(var i=0;i<al.length;i++){if(!(i in al))continue;var a=al[i];if(keep(a))out.push(a);}return out;}
+  function characters(includeDown){var p=playerNow();if(!p)return [];var out=[],keep=includeDown?Boolean:live;if(keep(p))out.push(p);var al=GiranPartyView.combatAllies(p);for(var i=0;i<al.length;i++){if(!(i in al))continue;var a=al[i];if(keep(a))out.push(a);}return out;}
   function team(){var out=characters(),n=out.length,dup=false;for(var i=1;i<n&&!dup;i++)if(out.lastIndexOf(out[i],i-1)>=0)dup=true;if(dup)out=uniq(out);if(typeof W.guardAliveList==='function'){var g=W.guardAliveList();for(var j=0;j<g.length;j++){var e=g[j];if(e&&out.indexOf(e)<0)out.push(e);}}return out;}
   function pets(owner,includeDown){
     var p=playerNow();owner=owner||p;if(!p||owner!==p)return [];
@@ -147,7 +147,7 @@
     return Math.max(0,Math.ceil(c.mpCost));
   }
   function nextPetSkillWait(e,base){var m=e&&e._relicNextSkillWait||1;if(e)delete e._relicNextSkillWait;return Math.max(0,base*m);}
-  function downedCompanions(owner){var p=playerNow();if(!p||owner&&owner!==p)return [];return (p.allies||[]).concat(pets(p,true)).filter(function(e){return e&&e._downed;});}
+  function downedCompanions(owner){var p=playerNow();if(!p||owner&&owner!==p)return [];return GiranPartyView.combatAllies(p).concat(pets(p,true)).filter(function(e){return e&&e._downed;});}
   function hasReviveScroll(){var p=playerNow();return !!(p&&(p.inv||[]).some(function(x){return x.id==='scroll_revive'&&num(x.cnt)>0;}));}
   function revive(e,opt){
     opt=opt||{};if(!e||!e._downed)return false;var p=playerNow();if(!p)return false;
@@ -163,6 +163,10 @@
   function incoming(e,amount,enemy,opt){
     if(enemy?._twisted)amount=W.TwistedSpace.monsterDamage(enemy,amount);
     if(!enabled())return amount;opt=opt||{};
+    if(opt.kind==='magic'&&!opt.skill?.fixedDmg&&['fire','water','wind','earth'].includes(opt.element)){
+      const resist=W.LineageClassCombat?.value(e,'resist')||0;
+      if(resist)amount*=Math.max(0,1-effResistPct(resist)/100);
+    }
     var value=R.incoming(e,amount,enemy,opt);
     var B=W.AFK_RELIC_WEAPON_BRIDGE;if(B&&B.companionIncoming)value=B.companionIncoming(e,value,enemy,opt.kind);
     return value;

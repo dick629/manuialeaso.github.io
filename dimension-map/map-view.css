@@ -1,0 +1,187 @@
+#battle-view .dm-switch, #battle-view .dm-vitality, .dm-town-actions > button {
+  border: 1px solid #a49266; border-radius: 4px; background: #171b18ed;
+  color: #f4e8c8; padding: 5px 11px; font: 600 13px/1.4 "Microsoft JhengHei", sans-serif;
+  cursor: pointer; box-shadow: 0 2px 7px #0008;
+}
+#battle-view .dm-field-actions {
+  position:absolute;top:10px;right:12px;z-index:95;display:flex;flex-direction:column;align-items:flex-end;gap:5px;
+  width:120px;pointer-events:none;
+}
+#battle-view .dm-field-actions > button { pointer-events:auto;white-space:nowrap; }
+body:not(.m-unified) #battle-view:has(.dm-switch:not([hidden])) #status-icon-bar { right:140px; }
+#battle-view .dm-vitality[aria-pressed="true"] { color: #ffe3a0; }
+.dm-town-actions { display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;max-width:100%; }
+.dm-town-actions > button { min-height:30px;white-space:nowrap; }
+#battle-view .dm-switch:hover, .dm-town-actions > button:hover { background: #3c3c2b; border-color: #e7c887; }
+#battle-view .dm-switch:focus-visible, .dm-town-actions > button:focus-visible { outline: 2px solid #f6ce76; }
+#battle-view .dm-map-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+#battle-view.dm-map { isolation: isolate; padding: 0 !important; }
+#battle-view.dm-map #mob-list {
+  position: absolute !important; left: 0 !important; top: 0 !important;
+  width: 100% !important; height: 242px !important; display: block !important;
+  overflow: visible !important; pointer-events: none; z-index: auto;
+}
+#battle-view.dm-map #mob-list > .mob-target {
+  position: absolute !important; left: var(--dm-x, 50%) !important; top: var(--dm-y, 52%) !important;
+  right: auto !important; bottom: auto !important; transform: translate(-50%, -100%) scale(var(--dm-figure-scale,1)) !important;
+  transform-origin:var(--dm-figure-pivot,50% 100%);
+  translate: var(--dm-foot-x, 0px) var(--dm-foot-y, 0px);
+  z-index: var(--dm-z, 10) !important; width: 84px !important; height: 76px !important;
+  min-width: 0 !important; padding: 0 !important; margin: 0 !important;
+  display: block !important; overflow: visible !important; background: transparent !important;
+  border: 0 !important; box-shadow: none !important; pointer-events: none;
+}
+#battle-view.dm-map #mob-list > .mob-target:not([data-uid]) { visibility: hidden; }
+#battle-view.dm-map #mob-list > .mob-target .mob-img-wrap {
+  position: absolute !important; left: 0 !important; right: 0 !important;
+  top: auto !important; bottom: 0 !important; width: 100% !important; height: 100% !important;
+  transform: none !important; margin: 0 !important; pointer-events: none;
+}
+#battle-view.dm-map #mob-list > .mob-target .mob-img-inner {
+  transform: none !important; height: auto; max-height: 100%; pointer-events: auto; cursor: crosshair;
+}
+#battle-view.dm-map #mob-list > .mob-target .mob-img-inner:not(.mob-anim) { height: 64px; }
+#battle-view.dm-map #mob-list > .mob-target:is(.boss-zoom, .boss-slot) {
+  width: 152px !important; height: 133px !important;
+}
+#battle-view.dm-map #mob-list > .mob-target:is(.boss-zoom, .boss-slot) .mob-img-inner:not(.mob-anim) { height: 115px; }
+#battle-view.dm-map #mob-list .mob-target.mob-raging .mob-img-wrap {
+  animation: none;
+}
+#battle-view.dm-map #mob-list .mob-target.mob-raging .mob-img-inner::before {
+  content: none;
+}
+#battle-view.dm-map #mob-list .mob-target.mob-raging .mob-img-inner::after {
+  width: 48px; height: 14px; bottom: 1px; border: 1px solid #f69179c2;
+  background: transparent; box-shadow: 0 0 3px #af403c80;
+  animation: none; transform: translateX(-50%);
+}
+#battle-view.dm-map #mob-list .mob-target.active .mob-img-inner:not(.mob-shadow-tint) {
+  filter: drop-shadow(0 0 1px #e28269);
+}
+#battle-view.dm-map #mob-list .mob-name, #battle-view.dm-map #mob-list .mob-badge-row,
+#battle-view.dm-map #mob-list .mob-hp-bar, #battle-view.dm-map #mob-list .mob-img-wrap + div {
+  position: absolute !important; left: 50% !important; transform: translateX(-50%) !important;
+  width: max-content !important; max-width: 160px; margin: 0 !important;
+  z-index: 5; pointer-events: none;
+}
+#battle-view.dm-map #mob-list .mob-name { bottom: 98% !important; top: auto !important; }
+#battle-view.dm-map #mob-list .mob-badge-row { display: none !important; }
+#battle-view.dm-map #mob-list .mob-hp-bar { top: 99% !important; bottom: auto !important; }
+#battle-view.dm-map #mob-list .mob-img-wrap + div { top: calc(100% + 5px) !important; bottom: auto !important; }
+/* Anchor labels at the measured feet. Only the sprite inherits its native artwork scale. */
+#battle-view.dm-map #mob-list .mob-target > :is(.mob-name,.mob-hp-bar,.afk-rr-sh),
+#battle-view.dm-map #mob-list .mob-target > .mob-img-wrap + div {
+  position:absolute !important;left:var(--dm-label-x,50%) !important;top:var(--dm-label-y,100%) !important;
+  bottom:auto !important;margin:0 !important;width:max-content !important;max-width:160px;transform-origin:0 0;
+  transform:scale(var(--dm-label-scale,1)) translate(-50%,var(--dm-label-offset,3px)) !important;
+  pointer-events:none;
+}
+#battle-view.dm-map #mob-list .mob-target > .mob-name { --dm-label-offset:calc(-100% - var(--dm-ink-height,64px) - 2px); }
+#battle-view.dm-map #mob-list .mob-target > .afk-rr-sh { --dm-label-offset:10px; }
+#battle-view.dm-map #mob-list .mob-target > .mob-img-wrap + div { --dm-label-offset:26px; }
+/* Monster health stays above the entire formation, including the captain's nameplate. */
+#giran-mob-heads { display:none;position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1501; }
+#battle-view.dm-map #giran-mob-heads:not([hidden]) { display:block; }
+#giran-mob-heads .giran-head {
+  position:absolute;left:0;top:0;transform:translate(-50%,-100%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;width:max-content;max-width:152px;
+}
+#giran-mob-heads .giran-head.active { z-index:1; }
+#giran-mob-heads .giran-head[hidden], #giran-mob-heads .giran-head-hp[hidden],
+#giran-mob-heads .giran-head-hp[hidden] ~ .afk-rr-sh { display:none!important; }
+#battle-view.dm-map #mob-list .giran-projected-head > :is(.mob-name,.mob-hp-bar,.afk-rr-sh) { display:none!important; }
+#giran-mob-heads .giran-head-name {
+  padding:1px 4px;border-radius:3px;background:#191714;text-align:center;
+  font:700 14px/1.15 "Microsoft JhengHei",sans-serif;overflow-wrap:anywhere;
+}
+#giran-mob-heads .giran-head-name span { font-size:inherit;line-height:inherit; }
+#giran-mob-heads .name-show .giran-head-name, body[data-afk-mobname="locked"] #giran-mob-heads .active .giran-head-name { opacity:1; }
+#giran-mob-heads .giran-head-hp {
+  width:58px;height:7px;box-sizing:border-box;overflow:hidden;border:1px solid #251815;border-radius:3px;
+  background:#382b2c;box-shadow:0 0 0 1px #dcc7a388;
+}
+#giran-mob-heads .giran-head-hp i { display:block;width:100%;height:100%;transform-origin:left;background:#f25a4d; }
+#giran-mob-heads .afk-rr-sh { margin:0!important; }
+#battle-view.dm-map #player-morph-sprite, #battle-view.dm-map .party-sprite {
+  left: var(--dm-x, 50%) !important; top: var(--dm-y, 58%) !important; bottom: auto !important;
+  transform:scale(var(--dm-figure-scale,1))!important;transform-origin:var(--dm-figure-pivot,50% 100%);
+  translate: calc(-50% + var(--dm-foot-x, 0px)) var(--dm-foot-y, 0px);
+  z-index: var(--dm-z, 10) !important; transition: none !important;
+}
+#battle-view.dm-map #pet-layer { display:contents; }
+#battle-view.dm-map #pet-layer > [data-pet] {
+  left:var(--dm-x) !important;top:var(--dm-y) !important;z-index:var(--dm-z);
+  transform:translate(-50%,-100%) scale(var(--dm-figure-scale,1))!important;transform-origin:var(--dm-figure-pivot,50% 100%);
+  translate:var(--dm-foot-x,0px) var(--dm-foot-y,0px);transition:none !important;
+}
+/* Move placed sprites using compositor translations. Keep native dimensions and pivots for hits. */
+#battle-view.dm-map #mob-list > .mob-target.dm-placed,
+#battle-view.dm-map #pet-layer > [data-pet].dm-placed,
+#battle-view.dm-map #player-morph-sprite.dm-placed,
+#battle-view.dm-map .party-sprite.dm-placed {
+  left:0 !important;top:0 !important;
+  contain:layout;
+  will-change:transform;
+}
+#battle-view.dm-map #pet-layer > [data-pet]:not(.dm-grounded) { visibility:hidden; }
+#battle-view.dm-map :is(.dm-walking,.dm-performing) > :is(.pm-body, .pm-shadow, .pm-weapon),
+#battle-view.dm-map .mob-target.dm-walking .mob-img-inner { opacity: 0 !important; }
+#battle-view .dm-stride { display: none; position: absolute; left:0; top:0; width: 0; height: 0; pointer-events: none; }
+#battle-view.dm-map :is(.dm-walking,.dm-performing) > .dm-stride { display: block; }
+#battle-view.dm-map .dm-stride :is(img,canvas) {
+  position: absolute !important; top: 0 !important; left: 0 !important; bottom: auto !important;
+  max-width: none !important; max-height: none !important; padding: 0 !important;
+  image-rendering: pixelated; pointer-events: none;
+}
+#battle-view .dm-stride .stride-shadow { mix-blend-mode: multiply; }
+#battle-view .dm-stride .stride-weapon { mix-blend-mode: screen; }
+#battle-view .dm-stride [hidden] { display: none !important; }
+#battle-view .dm-marker {
+  position: absolute; z-index: 2; width: 27px; height: 13px; transform: translate(-50%,-50%);
+  border: 2px solid #f7db8f; box-shadow: 0 0 7px #654711; border-radius: 50%; pointer-events: none;
+}
+#battle-view .dm-action-fx, #battle-view .dm-source-tag { display: none; pointer-events:none; }
+#battle-view.dm-map .dm-action-fx { display:block;position:absolute;inset:0;z-index:69;width:100%;height:100%; }
+#battle-view.dm-map .dm-source-tag {
+  display:block; position:absolute; z-index:74; transform:translate(-50%,-100%); padding:2px 6px;
+  border:1px solid var(--dm-tone); border-radius:3px; color:#fff7df; background:#14201df0;
+  font:bold 13px/1.25 "Microsoft JhengHei",sans-serif; text-shadow:0 1px 1px #000;
+  max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#battle-view.dm-map .dm-passive-tag { font-size:11px; padding:1px 5px; }
+#battle-view.dm-map .dm-source-tag[hidden] { display:none; }
+#battle-view .dm-recipient-tag { display:none;pointer-events:none; }
+#battle-view.dm-map .dm-recipient-tag:not([hidden]) {
+  display:block;position:absolute;z-index:73;transform:translateX(-50%);padding:1px 5px;
+  border-bottom:2px solid var(--dm-tone);border-radius:2px;background:#192421eb;color:#f4efe3;
+  font:600 11px/1.4 "Microsoft JhengHei",sans-serif;white-space:nowrap;
+}
+#battle-view.dm-map .dm-lit > .pm-body, #battle-view.dm-map .dm-lit .stride-body {
+  filter:drop-shadow(1px 0 0 var(--dm-aura)) drop-shadow(-1px 0 0 var(--dm-aura)) drop-shadow(0 0 2px var(--dm-aura));
+}
+#battle-view.dm-map :is(#player-morph-sprite,.party-sprite) > .afk-cfx { opacity:.26 !important; }
+#battle-view.dm-map :is(#player-morph-sprite,.party-sprite) > .afk-trans-aura { opacity:.24 !important; }
+body.dm-viewing #vfx-layer .vfx-spell { opacity:.28 !important; }
+body.dm-viewing #vfx-layer .vfx-spell.dm-featured-fx { opacity:.94 !important; }
+body.dm-viewing #vfx-layer .vfx-freeze { opacity:.34 !important; }
+#battle-view .dm-switch[hidden], #battle-view .dm-vitality[hidden], #dm-training[hidden],
+#battle-view .dm-marker[hidden], #battle-view .dm-map-canvas[hidden] { display: none !important; }
+
+#battle-view.dm-map:not(.area-fit) { width:100%; aspect-ratio:16/9; min-height:260px; overflow:hidden; }
+#battle-view.dm-map :is(.dm-no-seat,.dm-off-camera) { visibility:hidden !important; }
+.dm-town-actions[hidden], .dm-town-actions > button[hidden] { display:none !important; }
+body.m-unified #game-screen #map-view-panel #map-adventure-heading:has(>.dm-town-actions:not([hidden])) { padding:0 0 5px;letter-spacing:0; }
+body.m-unified #game-screen #map-view-panel .dm-town-actions { display:flex;flex:1 1 auto; }
+body.m-unified #game-screen #map-view-panel .dm-town-actions > button { width:auto!important;flex:1 1 auto!important; }
+body.m-unified #battle-view .dm-field-actions {
+  top:6px;left:8px;right:58px;width:auto;flex-direction:row;align-items:center;
+}
+body.m-unified #battle-view .dm-field-actions > button { min-height:40px;padding:4px 8px; }
+body.m-unified.dm-viewing #vfx-layer .vfx-boss-banner {
+  width:max-content;max-width:80vw;white-space:normal;overflow-wrap:anywhere;text-wrap:balance;
+}
+body.m-unified.dm-viewing #vfx-layer .vfx-boss-name {
+  font-size:clamp(15px,4.8vw,22px);line-height:1.2;letter-spacing:.025em;
+}
+body.m-unified.dm-viewing #vfx-layer .vfx-boss-sub { font-size:11px;letter-spacing:.16em; }

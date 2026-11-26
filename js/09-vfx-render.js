@@ -1,5 +1,19 @@
 // ===== ✨ 戰鬥特效層 VFX（cosmetic-only：傷害數字／擊殺粒子／受擊震動。不改任何遊戲數值，全程 try/catch，壞掉也不影響遊戲。__vfxOff=true 可關閉） =====
 let _vfxPending = [];
+let _vfxPendingMisses = 0;
+let _vfxFlushFrame = 0;
+// Reading the layout viewport between hits forces mobile Chrome to update the scene's styles.
+let _vfxViewportWidth = window.innerWidth, _vfxViewportHeight = window.innerHeight;
+window.addEventListener('resize', () => {
+    _vfxViewportWidth = window.innerWidth;
+    _vfxViewportHeight = window.innerHeight;
+});
+const _shieldForReadout = new WeakMap();
+window.giranShieldImpact = (mob, absorbed) => {
+    if (absorbed > 0 && !document.hidden && !window.GiranCombat?.offline()) {
+        _shieldForReadout.set(mob, (_shieldForReadout.get(mob) || 0) + absorbed);
+    }
+};
 let _vfxLastKillRect = null;   // 最近一次擊殺的怪物格螢幕位置（供稀有掉落閃光定位）
 let _mobRenderCache = null;    // 🚀 怪物列差異更新快取：{ ml節點, structKey, slots:[每格html字串] }→只重建有變動的格子，免每幀整列 innerHTML 重建
 const _VFX_ELE_COLOR = { fire:'#ff7a45', water:'#4fc3f7', wind:'#9ccc65', earth:'#d8a657', magic:'#ce93d8', normal:'#f1f5f9' };
@@ -14,7 +28,11 @@ function _vfxLayer() {
     return l;
 }
 function _vfxClearAll() {   // 🎚️ v3.0.73 換地圖/回城即清空狩獵區殘留特效（死亡殘影 vfx-ghost／法術 vfx-spell／冰凍／怪技能特效）→上一張地圖尚在播放的死亡動畫不會殘留、蓋到村莊或新地圖介面。冰凍/怪技能追蹤 dict 一併清鍵避免孤兒元素。
-    try { let l = document.getElementById('vfx-layer'); if (l) while (l.firstChild) l.removeChild(l.firstChild); } catch (e) {}
+    _vfxPending.length = 0;
+    _vfxPendingMisses = 0;
+    if (_vfxFlushFrame) cancelAnimationFrame(_vfxFlushFrame);
+    _vfxFlushFrame = 0;
+    try { _clearFieldBlood(); let l = document.getElementById('vfx-layer'); if (l) while (l.firstChild) l.removeChild(l.firstChild); } catch (e) {}
     try { if (typeof _freezeFx !== 'undefined' && _freezeFx) for (let k in _freezeFx) delete _freezeFx[k]; } catch (e) {}
     try { if (typeof _mobSkillFx !== 'undefined' && _mobSkillFx) for (let k in _mobSkillFx) delete _mobSkillFx[k]; } catch (e) {}
 }
@@ -35,6 +53,12 @@ const SPELL_FX_REF_W_K = 105 / 112;          // w驅動: 基準寬 = refH × 此
 //    → 凡以「內框高 r.height」推導尺寸的特效(SPELL_FX 三模式/FREEZE_FX/怪技能非錨定)全被放大 1.286×。
 //    正規化＝由 #mob-list 帶高(area-fit 恆 242 css×舞台縮放)推回 112 基準＝真正「與怪無關、只隨舞台等比」(v3.0.21 拍板)·順帶消除靜態 boss-zoom rect(×1.78) 對特效的誤放大；帶不可量→退傳入 rect 高(非 area-fit 舊版面維持原行為)。
 function _fxBandRefH(fallbackH) {
+    const world=window.GiranCombat?.field;
+    if (world?.ready()) {
+        // The world mob band is 242 CSS pixels and its original effect reference is 112.
+        const rect=world.screenRect(0,0,1,112);
+        if (rect) return rect.height;
+    }
     try { let ml = document.getElementById('mob-list'); let h = ml ? ml.getBoundingClientRect().height : 0; if (h > 0) return h * (112 / 242); } catch (e) {}
     return fallbackH;
 }
@@ -137,10 +161,11 @@ let _deathFxCache = {};
 //   改看此獨立計數（上限 12≈前後排 5 格 × 2 波重疊 + 餘裕），正常必定播完，只有病態重疊才擋。
 let _deathGhostCount = 0;
 function _preloadDeathFx(name, n) {
-    if (_deathFxCache[name]) return _deathFxCache[name];
+    const folder = _animDir(name);
+    if (_deathFxCache[folder]) return _deathFxCache[folder];
     let arr = [];
-    for (let i = 0; i < n; i++) { let im = new Image(); im.src = 'assets/anim/' + encodeURIComponent(name) + '/death_effect_' + i + '.png'; arr.push(im); }
-    _deathFxCache[name] = arr;
+    for (let i = 0; i < n; i++) { let im = new Image(); im.src = 'assets/anim/' + encodeURIComponent(folder) + '/death_effect_' + i + '.png'; arr.push(im); }
+    _deathFxCache[folder] = arr;
     return arr;
 }
 // ⚡ 在目標怪身上疊播一輪法術特效。skn=技能顯示名（須在 SPELL_FX 註冊·未註冊者靜默略過）；caster 可傳傭兵以決定方向與投射物起點。
@@ -156,6 +181,7 @@ function playSpellFx(skn, mob, caster) {
     try {
         if (_vfxMute() || !mob) return;
         let cfg = SPELL_FX[skn]; if (!cfg) return;
+        if (cfg.proj && !GiranPartyView.shows(caster)) return;
         // 🔮 v2.7.44 屬性變體(cfg.byEle)：依「目標怪屬性 mob.e」選對應幀組(如能量感測 火/水/地/風)·目標無對應屬性(none等)→靜默不播
         if (cfg.byEle) { let _v = cfg.byEle[mob.e]; if (!_v) return; cfg = Object.assign({}, cfg, _v); }
         let _casterKey = caster && caster !== player ? ('ally:' + String(caster._slot || caster.enSeed || 'unknown')) : 'player';
@@ -165,7 +191,7 @@ function playSpellFx(skn, mob, caster) {
         let slot = ml && ml.querySelector('.mob-target[data-uid="' + mob.uid + '"]');
         if (!slot) return;
         let box = slot.querySelector('.mob-img-inner') || slot.querySelector('.mob-img-wrap') || slot;
-        let r = box.getBoundingClientRect(); if (r.width === 0 || r.height === 0) return;
+        let r = window.GiranCombat?.field?.mobRect(mob.uid) || box.getBoundingClientRect(); if (r.width === 0 || r.height === 0) return;
         let layer = _vfxLayer();
         if (layer.childElementCount > 220) return;   // 洗版保護
         let _mobImg = box.querySelector('img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)');
@@ -177,8 +203,8 @@ function playSpellFx(skn, mob, caster) {
         //    影子層有 shadowDirPrefix 時一併跟著同一方向索引（主體與影子必須同向，否則碎冰與影子會分家）。
         let _effPrefix = cfg.prefix, _flipX = false, _shadowPrefix = cfg.shadowPrefix;
         if (cfg.dirs && cfg.dirPrefix) {
-            let _bv0 = document.getElementById('battle-view'); let _br0 = _bv0 && _bv0.getBoundingClientRect();
             let _pr0 = (caster && typeof _partyMemberRect === 'function') ? _partyMemberRect(caster) : ((typeof _pmCasterRect === 'function') ? _pmCasterRect() : null);
+            let _br0 = !_pr0 && document.getElementById('battle-view')?.getBoundingClientRect();
             let _ox0 = _pr0 ? (_pr0.left + _pr0.width * 0.5) : (_br0 ? (_br0.left + _br0.width * 0.5) : ax);
             let _oy0 = _pr0 ? (_pr0.top + _pr0.height * 0.35) : (_br0 ? (_br0.top + _br0.height * 0.98) : (ay + 120));
             let _deg = (Math.atan2(ax - _ox0, -(ay - _oy0)) * 180 / Math.PI + 360) % 360;   // 0=正上·順時針
@@ -220,9 +246,8 @@ function playSpellFx(skn, mob, caster) {
         // 🎯 v3.0.5 投射物「飛行」：proj 型特效由施法者飛向目標命中點(ax,ay)·途中循環播放幀·抵達即消失(取代原地疊播·符合「取代丟出去的投射物」)。
         //    施法者優先用傳入的隊伍成員 sprite；未傳時才以玩家變身 sprite／戰鬥區底部中央為起點。
         if (cfg.proj) {
-            let bv = document.getElementById('battle-view');
-            let br = bv && bv.getBoundingClientRect();
             let pr = (caster && typeof _partyMemberRect === 'function') ? _partyMemberRect(caster) : ((typeof _pmCasterRect === 'function') ? _pmCasterRect() : null);
+            let br = !pr && document.getElementById('battle-view')?.getBoundingClientRect();
             let ox = pr ? (pr.left + pr.width * 0.5) : (br ? (br.left + br.width * 0.5) : ax);                       // 施法者水平＝變身 sprite 中央·退回戰鬥區中央
             let oy = pr ? (pr.top + pr.height * 0.35) : (br ? (br.top + br.height * 0.98) : (ay + (fxH || 40) * 3));  // 施法者垂直＝sprite 胸口·退回戰鬥區底部(玩家視角)
             let axf = (cfg.ax != null ? cfg.ax : 0.5), ayf = (cfg.ay != null ? cfg.ay : 0.5);   // 投射物錨點(哪一點沿路徑走)
@@ -359,12 +384,15 @@ function playSelfFx(skn, anchorRect) {   // 🩹 v3.0.95 第2參 anchorRect（�
         if (_selfFxActive[_fxKey]) return;
         let bv = document.getElementById('battle-view');
         if (!bv) return;
-        let r = bv.getBoundingClientRect(); if (r.width === 0 || r.height === 0) return;
+        const mapAnchor=window.GiranCombat?.field?.ready() && (anchorRect || _pmCasterRect());
+        const projected=mapAnchor && mapAnchor.height>0;
+        const r=projected?mapAnchor:bv.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) return;
         // 📐 v3.3.12 尺寸基準改「怪物站立帶」#mob-list（area-fit 恆鎖 242px×舞台縮放＝舊條狀框高＝cfg.h 當初調校基準）：
         //    v3.2.80 戰鬥框改 16:9(450) 後原以 battle-view 高算尺寸→自身 buff/治癒/傳送特效被放大 ~1.86×；帶高恆定不受框形影響。r 仍供無 sprite 錨點時的「定位」fallback（置中要相對整個框）。
-        let _ml0 = document.getElementById('mob-list');
-        let _mr0 = _ml0 && _ml0.getBoundingClientRect();
-        let refH = (_mr0 && _mr0.height > 0) ? _mr0.height : r.height;
+        let _ml0 = !projected && document.getElementById('mob-list');
+        let _mr0 = !projected && _ml0 && _ml0.getBoundingClientRect();
+        let refH = projected ? mapAnchor.height*1.8 : ((_mr0 && _mr0.height > 0) ? _mr0.height : r.height);
         let layer = _vfxLayer();
         if (layer.childElementCount > 220) return;
         let frames = _preloadFxFrames(cfg.dir, cfg.prefix, cfg.n);
@@ -374,7 +402,7 @@ function playSelfFx(skn, anchorRect) {   // 🩹 v3.0.95 第2參 anchorRect（�
         let fxH, fxW, left, top;
         let _geom = () => {
             fxH = refH * (cfg.h || 0.5); fxW = fxH * ar;
-            let pr = anchorRect || ((typeof _pmCasterRect === 'function') ? _pmCasterRect() : null);   // 🧝 v3.0.49 玩家變身 sprite 顯示中→特效錨定 sprite 身上（水平置中）；v3.0.95 顯式錨點優先
+            let pr = mapAnchor || anchorRect || ((typeof _pmCasterRect === 'function') ? _pmCasterRect() : null);   // 🧝 v3.0.49 玩家變身 sprite 顯示中→特效錨定 sprite 身上（水平置中）；v3.0.95 顯式錨點優先
             if (pr) {
                 left = (pr.left + pr.width / 2 - fxW / 2) + 'px';
                 top = (cfg.overHead ? (pr.top - fxH * 0.55) : (pr.bottom - fxH)) + 'px';   // 🙏 輔助 buff→疊在 sprite 頭頂上方；治癒→疊在身體(自腳底往上)
@@ -449,7 +477,7 @@ function _updateFreezeFx() {
             let fx = _freezeFx[uid];
             if (frozen) {
                 let box = card.querySelector('.mob-img-inner') || card.querySelector('.mob-img-wrap') || card;
-                let r = box.getBoundingClientRect(); if (r.width === 0) return;
+                let r = window.GiranCombat?.field?.mobRect(uid) || box.getBoundingClientRect(); if (r.width === 0) return;
                 if (!fx || fx.mode === 'end') { let el = document.createElement('img'); el.className = 'vfx-spell vfx-freeze'; layer.appendChild(el); fx = _freezeFx[uid] = { el: el, mode: 'state', t0: Date.now() }; }
                 _freezePosition(fx.el, r);
                 let frames = _preloadFxFrames(FREEZE_FX.dir, 'state', FREEZE_FX.stateN);
@@ -495,7 +523,7 @@ function _updateMobSkillFx() {
             if (f >= total || !card) { if (s.el) s.el.remove(); if (s.el2) s.el2.remove(); if (s.el3) s.el3.remove(); delete _mobSkillFx[uid]; continue; }
             if (f < 0) continue;   // ⏳ 尚未到起噴幀（張嘴前不顯示·el 尚未建立）
             let box = card.querySelector('.mob-img-inner') || card.querySelector('.mob-img-wrap') || card;
-            let r = box.getBoundingClientRect(); if (r.width === 0) continue;
+            let r = window.GiranCombat?.field?.mobRect(m.uid) || box.getBoundingClientRect(); if (r.width === 0) continue;
             if (!s.el) { s.el = document.createElement('img'); s.el.className = 'vfx-spell vfx-mobskill'; layer.appendChild(s.el); }
             if (cfg.startPfx2 && a.skillFx.start2 && !s.el2) { s.el2 = document.createElement('img'); s.el2.className = 'vfx-spell vfx-mobskill'; layer.appendChild(s.el2); }   // 🔥 v2.7.41 第二特效層(不死鳥)
             if (cfg.startPfx3 && a.skillFx.start3 && !s.el3) { s.el3 = document.createElement('img'); s.el3.className = 'vfx-spell vfx-mobskill'; layer.appendChild(s.el3); }   // 🔥 v3.0.13 第三特效層(底比斯阿努比斯 skill_effect1/2/3 三層同時)
@@ -507,7 +535,7 @@ function _updateMobSkillFx() {
             if (cfg.anchored) {   // 🌍 世界格線錨定（v2.7.31·像素級）：特效與本體共用世界格線·單獨轉檔→用 meta latticeOrigin 差算出的固定偏移(ox,oy)貼在本體 img 上（縮放由 rect/畫布尺寸自動吸收）
                 let _bimg = box.querySelector('img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)');
                 if (_bimg) {
-                    let _br = _bimg.getBoundingClientRect();
+                    let _br = window.GiranCombat?.field?.mobRect(m.uid,'image') || _bimg.getBoundingClientRect();
                     if (_br.width > 0) {
                         let _sx = _br.width / cfg.anchored.bw, _sy = _br.height / cfg.anchored.bh;
                         s.el.style.width = ((f0.naturalWidth || 1) * _sx) + 'px'; s.el.style.height = ((f0.naturalHeight || 1) * _sy) + 'px';
@@ -534,7 +562,7 @@ function _updateMobSkillFx() {
             let cx = r.left + r.width * 0.5, cy;
             if (cfg.feet) {   // 🔥 地面型(敵人施法火環)：錨在本體圖「不透明區底部」＝真實腳底(bc 逐怪逐幀動態偵測·統一畫布 idle 腳底非畫布底也精準)·v2.7.26
                 let _bimg = box.querySelector('img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)');
-                if (_bimg) { let _br = _bimg.getBoundingClientRect(); cy = _br.top + _br.height * (_mobImgAnchor(_bimg).bc - (cfg.lift || 0)); }   // 🔼 v3.0.37 cfg.lift＝再往上抬「本體高度×lift」（用戶：火環太低·上抬 1/5）
+                if (_bimg) { let _br = window.GiranCombat?.field?.mobRect(m.uid,'image') || _bimg.getBoundingClientRect(); cy = _br.top + _br.height * (_mobImgAnchor(_bimg).bc - (cfg.lift || 0)); }   // 🔼 v3.0.37 cfg.lift＝再往上抬「本體高度×lift」（用戶：火環太低·上抬 1/5）
                 else cy = r.top + r.height * (0.78 - (cfg.lift || 0));
             } else cy = r.top + r.height * 0.5;   // 身體中心(DK/卡瑞 火焰爆發)
             let ay = (cfg.ay != null) ? cfg.ay : 0.55;
@@ -546,86 +574,226 @@ function _updateMobSkillFx() {
 }
 // 由 _renderMobsImpl 迴圈呼叫（讀 m.justHit 前）：用 HP 差捕捉本幀傷害，免改 50+ 個傷害落點
 function _vfxQueueDmg(m) {
-    if ((window.__vfxOff && window.__vfxNumOff) || !m) { if (m) m._vfxBig = false; return; }   // 🔢 v3.0.9 傷害數字獨立於特效：只有「特效關且數字也關」才完全略過→數字開時即使關特效仍捕捉 HP 差生成數字
+    if (!m) return;
     let prev = (m._vfxHp == null) ? m.curHp : m._vfxHp;
     let d = prev - m.curHp;
+    const shieldLoss = _shieldForReadout.get(m) || 0;
+    if (shieldLoss) _shieldForReadout.delete(m);
     m._vfxHp = m.curHp;
     let big = m._vfxBig; m._vfxBig = false;   // 'crit' | 'heavy' | undefined（只有爆擊/重擊才放大上色，不再用傷害量門檻）
-    if (d > 0 && m.curHp > 0 && !document.hidden) {   // 致命一擊交給 vfxKill 的粒子，這裡只顯示非致命傷害數字；🌙 v3.6.03 分頁隱藏不入佇列（_vfxHp 已於上方消化差值→回前景不會補噴巨量舊傷害）
+    if (window.__vfxOff && window.__vfxNumOff) return;
+    if ((d > 0 || shieldLoss > 0) && m.curHp > 0 && !document.hidden) {
         let ele = (m.justHit && m.justHit !== true) ? m.justHit : 'normal';
-        _vfxPending.push({ uid: m.uid, dmg: d, ele: ele, big: big });
+        window.__dimMapHit?.(m,ele);
+        _vfxPending.push({ uid: m.uid, dmg: Math.max(0,d), shield: Math.ceil(shieldLoss), ele, big });
     }
 }
-// innerHTML 重建後呼叫：此時格子已布局，可取螢幕座標生成飄字
+function _vfxBodyRect(uid, list) {
+    const projected = window.GiranCombat?.field?.mobRect(uid, 'body');
+    if (projected) return projected;
+    const slot = list?.querySelector('.mob-target[data-uid="' + uid + '"]');
+    if (!slot) return null;
+    return (slot.querySelector('.mob-img-inner') || slot.querySelector('.mob-img-wrap') || slot).getBoundingClientRect();
+}
+// Use the projected head, including on kills. Keep room for the nameplate below both numbers.
+function _vfxDamageReadout(r, heading, dmg, shield, ele, big, parent) {
+    if ((!dmg && !shield) || r.left + r.width < 0 || r.left > _vfxViewportWidth || r.top + r.height < 0 || r.top > _vfxViewportHeight) return;
+    const center = r.left + r.width / 2;
+    const rowGap = dmg && shield ? (big ? 46 : 34) : 0;
+    let x = center, y = (heading ? heading.top - 12 : r.top - 44) - rowGap;
+    if (y < 100) {
+        // At the top edge, move into the field alongside the head so the upward flight stays visible.
+        const headCenter = heading ? heading.left + heading.width / 2 : center;
+        const lane = (heading ? heading.width / 2 : 46) + 64;
+        x = headCenter + (headCenter < _vfxViewportWidth / 2 ? lane : -lane);
+        y = Math.max(106, r.top + r.height * .3 - rowGap);
+    }
+    x = Math.max(62, Math.min(_vfxViewportWidth - 62, x));
+    if (dmg) _vfxNumber(x, y, dmg, ele, big, parent);
+    if (shield) _vfxNumber(x, y + rowGap, shield, 'shield', false, parent);
+}
+// 同一幀同一目標只定位一次；一般命中、護盾、未命中共用身體錨點。
 function _vfxFlush() {
-    if (document.hidden) { _vfxPending = []; return; }   // 🌙 v3.6.03 分頁隱藏：丟棄佇列不生成（看不見·且背景中移除管線停擺會堆積）
-    if (window.__vfxOff && window.__vfxNumOff) { _vfxPending = []; return; }   // 🔢 v3.0.9 特效關但數字開→仍走 flush 顯示數字（粒子/impact 於下方另由 __vfxOff 個別關）
+    _vfxFlushFrame = 0;
     if (!_vfxPending.length) return;
-    let layer = _vfxLayer();
-    let ml = document.getElementById('mob-list');
-    if (ml) {
-        // 🚀 先一次讀完所有格子座標(批次量測)、再一次產生所有特效→消除「讀-寫-讀」反覆強制重排(layout thrashing)
-        let reads = [];
-        for (const p of _vfxPending) {
-            let slot = ml.querySelector('.mob-target[data-uid="' + p.uid + '"]');
-            if (!slot) continue;
-            let box = slot.querySelector('.mob-img-inner') || slot.querySelector('.mob-img-wrap') || slot;   // 🎯 v2.6.41 VFX 錨定「圖層 .mob-img-inner」(帶 translateY/scale·getBoundingClientRect 反映實際位置) 而非「容器 .mob-img-wrap」→修 v2.6.39 單排景深(後排上移30px/前排放大1.55)後 死亡殘影/擊殺特效/傷害數字 錯位
-            let r = box.getBoundingClientRect();
-            if (r.width === 0) continue;
-            reads.push({ p: p, cx: r.left + r.width / 2, top: r.top, h: r.height });
+    const hits = _vfxPending;
+    _vfxPending = [];
+    _vfxPendingMisses = 0;
+    if (document.hidden || (window.__vfxOff && window.__vfxNumOff)) return;
+    const list = document.getElementById('mob-list');
+    const rects = new Map();
+    for (const hit of hits) {
+        // The final blow can remove the card before the next paint. Keep its last screen position.
+        if (hit.atDeath) rects.set(hit.uid, hit.atDeath);
+    }
+    for (const hit of hits) {
+        if (!hit.bodyAtMiss && !rects.has(hit.uid)) rects.set(hit.uid, {
+            body: _vfxBodyRect(hit.uid, list),
+            heading: window.__vfxNumOff ? null : window.GiranCombat?.field?.mobRect(hit.uid, 'heading')
+        });
+    }
+    const layer = _vfxLayer();
+    const numbers = document.createDocumentFragment();
+    const fieldReady = !!window.GiranCombat?.field?.ready();
+    for (const hit of hits) {
+        const target = rects.get(hit.uid);
+        const r = hit.bodyAtMiss || target?.body, heading = target?.heading;
+        if (!r?.width) continue;
+        const x = r.left + r.width / 2, y = r.top + r.height * .4;
+        if (!window.__vfxNumOff && layer.childElementCount + numbers.childElementCount < 200) {
+            if (hit.miss) _vfxNumber(x + Math.random() * 18 - 9, y, '未命中', 'miss', false, numbers);
+            else _vfxDamageReadout(r, heading, hit.dmg, hit.shield, hit.ele, hit.big, numbers);
         }
-        for (const it of reads) {
-            let cx = it.cx, cy = it.top + it.h * 0.45;
-            // 🩸 傷害數字＝玩家最在意的資訊、單一輕量文字節點→放寬上限至 200，使快速/多段攻擊(龍騎士、AoE、傭兵/召喚同時打)也穩定顯示，不再整批被略過
-            if (layer.childElementCount < 200) _vfxNumber(cx + (Math.random() * 26 - 13), it.top + it.h * 0.40, it.p.dmg, it.p.ele, it.p.big);
-            // ⛔ v3.0.104 取消「白光打擊特效」（命中衝擊環 _vfxImpact + 火花）：改由命中濺血當唯一命中回饋（舊 _vfxImpact 衝擊環死碼已於 v3.5.48 清除·如需恢復可從 GitHub 版本庫找回）
-            if (!window.__vfxOff && layer.childElementCount < 150) _vfxBlood(cx, cy, it.p.big);   // 🩸 v3.0.103 命中濺血（小顆·無殘留）：純特效·輕量小 div 故上限放寬至 150
+        if (!hit.miss && !hit.atDeath && !window.__vfxOff && layer.childElementCount + numbers.childElementCount < 150) {
+            _vfxBlood(x, r.top + r.height * .45, hit.big, layer, fieldReady);
         }
     }
-    _vfxPending = [];
+    if (numbers.firstChild) layer.append(numbers);
 }
-// 未命中沒有 HP 差值，無法走 _vfxQueueDmg；直接依目標目前的畫面位置顯示淡灰提示。
+function _vfxRequestFlush() {
+    if (_vfxPending.length && !_vfxFlushFrame) _vfxFlushFrame = requestAnimationFrame(_vfxFlush);
+}
 function vfxMiss(mob) {
-    if (window.__vfxNumOff || !mob || document.hidden || (typeof state !== 'undefined' && state.ff)) return;   // 🌙 v3.6.03 分頁隱藏不生成
-    let ml = document.getElementById('mob-list');
-    let slot = ml && ml.querySelector('.mob-target[data-uid="' + mob.uid + '"]');
-    if (!slot) return;
-    let box = slot.querySelector('.mob-img-inner') || slot.querySelector('.mob-img-wrap') || slot;
-    let r = box.getBoundingClientRect();
-    if (r.width === 0) return;
-    let layer = _vfxLayer();
-    if (layer.childElementCount >= 200) return;
-    _vfxNumber(r.left + r.width / 2 + (Math.random() * 18 - 9), r.top + r.height * 0.40, '未命中', 'miss');
+    if (window.__vfxNumOff || !mob || document.hidden || (typeof state !== 'undefined' && state.ff && window.GiranCombat?.offline() !== false)) return;
+    if (_vfxPendingMisses >= 60) return;
+    _vfxPendingMisses++;
+    // A simultaneous lethal blow can remove this target before paint.
+    const bodyAtMiss = window.GiranCombat?.field?.mobRect(mob.uid,'body');
+    _vfxPending.push({uid: mob.uid, miss: true, bodyAtMiss});
+    _vfxRequestFlush();
 }
-function _vfxNumber(x, y, dmg, ele, big) {
+const _numberPools={plain:[],tagged:[]};
+function _vfxNumber(x, y, dmg, ele, big, parent) {
     if (window.__vfxNumOff) return;   // 🔢 v3.0.2 「只關傷害數字」獨立開關：關掉所有飄動傷害數字(致命/非致命皆走此唯一渲染點)·其餘特效不受影響
-    let el = document.createElement('div');
+    const tagged=big==='crit'||big==='heavy',pool=tagged?_numberPools.tagged:_numberPools.plain;
+    let el=pool.pop();
+    if (!el) {
+        el=document.createElement('div');
+        if (tagged) {
+            const tag=document.createElement('span'),value=document.createElement('span');
+            tag.className='vfx-dmg-tag';value.className='vfx-dmg-value';
+            el.dmTag=document.createTextNode('');tag.append(el.dmTag);
+            el.dmValue=document.createTextNode('');value.append(el.dmValue);el.append(tag,value);
+        } else {el.dmValue=document.createTextNode('');el.append(el.dmValue);}
+    }
     let isMiss = ele === 'miss';
     el.className = 'vfx-dmg' + (big ? ' vfx-crit' : '') + (big === 'crit' ? ' vfx-critical' : (big === 'heavy' ? ' vfx-heavy' : '')) + (isMiss ? ' vfx-miss' : '');
     el.style.left = x + 'px'; el.style.top = y + 'px';
+    if (!isMiss) el.style.setProperty('--vfx-anchor-x',el.style.left);
     el.style.color = isMiss ? 'rgba(203,213,225,.78)' : (big === 'crit' ? '#ff3b30' : (big === 'heavy' ? '#ffd54f' : (_VFX_ELE_COLOR[ele] || '#f1f5f9')));   // 未命中淡灰／爆擊大紅／重擊大金／其餘依屬性
-    el.style.fontSize = (isMiss ? 14 : (big ? 32 : 20)) + 'px';   // 未命中刻意較小；傷害飄字保留強弱差異
+    el.style.fontSize = (isMiss ? 14 : (big ? 38 : 26)) + 'px';
     const dmgText = dmg >= 10000 ? (dmg / 1000).toFixed(1) + 'k' : ('' + dmg);
-    if (big === 'crit' || big === 'heavy') {
-        const tag = document.createElement('span');
-        tag.className = 'vfx-dmg-tag';
-        tag.textContent = big === 'crit' ? '爆擊' : '重擊';
-        const value = document.createElement('span');
-        value.className = 'vfx-dmg-value';
-        value.textContent = dmgText;
-        el.append(tag, value);
-    } else {
-        el.textContent = dmgText;
-    }
-    _vfxLayer().appendChild(el);
-    el.addEventListener('animationend', () => el.remove(), { once: true });
-    setTimeout(() => { if (el.parentNode) el.remove(); }, 1400);
+    if (tagged) el.dmTag.data=big==='crit'?'爆擊':'重擊';
+    el.dmValue.data=ele==='shield'?'護盾 '+dmgText:dmgText;
+    if (ele==='shield') el.style.color='#93c5fd';
+    (parent || _vfxLayer()).appendChild(el);
+    const release=event=>{
+        if (event && event.target!==el) return;
+        clearTimeout(el.dmTimer);el.onanimationend=null;el.remove();
+        el.dmCombo?.remove();
+        if (pool.length<64) pool.push(el);
+    };
+    el.onanimationend=release;
+    el.dmTimer=setTimeout(release,1400);
+    return el;
 }
 // 🩸 v3.0.103 命中濺血：命中點噴數顆小紅血滴（帶重力弧線→淡出·無殘留貼花·怪物不變色）。爆擊/重擊噴更多。純裝飾·吃 window.__vfxOff。顆粒小、不上 box-shadow 保持不搶眼。
 const _VFX_BLOOD_COLORS = ['#7f1d1d', '#991b1b', '#b91c1c', '#dc2626', '#ef4444'];
-function _vfxBlood(cx, cy, big) {
-    let layer = _vfxLayer();
+const _fieldBlood = [];
+let _bloodFrame = 0, _fieldBloodCount = 0, _bloodCanvas = null, _bloodContext = null;
+let _bloodLayer = null, _bloodWidth = 0, _bloodHeight = 0, _bloodDirty = null;
+const _bloodSize = new ResizeObserver(entries => {
+    for (const entry of entries) {
+        if (entry.target !== _bloodLayer) continue;
+        _bloodWidth = Math.round(entry.contentRect.width);
+        _bloodHeight = Math.round(entry.contentRect.height);
+        if (_fieldBlood.length && !_bloodFrame && _bloodWidth && _bloodHeight) {
+            _bloodFrame = requestAnimationFrame(_advanceBlood);
+        }
+    }
+});
+function _clearFieldBlood() {
+    if (_bloodFrame) cancelAnimationFrame(_bloodFrame);
+    _bloodFrame = 0;
+    _fieldBlood.length = 0;
+    _fieldBloodCount = 0;
+    _bloodDirty = null;
+    if (_bloodCanvas?.isConnected) {
+        _bloodContext.clearRect(0, 0, _bloodCanvas.width, _bloodCanvas.height);
+        _bloodCanvas.remove();
+    }
+}
+function _paintBlood(b,now) {
+    const ctx=_bloodContext;
+    for (const drop of b.drops) {
+        const t=Math.min(1,(now-b.start)/drop.duration);
+        if (t===1) continue;
+        const u=1-(1-t)*(1-t),a=Math.min(1,u/.4),z=Math.max(0,(u-.4)/.6);
+        const x=b.x+drop.dx*(.7*a+.3*z),y=b.y+drop.up*a+drop.fall*z;
+        ctx.globalAlpha=(.9-.05*a)*(1-z);ctx.fillStyle=drop.color;
+        ctx.beginPath();ctx.arc(x,y,drop.radius*(1-.55*z),0,Math.PI*2);ctx.fill();
+    }
+}
+function _advanceBlood(now) {
+    _bloodFrame = 0;
+    if (document.hidden || window.__vfxOff || !_bloodLayer?.isConnected) { _clearFieldBlood(); return; }
+    if (!_bloodWidth || !_bloodHeight) return;
+    if (!_bloodCanvas) {
+        _bloodCanvas = document.createElement('canvas');
+        _bloodCanvas.className = 'vfx-blood-spray';
+        _bloodCanvas.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+        _bloodCanvas.setAttribute('aria-hidden', 'true');
+        _bloodContext = _bloodCanvas.getContext('2d');
+    }
+    if (_bloodCanvas.width !== _bloodWidth) _bloodCanvas.width = _bloodWidth;
+    if (_bloodCanvas.height !== _bloodHeight) _bloodCanvas.height = _bloodHeight;
+    if (!_bloodCanvas.isConnected) _bloodLayer.append(_bloodCanvas);
+    if (_bloodDirty) {
+        const {left, top, right, bottom} = _bloodDirty;
+        _bloodContext.clearRect(left, top, right-left, bottom-top);
+        _bloodDirty = null;
+    }
+    for (let i=_fieldBlood.length-1;i>=0;i--) {
+        const b=_fieldBlood[i];
+        // A late frame must still show the newly queued hit spreading from the target.
+        if (b.firstFrame) {
+            b.start = now - Math.min(90, Math.max(16, now - b.start));
+            b.firstFrame = false;
+        }
+        if (now-b.start>=b.life) { _fieldBlood.splice(i,1); _fieldBloodCount-=b.drops.length; }
+    }
+    if (!_fieldBlood.length) { _bloodCanvas.remove(); return; }
+    let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+    for (const b of _fieldBlood) {
+        _paintBlood(b,now);
+        left = Math.min(left,b.x); right = Math.max(right,b.x);
+        top = Math.min(top,b.y); bottom = Math.max(bottom,b.y);
+    }
+    _bloodDirty = {left:left-72, top:top-72, right:right+72, bottom:bottom+72};
+    _bloodFrame = requestAnimationFrame(_advanceBlood);
+}
+function _vfxBlood(cx, cy, big, layer = _vfxLayer(), fieldReady = window.GiranCombat?.field?.ready()) {
     let n = big ? (8 + (Math.random() * 5 | 0)) : (4 + (Math.random() * 3 | 0));   // 爆擊/重擊 8~12·一般 4~6（不用太多）
+    if (fieldReady) {
+        if (layer !== _bloodLayer) {
+            _clearFieldBlood();
+            _bloodSize.disconnect();
+            _bloodLayer = layer;
+            _bloodWidth = _bloodHeight = 0;
+            _bloodSize.observe(layer);
+        }
+        const b={x:cx,y:cy,start:performance.now(),firstFrame:true,drops:[],life:0};
+        for (let i=0;i<n;i++) {
+            const radius=(1.3+Math.random()*(big?2.1:1.4))/2,color=_VFX_BLOOD_COLORS[(Math.random()*5)|0];
+            const ang=Math.random()*Math.PI*2,dist=(big?22:14)+Math.random()*(big?22:15);
+            const dx=Math.cos(ang)*dist,up=Math.sin(ang)*dist*.55-(5+Math.random()*9);
+            const fall=16+Math.random()*(big?30:20),duration=360+Math.random()*240;
+            b.drops.push({radius,color,dx,up,fall,duration});b.life=Math.max(b.life,duration);
+        }
+        _fieldBlood.push(b);_fieldBloodCount+=n;
+        if (!_bloodFrame && _bloodWidth && _bloodHeight) _bloodFrame=requestAnimationFrame(_advanceBlood);
+        return;
+    }
     for (let i = 0; i < n; i++) {
         let sp = document.createElement('div'); sp.className = 'vfx-blood';
         let sz = 1.3 + Math.random() * (big ? 2.1 : 1.4);   // 小顆粒：一般 1.3~2.7·爆擊 1.3~3.4
@@ -652,7 +820,7 @@ function _vfxBlood(cx, cy, big) {
 //   ⚠️file:// 下 canvas.getImageData 會 taint(SecurityError)→退回常數 {vc:0.66,hc:0.5}(仍遠優於 0.45)並快取避免每次重試；GitHub/https 同源可正常逐圖精算。
 let _mobAnchorCache = {};
 function _mobImgAnchor(imgEl) {
-    let fallback = { vc: 0.66, hc: 0.5, bc: 0.95 };   // bc=不透明區「底部」比例(最低不透明像素下緣·地面型特效錨腳底用)
+    let fallback = { vc: 0.66, hc: 0.5, bc: 0.95, tc: 0.37 };   // bc/tc 為不透明區的底部與頂部
     try {
         if (!imgEl) return fallback;
         let key = imgEl.currentSrc || imgEl.src;
@@ -671,7 +839,7 @@ function _mobImgAnchor(imgEl) {
             if (d[(y * cw + x) * 4 + 3] > 16) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
         }
         if (maxY < 0) { _mobAnchorCache[key] = fallback; return fallback; }   // 全透明→fallback
-        let res = { vc: (minY + maxY) / 2 / ch, hc: (minX + maxX) / 2 / cw, bc: (maxY + 1) / ch };
+        let res = { vc: (minY + maxY) / 2 / ch, hc: (minX + maxX) / 2 / cw, bc: (maxY + 1) / ch, tc: minY / ch };
         _mobAnchorCache[key] = res;
         return res;
     } catch (e) { return fallback; }
@@ -681,50 +849,61 @@ function _mobImgAnchor(imgEl) {
 function vfxKill(mob) {
     try {
         if (!mob) return;
+        window.__dimMapHit?.(mob,mob.justHit);
         if (document.hidden) return;   // 🌙 v3.6.03 分頁隱藏：死亡殘影/粒子/致命數字全跳過（掛網擊殺最頻繁·殘影幀步進 interval 在背景被節流到 1/分鐘＝每隻殘影卡場數分鐘）
-        if (typeof state !== 'undefined' && state.ff && !state.ffSmall) return;   // 🚀 v3.2.65 背景補跑不播擊殺特效 → 🩹 v3.4.49 小補跑(≤2秒·前景微卡頓 GC/存檔造成)放行：死亡殘影仍受 _deathGhostCount<12 節流·長補跑維持靜音免回前景爆量
+        if (typeof state !== 'undefined' && state.ff && !state.ffSmall && window.GiranCombat?.offline() !== false) return;
         // 🎚️ v3.0.1 關閉特效時「保留死亡動畫」：不再整個 return，改為只擋「傷害數字/頭目閃光」等純裝飾（見下），死亡序列殘影(death_*.png)＋死亡特效層(death_effect)照播＝怪物死亡畫面不消失
         let ml = document.getElementById('mob-list');
         let slot = ml && ml.querySelector('.mob-target[data-uid="' + mob.uid + '"]');
         if (!slot) return;
         let box = slot.querySelector('.mob-img-inner') || slot.querySelector('.mob-img-wrap') || slot;   // 🎯 v2.6.41 VFX 錨定「圖層 .mob-img-inner」(帶 translateY/scale·getBoundingClientRect 反映實際位置) 而非「容器 .mob-img-wrap」→修 v2.6.39 單排景深(後排上移30px/前排放大1.55)後 死亡殘影/擊殺特效/傷害數字 錯位
-        let r = box.getBoundingClientRect();
+        const field = window.GiranCombat?.field;
+        const hitBody = field?.mobRect(mob.uid,'body');
+        let r = field?.mobRect(mob.uid) || hitBody || box.getBoundingClientRect();
         if (r.width === 0) return;
-        let _anc = _mobImgAnchor(box.querySelector('img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)'));   // 🎯 v2.6.45 錨到怪物實體視覺中心(非方框中心)→爆裂/數字落在怪身上
+        const _img = box.querySelector('img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)');
         let bcx = r.left + r.width / 2, bcy = r.top + r.height / 2;   // 方框幾何中心(殘影全圖覆蓋用)
-        let cx = r.left + r.width * _anc.hc, cy = r.top + r.height * _anc.vc;   // 怪物身體中心(爆裂環/核心/粒子用)
         _vfxLastKillRect = { left: r.left, top: r.top, width: r.width, height: r.height };   // 供稀有掉落閃光定位
         let layer = _vfxLayer();
         // 🩸 致命一擊的傷害數字：死怪在下一幀渲染前已被 settleDeadMobs 移除→渲染側 HP-delta 抓不到，故在此(格子 DOM 仍在)補顯示，使龍騎士等「一/二擊秒殺」也看得到傷害
+        const absorbed = _shieldForReadout.get(mob);
+        if (absorbed) _shieldForReadout.delete(mob);
         if (!window.__vfxNumOff) { let _prev = (mob._vfxHp != null) ? mob._vfxHp : (mob.hp || 0);   // 🔢 v3.0.9 致命傷害數字改由「傷害數字開關」控制（獨立於特效）：數字開→即使關特效仍顯示致命傷害數字（死亡動畫本就照播）
           let _kdmg = Math.floor(_prev - mob.curHp);   // 自上次渲染以來累積傷害(含致命擊；curHp 可能為負＝溢殺，顯示實際打出的數值)
           let _kbig = mob._vfxBig; mob._vfxBig = false;   // 'crit'|'heavy'：致命擊的爆擊/重擊旗標仍在(渲染未重設)
-          if (_kdmg > 0 && layer.childElementCount < 200) {
+          if (layer.childElementCount < 200) {
               let _kele = (mob.justHit && mob.justHit !== true) ? mob.justHit : 'normal';
-              _vfxNumber(cx + (Math.random() * 26 - 13), r.top + r.height * Math.max(0.12, _anc.vc - 0.30), _kdmg, _kele, _kbig);   // 🎯 v2.6.45 數字浮於怪身上方(相對身體中心·非固定 0.40 方框位)
+              let head = hitBody;
+              if (!head) {
+                  const ink = _mobImgAnchor(_img);
+                  head = {left:r.left + r.width*(ink.hc-.5), top:r.top + r.height*Math.max(0,ink.vc-.45), width:r.width,height:r.height};
+              }
+              const heading = field?.mobRect(mob.uid,'heading');
+              _vfxPending.push({uid:mob.uid, atDeath:{body:head,heading}, dmg:Math.max(0,_kdmg),
+                  shield:Math.ceil(absorbed || 0), ele:_kele, big:_kbig});
+              _vfxRequestFlush();
           }
         }
-        let color = mob.boss ? '#ffd54f' : '#ff8a5c';
         // 🎞️ v2.6.93 有死亡序列(death_*.png)→殘影改播死亡動畫，並略過白光殘影/衝擊波環/核心爆閃/爆裂粒子（死亡幀本身已表達「被擊殺」，白光重疊反而髒）。無死亡動畫則維持原白閃表現。
-        let _da = (typeof MOB_ANIM_8DIR !== 'undefined' && MOB_ANIM_8DIR.has(mob.n))
-            ? (typeof _mob8Cache !== 'undefined' ? _mob8Cache[mob.n + '#' + (mob._face8Loaded != null ? mob._face8Loaded : 6)] : null)   // 🧭 v3.2.11 八方向怪：取當前面向的方向 cache（死亡殘影播該向 death 幀；無 weapon 層→下方 _da[_wk] 為 undefined 安全）
+        let _da = (mob._giranArt || MOB_ANIM_8DIR.has(mob.n))
+            ? _mob8Cache[(mob._giranArt || mob.n) + '#' + (mob._face8Loaded ?? 6)]
             : ((typeof _mobAnimCache !== 'undefined') ? _mobAnimCache[mob.n] : null);
         let _deathSeq = (_da && _da !== 'probing' && _da.death) ? _da.death : null;
         // ✨ 強化死亡表現（讓「怪物被消滅」更明顯）。🎬 v3.4.43 節流改看「死亡殘影專屬計數」_deathGhostCount<12（原 layer.childElementCount<150 會被跳字/法術粒子洪水誤擋→AoE 連殺時死亡幀有時不播）；上限 12≈前後排 5 格 × 2 波重疊 + 餘裕。
         if (_deathGhostCount < 12) {
             // 1) 死亡殘影：複製怪物圖像 → 白化＋放大＋淡出（強烈的「被抹除」感）
             try {
-                let _img = box.querySelector('img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)');
                 if (_deathSeq && _img && _img.src && _img.naturalWidth !== 0) {   // 🚫 v2.7.49 只在有死亡序列幀(anim)時播殘影；移除靜態怪的 CSS 白閃殘影
                     let gh = document.createElement('img');
                     gh.className = 'vfx-ghost'; gh.src = _img.src;
                     // 🎯 v3.1.67 殘影尺寸/位置錨到「本體 img 實際 rect」而非 .mob-img-inner 方框：max-height 讓動畫怪 img 溢出方框(如哈維 185px img vs 112px 帶高)時，用方框尺寸會把死亡殘影 object-fit:contain 縮回帶高＝死亡瞬間變小。改用 img rect→殘影與生前本體同尺寸同位。方框為 0/未載入時退回原方框值。
-                    let _ir = _img.getBoundingClientRect();
+                    let _ir = window.GiranCombat?.field?.mobRect(mob.uid,'image') || _img.getBoundingClientRect();
                     let _grx = _ir.width > 0 ? (_ir.left + _ir.width / 2) : bcx, _gry = _ir.width > 0 ? (_ir.top + _ir.height / 2) : bcy;
                     let _grw = _ir.width > 0 ? _ir.width : r.width, _grh = _ir.width > 0 ? _ir.height : r.height;
                     gh.style.left = _grx + 'px'; gh.style.top = _gry + 'px';   // 殘影＝整張圖複製→定位本體 img 中心以完整覆蓋原圖(對齊)
                     gh.style.width = _grw + 'px'; gh.style.height = _grh + 'px';
-                    gh.style.transformOrigin = (_anc.hc * 100).toFixed(1) + '% ' + (_anc.vc * 100).toFixed(1) + '%';   // 🎯 v2.6.45 放大自「怪物身體中心」擴散(非方框中心)→白閃由怪身發散
+                    const ink = _mobImgAnchor(_img);
+                    gh.style.transformOrigin = (ink.hc * 100).toFixed(1) + '% ' + (ink.vc * 100).toFixed(1) + '%';
                     layer.appendChild(gh);
                     if (_deathSeq) {   // 🎞️ v2.6.86 死亡序列（death_*.png）：殘影原位逐幀播一輪→短淡出（取代白閃；怪卡本體照常移除）
                         _deathGhostCount++;   // 🎬 v3.4.43 專屬節流：生殘影 +1；淡出結束/保險回收擇一 _release() 保證只減一次
@@ -759,7 +938,7 @@ function vfxKill(mob) {
                     _deathGhostCount++;
                     let _fgDone = false; let _fgRelease = () => { if (_fgDone) return; _fgDone = true; _deathGhostCount = Math.max(0, _deathGhostCount - 1); };
                     let gh2 = document.createElement('img'); gh2.className = 'vfx-ghost'; gh2.src = _img.src;
-                    let _ir2 = _img.getBoundingClientRect();
+                    let _ir2 = window.GiranCombat?.field?.mobRect(mob.uid,'image') || _img.getBoundingClientRect();
                     gh2.style.left = (_ir2.width > 0 ? (_ir2.left + _ir2.width / 2) : bcx) + 'px'; gh2.style.top = (_ir2.width > 0 ? (_ir2.top + _ir2.height / 2) : bcy) + 'px';
                     gh2.style.width = (_ir2.width > 0 ? _ir2.width : r.width) + 'px'; gh2.style.height = (_ir2.width > 0 ? _ir2.height : r.height) + 'px';
                     layer.appendChild(gh2);
@@ -854,7 +1033,7 @@ function _vfxSlotRect(uid) {
     let slot = ml && ml.querySelector('.mob-target[data-uid="' + uid + '"]');
     if (!slot) return null;
     let box = slot.querySelector('.mob-img-inner') || slot.querySelector('.mob-img-wrap') || slot;   // 🎯 v2.6.41 VFX 錨定「圖層 .mob-img-inner」(帶 translateY/scale·getBoundingClientRect 反映實際位置) 而非「容器 .mob-img-wrap」→修 v2.6.39 單排景深(後排上移30px/前排放大1.55)後 死亡殘影/擊殺特效/傷害數字 錯位
-    let r = box.getBoundingClientRect();
+    let r = window.GiranCombat?.field?.mobRect(uid) || box.getBoundingClientRect();
     return (r.width > 0) ? { left: r.left, top: r.top, width: r.width, height: r.height } : null;
 }
 // 魔法拋射物：從施法者飛向目標（v3.0.49：玩家變身 sprite 顯示中→sprite 胸口·否則戰場底部中央）→ 抵達時小火花為止。
@@ -1044,6 +1223,7 @@ function vfxBossEntrance(mob, opts) {
     try {
         if (!mob || window.__vfxOff || document.hidden) return;   // 🌙 v3.6.03 分頁隱藏不播出場特效（閃光/暗角/名條多元素·背景中無法回收）
         if (typeof state !== 'undefined' && state.ff && !state.ffSmall) return;   // 🩹 v3.4.97 比照 vfxKill(v3.4.49)：前景微卡頓的小補跑(≤2秒)放行——變身/出怪常落在補跑批次·原 _vfxMute 一律靜音＝「變身名條有時不出現」主因；長背景補跑維持靜音（2 秒同名去重防爆量）
+        if(window.GiranBossRooms?.deferEntrance(mapState.current,mob,opts))return;
         let cfg = BOSS_ENTRANCE_FX[mob.n];
         if (!cfg) {
             if (!mob.boss) return;
@@ -1052,6 +1232,7 @@ function vfxBossEntrance(mob, opts) {
         let now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
         if (_bossEntranceLast[mob.n] && now - _bossEntranceLast[mob.n] < 2000) return;   // 同名 2 秒去重（防同 tick 重觸；正常重生>5秒不受影響）
         _bossEntranceLast[mob.n] = now;
+        if (!opts && window.__dimMapArrival?.(mob, cfg.a)) return;
         let bv = document.getElementById('battle-view');
         if (!bv || bv.classList.contains('hidden')) return;
         let r = bv.getBoundingClientRect();
@@ -1235,31 +1416,35 @@ if (typeof castSkill === 'function' && !castSkill._vfxWrapped) {
     castSkill._vfxWrapped = true;
 }
 
+function _captureMobHit(m) {
+    if (m.justHit && (m._giranArt || MOB_ANIM_NAMES.has(m.n)) && (!m.boss || m._vfxBig === 'crit' || m._vfxBig === 'heavy' || m._spellHurt)) {
+        if (m._giranArt || MOB_ANIM_8DIR.has(m.n)) _mobAnimTrigger(m, 'hurt');
+        else { let _ha = _mobAnimCache[m.n]; if (_ha && _ha !== 'probing' && _ha.hurt && typeof _mobAnimTrigger === 'function') _mobAnimTrigger(m, 'hurt'); }
+    }   // 🎬 v3.0.14 _spellHurt：法術傷害也讓「頭目」播 hurt（一般怪本就任何命中都播·物理維持 v2.7.30 爆擊/重擊門檻·DoT/反射不標記→頭目不因持續傷害狂顫）
+    try { _vfxQueueDmg(m); } catch(e){}   // ✨ VFX：用 HP 差捕捉本幀傷害（須在重設 justHit 前）
+    m.justHit = false;
+    m._spellHurt = false;
+}
 function _renderMobsImpl() {
     if(state.ff) return; // 補跑期間不刷新畫面
     _initMobListGuard();
     if(_mobPointerDown) { _mobRebuildPending = true; return; }   // 🚀 按住怪物卡期間延後重繪→點擊切換目標不被中斷
+    const worldCards=window.GiranCombat?.field ? [] : null;
     let _slotHtmls = [], _rageTransitions = [];   // 🚀 改差異更新：先各格產生 html 字串，最後只重建有變動的格；狂暴只記錄「未啟用→啟用」轉場（🧹 v3.5.87 刪 _forceHit/hitClass 死碼：hitClass 自 v2.7.49 起恆空字串·受擊表現全由 _mobAnimTrigger('hurt') 序列幀負責·justHit 仍驅動 hurt 觸發與傷害數字）
     let _showMobEleFlag = (typeof _relicShowMobEle === 'function') && _relicShowMobEle();   // 🏺 巨大螞蟻的複眼：狀態直接顯示敵人屬性（一次計算·全格共用）
 
     let _back = backSlotsActive();                                   // 🆕 五格模式：原三格(前排)＋後排兩格
-    let _order = _back ? [0, 1, 2, 3, 4] : [0, 1, 2];                // 🆕 v2.7.47 前排(0,1,2)由左而右→再後排(3,4)由左而右；視覺左右序＝目標鎖定序一致(不再交錯)
+    let _order = worldCards ? Array.from({length:mapState.mobs.length},(_,i)=>i) : (_back ? [0,1,2,3,4] : [0,1,2]);
     for(let _k = 0; _k < _order.length; _k++) {
         let i = _order[_k];
         let m = mapState.mobs[i];
         let _rowCls = (i >= 3) ? ' mob-back' : (_back ? ' mob-front' : '');   // 後排/前排版位 class（三格模式不加→沿用原版面）
         if (m) {
             let act = (i === mapState.targetIdx) ? 'active' : '';
-            let _mi = mobStillImg(m.n, m.img, true);   // 🎬 戰鬥初始幀：有動畫→優先 spawn_0（無 spawn 退 idle_0·再退舊靜態）；無動畫→舊靜態
+            let _mi = mobStillImg(m._giranArt||m.n, m.img, true);   // 🎬 戰鬥初始幀：有動畫→優先 spawn_0（無 spawn 退 idle_0·再退舊靜態）；無動畫→舊靜態
             // 🎬 v2.6.94 受擊序列幀（hurt_*.png）：被擊中且該怪有 hurt 動畫→優先播一輪（非鎖定·可蓋掉攻擊/待機·不打斷登場/技能鎖定）。gate 在「確有 hurt 序列」避免無 hurt 的怪被誤清掉進行中的攻擊動作。
             // 🎯 v2.7.30 頭目受擊門檻（用戶要求）：頭目「只有被 重擊(_vfxBig='heavy') 或 爆擊(_vfxBig='crit')」才播 hurt——一般命中不打斷頭目的待機/攻擊/技能動作，維持頭目氣勢；非頭目維持「任何命中都播」。⚠️ _vfxBig 由本幀攻擊設(js/03:818 getPhysicalDmg 樞紐)·須在下一行 _vfxQueueDmg 重設它「之前」判斷。
-            if (m.justHit && MOB_ANIM_NAMES.has(m.n) && (!m.boss || m._vfxBig === 'crit' || m._vfxBig === 'heavy' || m._spellHurt)) {
-                if (typeof MOB_ANIM_8DIR !== 'undefined' && MOB_ANIM_8DIR.has(m.n)) { if (typeof _mobAnimTrigger === 'function') _mobAnimTrigger(m, 'hurt'); }   // 🧭 v3.2.11 八方向怪：cache 分方向存(通用 cache 為空)→逕觸發受擊(該怪必有 hurt·_mob8Apply 從方向 cache 取幀)
-                else { let _ha = _mobAnimCache[m.n]; if (_ha && _ha !== 'probing' && _ha.hurt && typeof _mobAnimTrigger === 'function') _mobAnimTrigger(m, 'hurt'); }
-            }   // 🎬 v3.0.14 _spellHurt：法術傷害也讓「頭目」播 hurt（一般怪本就任何命中都播·物理維持 v2.7.30 爆擊/重擊門檻·DoT/反射不標記→頭目不因持續傷害狂顫）
-            try { _vfxQueueDmg(m); } catch(e){}   // ✨ VFX：用 HP 差捕捉本幀傷害（須在重設 justHit 前）
-            m.justHit = false;
-            m._spellHurt = false;
+            _captureMobHit(m);
 
             // 🔥 頭目狂暴轉場：嚴格低於門檻且仍存活才啟用。丹特斯吸血回到門檻以上會解除，之後再次跌破可重新提示。
             let _rageNow = m.curHp > 0 && typeof mobRageActive === 'function' && mobRageActive(m);
@@ -1308,18 +1493,20 @@ function _renderMobsImpl() {
             }
             // 🏰 v3.7.82 用戶指定復原：v3.7.79 曾在此加第三分支 `m.siegeEnemy && m.race!=='建築' → _sfCls=' siege-mob'`（攻城敵人整體縮 0.8×·css 同步移除），現已全數撤掉＝攻城敵人回到與其他怪物相同的原生尺寸渲染。要再縮回去＝本處補回分支＋css 補回 .siege-mob 規則（配方見記憶 siege-building-fixed-position）。
             // 🌑 v2.7.17 真實影子 sprite 圖層：本體圖層下疊一層同步影子 img（idle_s_0 為初始貼圖·_mobAnimApply 逐幀同步）；同時隱藏 CSS 橢圓（比照烙印影子）
-            let _spriteShadow = MOB_ANIM_NAMES.has(m.n) && (typeof MOB_ANIM_SPRITE_SHADOW !== 'undefined') && MOB_ANIM_SPRITE_SHADOW.has(m.n);
+            let _spriteShadow = !m._giranArt && MOB_ANIM_NAMES.has(m.n) && (typeof MOB_ANIM_SPRITE_SHADOW !== 'undefined') && MOB_ANIM_SPRITE_SHADOW.has(m.n);
             let _innerAnimCls = MOB_ANIM_NAMES.has(m.n) ? (' mob-anim' + ((MOB_ANIM_BAKED_SHADOW.has(m.n) || _spriteShadow) ? ' mob-anim-shadowed' : '')) : '';
             if (typeof MOB_SHADOW_TINT !== 'undefined' && MOB_SHADOW_TINT.has(m.n)) _innerAnimCls += ' mob-shadow-tint';   // 🌑 灰白剪影怪→半透明黑影
             if (typeof MOB_ANIM_BIG !== 'undefined' && MOB_ANIM_BIG.has(m.n)) _innerAnimCls += ' mob-anim-big';   // 🐉 大畫布非頭目怪→頭目級 185px 高度上限（v3.0.37）
             if (typeof MOB_ANIM_SMALL !== 'undefined' && MOB_ANIM_SMALL.has(m.n)) _innerAnimCls += ' mob-anim-small';   // 🔻 v3.1.65 過大/攻擊死亡溢框怪→整體等比縮小（max-height 降至 85%·本體+_s+_w+技能特效同縮同步）
             let _shadowLayer = _spriteShadow ? `<img class="mob-anim-shadow w-24 h-24 p-1 object-contain pointer-events-none" src="${mobShadowStillImg(m.n)}" alt="" aria-hidden="true" onload="this.style.display='';this.style.visibility=''" onerror="this.style.visibility='hidden'">` : '';
             // ⚔️ v2.7.22 武器揮動特效層(疊本體「前」·screen)：同影子機制·排在本體 img 之後
-            let _weaponFx = MOB_ANIM_NAMES.has(m.n) && (typeof MOB_ANIM_WEAPON_FX !== 'undefined') && MOB_ANIM_WEAPON_FX.has(m.n);
-            let _weaponLayer = _weaponFx ? `<img class="mob-anim-weapon w-24 h-24 p-1 object-contain pointer-events-none" src="assets/anim/${_animDir(m.n)}/idle_w_0.png" alt="" aria-hidden="true" onload="this.style.display='';this.style.visibility=''" onerror="this.style.visibility='hidden'">` : '';
+            let _weaponFx = !m._giranArt && MOB_ANIM_NAMES.has(m.n) && (typeof MOB_ANIM_WEAPON_FX !== 'undefined') && MOB_ANIM_WEAPON_FX.has(m.n);
+            const weaponRoot='assets/anim/'+_animDir(m.n);
+            const idleWeapon=prefix=>ANIM_MANIFEST[weaponRoot]?.[prefix]?`src="${weaponRoot}/${prefix}0.png"`:'style="visibility:hidden"';
+            let _weaponLayer = _weaponFx ? `<img class="mob-anim-weapon w-24 h-24 p-1 object-contain pointer-events-none" ${idleWeapon('idle_w_')} alt="" aria-hidden="true" onload="this.style.display='';this.style.visibility=''" onerror="this.style.visibility='hidden'">` : '';
             // ⚔️ v2.7.40 第二武器層(_w2·如伊弗利特雙武器/雙火焰)：與 _w 同機制·再疊一層 .mob-anim-weapon2
-            let _weaponFx2 = MOB_ANIM_NAMES.has(m.n) && (typeof MOB_ANIM_WEAPON_FX2 !== 'undefined') && MOB_ANIM_WEAPON_FX2.has(m.n);
-            let _weaponLayer2 = _weaponFx2 ? `<img class="mob-anim-weapon2 w-24 h-24 p-1 object-contain pointer-events-none" src="assets/anim/${_animDir(m.n)}/idle_w2_0.png" alt="" aria-hidden="true" onload="this.style.display='';this.style.visibility=''" onerror="this.style.visibility='hidden'">` : '';
+            let _weaponFx2 = !m._giranArt && MOB_ANIM_NAMES.has(m.n) && (typeof MOB_ANIM_WEAPON_FX2 !== 'undefined') && MOB_ANIM_WEAPON_FX2.has(m.n);
+            let _weaponLayer2 = _weaponFx2 ? `<img class="mob-anim-weapon2 w-24 h-24 p-1 object-contain pointer-events-none" ${idleWeapon('idle_w2_')} alt="" aria-hidden="true" onload="this.style.display='';this.style.visibility=''" onerror="this.style.visibility='hidden'">` : '';
             let _npcClanCrown = '';
             if (m._npcClanLeader && m._npcClanConflict && m._npcClanHasCastle && !m._dead && m.curHp > 0) {
                 let _crownAvatar = m._pvpAvatar === '公主' ? '公主' : '王子';
@@ -1335,11 +1522,18 @@ function _renderMobsImpl() {
                         </div>
                         ${badges}
                         <div class="flex justify-center mb-1 mob-img-wrap">
-                            <span class="mob-img-inner${_innerAnimCls}">${_shadowLayer}<img src="${_mi.src}" data-fb="${_mi.fb.concat(['https://placehold.co/100x100/1e293b/ffffff?text=?']).join('|')}" alt="${m.n}" onerror="_mobImgErr(this)" class="w-24 h-24 p-1 object-contain pointer-events-none${m._grace ? ' grace-glow' : ''}">${_weaponLayer}${_weaponLayer2}${_npcClanCrown}</span>
+                            <span class="mob-img-inner${_innerAnimCls}">${_shadowLayer}<img src="${_mi.src}" data-fb="${_mi.fb.concat(['assets/ui/missing-icon.png']).join('|')}" alt="${m.n}" onerror="_mobImgErr(this)" class="w-24 h-24 p-1 object-contain pointer-events-none${m._grace ? ' grace-glow' : ''}">${_weaponLayer}${_weaponLayer2}${_npcClanCrown}</span>
                         </div>
                         <div class="flex justify-center items-center gap-2 mb-1" style="height:16px;display:flex;align-items:center;justify-content:center;gap:8px;">${_statRow}</div>
                         ${_hpBar}
                      </div>`;
+            if(worldCards){
+                const html=_slotHtmls[_k],start=html.indexOf(badges),end=html.indexOf('<div class="flex justify-center items-center gap-2');
+                worldCards[_k]={uid:String(m.uid),row:_rowCls.trim(),active:!!act,rage:_rageNow,badges:_badgeTags,stats:_statRow,
+                    bar:_hpBar,percent:Math.max(0,Math.min(100,Math.round(100*m.curHp/(m.hp||1)))),
+                    // Keep the native sprite, its walking layer and its actual position on HP/status changes.
+                    shape:_sfCls+(m.boss?'B':'')+html.slice(html.indexOf(' data-uid='),start)+html.slice(start+badges.length,end)};
+            }
         } else {
             // 👇 修改這裡：純 BOSS 房除了中央（i === 1）以外，其餘兩格渲染為透明隱形區塊
             // 🔧 怪物尚未出現的空格：不顯示「搜尋中...」與虛線框，渲染為透明隱形區塊（保留版位、不擾亂背景）
@@ -1355,7 +1549,52 @@ function _renderMobsImpl() {
         let _wrote = false;
         // 11-11 效能：原本 CSS 用 #mob-list:has(.mob-back)／:has(.boss-slot) 判斷版位，每次怪格變動都讓瀏覽器重算大量元素樣式；改成這裡直接標 class（狀態沒變時 classList.toggle 不會動 DOM）
         { let _hb = _back, _hs = _slotHtmls.some(h => h.indexOf(' boss-slot') >= 0); _ml.classList.toggle('afk-has-back', _hb); _ml.classList.toggle('afk-has-boss', _hs); let _bv = document.getElementById('battle-view'); if (_bv) _bv.classList.toggle('afk-has-boss', _hs); }
-        if (!_c || _c.ml !== _ml || _c.structKey !== _structKey || _c.slots.length !== _slotHtmls.length || _ml.children.length !== _slotHtmls.length) {
+        if(worldCards && _c?.worldCards && _c.ml===_ml && _c.zone===mapState.current && _ml.children.length===_c.slots.length){
+            // A dead enemy may be spliced from the middle of the encounter. Keep every surviving
+            // sprite attached to its own UID, including its running attack, hurt and walking layers.
+            let nodesByUid,previousByUid;
+            const reordered=_c.worldCards.length!==worldCards.length||_c.worldCards.some((v,i)=>v?.uid!==worldCards[i]?.uid);
+            if(reordered){
+                const wanted=new Set(worldCards.filter(Boolean).map(v=>v.uid));
+                nodesByUid=new Map();previousByUid=new Map(_c.worldCards.filter(Boolean).map(v=>[v.uid,v]));
+                for(const card of Array.from(_ml.children)){
+                    const uid=card.dataset.uid;
+                    if(uid&&!wanted.has(uid)){card.remove();_wrote=true;}
+                    else if(uid)nodesByUid.set(uid,card);
+                }
+            }
+            for(let k=0;k<_slotHtmls.length;k++){
+                const next=worldCards[k],prev=reordered?previousByUid.get(next?.uid):_c.worldCards[k];
+                let card=_ml.children[k];
+                if(reordered&&card?.dataset.uid!==next?.uid){
+                    const retained=next&&nodesByUid.get(next.uid);
+                    if(retained){_ml.insertBefore(retained,card||null);card=retained;}
+                    else if(card?.dataset.uid){
+                        card.insertAdjacentHTML('beforebegin',_slotHtmls[k]);_wrote=true;continue;
+                    }
+                }
+                if(!card){_ml.insertAdjacentHTML('beforeend',_slotHtmls[k]);_wrote=true;continue;}
+                if(!next&&!card.dataset.uid)continue;
+                if(!reordered&&_slotHtmls[k]===_c.slots[k])continue;
+                if(!next||!prev||prev.shape!==next.shape||card.dataset.uid!==next.uid){
+                    card.outerHTML=_slotHtmls[k];_wrote=true;continue;
+                }
+                card.classList.toggle('active',next.active);card.classList.toggle('mob-raging',next.rage);
+                if(prev.row!==next.row){
+                    if(prev.row)card.classList.remove(prev.row);
+                    if(next.row)card.classList.add(next.row);
+                }
+                if(prev.badges!==next.badges)card.querySelector('.mob-badge-row').innerHTML=next.badges;
+                if(prev.stats!==next.stats)card.querySelector('.mob-img-wrap + div').innerHTML=next.stats;
+                if(next.bar!==prev.bar){
+                    const bar=card.querySelector('.mob-hp-bar');
+                    if(bar&&next.bar)bar.firstElementChild.firstElementChild.style.width=next.percent+'%';
+                    else if(bar)bar.remove();else card.insertAdjacentHTML('beforeend',next.bar);
+                }
+            }
+            while(_ml.children.length>_slotHtmls.length){_ml.lastElementChild.remove();_wrote=true;}
+            _c.structKey=_structKey;_c.slots=_slotHtmls;
+        } else if (!_c || _c.ml !== _ml || _c.structKey !== _structKey || _c.slots.length !== _slotHtmls.length || _ml.children.length !== _slotHtmls.length) {
             _ml.innerHTML = _slotHtmls.join('');   // 首次/結構改變/節點被換→整列重建
             _mobRenderCache = { ml: _ml, structKey: _structKey, slots: _slotHtmls };   // _slotHtmls 是每幀新建的暫存陣列→直接存、免 slice 複製
             _wrote = true;
@@ -1374,8 +1613,9 @@ function _renderMobsImpl() {
         }
         // 🖱️ name-show（hover 顯名）不再進 diff 字串、改由 _applyHoverName 單一管理→hover 不再觸發整格重建；
         //    但被重建過的格會丟失 hover class，故只在「有寫入 DOM」時重新套用一次（無重建的幀維持原樣、零成本）。
-        if (_wrote) _applyHoverName();
-        if (_wrote) { try { _mobAnimApply(); } catch(e){} }   // 🎞️ 重建過的格子立即補上當前動畫幀（同一同步工作內→不閃回靜態圖）
+        _mobRenderCache.worldCards=worldCards;_mobRenderCache.zone=mapState.current;
+        if (_wrote) {window.GiranCombat?.field?.restoreCards();_applyHoverName();}
+        if (_wrote) refreshBattleFrames(false);
     }
     // 🔥 訊息與一次性爆發只在轉場發生時觸發；持續光暈由上方 mob-raging class 維持。
     for (let m of _rageTransitions) {
@@ -1386,7 +1626,7 @@ function _renderMobsImpl() {
         } catch(e) {}
         try { vfxBossRage(m); } catch(e) {}
     }
-    try { _vfxFlush(); } catch(e){}   // ✨ VFX：格子重建後生成飄動傷害數字
+    _vfxRequestFlush();
 }
 
 // ===== 🎞️ 怪物 PNG 序列幀動畫引擎（v2.6.85·v2.6.86 分動作·v2.6.88 登場＋鎖定播放）=====
@@ -1582,7 +1822,8 @@ function mobStillImg(name, staticUrl, preferSpawn) {
     if (preferSpawn) {
         let _c = (typeof _mobAnimCache !== 'undefined') ? _mobAnimCache[name] : undefined;
         // 🎬 v2.6.93 已探測且確定「無登場動畫」(如哥布林只有 idle/attack/death)→不放 spawn_0，免每次渲染固定 404；未探測/探測中仍嘗試(首見一次無害)。
-        if (!(_c && _c !== 'probing' && (!_c.spawn || !_c.spawn.length))) list.push(`assets/anim/${dir}/spawn_0.png`);
+        const spawnUrl = `assets/anim/${dir}/spawn_0.png`;
+        if (_manifestCount(spawnUrl) !== 0 && !(_c && _c !== 'probing' && (!_c.spawn || !_c.spawn.length))) list.push(spawnUrl);
     }
     list.push(`assets/anim/${dir}/idle_0.png`, base);
     return { src: list[0], fb: list.slice(1) };
@@ -1625,12 +1866,24 @@ function _manifestCount(url0) {
     let n = ent[parts.slice(3).join('/')];                                    // 前綴（八方向含 "d6/" 前置）
     return (typeof n === 'number') ? n : 0;                                   // 資料夾在表內但無此前綴＝確定 0 幀
 }
-function _probeFramesWin(urlFor, maxF, minF, done) {
+function _probeFramesWin(urlFor, maxF, minF, done, sourceOnly = false) {
     // 🚀 v3.4.40 快路徑：幀數已知→直接平行載精確張數（零 404·零探測往返·離線同樣受益）。
     //    仍逐幀檢查載入結果並只取「從 0 起的連續段」→ manifest 過期(少載/多載)也不會壞，語意與探測完全一致。
     let known = _manifestCount(urlFor(0));
     if (known !== null) {
         if (known === 0) { done(null, 0); return; }                           // 確定沒有此序列→零請求
+        if (sourceOnly && window.GiranPartyView?.mobile() && known >= minF) {
+            const frames = window.__afkSheetFrameSources?.(urlFor(0), known);
+            if (frames) {
+                if(sourceOnly === 'measure'){
+                    const first=new Image();
+                    first.onload=()=>{frames[0]=first;done(frames,known);};
+                    first.onerror=()=>done(null,0);
+                    first.src=frames[0].src;
+                }else done(frames,known);
+                return;
+            }
+        }
         let got = [], left = known;
         let step = () => {
             if (--left > 0) return;
@@ -1640,6 +1893,7 @@ function _probeFramesWin(urlFor, maxF, minF, done) {
         };
         for (let i = 0; i < known; i++) {
             let im = new Image();
+            im.__giranProbeFrame = true;
             im.onload = () => { got[i] = im; step(); };
             im.onerror = () => { got[i] = false; step(); };                   // manifest 過期→該幀當缺號·截斷至連續段
             im.src = urlFor(i);
@@ -1663,6 +1917,7 @@ function _probeFramesWin(urlFor, maxF, minF, done) {
         while (!finished && inFlight < WIN && next < stopAt) {
             let i = next++; inFlight++;
             let im = new Image();
+            im.__giranProbeFrame = true;
             im.onload = () => { inFlight--; results[i] = im; settle(); };
             im.onerror = () => { inFlight--; results[i] = false; if (i < stopAt) stopAt = i; settle(); };
             im.src = urlFor(i);
@@ -1691,7 +1946,7 @@ function _mobAnimProbe(name) {
         let attempt = () => _probeFramesWin(i => `assets/anim/${animName}/${prefixes[pi]}${i}.png`, MOB_ANIM_MAX_FRAMES, minF || 2, (frames, n) => {
             if (!frames && n === 0 && pi + 1 < prefixes.length) { pi++; attempt(); return; }   // 第 0 幀即缺→換下一個前綴重試（同舊制：僅首幀缺才換前綴）
             target[key] = frames; finish();
-        });
+        }, target !== out.skillFx);
         attempt();
     };
     probeSeq(out, 'idle', ['idle_', '']);
@@ -1771,7 +2026,7 @@ function _mob8Probe(name, dir) {
     let pending = acts.length * 2;
     let finish = () => { if (--pending > 0) return; _mob8Cache[key] = out.idle ? out : null; };
     let probeSeq = (target, k, pfx, minF) => {   // 🚀 平行探測（滑動窗口·見 _probeFramesWin）
-        _probeFramesWin(i => folder + pfx + i + '.png', MOB_ANIM_MAX_FRAMES, minF || 2, frames => { target[k] = frames; finish(); });
+        _probeFramesWin(i => folder + pfx + i + '.png', MOB_ANIM_MAX_FRAMES, minF || 2, frames => { target[k] = frames; finish(); }, true);
     };
     acts.forEach(a => { probeSeq(out, a, a + '_', a === 'hurt' ? 1 : 2); probeSeq(out.shadow, a, a + '_s_', 1); });
 }
@@ -1787,6 +2042,17 @@ function _mob8TargetRect(m) {
     return null;
 }
 function _mob8FaceDir(m, box) {
+    const field=window.GiranCombat?.field;
+    if(field){
+        const from=field.point(m),key=m._facePartyKey;
+        const who=key?.startsWith('A:')?player.allies?.find(a=>a&&String(a._slot)===key.slice(2)):player;
+        const to=field.point(who)||field.leader;
+        if(from&&to){
+            const x=to.fx-from.fx,y=to.fy-from.fy;
+            if(Math.abs(x+y)>.12||Math.abs(y-x)>.24)m._face8=_vec2dir(24*(x+y),12*(y-x));
+        }
+        return m._face8??6;
+    }
     try {
         let tr = _mob8TargetRect(m); if (!tr) return (m._face8 != null) ? m._face8 : 6;
         let mr = box.getBoundingClientRect(); if (!mr.width) return (m._face8 != null) ? m._face8 : 6;
@@ -1796,20 +2062,29 @@ function _mob8FaceDir(m, box) {
         let d = _vec2dir(dx, dy); m._face8 = d; return d;
     } catch (e) { return (m._face8 != null) ? m._face8 : 6; }
 }
+function _mobLayers(card) {
+    const cached=card.dmNativeLayers;
+    if (cached&&card.contains(cached.body)) return cached;
+    const box=card.querySelector('.mob-img-inner')||card.querySelector('.mob-img-wrap')||card;
+    const body=box.querySelector('img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)');
+    return card.dmNativeLayers={box,body,shadow:box.querySelector('.mob-anim-shadow'),
+        weapon:box.querySelector('.mob-anim-weapon'),weapon2:box.querySelector('.mob-anim-weapon2')};
+}
 function _mob8Apply(c, m, uid, now) {
     now = now || Date.now();
-    let box = c.querySelector('.mob-img-inner') || c.querySelector('.mob-img-wrap') || c;
+    const layers=_mobLayers(c),box=layers.box;
     let dir = _mob8FaceDir(m, box);
-    let a = _mob8Cache[m.n + '#' + dir];
-    if (a === undefined) { _mob8Probe(m.n, dir); }
+    const name=m._giranArt||m.n;
+    let a = _mob8Cache[name + '#' + dir];
+    if (a === undefined) { _mob8Probe(name, dir); }
     if (!a || a === 'probing') {   // 該方向未載好→退上次成功方向／預設 d6
         let fb = (m._face8Loaded != null) ? m._face8Loaded : 6;
-        a = _mob8Cache[m.n + '#' + fb];
-        if (a === undefined) { _mob8Probe(m.n, fb); }
+        a = _mob8Cache[name + '#' + fb];
+        if (a === undefined) { _mob8Probe(name, fb); }
         if (!a || a === 'probing') return;   // 連退路都還沒好→本幀維持靜態圖
     } else { m._face8Loaded = dir; }
     m._animSpawned = true;   // 8 方向怪無 spawn 動作·標記免走 spawn 觸發
-    let img = c.querySelector('.mob-img-wrap .mob-img-inner img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)') || c.querySelector('.mob-img-wrap img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)');
+    let img=layers.body;
     if (!img) return;
     let _act = null, _f = 0;
     if (m._animAct) {   // 單次動作（攻擊/受擊/死亡）：自觸發時刻逐幀播一輪
@@ -1822,7 +2097,7 @@ function _mob8Apply(c, m, uid, now) {
     if (_act === null) return;
     let _bseq = a[_act];
     if (_bseq && _bseq[_f] && img.src !== _bseq[_f].src) img.src = _bseq[_f].src;
-    let _simg = c.querySelector('.mob-anim-shadow');
+    let _simg=layers.shadow;
     if (_simg && a.shadow) {
         let _sseq = a.shadow[_act];
         if (_sseq && _sseq.length) { if (_simg.style.visibility === 'hidden') _simg.style.visibility = ''; let _sf = _f < _sseq.length ? _f : (_f % _sseq.length); if (_simg.src !== _sseq[_sf].src) _simg.src = _sseq[_sf].src; }
@@ -1837,17 +2112,25 @@ function _mobAnimApply() {
     let mobByUid = new Map();
     for (let mob of mapState.mobs) if (mob) mobByUid.set(String(mob.uid), mob);
     let cards = ml.querySelectorAll('.mob-target[data-uid]');
+    const world=window.GiranCombat?.field,terrain=world?.ready()&&world.terrain;
     for (let c of cards) {
         let uid = c.getAttribute('data-uid');
         let m = mobByUid.get(String(uid));
-        if (!m) continue;
+        if (!m || c.classList.contains('dm-off-camera') || (c.classList.contains('dm-walking') && !m._animAct)) continue;
+        if (terrain && m._animSpawned && !m._animAct) {
+            const actor=world.point(m);
+            if (actor) {
+                const [x,y]=terrain.project(actor.fx,actor.fy),margin=Math.max(150,(actor.inkHeight||0)*2);
+                if(x < -margin || y < -margin || x > terrain.width+margin || y > terrain.height+margin) continue;
+            }
+        }
         if (!MOB_ANIM_NAMES.has(m.n)) continue;   // 🎬 非動畫名單→維持靜態圖·不探測（免對 1000+ 無動畫怪發 404）
-        if (MOB_ANIM_8DIR.has(m.n)) { _mob8Apply(c, m, uid, now); continue; }   // 🧭 v3.2.11 八方向怪：依攻擊目標選向（不走通用單方向路徑）
+        if (m._giranArt||MOB_ANIM_8DIR.has(m.n)) { _mob8Apply(c, m, uid, now); continue; }   // 🧭 v3.2.11 八方向怪：依攻擊目標選向（不走通用單方向路徑）
         let a = _mobAnimCache[m.n];
         if (a === undefined) { _mobAnimProbe(m.n); continue; }   // 首次遇到→背景探測幀檔（探測完成前維持靜態圖）
         if (!a || a === 'probing') continue;
         if (!m._animSpawned) { m._animSpawned = true; if (a.spawn) _mobAnimTrigger(m, 'spawn'); }   // 🎬 登場：該怪物物件首次被動畫系統看到→播登場一輪（每隻一次）
-        let img = c.querySelector('.mob-img-wrap .mob-img-inner img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)') || c.querySelector('.mob-img-wrap img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)'); if (!img) continue;
+        const layers=_mobLayers(c),img=layers.body;if (!img) continue;
         let _act = null, _f = 0;   // 🌑 先決定「動作＋幀索引」，本體與影子共用→逐幀同步
         if (m._animAct) {   // 🎬 單次動作（登場/攻擊/技能/受擊）：自觸發時刻起逐幀播一輪，播畢清除回待機
             let _ak = m._animAct.k;
@@ -1866,13 +2149,13 @@ function _mobAnimApply() {
             let _bseq = a[_act];
             if (_bseq && _bseq[_f] && img.src !== _bseq[_f].src) img.src = _bseq[_f].src;
             if (a.shadow) {   // 🌑 真實影子層：同動作同幀（缺該動作退 idle·幀數不足取模）→與本體像素級同步
-                let _simg = c.querySelector('.mob-anim-shadow');
+                let _simg=layers.shadow;
                 if (_simg) { let _sseq = a.shadow[_act];   // 🌑 v2.7.41 該動作無影子→隱藏(不再退 idle)：不死鳥 death 無 death_s→死亡無影子(用戶要求·全 164 影子怪僅此一例不對稱)
                     if (_sseq && _sseq.length) { if (_simg.style.display === 'none') _simg.style.display = ''; if (_simg.style.visibility === 'hidden') _simg.style.visibility = ''; let _sf = _f < _sseq.length ? _f : (_f % _sseq.length); if (_simg.src !== _sseq[_sf].src) _simg.src = _sseq[_sf].src; }
                     else if (_simg.style.visibility !== 'hidden') _simg.style.visibility = 'hidden'; }
             }
             if (a.weapon) {   // ⚔️ 武器揮動特效層：v2.7.36 嚴格「直接對照本動作本幀」(_w 與本體動作 1:1 逐幀對照·不退 idle·不取模)；本動作或本幀無 _w→隱藏(不殘留上一動作的舊武器幀)
-                let _wimg = c.querySelector('.mob-anim-weapon');
+                let _wimg=layers.weapon;
                 if (_wimg) {
                     let _wseq = a.weapon[_act];
                     if (_wseq && _wseq[_f]) { if (_wimg.style.display === 'none') _wimg.style.display = ''; if (_wimg.style.visibility === 'hidden') _wimg.style.visibility = ''; if (_wimg.src !== _wseq[_f].src) _wimg.src = _wseq[_f].src; }
@@ -1880,7 +2163,7 @@ function _mobAnimApply() {
                 }
             }
             if (a.weapon2) {   // ⚔️ v2.7.40 第二武器層：同 _w 嚴格 1:1 逐幀對照
-                let _w2img = c.querySelector('.mob-anim-weapon2');
+                let _w2img=layers.weapon2;
                 if (_w2img) {
                     let _w2seq = a.weapon2[_act];
                     if (_w2seq && _w2seq[_f]) { if (_w2img.style.display === 'none') _w2img.style.display = ''; if (_w2img.style.visibility === 'hidden') _w2img.style.visibility = ''; if (_w2img.src !== _w2seq[_f].src) _w2img.src = _w2seq[_f].src; }
@@ -1975,6 +2258,15 @@ function _classFacing8(who, el) {
     try {
         let tgtUid = who && who._faceTgtUid;
         if (tgtUid == null) return cur;
+        const field=window.GiranCombat?.field;
+        if(field?.ready()){
+            const self=field.point(who),other=field.point(mapState.mobs.find(m=>m&&m.uid===tgtUid));
+            if(self&&other){
+                const a=field.terrain.project(self.fx,self.fy),b=field.terrain.project(other.fx,other.fy);
+                if(a[0]!==b[0]||a[1]!==b[1])who._faceD=_vec2dir(b[0]-a[0],b[1]-a[1]);
+                return who._faceD??cur;
+            }
+        }
         let tr = (typeof _vfxSlotRect === 'function') ? _vfxSlotRect(tgtUid) : null;   // 目標怪格 rect（怪已死/離場→null）
         if (!tr || !tr.width) return cur;
         let er = (el && el.getBoundingClientRect) ? el.getBoundingClientRect() : null;
@@ -2030,33 +2322,39 @@ function _actorBattleForm(actor, allyGrp) {   // 玩家／傭兵戰場形態：�
     return _classForm(actor, !!allyGrp);
 }
 function _playerBattleForm() {
-    return _actorBattleForm((typeof player !== 'undefined') ? player : null, false);
+    const who = (typeof player !== 'undefined') ? player : null;
+    const form = _actorBattleForm(who, false);
+    return window.__dimMapForm ? window.__dimMapForm(form, who, false) : form;
 }
 let _morphBattleCache = {};   // 形態 key（morph:<名>｜class:<avatar>:<武器key>）→ { idle/attack/skill/hurt/death:[Image]|null, shadow:{...}, weapon:{...} } | 'probing'
 function _battleSpriteProbe(form) {
-    _morphBattleCache[form.key] = 'probing';
-    let out = { shadow: {}, weapon: {} };
-    let pending = form.wpn ? 20 : 18;   // 🗡️ v3.0.70 職業形態多探 2 項：武器專屬 skill（<wpn>_skill_·黑暗妖精雙刀/鋼爪·龍騎士雙手劍/鎖鏈劍·戰士各武器）；🚶 v3.7.65 動作多一組 walk（body/shadow/weapon 共 3）
-    let finish = () => { if (--pending <= 0) {
-        // 🏹 弓/十字弓無專屬技能動畫(bow_skill_)：施放技能(如妖精三重矢)時原退回「通用 skill_」空手施法姿勢→改借用弓攻擊(bow_attack)姿勢，持弓者施放技能不再變空手（玩家＋傭兵共用此快取·同套用影子層）
-        if (form.wpn === 'bow' && !out.wskill && out.attack) { out.wskill = out.attack; if (out.shadow && !out.shadow.wskill && out.shadow.attack) out.shadow.wskill = out.shadow.attack; }
-        _morphBattleCache[form.key] = out;
-    } };
-    let probeSeq = (target, key, pfx, minF) => {   // 🚀 平行探測（滑動窗口·見 _probeFramesWin）
-        _probeFramesWin(i => form.base + pfx + i + '.png', MOB_ANIM_MAX_FRAMES, minF || 2, frames => { target[key] = frames; finish(); });
-    };
-    let pfxOf = (a) => (form.wpn && a !== 'skill' && a !== 'death') ? form.wpn + '_' + a + '_' : a + '_';   // 職業形態：idle/attack/hurt 帶武器前綴·skill/death 共用
-    ['idle', 'walk', 'attack', 'skill', 'hurt', 'death'].forEach(a => {   // 🚶 v3.7.65 walk＝行走幀（移動中播放·無此檔→null→退 idle）
-        let p = pfxOf(a);
-        probeSeq(out, a, p, a === 'hurt' ? 1 : 2);
-        probeSeq(out.shadow, a, p.slice(0, -1) + '_s_', 1);
-        if (form.wpn) { out.weapon[a] = null; finish(); }   // 職業動態無 _w 層→免探測（省 404）
-        else probeSeq(out.weapon, a, p.slice(0, -1) + '_w_', 1);
-    });
-    if (form.wpn) {   // 🗡️ 武器專屬 skill（無此檔＝null→播放層退通用 skill）
-        probeSeq(out, 'wskill', form.wpn + '_skill_', 2);
-        probeSeq(out.shadow, 'wskill', form.wpn + '_skill_s_', 1);
+    const out={shadow:{},weapon:{}};
+    // A full squad uses many forms and facings. Decode each action only when its renderer requests it.
+    function sequence(target,key,prefix,minimum,fallback){
+        let active=false,finished=false,value=null;
+        Object.defineProperty(target,key,{configurable:true,enumerable:true,get(){
+            if(!active){
+                active=true;
+                _probeFramesWin(i=>form.base+prefix+i+'.png',MOB_ANIM_MAX_FRAMES,minimum,frames=>{
+                    value=frames;finished=true;
+                    if(frames || !fallback)Object.defineProperty(target,key,{enumerable:true,value:frames});
+                },key==='idle' && target===out?'measure':true);
+            }
+            return value||(finished&&fallback?fallback():null);
+        }});
     }
+    for(const act of ['idle','walk','attack','skill','hurt','death']){
+        const prefix=(form.wpn&&act!=='skill'&&act!=='death'?form.wpn+'_':'')+act;
+        sequence(out,act,prefix+'_',act==='hurt'?1:2);
+        sequence(out.shadow,act,prefix+'_s_',1);
+        if(!form.wpn)sequence(out.weapon,act,prefix+'_w_',1);
+    }
+    if(form.wpn){
+        sequence(out,'wskill',form.wpn+'_skill_',2,form.wpn==='bow'?()=>out.attack:null);
+        sequence(out.shadow,'wskill',form.wpn+'_skill_s_',1,form.wpn==='bow'?()=>out.shadow.attack:null);
+    }
+    _morphBattleCache[form.key]=out;
+    void out.idle;
 }
 function _actorMorphName(actor) {   // 玩家／傭兵目前變身名（含套裝別名映射）·沒有動畫資源則退回職業外觀
     if (!actor) return null;
@@ -2258,6 +2556,48 @@ function _playerMoveStep(bv) {
     st.mx = Math.max(0.05, Math.min(0.95, st.mx));
     st.mb = Math.max(2, Math.min(28, st.mb));
 }
+function _captainMeter(kind) {
+    const bar = document.createElement('span');
+    bar.className = 'captain-' + kind;
+    bar.setAttribute('role', 'meter');
+    bar.setAttribute('aria-label', '隊長 ' + kind.toUpperCase());
+    bar.setAttribute('aria-valuemin', '0');
+    const fill = document.createElement('i');
+    fill.setAttribute('aria-hidden', 'true');
+    bar.append(fill);
+    return bar;
+}
+function _updateCaptainMeter(bar, current, maximum) {
+    const max = Math.max(0, Number(maximum) || 0);
+    const value = Math.max(0, Math.min(max, Number(current) || 0));
+    if (bar.lastValue === value && bar.lastMax === max) return;
+    bar.lastValue = value;
+    bar.lastMax = max;
+    bar.setAttribute('aria-valuemax', String(max));
+    bar.setAttribute('aria-valuenow', String(value));
+    bar.firstElementChild.style.transform = 'scaleX(' + (max ? value / max : 0) + ')';
+}
+function _renderCaptainVitals(parent, height, visible = true) {
+    let bars = parent.captainVitals;
+    if (!_showCaptainVitals || !visible) {
+        if (bars) { bars.remove(); parent.captainVitals = null; }
+        return;
+    }
+    if (!bars) {
+        bars = document.createElement('span');
+        bars.className = 'captain-vitals';
+        bars.append(_captainMeter('hp'), _captainMeter('mp'));
+        parent.append(bars);
+        parent.captainVitals = bars;
+    }
+    const bottom = Math.round(height) + 2;
+    if (bars.lastBottom !== bottom) {
+        bars.lastBottom = bottom;
+        bars.style.bottom = bottom + 'px';
+    }
+    _updateCaptainMeter(bars.firstElementChild, player.dead ? 0 : player.hp, player.mhp);
+    _updateCaptainMeter(bars.lastElementChild, player.mp, player.mmp);
+}
 function _playerMorphApply() {   // 8fps ticker 驅動（🗡️ v3.0.67 形態＝變身優先→職業動態·key 含武器變體→換武器自動重建）
     let form = _playerBattleForm();
     let bv = document.getElementById('battle-view');
@@ -2293,9 +2633,15 @@ function _playerMorphApply() {   // 8fps ticker 驅動（🗡️ v3.0.67 形態�
         let w = (a.idle && a.idle[0]) ? a.idle[0].naturalWidth : 100;
         el.style.width = w + 'px';
     } else if (_pmState.el.parentElement !== bv) bv.appendChild(_pmState.el);
+    if (document.documentElement.dataset.playMode === 'dimension' && (_showCaptainVitals || _pmState.el.captainVitals)) {
+        const idle = a.idle?.[0];
+        // Anchor to the standing figure across poses. Many sprite sheets have transparent space above the head.
+        const height = _showCaptainVitals && idle ? idle.naturalHeight * (1 - _mobImgAnchor(idle).tc) : 60;
+        _renderCaptainVitals(_pmState.el, height);
+    }
     // 🗡️ v3.0.71 每輪更新：站怪物格縫隙(依 5格/3格版面動態)·免 transform；🤝 v3.6.89 固定站位＝玩家恆前排中央（bottom/zIndex 一併固定）
     // 🚶 v3.7.64 主角走位（取代 v3.6.89 玩家固定站位·僅主玩家；傭兵仍固定站位）：_playerMoveStep 每輪步進·CSS 補間平滑（同寵物 .14s linear）
-    {
+    if (!bv.classList.contains('dm-map') || !_pmState.el.classList.contains('dm-placed')) {
         let _pw = (a.idle && a.idle[0]) ? a.idle[0].naturalWidth : 100;
         if (PLAYER_BATTLE_WALK) {
             _playerMoveStep(bv);
@@ -2348,8 +2694,10 @@ function _playerMorphApply() {   // 8fps ticker 驅動（🗡️ v3.0.67 形態�
         let cr = document.createElement('img'); cr.className = 'pm-castle-crown'; cr.src = 'assets/ui/castle-crown.gif?v=v3.6.22'; cr.alt = ''; cr.draggable = false; cr.style.visibility = 'hidden';
         _pmState.el.appendChild(cr); I.cr = cr;
     }
-    if (I.bd.src !== seq[f].src) I.bd.src = seq[f].src;
     _playerBattleCrownApply(I.cr, form, act);
+    if (I.bd.complete && I.bd.naturalWidth && (act==='idle'||act==='attack'||act==='skill') &&
+        bv.classList.contains('dm-map') && (_pmState.el.classList.contains('dm-performing') || _pmState.el.classList.contains('dm-walking'))) return;
+    if (I.bd.src !== seq[f].src) I.bd.src = seq[f].src;
     let ss = (act === 'skill' && _useW) ? a.shadow.wskill : a.shadow[act];   // 影子：寬容（幀數不足取模·缺動作隱藏）
     if (ss && ss.length) { let sf = f < ss.length ? f : (f % ss.length); if (I.sh.style.visibility === 'hidden') I.sh.style.visibility = ''; if (I.sh.src !== ss[sf].src) I.sh.src = ss[sf].src; }
     else if (I.sh.style.visibility !== 'hidden') I.sh.style.visibility = 'hidden';
@@ -2377,6 +2725,8 @@ let _allySpriteStates = {};   // slot → { act, t, prevHp, el, imgs, key, skGen
 function _allySpriteTrigger(ally, k, skId) {   // js/06 掛點：allyAttackOnce→'attack'·三施法函式→'skill'
     try {
         if (!ally || ally._slot == null) return;
+        if (!GiranPartyView.shows(ally)) return;
+        if (k === 'skill') window.__dimMapMemberCast?.(ally);
         let st = _allySpriteStates[String(ally._slot)];
         if (!st || st.act === 'death') return;
         if (st.act === 'skill' && k === 'attack') {   // 🔮 v3.0.96 鏡像玩家(v3.0.94)：技能動畫優先——攻擊排隊(pendAtk)到技能播完才播（傭兵受擊走 HP-delta 本就不打斷施法）
@@ -2391,7 +2741,7 @@ function _allySpriteTrigger(ally, k, skId) {   // js/06 掛點：allyAttackOnce�
 function _allySpritesApply() {   // 8fps ticker 驅動
     let bv = document.getElementById('battle-view');
     let inBattle = bv && !bv.classList.contains('hidden') && bv.classList.contains('area-fit');
-    let allies = (typeof player !== 'undefined' && player && player.allies) || [];
+    let allies = (typeof player !== 'undefined' && player) ? GiranPartyView.visibleAllies() : [];
     for (let slot in _allySpriteStates) {   // 清理：離場/不在戰鬥→移除
         if (!inBattle || !allies.some(a => a && String(a._slot) === slot)) {
             let st = _allySpriteStates[slot];
@@ -2402,7 +2752,8 @@ function _allySpritesApply() {   // 8fps ticker 驅動
     if (!inBattle) return;
     allies.forEach((ally, i) => {
         if (!ally) return;
-        let form = _actorBattleForm(ally, i > 0);   // 傭兵變身優先；未變身才使用原職業動畫
+        let form = _actorBattleForm(ally, i > 0);
+        if (window.__dimMapForm) form = window.__dimMapForm(form, ally, i > 0);   // 傭兵變身優先；未變身才使用原職業動畫
         if (!form) return;
         let a = _morphBattleCache[form.key];
         if (a === undefined) { _battleSpriteProbe(form); return; }
@@ -2422,6 +2773,7 @@ function _allySpritesApply() {   // 8fps ticker 驅動
         if (!st.el) {
             let el = document.createElement('div');
             el.className = 'party-sprite';
+            el.dataset.memberSlot = String(ally._slot);
             let sh = document.createElement('img'); sh.className = 'pm-shadow';
             let bd = document.createElement('img'); bd.className = 'pm-body';
             let wp = document.createElement('img'); wp.className = 'pm-weapon';   // 🧝 v3.5.23 傭兵變身特效層（_w·screen 混合）＝鏡像玩家三層結構
@@ -2432,7 +2784,7 @@ function _allySpritesApply() {   // 8fps ticker 驅動
         } else if (st.el.parentElement !== bv) bv.appendChild(st.el);
         let w = (a.idle && a.idle[0]) ? a.idle[0].naturalWidth : 100;
         st.el.style.width = w + 'px';
-        { let _ps = _partySpritePos().A, _pp = _ps[Math.min(i, _ps.length - 1)]; st.el.style.left = 'calc(' + _pp.x + ' - ' + Math.round(w / 2) + 'px)'; st.el.style.bottom = _pp.b + 'px'; st.el.style.zIndex = String(30 - _pp.b); }
+        if (!st.el.classList.contains('dm-placed')) { let _ps = _partySpritePos().A, _pp = _ps[Math.min(i, _ps.length - 1)]; st.el.style.left = 'calc(' + _pp.x + ' - ' + Math.round(w / 2) + 'px)'; st.el.style.bottom = _pp.b + 'px'; st.el.style.zIndex = String(30 - _pp.b); }
         if (CLASS_ANIM_8DIR.has(ally.avatar) || MORPH_ANIM_3DIR.has(_actorMorphName(ally) || '')) _classFacing8(ally, st.el);   // 🧭 職業／變身皆依攻擊目標更新朝向（傭兵固定站位不走位→恆為目標朝向）
         // 動作＋幀（同主玩家邏輯·wskill 武器專屬 skill 優先·咆哮通用）
         let act = null, f = 0, _useW = false;
@@ -2458,6 +2810,10 @@ function _allySpritesApply() {   // 8fps ticker 驅動
         if (act === null && a.idle) { act = 'idle'; f = (Math.floor(Date.now() / (1000 / MOB_ANIM_FPS)) + i * 3) % a.idle.length; _useW = false; }   // 隊員間錯相（+i*3）
         if (act === null) return;
         let seq = (act === 'skill' && _useW) ? a.wskill : a[act]; if (!seq || !seq[f]) return;
+        // Directional walking and combat frames already cover these standing layers.
+        // Retain the decoded reference for the foot anchor and resume at the live frame.
+        if (st.imgs.bd.complete && st.imgs.bd.naturalWidth && (act==='idle'||act==='attack'||act==='skill') &&
+            (st.el.classList.contains('dm-performing') || st.el.classList.contains('dm-walking'))) return;
         if (st.imgs.bd.src !== seq[f].src) st.imgs.bd.src = seq[f].src;
         let ss = (act === 'skill' && _useW) ? a.shadow.wskill : a.shadow[act];
         if (ss && ss.length) { let sf = f < ss.length ? f : (f % ss.length); if (st.imgs.sh.style.visibility === 'hidden') st.imgs.sh.style.visibility = ''; if (st.imgs.sh.src !== ss[sf].src) st.imgs.sh.src = ss[sf].src; }
@@ -2469,7 +2825,29 @@ function _allySpritesApply() {   // 8fps ticker 驅動
         }
     });
 }
-setInterval(() => { if (!document.hidden && !(typeof catchupActive === 'function' && catchupActive() && !(typeof _ffAcc !== 'undefined' && _ffAcc && _ffAcc.fg) /* 🔌 加掛版補丁:前景跟不上時照常重畫 */)) { try { _mobAnimApply(); } catch (e) {} try { _updateFreezeFx(); } catch (e) {} try { _updateMobSkillFx(); } catch (e) {} try { _allySpritesApply(); } catch (e) {} try { _playerMorphApply(); } catch (e) {} } }, Math.floor(1000 / MOB_ANIM_FPS));
+let battleFrameRequest=0, refreshPartyFrames=false;
+function paintBattleFrames(){
+    battleFrameRequest=0;
+    const party=refreshPartyFrames;
+    refreshPartyFrames=false;
+    if(document.hidden || (typeof catchupActive==='function' && catchupActive() && !_ffAcc?.fg))return;
+    try { _mobAnimApply(); } catch(e){}
+    if(!party)return;
+    try { _updateFreezeFx(); } catch(e){}
+    try { _updateMobSkillFx(); } catch(e){}
+    try { _allySpritesApply(); } catch(e){}
+    try { _playerMorphApply(); } catch(e){}
+}
+function refreshBattleFrames(party){
+    refreshPartyFrames=refreshPartyFrames||party;
+    if(battleFrameRequest)return;
+    // Several spatial hits can land between screen refreshes. Select the current
+    // image of each original sequence only once for the frame that will be painted.
+    if(window.GiranCombat?.field?.ready()&&!document.hidden){
+        battleFrameRequest=requestAnimationFrame(paintBattleFrames);
+    }else paintBattleFrames();
+}
+setInterval(()=>{if(!document.hidden)refreshBattleFrames(true);},Math.floor(1000/MOB_ANIM_FPS));
 
 // 🌙 v3.6.03 掛網記憶體釋放：切到背景的瞬間清空 #vfx-layer 全部特效元素＋冰凍/怪技能追蹤 dict。
 //    背景分頁的移除管線全數停擺（animationend 不觸發·WAAPI onfinish 暫停·setTimeout 節流至 1/分鐘），

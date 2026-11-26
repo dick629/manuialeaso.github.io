@@ -65,10 +65,10 @@
     // manifest 只在 http(s) 注入:file:// 下瀏覽器抓 manifest 會被 CORS 擋(origin null)、console 噴紅字
     if (/^https?:$/.test(location.protocol) && !document.querySelector('link[rel="manifest"]')) add('link', { rel: 'manifest', href: 'manifest.webmanifest' });
     if (!document.querySelector('link[rel="apple-touch-icon"]')) add('link', { rel: 'apple-touch-icon', href: ICON });
-    if (!document.querySelector('meta[name="theme-color"]')) add('meta', { name: 'theme-color', content: '#0f141d' });
+    if (!document.querySelector('meta[name="theme-color"]')) add('meta', { name: 'theme-color', content: '#1b211b' });
     if (!document.querySelector('meta[name="apple-mobile-web-app-capable"]')) add('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
     if (!document.querySelector('meta[name="mobile-web-app-capable"]')) add('meta', { name: 'mobile-web-app-capable', content: 'yes' });
-    if (!document.querySelector('meta[name="apple-mobile-web-app-title"]')) add('meta', { name: 'apple-mobile-web-app-title', content: '放置天堂' });
+    if (!document.querySelector('meta[name="apple-mobile-web-app-title"]')) add('meta', { name: 'apple-mobile-web-app-title', content: '次元奇岩城' });
   }
 
   // ----- 安裝 UI ----------------------------------------------------------
@@ -198,6 +198,8 @@
   //   「舊 ?v= 的 js/css」會殘留在桶裡 → 把「本頁實際引用的 js/css URL 清單」送給 SW,清掉不在清單上的殘留。
   //   清單從 DOM 收集(script[src] + link[rel=stylesheet]),永遠跟當下載入的 index.html 一致,零手動維護。
   function reconcileCode() {
+    // The fusion entry lists both modes' runtime dependencies. The fixed entry omits the map renderer.
+    if (document.documentElement.dataset.playMode === 'dimension') return;
     whenController(function (ctrl) {
       var keep = [];
       var scripts = document.querySelectorAll('script[src]');

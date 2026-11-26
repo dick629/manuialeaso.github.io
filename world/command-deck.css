@@ -1,0 +1,44 @@
+/* Enlarge the existing rail upwards, keeping the controls beneath it in place. */
+html body.giran-chrome #giran-dock > #giran-vitals {
+  --ga-vital-height:43px;
+  top:calc(17px - var(--ga-vital-height));height:var(--ga-vital-height);
+}
+html body.giran-chrome #giran-dock #giran-vitals>div {
+  height:100%;background-size:100% 100%;
+}
+html body.giran-chrome #giran-dock #giran-vitals .ga-vital-track {
+  display:block;position:absolute;inset:6px 2px 2px;overflow:hidden;
+  border:1px solid #755341;border-radius:2px;background:#1c1721;
+}
+.ga-vital-track::after {
+  content:"";display:block;height:100%;transform-origin:left center;transform:scaleX(var(--ga-fill,0));
+  background:linear-gradient(#f59470,#c74d33 24%,#a52f21 51%,#802316 78%,#af3d26);
+}
+.ga-mp .ga-vital-track::after {background:linear-gradient(#91baff,#427fdb 24%,#295dbb 51%,#1d4191 78%,#3773cb)}
+html body.giran-chrome #giran-dock #giran-vitals meter {
+  opacity:0;inset:6px 2px 2px;width:calc(100% - 4px);height:calc(100% - 8px);
+}
+html body.giran-chrome #giran-dock #giran-vitals span {
+  inset:6px 0 2px;display:flex;align-items:center;justify-content:center;color:#fff;
+  font:800 clamp(14px,1.28vw,20px)/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;
+  text-shadow:1px 1px 2px #10090b,-1px -1px 1px #160e13,0 2px 3px #000;
+}
+html body.giran-chrome #giran-dock #giran-vitals small {inset:50% auto auto 5px;transform:translateY(-35%);font:700 9px/1 system-ui;color:#ffedcc}
+html body.giran-chrome #giran-dock #giran-vitals .ga-mp small {right:5px;left:auto}
+html body.giran-chrome #giran-dock #giran-vitals::after {top:0;height:100%;width:clamp(26px,3.3vw,42px);background-position:center}
+html body.giran-chrome #giran-dock #giran-vitals>div::before {height:92%;width:7px}
+.ga-pilot-info {min-width:0;flex:1;display:grid;gap:2px}
+html body.giran-chrome #giran-dock #ga-captain-name {
+  display:block; max-width:100%; min-height:0; padding:0; margin:0; border:0; background:none;
+  color:inherit; font:inherit; text-shadow:inherit; text-align:left; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; cursor:pointer;
+}
+html body.giran-chrome #giran-dock #ga-captain-name[hidden] {display:none}
+#giran-dock .ga-pilot-info .status-exp-bar {width:100%;height:16px}
+#giran-dock .ga-pilot-info #txt-exp {line-height:14px;font-size:11px;font-weight:700;color:#fff4ce;font-variant-numeric:tabular-nums}
+#giran-dock .ga-pilot-info #txt-exp::before {content:'EXP '}
+@media(max-width:1100px){
+  html body.giran-chrome #giran-dock > #giran-vitals {--ga-vital-height:36px}
+  .ga-pilot-info {display:flex;align-items:center;gap:8px}
+  #giran-dock .ga-pilot-info .status-exp-bar {flex:0 0 78px}
+}

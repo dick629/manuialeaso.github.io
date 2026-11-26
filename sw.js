@@ -1,3 +1,4 @@
+importScripts('site-config.js','merged/media-paths.js','merged/media-router.js');
 /* ============================================================================
  * sw.js — PWA Service Worker：程式桶 / 圖桶「分離快取」
  *
@@ -29,8 +30,8 @@
  *
  * 圖桶失效走 reconcileImages 逐張對帳(見上);不再背景預抓——圖片一律 on-demand 用到才抓、不主動下載整包。
  * ========================================================================== */
-const CODE_VERSION = 'code-a10bb211bf00';   // ← scripts/stamp-sw-version.mjs 自動覆寫,勿手改(只用來讓 sw.js 內容變動→觸發更新偵測,不是桶名)
-const BUILD_ID     = 'merge-0.4-a10bb2'; // ← stamp 在 CODE_VERSION 變動時一起更新成台灣時間 MMDD-HHMM(僅供畫面辨識版本)
+const CODE_VERSION = 'code-3b21d7fd8c07';   // ← scripts/stamp-sw-version.mjs 自動覆寫,勿手改(只用來讓 sw.js 內容變動→觸發更新偵測,不是桶名)
+const BUILD_ID     = 'giran-0.8.25-3b21d7'; // ← stamp 在 CODE_VERSION 變動時一起更新成台灣時間 MMDD-HHMM(僅供畫面辨識版本)
 const IMG_VERSION  = 'img-v3';    // 固定桶名,不再 bump(失效改走逐張對帳,見 reconcileImages)
 const CODE_CACHE = 'code-v1';     // 固定桶名,不隨版本換(檔案以 ?v= 定址;殘留由 reconcileCode 對帳清掉)
 const IMG_CACHE  = IMG_VERSION;
@@ -39,11 +40,6 @@ const IMG_CACHE  = IMG_VERSION;
 const IMG_HASH_KEY = '/__afk-img-hashes__';
 // 圖桶內另一個合成 entry,存「assets/anim/<怪>資料夾 → 已快取版本的合併 sha」,供動畫幀逐「怪」對帳(見 reconcileAnim)。
 const ANIM_HASH_KEY = '/__afk-anim-hashes__';
-
-// 外部 CDN：離線也要能用,用 cache-first 收進程式桶(opaque 也存)。
-//   placehold.co=怪物圖載入失敗的備援圖。(Tailwind 已由作者改成本機 css/tailwind-built.css,
-//   走 .css 副檔名進程式桶,不再需要列外部主機;原本的 cdn.tailwindcss.com 已移除。)
-const EXTERNAL_HOSTS = ['placehold.co'];
 
 // 導覽文件 network-first:有快取墊底時,等網路最多這麼久還沒回就先回快取(背景仍把快取更新到最新)。
 //   離線時 fetch 會更快直接失敗、不會等滿這段;這只是「連得到但很慢/卡住」時不讓開場被網路拖死的安全閥。
@@ -159,36 +155,38 @@ async function reconcileImages(manifest, client) {
   const entries = manifestEntries(manifest);
   const cache = await caches.open(IMG_CACHE);
   const hashes = await readImgHashes(cache);
-  const manifestPaths = new Set(entries.map((en) => en.path));
-  // 先列一次桶裡有哪些圖(2026-10-28):清單 6 萬筆,大多沒快取過,原本每筆都 cache.match 一次。
-  //   列得出來就用集合直接跳過沒快取的;桶太大 keys() 會拋錯(見 reconcileAnim),那就退回逐筆查。
-  let cachedSet = null;
+  const physical=p=>LineageMedia.keyFor(p)||p;
+  const manifestPaths=new Set(entries.map(en=>physical(en.path)));
+  const groups=new Map();
   try {
-    const base = decodeURIComponent(new URL('./', self.location).pathname);
-    cachedSet = new Set();
-    for (const r of await cache.keys()) {
-      let p; try { p = decodeURIComponent(new URL(r.url).pathname); } catch (err) { continue; }
-      if (p.startsWith(base)) cachedSet.add(p.slice(base.length));
+    for(const req of await cache.keys()){
+      const u=new URL(req.url), base=new URL(LineageMedia.mediaBase?LineageMedia.mediaBase+'/':LineageMedia.site);
+      const site=new URL(LineageMedia.site);
+      const dir=u.origin===base.origin&&u.pathname.startsWith(base.pathname)?base:site;
+      if(u.origin!==dir.origin||!u.pathname.startsWith(dir.pathname))continue;
+      let path;try{path=decodeURIComponent(u.pathname.slice(dir.pathname.length));}catch{continue;}
+      const k=physical(path);
+      if(!groups.has(k))groups.set(k,[]);
+      groups.get(k).push(req);
     }
-  } catch (err) { cachedSet = null; }
-  let evicted = 0;
-  for (const en of entries) {
-    if (!en.sha) continue;                          // manifest 沒帶 sha 無從比對
-    if (hashes[en.path] === en.sha) continue;       // 記錄相符 → 最新
-    if (cachedSet && !cachedSet.has(en.path)) { if (en.path in hashes) delete hashes[en.path]; continue; }  // 沒快取 → 之後抓的就是新的
-    const cached = await cache.match(en.path);
-    if (!cached) { if (en.path in hashes) delete hashes[en.path]; continue; }  // 沒快取 → 之後抓的就是新的
-    if (hashes[en.path] === undefined) {
-      let actual = null;
-      try { actual = await gitBlobSha(await cached.clone().arrayBuffer()); } catch (err) { /* 算不出當作要清 */ }
-      if (actual === en.sha) { hashes[en.path] = en.sha; continue; }   // 舊快取內容其實是最新 → 補記、免重抓
+  }catch(err){if(client)client.postMessage({type:'reconcile-done',evicted:0,skipped:'cache keys: '+String(err?.message||err)});return;}
+  let evicted=0;
+  for(const en of entries){
+    const key=physical(en.path),requests=groups.get(key);
+    if(!en.sha||!requests)continue;
+    if(hashes[key]===en.sha)continue;
+    let matched=false;
+    for(const req of requests){
+      const hit=await cache.match(req,{ignoreVary:true});if(!hit)continue;
+      if(!hashes[key]&&hit.type!=='opaque'&&await gitBlobSha(await hit.arrayBuffer())===en.sha){matched=true;continue;}
+      await cache.delete(req,{ignoreVary:true});evicted++;
     }
-    await cache.delete(en.path);                    // 內容對不上 → 清掉舊圖
-    delete hashes[en.path];
-    evicted++;
+    if(matched)hashes[key]=en.sha;else delete hashes[key];
   }
-  for (const path of Object.keys(hashes)) {         // 作者移除的圖 → 清快取與記錄
-    if (!manifestPaths.has(path)) { await cache.delete(path); delete hashes[path]; evicted++; }
+  for(const key of Object.keys(hashes)){
+    if(manifestPaths.has(key))continue;
+    for(const req of groups.get(key)||[]){await cache.delete(req,{ignoreVary:true});evicted++;}
+    delete hashes[key];
   }
   await writeImgHashes(cache, hashes);
   if (client) client.postMessage({ type: 'reconcile-done', evicted });
@@ -271,10 +269,11 @@ async function reconcileAnim(folders, client) {
 // cache-first + 連網補存。只存 status 200 或 opaque(跨網域);206(Range 部分回應,如 <audio> 串流音檔)
 //   不能進 Cache(cache.put 對 206 會 reject:Partial response unsupported)→ 必須排除,否則丟出未捕捉的 rejection。
 //   put 一律掛 .catch:任何寫入失敗(配額滿/極端 race)都不該變成頁面端看到的錯誤、也不該影響回傳 res。
-async function cacheFirst(req, cacheName) {
+async function cacheFirst(req, cacheName, event) {
   const cache = await caches.open(cacheName);
   const hit = await cache.match(req);
-  if (hit) return hit;
+  if (hit && (cacheName!==IMG_CACHE||hit.type!=='opaque')) return hit;
+  if (hit) await cache.delete(req);
   // 程式桶 miss → 先翻「舊制 code-<hash> 桶」(桶名綁版本的舊設計)懶搬家:同 URL 的檔內容必同
   //   (?v= 就是內容 sha),搬進固定桶直接回用,免重新下載。舊桶由 reconcileCode 在頁面載完後收尾刪除,
   //   刪完後這段只多一次 caches.keys()(比對不到 code- 舊桶,零額外 IO)。
@@ -290,7 +289,10 @@ async function cacheFirst(req, cacheName) {
   }
   try {
     const res = await fetch(req);
-    if (res && (res.status === 200 || res.type === 'opaque')) cache.put(req, res.clone()).catch(() => {});
+    if (res && res.status === 200 && res.type !== 'opaque') {
+      const saving=cache.put(req,res.clone()).catch(()=>{});
+      if(event)event.waitUntil(saving);
+    }
     return res;
   } catch (err) {
     const fallback = await cache.match(req);
@@ -316,8 +318,8 @@ async function navFirst(e, req) {
 
   const cached = await cache.match(req, { ignoreSearch: true })
               || await cache.match(putKey)
-              || await cache.match('index.html')
-              || await cache.match('./');
+              || (/(?:\/|\/index\.html)$/.test(u.pathname)
+                  ? await cache.match('index.html') || await cache.match('./') : undefined);
   if (!cached) return netP;            // 沒有墊底 → 等網路(離線會 throw,正常)
 
   const winner = await Promise.race([
@@ -335,13 +337,38 @@ self.addEventListener('fetch', (e) => {
 
   const sameOrigin = url.origin === self.location.origin;
 
+  if(sameOrigin && url.pathname===new URL('site-config.js',LineageMedia.site).pathname){
+    e.respondWith(navFirst(e,req));return;
+  }
+  if(LineageMedia.active){
+    const route=sameOrigin?LineageMedia.route(url.href):null;
+    const remote=LineageMedia.mediaBase&&LineageMedia.remoteKey(url.href);
+    if(route||remote){
+      const target=route?.url||url.href;
+      const headers=new Headers();
+      if(req.headers.has('range'))headers.set('range',req.headers.get('range'));
+      const input=new Request(target,{mode:'cors',credentials:'omit',headers});
+      const streaming=headers.has('range')||/\/(?:bgm|sfx)\//.test(new URL(target).pathname);
+      e.respondWith((async()=>{
+        const res=await (streaming?fetch(input):cacheFirst(input,IMG_CACHE,e));
+        return route&&new URL(target).origin!==url.origin
+          ?new Response(res.body,{status:res.status,statusText:res.statusText,headers:res.headers}):res;
+      })());return;
+    }
+  }
   // 音檔(bgm/sfx)不攔截:<audio> 走 Range 串流,回應是 206、本來就進不了 Cache(cache.put 對 206 會
   //   reject,離線行為不變);讓它流經 SW 只會讓 SW 掛著長壽的 fetch 事件(BGM 一放就是整首)、無法閒置。
   if (sameOrigin && /\/assets\/(?:bgm|sfx)\//.test(url.pathname)) return;
 
   // 圖桶:同源 assets 圖＋GPT變身檔的逐幀圖(art-v3/frames)＋手環圖(brace-art)＋守護者之戒的戒指圖(guardring-art)＋圖檔修復版(art-fix),用到才抓、抓過離線可用
   if (sameOrigin && (url.pathname.includes('/assets/') || url.pathname.includes('/art-v3/frames/') || url.pathname.includes('/brace-art/') || url.pathname.includes('/guardring-art/') || url.pathname.includes('/art-fix/'))) {
-    e.respondWith(cacheFirst(req, IMG_CACHE));
+    e.respondWith(cacheFirst(req, IMG_CACHE,e));
+    return;
+  }
+
+  // 地圖資料和拼圖跟著玩家探索下載。重新連線更新總表，換圖時依來源版本識別各分區。
+  if (sameOrigin && /\/dimension-map\/(?:terrain\/|(?:idle-meta|strides|areas|teleports)\.json$)/.test(url.pathname)) {
+    e.respondWith(url.searchParams.has('g') ? cacheFirst(req,IMG_CACHE,e) : navFirst(e,req));
     return;
   }
 
@@ -356,12 +383,12 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 程式桶:js / css / manifest / PWA 圖示,以及外部 CDN → cache-first(帶 ?v= 版本號,換版即換 URL,不會被釘舊版)
+  // 程式與 PWA 圖示以版本化 URL 快取。
   const isCodePath = sameOrigin && (
     /\.(?:js|css|webmanifest)$/.test(url.pathname) ||
     /pwa-icon[^/]*\.png$/.test(url.pathname)
   );
-  if (isCodePath || EXTERNAL_HOSTS.includes(url.hostname)) {
+  if (isCodePath) {
     e.respondWith(cacheFirst(req, CODE_CACHE));
     return;
   }

@@ -141,7 +141,7 @@
       var lb = A('libra');
       if (lb && fight && t >= g.libraAt) {
         g.libraAt = t + 300;
-        var ents = [p].concat((p.allies || []).filter(function (a) { return a && !a._downed && a.curHp > 0; }));
+        var ents = [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed && a.curHp > 0; }));
         if (ents.length > 1) {
           var rs = ents.map(function (e) { return (e === p ? p.hp : e.curHp) / (e.mhp || 1); }), avg = rs.reduce(function (s, x) { return s + x; }, 0) / rs.length, did = false;
           ents.forEach(function (e, i) { if (rs[i] >= avg) return; var nr = Math.min(avg, rs[i] + lb.cap / 100), hp = Math.floor((e.mhp || 0) * nr); if (e === p) { if (hp > p.hp) { p.hp = Math.min(p.mhp, hp); did = true; } } else if (hp > e.curHp) { e.curHp = Math.min(e.mhp, hp); did = true; } });

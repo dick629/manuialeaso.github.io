@@ -307,7 +307,7 @@
   var mOf = function (a, id) { try { if (typeof W._afkM === 'function') return !!W._afkM(a, id); } catch (e) {} return !!(a && a.mastery === id); };
   var tagsOf = function (a) { try { return (a && a.eq && a.eq.wpn && typeof getWeaponTags === 'function') ? getWeaponTags(a.eq.wpn.id) : []; } catch (e) { return []; } };
   var artOf = function (a) { return a && a.rebirth > 0 ? a.rebirthArt : null; };
-  var party = function () { var p = P(); return p ? [p].concat(p.allies || []) : []; };
+  var party = function () { var p = P(); return p ? [p].concat(GiranPartyView.combatAllies(p)) : []; };
   var PHYS = { melee: 1, ranged: 1, phys: 1 };
 
   // ── 目標身上的印記：暈住的頭目、被凍住、奪命之雷打到的王（全隊打牠都加）──
@@ -524,7 +524,7 @@
       try {
         var p = P(), pp = null;
         if (p && p.buffs && p.buffs.sk_royal_precise > 0) pp = p;
-        else if (p) (p.allies || []).some(function (a) { if (a && !a._downed && a.buffs && a.buffs.sk_royal_precise > 0) { pp = a; return true; } return false; });
+        else if (p) GiranPartyView.combatAllies(p).some(function (a) { if (a && !a._downed && a.buffs && a.buffs.sk_royal_precise > 0) { pp = a; return true; } return false; });
         var st = stageOf(pp);
         if (pp && st >= 2) {
           var div = pp.mastery === 'k_royal_pledge' || mOf(pp, 'k_royal_pledge') ? 10 : 15, lv = pp.lv || 1;

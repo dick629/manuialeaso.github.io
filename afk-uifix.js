@@ -13,7 +13,7 @@
   // 收集冊剪影：不透明的 jpg 圖示（亞丁古物 ttmi）套 brightness(0) 會變成整格黑色方塊 → 改成暗灰（2026-10-30 QA）
   try {
     var st = document.createElement('style'); st.id = 'afk-uifix-css';
-    st.textContent = 'img.card-silhouette[src*=".jpg"],img.card-silhouette[src*=".jpeg"]{filter:grayscale(1) brightness(.28) contrast(.9)!important;opacity:.7}'
+    st.textContent = 'img.card-silhouette[data-art-raster~="jpeg"]{filter:grayscale(1) brightness(.28) contrast(.9)!important;opacity:.7}'
       // 手機首頁／選角／創角：左上固定的「外掛」「電台」按鈕會蓋住標題與創角說明 → 窄螢幕往下讓出一排（2026-10-30 QA）
       + '@media (max-width:640px){#creation-screen{padding-top:46px!important}}';
     (document.head || document.documentElement).appendChild(st);

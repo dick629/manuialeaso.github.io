@@ -121,6 +121,8 @@
   var destOf = function () {
     try {
       var cur = mapState.current; if (!cur || /^town_/.test(cur)) return null;
+      // 肯特由共用回村流程依持城與當前座標決定，保留它選好的目的地。
+      if (W.GiranGates?.kentField(cur)) return null;
       var key = typeof mapRegionOf === 'function' ? mapRegionOf(cur) : null; if (!key) return null;
       var reg = (typeof MAP_REGIONS !== 'undefined' ? MAP_REGIONS : []).filter(function (r) { return r && r.key === key; })[0]; if (!reg) return null;
       if (typeof siegeVictoryActive === 'function' && siegeVictoryActive()) { var cs = victoryCityCfg().castle; if (cs && (mapRegionOf(cs) === key || reg.castleCity === victoryCityCfg().key)) return cs; }   // 這個地區有自己血盟的城堡

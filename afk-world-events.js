@@ -148,11 +148,11 @@
   var lordCity = function () { var c = null; try { c = typeof castleOwnerCity === 'function' ? castleOwnerCity() : null; } catch (e) {} if (!c) { try { var h = W.__afkCastleWar && W.__afkCastleWar.held ? W.__afkCastleWar.held() : []; if (h.length) c = h[0]; } catch (e) {} } return c; };   // 七城清單也算（2026-11-02 修：血盟沒記主城時一直不觸發）
   var targets = function (id, alive) {
     var p = P(); if (!p) return [];
-    if (W.TwistedSpace?.here() && (!alive || !p.dead)) return alive ? L.boss.party() : [p].concat((p.allies || []).filter(Boolean));
+    if (W.TwistedSpace?.here() && (!alive || !p.dead)) return alive ? L.boss.party() : [p].concat(GiranPartyView.combatAllies(p).filter(Boolean));
     var who = EV[id].who, out = [];
     if (who === 'lord') { if (lordCity() && (!alive || !p.dead)) out.push(p); return out; }
     if ((who === 'all' || p.cls === who) && (!alive || !p.dead)) out.push(p);
-    (p.allies || []).forEach(function (a) { if (a && (who === 'all' || a.cls === who) && (!alive || (!a._downed && (a.curHp || 0) > 0))) out.push(a); });
+    GiranPartyView.combatAllies(p).forEach(function (a) { if (a && (who === 'all' || a.cls === who) && (!alive || (!a._downed && (a.curHp || 0) > 0))) out.push(a); });
     return out;
   };
   var allyCount = function () { var p = P(); return p ? (p.allies || []).filter(Boolean).length : 0; };
@@ -328,7 +328,7 @@
     if (!okMap(cur)) { badge(); return; }
     act.left--;
     if (act.left <= 0) { end('time'); return; }
-    if (act.id === 'senis' && act.curse > 0) { var f2 = 1 - 0.05 * act.curse; (p.allies || []).forEach(function (a) { if (a && !a._downed && a.mhp && a.curHp > a.mhp * f2) a.curHp = Math.floor(a.mhp * f2); }); }
+    if (act.id === 'senis' && act.curse > 0) { var f2 = 1 - 0.05 * act.curse; GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed && a.mhp && a.curHp > a.mhp * f2) a.curHp = Math.floor(a.mhp * f2); }); }
     var b = onField('boss')[0];
     if (b) { act.hpFrac = b[0].curHp / Math.max(1, b[0].hp); act.map = cur; skills(b[0]); }
     else if (act.map !== cur) { act.map = cur; act.wait = tk() + rint(200, 400); sys('<span style="color:' + EV[act.id].color + '">' + EV[act.id].badge.split(' ')[0] + ' 他們正在追過來……</span>'); }

@@ -209,7 +209,7 @@
   var mhp = function (p) { return Math.max(1, N(p.mhp)); };
   var shieldOf = function (p, ratio, src) { try { var R = W.AFK_RELIC_RUNTIME; if (R && R.api && R.api.shield) R.api.shield(p, mhp(p) * ratio, { source: src, owner: p, duration: 8 }); } catch (e) {} };
   var heal = function (a, ratio) { try { if (a === P()) a.hp = Math.min(mhp(a), N(a.hp) + Math.floor(mhp(a) * ratio)); else if (a && !a._downed && a.mhp) a.curHp = Math.min(N(a.mhp), N(a.curHp) + Math.floor(N(a.mhp) * ratio)); } catch (e) {} };
-  var allies = function (p) { return (p.allies || []).filter(function (a) { return a && !a._downed; }); };
+  var allies = function (p) { return GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed; }); };
   var bossNow = function () { try { return (mapState.mobs || []).filter(function (x) { return x && x.boss && x.curHp > 0 && !x._dead; })[0] || null; } catch (e) { return null; } };
   var stars = function (p) { var id = clothOn(p), s = p.cardAscension; return id && s && s.clothStars ? N(s.clothStars[id]) : 0; };
   var finalMob = function (m) { return !!(m && (m._afkFinal || m._afkApostle)); };

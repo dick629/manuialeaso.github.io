@@ -138,13 +138,20 @@
   var twisted = function () { return !!W.TwistedSpace?.here(); };
   var noErosionFloor = function () { return !twisted() && endlessOn(); };   // 11-26 16:19 Ping：扭亂時空改成有上限、最低 0（見 TWX）
   var TWX = 5;   // 扭亂時空：侵蝕上限＝一般裂縫的 5 倍（AC、魔防 1,500，抗性 2,500），魔防、抗性最低 0、AC 最多加到 0
+  function currentErosion(p) {
+    var r = rec(p);
+    // Older saves may still carry stacks from the uncapped version.
+    if (twisted() && r.ero > R.resMax * TWX) r.ero = R.resMax * TWX;
+    return r.ero || 0;
+  }
   var panelF = function (p) { var f = BASE + recoverPct(p) / 100; try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) f = Math.min(f, 0.75); } catch (e) {} if (endlessOn()) f = Math.max(0.1, f - 0.25); return twisted() ? Math.min(0.50,f) : f; };   // 11-26 Ping：扭亂時空面板最多 50%
   var recoverPct = function (p) { return Math.min(40, RECOVER.reduce(function (s, x) { return s + (Number(x[1](p)) || 0); }, 0)); };
-  function clearErosion(p, all) { var r = rec(p); r.ero = 0; if (all) { /* 光蝕不因回村清除 */ } }
-  var members = function () { var p = P(), out = []; if (!p) return out; if (!p.dead) out.push(p); (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); }); return out; };
+  function clearErosion(p, all) { var r = rec(p); r.ero = 0; r._twEro = 0; if (all) { /* 光蝕不因回村清除 */ } }
+  var members = function () { var p = P(), out = []; if (!p) return out; if (!p.dead) out.push(p); GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); }); return out; };
   var bossOnField = function () { return (mapState.mobs || []).some(function (m) { return m && m.boss && !m._dead && m.curHp > 0; }); };
   function erodeSecond() {
     var p = P(), r = rec(p); if (!p) return;
+    if (!twisted()) r._twEro = 0;
     if (inTown()) { if (r.ero) { r.ero = 0; r.resBack = 0; try { calcStats(); } catch (e) {} } return; }
     if (p.dead) return;
     if (typeof W.__afkErodePaused === 'function' && W.__afkErodePaused()) return;   // 九階以上娃娃的「縫光」
@@ -153,15 +160,15 @@
     members().forEach(function (x) {
       var mx = x === p ? (rec(p).hp50 || Math.floor((p.mhp || 1) / (panelF(p)) * BASE)) : (x._dimBase ? Math.floor(x._dimBase.mhp * BASE) : (x.mhp || 1));
       if (net <= 0) { var heal = Math.floor(mx * (-net) / 100); if (heal > 0) { if (x === p) p.hp = Math.min(p.mhp, p.hp + heal); else x.curHp = Math.min(x.mhp || x.curHp, x.curHp + heal); } return; }
-      var dmg = (twisted() ? ((W.TwistedSpace && TwistedSpace.X && TwistedSpace.X.drain) || 5) : endlessOn() ? 2 : 1) * mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p)) * (W.__afkErodeCuts || []).reduce(function (m, f) { try { return m * (1 - Math.max(0, Math.min(0.9, Number(f(p, x)) || 0))); } catch (e) { return m; } }, 1);   // 黃道星卡・水瓶、七階以上娃娃（堅壁、統御）
+      var dmg = (twisted() ? W.TwistedSpace.X.drain : endlessOn() ? 2 : 1) * mx * net / 100 * (1 - weightCut(p)) * (1 - pctCut(p)) * (W.__afkErodeCuts || []).reduce(function (m, f) { try { return m * (1 - Math.max(0, Math.min(0.9, Number(f(p, x)) || 0))); } catch (e) { return m; } }, 1);   // 黃道星卡・水瓶、七階以上娃娃（堅壁、統御）
       if (x === p) W.__afkDrainHit = (Number(W.__afkDrainHit) || 0) + dmg;   // 聖十字之盾（禁衛軍）在裂縫只擋一部分：見 afk-castle-guards
       if (L && L.boss) L.boss.hurt(x, dmg);
     });
     // AC、魔防、抗性
     var endless = noErosionFloor();   // 11-16：無盡的裂縫沒有上限、沒有最低保留
-    // 11-26 Ping：扭亂時空侵蝕堆疊變慢、量維持 5 倍——每 5 秒一次、每次 ×5（AC +25、魔防 −25、四屬性 −25），沒有上限
+    // 11-26 Ping：扭亂時空侵蝕堆疊變慢、量維持 5 倍——每 5 秒一次、每次 ×5（AC +25、魔防 −25、四屬性 −25），上限為一般裂縫的五倍
     if (twisted()) { r._twEro = ((r._twEro || 0) + 1) % 5; if (r._twEro) return; }
-    var eMax = R.resMax * (twisted() ? TWX : 1); if (endless || (r.ero || 0) < eMax) { var step = R.eroStep * (twisted() ? 5 : 1); try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) step *= 2; } catch (e) {} r.ero = endless ? (r.ero || 0) + step : Math.min(eMax, (r.ero || 0) + step); try { calcStats(); } catch (e) {} }   // Ping 11-13 14:29：每秒 AC +5、魔防 −5、四屬性 −5；GD之子的期待 ×2
+    var eMax = R.resMax * (twisted() ? TWX : 1); if (endless || currentErosion(p) < eMax) { var step = R.eroStep * (twisted() ? 5 : 1); try { if (W.__afkGdRiftOn && W.__afkGdRiftOn()) step *= 2; } catch (e) {} r.ero = endless ? (r.ero || 0) + step : Math.min(eMax, (r.ero || 0) + step); try { calcStats(); } catch (e) {} }   // Ping 11-13 14:29：每秒 AC +5、魔防 −5、四屬性 −5；GD之子的期待 ×2
   }
   var L = W.__afkLore;
   function lightSecond() {
@@ -187,7 +194,8 @@
     var oTick = W.tick;
     W.tick = function () {
       var t0 = tk(), r = oTick.apply(this, arguments);
-      try { if (on() && tk() !== t0 && tk() % 10 === 0) { var off = typeof W.__afkOfflineNow === 'function' && W.__afkOfflineNow(); var trn = false; try { trn = !!(W.__afkTrainIn && W.__afkTrainIn()); } catch (e) {} if ((!off || twisted()) && !trn) { erodeSecond(); lightSecond(); }   /* 木人場不算侵蝕、光蝕、斬殺線 */ bossRegen(); if (twisted() && W.TwistedSpace && W.TwistedSpace.feeSecond) { try { W.TwistedSpace.feeSecond(); } catch (e) {} }   /* 11-26 扭亂時空停留費用（離線也扣） */ allyPanel(); sealDebuff(); } else if (!on() && tk() % 10 === 0) allyPanel(); } catch (e) { console.warn('[AFK-dimrift] tick', e); }
+      try { if (on() && tk() !== t0 && tk() % 10 === 0) { var off = typeof W.__afkOfflineNow === 'function' && W.__afkOfflineNow(); var trn = false; try { trn = !!(W.__afkTrainIn && W.__afkTrainIn()); } catch (e) {} if ((!off || twisted()) && !trn) { erodeSecond(); lightSecond(); }   /* 木人場不算侵蝕、光蝕、斬殺線 */ bossRegen(); allyPanel(); sealDebuff(); } else if (!on() && tk() % 10 === 0) allyPanel(); } catch (e) { console.warn('[AFK-dimrift] tick', e); }
+      if (tk() !== t0 && twisted()) W.TwistedSpace.feeSecond(t0);
       return r;
     };
   }
@@ -239,13 +247,13 @@
         HALF.forEach(function (k) { if (typeof d[k] === 'number' && d[k] > 0) d[k] = Math.floor(d[k] * f); });
         if (typeof d.ac === 'number' && d.ac < 0) d.ac = Math.ceil(d.ac * f);
         // 侵蝕：AC 往上加（越高越差），魔防、抗性往下扣到最低保留
-        var ero = Math.floor((rec(p).ero || 0) * (typeof W.__afkEroMult === 'function' ? (Number(W.__afkEroMult(p)) || 1) : 1) * hmul('eroMult', p));   // 龍息娃娃：侵蝕的下降打折
+        var ero = Math.floor(currentErosion(p) * (typeof W.__afkEroMult === 'function' ? (Number(W.__afkEroMult(p)) || 1) : 1) * hmul('eroMult', p));   // 龍息娃娃：侵蝕的下降打折
         if (ero) {
           var tw = twisted(), keep = tw ? 0 : floorSum(p), wc = tw ? 0 : weightCut(p), noFloor = noErosionFloor();
           var eAc = Math.max(0,Math.min(ero, noFloor ? Infinity : R.acMax * (tw ? TWX : 1))-(W.LineageSherine?.erosionBack(p)||0));
           if (tw) { if ((d.ac || 0) < 0) d.ac = Math.min(0, d.ac + eAc); } else d.ac = (d.ac || 0) + eAc;
           var cut = function (k) { var v = Number(d[k]) || 0; if (noFloor) { d[k] = v - eAc; return; } if (v <= 0) return; var floor = Math.max(keep, Math.floor(v * wc)); var low = Math.min(v, floor); d[k] = Math.max(low, v - eAc); };
-          cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; var e2 = ero - rb; if (tw) { if (v > 0) d[k] = Math.max(0, v - Math.min(e2, R.resMax * TWX)); return; }   /* 11-26 19:03 Ping：扭亂時空抗性一律最低 0（魔眼、成長的最低保留不算） */ if (noFloor) { d[k] = v - e2; return; } var floor = Math.max(keep, Math.floor(v * wc)); var growthFloor = W.LineageGrowth ? W.LineageGrowth.pct(p, 'curse') : 0; var eyeF = 0; try { eyeF = typeof W.__afkEroFloorEle === 'function' ? (Number(W.__afkEroFloorEle(p, k)) || 0) : 0; } catch (e) {} d[k] = Math.max(Math.min(v,floor+growthFloor+eyeF),v-e2); });   /* __afkEroFloorEle：次元魔眼的對應屬性最低保留（afk-eyetier） */
+          cut('mr'); var rb = Math.min(ero, rec(p).resBack || 0); RES4.forEach(function (k) { var v = Number(d[k]) || 0; var e2 = Math.min(ero, tw ? R.resMax * TWX : Infinity) - rb; if (tw) { if (v > 0) d[k] = Math.max(0,v-e2); return; } if (noFloor) { d[k] = v - e2; return; } var floor = Math.max(keep, Math.floor(v * wc)); var growthFloor = W.LineageGrowth ? W.LineageGrowth.pct(p, 'curse') : 0; var eyeF = 0; try { eyeF = typeof W.__afkEroFloorEle === 'function' ? (Number(W.__afkEroFloorEle(p, k)) || 0) : 0; } catch (e) {} d[k] = Math.max(Math.min(v,floor+growthFloor+eyeF),v-e2); });   /* __afkEroFloorEle：次元魔眼的對應屬性最低保留（afk-eyetier） */
         }
       } catch (e) { console.warn('[AFK-dimrift] stats', e); }
       return r;
@@ -322,14 +330,15 @@
     var rare = got.filter(function (x) { return !/次元結晶|裂縫碎光/.test(x); });
     if (rare.length) sys('<span class="text-cyan-300">🌀 裂縫掉落：' + rare.map(esc).join('、') + '</span>');
   }
-  // 11-18 19:18 Ping：次元裂縫模式只掉次元材料——怪物原本的掉落表整個不掉（金幣、經驗照舊；次元材料由上面 drops() 與各副本另外發）
+  // 裂縫地圖保留怪物專屬遺物與次元材料。卡片由卡冊掉落流程處理。
   var DIM_KEEP = function (id) { try { var L = W.__afkCraftLock; return !!(L && L.IDS && L.IDS.indexOf(id) >= 0); } catch (e) { return false; } };
-  var inRiftBattle = function () { try { return !!(typeof state !== 'undefined' && state && state.riftRun && mapState && mapState.current === 'rift_battle'); } catch (e) { return false; } };
   var dimOnlyWrap = function () {   // 包在最外層（之後載入的外掛也會往掉落表加東西）→ 載入時先包一次，load 後再包到最外面
     var prevDF = W.__afkDropListFilter; if (prevDF && prevDF.__afkDimOnly) return;
     var f = function (mob, list) {
       if (typeof prevDF === 'function') list = prevDF(mob, list) || list;
-      try { if (mob && mob._dimRift && on() && list && list.length) { return list.filter(function (x) { if (!x) return false; if (DIM_KEEP(x[0])) return true; var d = DB.items[x[0]]; return !!(d && d.relic); });   /* 11-26 Ping：次元裂縫的一般地圖也掉遺物（卡片本來就照掉） */ } } catch (e) {}   // 11-19 Ping：時空裂痕裡（GD、次元模式的裂痕）怪物專屬遺物照掉
+      if (mob?._dimRift && on() && Array.isArray(list)) {
+        return list.filter(row => row && (DIM_KEEP(row[0]) || DB.items[row[0]]?.relic));
+      }
       return list;
     };
     f.__afkDimOnly = true; W.__afkDropListFilter = f;
@@ -365,7 +374,7 @@
 
   // ── 傭兵：面板壓到 50%、侵蝕（每秒照隊長的取回比例與侵蝕層數，從原本的數值重算） ──
   function allyPanel() {
-    var p = P(); if (!p || !p.allies) return; var live = on(), f = panelF(p), ero = live ? (rec(p).ero || 0) : 0, keep = floorSum(p);
+    var p = P(); if (!p || !p.allies) return; var live = on(), f = panelF(p), ero = live ? currentErosion(p) : 0, keep = floorSum(p);
     p.allies.forEach(function (a) {
       if (!a || !a.d) return;
       if (!live) { if (a._dimBase) { var b0 = a._dimBase; a.mhp = b0.mhp; a.mmp = b0.mmp; Object.keys(b0.d).forEach(function (k) { a.d[k] = b0.d[k]; }); delete a._dimBase; } return; }

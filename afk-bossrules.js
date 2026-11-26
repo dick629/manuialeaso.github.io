@@ -35,7 +35,7 @@
   var until = -1, lastMap = null;
   var graceOn = function () { return until > 0 && on() && tk() <= until; };
   W.__afkGraceOn = graceOn;
-  var snap = function () { var p = P(); if (!p) return null; return { p: p.hp, a: (p.allies || []).map(function (a) { return a ? [a, a.curHp, !!a._downed] : null; }) }; };
+  var snap = function () { var p = P(); if (!p) return null; return { p: p.hp, a: GiranPartyView.combatAllies(p).map(function (a) { return a ? [a, a.curHp, !!a._downed] : null; }) }; };
   var restore = function (s) {
     var p = P(); if (!p || !s) return;
     if ((p.hp || 0) < s.p) p.hp = s.p;
@@ -82,7 +82,7 @@
   var SMOKE = { iv: 800, dur: 30, k: 0.5 }, HITS = ['meleeHit', 'rangedHit', 'magicHit'];
   var RES = { after: 6000, iv: 300, step: 50, max: 500 }, RES4 = ['resFire', 'resWater', 'resWind', 'resEarth'];
   var zone = { map: null, t0: 0, smokeAt: 0, resAt: 0, res: 0 };
-  var chars = function () { var p = P(); if (!p || p.dead) return []; return [p].concat((p.allies || []).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0; })); };
+  var chars = function () { var p = P(); if (!p || p.dead) return []; return [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0; })); };
   var smokeOn = function (x) { return !!(x && x._afkSmoke2 && tk() <= x._afkSmoke2); };
   var recompute = function () { try { if (typeof recomputeStats === 'function') recomputeStats(); } catch (e) {} };
   var castSmoke = function (m) {
@@ -99,11 +99,11 @@
   var smokeEnd = function () {
     var p = P(); if (!p) return;
     if (p._afkSmoke2 && tk() > p._afkSmoke2) { p._afkSmoke2 = 0; recompute(); }
-    (p.allies || []).forEach(function (x) { if (!x || !x._afkSmoke2Save || smokeOn(x)) return; var sv = x._afkSmoke2Save; x._afkSmoke2Save = null; x._afkSmoke2 = 0; if (x.d === sv.d) HITS.forEach(function (k) { x.d[k] = sv[k]; }); });
+    GiranPartyView.combatAllies(p).forEach(function (x) { if (!x || !x._afkSmoke2Save || smokeOn(x)) return; var sv = x._afkSmoke2Save; x._afkSmoke2Save = null; x._afkSmoke2 = 0; if (x.d === sv.d) HITS.forEach(function (k) { x.d[k] = sv[k]; }); });
   };
   var applyResAlly = function () {
     var p = P(); if (!p) return;
-    (p.allies || []).forEach(function (a) {
+    GiranPartyView.combatAllies(p).forEach(function (a) {
       if (!a || !a.d) return;
       var ap = a._afkRes4; if (!ap || ap.d !== a.d || ap.rn !== a._recompN) ap = { amt: 0 };
       var diff = zone.res - ap.amt; if (diff) RES4.forEach(function (k) { a.d[k] = (Number(a.d[k]) || 0) - diff; });

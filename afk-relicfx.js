@@ -330,12 +330,12 @@
           var el = document.getElementById('sel-atk-skill'), sk = el && el.value; if (sk && DB.skills[sk] && DB.skills[sk].dmgType !== 'physical' && t.curHp > 0) withMult(h.mult || 1, function () { procFreeMagicSkill(t, sk, 0, false, wpn); });
         }
         else if (h.t === 'groupHeal') {
-          var team = [player].concat((player.allies || []).filter(function (a) { return a && !a._downed; }));
+          var team = [player].concat(GiranPartyView.combatAllies().filter(function (a) { return a && !a._downed; }));
           for (var gh = 0; gh < h.count; gh++) team.forEach(function (a) { var mh = a.mhp || 1, amt = Math.floor(mh * 0.05 * 2) + (h.spring ? Math.floor(mh * 0.05) : 0); if (a === player) player.hp = Math.min(player.mhp, player.hp + amt); else a.curHp = Math.min(a.mhp || 1, (a.curHp || 0) + amt); });
         }
       });
       if (wpn.relicAsc != null) t._afkAscDot = true;
-      if (r.stoneKillHeal && t.curHp <= 0 && t.st && t.st.stone > 0) { player.hp = Math.min(player.mhp, player.hp + r.stoneKillHeal); (player.allies || []).forEach(function (a) { if (a && !a._downed) a.curHp = Math.min(a.mhp || 1, (a.curHp || 0) + r.stoneKillHeal); }); }
+      if (r.stoneKillHeal && t.curHp <= 0 && t.st && t.st.stone > 0) { player.hp = Math.min(player.mhp, player.hp + r.stoneKillHeal); GiranPartyView.combatAllies().forEach(function (a) { if (a && !a._downed) a.curHp = Math.min(a.mhp || 1, (a.curHp || 0) + r.stoneKillHeal); }); }
       if (r.killSessho && t.curHp > 0 && /殺生石/.test(t.n || '')) t.curHp = 0;
     } catch (e) {}
   };

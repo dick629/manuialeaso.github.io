@@ -57,33 +57,9 @@ function refreshClassicSkillBookOnly() {
 function classicSkillChooseTier(tier) {
     classicSkillBookState.mode = 'general';
     classicSkillBookState.tier = Math.max(1, Math.min(10, parseInt(tier, 10) || 1));
+    const keepFocus=document.activeElement?.hasAttribute('data-skill-tier');
     refreshClassicSkillBookOnly();
-    requestAnimationFrame(function(){
-        let view = document.querySelector('#tab-skill .classic-skill-grid-scroll');
-        let first = document.querySelector('#tab-skill .classic-skill-cell[data-tier="' + classicSkillBookState.tier + '"]');
-        if (view && first) view.scrollTop = Math.max(0, first.offsetTop);
-    });
-}
-function classicSkillSelectTier(tier) {
-    tier = Math.max(1, Math.min(10, parseInt(tier, 10) || 1));
-    classicSkillBookState.tier = tier;
-    let strip = document.querySelector('#tab-skill .classic-skill-tier-strip');
-    if (strip) {
-        strip.style.backgroundImage = "url('assets/ui/skill-level/" + (538 + tier) + ".webp')";
-        strip.querySelectorAll('[data-skill-tier]').forEach(button => button.setAttribute('aria-pressed', String(Number(button.dataset.skillTier) === tier)));
-    }
-    let heading = document.querySelector('#tab-skill .classic-skill-heading');
-    if (heading && classicSkillBookState.mode === 'general') heading.textContent = tier + '階一般魔法';
-}
-function classicSkillSyncTierFromScroll(view) {
-    if (!view || classicSkillBookState.mode !== 'general') return;
-    let cells = view.querySelectorAll('.classic-skill-cell[data-tier]');
-    let line = view.scrollTop + Math.max(4, view.clientHeight * 0.12), tier = classicSkillBookState.tier;
-    for (let cell of cells) {
-        if (cell.offsetTop <= line) tier = parseInt(cell.dataset.tier, 10) || tier;
-        else break;
-    }
-    if (tier !== classicSkillBookState.tier) classicSkillSelectTier(tier);
+    if (keepFocus) document.querySelector('#tab-skill [data-skill-tier][aria-pressed="true"]')?.focus({preventScroll:true});
 }
 function classicSkillScrollRows(direction) {
     let view = document.querySelector('#tab-skill .classic-skill-grid-scroll');
@@ -113,25 +89,26 @@ function classicSkillIsClassSkill(sk) {
 function renderClassicSkillBook(sDiv) {
     if (!sDiv || typeof player === 'undefined' || !player) return;
     let stateBook = classicSkillBookState;
-    let allIds = Object.keys(DB.skills).filter(id => DB.skills[id] && !DB.skills[id].procOnly && id.indexOf('sk_helm_') !== 0);
+    let inherited = new Set(window.LineageClassUI?.inheritedSpells(player) || []);
+    let allIds = Object.keys(DB.skills).filter(id => !inherited.has(id) && DB.skills[id] && !DB.skills[id].procOnly && id.indexOf('sk_helm_') !== 0);
     let accessibleGeneral = allIds.filter(id => { let sk = DB.skills[id]; return sk.reqM !== undefined && skillReqLv(sk, id) !== undefined; });
     let classSkills = allIds.filter(id => classicSkillIsClassSkill(DB.skills[id]));
-    let granted = (player.grantedSkills || []).filter(id => DB.skills[id]);
+    let granted = [...new Set(player.grantedSkills || [])].filter(id => DB.skills[id] && !inherited.has(id));
+    classSkills = classSkills.filter(id => !granted.includes(id));
+    accessibleGeneral = accessibleGeneral.filter(id => !granted.includes(id) && !classSkills.includes(id));
     let classLabel = classicSkillClassLabel();
     if (stateBook.mode === 'class' && !classSkills.length) stateBook.mode = 'general';
     if (stateBook.mode === 'equipment' && !granted.length) stateBook.mode = 'general';
     if (stateBook.mode === 'general' && !accessibleGeneral.length && classSkills.length) stateBook.mode = 'class';   // 🔧 無一般魔法職業(騎士/戰士)→預設顯示職業技能，不留空白格
 
-    let tierAvailable = new Set(accessibleGeneral.map(id => +DB.skills[id].tier));
+    const tiers = [...new Set(accessibleGeneral.map(id => Number(DB.skills[id].tier)))].filter(Number.isInteger).sort((a,b) => a-b);
+    if (tiers.length && !tiers.includes(stateBook.tier)) stateBook.tier = tiers[0];
     let list = [];
     if (stateBook.mode === 'class') list = classSkills.map(id => ({ id:id, tier:null }));
     else if (stateBook.mode === 'equipment') list = granted.map(id => ({ id:id, tier:null }));
     else {
-        Array.from(tierAvailable).sort((a,b) => a-b).forEach(tier => {
-            let group = accessibleGeneral.filter(id => +DB.skills[id].tier === tier).map(id => ({ id:id, tier:tier }));
-            while (group.length % 4) group.push({ id:null, tier:tier });
-            list.push.apply(list, group);
-        });
+        list = accessibleGeneral.filter(id => Number(DB.skills[id].tier) === stateBook.tier)
+            .map(id => ({ id, tier: stateBook.tier }));
     }
     while (list.length < CLASSIC_PAGE_CELLS) list.push({ id:null, tier:null });
     let cells = list.map(entry => {
@@ -148,13 +125,14 @@ function renderClassicSkillBook(sDiv) {
         let img = '<img src="' + getIconUrl(sk, true) + '" onerror="this.style.display=\'none\';" alt="' + sk.n + '">';
         img += '<span class="classic-skill-name">' + sk.n + '</span><span class="classic-skill-status">' + (!learned ? '未學習' : (usable ? '已學習' : '條件不足')) + '</span>';
         let tierAttr = entry.tier ? ' data-tier="' + entry.tier + '"' : '';
-        let select = entry.tier ? 'classicSkillSelectTier(' + entry.tier + ');' : '';
-        if (learned && usable && sk.type === 'manual') return '<button class="classic-skill-cell tip-host' + dim + '"' + tierAttr + ' data-tip-skill="' + id + '" title="' + sk.n + '" onclick="' + select + 'manualCast(\'' + id + '\')">' + img + '</button>';
-        return '<div class="classic-skill-cell tip-host' + dim + '"' + tierAttr + ' data-tip-skill="' + id + '" title="' + sk.n + '" onclick="' + select + '">' + img + (!learned ? '<span class="classic-skill-lock">◆</span>' : '') + '</div>';
+        if (learned && usable && sk.type === 'manual') return '<button class="classic-skill-cell tip-host' + dim + '"' + tierAttr + ' data-tip-skill="' + id + '" title="' + sk.n + '" onclick="manualCast(\'' + id + '\')">' + img + '</button>';
+        return '<div class="classic-skill-cell tip-host' + dim + '"' + tierAttr + ' data-tip-skill="' + id + '" title="' + sk.n + '">' + img + (!learned ? '<span class="classic-skill-lock">◆</span>' : '') + '</div>';
     }).join('');
 
     let tierButtons = '';
-    for (let t = 1; t <= 10; t++) tierButtons += '<button type="button" data-skill-tier="' + t + '" aria-pressed="' + (stateBook.tier === t) + '" class="classic-skill-tier-hit tier-' + t + (tierAvailable.has(t) ? '' : ' disabled') + '" ' + (tierAvailable.has(t) ? 'onclick="classicSkillChooseTier(' + t + ')"' : 'disabled') + ' aria-label="' + t + '階一般魔法" title="' + t + '階一般魔法"><span class="classic-skill-tier-label">' + t + '階</span></button>';
+    if (stateBook.mode === 'general' && tiers.length > 1) {
+        tierButtons = tiers.map(t => '<button type="button" data-skill-tier="' + t + '" aria-pressed="' + (stateBook.tier === t) + '" class="classic-skill-tier-hit tier-' + t + '" onclick="classicSkillChooseTier(' + t + ')" aria-label="' + t + '階一般魔法"><span class="classic-skill-tier-label">' + t + '階</span></button>').join('');
+    }
     let sprite = 538 + stateBook.tier;
     let modeButtons = '<button class="' + (stateBook.mode === 'general' ? 'active' : '') + '" onclick="classicSkillChooseMode(\'general\')">一般</button>'
         + (classSkills.length ? '<button class="' + (stateBook.mode === 'class' ? 'active' : '') + '" onclick="classicSkillChooseMode(\'class\')">' + (player.cls === 'elf' ? '精靈' : '職業') + '</button>' : '')
@@ -165,13 +143,14 @@ function renderClassicSkillBook(sDiv) {
     sDiv.innerHTML = '<div class="classic-skill-window" data-skill-mode="' + stateBook.mode + '">'
         + '<div class="classic-skill-heading">' + heading + '</div>'
         + '<div class="classic-skill-mode">' + modeButtons + '</div>'
-        + '<div class="classic-skill-tier-strip" style="background-image:url(\'assets/ui/skill-level/' + sprite + '.webp\')">' + tierButtons + '</div>'
-        + '<div class="classic-skill-grid-scroll" onscroll="classicSkillSyncTierFromScroll(this)"><div class="classic-skill-grid">' + cells + '</div></div>'
+        + (tierButtons ? '<div class="classic-skill-tier-strip" style="background-image:url(\'assets/ui/skill-level/' + sprite + '.webp\')">' + tierButtons + '</div>' : '')
+        + '<div class="classic-skill-grid-scroll"><div class="classic-skill-grid">' + cells + '</div></div>'
         + '<button type="button" class="classic-skill-scroll classic-skill-scroll-up" aria-label="技能向上捲動" onclick="classicSkillScrollRows(-1)"></button>'
         + '<button type="button" class="classic-skill-scroll classic-skill-scroll-down" aria-label="技能向下捲動" onclick="classicSkillScrollRows(1)"></button>'
         + '<div class="classic-skill-stat classic-skill-stat-sp">' + _spv + '</div>'
         + '<div class="classic-skill-stat classic-skill-stat-mr">' + _mrv + '</div>'
         + '</div>';
+    window.LineageClassUI?.tabSkills();
 }
 function renderTabs(force, visibleScope) {
     if(state.ff || (typeof catchupActive === 'function' && catchupActive())) return; // 補跑全部完成前不刷新畫面
@@ -268,6 +247,7 @@ function renderTabs(force, visibleScope) {
         let _setCls = isSetActive ? ` set-slot-lit ${_setN >= 5 ? 'set-tier-5' : (_setN >= 3 ? 'set-tier-3' : 'set-tier-2')}` : '';
 
         let el = document.createElement('div');
+        el.dataset.equipSlot=s.k;el.dataset.slotLabel=s.n;
         // 🔧 底色優先序：席琳套裝(綠) > 舊套裝(琥珀金，原綠色讓給席琳) > 一般
         el.className = `list-item text-base rounded mb-1 ${isSherineActive
             ? 'bg-green-900 border border-green-400 ring-1 ring-green-400/60 shadow-[0_0_10px_rgba(74,222,128,0.6)]'
@@ -287,6 +267,8 @@ function renderTabs(force, visibleScope) {
             el.setAttribute('data-tip-uid', eq.uid); el.setAttribute('data-tip-src', 'eq');   // 🖱️ 裝備欄 hover 即時顯示完整資訊 tooltip（同背包/裝備視窗·取代原生 title 慢速）
             if (eq.lock) el.classList.add('classic-item-locked');
             el.innerHTML = `<div class="classic-icon-box">${imgHtml}${_equippedBadge}${_cornerValue}</div><div class="classic-name-box"><span class="classic-slot-name">${s.n}</span><span class="${getItemColor(eq)} font-bold">${getItemFullName(eq)}</span></div>${eq.lock ? '<span class="classic-item-lock-badge" aria-hidden="true">🔒</span>' : ''}`;
+            el.setAttribute('aria-label',s.n+'・'+d.n);el.setAttribute('role','button');el.tabIndex=0;
+            el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click();}};
             el.onclick = () => openModal(eq, true, s.k);
         } else {
             let _rlv = (s.k === 'ring3') ? 76 : (s.k === 'ring4') ? 81 : (s.k === 'ear2') ? 59 : 0;   // 🔧 第3/4戒指欄、第2耳環欄等級需求
@@ -1427,6 +1409,7 @@ function openModal(item, isEq, slot) {
         }
     }
 
+    document.getElementById('item-modal').dataset.itemUid=item.uid;
     document.getElementById('item-modal').classList.remove('hidden');
 }
 // 👇 新增功能：返回裝備視窗
@@ -2628,6 +2611,9 @@ function _allyAutoBuffChips(a) {
 }
 
 function renderSquadPanel() {
+    // The field HUD reads the live party directly. Opening a roster or orders
+    // tab renders this native list from the current party before mounting it.
+    if (window.GiranPanels?.nativeSquadHidden()) return;
     // 🩹 v3.8.1 補跑期間不重建隊伍面板：傭兵/寵物/召喚物/城堡護衛 的 HP 變動都經由此函式（22 處呼叫·多為每 tick/每擊），
     //    而它會整區重建 team 分頁 DOM——補跑上千 tick 時是主要拖慢來源（比照 renderMobs/flushTickRender 已有的 catchupActive 閘）。
     //    補跑結束後由下一個 tick 的各實體 render 或 js/23 的 500ms interval 自動刷新（補跑中面板不可見·無感）。
@@ -2645,7 +2631,7 @@ function renderSquadPanel() {
     if (!allies.length && !_pets.length && !_summonVisible && !_guards.length) { panel.style.display = 'none'; _squadSigTeam = ''; _squadSigSkill = ''; return; }
     panel.style.display = '';
     let _sigAllies = allies.map(a => a._slot + ':' + (a._allyName || '') + ':' + (a._downed ? 'D' : '') + ':' + (a.lv || 1)).join('|');
-    let sigTeam = _sigAllies
+    let sigTeam = _sigAllies + '|lineup:' + GiranPartyView.limit + '/' + GiranPartyView.combatLimit
         + '||P:' + _pets.map(p => p.uid + ':' + p.lv + ':' + (p._downed ? 'D' : '') + ':' + Math.round(p.hp / Math.max(1, p.mhp) * 20) + ':' + Math.round(p.mp / Math.max(1, p.mmp) * 20) + ':' + Math.round((p.exp || 0) / Math.max(1, petExpReq(p.lv)) * 20) + ':' + (p.potPct || 0) + ':' + Math.ceil((p._reviveCd || 0) / 10)).join('|')
         + '||S:' + ((typeof summonTeamSignature === 'function') ? summonTeamSignature() : '')   // team 分頁：名單/倒地/等級＋寵物/召喚血量(5%階)變動才重建
         + '||G:' + ((typeof guardTeamSignature === 'function') ? guardTeamSignature() : '');   // 🏰 城堡護衛血量/倒地/復活倒數變動才重建
@@ -2654,20 +2640,24 @@ function renderSquadPanel() {
     let _squadRebuilt = false;
     if (sigTeam !== _squadSigTeam) {
         _squadSigTeam = sigTeam;
-        document.getElementById('squad-tab-team').innerHTML = allies.map(a => {
+        document.getElementById('squad-tab-team').innerHTML = allies.map((a, i) => {
             let s = a._slot;
+            const rank = i + 2;
+            const place = rank > GiranPartyView.combatLimit ? '（後備）' : rank > GiranPartyView.limit ? '（參戰）' : '';
             if (a._downed) {   // 🤝 Phase 3：倒地→灰顯卡片。返生術＝手動鈕（消耗MP·無冷卻立即）；復活卷軸＝v2.6.6 改自動（15秒冷卻結束身上有卷軸即自動使用），此處只顯示狀態文字（不可點）。每幀更新。
-                return `<div class="bg-slate-900/70 border border-red-900 rounded p-2 flex items-center justify-between gap-2" style="opacity:0.85;">
-                    <div class="text-sm"><span class="font-bold text-slate-400">${a._allyName}</span> <span class="text-slate-600 text-xs">Lv.${a.lv || 1}</span> <span class="text-red-400 font-bold">【倒地】</span></div>
+                return `<div data-squad-slot="${s}" class="bg-slate-900/70 border border-red-900 rounded p-2 flex items-center justify-between gap-2" style="opacity:0.85;">
+                    <div class="text-sm"><span class="font-bold text-slate-400">${a._allyName}${place}</span> <span class="text-slate-600 text-xs">Lv.${a.lv || 1}</span> <span class="text-red-400 font-bold">【倒地】</span></div>
                     <div class="flex items-center gap-1 shrink-0">
+                        <button type="button" data-member-buffs="${s}">查看隊員</button>
                         <button id="squad-rez-${s}" class="py-1 px-2 text-xs font-bold rounded border whitespace-nowrap" style="background:#1e3a8a;border-color:#3b82f6;color:#bfdbfe;" onclick="reviveMercenary('${s}','rez')">返生術</button>
                         <span id="squad-revive-${s}" class="py-1 px-2 text-xs font-bold rounded border whitespace-nowrap" style="background:#3f1d1d;border-color:#7f1d1d;color:#fca5a5;cursor:default;" title="倒地 15 秒後，若身上有復活卷軸將自動使用。">卷軸</span>
                     </div>
                 </div>`;
             }
-            return `<div class="bg-slate-800/60 border border-slate-600 rounded p-2 flex flex-col gap-1 ally-compact-card">
+            return `<div data-squad-slot="${s}" class="bg-slate-800/60 border border-slate-600 rounded p-2 flex flex-col gap-1 ally-compact-card">
                 <div class="ally-compact-head text-sm">
-                    <span class="font-bold text-amber-200 ally-compact-name">${a._allyName}</span>
+                    <span class="font-bold text-amber-200 ally-compact-name">${a._allyName}${place}</span>
+                    <button type="button" class="ga-member-link" data-member-buffs="${s}">查看隊員</button>
                     <span class="text-slate-400 text-xs whitespace-nowrap">Lv.${a.lv || 1}</span>
                     <div class="bar-bg ally-exp-bar"><div id="squad-exp-${s}" class="bar-fill bg-yellow-500" style="width:0%"></div><div id="squad-exp-txt-${s}" class="bar-text text-white">0%</div></div>
                 </div>
@@ -2686,7 +2676,8 @@ function renderSquadPanel() {
     }
     if (sigSkill !== _squadSigSkill) {
         _squadSigSkill = sigSkill;
-        document.getElementById('squad-tab-skill').innerHTML = allies.map(a => {
+        const potionButton=allies.length?'<button type="button" id="giran-squad-potions" class="py-1 px-2 text-sm rounded border" onclick="applySquadPotionThreshold()">將隊長喝水門檻套用至全隊</button>':'';
+        document.getElementById('squad-tab-skill').innerHTML = potionButton + allies.map(a => {
             let s = a._slot;
             let hpPct = (a._healHpPct != null) ? a._healHpPct : 70;
             let potPct = (a._potHpPct != null) ? a._potHpPct : ((a._hpSafePct != null) ? a._hpSafePct : 0);
@@ -2694,12 +2685,12 @@ function renderSquadPanel() {
             let mpPct = (a._castMpPct != null) ? a._castMpPct : 0;   // 🆕 v2.6.27 施法MP門檻
             return `<div class="bg-slate-800/60 border border-slate-600 rounded p-2 flex flex-col gap-1">
                 <div class="text-sm font-bold text-amber-200">${a._allyName} <span class="text-slate-500 text-xs">Lv.${a.lv || 1}</span></div>
-                <div class="flex items-center gap-1 text-xs"><span class="text-cyan-400 font-bold shrink-0" style="width:3rem;">攻擊技能</span><select class="flex-1 min-w-0 bg-slate-900 border border-slate-600 text-cyan-300 px-1 py-1 rounded text-xs outline-none" onchange="setAllyAtkSkill('${s}', this.value)">${_allySkillOptions(a, 'atk', a._atkSkill || '')}</select><span class="shrink-0 flex items-center text-blue-300 whitespace-nowrap" title="MP％ 高於此值才施放攻擊技（0 = 不限）。">MP&gt;<input type="number" min="0" max="100" value="${mpPct}" class="w-10 bg-slate-900 border border-blue-700 text-center text-white rounded" onchange="setAllyCastMp('${s}', this.value)">%</span></div>
-                <div class="flex items-center gap-1 text-xs"><span class="text-green-400 font-bold shrink-0" style="width:3rem;">治癒魔法</span><select class="flex-1 min-w-0 bg-slate-900 border border-slate-600 text-green-300 px-1 py-1 rounded text-xs outline-none" onchange="setAllyHealSkill('${s}', this.value)">${_allySkillOptions(a, 'heal', a._healSkill || '')}</select><span class="shrink-0 flex items-center text-green-300 whitespace-nowrap" title="HP％ 低於此值才施放治癒。">HP&lt;<input type="number" min="0" max="100" value="${hpPct}" class="w-10 bg-slate-900 border border-green-700 text-center text-white rounded" onchange="setAllyHealHp('${s}', this.value)">%</span></div>
+                <div class="flex items-center gap-1 text-xs"><span class="text-cyan-400 font-bold shrink-0" style="width:3rem;">攻擊技能</span><select class="flex-1 min-w-0 bg-slate-900 border border-slate-600 text-cyan-300 px-1 py-1 rounded text-xs outline-none" onchange="setAllyAtkSkill('${s}', this.value)">${_allySkillOptions(a, 'atk', a._atkSkill || '')}</select><span class="shrink-0 flex items-center text-blue-300 whitespace-nowrap" title="MP％ 高於此值才施放攻擊技（0 = 不限）。">MP&gt;<input type="number" inputmode="numeric" aria-label="攻擊技能 MP 門檻" min="0" max="100" value="${mpPct}" class="w-10 bg-slate-900 border border-blue-700 text-center text-white rounded" onchange="setAllyCastMp('${s}', this.value)">%</span></div>
+                <div class="flex items-center gap-1 text-xs"><span class="text-green-400 font-bold shrink-0" style="width:3rem;">治癒魔法</span><select class="flex-1 min-w-0 bg-slate-900 border border-slate-600 text-green-300 px-1 py-1 rounded text-xs outline-none" onchange="setAllyHealSkill('${s}', this.value)">${_allySkillOptions(a, 'heal', a._healSkill || '')}</select><span class="shrink-0 flex items-center text-green-300 whitespace-nowrap" title="HP％ 低於此值才施放治癒。">HP&lt;<input type="number" inputmode="numeric" aria-label="治療魔法 HP 門檻" min="0" max="100" value="${hpPct}" class="w-10 bg-slate-900 border border-green-700 text-center text-white rounded" onchange="setAllyHealHp('${s}', this.value)">%</span></div>
                 <div class="flex items-center gap-1 text-xs"><span class="text-purple-400 font-bold shrink-0" style="width:3rem;">轉換技能</span><select class="flex-1 min-w-0 bg-slate-900 border border-slate-600 text-purple-300 px-1 py-1 rounded text-xs outline-none" onchange="setAllyConvertSkill('${s}', this.value)">${_allySkillOptions(a, 'convert', a._convertSkill || '')}</select></div>
-                <div class="flex items-stretch gap-1 text-xs">
-                    <span class="flex-1 flex items-center justify-center gap-0.5 text-amber-400 bg-slate-900/40 border border-amber-800 rounded py-0.5" title="低於此％時，喝隊長設定的藥水回血。0 = 關閉。">HP&lt;<input type="number" min="0" max="100" value="${potPct}" class="w-10 bg-slate-900 border border-amber-700 text-center text-white rounded" onchange="setAllyPotHp('${s}', this.value)">%喝水</span>
-                    <span class="flex-1 flex items-center justify-center gap-0.5 text-rose-400 bg-slate-900/40 border border-rose-800 rounded py-0.5" title="低於此％時，暫停施放消耗 HP 的技能（龍騎士 HP 技／轉換技能／立方和諧），退回普攻。0 = 關閉。">HP&lt;<input type="number" min="0" max="100" value="${skillPct}" class="w-10 bg-slate-900 border border-rose-700 text-center text-white rounded" onchange="setAllyHpSkill('${s}', this.value)">%停技</span>
+                <div class="giran-hp-thresholds flex items-stretch gap-1 text-xs">
+                    <span class="flex-1 flex items-center justify-center gap-0.5 text-amber-400 bg-slate-900/40 border border-amber-800 rounded py-0.5" title="低於此％時，喝隊長設定的藥水回血。0 = 關閉。">HP&lt;<input type="number" inputmode="numeric" aria-label="喝水 HP 門檻" min="0" max="100" value="${potPct}" class="w-10 bg-slate-900 border border-amber-700 text-center text-white rounded" onchange="setAllyPotHp('${s}', this.value)">%喝水</span>
+                    <span class="flex-1 flex items-center justify-center gap-0.5 text-rose-400 bg-slate-900/40 border border-rose-800 rounded py-0.5" title="低於此％時，暫停施放消耗 HP 的技能（龍騎士 HP 技／轉換技能／立方和諧），退回普攻。0 = 關閉。">HP&lt;<input type="number" inputmode="numeric" aria-label="停技 HP 門檻" min="0" max="100" value="${skillPct}" class="w-10 bg-slate-900 border border-rose-700 text-center text-white rounded" onchange="setAllyHpSkill('${s}', this.value)">%停技</span>
                 </div>
                 ${_allyAutoBuffChips(a)}
             </div>`;
@@ -2771,6 +2762,20 @@ function _findAlly(slot) { return (player.allies || []).find(a => a && String(a.
 function setAllyAtkSkill(slot, val) { let a = _findAlly(slot); if (a) { a._atkSkill = val || ''; saveGame(); } }   // _atkSkill 即時生效（傭兵攻擊路徑直接讀 ally._atkSkill）
 function setAllyHealSkill(slot, val) { let a = _findAlly(slot); if (a) { a._healSkill = val || ''; saveGame(); } }   // _healSkill 儲存待 Phase 3 傭兵自動補血讀取
 function setAllyConvertSkill(slot, val) { let a = _findAlly(slot); if (a) { a._convertSkill = val || ''; saveGame(); } }   // 🔄 v2.6.4 轉換技能（type:'convert'／立方和諧）：即時生效（allyCubeTick/轉換施放路徑直接讀 ally._convertSkill）
+function applySquadPotionThreshold() {
+    if (!state.running || document.body.classList.contains('giran-guest')) return false;
+    const allies=(player.allies||[]).filter(Boolean), control=document.getElementById('set-hp-pot');
+    if(!allies.length || !control || !Number.isFinite(Number.parseInt(control.value,10)))return false;
+    const threshold=Math.max(0,Math.min(100,Number.parseInt(control.value,10)));
+    const prior=allies.map(a=>a._potHpPct);
+    for(const ally of allies)ally._potHpPct=threshold;
+    if(!saveGame()){
+        allies.forEach((a,i)=>{if(prior[i]===undefined)delete a._potHpPct;else a._potHpPct=prior[i];});
+        return false;
+    }
+    _squadSigSkill='';renderSquadPanel();
+    logSys(allies.length+' 名隊員的喝水門檻已設為 '+threshold+'%。');return true;
+}
 function setAllyHealHp(slot, val) { let a = _findAlly(slot); if (a) { a._healHpPct = Math.max(0, Math.min(100, parseInt(val) || 0)); saveGame(); } }
 function setAllyPotHp(slot, val) { let a = _findAlly(slot); if (a) { a._potHpPct = Math.max(0, Math.min(100, parseInt(val) || 0)); saveGame(); } }   // 🍶 v2.6.4 喝藥水門檻（獨立·低於此%→喝隊長藥水；0=關閉）
 function setAllyHpSkill(slot, val) { let a = _findAlly(slot); if (a) { a._hpSkillPct = Math.max(0, Math.min(100, parseInt(val) || 0)); saveGame(); } }   // 🛡️ v2.6.4 停耗HP技門檻（獨立·低於此%→暫停龍騎HP技/轉換技/立方和諧；0=關閉）

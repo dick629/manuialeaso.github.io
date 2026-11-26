@@ -1,6 +1,6 @@
 /* Interface v6: original vector engraving, shared materials only.
    Layout rules live in separate desktop/mobile files. Never recolor rarity text or battle art. */
-:root{--li-frame:url('../assets/ui/interface-v6/carved-frame.svg')}
+:root{--li-frame:var(--lm-0d601be250cd,url('../assets/ui/interface-v6/carved-frame.svg'))}
 body.m-unified #game-screen .log-bg{background:var(--li-panel)!important;border-color:#6d6754}
 body.m-unified :is(#game-screen,#lm-detail,#collection-panel,#card-book,#equip-book,#misc-book,#relic-book,#warehouse-window,#item-modal,#npc-interaction-modal,#shop-window,#growth-overlay,#class-overlay,#attribute-help,#afk-novel,#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#m-fsv-modal,#m-hist-modal,#m-rid-modal,#m-diag-modal,#m-mobname-modal,#m-stg-modal,#afk-confirm-modal,#afk-alert-modal,#afk-gh-win) :is(.panel,.modal-content){border-color:var(--li-edge);border-radius:1px}
 body.m-unified :is(#game-screen,#lm-detail,#collection-panel,#card-book,#equip-book,#misc-book,#relic-book,#warehouse-window,#item-modal,#npc-interaction-modal,#shop-window,#growth-overlay,#class-overlay,#attribute-help,#afk-novel,#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#m-fsv-modal,#m-hist-modal,#m-rid-modal,#m-diag-modal,#m-mobname-modal,#m-stg-modal,#afk-confirm-modal,#afk-alert-modal,#afk-gh-win) :is(.panel-header,.nv-head){color:var(--li-heading);border-color:var(--li-edge);background:var(--li-header)!important;font-family:"Noto Serif TC","PMingLiU",serif;letter-spacing:.04em}

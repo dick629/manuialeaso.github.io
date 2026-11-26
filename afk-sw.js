@@ -18,7 +18,7 @@
     return;
   }
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').then(function () {
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function () {
       console.log('[AFK-sw] hooks OK — 背景大圖 Service Worker 已註冊(回訪 / 重整秒出)。');
     }).catch(function (err) {
       console.warn('[AFK-sw] Service Worker 註冊失敗(不影響遊戲):', err && err.message);

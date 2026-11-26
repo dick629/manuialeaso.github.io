@@ -40,8 +40,21 @@
   if(kind==='resource'){if(has(v,'祖誓',5)&&ready(p,'resource',12))next(p,'resource',.3);mixTrigger(p,'祖誓',t);}
   if(kind==='cast'&&extra.id){a.casts.add(extra.id);if(a.casts.size>=3){a.casts.clear();if(has(v,'星祭',5)&&ready(p,'mp',12))p.mp=Math.min(p.mmp,p.mp+p.mmp*.06);mixTrigger(p,'星祭',t);}}
  }
- function event(name,c){if(!c?.actor)return;let s=seen.get(c);if(!s){s=new Set();seen.set(c,s);}if(s.has(name))return;s.add(name);const p=c.actor,v=view(p),a=mem(p),direct=c.direct!==false&&!c.generated&&!c.noProc&&!c.environment&&!c.isDot&&!c.reflection&&!c.redirected&&c.kind!=='true'&&!['proc','dot','reflection','redirect','sherine','class'].includes(c.origin);
+ const handled=new Set(['battleEnd','onStats','beforeStatus','beforeHeal','onHeal','beforeCast','onCast','castPaid','onDodge','onStatusAttempt','shieldBreak','beforeHit','beforeSkill','beforeDot','beforeHurt','directHit','tick']);
+ function event(name,c){if(!c?.actor||!handled.has(name))return;let s=seen.get(c);if(!s){s=new Set();seen.set(c,s);}if(s.has(name))return;s.add(name);const p=c.actor;
+  // Timers consume the effects already armed on the actor. They need no equipment scan.
+  if(name==='tick'){
+   const a=states.get(p);if(!a)return;
+   if(a.mixUntil&&a.mixUntil<=now()){a.mixUntil=0;R.recalc(p);}
+   if(a.dots.length){
+    for(const d of a.dots)if(d.left>0&&d.next<=now()&&live(d.t)){d.left--;d.next=now()+1;partial(p,d.t,d.damage,true);}
+    a.dots=a.dots.filter(d=>d.left>0&&live(d.t));
+   }
+   return;
+  }
+  const a=mem(p);
   if(name==='battleEnd'){const cd=a.cd;states.delete(p);mem(p).cd=cd;return;}
+  const v=view(p),direct=c.direct!==false&&!c.generated&&!c.noProc&&!c.environment&&!c.isDot&&!c.reflection&&!c.redirected&&c.kind!=='true'&&!['proc','dot','reflection','redirect','sherine','class'].includes(c.origin);
   if(name==='onStats'){const d=c.stats,add=(k,n)=>d[k]=N(d[k])+n;
    const base={潮誓:{extraDmg:50,extraMp:30},葬星:{extraHit:50,mr:50},裂鎧:{ac:-30,dr:30},冥契:{meleeDmg:30,meleeHit:30},破曉:{rangedDmg:30,rangedHit:30},鏡潮:{extraDmg:20,extraHit:30},星祭:{mpR:50,extraMp:60},封夢:{magicDmg:30,magicHit:25},噬影:{extraDmg:70},界織:{magicDmg:30},燼心:{}};
    for(const[g,attrs]of Object.entries(base))if(has(v,g,2))for(const[k,n]of Object.entries(attrs))add(k,n);
@@ -71,7 +84,6 @@
    if(R.api.hp(p)<p.mhp*.4)mixTrigger(p,'燼心',c.target);
    let leech=(has(v,'祖誓',2)&&c.kind!=='magic'?.05:0)+(oldActive(p,'龍血')?.03:0);if(leech&&ready(p,'leech',1))R.api.heal(p,Math.min(c.actualDamage*leech,p.mhp*(has(v,'祖誓',2)?.03:.02)),{owner:p,source:'sherine-leech'});
   }
-  if(name==='tick'){if(a.mixUntil&&a.mixUntil<=now()){a.mixUntil=0;R.recalc(p);}for(const d of a.dots)if(d.left>0&&d.next<=now()&&live(d.t)){d.left--;d.next=now()+1;partial(p,d.t,d.damage,true);}a.dots=a.dots.filter(d=>d.left>0&&live(d.t));}
  }
  const RC=W.AFK_RELIC_COMPANIONS,oldCapacity=RC?.equipmentCapacity;if(oldCapacity)RC.equipmentCapacity=function(p,cap){return oldCapacity.apply(this,arguments)+(has(view(p),'燼心',2)?500:0);};
  if(W.__afkMaxAdd?.add)W.__afkMaxAdd.add(p=>{const v=view(p);let bonus=0;if(has(v,'冥契',3))bonus+=.2;if(has(v,'燼心',3))bonus+=.5;p.mhp=Math.floor(p.mhp*(1+bonus)+(has(v,'燼心',2)?5000:0));});

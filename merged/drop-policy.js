@@ -27,7 +27,7 @@
   if(collectionChanged&&typeof W.__afkDexCacheBump==='function')W.__afkDexCacheBump();
  }
  const oldFilter=W.__afkDropListFilter;
- W.__afkDropListFilter=function(mob,list){const incoming=oldFilter?oldFilter.apply(this,arguments)||list:list;const kept=incoming.filter(e=>allows(mob,Array.isArray(e)?e[0]:e&&e.id));stats.filteredEntries+=incoming.length-kept.length;return kept;};
+ W.__afkDropListFilter=function(mob,list){const incoming=oldFilter?oldFilter.apply(this,arguments)||list:list;const kept=incoming.filter(e=>allows(mob,Array.isArray(e)?e[0]:e&&e.id));if(!mob?._areaDropPreview)stats.filteredEntries+=incoming.length-kept.length;return kept;};
  W.LineageDropPolicy={source:data.source,allows,apply,stats,allowEvent(mob,id){const allowed=allows(mob,id);if(!allowed)stats.blockedEventRewards++;return allowed;}};
  apply();W.addEventListener('load',apply);
 })(window);

@@ -36,7 +36,7 @@
     pool.forEach(function (id) { var m = DB.mobs[id]; if (m && !m.boss) mx = Math.max(mx, N(m.lv)); });
     return (LVC[k] = mx);
   };
-  var members = function () { var p = P(), out = []; if (!p) return out; if (!p.dead && p.hp > 0) out.push(p); (p.allies || []).forEach(function (a) { if (a && !a._downed && N(a.curHp) > 0) out.push(a); }); return out; };
+  var members = function () { var p = P(), out = []; if (!p) return out; if (!p.dead && p.hp > 0) out.push(p); GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed && N(a.curHp) > 0) out.push(a); }); return out; };
   var hurtAll = function (pct) {
     var p = P(); members().forEach(function (x) {
       var mx = x === p ? N(p.mhp) : N(x.mhp), dmg = Math.floor(mx * pct * (typeof W.__afkRecoilMult === 'function' ? (N(W.__afkRecoilMult(x)) || 1) : 1));   // 標籤卡「怪物倒下時的反噬傷害 −%」
@@ -139,6 +139,7 @@
           // 11-17（Ping）：碎盾易傷（打盾 ×(1+%)，最多 +50%）、穿透易傷（一半打盾、一半打血）
           var bk = SV.brk(target), pen = SV.pen(target), toS = pen ? v * 0.5 : v, hpPart = v - toS, mul = 1 + bk;
           var a = Math.min(s, toS * mul); target._rrShield = s - a;
+          W.giranShieldImpact?.(target, a);
           v = Math.floor(hpPart + Math.max(0, toS - a / mul)); if (!(v > 0)) zeroMark('護盾吸收 ' + Math.floor(a).toLocaleString());
           if (target._rrShield <= 0) { if (target.boss) log('<span style="color:#93c5fd">' + (target.n || '王') + ' 的屏障破了。</span>'); }
           else if (tk() >= (target._rrAbsLog || 0)) { target._rrAbsLog = tk() + 50; log('<span style="color:#93c5fd">【' + (target.boss ? '魔法屏障' : '護盾') + '】' + (target.n || '怪物') + ' 的護盾吸收了傷害（還剩 ' + Math.ceil(target._rrShield).toLocaleString() + '）。</span>'); }   // 11-17：0 點傷害的原因要看得到（每 5 秒最多一行）
@@ -193,7 +194,7 @@
   };
   wrapCast('castSkill', 0); ['allyCastMagic', 'allyCastNonDamage', 'allyCastPhysicalSkill', 'allyCastCrush', 'allyCastFixedStatus'].forEach(function (n) { wrapCast(n, 1); });
   var party = function (a) { var p = P(); return !!(a && p && (a === p || (p.allies || []).indexOf(a) >= 0)); };
-  var preciseOn = function () { var p = P(); if (!p) return false; if (p.buffs && (p.buffs.sk_royal_precise || 0) > 0) return true; return (p.allies || []).some(function (a) { return a && a.buffs && (a.buffs.sk_royal_precise || 0) > 0; }); };
+  var preciseOn = function () { var p = P(); if (!p) return false; if (p.buffs && (p.buffs.sk_royal_precise || 0) > 0) return true; return GiranPartyView.combatAllies(p).some(function (a) { return a && a.buffs && (a.buffs.sk_royal_precise || 0) > 0; }); };
   var wpnOf = function (a) { var w = a && a.eq && (a.eq.wpn || a.eq.weapon); return w && typeof DB !== 'undefined' ? DB.items[w.id] && { id: w.id, d: DB.items[w.id] } : null; };
   var bluntRelic = function (w) { if (!w || !w.d.relic) return false; try { return (getWeaponTags(w.id) || []).some(function (t) { return /鈍器/.test(t); }); } catch (e) { return false; } };
   var penRelic = function (w) { return !!(w && w.d.relic && (w.d.eff === 'pierce' || w.d.alsoPierce || w.d.ignHardSkin)); };
@@ -230,15 +231,15 @@
     for (var i = 0; i < L.length; i++) {
       var m = L[i]; if (!m || !m.uid) continue;
       var el = document.querySelector('.mob-target[data-uid="' + m.uid + '"]'); if (!el) continue;
-      var box = el.querySelector('.afk-rr-sh'), s = shieldOf(m);
-      if (!(s > 0) || m._dead) { if (box) box.remove(); continue; }
+      var host = el.giranHead || el, box = host.querySelector('.afk-rr-sh'), s = shieldOf(m);
+      if (!(s > 0) || m._dead || !_showMobHp) { if (box) box.remove(); continue; }
       var mx = Math.max(s, N(m._rrShieldMax) || s), w = Math.max(2, Math.round(s / mx * 100));
       if (!box) {
         var bar = el.querySelector('.mob-hp-bar'); if (!bar) continue;
         box = document.createElement('div'); box.className = 'afk-rr-sh';
         box.style.cssText = 'display:flex;flex-direction:column;align-items:center;margin:-2px 0 2px;pointer-events:none';
         box.innerHTML = '<div style="width:50px;height:3px;background:#1e293b;border-radius:2px;overflow:hidden"><div class="afk-rr-shf" style="height:100%;background:#60a5fa"></div></div><div class="afk-rr-sht" style="font-size:10px;line-height:12px;color:#93c5fd;font-weight:700;text-shadow:0 0 3px #000"></div>';
-        bar.parentNode.insertBefore(box, bar.nextSibling);
+        if (host === el) bar.after(box); else host.append(box);
       }
       box.querySelector('.afk-rr-shf').style.width = w + '%';
       var bk = SV.brk(m), t = '🛡 ' + fmtK(s) + (bk > 0 ? ' 碎盾+' + Math.round(bk * 100) + '%' : '') + (SV.pen(m) ? ' 穿透' : ''), tx = box.querySelector('.afk-rr-sht');

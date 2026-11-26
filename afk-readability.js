@@ -105,7 +105,7 @@ body #poly-modal>.panel>button.btn.mt-4{position:sticky;bottom:0;z-index:2}
 body.afk-readable :is(#item-modal,#poly-modal,#town-interaction-container,#card-book,#equip-book,#misc-book,#relic-book,#collection-panel):not(.hidden){z-index:9700!important}
 /* The fixed app stage is itself a stacking context. Raise it only while a
    native dialog is open, so a child z-index can actually clear the log sheet. */
-body.afk-readable.m-mobile #app-stage:has(:is(#item-modal,#poly-modal,#town-interaction-container,#card-book,#equip-book,#misc-book,#relic-book,#collection-panel):not(.hidden)){z-index:9700}
+body.afk-readable.m-mobile #app-stage.afk-dialog-raised{z-index:9700}
 body.afk-readable:not(.m-mobile) #item-modal:not(.hidden){position:fixed;top:calc(50% + var(--orig-bar-h,0px)/2);max-width:calc(100vw - 24px);max-height:calc(100dvh - var(--orig-bar-h,0px) - 24px);align-items:stretch}
 body.afk-readable:not(.m-mobile) #item-modal>div{min-width:0;max-height:inherit;overflow-y:auto;overscroll-behavior:contain;width:min(420px,calc(100vw - 24px))}
 body.afk-readable:not(.m-mobile) #item-modal>#modal-compare{width:320px;flex-shrink:1}

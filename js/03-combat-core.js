@@ -179,6 +179,18 @@ function _dpsCreditDot(src, amt) {   // DoT 依施加者標記歸因：'player'/
     _dps.player += amt;
 }
 
+// Chrome can delay the interval for over a second even while presenting several
+// field frames. Both paths use the same elapsed-time anchor and the same real ticks.
+function serviceForegroundClock() {
+    if (_gameLoopId === null || _loopLast === null || state.inTick || state.ff ||
+        player.dead || !state.running || document.hidden || _perfNow() - _loopLast < TICK_MS * 2) return;
+    if (_ffAcc && !(_ffAcc.fg && _ffAcc.spatial)) return;
+    if (_ffResumeTimer !== null) {
+        if (!_ffAcc?.fg || !_ffAcc.spatial) return;
+        _ffCancelScheduledLoop();
+    }
+    gameLoop();
+}
 function gameLoop() {
     if (_ffResumeTimer !== null && _tickDebt >= TICK_MS) return;   // 快速續跑已排程時，忽略一般 100ms 計時器插隊
     // 🛡️ 反盜用：非官方網域時橫幅若被移除則自動重掛（官方/本機為快取布林值判定，成本可忽略）
@@ -213,6 +225,10 @@ function gameLoop() {
         return;
     }
 
+    const field = window.GiranCombat?.field;
+    // 戰場遮罩仍在讀圖時保留既有的補跑時間，玩家能行動才開始累計新的即時戰鬥時間。
+    if (!_hidden && !_ffAcc && !state.ff && _tickDebt < TICK_MS && field &&
+        !mapState.current.startsWith('town_') && !window.__afkOfflineNow?.() && !field.ready()) return;
     if (!Number.isFinite(elapsed) || elapsed < 0) elapsed = 0;
     _tickDebt += _hidden ? elapsed : Math.min(elapsed, FF_MAX_ELAPSED_MS);   // 背景凍結可能超過 5 分鐘：全額保留在債務中，不能因單次上限遺失收益
     if (typeof window.__afkFgCarryTake === 'function') _tickDebt += window.__afkFgCarryTake();   /* 🔌 加掛版補丁:前景跟不上時照常重畫 */
@@ -224,6 +240,7 @@ function gameLoop() {
     // 🔌 加掛版補丁（玩家 11-11）：待在村莊裡沒有戰鬥，背景／凍結回來的時間不逐 tick 補跑（村莊裡補跑只是空轉、還會卡畫面）
     if (_tickDebt >= TICK_MS * 2 && typeof mapState !== 'undefined' && mapState && /^town_/.test(mapState.current || '') && !_ffAcc) _tickDebt = TICK_MS;
     let owed = Math.floor(_tickDebt / TICK_MS);
+    const spatialDebt=!_hidden && field?.map===mapState.current && !window.__afkOfflineNow?.() && window.__giranForegroundDebt?.(owed);
     let _fg = owed > 1 && !_hidden && (!_ffAcc || _ffAcc.fg) && typeof window.__afkFgLag === 'function' && !!window.__afkFgLag(owed);   /* 🔌 加掛版補丁:前景跟不上時照常重畫 */
     if (owed <= 1 && !_hidden && !_ffAcc) {   // 即時路徑：背景／既有補跑摘要一律走下方靜音路徑
         _tickDebt -= TICK_MS;
@@ -238,9 +255,10 @@ function gameLoop() {
     //    state.ff＝全域補跑閘（VFX/動畫/音效/日誌/逐次重繪與存檔全部受抑制）；ffSmall 保留相容但固定 false。
     if (!_ffAcc) {
         if (typeof resetCatchupGainItemIndex === 'function') resetCatchupGainItemIndex();
-        _ffAcc = { t0: Date.now(), ticks: 0, gold: (player.gold || 0), invStart: _ffInventoryCounts() };   // ⏩ 整段補跑只在起點與終點各掃一次背包
+        _ffAcc = { t0: Date.now(), ticks: 0, gold: (player.gold || 0), invStart: _fg ? null : _ffInventoryCounts(), spatial:spatialDebt };
         if (_fg) _ffAcc.fg = true; else try { if (typeof _vfxClearAll === 'function') _vfxClearAll(); } catch (e) {}   // 補跑只保留最終收益，立即釋放尚未播完的戰鬥特效
     }
+    if(_hidden)_ffAcc.spatial=false;
     // 長補跑先讓瀏覽器畫出進度提示再開始重運算；只做一次，不增加每批額外等待。
     if (!_fg && !_hidden && !_ffAcc.progressPrimed && (_ffAcc.ticks * TICK_MS + _tickDebt) >= FF_PROGRESS_MIN_MS) {
         _ffAcc.progressPrimed = true;
@@ -254,6 +272,9 @@ function gameLoop() {
     state.ffSmall = false;   // 真實補跑一律略過動畫；小補跑也只保留最終畫面與收益
     let ran = 0, budget0 = now;
     let _burstMax = _fg ? owed - 1 : owed;   /* 🔌 加掛版補丁:前景跟不上時照常重畫 */
+    // In a busy visible field, a batch has to cover the time since the last wake.
+    // Limit this allowance for long pauses; the ordinary background budget still applies.
+    const pacedTicks = _fg && spatialDebt ? Math.min(_burstMax, 8, Math.ceil(elapsed / TICK_MS)) : 0;
     try {
         while (ran < _burstMax && ran < FF_HARD_CAP) {
             let tickError = null;
@@ -277,7 +298,7 @@ function gameLoop() {
             _ffErrorStreak = 0;
             if ((ran & 3) === 0) {
                 let t = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-                if (t - budget0 >= FF_BUDGET_MS) break;
+                if (ran >= pacedTicks && t - budget0 >= FF_BUDGET_MS) break;
             }
         }
     } finally {
@@ -486,9 +507,29 @@ function inAbsBarrier() { return !!(player.buffs && player.buffs.sk_abs_barrier 
 // 🚀 重繪合併：tick 進行中(state.inTick)時 updateUI/renderMobs 只標記 dirty，於 tick 結尾 flushTickRender() 統一重繪一次，
 //   避免單一 tick 內(玩家＋多傭兵＋持續傷害＋特效＋擊殺)重複重繪十數次；tick 外(點擊/裝備/用道具/開面板)維持立即重繪、體感不變。
 let _uiDirty = false, _mobsDirty = false;
-function updateUI() { if (state.inTick || (typeof catchupActive === 'function' && catchupActive())) { _uiDirty = true; return; } _uiDirty = false; _updateUIImpl(); }
-function renderMobs() { if (state.inTick || (typeof catchupActive === 'function' && catchupActive())) { _mobsDirty = true; return; } _mobsDirty = false; _renderMobsImpl(); }
-function flushTickRender() { if (typeof catchupActive === 'function' && catchupActive()) return; if (_uiDirty) { _uiDirty = false; _updateUIImpl(); } if (_mobsDirty) { _mobsDirty = false; _renderMobsImpl(); } }
+let worldRenderDepth=0;
+function batchWorldRender(fn,...args) {
+    worldRenderDepth++;
+    try { return fn(...args); }
+    finally {
+        worldRenderDepth--;
+        if (!worldRenderDepth && !state.inTick && (_mobsDirty || _uiDirty)) flushTickRender();
+    }
+}
+function updateUI() { if (worldRenderDepth || state.inTick || (typeof catchupActive === 'function' && catchupActive())) { _uiDirty = true; return; } _uiDirty = false; _updateUIImpl(); }
+function renderMobs() {
+    if (state.inTick || (typeof catchupActive === 'function' && catchupActive())) { _mobsDirty=true; return; }
+    if (worldRenderDepth) {
+        // Capture each individual strike before another ally changes the target's HP.
+        // Only the structural card and HUD refresh waits for the last impact.
+        if (!state.ff && !_mobPointerDown) {
+            for (const mob of mapState.mobs) if (mob) _captureMobHit(mob);
+        }
+        _mobsDirty=true;return;
+    }
+    _mobsDirty=false;_renderMobsImpl();
+}
+function flushTickRender() { if (worldRenderDepth || (typeof catchupActive === 'function' && catchupActive())) return; if (_uiDirty) { _uiDirty = false; _updateUIImpl(); } if (_mobsDirty) { _mobsDirty = false; _renderMobsImpl(); } }
 // 🚀 怪物卡互動穩定：① 滑鼠所在怪的 uid 以 JS 追蹤(_hoverMobUid)、每次重繪都重新套用「顯示名字」class→避免重繪(每 tick 換掉 #mob-list 內容)使 :hover 瞬間失效造成名字一直閃；② 按住怪物卡期間(_mobPointerDown)延後重繪→避免 mousedown↔mouseup 之間整列被換掉使點擊切換目標失效。
 let _hoverMobUid = null, _mobPointerDown = false, _mobRebuildPending = false;
 function _applyHoverName() {   // 依 _hoverMobUid 即時切換各卡名字顯示(不整列重繪)
@@ -512,7 +553,10 @@ function _initMobListGuard() {   // 在 #mob-list(穩定父節點·只換其 inn
         let uid = card.getAttribute('data-uid');
         if (!uid) return;   // 空格(無 data-uid·pointer-events:none)→略過
         let idx = mapState.mobs.findIndex(m => m && String(m.uid) === String(uid) && !m._dead);
-        if (idx >= 0 && idx !== mapState.targetIdx) setTarget(idx);
+        if (idx >= 0) {
+            if (window.GiranRoam) GiranRoam.choose(mapState.mobs[idx]);
+            else if (idx !== mapState.targetIdx) setTarget(idx);
+        }
     });
     let release = () => { if (!_mobPointerDown) return; _mobPointerDown = false; if (_mobRebuildPending) { _mobRebuildPending = false; setTimeout(() => _renderMobsImpl(), 0); } };   // 放開後(讓 click→setTarget 先在存活節點上觸發)再補一次重繪
     document.addEventListener('pointerup', release);
@@ -547,7 +591,8 @@ function applyPlayerHitstun() {
 }
 // 🔌 加掛版補丁(apply-core-patches)：出怪排程抽成具名函式，供 afk-offline 離線快速結算與 tick() 共用同一份排程。
 function maybeSpawnMobs() {
-        let isPureBossMap = PURE_BOSS_MAPS.includes(mapState.current) && !KING_ROOMS[mapState.current];   // 🔧 軍王之室仍屬純BOSS房(免自動瞬移/追蹤)，但四軍王房改用五格
+        if (window.GiranRoam?.owns()) return;
+        let isPureBossMap = !KING_ROOMS[mapState.current] && (PURE_BOSS_MAPS.includes(mapState.current) || window.GiranBossRooms?.singleSlot(mapState.current,DB.maps[mapState.current]));
         if(!mapState.spawnAt) mapState.spawnAt = [null, null, null, null, null];
         let nowT = state.ticks;
         if(KING_ROOMS[mapState.current] && state._kbRespawnAt != null) {
@@ -557,8 +602,11 @@ function maybeSpawnMobs() {
             // 🏛️ 雙BOSS祭壇：不逐格自動補怪（初次生成於 changeMap；單隻陣亡不補）。防呆：兩隻皆亡卻未標記全滅 → 補標，交由 settleDeadMobs 啟動 5 秒同時復活
             if(state._kbVictory !== true && !mapState.mobs.some(m => m && m.boss)) state._kbVictory = true;
         } else {
-            let slotCount = backSlotsActive() ? 5 : 3;                          // 🆕 一般狩獵／攻城／時空裂痕／四軍王房開放後排兩格(3,4)→最多 5 隻
+            const instanceSlots=window.GiranRoam?.instanceSlots()||0;
+            const slotCount=instanceSlots||(backSlotsActive()?5:3);
+            let budget=instanceSlots?Math.min(8,slotCount-mapState.mobs.filter(m=>m&&!m._dead&&m.curHp>0).length):Infinity;
             for(let i=0; i<slotCount; i++) {
+                if(budget<=0)break;
                 if(mapState.mobs[i]) { mapState.spawnAt[i] = null; continue; } // 有怪：清除排程
                 if(isPureBossMap && i !== 1) continue;                          // 純 BOSS 房只生中央
                 let delay;
@@ -592,12 +640,16 @@ function maybeSpawnMobs() {
                         else mapState._sanctBossSpawned = true;                                                                   // 首次生成免費
                     }
                     spawnMob(i); mapState.spawnAt[i] = null;
+                    if(mapState.mobs[i])budget--;
                 }
             }
         }
     }
 function tick() {
     if(!state.running || player.dead) return;
+    if(player.giranHunt&&state.ticks%10===0&&window.GiranHunt?.step()){
+        state.ticks++;return;
+    }
     state.ticks++; if(window.AFK_CARD_COMBAT)window.AFK_CARD_COMBAT.tick(); /* card-combat:aura-tick */
     if (window.AFK_RELIC_RUNTIME) window.AFK_RELIC_RUNTIME.tick(); /* relic-runtime:runtime-tick */
     // 🪄 吉爾塔斯魔杖：擊殺增益到期即重算，避免額外魔法點數停留在衍生能力中。
@@ -751,6 +803,7 @@ function tick() {
         }
         if(player._waterVitalCd > 0) player._waterVitalCd--;   // 🔧 水之元氣：觸發後 7 秒冷卻（每秒遞減）
         if(_buffEnded) calcStats();   // 到期重算（變身還原、技能加成移除等）
+        window.GiranPartyEffects?.sync(player);
         if(canAct) autoActions();   // 🆕 v2.6.28 硬控中(石化/冰凍/暈眩/麻痺/沉睡)不再自救淨化；改由自由隊員(玩家/傭兵)幫全隊解除（team dispel）
     }
 
@@ -920,7 +973,7 @@ function tick() {
 //    `hot: { interval: <每跳 tick 數>, ticks: <總跳數> }` 與 `autoBuff: true`，整條鏈路即自動復活。
 //    相關落點：js/03 tick 回復迴圈、js/07 applyTeamHot＋施放分支、js/06 傭兵施放、js/08 狀態圖示、js/10 取消打勾結束。
     if(player.hots && !player.dead) {   // 🍃 團隊 HoT（體力回復術/生命的祝福）：多技能並存·每 interval 對玩家＋全體非倒地傭兵各回復一次
-        let _hotAllies = (player.allies || []).filter(a => a && !a._downed && (a.curHp || 0) > 0);
+        let _hotAllies = GiranPartyView.combatAllies().filter(a => a && !a._downed && (a.curHp || 0) > 0);
         for(let _hsk in player.hots) {
             let _h = player.hots[_hsk];
             if(--_h.cd <= 0) {
@@ -1981,6 +2034,10 @@ function spawnMob(idx) {
     const twisted = window.TwistedSpace?.here();
     if (twisted && !TwistedSpace.canPlace(idx)) return;
     let pool = DB.maps[mapState.current];
+    if(window.GiranBossRooms?.singleSlot(mapState.current,pool) && !KING_ROOMS[mapState.current] &&
+        (idx!==1 || mapState.mobs.some((m,i)=>i!==idx && m?.boss && !m._dead && m.curHp>0)))return;
+    if(window.GiranWorldBosses?.spawn(idx))return;
+    if(Array.isArray(pool)&&!pool.length&&String(mapState.current).startsWith('giran_floor_'))return;
     if(!pool) return;
     // 🐉 v3.7.57 侵蝕的安塔瑞斯巢穴：棲息地=中央「被侵蝕的安塔瑞斯」+其餘「大地荒龍」；入口/通道/深處=中央固定區域頭目（場上無王時）、其餘格走 DB.maps 池
     //    ⚠️ 刻意不掛 KING_ROOMS/PURE_BOSS_MAPS：前者會觸發 _kbVictory 傳送與非頭目掉落封鎖、後者只生中央格，皆與副本規格衝突。
@@ -2013,6 +2070,10 @@ function spawnMob(idx) {
         return;
     }
     // 🆕 2026-06：後排格(3,4)現在也會 roll 頭目——原本後排不出王，但死亡輸送帶把存活怪往前壓實、空格往後堆→補位幾乎都落在後排、跳過頭目判定而稀釋出王率；故 wantBoss/卡瑞/林德拜爾改成全 5 格皆判定（idx>=3 不再排除頭目）
+    const expandedFieldSlot=idx>=5 && (window.GiranRoam?.spawning||window.GiranRoam?.instanceSlots());
+    const summonBossByItem=!expandedFieldSlot && !!mapState.forceBoss;
+    if(!summonBossByItem && window.GiranWorldBosses)pool=GiranWorldBosses.fieldPool(pool);
+    if(!pool.length)return;
     let bossInBattle = mapState.mobs.some(m => m && m.boss);
     let bossPool = pool.filter(id => DB.mobs[id] && DB.mobs[id].boss);
     let normalPool = pool.filter(id => DB.mobs[id] && !DB.mobs[id].boss);
@@ -2020,157 +2081,165 @@ function spawnMob(idx) {
     let siegeArea = isSiegeArea(mapState.current);
     let npcClanBattle = !_antharasDungeon && typeof npcClanGroupBattleActive === 'function' && npcClanGroupBattleActive();
     let wcMassTauntBattle = !_antharasDungeon && typeof wcMassTauntGroupBattleActive === 'function' && wcMassTauntGroupBattleActive();
-    let wantBoss = false;
+    let wantBoss=false;
     if (twisted) {
-        const summonBossByItem = !!mapState.forceBoss;
-        const baseChance = Math.max(0.01, Math.min(1, (player.d?.bossEncounterPct || 1)/100));
-        mobId = TwistedSpace.pickBossOrMob(summonBossByItem, window.__afkBossChanceAdj?.(baseChance) ?? baseChance);
+        mobId = TwistedSpace.pickBossOrMob(idx);
         wantBoss = !!DB.mobs[mobId]?.boss;
         if (summonBossByItem) mapState.forceBoss = false;
         const fieldBoss = DB.mobs[mobId]?.afkMb;
         if (fieldBoss && window.__afkMapBoss?.spawnAt(fieldBoss,idx)) return;
-    } else {   // 扭亂時空以外：原本的出怪流程
-    let allowMultiBoss = backSlotsActive() && !siegeArea;   // 🆕 一般5格地圖可同時出現多隻頭目；攻城雖改為5格，仍維持單一城門／守護塔
-    // 🏛️ 長老之室 BOSS 節流：場上最多同時 2 隻長老 BOSS；已有 1 隻時須該 BOSS 存活滿 3 分鐘才可能出現第 2 隻
-    let _elderRoom = mapState.current === 'elder_room';
-    let _elderBossOk = true;
-    if (_elderRoom) {
-        let _ab = mapState.mobs.filter(m => m && m.boss && m.curHp > 0 && !m._dead);
-        if (_ab.length >= 2) _elderBossOk = false;
-        else if (_ab.length === 1) _elderBossOk = (Date.now() - (_ab[0]._bornMs || Date.now())) >= 180000;
-    }
-    let _normalBossChance = Math.max(0.01, Math.min(1, (((player && player.d && player.d.bossEncounterPct) || 1) / 100)));
-    if (typeof window.__afkBossChanceAdj === 'function') _normalBossChance = window.__afkBossChanceAdj(_normalBossChance);   /* 🔌 加掛版補丁:出王機率掛點 */
-    wantBoss = !npcClanBattle && !wcMassTauntBattle && (allowMultiBoss || !bossInBattle) && bossPool.length > 0 && (!_elderRoom || _elderBossOk) && (mapState.forceBoss || (siegeArea ? (!mapState.suppressSiegeBoss && Math.random() < 0.10) : (_elderRoom ? Math.random() < 0.05 : Math.random() < _normalBossChance)));
-    if(mapState.forceBoss) mapState.forceBoss = false;   // 強制旗標只作用於下一次生怪
-    if(wantBoss) {
-        // 🔧 同名BOSS限制：場上已有同名BOSS時不再抽到該名→需地圖池有 2 種以上「不同名」BOSS 才可能同時出現多隻；若無不同名可出則退回一般怪
-        let _onFieldBoss = mapState.mobs.filter(m => m && m.boss).map(m => m.n);
-        let _bossPick = bossPool.filter(id => !_onFieldBoss.includes(DB.mobs[id].n));
-        if (_bossPick.length > 0) mobId = _bossPick[Math.floor(Math.random() * _bossPick.length)];
-        else wantBoss = false;
-    }
-    if(!wantBoss) {
-        let safePool = normalPool.length > 0 ? normalPool : pool;
-        if (siegeArea) {   // 攻城區：避免場上同時出現兩名以上同名敵人
-            let onFieldNames = mapState.mobs.filter(m => m).map(m => m.n);
-            let uniquePool = safePool.filter(id => DB.mobs[id] && !onFieldNames.includes(DB.mobs[id].n));
-            if (uniquePool.length > 0) safePool = uniquePool;
+    } else if(expandedFieldSlot){
+        if(!normalPool.length)return;
+        mobId=normalPool[Math.floor(Math.random()*normalPool.length)];
+    }else{
+        let allowMultiBoss = backSlotsActive() && !siegeArea;   // 🆕 一般5格地圖可同時出現多隻頭目；攻城雖改為5格，仍維持單一城門／守護塔
+        // 🏛️ 長老之室 BOSS 節流：場上最多同時 2 隻長老 BOSS；已有 1 隻時須該 BOSS 存活滿 3 分鐘才可能出現第 2 隻
+        let _elderRoom = mapState.current === 'elder_room';
+        let _elderBossOk = true;
+        if (_elderRoom) {
+            let _ab = mapState.mobs.filter(m => m && m.boss && m.curHp > 0 && !m._dead);
+            if (_ab.length >= 2) _elderBossOk = false;
+            else if (_ab.length === 1) _elderBossOk = (Date.now() - (_ab[0]._bornMs || Date.now())) >= 180000;
         }
-        mobId = safePool[Math.floor(Math.random() * safePool.length)];
-        if (siegeArea) {
-            let _onF = mapState.mobs.filter(m => m).map(m => m.n);
-            let _defClanId = typeof npcClanSiegeDefenderId === 'function' ? npcClanSiegeDefenderId() : null;
-            let _siegePvp = pvpCreateRandomOpponent(_onF, _defClanId ? {
-                defenderClanId:_defClanId,
-                defenderChance:0.5
-            } : null);
-            _siegePvp.siegePlayer = true;
-            _siegePvp.siegeLevel = Math.max(1, player.lv + Math.floor(Math.random() * 21) - 10);
-            mobId = trollPickClassMob(_siegePvp.avatar);   // 😤 v3.6.20 70%/30% 模板抽選
-            mapState._trollSpawn = _siegePvp;
+        let _normalBossChance = Math.max(0.01, Math.min(1, (((player && player.d && player.d.bossEncounterPct) || 1) / 100)));
+        if (typeof window.__afkBossChanceAdj === 'function') _normalBossChance = window.__afkBossChanceAdj(_normalBossChance);   /* 🔌 加掛版補丁:出王機率掛點 */
+        wantBoss = !npcClanBattle && !wcMassTauntBattle && (allowMultiBoss || !bossInBattle) && bossPool.length > 0 && (!_elderRoom || _elderBossOk) && (mapState.forceBoss || (siegeArea ? (!mapState.suppressSiegeBoss && Math.random() < 0.10) : (_elderRoom ? Math.random() < 0.05 : Math.random() < _normalBossChance)));
+        if(mapState.forceBoss) mapState.forceBoss = false;   // 強制旗標只作用於下一次生怪
+        if(wantBoss) {
+            // 🔧 同名BOSS限制：場上已有同名BOSS時不再抽到該名→需地圖池有 2 種以上「不同名」BOSS 才可能同時出現多隻；若無不同名可出則退回一般怪
+            let _onFieldBoss = mapState.mobs.filter(m => m && m.boss).map(m => m.n);
+            let _bossPick = bossPool.filter(id => !_onFieldBoss.includes(DB.mobs[id].n));
+            if (_bossPick.length > 0) mobId = _bossPick[Math.floor(Math.random() * _bossPick.length)];
+            else wantBoss = false;
         }
-        // PVP／NPC 血盟宣戰：依宣戰方向決定野外遭遇率與敵盟占比。
-        if (typeof pvpEnsureState === 'function') pvpEnsureState();
-        let _clanEncounter = typeof npcClanEncounterProfile === 'function'
-            ? npcClanEncounterProfile(player)
-            : null;
-        let _wildPvpChance = _clanEncounter && _clanEncounter.active
-            ? _clanEncounter.chance
-            : PVP_WILD_CHANCE;
-        let _wildPvpAllowed = !!player.pvpOn || !!(_clanEncounter && _clanEncounter.npcInitiated);
-        if (_wildPvpAllowed && typeof MAP_CATEGORIES !== 'undefined' && MAP_CATEGORIES.wild
-            && MAP_CATEGORIES.wild.some(m => m.v === mapState.current)
-            && !PURE_BOSS_MAPS.includes(mapState.current) && !isSiegeArea(mapState.current)
-            && Math.random() < _wildPvpChance) {
-            let _onF = mapState.mobs.filter(m => m).map(m => m.n);
-            let _clanOpts = _clanEncounter && _clanEncounter.active ? {
-                warEncounter:true,
-                encounterClanIds:_clanEncounter.clanIds,
-                enemyClanChance:_clanEncounter.enemyClanChance
-            } : null;
-            let _pvp = pvpCreateRandomOpponent(_onF, _clanOpts);
-            if (_pvp && !_onF.includes(_pvp.n)) {
-                mobId = trollPickClassMob(_pvp.avatar);   // 😤 v3.6.20 70%/30% 模板抽選
-                mapState._trollSpawn = _pvp;
+        if(!wantBoss) {
+            let safePool = normalPool.length > 0 ? normalPool : pool;
+            if (siegeArea) {   // 攻城區：避免場上同時出現兩名以上同名敵人
+                let onFieldNames = mapState.mobs.filter(m => m).map(m => m.n);
+                let uniquePool = safePool.filter(id => DB.mobs[id] && !onFieldNames.includes(DB.mobs[id].n));
+                if (uniquePool.length > 0) safePool = uniquePool;
             }
-        }
-        // 😤 v3.5.59 白目玩家：被記仇(player.trollPlayers·js/24 嗆聲觸發)→野外(非BOSS房/非攻城)重生 5% 機率遭遇；同名不同時出現；逾期(2小時)自動移除
-        if (!_antharasDungeon && player.trollPlayers && player.trollPlayers.length) {
-            let _now = Date.now();
-            let _tl = player.trollPlayers.filter(t => t && (t.noExpire || t.pvpRevenge || t.until > _now));
-            if (_tl.length !== player.trollPlayers.length) {
-                let _keep = new Set(_tl.map(t => t && t.n));
-                let _expiredNames = player.trollPlayers.filter(t => t && t.n && !_keep.has(t.n)).map(t => t.n);
-                player.trollPlayers = _tl;
-                _expiredNames.forEach(n => { if (typeof pvpReleaseAlignLock === 'function') pvpReleaseAlignLock(n); });
-            }
-            if (_tl.length && !PURE_BOSS_MAPS.includes(mapState.current) && !isSiegeArea(mapState.current) && Math.random() < ((typeof window !== 'undefined' && window.__FB5_TEST_BUILD) ? 1 : 0.05)) {   // 🧪 TEST版：野外重生必定遭遇（正式版 5%）
+            mobId = safePool[Math.floor(Math.random() * safePool.length)];
+            if (siegeArea) {
                 let _onF = mapState.mobs.filter(m => m).map(m => m.n);
-                let _cand = _tl.filter(t => !_onF.includes(t.n));
-                if (_cand.length) {
-                    let _t = _cand[Math.floor(Math.random() * _cand.length)]; mobId = trollPickClassMob(_t.avatar); mapState._trollSpawn = _t;   // 😤 v3.6.20 70%/30% 模板抽選
-                    if (typeof pvpLockAlignment === 'function') _t.alignmentValue = pvpLockAlignment(_t.n, _t.alignmentValue, _t.clanId);
+                let _defClanId = typeof npcClanSiegeDefenderId === 'function' ? npcClanSiegeDefenderId() : null;
+                let _siegePvp = pvpCreateRandomOpponent(_onF, _defClanId ? {
+                    defenderClanId:_defClanId,
+                    defenderChance:0.5
+                } : null);
+                _siegePvp.siegePlayer = true;
+                _siegePvp.siegeLevel = Math.max(1, player.lv + Math.floor(Math.random() * 21) - 10);
+                mobId = trollPickClassMob(_siegePvp.avatar);   // 😤 v3.6.20 70%/30% 模板抽選
+                mapState._trollSpawn = _siegePvp;
+            }
+            // PVP／NPC 血盟宣戰：依宣戰方向決定野外遭遇率與敵盟占比。
+            if (typeof pvpEnsureState === 'function') pvpEnsureState();
+            let _clanEncounter = typeof npcClanEncounterProfile === 'function'
+                ? npcClanEncounterProfile(player)
+                : null;
+            let _wildPvpChance = _clanEncounter && _clanEncounter.active
+                ? _clanEncounter.chance
+                : PVP_WILD_CHANCE;
+            let _wildPvpAllowed = !!player.pvpOn || !!(_clanEncounter && _clanEncounter.npcInitiated);
+            if (_wildPvpAllowed && typeof MAP_CATEGORIES !== 'undefined' && MAP_CATEGORIES.wild
+                && MAP_CATEGORIES.wild.some(m => m.v === mapState.current)
+                && !PURE_BOSS_MAPS.includes(mapState.current) && !isSiegeArea(mapState.current)
+                && Math.random() < _wildPvpChance) {
+                let _onF = mapState.mobs.filter(m => m).map(m => m.n);
+                let _clanOpts = _clanEncounter && _clanEncounter.active ? {
+                    warEncounter:true,
+                    encounterClanIds:_clanEncounter.clanIds,
+                    enemyClanChance:_clanEncounter.enemyClanChance
+                } : null;
+                let _pvp = pvpCreateRandomOpponent(_onF, _clanOpts);
+                if (_pvp && !_onF.includes(_pvp.n)) {
+                    mobId = trollPickClassMob(_pvp.avatar);   // 😤 v3.6.20 70%/30% 模板抽選
+                    mapState._trollSpawn = _pvp;
+                }
+            }
+            // 😤 v3.5.59 白目玩家：被記仇(player.trollPlayers·js/24 嗆聲觸發)→野外(非BOSS房/非攻城)重生 5% 機率遭遇；同名不同時出現；逾期(2小時)自動移除
+            if (!_antharasDungeon && player.trollPlayers && player.trollPlayers.length) {
+                let _now = Date.now();
+                let _tl = player.trollPlayers.filter(t => t && (t.noExpire || t.pvpRevenge || t.until > _now));
+                if (_tl.length !== player.trollPlayers.length) {
+                    let _keep = new Set(_tl.map(t => t && t.n));
+                    let _expiredNames = player.trollPlayers.filter(t => t && t.n && !_keep.has(t.n)).map(t => t.n);
+                    player.trollPlayers = _tl;
+                    _expiredNames.forEach(n => { if (typeof pvpReleaseAlignLock === 'function') pvpReleaseAlignLock(n); });
+                }
+                if (_tl.length && !PURE_BOSS_MAPS.includes(mapState.current) && !isSiegeArea(mapState.current) && Math.random() < ((typeof window !== 'undefined' && window.__FB5_TEST_BUILD) ? 1 : 0.05)) {   // 🧪 TEST版：野外重生必定遭遇（正式版 5%）
+                    let _onF = mapState.mobs.filter(m => m).map(m => m.n);
+                    let _cand = _tl.filter(t => !_onF.includes(t.n));
+                    if (_cand.length) {
+                        let _t = _cand[Math.floor(Math.random() * _cand.length)]; mobId = trollPickClassMob(_t.avatar); mapState._trollSpawn = _t;   // 😤 v3.6.20 70%/30% 模板抽選
+                        if (typeof pvpLockAlignment === 'function') _t.alignmentValue = pvpLockAlignment(_t.n, _t.alignmentValue, _t.clanId);
+                    }
                 }
             }
         }
-    }
-    
-    // 魔物追蹤：在追蹤地圖且追蹤有效期間，每次出怪 50% 固定機率改為被追蹤的怪物（🏺 v3.2.17 裝備 小獵犬的追蹤鼻 → 70%）
-    if(player.tracking && player.tracking.until > Date.now() && player.tracking.map === mapState.current
-       && DB.maps[mapState.current] && DB.maps[mapState.current].includes(player.tracking.mob)
-       && DB.mobs[player.tracking.mob] && !DB.mobs[player.tracking.mob].boss) {
-        let _trkRate = 0.5;
-        try { for (let _k in player.eq) { let _e = player.eq[_k]; if (_e && DB.items[_e.id] && DB.items[_e.id].trackBoost) { _trkRate = 0.7; break; } } } catch (e) {}
-        if (Math.random() < (window.AFK_RELIC_COMPANIONS?window.AFK_RELIC_COMPANIONS.trackingChance(_trkRate):_trkRate)) /* relic-companion:tracking-rate */ mobId = player.tracking.mob;
-    }
-    // 🔧 卡瑞（BOSS）：身上「同時」攜帶 飛龍的爪子/蜥蜴的角/水晶球/妖魔戰士護身符 時，
-    //    於龍之谷地監6樓 1% 機率出現（場上無其他 BOSS 時才出現，且同時最多一隻）
-    if (mapState.current === 'zone_31'
-        && !bossInBattle
-        && !mapState.mobs.some(m => m && m.n === '卡瑞')
-        && ['item_dragon_claw', 'item_lizard_horn', 'item_crystal_ball', 'item_orc_amulet'].every(q => player.inv.some(i => i.id === q && i.cnt > 0))
-        && Math.random() < 0.01) {
-        mobId = 'kari';
-    }
-    // 🔥 50級試煉：大洞穴隱遁者村莊地區 1% 出現「魔族暗殺團」（妖精 stage2 收集密封情報書／法師 stage1 收集間諜報告書）
-    if (mapState.current === 'hidden_cave' && !mapState.mobs.some(m => m && m.n === '魔族暗殺團')
-        && ((player.cls === 'elf' && player.trialStage === 2 && !player.inv.some(i => i.id === 'item_sealed_intel'))
-            || (player.cls === 'mage' && player.trialStage === 1 && !player.inv.some(i => i.id === 'item_spy_report')))
-        && Math.random() < 0.10) {   // 🔌 加掛版補丁（玩家 11-11：法師、妖精 50 級試煉打不到）1% → 10%
-        mobId = 'demon_assassin';
-    }
-    // 🐉 林德拜爾（BOSS）：身上持有任意「幼龍蛋」（頑皮／淘氣）於任一野外地圖時，1% 機率改為刷出林德拜爾
-    //    （場上無其他 BOSS 時才出現、同時最多一隻；蛋全數賣出或存入倉庫即不再遭遇）
-    if (!bossInBattle
-        && MAP_CATEGORIES.wild.some(m => m.v === mapState.current)
-        && !mapState.mobs.some(m => m && m.n === '林德拜爾')
-        && Math.random() < 0.01
-        && player.inv.some(i => (i.id === 'item_dragon_egg' || i.id === 'item_dragon_egg2') && i.cnt > 0)) {   /* 🔌 加掛版補丁:林德拜爾先擲骰 */
-        mobId = 'lindvior';
-    }
-    if (typeof window.__afkForceTroll === 'function' && !_antharasDungeon) { try { let _ft = window.__afkForceTroll(idx, mobId); if (_ft && _ft.spawn && DB.mobs[_ft.mobId] && DB.mobs[_ft.mobId].trollPlayer) { mobId = _ft.mobId; mapState._trollSpawn = _ft.spawn; } } catch (e) {} }   /* 🔌 加掛版補丁:宣戰強制敵對 NPC */
-    let _actualPlayerEncounter = mapState._trollSpawn && DB.mobs[mobId] && DB.mobs[mobId].trollPlayer;
-    if (!npcClanBattle && !wcMassTauntBattle && _actualPlayerEncounter && typeof wcMassTauntMaybeStartGroupBattle === 'function' &&
-        wcMassTauntMaybeStartGroupBattle(mapState._trollSpawn)) wcMassTauntBattle = true;
-    if (wcMassTauntBattle && typeof wcMassTauntGroupBattleNextOpponent === 'function') {
-        let _massPvp = wcMassTauntGroupBattleNextOpponent();
-        if (!_massPvp) { delete mapState._trollSpawn; mapState.mobs[idx] = null; return; }
-        mobId = trollPickClassMob(_massPvp.avatar);
-        mapState._trollSpawn = _massPvp;
-    } else if (npcClanBattle && typeof npcClanCreateGroupBattleOpponent === 'function') {
-        let _battle = mapState.npcClanBattle;
-        let _groupPvp = npcClanCreateGroupBattleOpponent(_battle && _battle.clanId);
-        if (_groupPvp) {
-            mobId = trollPickClassMob(_groupPvp.avatar);
-            mapState._trollSpawn = _groupPvp;
+        
+        // 魔物追蹤：在追蹤地圖且追蹤有效期間，每次出怪 50% 固定機率改為被追蹤的怪物（🏺 v3.2.17 裝備 小獵犬的追蹤鼻 → 70%）
+        if(player.tracking && player.tracking.until > Date.now() && player.tracking.map === mapState.current
+           && DB.maps[mapState.current] && DB.maps[mapState.current].includes(player.tracking.mob)
+           && DB.mobs[player.tracking.mob] && !DB.mobs[player.tracking.mob].boss) {
+            let _trkRate = 0.5;
+            try { for (let _k in player.eq) { let _e = player.eq[_k]; if (_e && DB.items[_e.id] && DB.items[_e.id].trackBoost) { _trkRate = 0.7; break; } } } catch (e) {}
+            if (Math.random() < (window.AFK_RELIC_COMPANIONS?window.AFK_RELIC_COMPANIONS.trackingChance(_trkRate):_trkRate)) /* relic-companion:tracking-rate */ mobId = player.tracking.mob;
+        }
+        // 🔧 卡瑞（BOSS）：身上「同時」攜帶 飛龍的爪子/蜥蜴的角/水晶球/妖魔戰士護身符 時，
+        //    於龍之谷地監6樓 1% 機率出現（場上無其他 BOSS 時才出現，且同時最多一隻）
+        if (mapState.current === 'zone_31'
+            && !bossInBattle
+            && !mapState.mobs.some(m => m && m.n === '卡瑞')
+            && ['item_dragon_claw', 'item_lizard_horn', 'item_crystal_ball', 'item_orc_amulet'].every(q => player.inv.some(i => i.id === q && i.cnt > 0))
+            && Math.random() < 0.01) {
+            mobId = 'kari';
+        }
+        // 🔥 50級試煉：大洞穴隱遁者村莊地區 1% 出現「魔族暗殺團」（妖精 stage2 收集密封情報書／法師 stage1 收集間諜報告書）
+        if (mapState.current === 'hidden_cave' && !mapState.mobs.some(m => m && m.n === '魔族暗殺團')
+            && ((player.cls === 'elf' && player.trialStage === 2 && !player.inv.some(i => i.id === 'item_sealed_intel'))
+                || (player.cls === 'mage' && player.trialStage === 1 && !player.inv.some(i => i.id === 'item_spy_report')))
+            && Math.random() < 0.10) {   // 🔌 加掛版補丁（玩家 11-11：法師、妖精 50 級試煉打不到）1% → 10%
+            mobId = 'demon_assassin';
+        }
+        // 🐉 林德拜爾（BOSS）：身上持有任意「幼龍蛋」（頑皮／淘氣）於任一野外地圖時，1% 機率改為刷出林德拜爾
+        //    （場上無其他 BOSS 時才出現、同時最多一隻；蛋全數賣出或存入倉庫即不再遭遇）
+        if (!bossInBattle
+            && MAP_CATEGORIES.wild.some(m => m.v === mapState.current)
+            && !mapState.mobs.some(m => m && m.n === '林德拜爾')
+            && Math.random() < 0.01
+            && player.inv.some(i => (i.id === 'item_dragon_egg' || i.id === 'item_dragon_egg2') && i.cnt > 0)) {   /* 🔌 加掛版補丁:林德拜爾先擲骰 */
+            mobId = 'lindvior';
+        }
+        if (typeof window.__afkForceTroll === 'function' && !_antharasDungeon) { try { let _ft = window.__afkForceTroll(idx, mobId); if (_ft && _ft.spawn && DB.mobs[_ft.mobId] && DB.mobs[_ft.mobId].trollPlayer) { mobId = _ft.mobId; mapState._trollSpawn = _ft.spawn; } } catch (e) {} }   /* 🔌 加掛版補丁:宣戰強制敵對 NPC */
+        let _actualPlayerEncounter = mapState._trollSpawn && DB.mobs[mobId] && DB.mobs[mobId].trollPlayer;
+        if (!npcClanBattle && !wcMassTauntBattle && _actualPlayerEncounter && typeof wcMassTauntMaybeStartGroupBattle === 'function' &&
+            wcMassTauntMaybeStartGroupBattle(mapState._trollSpawn)) wcMassTauntBattle = true;
+        if (wcMassTauntBattle && typeof wcMassTauntGroupBattleNextOpponent === 'function') {
+            let _massPvp = wcMassTauntGroupBattleNextOpponent();
+            if (!_massPvp) { delete mapState._trollSpawn; mapState.mobs[idx] = null; return; }
+            mobId = trollPickClassMob(_massPvp.avatar);
+            mapState._trollSpawn = _massPvp;
+        } else if (npcClanBattle && typeof npcClanCreateGroupBattleOpponent === 'function') {
+            let _battle = mapState.npcClanBattle;
+            let _groupPvp = npcClanCreateGroupBattleOpponent(_battle && _battle.clanId);
+            if (_groupPvp) {
+                mobId = trollPickClassMob(_groupPvp.avatar);
+                mapState._trollSpawn = _groupPvp;
+            }
         }
     }
-    } // 扭亂時空以外
     if (mapState._trollSpawn && (!DB.mobs[mobId] || !DB.mobs[mobId].trollPlayer)) delete mapState._trollSpawn;
+    const tracked=!expandedFieldSlot&&player.tracking?.until>Date.now()&&player.tracking.map===mapState.current&&player.tracking.mob===mobId;
+    const specialEncounter=siegeArea||npcClanBattle||wcMassTauntBattle||mapState._trollSpawn||tracked||summonBossByItem||['lindvior','kari','demon_assassin'].includes(mobId);
+    const groundEncounter=specialEncounter||wantBoss?null:(window.GiranRoam?.given(idx) ||
+        (!wantBoss&&normalPool.includes(mobId)?window.GiranWorldBosses?.ordinary(idx):null));
+    if(!twisted && groundEncounter?.id)mobId=groundEncounter.id;
     let base = DB.mobs[mobId];
     if(!base) return;
+    if(groundEncounter&&base.boss)base={...base,boss:false};
     mapState.mobs[idx] = { ...base, mobId: mobId, curHp: base.hp, uid: uid(), /* relic-companion:tracking-identity */ _born: ++_mobBornSeq, _magCd: {}, justHit: false, st: newMobStatus(), _bornMs: Date.now() };   // 🏛️ _bornMs：生成時間（長老之室 BOSS 3 分鐘節流用）；_born：出生序（鎖定最早出生用）
+    if(groundEncounter)mapState.mobs[idx]._giranSpawn=groundEncounter.point;
     // 弓：場上原本沒有任何敵人時，第一個出現的敵人不論主動/被動，都強制視為被動（搭配弓攻擊3秒延遲，可先手放風箏）
     if(!base.boss && player.eq.wpn && DB.items[player.eq.wpn.id] && DB.items[player.eq.wpn.id].isBow && !mapState.mobs.some((m, j) => m && j !== idx)) {
         mapState.mobs[idx].beh = '被動';   // 頭目除外，維持主動
@@ -2244,7 +2313,7 @@ function spawnMob(idx) {
     applySherineGrace(idx);   // 🔮 席琳的恩賜：1% 機率場上一隻一般怪變恩賜怪（與時空裂痕共用 applySherineGrace）
     if (base.boss && typeof vfxBossEntrance === 'function') { try { vfxBossEntrance(mapState.mobs[idx]); } catch (e) {} }   // 🐉 頭目出場特效＋螢幕震動（cosmetic·v3.4.95 起全頭目通用：名單有專屬配色/稱號·未註冊者依屬性配色·吃 __vfxOff/補跑）
     if (mapState.mobs[idx]._wcMassTauntBattle && typeof wcMassTauntGroupBattleFill === 'function') wcMassTauntGroupBattleFill();
-    if (!state.ff && !mapState._wcMassTauntBattleFilling) renderMobs();
+    if (!state.ff && !mapState._wcMassTauntBattleFilling && !window.GiranRoam?.spawning) renderMobs();
 }
 
 function getMobColor(mobLv) {
@@ -2262,8 +2331,15 @@ function getMobNameClass(m) {
 }
 
 function getTarget() {
+    if(window.GiranCombat?.pinned)return GiranCombat.pinned;
+    if(window.GiranRoam && (GiranRoam.manual() || GiranRoam.owns() || GiranCombat.inWorld() && window.GiranBossRooms?.room(mapState.current))) {
+        const choice=GiranRoam.selectTarget(), target=(choice && window.__afkHardin?.protectingClone?.(choice)) || choice;
+        const idx=target?mapState.mobs.indexOf(target):-1;
+        if(mapState.targetIdx!==idx)setTarget(idx);
+        return target;
+    }
     let t = mapState.mobs[mapState.targetIdx];
-    if (t && t._dead) t = null;   // 🔧 架構#2：已死亡待清算的怪不可作為目標
+    if (t && (t._dead || player.giranHunt && !GiranHunt.allows(t))) t = null;
     // 🎯 v3.0.11 當前目標不存在（如剛開局或剛擊殺）時，自動鎖定「最早出生」的活怪（_born 最小＝在場上存活最久）。
     //    _born＝全域單調出生序（spawnMob/spawnRiftMob/軍王之室 三處生成時戳記）；缺 _born 的怪（理論上不會有）以 Infinity 墊底、再以格位序 tiebreak。
     //    手動點擊鎖定（setTarget）不受影響：鎖定目標存活期間不會被此邏輯改鎖。
@@ -2271,14 +2347,20 @@ function getTarget() {
         let best = -1, bestBorn = Infinity;
         for(let i = 0; i < mapState.mobs.length; i++) {
             let m = mapState.mobs[i];
-            if(!m || m._dead) continue;
+            if(!m || m._dead || player.giranHunt && !GiranHunt.allows(m)) continue;
             let b = (m._born != null) ? m._born : Infinity;
-            if(b < bestBorn) { bestBorn = b; best = i; }
+            if(best < 0 || b < bestBorn) { bestBorn = b; best = i; }
         }
         if(best >= 0) {
+            t = mapState.mobs[best];
             setTarget(best);
-            return mapState.mobs[best];
         }
+        else if(player.giranHunt && mapState.targetIdx>=0)setTarget(-1);
+    }
+    const guard=window.__afkHardin?.protectingClone?.(t);
+    if(guard && (!player.giranHunt || GiranHunt.allows(guard))){
+        setTarget(mapState.mobs.indexOf(guard));
+        return guard;
     }
     return t;
 }
@@ -2636,7 +2718,7 @@ function relicAuraTick() {
     if (!live.length) return;
     // 🩹 v3.1.76 傭兵吃遺物：光環來源＝玩家＋各未倒地傭兵的裝備欄（傭兵光環標示持有者·掉血仍於玩家階段結算）
     let _auraSrcs = [{ eq: player.eq, tag: '' }];
-    (player.allies || []).forEach(a => { if (a && !a._downed && (a.curHp || 0) > 0 && a.eq) _auraSrcs.push({ eq: a.eq, tag: `協力·${a._allyName}·` }); });
+    GiranPartyView.combatAllies().forEach(a => { if (a && !a._downed && (a.curHp || 0) > 0 && a.eq) _auraSrcs.push({ eq: a.eq, tag: `協力·${a._allyName}·` }); });
     for (let _s of _auraSrcs) for (let k in _s.eq) {
         let e = _s.eq[k]; if (!e) continue; let d = DB.items[e.id];
         // 🏺 v3.7.20 俯瞰大地的雷電（auraSkill）：每 interval tick 免費施放一次指定法術（procFreeMagicSkill 走玩家魔傷係數·
@@ -2983,7 +3065,7 @@ function waterVitalHeal(heal, target) {
 function manaMasteryRefund(spent) {
     if (!spent || spent <= 0) return;
     let give = Math.max(1, Math.floor(spent * 0.10));
-    if (player.allies) player.allies.forEach(a => { if (a && (a.mmp || 0) > 0) a.mp = Math.min(a.mmp, (a.mp || 0) + give); });
+    if (player.allies) GiranPartyView.combatAllies().forEach(a => { if (a && (a.mmp || 0) > 0) a.mp = Math.min(a.mmp, (a.mp || 0) + give); });
 }
 // 🔮 是否為魔杖/法杖類武器（沿用 js/10 同一套名稱判定，排除黃金權杖＝王族單手劍）：
 //    魔劍精通(i_magicsword)只把「非奇古獸的近戰武器」轉成奇古獸必中魔法路徑，魔杖本即施法武器、不應再轉（必中/攻速+30% 皆排除）。

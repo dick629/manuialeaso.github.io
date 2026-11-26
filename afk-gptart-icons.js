@@ -15,7 +15,19 @@
     T.register({ id: 'art-v3', name: 'GPT新美術', group: '遊戲介面',
       desc: 'GPT 重新繪製的美術：神話、天上、時空與十二聖衣的變身動畫，29 隻新怪物的專屬動畫，以及 837 件裝備圖示的光影修補（只換外觀，不影響能力與存檔）。' });
   }
-  if (!M || typeof HTMLImageElement === 'undefined') return;
+  if (typeof HTMLImageElement === 'undefined') return;
+  // Classify presentation when the source is assigned or an HTML image loads.
+  // Global substring selectors on src otherwise rematch every battle frame.
+  function markRaster(img,url) {
+    if(typeof url!=='string')return;
+    var hd=url.includes('assets/icons/hd/'),jpeg=/\.jpe?g(?:$|[?#])/i.test(url);
+    var type=hd?(jpeg?'hd jpeg':'hd'):(jpeg?'jpeg':'');
+    if(type){if(img.getAttribute('data-art-raster')!==type)img.setAttribute('data-art-raster',type);}
+    else if(img.hasAttribute('data-art-raster'))img.removeAttribute('data-art-raster');
+  }
+  document.addEventListener('load',function(e){if(e.target instanceof HTMLImageElement)markRaster(e.target,e.target.getAttribute('src'));},true);
+  for(var img of document.images)markRaster(img,img.getAttribute('src'));
+  if (!M) return;
   var on = function () { return !T || T.enabled('art-v3'); };
   var hits = 0;
   var map = function (u) {
@@ -36,13 +48,13 @@
   try {
     var d = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
     if (d && d.set && d.configurable) Object.defineProperty(HTMLImageElement.prototype, 'src', {
-      configurable: true, enumerable: d.enumerable, get: d.get, set: function (v) { d.set.call(this, map(v)); }
+      configurable: true, enumerable: d.enumerable, get: d.get, set: function (v) { var url=map(v);markRaster(this,url);d.set.call(this,url); }
     });
   } catch (e) {}
   try {
     var oSA = Element.prototype.setAttribute;
     Element.prototype.setAttribute = function (n, v) {
-      if ((n === 'src' || n === 'SRC') && this instanceof HTMLImageElement) v = map(v);
+      if ((n === 'src' || n === 'SRC') && this instanceof HTMLImageElement) {v=map(v);markRaster(this,v);}
       return oSA.call(this, n, v);
     };
   } catch (e) {}

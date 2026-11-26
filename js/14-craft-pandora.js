@@ -1500,6 +1500,7 @@ function pandoraCancelBuyOrder() {
 function _pandoraLogLatest(slot) {
     let d = DB.items[slot.id]; if (!d) return;
     let inst = { id: slot.id, bless: slot.bless === true };
+    window.__afkDiscardPendingStockLog?.();
     try { document.querySelectorAll('#sys-log .pandora-stock-log').forEach(sp => { let le = sp.closest('.log-entry'); if (le) le.remove(); }); } catch (e) {}
     let rare = slot.weight === 1;
     let lead = slot.buyOrder ? '玩家收購物品上架了：' : (rare ? '珍稀商品 ' : '新上架 ');
@@ -1671,7 +1672,7 @@ function pandoraRenderMarket(div) {
         return `<div class="pandora-market-card rounded-md border ${border} bg-slate-900/80 flex items-center ${s.sold ? 'opacity-70' : ''}"
             onmouseenter="pandoraTipShow(event,${i})" onmousemove="pandoraTipMove(event)" onmouseleave="pandoraTipHide()">
             <div class="pandora-collection-icon pandora-card-icon-wrap">
-                <img src="${getIconUrl(d)}" onerror="this.src='https://placehold.co/40x40/1e293b/ffffff?text=?';" class="pandora-card-icon object-contain ${s.sold ? 'grayscale opacity-40' : getGlowClass(inst, d)}">
+                <img src="${getIconUrl(d)}" onerror="this.onerror=null;this.src='assets/ui/missing-icon.png';" class="pandora-card-icon object-contain ${s.sold ? 'grayscale opacity-40' : getGlowClass(inst, d)}">
                 ${pandoraUncollectedBadgeHTML(s.id)}
             </div>
             <div class="min-w-0 flex-1">
@@ -1751,27 +1752,33 @@ function buyPandoraItem(i) {
 
 
 /* ===== 玩家自訂名稱：點擊左上狀態欄名稱 → 輸入框 → 確認 ===== */
-function startEditName() {
+function startEditName(el = document.getElementById('st-class')) {
     if (window._editingName || !player.cls) return;
     window._editingName = true;
-    let el = document.getElementById('st-class');
-    let cur = (player.name || '').replace(/"/g, '&quot;');
-    el.innerHTML = `<input id="name-edit-input" type="text" maxlength="12" value="${cur}" `
+    el.innerHTML = `<input id="name-edit-input" type="text" maxlength="12" aria-label="角色名稱" `
         + `onclick="event.stopPropagation()" `
-        + `onkeydown="if(event.key==='Enter'){event.preventDefault();confirmEditName();}else if(event.key==='Escape'){cancelEditName();}" `
+        + `onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();confirmEditName();}else if(event.key==='Escape'){cancelEditName();}" `
         + `class="w-24 px-1 py-0.5 text-black text-sm rounded align-middle"> `
         + `<button onclick="event.stopPropagation();confirmEditName()" class="text-green-400 font-bold align-middle">✓</button>`;
     let input = document.getElementById('name-edit-input');
-    if (input) { input.focus(); input.select(); }
+    input.value = player.name || '';
+    input.addEventListener('input', () => input.setCustomValidity(''));
+    input.focus(); input.select();
 }
 function confirmEditName() {
     let input = document.getElementById('name-edit-input');
-    let v = input ? input.value.trim() : '';
-    v = v.replace(/[<>&"']/g, '');   // 🔧 過濾 HTML 特殊字元：名稱會以 innerHTML 呈現，避免自我注入標籤
-    player.name = v ? v.slice(0, 12) : null;   // 留空則回到未取名狀態（顯示「點擊取名」）
+    if (!input) return false;
+    const name = cleanRoleName(input.value);
+    if (!name || name.length > 12) {
+        input.setCustomValidity(name ? '角色名稱最多 12 個字' : '角色名稱不能空白');
+        input.reportValidity();
+        return false;
+    }
+    player.name = name;
     window._editingName = false;
     updateUI();
     saveGame();
+    return true;
 }
 function cancelEditName() {
     window._editingName = false;
@@ -1781,7 +1788,12 @@ function cancelEditName() {
 window.onload = () => {
     migrateSaves();
     try { _applyVfxPref(); } catch (e) {}   // 🎚️ 套用標題畫面的「戰鬥特效開關」偏好（持久化於 localStorage）
-    try { let _v = document.getElementById('login-version'); if (_v && typeof GAME_VERSION !== 'undefined') _v.textContent = GAME_VERSION; } catch (e) {}   // 🏷️ 登入頁面版本號：以 GAME_VERSION 為單一真相來源
+    const versionLabel = document.getElementById('login-version');
+    if (versionLabel && typeof GAME_VERSION !== 'undefined') {
+        versionLabel.textContent = versionLabel.dataset.giranRelease
+            ? 'v' + versionLabel.dataset.giranRelease
+            : GAME_VERSION;
+    }
     try { if (typeof wireBuffEnders === 'function') wireBuffEnders(); } catch (e) {}   // 🔧 藥水/卷軸維持型增益勾選框：取消打勾即立即結束
 };
 

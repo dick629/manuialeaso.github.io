@@ -103,15 +103,41 @@
     try { if (typeof gainItem === 'function') gainItem(itemId(f.n, t), 1, true, true); } catch (e) {}
     log('<span class="text-pink-200">魔物消散前留下了一縷形貌：「' + f.n + ' 變身' + TIER_N[t - 1] + '卡」。</span>');
   }
+  function nearbyForms(m) {
+    return noMob.filter(f => Math.abs(f.lv - (Number(m.lv) || 0)) <= 5);
+  }
+  function rollTwistedBatch(m, kills, sample, give) {
+    if (!enabled() || !P() || !mobSilver(m.n) || kills < 1) return;
+    function draw(form, attempts, factor) {
+      let tier = tierOf(form.n);
+      // Sample the wait to the next registration, then use the new tier's rate.
+      while (attempts > 0 && tier < 3) {
+        const wait = 1 + Math.floor(Math.log1p(-Math.random()) / Math.log1p(-RATE[tier] * factor));
+        if (wait > attempts || !register(form.n, tier + 1, true)) return;
+        attempts -= wait;
+        tier++;
+      }
+      const count = sample(attempts, RATE[2] * factor);
+      if (count) give(itemId(form.n, 3), count);
+    }
+    if (byName[m.n]?.hasMob) draw(byName[m.n], kills, 1);
+    const near = nearbyForms(m);
+    let left = kills;
+    near.forEach((form,i) => {
+      const n = i === near.length - 1 ? left : sample(left, 1 / (near.length - i));
+      draw(form, n, 0.5);
+      left -= n;
+    });
+  }
   var oKill = window.killMob;
   window.killMob = function (idx) {
     var m = (typeof mapState !== 'undefined' && mapState.mobs) ? mapState.mobs[idx] : null, was = !!(m && !m._dead);
     var r = oKill.apply(this, arguments);
     try {
       if (was && m._dead && enabled() && P() && !m.siegeEnemy && !m.pledgeEnemy && !m.trollPlayer && m.race !== '建築') {
-        var pm = partyMult();
+        var pm = m._twisted ? 1 : partyMult();
         if (byName[m.n] && byName[m.n].hasMob) rollFor(byName[m.n], pm, m.n);
-        var lv = Number(m.lv) || 0, near = noMob.filter(function (f) { return Math.abs(f.lv - lv) <= 5; });
+        var near = nearbyForms(m);
         if (near.length) rollFor(near[Math.floor(Math.random() * near.length)], pm * 0.5, m.n);
       }
     } catch (e) {}
@@ -262,6 +288,6 @@
     }
   } catch (e) {}
 
-  window.AFK_POLY_CODEX = { forms: forms, series: series, itemId: itemId, tierOf: tierOf, goldCount: goldCount, register: register, totals: totals, render: render, rollFor: rollFor, partyMult: partyMult, enabled: enabled };
+  window.AFK_POLY_CODEX = { forms: forms, series: series, itemId: itemId, tierOf: tierOf, goldCount: goldCount, register: register, totals: totals, render: render, rollFor: rollFor, rollTwistedBatch: rollTwistedBatch, partyMult: partyMult, enabled: enabled };
   console.log('[AFK-poly-codex] 已啟用：變身收集冊 ' + forms.length + ' 種（' + noMob.length + ' 種由同等級怪物掉落）');
 })();

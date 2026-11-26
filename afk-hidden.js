@@ -44,13 +44,13 @@
   var male = function (a) { var v = String(a && a.avatar || ''); return v === '王子' || v.charAt(0) === '男'; };
   var trio = function () {
     var p = P(); if (!p) return false;
-    var party = [p].concat(p.allies || []).filter(Boolean);
+    var party = [p].concat(GiranPartyView.combatAllies(p)).filter(Boolean);
     if (party.length !== 3 || !party.every(male)) return false;
     var cls = party.map(function (a) { return a.cls; }).sort();
     return cls.join(',') === TRIO.slice().sort().join(',');
   };
   var inTraitor = function () { return typeof mapState !== 'undefined' && mapState && mapState.current === TRAITOR_MAP; };
-  var isMember = function (a) { var p = P(); return !!(p && a && (a === p || (p.allies || []).indexOf(a) >= 0)); };
+  var isMember = function (a) { var p = P(); return !!(p && a && (a === p || GiranPartyView.combatAllies(p).indexOf(a) >= 0)); };
   var kingFoe = function (actor, target) {
     if (!actor || !target || !FOES[target.n] || !male(actor) || TRIO.indexOf(actor.cls) < 0) return false;
     var m = typeof mapState !== 'undefined' && mapState ? String(mapState.current || '') : '';
@@ -116,7 +116,7 @@
     var t = tk(); if (t === trigT) return trigOk;
     trigT = t; trigOk = false;
     var p = P(); if (!p) return false;
-    var party = [p].concat(p.allies || []).filter(Boolean);
+    var party = [p].concat(GiranPartyView.combatAllies(p)).filter(Boolean);
     if (party.length !== TRIG.n) return false;
     var cnt = {}, arts = {};
     for (var i = 0; i < party.length; i++) {

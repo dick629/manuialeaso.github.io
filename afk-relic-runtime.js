@@ -31,7 +31,7 @@
   // Same result and the same mark side effect as targets().length > 0, without building the array.
   var hasTargets = function () { if (typeof mapState === 'undefined' || !mapState.mobs) return false; var ms = mapState.mobs, any = false; for (var i = 0; i < ms.length; i++) { var m = ms[i]; if (m && !m._relicDefenseMarks) transient(m,'_relicDefenseMarks',{}); if (!any && m && hp(m) > 0 && !m._dead) any = true; } return any; };
   var ownerPlayer = function () { return typeof player !== 'undefined' ? player : null; };
-  var team = function () { var p = ownerPlayer(); return p ? [p].concat((p.allies || []).filter(function (a) { return a && !a._downed && hp(a) > 0; })) : []; };
+  var team = function () { var p = ownerPlayer(); return p ? [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed && hp(a) > 0; })) : []; };
   var pets = function () { var p = ownerPlayer(); return p && p.pets ? p.pets.filter(function (x) { return x && !x._downed && hp(x) > 0 && !x.stored; }) : []; };
   var summons = function () { var p = ownerPlayer(); return p ? (p.summons || []).concat(p.spirits || []).filter(function (x) { return x && hp(x) > 0; }) : []; };
   function stateOf(actor, id) {
@@ -64,9 +64,9 @@
     // keys in the same order as Object.keys for plain equipment objects) instead
     // of allocating a key array and doing dictionary lookups on every query.
     var eq=actor.eq,old=caches.get(actor);
-    // 11-21 效能（補跑）：同一刻、中間沒有重算能力（換裝一定會重算）就直接沿用，不再逐格比對
     var tkNow=(typeof state!=='undefined'&&state)?state.ticks:-1;
-    if(old&&old.revision===revision&&old.t===tkNow&&old.g===srcGen)return old.sources;
+    // A weapon channel or follower can change equipment during the same game tick.
+    // Reuse the effect list after checking its existing slot snapshot.
     if(old&&old.revision===revision){
       var okeys=old.keys,oids=old.idList,at=0,same=true;
       for(var sk in eq){if(okeys[at]!==sk){same=false;break;}var entry=eq[sk],eid=entry&&entry.id||'';if(typeof eid!=='string')eid=String(eid);if(oids[at]!==eid){same=false;break;}at++;}
@@ -212,7 +212,7 @@
   }
   function heal(target, amount, opt) {
     opt = opt || {}; var ctx = active, owner = opt.owner || ctx && ctx.actor || target, source = opt.source || ctx && ctx.sourceId || 'relic';
-    if (!target || target.dead || target._downed || hp(target) <= 0 || amount <= 0) return 0;
+    if (!target || target._noHeal || target.dead || target._downed || hp(target) <= 0 || amount <= 0) return 0;
     var cd = Math.max(10, finite(opt.cd) || 10), group = opt.group;
     var st = stateOf(owner, source), permitted = !!opt.prepaid;
     if (!permitted && group != null && st._healGroup === group) permitted = true;
@@ -323,12 +323,15 @@
   function recalc(actor) { if(action&&action.gm&&action.actor===actor){(action.gmRoot||action).gmRecalc=true;return;}if (inRecalc) return; inRecalc = true; try { var p=ownerPlayer();if (actor === p && typeof recomputeStats === 'function') recomputeStats();else if(typeof _allyLevelRecompute==='function'&&p&&(p.allies||[]).indexOf(actor)>=0)_allyLevelRecompute(actor); } finally { inRecalc = false; } }
   function damage(target, amount, opt) {
     opt = opt || {}; var ctx = active||action&&action.context, actor = opt.actor||opt.owner || ctx && ctx.actor || ownerPlayer();
+    if(!GiranPartyView.canFight(actor)||!GiranPartyView.canFight(target))return 0;
     if (!target || hp(target) <= 0 || !(amount > 0)||actor&&(actor.dead||actor._downed||hp(actor)<=0)) return 0;
     var typ=opt.trueDamage?'true':opt.type||opt.kind||'physical',src=opt.source||ctx&&ctx.sourceId,asc=opt.ascended!=null?opt.ascended:!!(ctx&&ctx.asc!=null),reflection=!!(opt.reflection||ctx&&ctx.origin==='reflection'||action&&action.reflection);
     // A transferred hit and a self cost retain their identity even when paid
     // inside a reflected hit. Their owner is not an enemy to retaliate against.
     var redirected=!!opt.redirected, self=target===actor||opt.origin==='self';
     var origin=redirected||opt.origin==='redirect'?'redirect':self?'self':reflection?'reflection':opt.origin||(typ==='dot'?'dot':'relic');
+    if(!self&&!redirected&&!reflection&&origin!=='dot'&&typ!=='dot'&&window.GiranCombat?.inWorld() &&
+       mapState.mobs.includes(target)&&!GiranCombat.onTerrain(actor,target,typ==='physical'&&opt.range!=='ranged'?'basic':'magic'))return 0;
     amount = Math.max(0, finite(amount)); var ele = opt.element || 'none';
     if (typ !== 'true' && !opt.snapshot && opt.raw) {
       if (typeof elementCounterMult === 'function') amount *= elementCounterMult(ele, target.e);
@@ -495,7 +498,7 @@
     if(!enabled())return amount;
     var C=W.AFK_RELIC_COMPANIONS,meta=C&&C.companionContext?C.companionContext(owner,entity,extra):C&&C.context?C.context():null;
     var c=Object.assign({actor:owner||ownerPlayer(),owner:owner||ownerPlayer(),companion:entity,pet:entity,target:target,damage:amount,snapshot:amount,targetHpBefore:hp(target),origin:entity&&entity.skId?'summon':'pet',main:false,direct:true,now:now()},extra||{},meta||{});
-    c.companionKind=c.kind==='pet'?'pet':'summon';c.kind=extra&&extra.element&&extra.element!=='none'?'magic':'melee';
+    c.companionKind=c.kind==='pet'?'pet':'summon';c.kind=extra&&extra.damageType||(extra&&extra.element&&extra.element!=='none'?'magic':'melee');
     if(C&&C.damageMult)c.damage*=C.damageMult(c.actor,entity);if(meta&&meta.mult!=null)c.damage*=meta.mult;
     if(W.AFK_RELIC_DEFENSE&&W.AFK_RELIC_DEFENSE.targetModifiers)W.AFK_RELIC_DEFENSE.targetModifiers(c,api);
     moduleEvent('weapon','petHit',c);c.snapshot=c.damage;

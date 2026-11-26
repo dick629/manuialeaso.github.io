@@ -153,7 +153,7 @@
     // 用 huntActive 的話,場上一出現要躲的王就會閃掉一格,玩家會以為功能被關掉了。
     function huntEnabled() {
         try {
-            return isOn() && typeof state !== 'undefined' && state && state.running && !state.ff
+            return !window.GiranCombat?.exploring() && isOn() && typeof state !== 'undefined' && state && state.running && !state.ff
                 && hasTeleportRing() && !excludedMap() && mapHasBossPool();
         } catch (e) { return false; }
     }
@@ -169,13 +169,13 @@
     }
 
     var _waitUntil = 0;   // 瞬移後「等 BOSS 生成」期限(比照 main 的 _autoBossHuntUntil);逾時容許重試
-    function tick() {
+    async function tick() {
         try {
-            if (!isOn()) return;                         // 勾選框沒勾 → 不自動
+            if (!isOn() || window.GiranBookmarks?.scrollFlight) return;
             if (typeof state === 'undefined' || !state || !state.running || state.ff) return;   // 只線上前景
             if (typeof mapState === 'undefined' || !mapState || !mapState.mobs) return;
             if (typeof player === 'undefined' || !player || !player.inv) return;
-            if (!hasTeleportRing()) return;              // 沒戒指
+            if (window.GiranCombat?.exploring() || !hasTeleportRing()) return;              // 沒戒指
             if (anyBoss()) { _waitUntil = 0; return; }   // 場上有王 → 打它，不瞬移（與自動逃離互斥）
             if (mapState.forceBoss) return;              // 已排定必出 BOSS → 等它生出來
             if ((state.ticks || 0) < _waitUntil) return; // 剛瞬移過:BOSS 生成要幾秒,等滿再重試
@@ -196,7 +196,10 @@
             }
             if (!sc) return;                             // 買不起也沒存貨 → 不動
             var before = scrollCount();
+            var captain=player,map=mapState.current;
             useItem(sc.uid, false, true);                // 非 silent=戒指 forceBoss;keepModal=自動觸發別關玩家開著的視窗
+            if(window.GiranBookmarks?.scrollFlight)await GiranBookmarks.scrollFlight;
+            if(player!==captain||mapState.current!==map)return;
             var blocked = (before >= 0 && scrollCount() === before);
             _waitUntil = (state.ticks || 0) + (blocked ? WAIT_BLOCKED_TICKS : WAIT_SPAWN_TICKS);
         } catch (e) {}

@@ -59,14 +59,20 @@
   var RULE_TXT = { mythic: '神話', celestial: '天上', spacetime: '時空' };
   var COLOR = { mythic: '#fb923c', celestial: '#fde68a', spacetime: '#c4b5fd' };
   var starStr = function (n) { var s = ''; for (var i = 0; i < 7; i++) s += i < n ? '★' : '☆'; return s; };
+  function isOpen(p) {
+    if (!p || !enabled()) return false;
+    var a = A(), book = window.AFK_POLY_CODEX;
+    return (!!book && book.goldCount(p) >= 5) || TIERS.some(function (tier) {
+      return a.catalog[tier].some(function (row) { return a.owned(row.id, p); });
+    });
+  }
   function renderBook(host) {
     if (!host || !enabled()) return;
     var p = P(); if (!p) return;
     var old = host.querySelector('#afk-codex'); if (old) old.remove();
     var a = A(), b = bonusOf(p), all = 0; TIERS.forEach(function (t) { all += (a.catalog[t] || []).length; });
     var box = document.createElement('section'); box.id = 'afk-codex'; box.className = 'afk-ca-panel';
-    var PC = window.AFK_POLY_CODEX, gold = PC ? PC.goldCount(p) : 5;
-    if (gold < 5 && !b.lit) { box.innerHTML = '<h3>神話變身卡冊</h3><p class="afk-lore">卡冊的封扣仍緊閉著，似乎在等待冷鐵的鑰匙。</p><p>變身收集冊的鐵卡登錄滿 5 種後開放查看（目前 ' + gold + '/5）。</p>'; host.appendChild(box); return; }
+    if (!isOpen(p)) { var gold = window.AFK_POLY_CODEX ? window.AFK_POLY_CODEX.goldCount(p) : 0; box.innerHTML = '<h3>神話變身卡冊</h3><p class="afk-lore">卡冊的封扣仍緊閉著，似乎在等待冷鐵的鑰匙。</p><p>變身收集冊的鐵卡登錄滿 5 種後開放查看（目前 ' + gold + '/5）。</p>'; host.appendChild(box); return; }
     var h = '<h3>變身卡冊</h3><p class="afk-lore">每一頁都封著一段傳說。翻開它的人，終將成為傳說的一部分。</p><p>取得高階變身卡會點亮卡冊；同一張再取得可升星（最多 7 星）。每顆星五種屬性抗性 +1，滿 7 星再 +3；整本合計最多 +300。</p>'
       + '<div>點亮 <b>' + b.lit + '</b>/' + all + '　總星數 <b>' + b.stars + '</b>　滿星 ' + b.full + '　目前加成：五種屬性抗性各 <b style="color:#86efac">+' + b.total + '</b>' + (b.raw > b.cap ? '（已達上限 ' + b.cap + '）' : '') + '、最大 HP +' + b.hp + Object.keys(b.stats).map(function (k) { return '、' + ({ extraDmg: '額外傷害', extraHit: '額外命中', extraMp: '額外魔法點數' }[k] || k) + ' +' + b.stats[k]; }).join('') + '</div>'
       + '<p>收集加成：每張神話 HP +20；天上 HP +40、額外傷害 +1；時空 HP +60、額外傷害 +1、額外命中 +1。同一階收集一半、全部收集再各加額外傷害與命中（神話 +2／+3、天上 +3／+5、時空 +5／+8；全收另加同值額外魔法點數）。</p>';
@@ -143,6 +149,6 @@
     + '.afk-cb-tile.mythic{border-color:#9a651c}.afk-cb-tile.celestial{border-color:#c6a85d}.afk-cb-tile.spacetime{border-color:#6856d5}.afk-cb-tile.samsara{border-color:#f59e0b;box-shadow:inset 0 0 8px rgba(245,158,11,.18)}'
     + '.afk-cb-tile.off{border-color:#3a2c24;box-shadow:none}.afk-cb-tile.off b{color:#6b645c}';
   document.head.appendChild(cbStyle);
-  window.AFK_CARD_CODEX = { bonusOf: bonusOf, renderBook: renderBook, openNpc: openNpc };
+  window.AFK_CARD_CODEX = { bonusOf: bonusOf, isOpen: isOpen, renderBook: renderBook, openNpc: openNpc };
   console.log('[AFK-card-codex] 已啟用：變身卡冊（點亮／升星）、燃柳村至幻者');
 })();

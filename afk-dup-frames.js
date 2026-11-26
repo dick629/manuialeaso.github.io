@@ -37,16 +37,74 @@
   //   還沒載完 → 先給第 0 格，並記下這張 <img>，切好後自動換上。超過最大格號的照原網址（不存在＝探測幀數時會停下來）。
   var SH = W.AFK_ANIM_SHEETS && W.AFK_ANIM_SHEETS.on && W.AFK_ANIM_SHEETS.data ? W.AFK_ANIM_SHEETS.data : null;
   var shIdx = null, shState = Object.create(null);
+  var hold = new Map(), cellOwners = new Map(), desired = new WeakMap(), waitForCell = {};
+  var canRelease = typeof WeakRef === 'function' && typeof FinalizationRegistry === 'function';
+  var release = canRelease && new FinalizationRegistry(function (entry) {
+    entry.urls.forEach(function (url) { cellOwners.delete(url);URL.revokeObjectURL(url); });
+    if (shState[entry.key] === entry.ref) delete shState[entry.key];
+  });
+  var workerUrl = new URL('world/sheet-worker.js', document.currentScript.src).href;
+  var worker, workerId = 0, jobs = new Map();
+  function splitInWorker(url, group, finish) {
+    if (worker === false || typeof Worker !== 'function' || typeof OffscreenCanvas !== 'function') return false;
+    try {
+      if (!worker) {
+        worker = new Worker(workerUrl);
+        worker.onmessage = function (ev) {
+          var complete = jobs.get(ev.data.id);
+          jobs.delete(ev.data.id);
+          if (complete) complete(ev.data.blobs);
+        };
+        worker.onerror = function () {
+          worker.terminate(); worker = false;
+          var retry = Array.from(jobs.values()); jobs.clear(); retry.forEach(function (fn) { fn(); });
+        };
+      }
+      var id=++workerId;
+      jobs.set(id, finish); worker.postMessage({id:id,url:new URL(url,document.baseURI).href,group:group});
+      return true;
+    } catch (_) { jobs.delete(id); return false; }
+  }
+  function sourceURL(value) {
+    if(typeof value!=='string'||!value.startsWith('blob:'))return value;
+    var pos=value.indexOf('#giran-frame=');
+    if(pos===-1)return value;
+    var path=value.slice(pos+13);
+    return /^(assets\/(anim|classanim|morphanim)\/|art-v3\/frames\/)/.test(path)?new URL(path,document.baseURI).href:value;
+  }
+  W.__afkFrameSource=sourceURL;
   var shGroup = function (dir, act) {
     if (!shIdx) { shIdx = Object.create(null); var D0 = SH.d, G = SH.g; for (var i = 0; i < G.length; i++) shIdx[D0[G[i][0]] + '/' + G[i][1]] = G[i]; }
     return shIdx[dir + '/' + act] || null;
   };
   var origSet = null;   // 原本的 img.src setter（下面設定）
   var shLoad = function (key, g, head, enc) {
-    var st = shState[key]; if (st) return st;
-    st = shState[key] = { cells: [], wait: Object.create(null), ok: false };
+    var st = canRelease ? shState[key]?.deref() : shState[key];
+    if (st) return st;
+    st = { cells: [], wait: Object.create(null), ok: false };
+    if(canRelease){
+      var ref=shState[key]=new WeakRef(st);
+      release.register(st,{key:key,ref:ref,urls:st.cells});
+      hold.set(key,st);
+      if(hold.size>64)hold.delete(hold.keys().next().value);
+    } else shState[key]=st;
     var dir = key.slice(0, key.lastIndexOf('/')), act = g[1];
     var url = dir + '/' + act + '.sheet.webp'; if (enc) url = url.split('/').map(encodeURIComponent).join('/');
+    var apply = function(failed) {
+      st.ok=!failed;st.bad=failed;
+      st.cells.forEach(function(url){if(url)cellOwners.set(url,shState[key]);});
+      for(var n in st.wait) {
+        var cu=frameURL(st,g,+n,dir,act);
+        st.wait[n].forEach(function(img){
+          var request=desired.get(img);
+          if(!request||request.st!==st||request.n!==+n)return;
+          desired.delete(img);
+          origSet.call(img,cu||toWebp(dupMap(request.url)));
+        });
+      }
+      st.wait=null;
+    };
+    var onMain = function(){
     var im = new Image();
     im.onload = function () {
       var cols = g[3], cw = g[4], ch = g[5], sizes = g[7] || null, nCells = 0, c = g[6], k;
@@ -58,15 +116,49 @@
         cv.getContext('2d').drawImage(im, (i % cols) * cw, Math.floor(i / cols) * ch, w, h, 0, 0, w, h);
         cv.toBlob(function (bl) {
           st.cells[i] = bl ? URL.createObjectURL(bl) : '';
-          if (--left === 0) { st.ok = true; for (var n in st.wait) { var cu = st.cells[cellOf(g, +n)]; st.wait[n].forEach(function (img) { try { if (cu && origSet) origSet.call(img, cu); } catch (e) {} }); } st.wait = null; }
+          cv.width=cv.height=0;
+          if (--left === 0) apply(false);
         }, 'image/png');
       })(k);
     };
-    im.onerror = function () { st.bad = true; };
+    im.onerror = function () { apply(true); };
     try { if (origSet) origSet.call(im, (head || '') + url); else im.src = (head || '') + url; } catch (e) {}
+    };
+    if(!splitInWorker((head || '') + url,g,function(blobs){
+      if(!blobs){onMain();return;}
+      blobs.forEach(function(bl){st.cells.push(URL.createObjectURL(bl));}); apply(false);
+    }))onMain();
     return st;
   };
   var cellOf = function (g, n) { var c = g[6]; return c && c.length ? c[n - 1] : n - 1; };
+  function frameURL(st,g,n,dir,act) {
+    var cell=st.cells[cellOf(g,n)];
+    return cell?cell+'#giran-frame='+encodeURI(dir+'/'+act+'_'+n+'.png'):'';
+  }
+  // These particular sprites are painted by assigning a URL to a visible image. The
+  // checked atlas already describes every frame, including duplicate cells. Looking up
+  // a pose should not decode a second, invisible image for every frame and direction.
+  W.__afkSheetFrameSources = function (first, count) {
+    if (!SH || count < 2) return null;
+    var absolute = new URL(first, document.baseURI);
+    var rel = decodeURIComponent(absolute.pathname), tree = RE_TREE.exec(rel);
+    if (!tree || !rel.endsWith('_0.png')) return null;
+    rel = rel.slice(tree.index + (tree[0][0] === '/' ? 1 : 0));
+    var slash = rel.lastIndexOf('/'), dir = rel.slice(0, slash), act = rel.slice(slash + 1, -6);
+    var group = shGroup(dir, act);
+    if (!group || group[2] !== count - 1 || group[6]?.some(cell => cell < 0)) return null;
+    var key = dir + '/' + act, firstURL = absolute.href;
+    return Array.from({length:count}, function (_, n) {
+      var url = n ? firstURL.replace(/_0\.png(?=[?#]|$)/, '_' + n + '.png') : firstURL;
+      if (!n) return {src:url};
+      // The regular src setter loads the sheet on first use. If the sheet is pending it
+      // displays frame zero, then installs the desired cell only if this pose still owns the image.
+      return Object.defineProperty({}, 'src', {get:function () {
+        var state = canRelease ? shState[key]?.deref() : shState[key];
+        return state?.ok ? frameURL(state, group, n, dir, act) || url : url;
+      }});
+    });
+  };
   var RE_SH = /^(.*)_([1-9]\d*)$/;
   var sheetMap = function (v, img) {
     if (!SH || typeof v !== 'string' || v.indexOf('.png') < 0 || (v.indexOf('anim') < 0 && v.indexOf('art-v3') < 0)) return null;
@@ -80,13 +172,27 @@
     var n = +mm[2]; if (n > g[2]) return v;   // 沒有這一格：照原網址（不存在）
     var ci = cellOf(g, n); if (ci < 0) return v;
     var st = shLoad(dir + '/' + mm[1], g, enc ? encodeURI(head) : head, enc);
-    if (st.ok && st.cells[ci]) return st.cells[ci];
+    if(img)img.__giranSheet=st;
+    if (st.ok && st.cells[ci]) return frameURL(st,g,n,dir,mm[1]);
     if (st.bad) return v;
-    if (img && st.wait) { var wl = st.wait[n] || (st.wait[n] = []); if (wl.indexOf(img) < 0) wl.push(img); }
+    if (img && st.wait) {
+      desired.set(img,{st:st,n:n,url:v});
+      var wl = st.wait[n] || (st.wait[n] = []); if (wl.indexOf(img) < 0) wl.push(img);
+      if(img.__giranProbeFrame)return waitForCell;
+    }
     var f0 = dir + '/' + mm[1] + '_0.png'; if (enc) f0 = f0.split('/').map(encodeURIComponent).join('/');
     return (enc ? encodeURI(head) : head) + f0 + q;   // 大圖還沒好：先顯示第 0 格
   };
-  var map = function (v, img) { var s = sheetMap(v, img); if (s !== null) return s; return toWebp(dupMap(v)); };
+  var map = function (v, img) {
+    if(typeof v==='string'&&v.startsWith('blob:')){
+      var mark=v.indexOf('#giran-frame='),ref=mark>=0&&cellOwners.get(v.slice(0,mark));
+      var owner=ref&&(canRelease?ref.deref():ref);
+      if(owner){if(img){desired.delete(img);img.__giranSheet=owner;}return v;}
+    }
+    v=sourceURL(v);
+    if(img){desired.delete(img);if(img.__giranSheet)img.__giranSheet=null;}
+    var s = sheetMap(v, img); if (s !== null) return s; return toWebp(dupMap(v));
+  };
   var dupMap = function (v) {
     if (typeof v !== 'string' || v.length < 12) return v;
     if (v.indexOf('anim') < 0 && v.indexOf('art-v3') < 0) return v;
@@ -114,7 +220,7 @@
     if (d && d.set && d.configurable) Object.defineProperty(HTMLImageElement.prototype, 'src', {
       configurable: true, enumerable: d.enumerable, get: d.get,
       // ⚡ 11-12 效能：動畫每格都會重設 src；跟現在一模一樣、而且已經載好的就不再設（瀏覽器每設一次都會重跑一次圖片更新流程）
-      set: function (v) { var nv = map(v, this); if (typeof nv === 'string' && this.complete && this.naturalWidth > 0 && this.getAttribute('src') === nv) return; d.set.call(this, nv); }
+      set: function (v) { var nv = map(v, this); if(nv===waitForCell)return; if (typeof nv === 'string' && this.complete && this.naturalWidth > 0 && this.getAttribute('src') === nv) return; d.set.call(this, nv); }
     });
   } catch (e) {}
   try { origSet = d && d.set ? d.set : null; } catch (e) {}
@@ -122,7 +228,7 @@
   try {
     var oSA = Element.prototype.setAttribute;
     Element.prototype.setAttribute = function (n, v) {
-      if ((n === 'src' || n === 'SRC') && this instanceof HTMLImageElement) v = map(v, this);
+      if ((n === 'src' || n === 'SRC') && this instanceof HTMLImageElement) {v = map(v, this);if(v===waitForCell)return;}
       return oSA.call(this, n, v);
     };
   } catch (e) {}
@@ -138,7 +244,12 @@
     }
     var m2 = map(s); if (m2 && m2 !== s) t.src = m2;
   }, true);
-  W.__afkAnimSheets = { on: !!SH, state: function () { return shState; } };
+  W.__afkAnimSheets = { on: !!SH, state: function () {
+    if(!canRelease)return shState;
+    var state=Object.create(null);
+    for(var key in shState){var entry=shState[key].deref();if(entry)state[key]=entry;}
+    return state;
+  } };
   W.__afkDupSrc = map; W.__afkWebpOn = function () { return WEBP; };
   W.__afkDupStats = function () { return { folders: F.length, hits: hits }; };
 })();

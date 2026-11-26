@@ -1,10 +1,14 @@
 /* 🔌 加掛版補丁:受傷掛點 */ window.__afkTakenPatched = true;
 function playerAttack() {
+    if(!window.GiranCombat)return giranPlayerImpact();
+    return GiranCombat.strike(player,getTarget(),giranPlayerImpact,'普通攻擊');
+}
+function giranPlayerImpact() {
     let target = getTarget();
     if(!target) return;
     player._faceTgtUid = target.uid;   // 🧭 只記錄可序列化 UID；不可保存怪物物件，否則與 mob→player 面向參照形成循環而使存檔失敗
     delete player._faceTgt;
-    if (typeof _playerMorphTrigger === 'function') { try { _playerMorphTrigger('attack'); } catch (e) {} }   // 🧝 v3.0.46 玩家變身 sprite：攻擊動作（含被迴避＝有揮擊）
+    if (typeof _playerMorphTrigger === 'function') { try { _playerMorphTrigger('attack'); if(!window.GiranCombat?.pinned)window.__dimMapNative?.(player,'普通攻擊',target,'basic'); } catch (e) {} }   // 🧝 v3.0.46 玩家變身 sprite：攻擊動作（含被迴避＝有揮擊）
     // 🔮 幻術士 奇古獸攻擊：裝備奇古獸(必中魔法)或魔劍精通(任意非弓武器套用奇古獸公式) → 走奇古獸路徑，繞過物理命中/迴避
     if (player.cls === 'illusion') {
         let _qw = player.eq.wpn ? DB.items[player.eq.wpn.id] : null;
@@ -1107,6 +1111,7 @@ function _statusInflictHeal(beforeKeys) {
     }
 }
 function enemyPhysicalAttack(mob, idx, stunChance = 0, atkDmg = null, atkDb = null, isBasicAttack = false) {
+    if(window.GiranCombat && !GiranCombat.permits(mob,player,'basic'))return;
     if (bindMobBlockedVs(mob, player)) return;   // 🕸️ v3.7.75 束縛：被束縛的怪物搆不到裝備遠距離武器的玩家（連擊技也走這裡→一併落空）
     let _snap = _playerStatusSnap(); _statusHealDepth++;
     try { return _enemyPhysicalAttackInner(mob, idx, stunChance, atkDmg, atkDb, isBasicAttack); }
@@ -1132,7 +1137,7 @@ function _enemyPhysicalAttackInner(mob, idx, stunChance = 0, atkDmg = null, atkD
     // 🔧 暗隱術：100% 迴避一次物理攻擊（迴避後失效並進入 5 秒冷卻）；否則依 ER 有效迴避率判定
     let _stealthDodge = !!(player.buffs && player.buffs.sk_dark_stealth > 0);
     let _titanEr = (player.skills.includes('sk_warrior_titan_bullet') && player.hp < player.mhp * titanThreshold()) ? 50 : 0;   // ⚔️ 泰坦：子彈：HP<40%(反彈精通 80%) 時 ER+50（即時判定，不入 recomputeStats）
-    if (!mob.magicMelee && !_asleep && !(player.d && player.d.noEvade && !_stealthDodge) && (_stealthDodge || roll(1, 100) <= Math.min(window.__afkEvadeCap || 100, effResistPct(player.d.er + _titanEr)) /* 🔌 加掛版補丁:迴避上限 */)) {   // 😤 magicMelee(白目幻術士)：一般攻擊視為魔法·必定命中不可迴避   // 🏺 笨重的鋼鐵石盾 noEvade：無法迴避（暗隱術 100% 迴避不受限）
+    if (!mob.magicMelee && !_asleep && !(player.d && player.d.noEvade && !_stealthDodge) && (_stealthDodge || roll(1, 100) <= Math.min(window.__afkEvadeCap || 100, effResistPct(player.d.er + _titanEr) + (window.GiranMagicMerchant?.arrowEvade(player,mob)||0)) /* 🔌 加掛版補丁:迴避上限 */)) {   // 😤 magicMelee(白目幻術士)：一般攻擊視為魔法·必定命中不可迴避   // 🏺 笨重的鋼鐵石盾 noEvade：無法迴避（暗隱術 100% 迴避不受限）
         logCombat(`${player.name || '你'} 成功迴避攻擊。`, 'evade');   if (typeof window.__afkOnEvade === 'function') { try { window.__afkOnEvade(player, mob); } catch (e) {} }   /* 🔌 加掛版補丁:迴避掛點 */
         if (hasMastery('d_evade')) { let _s = player._darkEvadeStack || 0; player._darkEvadeStack = 0; if (player.d) player.d.er -= _s; player._darkEvadeSure = true; player._darkEvadeCrit = true; }   // 🔧 迴避精通：清空累積ER，下次一般攻擊必中且必爆
         // 🔧 暗隱術：消耗該次 100% 迴避後失效，並進入 5 秒冷卻
@@ -1443,7 +1448,7 @@ function aggroVictimPool(allies) {
 function enemyAttackChooseVictim(mob, idx) {
     try { if (typeof playMobAttack === 'function') playMobAttack(mob); } catch (e) {}   // 🔊 怪物一般攻擊音（每次普攻動作一次·不分打玩家/傭兵·查無對應則靜音）
     if (player.dead) { enemyPhysicalAttack(mob, idx, 0, null, null, true); return; }   // 玩家已死：照舊（enemyPhysicalAttack 內部即 return）
-    let allies = (player.allies || []).filter(a => a && !a._downed && (a.curHp || 0) > 0);
+    let allies = GiranPartyView.combatAllies().filter(a => a && !a._downed && (a.curHp || 0) > 0);
     let ironTarget = (typeof ironGuardTauntTarget === 'function') ? ironGuardTauntTarget(mob) : null;
     if (ironTarget === player) { enemyPhysicalAttack(mob, idx, 0, null, null, true); return; }
     if (ironTarget) { enemyAttackAlly(mob, ironTarget, true); return; }
@@ -1516,6 +1521,8 @@ function teamIlluAura(forWho, forMinion) {
     return { ed: ed, eh: eh, md: md, mel: mel, royalEd: royalEd };
 }
 function enemyAttackAlly(mob, ally, isBasicAttack = false) {
+    if (!GiranPartyView.canFight(ally)) return;
+    if(window.GiranCombat && !GiranCombat.permits(mob,ally,'basic'))return;
     if (!ally) return;
     if (bindMobBlockedVs(mob, ally)) return;   // 🕸️ v3.7.75 束縛：被束縛的怪物搆不到裝備遠距離武器的傭兵
     if (!ally.statuses) ally.statuses = {};
@@ -1534,7 +1541,7 @@ function _enemyAttackAllyInner(mob, ally, isBasicAttack = false) {
         let _titanEr = (ally.skills && ally.skills.includes('sk_warrior_titan_bullet') && (ally.curHp || 0) < (ally.mhp || 1) * ((ally.cls === 'warrior' && allyHasMastery(ally, 'k_rebound')) ? 0.8 : 0.4)) ? 50 : 0;   // ⚔️ 泰坦：子彈
         let _evStack = allyHasMastery(ally, 'd_evade') ? (ally._darkEvadeStack || 0) : 0;   // 🖤 迴避精通：累積 ER（直接加進判定·不動 ally.d 避免重算失同步）
         let _stealthDodge = !!(ally.buffs && ally.buffs.sk_dark_stealth > 0);   // 🖤 v2.7.92 暗隱術（傭兵）：100% 迴避一次物理攻擊（迴避後失效並進入 5 秒冷卻·鏡像玩家 enemyPhysicalAttack）
-        if (!(d.noEvade && !_stealthDodge) && (_stealthDodge || roll(1, 100) <= Math.min(window.__afkEvadeCap || 100, effResistPct((d.er || 0) + _titanEr + _evStack)) /* 🔌 加掛版補丁:迴避上限 */)) {   // 🏺 笨重的鋼鐵石盾 noEvade：無法一般迴避（鏡像玩家 enemyPhysicalAttack；暗隱術 100% 迴避不受限）
+        if (!(d.noEvade && !_stealthDodge) && (_stealthDodge || roll(1, 100) <= Math.min(window.__afkEvadeCap || 100, effResistPct((d.er || 0) + _titanEr + _evStack) + (window.GiranMagicMerchant?.arrowEvade(ally,mob)||0)) /* 🔌 加掛版補丁:迴避上限 */)) {   // 🏺 笨重的鋼鐵石盾 noEvade：無法一般迴避（鏡像玩家 enemyPhysicalAttack；暗隱術 100% 迴避不受限）
             logCombat(`<span class="text-sky-300 font-bold">協力·${ally._allyName}</span> 迴避了 <span class="${getMobColor(mob.lv)}">${mob.n}</span> 的攻擊。`, 'evade', 'enemy');
             if (allyHasMastery(ally, 'd_evade')) { ally._darkEvadeStack = 0; ally._darkEvadeSure = true; ally._darkEvadeCrit = true; }   // 迴避精通：清空累積·下次一般攻擊必中必爆
             if (_stealthDodge) { ally.buffs.sk_dark_stealth = 0; ally._darkStealthCd = state.ticks + 50; logCombat(`<span class="text-fuchsia-300">協力·${ally._allyName} 的暗影隱蔽消散了。</span>`, 'magic', 'mercenary'); }   // 🖤 v2.7.92 消耗該次 100% 迴避後失效＋5 秒冷卻（allyMaintainBuffs 冷卻閘讀 _darkStealthCd）
@@ -1712,6 +1719,7 @@ function pvpChaoticDeathItemLoss() {
 }
 
 function killPlayer() {
+    if(player.dead)return;
     player.hp = 0;
     player.dead = true; // 保持死亡狀態，停止遊戲計時
     // ⚔️ v3.7.9 決鬥落敗＝完全無損失（用戶拍板）：決鬥贏沒有獎勵，輸也不該有真實損失。
@@ -1787,6 +1795,11 @@ function killPlayer() {
     if (!_duelDeath) {
         document.getElementById('btn-revive').classList.remove('hidden');
         updateReviveInPlaceBtn();   // 視條件顯示「原地復活」按鈕
+        player.giranDeath={map:mapState.current,home:window.GiranGates?.homeDestination()||getHomeTown()};
+        if(state.prideClimb)Object.assign(player.giranDeath,{prideClimb:true,prideFloor:state.prideFloor,prideRanked:!!state.prideRanked});
+        if(state.oblivion)player.giranDeath.oblivion=state.oblivion;
+        if(state.antharas)player.giranDeath.antharas=state.antharas;
+        saveGame();
     }
     updateUI();
 }
@@ -1859,43 +1872,58 @@ function shieldDmgReduceProc(who, dmg) {
     logCombat(`<span class="font-bold" style="color:#93c5fd;">【${d0.n}】</span>盾牌吸收了部分衝擊（傷害 -${p.amt || 50}）。`, 'player');
     return Math.max(0, dmg - (p.amt || 50));
 }
-function castMobMagic(mob, sk) {
-    if (!sk) return;
+function animateMobCast(mob) {
     if (mob && mob.curHp > 0 && typeof _mobAnimTrigger === 'function') _mobAnimTrigger(mob, 'skill');   // 🎞️ 序列幀：技能動作（🔒 鎖定·強制放完·播放中的新觸發被忽略）
     if (mob && mob.curHp > 0) { try { if (typeof playMobSkill === 'function') playMobSkill(mob); } catch (e) {} }   // 🔊 怪物技能(施法)音（查 MOB_SKILL_SFX·查無/缺檔靜音·冰之女王 3564）
     if (mob && mob.curHp > 0 && (mob.n === '死亡騎士' || mob.n === '真‧死亡騎士 冥皇丹特斯')) { try { if (typeof vfxCastShake === 'function') vfxCastShake(); } catch (e) {} }   // ✨ 死亡騎士／真‧死亡騎士 冥皇丹特斯 施放死亡騎士技能特效→整個戰場震動（v3.4.8·cosmetic·吃 __vfxOff）
-    let redirectable = !!sk.dmg || ['stone', 'paralyze', 'silence', 'magicseal', 'freeze', 'sleep', 'scald', 'stun', 'slowatk', 'poison', 'burn', 'bleed', 'frost_breath', 'weaken', 'disease', 'potionfrost', 'foulwater'].includes(sk.type);   // 🌊 v3.6.20 汙濁之水：單體·依仇恨權重打玩家或某傭兵（寵物中招走 js/22）
-    if (!redirectable) { applyMobMagic(mob, sk); return; }
-    let allies = (player.allies || []).filter(a => a && !a._downed && (a.curHp || 0) > 0);
+}
+function castMobMagic(mob, sk) {
+    if (!sk || !mob || mob.curHp<=0) return;
+    const reachable = actor => !window.GiranCombat || GiranCombat.permits(mob,actor,'magic');
+    const captainInRange=!player.dead&&reachable(player);
+    const redirectable = !!sk.dmg || ['stone', 'paralyze', 'silence', 'magicseal', 'freeze', 'sleep', 'scald', 'stun', 'slowatk', 'poison', 'burn', 'bleed', 'frost_breath', 'weaken', 'disease', 'potionfrost', 'foulwater'].includes(sk.type);
+    if (!redirectable) {
+        if(captainInRange || ['reflectwall','terror_visage','counter_barrier'].includes(sk.type)){
+            animateMobCast(mob);applyMobMagic(mob,sk);
+        }
+        return;
+    }
+    let allies = GiranPartyView.combatAllies().filter(a => a && !a._downed && (a.curHp || 0) > 0);
     let pets = (typeof petsOutList === 'function') ? petsOutList().filter(p => p && !p._downed && (p.hp || 0) > 0) : [];
     let sums = (typeof summonV2List === 'function') ? summonV2List().filter(s => s && !s._downed && (s.hp || 0) > 0) : [];   // 🧙 v3.2.82 召喚物加入魔法受害者池
     if (typeof necroSkeletonList === 'function') sums = sums.concat(necroSkeletonList().filter(s => s && !s._downed && (s.hp || 0) > 0));   // 🏺 v3.8.12 骷髏復生實體
     if (typeof mercSummonList === 'function') sums = sums.concat(mercSummonList());   // 🧱 v3.4.50 傭兵召喚物也入魔法受害者池（AOE 波及＋傷害型單體加權·applyMobMagicToSummon 通用）
     let guards = (typeof guardAliveList === 'function') ? guardAliveList() : [];   // 🏰 城堡護衛（同召喚物：純 CC/DoT 對其無效·僅傷害型單體加權·全體型一律波及）
+    allies=allies.filter(reachable);pets=pets.filter(reachable);sums=sums.filter(reachable);guards=guards.filter(reachable);
+    if(!captainInRange&&!allies.length&&!pets.length&&!sums.length&&!guards.length)return;
+    animateMobCast(mob);
     let petWeight = petAggroWeight;   // 🐾 v3.2.82 共用模組權重（含四寵覆寫）
     let _gW = (typeof guardAggroWeight === 'function') ? guardAggroWeight : (() => 4);
     let sumIn = !!sk.dmg && sums.length;   // 🧙 v3.2.82 召喚物僅「傷害型魔法」納入單體加權池（召喚物無狀態系統→純 CC/DoT 不重導向·以免免疫怪魔法變成召喚物 CC 海綿）；全體型一律波及（AOE 分支·純狀態對其自然無效）
     let guardIn = !!sk.dmg && guards.length;   // 🏰 護衛同上（無狀態系統）
     if ((typeof MOB_PARTY_AOE_SKILLS !== 'undefined') && MOB_PARTY_AOE_SKILLS.has(sk.skn)) {   // 全體：玩家＋全部非倒地傭兵/寵物/召喚物/護衛
-        if (!player.dead) applyMobMagic(mob, sk);
+        if (captainInRange) applyMobMagic(mob, sk);
         for (let a of allies) { if (mob.curHp <= 0) break; applyMobMagicToAlly(mob, sk, a); }
         for (let p of pets) { if (mob.curHp <= 0) break; if (typeof applyMobMagicToPet === 'function') applyMobMagicToPet(mob, sk, p); }
         for (let s of sums) { if (mob.curHp <= 0) break; if (typeof applyMobMagicToSummon === 'function') applyMobMagicToSummon(mob, sk, s); }   // 🧙 v3.2.82 全體魔法波及召喚物（只吃傷害·純狀態內部略過）
         for (let g of guards) { if (mob.curHp <= 0) break; if (typeof applyMobMagicToGuard === 'function') applyMobMagicToGuard(mob, sk, g); }   // 🏰 全體魔法波及護衛
         return;
     }
+    if(!captainInRange&&!allies.length&&!pets.length&&!sumIn&&!guardIn)return;
     let ironTarget = (typeof ironGuardTauntTarget === 'function') ? ironGuardTauntTarget(mob) : null;
+    if(ironTarget && (ironTarget===player?!captainInRange:!allies.includes(ironTarget)))ironTarget=null;
     if (ironTarget === player) { applyMobMagic(mob, sk); return; }
     if (ironTarget) { applyMobMagicToAlly(mob, sk, ironTarget); return; }
     if (!allies.length && !pets.length && !sumIn && !guardIn) { applyMobMagic(mob, sk); return; }
-    let pool = aggroVictimPool(allies);   // 🏺 聖甲蟲的孵育巢：單體指定魔法同樣「未裝備者優先」（全體魔法走上方 AOE 分支不受影響）
+    let pool = aggroVictimPool(allies);
+    pool.playerIn=pool.playerIn&&captainInRange;
     allies = pool.allies;
     let _tw = (typeof victimThreatWeight === 'function') ? victimThreatWeight : (m, e, b) => b;   // 🎯 v3.7.97 仇恨制：單體魔法選敵同走 base×K+累積
     let pw = pool.playerIn ? _tw(mob, player, mercAggroWeight(player)) : 0, total = pw; for (let a of allies) total += _tw(mob, a, mercAggroWeight(a));
     for (let p of pets) total += _tw(mob, p, petWeight(p));
     if (sumIn) for (let s of sums) total += _tw(mob, s, summonAggroWeight(s));   // 🧙 v3.2.82 傷害型魔法：召喚物入池
     if (guardIn) for (let g of guards) total += _tw(mob, g, _gW(g));   // 🏰 傷害型魔法：護衛入池
-    if (total <= 0) { applyMobMagic(mob, sk); return; }
+    if (total <= 0) { if(captainInRange)applyMobMagic(mob, sk); return; }
     let r = Math.random() * total; r -= pw;
     if (r < 0) { applyMobMagic(mob, sk); return; }
     for (let a of allies) { r -= _tw(mob, a, mercAggroWeight(a)); if (r < 0) { applyMobMagicToAlly(mob, sk, a); return; } }
@@ -1906,7 +1934,8 @@ function castMobMagic(mob, sk) {
     else if (allies.length) applyMobMagicToAlly(mob, sk, allies[allies.length - 1]);
     else if (pets.length && typeof applyMobMagicToPet === 'function') applyMobMagicToPet(mob, sk, pets[pets.length - 1]);
     else if (sumIn && sums.length && typeof applyMobMagicToSummon === 'function') applyMobMagicToSummon(mob, sk, sums[sums.length - 1]);
-    else applyMobMagic(mob, sk);
+    else if (guardIn) applyMobMagicToGuard(mob,sk,guards[guards.length-1]);
+    else if (reachable(player)) applyMobMagic(mob, sk);
 }
 // 🏺 statusHealHp（牛鬼之子的黑戒·傭兵鏡像）：與玩家 _playerStatusSnap/_statusInflictHeal 同型——
 //    比對「本次是否有新轉正的異常狀態鍵」，有就依傭兵自身裝備的 statusHealHp 總和補血。逐傭兵獨立 depth。
@@ -1930,6 +1959,7 @@ function _allyStatusInflictHeal(ally, beforeKeys) {
 }
 // 🤝 Phase4：怪物攻擊型魔法作用於「協力傭兵」（applyMobMagic 玩家路徑的精簡鏡像：傷害＋CC/DoT 狀態·用 ally.d.mr/屬抗/dr·扣 ally.curHp·倒地）。玩家專屬層（娃娃抵抗/月光/暗影閃避/魔法屏障/鐵衛5/反射/castleGuard/魔法屏障卷軸）一律不套用。
 function applyMobMagicToAlly(mob, sk, ally) {
+    if (!GiranPartyView.canFight(ally)) return;
     let _snap = _allyStatusSnap(ally);
     try { return _applyMobMagicToAllyInner(mob, sk, ally); }
     finally { _allyStatusInflictHeal(ally, _snap); }

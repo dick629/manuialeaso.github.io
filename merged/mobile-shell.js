@@ -71,6 +71,10 @@
     ['切換角色／登出','儲存進度後回到首頁','logout'],
     ['統計與存檔','冒險紀錄、匯出進度','audit'],
     ['血盟','血盟成員與共同冒險','clan'],
+    ...(document.documentElement.dataset.playMode === 'dimension' ? [] : [
+      ['多人隊伍','房間、好友與隊伍聊天','giran-room'],
+      ['冒險地圖','選擇區域、目的地與回城','giran-map']
+    ]),
     ['社交','互動與角色資訊','pvp'],
     ['自動販賣','整理規則與出售預覽','btn-autosell'],
     ['收藏圖鑑','卡片、裝備與冒險收藏','btn-collection'],
@@ -107,6 +111,7 @@
   };
   function openMenuAction(action){
     if(action==='recovery'){$('lm-recovery').click();return;}
+    if(action==='giran-map'||action==='giran-room'){go('adventure');$(action)?.click();return;}
     if(action==='display'){window.AFK_MOBILE_SCALE?.open();return;}
     if(action==='logout'){if(oldMobile.logout)oldMobile.logout();return;}
     const original=$(action);if(original)original.click();
@@ -169,11 +174,11 @@
     window.startEditName();
     const input=$('name-edit-input');if(!input)return;
     const modal=document.createElement('section');modal.id='lm-rename-modal';modal.setAttribute('role','dialog');modal.setAttribute('aria-label','修改角色名稱');
-    modal.innerHTML='<form class="lm-rename-form"><label for="name-edit-input">角色名稱</label><p>最多 12 個字；留白可恢復未取名。</p><div class="lm-rename-actions"><button type="button" data-rename-cancel>取消</button><button type="submit">確認修改</button></div></form>';
+    modal.innerHTML='<form class="lm-rename-form"><label for="name-edit-input">角色名稱</label><p>最多 12 個字</p><div class="lm-rename-actions"><button type="button" data-rename-cancel>取消</button><button type="submit">確認修改</button></div></form>';
     input.removeAttribute('onkeydown');input.removeAttribute('onclick');input.setAttribute('autocomplete','off');
     const form=modal.querySelector('form');form.insertBefore(input,form.querySelector('p'));
     const close=()=>{window.cancelEditName?.();modal.remove();queueHud();scheduleSync();};
-    form.addEventListener('submit',event=>{event.preventDefault();window.confirmEditName();modal.remove();queueHud();scheduleSync();});
+    form.addEventListener('submit',event=>{event.preventDefault();if(!window.confirmEditName())return;modal.remove();queueHud();scheduleSync();});
     modal.querySelector('[data-rename-cancel]').addEventListener('click',close);
     input.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();}});
     body.appendChild(modal);discover(modal);sync();input.focus();input.select();
@@ -198,8 +203,9 @@
   // Mirror native HUD fields. Currency uses the native read-only API and inventory,
   // throttled to once per second; never write saves or rebuild inventory.
   let hudFrame=0,currencyUpdatedAt=0;
+  function nativeHeaderVisible(){return enabled&&!document.hidden&&!(body.classList.contains('giran-chrome')&&body.classList.contains('giran-running'));}
   function updateHud(){
-    hudFrame=0;if(!enabled||document.hidden)return;
+    hudFrame=0;if(!nativeHeaderVisible())return;
     const text=(dest,source,fallback)=>{
       const value=$(source)?.textContent.trim()||fallback;
       if($(dest).textContent!==value)$(dest).textContent=value;
@@ -238,7 +244,7 @@
       if(portrait)image.setAttribute('src',portrait);else image.removeAttribute('src');
     }
   }
-  function queueHud(){if(enabled&&!document.hidden&&!hudFrame)hudFrame=requestAnimationFrame(updateHud);}
+  function queueHud(){if(!hudFrame&&nativeHeaderVisible())hudFrame=requestAnimationFrame(updateHud);}
   const hudObserver=new MutationObserver(queueHud);
   for(const id of ['st-class','st-classname','st-lv','st-gold','st-ac','st-mr','txt-hp','txt-mp','bar-hp','bar-mp','bar-exp','txt-exp','status-panel','victory-badge','classic-badge','status-alerts']){
     const node=id==='status-alerts'?$(id)?.parentElement:$(id);if(node)hudObserver.observe(node,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['style','class','title','hidden']});
@@ -258,11 +264,8 @@
   let logHome = null;
   // Keep the explicit preview URL; normal play selects its layout automatically.
   // No floating layout switch: it covered desktop ability values and controls.
-  const phoneDisplay = /(?:[?&])display=phone(?:&|$)/.test(window.location?.search||'');
-  function mobile() {
-    return phoneDisplay || (!window.AFK_TOGGLES || AFK_TOGGLES.enabled('mobile')) &&
-      (innerWidth<=820 || (innerWidth<=1024 && innerHeight<=520 && matchMedia('(pointer:coarse)').matches));
-  }
+  const phoneDisplay = GiranPartyView.phonePreview;
+  const mobile = GiranPartyView.mobile;
   function inGame() {return !game.classList.contains('hidden');}
   function scrollKey(){return page+':'+tab;}
   function nativeButton(id) {
@@ -284,6 +287,12 @@
   }
   function go(id,nextTab,fromBack) {
     if(!enabled||!groups[id]||stack.length)return;
+    if(id==='logs'&&window.GiranPanels){
+      const channels={world:'world',combat:'combat',sys:'system',exp:'experience'};
+      GiranPanels.chooseChannel(channels[nextTab]||'journal');
+      return;
+    }
+    if(body.dataset.giranPane)window.GiranUI?.pane(null);
     scroll.set(scrollKey(),game.scrollTop);
     page=id; tab=nextTab===undefined?(rememberedTabs.get(id)||groups[id].tabs[0]?.[0]||''):nextTab;
     if(id!=='more')rememberedTabs.set(id,tab);
@@ -325,7 +334,7 @@
     scheduleSync();
   }
   window.switchTab=function(t,b){
-    if(enabled&&!switching) {chooseTab(t);return;}
+    if(enabled&&!switching&&!body.dataset.giranPane) {chooseTab(t);return;}
     return nativeSwitch.apply(this,arguments);
   };
   function measure(){
@@ -352,9 +361,10 @@
     if(enabled){
       queueHud();
       const row=$('log-row');
-      if(row&&!logHome){logHome=document.createComment('mobile-log-home');row.before(logHome);logs.appendChild(row);}
+      if(row&&!logHome&&!window.GiranPanels){logHome=document.createComment('mobile-log-home');row.before(logHome);logs.appendChild(row);}
       oldMobile.closeLog?.();
-      go(page,tab||undefined);
+      if(body.dataset.giranPane)measure();
+      else go(page,tab||undefined);
       stack.forEach(mount);
       scheduleSync();
     }else{
@@ -365,16 +375,19 @@
       document.documentElement.style.setProperty('--m-nav-h','0px');
       // The legacy responsive handler may reset its active tab during resize.
       // Restore the selected phone subpage before fitting the desktop surface.
-      const selected=nativeButton(tab);if(selected)nativeSwitch(tab,selected);
-      if(typeof setEquipmentPanelEmbedded==='function')setEquipmentPanelEmbedded(page==='character'&&tab==='equip');
+      if(!body.dataset.giranPane){
+        const selected=nativeButton(tab);if(selected)nativeSwitch(tab,selected);
+        if(typeof setEquipmentPanelEmbedded==='function')setEquipmentPanelEmbedded(page==='character'&&tab==='equip');
+      }
     }
     window.AFK_MOBILE_SCALE?.refresh?.();
     window.AFK_HOTBAR?.render();
+    window.dispatchEvent(new Event('giran-mobile-layout'));
   }
   const extra = '#afk-radio-menu,#collection-panel,#item-modal,#town-interaction-container,#warehouse-window,#afk-alert-modal,#afk-confirm-modal,#m-logout-modal,#m-stat-modal,#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#rb-modal,#rp-modal,.afk-ca-overlay,#afk-novel,#afk-gd-ov';
   const known=(window.AFK_BANNER?.MODAL_HOSTS||'')+','+extra;
   const discoverSelector=known.replace(/^,/,'')+',[role="dialog"],[id$="-modal"],[id$="-overlay"],[id$="-book"]';
-  const excludes=new Set(['equipment-window','load-select-overlay','m-logout-overlay','lm-detail','growth-overlay','class-overlay','attribute-help','afk-plugin-panel']);
+  const excludes=new Set(['giran-console','equipment-window','load-select-overlay','m-logout-overlay','lm-detail','growth-overlay','class-overlay','attribute-help','afk-plugin-panel']);
   const closeFunctions={
     'item-modal':'closeModal','town-interaction-container':'closeNpcInteraction',
     'warehouse-window':'closeWarehouseWindow','collection-panel':'closeCollectionPanel',
@@ -521,6 +534,7 @@
   discover(body);
   new MutationObserver(activate).observe(game,{attributes:true,attributeFilter:['class']});
   window.addEventListener('resize',activate,{passive:true});
+  window.addEventListener('giran-party-layout',activate);
   window.addEventListener('pageshow',activate);
   window.__afkm=Object.assign({},oldMobile,{
     version:'4.1.0',isMobile:mobile,
@@ -529,7 +543,7 @@
     setLog:which=>{if(enabled)go('logs',which==='sys'?'sys':'combat');else oldMobile.setLog?.(which);}
   });
   window.LineageMobile={
-    go,back,
+    go,back,menuEntries:menu,menuArt,openMenuAction,
     pendingScroll:()=>switching?(scroll.get(scrollKey())||0):null,
     status:()=>({enabled,page,tab,depth:stack.length,active:stack.at(-1)?.el.id||null,
       registered:registered.size,...stats})

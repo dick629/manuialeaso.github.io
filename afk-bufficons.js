@@ -88,7 +88,7 @@
     if (box.dataset.sig !== sig) {
       box.dataset.sig = sig;
       box.innerHTML = cur.map(function (r, i) {
-        return '<div class="status-icon afk-bi" data-afk-bi="' + i + '"><img src="' + esc(icon(r.id)) + '" alt="' + esc(r.name) + '"></div>';
+        return '<button type="button" class="status-icon afk-bi" data-afk-bi="' + i + '"><img src="' + esc(icon(r.id)) + '" alt="' + esc(r.name) + '"></button>';
       }).join('');
     }
     cur.forEach(function (r, i) {
@@ -101,6 +101,7 @@
   document.addEventListener('click', function (ev) {
     var el = ev.target && ev.target.closest && ev.target.closest('[data-afk-bi]');
     if (!el) { if (!(ev.target && ev.target.closest && ev.target.closest('#afk-bi-tip'))) hideTip(); return; }
+    if (ev.defaultPrevented) { hideTip(); return; }
     var r = cur[Number(el.getAttribute('data-afk-bi'))]; if (!r) return;
     if (tipKey === r.key) hideTip(); else showTip(el, r);
   });

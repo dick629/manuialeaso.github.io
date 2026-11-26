@@ -34,7 +34,7 @@ host.querySelector('nav').innerHTML=(soulOnly?[['souls','八格魂魄']]:[...(sk
  }
  async function confirmText(title,text,expected){if(W.AFK_UI?.confirm)return new Promise(resolve=>W.AFK_UI.confirm({title,message:text,requireText:expected,onOk:()=>resolve(true),onCancel:()=>resolve(false),onDismiss:()=>resolve(false)}));if(!window.confirm(text))return false;return window.prompt(title+'\n請輸入「'+expected+'」確認永久變更。')===expected;}
  async function click(e){const b=e.target.closest('[data-class]');if(!b||b.disabled)return;const [cmd,...rest]=b.dataset.class.split(':'),arg=rest.join(':');try{
-  if(cmd==='close'){close();return;}if(cmd==='recovery'){if(W.LineageClassPreview){message('預覽不讀寫存檔，請從正式遊戲開啟修復工具。');return;}window.open('recovery.html','_blank','noopener');return;}
+  if(cmd==='close'){close();return;}if(cmd==='recovery'){if(W.LineageClassPreview){message('預覽不讀寫存檔，請從正式遊戲開啟修復工具。');return;}W.LineageBoot.goRecovery();return;}
   if(cmd==='tab'){tab=arg;render();host.querySelector('main').scrollTop=0;return;}if(cmd==='route'){if(selected===arg)return;selected=arg;render();host.querySelector('.class-detail')?.scrollIntoView({block:'nearest'});return;}if(cmd==='stage'){step=Number(arg);render();return;}if(cmd==='inspect'){selected=arg;step=1;tab='skills';render();return;}
   if(cmd==='cast'||cmd==='dual'||cmd==='claw'){const r=W.LineageClassCombat.cast(arg,null,cmd==='cast'?null:{style:cmd});message(r.ok?'已施放 '+C.skills.get(arg).name:r.reason);return;}
   if(cmd==='release'){const s=A.vault().souls.find(x=>x.id===arg)
@@ -52,9 +52,34 @@ await A.release(s.id)
  function mount(){document.querySelector('#class-launch')?.remove();}
  const npc=W.interactNPC;W.interactNPC=function(id){if(host&&embedded)dismiss();const r=npc.apply(this,arguments);if(id==='npc_afk_skillup'||id==='npc_afk_zal'){document.querySelector('#aev')?.remove();const container=document.querySelector('#interaction-content');if(container){if(id==='npc_afk_skillup'){const panel=document.createElement('div');while(container.firstChild)panel.append(container.firstChild);open('enhance',{container,skillPanel:panel});}}}return r;};
  // Ping 11-12：已解鎖的流派／轉職技能自動出現在「技能」分頁（不用再回薇爾娜那裡施放、加入自動）
- function tabSkillsHtml(){const p=player;if(!p?.cls)return '';const v=C.get(p),t=C.tree(p);if(!v||!t)return ''
-  const list=t.skills.filter(s=>s.stage<=v.stage&&C.canUse(p,s.id));if(!list.length)return ''
-  return '<section class="class-tabskills"><h4>'+esc(t.name)+' · 第 '+v.stage+' 段技能</h4>'+list.map(s=>{const cost=W.LineageClassCombat.cost(p,s),ico=icoOf(t,s),dual=s.plan.ops.some(o=>o.kind==='stance'&&o.family==='weaponStyle')
+ function inheritedSpells(p){
+  if(!p||W.__afkHybridOff)return [];
+  const learned=new Set(p.skills||[]);
+  return [...new Set(W.LineageHybrid?.legacy(p)||[])].filter(id=>learned.has(id)&&DB.skills[id]);
+ }
+ function inheritedRows(p){
+  const ids=inheritedSpells(p);
+  if(!ids.length)return '';
+  return '<section class="class-tabskills"><h4>流派傳授的法術</h4>'+ids.map(id=>{
+    const sk=DB.skills[id],need=skillReqLv(sk,id),ready=need!=null&&p.lv>=need;
+    const control=sk.type==='manual'&&ready?'<button type="button" data-inherited-cast="'+esc(id)+'">施放</button>':'';
+    const status=!ready?'需要 Lv.'+need:sk.type==='manual'?'已習得':'已習得 · 依技能設定發動';
+    return '<div class="class-tabskill" data-tip-skill="'+esc(id)+'"><img src="'+esc(getIconUrl(sk,true))+'" alt=""><div class="class-tabskill-body"><b>'+esc(sk.n)+'</b><small>'+esc(status)+'</small><p>'+esc(sk.desc||sk.d||'')+'</p></div><div class="class-tabskill-ctl">'+control+'</div></div>';
+  }).join('')+'</section>';
+ }
+ function tabSkillsHtml(mode){
+  const p=player,inherit=mode==='inherit',v=C.get(p),t=C.tree(p);
+  const inherited=inherit?inheritedRows(p):'';
+  const matches=s=>(s.type==='大絕'||s.type==='龍魔法')===inherit;
+  const textRows=(name,rows)=>'<section class="class-tabskills"><h4>'+esc(name)+'</h4>'+rows.map(row=>'<p>'+esc(row)+'</p>').join('')+'</section>';
+  const awake=W.__afkAwakenExt?.evo(p);
+  if(!t&&awake)return inherited+textRows(awake.route.n,awake.route.s.slice(0,awake.stage).map((s,i)=>'第 '+(i+1)+' 段・'+(inherit?'自動施放・'+s.u:'常駐・'+s.p)));
+  const legacy=W.__afkEvolve?.schoolOf(p);
+  if(!t&&legacy&&!inherit)return textRows(legacy.n,legacy.st.slice(0,W.__afkEvolve.stageOf(p)).map((s,i)=>'第 '+(i+1)+' 段・'+s.t));
+  if(!v||!t)return inherited||textRows(inherit?'傳承技能':'流派技能',[inherit?'尚未習得傳承技能。':'尚未習得流派技能。']);
+  const list=t.skills.filter(s=>matches(s)&&s.stage<=v.stage&&C.canUse(p,s.id));
+  if(!list.length)return inherited||textRows(t.name,[inherit?'此段尚未選定傳承大絕。':'此段尚無已習得的流派技能。']);
+  return inherited+'<section class="class-tabskills"><h4>'+esc(t.name)+' · 第 '+v.stage+' 段技能</h4>'+list.map(s=>{const cost=W.LineageClassCombat.cost(p,s),ico=icoOf(t,s),dual=s.plan.ops.some(o=>o.kind==='stance'&&o.family==='weaponStyle')
    const b=(text,act)=>'<button type="button" data-cls-act="'+esc(act)+'">'+esc(text)+'</button>'
    const ctl=s.type==='被動'?'<span class="class-tabskills-note">常駐生效</span>':s.type==='光環'?b((v.auras||[]).includes(s.id)?'停用光環':'啟用光環','aura:'+s.id):(dual?b('雙刀姿態','dual:'+s.id)+b('鋼爪姿態','claw:'+s.id):b('施放','cast:'+s.id))+b((v.auto||[]).includes(s.id)?'移出自動':'加入自動','auto:'+s.id)
    return '<div class="class-tabskill">'+(ico?'<img src="'+ico+'" alt="" loading="lazy" onerror="this.remove()">':'')+'<div class="class-tabskill-body"><b>'+esc(s.name)+'</b><small>'+esc(s.type+(s.type==='被動'?'':s.type==='光環'?' · 啟用 3% MP，每 5 秒 1% MP':' · MP '+cost.mp+(cost.hp?' · HP '+cost.hp:'')+' · 冷卻 '+s.plan.cd+' 秒'))+'</small><p>'+esc(C.description(s))+'</p></div><div class="class-tabskill-ctl">'+ctl+'</div></div>'}).join('')+'</section>'}
@@ -64,7 +89,7 @@ await A.release(s.id)
  const tipHide=()=>{const t=document.getElementById('class-tabskill-tip');if(t)t.style.display='none'}
  function tipShow(row){const t=tipBox();if(row.dataset.tipName!==undefined)t.innerHTML='<b>'+esc(row.dataset.tipName)+'</b><small>'+esc(row.dataset.tipMeta)+'</small><p>'+esc(row.dataset.tipDesc)+'</p>';else{const b=row.querySelector('.class-tabskill-body');if(!b)return;t.innerHTML='<b>'+b.querySelector('b').innerHTML+'</b><small>'+b.querySelector('small').innerHTML+'</small><p>'+b.querySelector('p').innerHTML+'</p>'}t.style.display='block'
   const r=row.getBoundingClientRect(),w=Math.min(320,innerWidth-16);t.style.width=w+'px';const h=t.offsetHeight;let x,y=r.top;if(r.right+8+w<=innerWidth-8)x=r.right+8;else if(r.left-w-8>=8)x=r.left-w-8;else{x=Math.max(8,Math.min(innerWidth-w-8,r.left));y=r.bottom+4;if(y+h>innerHeight-8)y=r.top-h-4}y=Math.max(8,Math.min(y,innerHeight-h-8));t.style.left=x+'px';t.style.top=y+'px'}
- const autoIds=()=>{const p=player,v=p&&C.get(p),t=p&&C.tree(p);if(!v||!t)return null;return {p,t,ids:(v.auto||[]).filter(id=>C.skills.get(id))}}
+ const autoIds=()=>{const p=player,v=p&&C.get(p),t=p&&C.tree(p);if(!v||!t)return null;return {p,t,ids:(v.auto||[]).filter(id=>t.skills.some(s=>s.id===id)&&C.canUse(p,id))}}
  const slotHtml=(o,i,hb)=>{const id=o.ids[i],s=id&&C.skills.get(id),key=hb?'<span class="hb-key">流'+(i+1)+'</span>':'';if(!s)return '<div class="'+(hb?'hb-slot hb-cls ':'')+'cab-slot empty">'+key+'</div>';const ico=icoOf(o.t,s),cost=W.LineageClassCombat.cost(o.p,s)
   return '<div class="'+(hb?'hb-slot hb-cls ':'')+'cab-slot" data-auto-id="'+esc(id)+'" data-tip-name="'+esc(s.name)+'" data-tip-meta="'+esc(s.type+' · MP '+cost.mp+(cost.hp?' · HP '+cost.hp:'')+' · 冷卻 '+s.plan.cd+' 秒')+'" data-tip-desc="'+esc(C.description(s))+'">'+key+(ico?'<img src="'+ico+'" alt="" draggable="false" onerror="this.remove()">':'<span class="cab-txt">'+esc(s.shortName||'')+'</span>')+'<i class="cab-cd"></i><em class="cab-left"></em><button type="button" data-auto-rm="'+esc(id)+'" aria-label="移出自動" title="移出自動">×</button></div>'}
  // 熱鍵列第三、四組（afk-hotbar 問這裡）：有流派才有
@@ -86,30 +111,51 @@ await A.release(s.id)
    const sig=o.ids.join(',')+'|'+o.t.id;if(autoBar.sig!==sig||!bar.firstChild){autoBar.sig=sig;bar.innerHTML='<div class="cab-head">自動施放 <small>'+o.ids.length+'/8</small></div><div class="cab-row">'+[0,1,2,3,4,5,6,7].map(i=>slotHtml(o,i,false)).join('')+'</div>'}}
   autoTick()
   if(!autoBar.timer)autoBar.timer=setInterval(()=>{try{if(!player||!C.get(player))return;autoBar()}catch(e){}},250)}
- function autoTick(){if(!player)return;document.querySelectorAll('#class-autobar [data-auto-id],#afk-hotbar [data-auto-id]').forEach(el=>{const s=C.skills.get(el.dataset.autoId);if(!s)return;let left=0;try{left=W.LineageClassCombat.cooldown(player,s)}catch(e){}
-  const tot=left>0?Math.max(Number(el.dataset.tot)||0,left,s.plan.cd||0):0;el.dataset.tot=tot;const f=tot>0?Math.min(1,left/tot):0,cd=el.querySelector('.cab-cd'),lf=el.querySelector('.cab-left');if(cd)cd.style.height=(f*100).toFixed(1)+'%';if(lf)lf.textContent=left>0?Math.ceil(left):'';el.classList.toggle('cooling',left>0)})}
+ function autoTick(){
+  if(!player)return;
+  for(const id of ['class-autobar','afk-hotbar']){
+   const bar=document.getElementById(id);
+   if(!bar)continue;
+   for(const slot of bar.querySelectorAll('[data-auto-id]')){
+    const skill=C.skills.get(slot.dataset.autoId);if(!skill)continue;
+    const left=W.LineageClassCombat?.cooldown(player,skill)||0;
+    const total=left>0?Math.max(Number(slot.dataset.tot)||0,left,skill.plan.cd||0):0;
+    const height=(total>0?Math.min(1,left/total)*100:0).toFixed(1)+'%',seconds=left>0?String(Math.ceil(left)):'';
+    if(slot.dataset.tot!==String(total))slot.dataset.tot=total;
+    const cd=slot.querySelector('.cab-cd'),label=slot.querySelector('.cab-left');
+    if(cd&&cd.dataset.height!==height){cd.style.height=height;cd.dataset.height=height;}
+    if(label&&label.textContent!==seconds)label.textContent=seconds;
+    slot.classList.toggle('cooling',left>0);
+   }
+  }
+ }
  let clsY=0   // 流派清單的捲動位置（核心重建技能視窗時用來還原）
- let clsMode=false   // 技能分頁的「流派」頁籤（跟核心的 一般／職業／裝備 並排）
- function tabSkills(){try{autoBar()}catch(e){}try{const host=document.getElementById('tab-skill');if(!host)return;const win=host.querySelector('.classic-skill-window'),modes=win&&win.querySelector('.classic-skill-mode');if(!win||!modes)return
+ let clsMode=''   // 技能分頁的「流派」頁籤（跟核心的 一般／職業／裝備 並排）
+ function tabSkills(){
+  // The dock refreshes cooldowns on its own clock. Loot triggers renderTabs on
+  // every kill, even when the field is open and the skill book is closed.
+  if(autoBar.timer && W.GiranPanels && document.body.classList.contains('giran-running') && document.body.dataset.giranPane!=='skills')return;
+  try{autoBar()}catch(e){}try{const host=document.getElementById('tab-skill');if(!host)return;const win=host.querySelector('.classic-skill-window'),modes=win&&win.querySelector('.classic-skill-mode');if(!win||!modes)return
   if(!host.dataset.clsTip){host.dataset.clsTip='1'   // Ping 11-12 17:49：滑鼠移上去（手機點圖示／名稱）顯示技能說明
    const hide=tipHide,show=tipShow
    host.addEventListener('mouseover',ev=>{if(ev.pointerType==='touch')return;const row=ev.target.closest('.class-tabmode .class-tabskill');if(row&&!ev.target.closest('button'))show(row);else if(!row)hide()})
    host.addEventListener('mouseleave',hide);host.addEventListener('scroll',hide,true)
    host.addEventListener('click',ev=>{const row=ev.target.closest('.class-tabmode .class-tabskill');if(!row||ev.target.closest('button'))return hide();show(row)})
    document.addEventListener('click',ev=>{if(!host.contains(ev.target))hide()},true)}
-  const html=tabSkillsHtml();if(!html){clsMode=false;return}
-  if(!modes.querySelector('[data-cls-mode]')){const b=document.createElement('button');b.type='button';b.dataset.clsMode='1';b.textContent='流派';modes.appendChild(b)
-   modes.addEventListener('click',ev=>{const x=ev.target.closest('button');if(!x)return;if(x.dataset.clsMode){ev.preventDefault();ev.stopPropagation();if(!clsMode)clsY=0;clsMode=true;tabSkills();return}clsMode=false},true)}
-  const mb=modes.querySelector('[data-cls-mode]');mb.classList.toggle('active',clsMode);if(clsMode)modes.querySelectorAll('button:not([data-cls-mode])').forEach(x=>x.classList.remove('active'))
-  win.classList.toggle('class-tabmode',clsMode);{const g0=win.querySelector('.classic-skill-grid-scroll');if(g0&&!clsMode&&g0.dataset.clsFit){g0.style.maxHeight='';delete g0.dataset.clsFit}}if(!clsMode)return
-  const head=win.querySelector('.classic-skill-heading');if(head)head.textContent=C.tree(player)?.name||'流派'
+  if(!modes.querySelector('[data-cls-mode]')){
+   for(const [mode,name] of [['school','流派'],['inherit','傳承']]){const b=document.createElement('button');b.type='button';b.dataset.clsMode=mode;b.textContent=name;modes.appendChild(b);}
+   modes.addEventListener('click',ev=>{const x=ev.target.closest('button');if(!x)return;if(x.dataset.clsMode){ev.preventDefault();ev.stopPropagation();if(clsMode!==x.dataset.clsMode)clsY=0;clsMode=x.dataset.clsMode;tabSkills();return;}clsMode='';},true);}
+  for(const b of modes.querySelectorAll('[data-cls-mode]'))b.classList.toggle('active',b.dataset.clsMode===clsMode);
+  if(clsMode)modes.querySelectorAll('button:not([data-cls-mode])').forEach(x=>x.classList.remove('active'));
+  win.classList.toggle('class-tabmode',!!clsMode);{const g0=win.querySelector('.classic-skill-grid-scroll');if(g0&&!clsMode&&g0.dataset.clsFit){g0.style.maxHeight='';delete g0.dataset.clsFit}}if(!clsMode)return
+  const html=tabSkillsHtml(clsMode),head=win.querySelector('.classic-skill-heading');if(head)head.textContent=clsMode==='inherit'?'傳承技能':'流派技能'
   const grid=win.querySelector('.classic-skill-grid-scroll');if(grid){grid.removeAttribute('onscroll');const mine=!!grid.querySelector(':scope>.class-tabskills'),y=mine?grid.scrollTop:(clsY||0);if(!mine||grid.dataset.clsHtml!==html){grid.innerHTML=html;grid.dataset.clsHtml=html}grid.scrollTop=y;if(!grid.dataset.clsY){grid.dataset.clsY='1';grid.addEventListener('scroll',()=>{if(win.classList.contains('class-tabmode'))clsY=grid.scrollTop},{passive:true})}}   /* Ping 11-13 03:12：重畫時保留捲動位置，內容沒變就不重畫；11-16：核心重建技能視窗（掉寶、喝水）後也回到原本位置，不再跳回頂端 */
   /* Ping 11-16：手機版底部選單（#lm-nav）蓋住清單最後幾項、滑不到底 → 清單高度收到選單上緣為止 */
   if(grid){const fit=()=>{try{const nav=document.getElementById('lm-nav'),r=grid.getBoundingClientRect();if(!r.height)return;const nr=nav&&getComputedStyle(nav).display!=='none'?nav.getBoundingClientRect():null,bottom=nr&&nr.height>0&&nr.top<innerHeight?nr.top:innerHeight;const h=Math.floor(bottom-r.top-8);if(h>=120&&r.bottom>bottom-4){grid.style.maxHeight=h+'px';grid.dataset.clsFit='1'}}catch(e){}};fit();requestAnimationFrame(fit);if(!W.__clsFitBound){W.__clsFitBound=1;let lw=innerWidth;W.addEventListener('resize',()=>{if(innerWidth===lw)return;lw=innerWidth;const g=document.querySelector('.classic-skill-window.class-tabmode .classic-skill-grid-scroll');if(g){g.style.maxHeight='';tabSkills()}})}   /* 11-16：手機網址列隱藏／出現只改高度，不重算（避免滑動時跳動） */}
-  if(!host.dataset.clsBound){host.dataset.clsBound='1';host.addEventListener('click',async ev=>{const el=ev.target.closest('[data-cls-act]');if(!el)return;ev.preventDefault();ev.stopPropagation()
+  if(!host.dataset.clsBound){host.dataset.clsBound='1';host.addEventListener('click',async ev=>{const legacy=ev.target.closest('[data-inherited-cast]');if(legacy){manualCast(legacy.dataset.inheritedCast);return;}const el=ev.target.closest('[data-cls-act]');if(!el)return;ev.preventDefault();ev.stopPropagation()
    const [cmd,id]=String(el.dataset.clsAct).split(/:(.*)/);try{if(cmd==='cast'||cmd==='dual'||cmd==='claw'){const r=W.LineageClassCombat.cast(id,null,cmd==='cast'?null:{style:cmd});if(!r.ok&&r.reason)try{logSys('<span class="text-amber-300">'+esc(r.reason)+'</span>')}catch(e){}return}
     el.disabled=true;await A.configure(id,cmd==='aura'?'aura':'auto');tabSkills()}catch(e){el.disabled=false;try{W.alert(e.message)}catch(x){}}})}}catch(e){console.warn('[class-ui] 技能分頁',e)}}
  if(typeof W.renderTabs==='function'){const oRT=W.renderTabs;W.renderTabs=function(){const r=oRT.apply(this,arguments);tabSkills();return r};try{(0,eval)('renderTabs = window.renderTabs')}catch(e){}}
- W.LineageClassUI={open,close,render,mount,tabSkills,hotbarPages};W.addEventListener('load',mount);mount();
+ W.LineageClassUI={open,close,render,mount,tabSkills,hotbarPages,inheritedSpells};W.addEventListener('load',mount);mount();
 })(window);
 

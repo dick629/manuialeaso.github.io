@@ -27,7 +27,7 @@
   var hpOf = function (e) { return isLeader(e) ? e.hp : (e.curHp != null ? e.curHp : e.hp); };
   var setHp = function (e, v) { if (isLeader(e)) e.hp = v; else if (e.curHp != null) e.curHp = v; else e.hp = v; };
   var alive = function (e) { return !!e && !e._downed && !(isLeader(e) && e.dead) && (hpOf(e) || 0) > 0; };
-  var party = function () { var p = P(); if (!p) return []; return [p].concat((p.allies || []).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0; })); };
+  var party = function () { var p = P(); if (!p) return []; return [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0; })); };
   var zodiacOf = function (e) { var f = e && e.poly; if (!f || f.cardAscensionTier !== 'samsara' || !(e.buffs && e.buffs.poly > 0)) return null; var m = /^(..座)/.exec(f.n || ''); return m ? m[1] : null; };
   var gloryOn = function () { return reborn(P()); };
   var RES5 = ['resFire', 'resWater', 'resWind', 'resEarth', 'resNone'];
@@ -106,6 +106,7 @@
     var p = P(); if (!p) return; shCss();
     var nowMs = Date.now(); if (nowMs - lastPaint < 250) return; lastPaint = nowMs;   // 11-19 效能：護盾條最多每 0.25 秒畫一次（隊伍面板每刻重建時原本每次都重算樣式）
     paintOne('bar-hp', p); paintOne('mv-hp-fill', p); tagTxt('txt-hp', p); tagTxt('mv-hp-txt', p);
+    if (window.GiranPanels?.nativeSquadHidden()) return;
     (p.allies || []).forEach(function (a) { if (a && a._slot != null) { paintOne('squad-hp-' + a._slot, a); tagTxt('squad-hp-txt-' + a._slot, a); } });
   };
   ['_updateUIImpl', 'renderSquadPanel'].forEach(function (nm) {

@@ -135,7 +135,7 @@
   (window.__afkTakenMods = window.__afkTakenMods || []).push(function (ent, mob) { return (on() && mob && (mob._afkFinal || mob._afkApostle)) ? modeMult() : 1; });
   var bossOf = function () { return (mapState.mobs || []).filter(function (m) { return m && m._afkFinal && !m._dead && m.curHp > 0; })[0] || null; };
   var addsAlive = function () { return (mapState.mobs || []).filter(function (m) { return m && m._afkApostle && !m._dead && m.curHp > 0; }).length; };
-  var members = function () { var out = []; if (!player.dead) out.push(player); (player.allies || []).forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) out.push(x); }); return out; };
+  var members = function () { var out = []; if (!player.dead) out.push(player); GiranPartyView.combatAllies().forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) out.push(x); }); return out; };
   var nameOf = function (t) { return t === player ? '你' : '協力·' + (t._allyName || '傭兵'); };
   var hurt = function (t, dmg, why) {
     var mm = modeMult(); if (!(mm > 0)) return false;
@@ -317,7 +317,7 @@
   var smokeTick = function () {
     var t = S().ticks || 0;
     if (player && player._afkSmokeUntil && t > player._afkSmokeUntil) { player._afkSmokeUntil = 0; try { recomputeStats(); } catch (e) {} }
-    (player && player.allies || []).forEach(function (x) {
+    GiranPartyView.combatAllies().forEach(function (x) {
       if (!x || !x._afkSmokeSave || smokeOn(x)) return;
       var sv = x._afkSmokeSave; x._afkSmokeSave = null; x._afkSmokeUntil = 0;
       if (x.d === sv.d) HITS.forEach(function (k) { x.d[k] = sv[k]; });   // 面板重建過＝已經是原本的了
@@ -392,7 +392,7 @@
     if ((m._fbWaveUntil || 0) > age && age % SEC === 0) { if (pctAll(FB.wavePct, '死亡之潮')) return; }
     if (age >= FB.limit * SEC) {
       sys('<span class="text-red-500 font-bold">' + tag('萬物歸於死', '#ef4444') + '席琳闔上雙眼，死亡之海吞沒了神殿裡的一切生命。</span>');
-      (player.allies || []).forEach(function (x) { if (x && !x._downed) { x.curHp = 0; x._downed = true; x._reviveCd = 150; } });
+      GiranPartyView.combatAllies().forEach(function (x) { if (x && !x._downed) { x.curHp = 0; x._downed = true; x._reviveCd = 150; } });
       finish('lose', '時間耗盡');
     }
   };

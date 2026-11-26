@@ -258,7 +258,7 @@
     var id = pickOk(isBoss, minLv, maxLv, ks) || (gd ? (pickOk(true, 1, maxLv + 20, ks) || pickOk(true, 1, 999, ks)) : pickOk(!isBoss, minLv, maxLv, ks));
     if (!id) return;
     var base = DB.mobs[id];
-    mapState.mobs[idx] = Object.assign({}, base, { curHp: base.hp, uid: uid(), _born: ++_mobBornSeq, _magCd: {}, justHit: false, st: newMobStatus() });
+    mapState.mobs[idx] = Object.assign({}, base, { mobId: id, curHp: base.hp, uid: uid(), _born: ++_mobBornSeq, _magCd: {}, justHit: false, st: newMobStatus() });
     applySherineBuff(idx);
     if (mapState.mobs[idx].hard) initHardSkin(mapState.mobs[idx]);
     applySherineGrace(idx);
@@ -348,7 +348,7 @@
 
   // ── 難度 ──
   var hpMult = function (mode, m, gd) { var TT = gd ? TUNE_GD : TUNE, rate = (TT.hpRate || {})[mode] || 0, base = (TT.hpBase || {})[mode] || 1; return base * (m > TT.hpFrom ? Math.exp(rate * (m - TT.hpFrom)) : 1); };
-  var members = function () { var out = []; if (!player.dead) out.push(player); (player.allies || []).forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) out.push(x); }); return out; };
+  var members = function () { var out = []; if (!player.dead) out.push(player); GiranPartyView.combatAllies().forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) out.push(x); }); return out; };
   var hurtAll = function (pct, why) {
     var dead = false;
     members().forEach(function (t) {

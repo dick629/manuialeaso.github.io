@@ -80,7 +80,7 @@
  verify();
 })();
 (function(){'use strict';
- const events=[];
+ const events=[],returnKey='giran.recovery.return';
  function record(type,source,line){events.push({type,source:String(source||'').split('?')[0].split('/').pop(),line:line||0});if(events.length>40)events.shift();try{sessionStorage.setItem('lineage.merge.events',JSON.stringify(events));}catch{}}
  addEventListener('error',e=>{const t=e.target;if(t&&t!==window&&['SCRIPT','LINK'].includes(t.tagName))record('resource',t.src||t.href,0);else if(e.filename)record('runtime',e.filename,e.lineno);},true);
  addEventListener('unhandledrejection',()=>record('promise','game',0));
@@ -89,12 +89,30 @@
    if(typeof player!=='undefined'&&player&&player.cls&&typeof state!=='undefined'&&state.running){
     window.__fb5CloseFlush=true;let saved;try{saved=typeof saveGame==='function'&&saveGame();}finally{window.__fb5CloseFlush=false;}
     if(saved!==true){alert('目前進度尚未成功保存。請保留這個遊戲分頁，另開修復頁面下載已保存資料；不要直接清除瀏覽器資料。');return false;}
+    sessionStorage.setItem(returnKey,JSON.stringify({slot:currentSlot,role:_roleFingerprint(player),map:mapState.current}));
     state.running=false;if(typeof _roleSessionForget==='function')_roleSessionForget();
    }
    return true;
   }catch{alert('目前進度尚未成功保存，請先保留備份再離開遊戲。');return false;}
  }
- function goRecovery(){if(leaveSafely())location.assign(new URL('recovery.html',location.href));}
+ function goRecovery(){
+  if(!leaveSafely())return;
+  const url=new URL('recovery.html',location.href);
+  if(document.documentElement.dataset.playMode==='dimension')url.searchParams.set('mode','dimension');
+  location.assign(url.href);
+ }
+ function resumeGame(){
+  const url=new URL(location.href);if(!url.searchParams.has('resume'))return;
+  url.searchParams.delete('resume');history.replaceState(null,'',url);
+  let back;try{back=JSON.parse(sessionStorage.getItem(returnKey)||'null');}catch{return;}
+  if(!back)return;
+  const slot=Number(back.slot),stored=Number.isSafeInteger(slot)&&slot>0&&_roleReadSavePlayer(slot);
+  if(!stored||_roleFingerprint(stored)!==back.role){sessionStorage.removeItem(returnKey);return;}
+  if(_roleOtherActiveSessions().some(row=>String(row.slot)===String(slot)))return;
+  currentSlot=slot;loadGame();
+  if(typeof player==='object'&&player?.cls&&_roleFingerprint(player)===back.role)sessionStorage.removeItem(returnKey);
+ }
+ window.addEventListener('load',()=>setTimeout(resumeGame,0),{once:true});
  function mountToolsEntry(){
   const panel=document.getElementById('tab-automation');if(!panel)return;
   let row=document.getElementById('m-afk-navrow');
@@ -110,7 +128,7 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountToolsEntry,{once:true});else mountToolsEntry();
  document.addEventListener('click',e=>{
-  const a=e.target.closest&&e.target.closest('[data-merge-recovery]');if(a&&!leaveSafely())e.preventDefault();
+  const a=e.target.closest&&e.target.closest('[data-merge-recovery]');if(a){e.preventDefault();goRecovery();}
  });
  window.LineageBoot={events,goRecovery};
 })();

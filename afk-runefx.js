@@ -231,7 +231,7 @@
       var r = oKill.apply(this, arguments);
       try {
         if (alive && m && m._dead && p) {
-          [p].concat(p.allies || []).forEach(function (a) { if (a && Wd(a, 'styx')) { var sx = 0.03 * WK(a, 'styx'); if (a === p) p.hp = Math.min(p.mhp, p.hp + floor(p.mhp * sx)); else if (!a._downed) a.curHp = Math.min(a.mhp, (a.curHp || 0) + floor(a.mhp * sx)); } });
+          [p].concat(GiranPartyView.combatAllies(p)).forEach(function (a) { if (a && Wd(a, 'styx')) { var sx = 0.03 * WK(a, 'styx'); if (a === p) p.hp = Math.min(p.mhp, p.hp + floor(p.mhp * sx)); else if (!a._downed) a.curHp = Math.min(a.mhp, (a.curHp || 0) + floor(a.mhp * sx)); } });
           if (!rift) { var gk = 0.25 * N(p, '豐') + 0.05 * SS(p, '豐') + 0.10 * Wd(p, 'harvest') * WK(p, 'harvest'); var dg = (Number(p.gold) || 0) - g0; if (gk && dg > 0) p.gold += floor(dg * gk); }
         }
       } catch (e) {}
@@ -321,7 +321,7 @@
         var mp0 = p.mp, ok = castAs(p, skId, star);
         if (ok && p.mp < mp0) { var back = star >= 3 ? 1 : star === 2 ? 0.6 : star === 1 ? 0.3 : 0; if (back) p.mp = Math.min(p.mmp || p.mp, p.mp + Math.floor((mp0 - p.mp) * back)); }
       }
-      if (star >= 3 && t % 10 === 0 && (p.buffs || {})[skId] > 0) (p.allies || []).forEach(function (a) { if (!a || a._downed) return; a.buffs = a.buffs || {}; var had = (a.buffs[skId] || 0) > 0; a.buffs[skId] = Math.max(a.buffs[skId] || 0, p.buffs[skId]); if (!had) try { if (typeof _allyLevelRecompute === 'function') _allyLevelRecompute(a); } catch (e) {} });
+      if (star >= 3 && t % 10 === 0 && (p.buffs || {})[skId] > 0) GiranPartyView.combatAllies(p).forEach(function (a) { if (!a || a._downed) return; a.buffs = a.buffs || {}; var had = (a.buffs[skId] || 0) > 0; a.buffs[skId] = Math.max(a.buffs[skId] || 0, p.buffs[skId]); if (!had) try { if (typeof _allyLevelRecompute === 'function') _allyLevelRecompute(a); } catch (e) {} });
       return;
     }
     if (inTown() || !(typeof getTarget === 'function' && getTarget())) return;
@@ -334,7 +334,7 @@
   var allyClassTick = function () {
     var p = P(); if (!p || p.dead) return;
     var t = S().ticks || 0;
-    (p.allies || []).forEach(function (a) {
+    GiranPartyView.combatAllies(p).forEach(function (a) {
       if (!a || a._downed || !(a.curHp > 0)) return;
       var c = classRune(a); if (!c) return;
       var sel = a.afkRuneSkill || {}, skId = sel.main, sk = skId && DB.skills[skId];

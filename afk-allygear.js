@@ -103,6 +103,7 @@
     h += '<div class="ag-head"><b>傭兵公會・換裝</b><button type="button" class="btn ag-btn" data-ag-back="1">返回</button></div>';
     var idx = allies.findIndex(function (a) { return String(a._slot) === G.slot; });
     h += '<div class="ag-pick"><button type="button" class="btn ag-btn" data-ag-step="-1" ' + (allies.length > 1 ? '' : 'disabled') + '>‹</button><select data-ag-ally>' + allies.map(function (a) { return '<option value="' + esc(a._slot) + '"' + (String(a._slot) === G.slot ? ' selected' : '') + '>' + esc((a._allyName || '隊員') + ' · ' + ((typeof CLAN_CLASS_NAMES !== 'undefined' && CLAN_CLASS_NAMES[a.cls]) || a.cls) + ' Lv.' + (a.lv || 1)) + '</option>'; }).join('') + '</select><button type="button" class="btn ag-btn" data-ag-step="1" ' + (allies.length > 1 ? '' : 'disabled') + '>›</button></div>';
+    if(W.GiranTraining)h+=W.GiranTraining.controls(ctx);
     h += '<div class="ag-sub">隊長背包・可穿戴裝備（' + inv.length + '）</div>';
     h += '<div class="ag-filter"><select data-ag-group>' + GROUPS.map(function (g) { return '<option value="' + g[0] + '"' + (G.group === g[0] ? ' selected' : '') + '>' + g[1] + '</option>'; }).join('') + '</select><input type="search" data-ag-q placeholder="搜尋裝備" value="' + esc(G.q) + '"></div>';
     var LIM = 240, more = list.length - LIM; if (more > 0) list = list.slice(0, LIM);
@@ -139,6 +140,7 @@
   var bindGuild = function (div) {
     if (div.__agBound) return; div.__agBound = true;
     div.addEventListener('click', function (e) {
+      if(W.GiranTraining&&W.GiranTraining.click(e,G.slot,div))return;
       if (!div.querySelector('.ag-wrap')) return;
       var t = e.target.closest('[data-ag-back],[data-ag-step],[data-ag-page],[data-ag-item],[data-ag-slot],[data-ag-wear],[data-ag-off]'); if (!t) return;
       if (t.hasAttribute('data-ag-back')) { try { closeAllyEquipmentManager(); } catch (er) {} return; }
@@ -184,18 +186,24 @@
     if (N(b.brave) > 0) add('勇敢藥水', b.brave); if (N(b.blue) > 0) add('藍色藥水', b.blue); if (N(b.cautious) > 0) add('慎重藥水', b.cautious); if (N(b.elfcookie) > 0) add('精靈餅乾', b.elfcookie);
     if (a._setPoly || (N(b.poly) > 0 && a.poly)) add('變形術', b.poly, '變身');
     try { Object.keys(STATUS_ICON_SKILLS).forEach(function (id) { if (N(b[id]) > 0) add(STATUS_ICON_SKILLS[id], b[id], DB.skills[id] ? DB.skills[id].n : STATUS_ICON_SKILLS[id]); }); } catch (e) {}
+    if(W.GiranPartyEffects)for(const r of GiranPartyEffects.current().rows){
+      const active=r.members.get(a);if(!active||rows.some(row=>row.label===r.name||row.icon===STATUS_ICON_SKILLS[r.id]))continue;
+      const d=r.id.startsWith('ttmi_food:')?DB.items[r.id.slice(10)]:null;
+      const url=d&&typeof getIconUrl==='function'?getIconUrl(d):null;
+      rows.push({label:r.name,sec:Number.isFinite(active.seconds)?active.seconds:0,icon:STATUS_ICON_SKILLS[r.id]||null,url});
+    }
     return rows;
   };
   var debuffRows = function (a) { var out = [], st = a.statuses || {}; try { Object.keys(st).forEach(function (k) { var t = N(st[k]); if (t <= 0) return; out.push({ label: (typeof PLAYER_DEBUFF_NAME !== 'undefined' && PLAYER_DEBUFF_NAME[k]) || k, sec: Math.ceil(t / 10), icon: typeof PLAYER_DEBUFF_ICON !== 'undefined' ? PLAYER_DEBUFF_ICON[k] : null }); }); } catch (e) {} return out; };
   var iconsHtml = function (rows, empty) {
     if (!rows.length) return '<div class="ag-note">' + empty + '</div>';
-    return '<div class="ag-icons">' + rows.map(function (r) { var t = r.label + (r.sec > 0 ? '｜剩餘 ' + r.sec + ' 秒' : ''); return r.icon ? '<span class="status-icon" title="' + esc(t) + '"><img src="assets/state-icons/' + encodeURIComponent(r.icon) + '.jpg" alt="' + esc(r.label) + '"></span>' : '<span class="ag-tag" title="' + esc(t) + '">' + esc(r.label) + '</span>'; }).join('') + '</div>';
+    return '<div class="ag-icons">' + rows.map(function (r) { var t = r.label + (r.sec > 0 ? '｜剩餘 ' + r.sec + ' 秒' : ''); return (r.icon||r.url) ? '<span class="status-icon" title="' + esc(t) + '"><img src="' + esc(r.url||('assets/state-icons/'+encodeURIComponent(r.icon)+'.jpg')) + '" alt="' + esc(r.label) + '"></span>' : '<span class="ag-tag" title="' + esc(t) + '">' + esc(r.label) + '</span>'; }).join('') + '</div>';
   };
   var pct = function (v) { return fmt(v) + '%'; }, sgn = function (v) { v = N(v); return (v > 0 ? '+' : '') + fmt(v); };
-  var abilityHtml = function (a) {
+  var abilityHtml = function (a, includeBuffs = true) {
     var d = a.d || {}, cond = a._downed ? '倒地' : (String(mapState.current || '').indexOf('town_') === 0 ? '就緒' : '戰鬥中');
-    var h = '<div class="ag-cap">Lv.' + (a.lv || 1) + ' · ' + cond + ' · HP ' + fmt(a.curHp) + ' / ' + fmt(a.mhp) + ' · MP ' + fmt(a.mp) + ' / ' + fmt(a.mmp) + ' · 即時更新</div>';
-    h += '<h4>生效增益</h4>' + iconsHtml(buffRows(a), '目前沒有增益');
+    var h = '<div class="ag-cap">Lv.' + (a.lv || 1) + ' · ' + cond + ' · HP ' + fmt(a === player ? a.hp : a.curHp) + ' / ' + fmt(a.mhp) + ' · MP ' + fmt(a.mp) + ' / ' + fmt(a.mmp) + ' · 即時更新</div>';
+    if (includeBuffs) h += '<h4>生效增益</h4>' + iconsHtml(buffRows(a), '目前沒有增益');
     h += '<h4>異常狀態</h4>' + iconsHtml(debuffRows(a), '目前沒有異常狀態');
     var six = [['力量', d.str], ['敏捷', d.dex], ['體質', d.con], ['智力', d.int], ['精神', d.wis], ['魅力', d.cha]];
     h += '<h4>角色能力</h4><div class="ag-six">' + six.map(function (x) { return '<span><b>' + x[0] + '</b>' + fmt(x[1]) + '</span>'; }).join('') + '</div>';
@@ -208,10 +216,11 @@
     h += '<div class="ag-stats">' + rows.map(function (r) { return '<div><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join('') + '</div>';
     return h;
   };
-  var gearHtml = function (a) {
+  var gearHtml = function (a, page = PI.page) {
     var d = a.d || {}, tier = Math.max(0, Math.min(3, N(d.loadTier)));
     var h = '<div class="ag-cap">負重 ' + (isFinite(d.weightCur) && isFinite(d.weightLimit) ? fmt(d.weightCur) + ' / ' + fmt(d.weightLimit) + ' · ' : '') + fmt(d.weightPct) + '%' + (tier >= 2 ? '（一般攻擊變慢）' : '') + '　防禦 AC ' + fmt(d.ac) + '</div>';
-    return h + '<div class="ag-pi-doll">' + doll(a, PI.page, 'view') + pager(PI.page, 'data-pi-page') + '</div><div class="ag-note">游標移到裝備上看名稱。換裝請到傭兵公會。</div>';
+    var hint = a === player ? '可在角色手冊的穿戴頁調整裝備。' : '可在傭兵公會管理隊員裝備。';
+    return h + '<div class="ag-pi-doll">' + doll(a, page, 'view') + pager(page, 'data-pi-page') + '</div><div class="ag-note">' + hint + '</div>';
   };
   var box = function () {
     var el = document.getElementById('afk-pi'); if (el) return el;
@@ -236,6 +245,10 @@
     if (html !== PI.sig) { var body = el.querySelector('#afk-pi-body'), sc = body.scrollTop; body.innerHTML = html; body.scrollTop = sc; PI.sig = html; }
   };
   var openPI = function (slot) {
+    if (document.body.classList.contains('giran-running') && W.GiranPanels?.inspectMember) {
+      W.GiranPanels.inspectMember(slot);
+      return;
+    }
     PI.slot = String(slot); PI.sig = ''; PI.page = 0; var el = box(); el.classList.add('open');
     try { var sb = document.getElementById('squad-body'), r = sb && sb.getBoundingClientRect(); if (r && r.width && innerWidth > 760) { el.style.left = Math.max(8, Math.min(innerWidth - el.offsetWidth - 8, r.right + 8)) + 'px'; el.style.top = Math.max(8, Math.min(r.top, innerHeight - 700)) + 'px'; } else { el.style.left = ''; el.style.top = ''; } } catch (e) {}
     try { el.style.maxHeight = Math.max(240, innerHeight - el.getBoundingClientRect().top - 8) + 'px'; } catch (e) {}
@@ -288,5 +301,5 @@
   ].join('\n');
   document.head.appendChild(css);
 
-  W.__afkAllyGear = { render: render, openPI: openPI, closePI: closePI, preview: preview, doll: doll };
+  W.__afkAllyGear = { render: render, openPI: openPI, closePI: closePI, preview: preview, doll: doll, abilityHtml, gearHtml };
 })();

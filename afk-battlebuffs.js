@@ -65,7 +65,7 @@
   }
 
   function sync() {
-    var src = document.getElementById('dt-buffs');
+    var src = (window.__afkBuffTextTarget || document.getElementById('dt-buffs'));
     if (!host || !src) return;
     var show = inBattle();
     applyTab();

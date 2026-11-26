@@ -153,6 +153,7 @@ function loadWarehouse(){
         let w = JSON.parse(s);
         let items = w.items || [];
         try { let tombs = _whTombsRead(); items = items.filter(it => !(it && it.uid != null && tombs[it.uid])); } catch(e){}   // 🪦 墓碑 uid＝已被領出（他分頁復活殘留）→ 隱藏；下次任一寫入時自桶清除
+        if(window.GiranAtlas)items=items.filter(it=>!GiranAtlas.isRetired(it?.id));
         _whLoadUids = new Set(items.map(it => it && it.uid).filter(u => u != null));
         return { items: items, gold: w.gold || 0 };
     } catch(e){ _whLoadOk = false; return { items: [], gold: 0 }; }   // JSON 毀損→不可當成空倉庫
@@ -166,6 +167,7 @@ function saveWarehouse(w){
         return false;
     }
     let items = (w && w.items) || [];
+    let retired = [];
     // 🪦 墓碑過濾：快照殘留的墓碑 uid（他分頁已領出）→ 丟棄防復活；本次新增（不在 _whLoadUids＝剛存入的合法回歸）→ 解除墓碑並保留。
     let tombs = _whTombsRead(); let tombsChanged = false;
     try {
@@ -177,16 +179,19 @@ function saveWarehouse(w){
     } catch(e){}
     // 安全網 B（多分頁）：寫入前重讀桶現值，併入「其他分頁在本快照之後新存入、本快照沒見過且本次也沒寫」的堆疊（以 uid 比對·只增不減·偏向重複而非遺失）。🪦 墓碑 uid 跳過（桶內殘留的已領出物）。
     try {
-        if(_whLoadUids){
+        if(_whLoadUids || window.GiranAtlas){
             let cs = _lzGet(key);
             if(cs != null && cs !== ''){
                 let cur = JSON.parse(cs);
                 let haveUid = new Set(items.map(it => it && it.uid).filter(u => u != null));
-                (cur.items || []).forEach(it => { if(it && it.uid != null && !tombs[it.uid] && !_whLoadUids.has(it.uid) && !haveUid.has(it.uid)) items.push(it); });
+                (cur.items || []).forEach(it => {
+                    if(window.GiranAtlas?.isRetired(it?.id)) { if(!tombs[it.uid])retired.push(it); }
+                    else if(_whLoadUids && it && it.uid!=null && !tombs[it.uid] && !_whLoadUids.has(it.uid) && !haveUid.has(it.uid))items.push(it);
+                });
             }
         }
     } catch(e){}
-    let ok = _lzSet(key, JSON.stringify({ items: items, gold: (w && w.gold) || 0 }));
+    let ok = _lzSet(key, JSON.stringify({ items: items.filter(it=>!window.GiranAtlas?.isRetired(it?.id)).concat(retired), gold: (w && w.gold) || 0 }));
     // 🪦 成功寫入後：本次自倉庫移除的 uid（快照有、最終沒有）記入墓碑——涵蓋 領出/製作消耗/兌換/清孤兒 全部移除路徑，防其他分頁舊快照復活。
     try {
         if (ok && _whLoadUids) {

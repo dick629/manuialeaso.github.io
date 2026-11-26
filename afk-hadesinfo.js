@@ -57,9 +57,9 @@
     W.enterHades = function () {
       try {
         var p = P(), MW = W.__afkMatWh;
-        if (p && on() && MW && MW.on() && !(typeof state !== 'undefined' && state && state.riftRun)) {
-          var ids = !(p.rebirth > 0) ? TS : p.rebirth === 1 ? FATE.map(function (f) { return 'afk_fate_' + f[0]; }) : [];
-          ids.forEach(function (id) { if (!inBag(id) && MW.wh(id) > 0) MW.pull(id, 1); });
+        // 二轉的材料由確認按鈕一次取齊。這裡只處理一轉。
+        if (p && !(p.rebirth > 0) && on() && MW && MW.on() && !(typeof state !== 'undefined' && state && state.riftRun)) {
+          TS.forEach(function (id) { if (!inBag(id) && MW.wh(id) > 0) MW.pull(id, 1); });
         }
       } catch (e) {}
       return o.apply(this, arguments);

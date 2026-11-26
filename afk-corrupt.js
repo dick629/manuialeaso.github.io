@@ -362,7 +362,7 @@
   // 符文（afk-runefx）：「逆」不受死亡藥水、「解咒」不受死亡治療 → window.__afkRuneImmune(角色, 'pot'|'heal'|'half') 為真就當作沒中
   var has = function (t, k) { var d = t && debuff.get(t); if (!(d && d[k] > (S().ticks || 0))) return false; try { if (typeof window.__afkRuneImmune === 'function' && window.__afkRuneImmune(t, k)) return false; } catch (e) {} return true; };
   var DEB = [['pot', '死亡藥水', '喝治癒藥水會變成扣血'], ['heal', '死亡治療', '治癒魔法會變成扣血'], ['half', '減少治療', '受到的治癒效果減半']];
-  var team = function () { var a = []; if (!player.dead) a.push(player); (player.allies || []).forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) a.push(x); }); return a; };
+  var team = function () { var a = []; if (!player.dead) a.push(player); GiranPartyView.combatAllies().forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) a.push(x); }); return a; };
   var hurt = function (t, dmg, opts) {
     if (!t || (t === player ? player.dead || player.hp <= 0 : t._downed || t.curHp <= 0)) return false;
     dmg = Math.max(0, Math.floor(dmg));

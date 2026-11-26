@@ -44,6 +44,12 @@ function antHelperEarthResistanceBonus(value) {
 function antHelperGuardReductionPercent(magicResistance) {
     return Math.min(20, Math.floor((magicResistance || 0) * 0.10));
 }
+function mercPermanentPotionFor(p,key) {
+    if(!p?._mercPermanentPotions)return false;
+    if(key==='haste')return true;
+    if(key==='brave')return ['knight','dragon','warrior','royal'].includes(p.cls);
+    return (key==='elfcookie'&&p.cls==='elf')||(key==='cautious'&&p.cls==='mage');
+}
 function recomputeStats() {
     let p = player, d = p.d, b = p.base, a = p.alloc;
     if (typeof p.lv === 'number') p.lv = Math.max(1, Math.min((typeof window.__afkLvCap === 'function' ? window.__afkLvCap(p) : 100), Math.floor(p.lv) || 1));   /* 🔌 加掛版補丁:轉生等級上限 150 */   // 🛡️ 等級硬夾 [1,100]：即時中和「改 player.lv」的外掛，避免職業成長值被放大
@@ -502,6 +508,8 @@ d.mr += (baseMr + bonusMr);
     // 每格遺骸必附一種席琳詞綴(seteff)，相同組名的遺骸格數達 2/3/5 → 發動效果（門檻/效果不變）。
     // 裝備上的舊詞綴(p.eq 其他欄的 seteff)保留顯示但「不再計入」；可由菈克希絲拆分成遺骸。
     // 同步寫入傭兵快照：buildAlly 換身重算時 p=ally，旗標自然存於傭兵物件上（傭兵存檔角色的遺骸欄同樣生效）
+    window.GiranCollections?.apply(p,d,mapState.current);
+    window.GiranMagicMerchant?.apply(p,d);
     let _shSets = {};
     if (typeof SHERINE_REMAINS !== 'undefined') for (let _r of SHERINE_REMAINS) {
         let e = p.eq && p.eq[_r.id];
@@ -563,10 +571,10 @@ d.mr += (baseMr + bonusMr);
     if (player.skills.includes('sk_warrior_crush')) d.meleeDmg += 2 + Math.max(0, p.lv - 44);   // ⚔️ 粉碎：近距離傷害+2；玩家等級45起每升一級+1
     
     let spdMult = 1.0;
-    let _mercPots = !!p._mercPermanentPotions;   // 🤝 傭兵預設常駐職業藥水效果（不消耗道具、不寫入一般 buff 計時）
-    if(p.buffs.haste > 0 || p._equipHaste || _mercPots) spdMult *= (1/1.33);   // 加速術／加速藥水／裝備加速：攻速+33%（🔧 v3.5.37 名實相符：1/1.33＝速度×1.33，取代舊 0.67＝實際+49%）；傭兵全職常駐
-    if(p.buffs.brave > 0 || (_mercPots && ['knight','dragon','warrior','royal'].includes(p.cls))) spdMult *= (1/1.33);   // 勇敢藥水：攻速+33%（🔧 v3.5.37 1/1.33）；可用職業傭兵常駐
-    if(p.buffs.elfcookie > 0 || (_mercPots && p.cls === 'elf')) spdMult *= (1/1.15); // 精靈餅乾：攻速+15%（🔧 v3.5.37 1/1.15·取代舊 0.85＝實際+17.6%）；妖精傭兵常駐
+    const permanent = key => mercPermanentPotionFor(p,key);
+    if(p.buffs.haste > 0 || p._equipHaste || permanent('haste') || window.GiranMagicMerchant?.seconds(p,'haste')>0) spdMult *= (1/1.33);   // 加速術／加速藥水／裝備加速：攻速+33%（🔧 v3.5.37 名實相符：1/1.33＝速度×1.33，取代舊 0.67＝實際+49%）；傭兵全職常駐
+    if(p.buffs.brave > 0 || permanent('brave')) spdMult *= (1/1.33);   // 勇敢藥水：攻速+33%（🔧 v3.5.37 1/1.33）；可用職業傭兵常駐
+    if(p.buffs.elfcookie > 0 || permanent('elfcookie')) spdMult *= (1/1.15); // 精靈餅乾：攻速+15%（🔧 v3.5.37 1/1.15·取代舊 0.85＝實際+17.6%）；妖精傭兵常駐
     if(p.buffs.sk_dark_walkhaste > 0) spdMult *= (1/1.15); // 🔧 行走加速：攻速+15%（v3.5.37 1/1.15）（與加速術等相乘疊加）
     { let _clvW = p.eq.wpn ? DB.items[p.eq.wpn.id] : null; let _clvOn = !p.classicMode && ((p.statuses && p.statuses.cleave > 0) || ((typeof _afkM === 'function' ? _afkM(p, 'k_cleave') : p.mastery === 'k_cleave') && _clvW && _clvW.eff === 'cleave')); if(_clvOn) spdMult *= (window.AFK_RELIC_WEAPON_BRIDGE ? window.AFK_RELIC_WEAPON_BRIDGE.cleaveSpeed(_clvW,((typeof _afkM === 'function' ? _afkM(p, 'k_cleave') : p.mastery === 'k_cleave') ? (1/1.5) : (1/1.2))) : ((typeof _afkM === 'function' ? _afkM(p, 'k_cleave') : p.mastery === 'k_cleave') ? (1/1.5) : (1/1.2))); /* relic-weapon-bridge:cleave-speed */ }   // 切割：攻速+20%（🏅 切割精通：+50%・持切割武器常駐），與其他加速相乘疊加；🎮 經典模式停用
     if (typeof player !== 'undefined' && p === player && !p._allyName && (p._crushFuryUntil || 0) > state.ticks) spdMult *= (1/1.2);   // 🔨 v3.6.47 重裝戰士的粉碎鎚：即死觸發攻速+20%（8秒·js/04 授予·js/03 到期重算·經典亦生效比照即死本體；傭兵版走 _crushFuryTicks 於 js/06 攻擊間隔）
@@ -585,7 +593,7 @@ d.mr += (baseMr + bonusMr);
     { let _polySpd = 0; if (p._setPoly || (p.buffs.poly > 0 && p.poly)) { try { for (let _k in p.eq) { let _e = p.eq[_k]; if (_e && DB.items[_e.id] && DB.items[_e.id].polyAtkSpdPct) _polySpd += DB.items[_e.id].polyAtkSpdPct; } } catch (e) {} } if (_polySpd > 0) spdMult *= (1 / (1 + _polySpd / 100)); }   // 🏺 v3.2.17 浣熊的變身葉：變身狀態時攻擊速度 +20%（需裝備·限變身期間）
     { let _mhw = p.eq.wpn ? DB.items[p.eq.wpn.id] : null; if(d.meleeHaste > 0 && _mhw && !_mhw.isBow && !_mhw.ranged) spdMult *= (1 / (1 + d.meleeHaste / 100)); }   // 🏺 遺物 狂野的鬃毛外套：裝備近距離武器時攻速 +meleeHaste%
     if(p.buffs.blue > 0) d.mpR += getWisBlueBonus(d.wis);          // 藍色藥水：依精神提升MP恢復
-    if(p.buffs.cautious > 0 || (_mercPots && p.cls === 'mage')) { d.magicDmg += 2; d.mpR += 2; }      // 慎重藥水；法師傭兵常駐
+    if(p.buffs.cautious > 0 || permanent('cautious')) { d.magicDmg += 2; d.mpR += 2; }      // 慎重藥水；法師傭兵常駐
     if(p.buffs.sk_reduction_armor > 0) d.dr += Math.floor(p.lv/10);   // 增幅防禦：等同傷害減免 floor(等級/10)，併入 DR 顯示與計算
     if(p.statuses && p.statuses.evilAura > 0) { d.ac += 10; d.er -= 10; }   // 🔧 邪靈之氣減益：AC+10、ER−10（持續6秒，由黑暗精靈使施放）
     
@@ -678,7 +686,7 @@ d.mr += (baseMr + bonusMr);
     if (d.hitstunReduce > 0) d.hitstun = Math.max(0, (d.hitstun || 0) - d.hitstunReduce);   // 🏺 不動的鋼鐵堅壁：硬直減免統一套用點（置於變身速度覆蓋後→變身形態的 pf.stun 也吃減免·夾下限 0）
 
     if (typeof window.__afkTtmiStats === 'function') window.__afkTtmiStats(p,d);
-    if(p.buffs.sk_soul_up > 0) /* relic-runtime:ttmi-stats */ { p.mhp = Math.floor(p.mhp * 1.2); p.mmp = Math.floor(p.mmp * 1.2); }
+    if(p.buffs.sk_soul_up > 0 || window.GiranMagicMerchant?.seconds(p,'sk_soul_up')>0) /* relic-runtime:ttmi-stats */ { p.mhp = Math.floor(p.mhp * 1.2); p.mmp = Math.floor(p.mmp * 1.2); }
     if (player.skills.includes('sk_warrior_armorbody')) d.dr += Math.floor((10 - d.ac) / (hasMastery('k_tough') ? 5 : 10));   // ⚔️ 護甲身軀：傷害減免 +[(10-AC)/10]；🏅 堅韌精通改 /5
     if (p.buffs.sk_warrior_endurance > 0) p.mhp = Math.floor(p.mhp * (1 + (p.lv / 2) / 100));   // ⚔️ 體能強化：HP上限 +(等級/2)%
     if (_shN('狂怒') >= 3) p.mhp = Math.floor(p.mhp * 1.2);   // 😡 狂怒 3/5：最大HP +20%（於各 flat HP 加成後套用）
@@ -774,6 +782,7 @@ d.mr += (baseMr + bonusMr);
         if (_shN('狂怒') >= 2) _cap += 500;   // 😡 狂怒 2/5：負重上限 +500
         if (window.LineageGrowth) window.LineageGrowth.statBase(p);
         let _limit = window.LineageGrowth ? window.LineageGrowth.weight(p, _wbase + _cap) : _wbase + _cap;
+        if(d.giranBookWeight)_limit=Math.floor(_limit*(100+d.giranBookWeight)/100);
         let _pct = _limit > 0 ? Math.floor(_cur / _limit * 100) : 999;
         let _tier = _pct <= 49 ? 0 : (_pct <= 81 ? 1 : (_pct <= 99 ? 2 : 3));
         d.weightPct = _pct; d.loadTier = _tier; d.equippedWeight = _cur; d.weightCapacity = _limit; /* relic-companion:weight-values */
@@ -1116,7 +1125,7 @@ function hasTeleportRing() {
         || (player.inv && player.inv.some(i => i && i.id === 'acc_116' && (i.cnt || 0) > 0));
 }
 // 傳送：清空當前怪物並重置生怪排程；forceBoss=true 時讓下一次生怪必定為 BOSS
-function doTeleport(forceBoss) {
+function doTeleport(forceBoss, alreadyMoved = false) {
     if (typeof npcClanOnLeaveBattleArea === 'function') npcClanOnLeaveBattleArea();
     if (typeof giltasKeepOnLeave === 'function') giltasKeepOnLeave();   // 🌑 v3.4.16 受詛咒聖地內瞬移＝清空重生怪物（吉爾塔斯消失重生）→ 視同離開戰鬥·先做 HP 保留判定（消耗完整的召喚球＋提示·helper 自帶地圖 gate）
     if (typeof playTeleportFx === 'function') { try { playTeleportFx(); } catch (e) {} }   // 🌀 v3.0.102 傳送術特效＋玩家 sprite 暫隱（傳送術技能/手動+自動瞬移卷軸皆經此）
@@ -1125,10 +1134,11 @@ function doTeleport(forceBoss) {
     mapState.spawnAt = [null, null, null, null, null];
     if(forceBoss) mapState.forceBoss = true;
     mapState.suppressSiegeBoss = !forceBoss;   // 無戒指傳送：必不出現城門/守護塔；持戒指：forceBoss 必定出現
+    if(!alreadyMoved)window.GiranCombat?.field?.relocate();
     renderMobs();
 }
 
-// ===== 🏛️ 隱藏狩獵區域系統（由對應地圖手動傳送/瞬移卷軸進入；不列於地圖選單、魔物追蹤無法指定；區域規則同地監狩獵地圖） =====
+// 隱藏狩獵區可由母地圖的入口或手動施放傳送術進入。
 const HIDDEN_AREA_PARENT = { zone_37: 'hidden_lab_nolife', zone_38: 'hidden_lab_darkmagic', zone_39: 'hidden_seal_spirit', zone_40: 'hidden_seal_monster', zone_41: 'hidden_seal_demon', zone_33: 'hidden_antqueen' };
 const HIDDEN_AREA_NAMES = { hidden_lab_nolife: '無生物研究室', hidden_lab_darkmagic: '黑魔法研究室', hidden_seal_spirit: '惡靈封印室', hidden_seal_monster: '魔物封印室', hidden_seal_demon: '惡魔封印室', hidden_antqueen: '巨蟻女皇棲息地' };
 const HIDDEN_AREA_BG = { hidden_lab_nolife: '象牙塔4樓', hidden_lab_darkmagic: '象牙塔5樓', hidden_seal_spirit: '象牙塔6樓', hidden_seal_monster: '象牙塔7樓', hidden_seal_demon: '象牙塔8樓', hidden_antqueen: '螞蟻洞穴2樓' };   // 🏛️ 隱藏區域背景＝對應母地圖樓層同名圖；⚠️ v3.5.90 平面 assets/area/<樓層>.jpg 探測已移除（該目錄只剩 1920x1080 子夾）→ 現行走 AREA_1920 同名判定，這 6 個樓層名皆在表內；新增樓層背景須一併加進 AREA_1920 否則退回 SPECIAL_AREA_BG
@@ -1144,9 +1154,11 @@ function enterHiddenArea(hiddenId) {
     logCombat(`<span class="font-bold" style="color:#e879f9;text-shadow:0 0 8px #c026d3;">空間的裂隙在你眼前展開，你踏入了 ${HIDDEN_AREA_NAMES[hiddenId] || '隱藏狩獵區域'}。</span>`, 'magic');
 }
 // 🌀 順移按鈕：v3.4.21 改為優先消耗 瞬間移動卷軸；沒有卷軸才判定手動施放傳送術（MP 足夠時）；皆無則提示
-function playerTeleport() {
-    let _it = player.inv.find(i => i.id === 'scroll_teleport' && (i.cnt || 1) >= 1);
+function playerTeleport(scrollOnly = false) {
+    let _it = player.inv.find(i => i.id === 'scroll_teleport' && i.cnt > 0)
+        || player.inv.find(i => DB.items[i.id]?.eff === 'teleport_scroll' && i.cnt > 0);
     if (_it) { state._manualTpUntil = (state.ticks || 0) + 50; useItem(_it.uid, false); return; }   // 🕒 手動瞬移後 5 秒內抑制自動瞬移/自動購買
+    if (scrollOnly) { logSys('背包中沒有瞬間移動卷軸。'); return; }
     if (player.skills && player.skills.includes('sk_teleport')) {
         let _sk = DB.skills.sk_teleport;
         if (player.mp >= player.d.getMpCost(_sk.mp, _sk.tier)) { state._manualTpUntil = (state.ticks || 0) + 50; manualCast('sk_teleport'); return; }   // 🕒 手動瞬移後 5 秒內抑制自動瞬移/自動購買

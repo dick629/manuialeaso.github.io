@@ -1,0 +1,20 @@
+#giran-history{box-sizing:border-box;width:min(600px,calc(100% - 24px));max-height:82dvh;margin:auto;padding:18px;color:#eee5ce;background:#201e1a;border:1px solid #867048;border-radius:6px;box-shadow:0 12px 52px #000a;font:15px/1.45 "Microsoft JhengHei",sans-serif;color-scheme:dark}
+#giran-history::backdrop{background:#090908bc}
+#giran-history form,#giran-history .gh-filters{display:flex;align-items:center;gap:12px}
+#giran-history form{justify-content:space-between;border-bottom:1px solid #534939;padding-bottom:10px}
+#giran-history h2{font-size:21px;color:#eed7ab;margin:0}
+#giran-history button,#giran-history select,#giran-history input{box-sizing:border-box;font:inherit;color:#eee5ce;background:#323027;border:1px solid #786b50;border-radius:4px;padding:5px 8px}
+#giran-history .gh-filters{margin-top:12px}
+#giran-history .gh-filters label{display:grid;gap:3px;font-size:13px}
+#giran-history .gh-filters label:last-child{flex:1;min-width:0}
+#giran-history input{min-width:0;width:100%}
+#giran-history p{margin:8px 0;color:#d3c39f;font-size:13px}
+#giran-history ol{padding:0;margin:0 0 8px;list-style:none;max-height:48dvh;overflow:auto}
+#giran-history li{padding:7px 2px;border-bottom:1px solid #464033;overflow-wrap:anywhere}
+#giran-history li small,#giran-history li span{display:block}
+#giran-history li small{color:#bcb29d;font-size:12px}
+#giran-history [hidden]{display:none}
+#giran-transfer details{margin-top:14px}
+#giran-transfer details summary{cursor:pointer}
+.gh-mobile-open{display:none}
+body.m-unified[data-mobile-page=logs] #lm-logs .gh-mobile-open{display:block;align-self:flex-start;flex:0 0 auto;padding:7px 13px;margin:0 0 8px;border:1px solid #786b50;background:#322b21;color:#efdfbe;border-radius:4px;font:inherit}

@@ -121,7 +121,13 @@
       clog('<span class="font-bold" style="color:#fde047">【' + esc(h.n) + ' 第 ' + run.layer + ' 層】</span>' + esc(m.n) + ' 現身了。' + (final ? '<span class="text-slate-300">（' + esc(h.d) + '）</span>' : ''), 'enemy');
       try { if (typeof vfxBossEntrance === 'function' && !S().ff) vfxBossEntrance(m); } catch (e) {}
     } else {
-      var pool = POOL(); for (var i = 0; i < 4 && pool.length; i++) { var id = pool[Math.floor(Math.random() * pool.length)]; var mm = scale(DB.mobs[id], lv, 1); mm.hp = Math.round(ZT.mobRef * Math.pow(lv / ZT.REF, 2.5) * ZT.mobHp * hpk); placeZ(i, mm, { mobId: id, _zd: true, noAutoTeleport: true }); run.alive++; }
+      var pool = POOL(), count = W.GiranRoam?.waveSize(4) ?? 4;
+      for (var i = 0; i < count && pool.length; i++) {
+        var id = pool[Math.floor(Math.random() * pool.length)], mm = scale(DB.mobs[id], lv, 1);
+        mm.hp = Math.round(ZT.mobRef * Math.pow(lv / ZT.REF, 2.5) * ZT.mobHp * hpk);
+        placeZ(i, mm, { mobId: id, _zd: true, noAutoTeleport: true });
+        run.alive++;
+      }
     }
     try { if (!S().ff) renderMobs(); } catch (e) {}
   };

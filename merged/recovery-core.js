@@ -3,6 +3,7 @@
  const ROLE=/^lineage_idle_save(?:_\d+)?$/;
  const ID='lineage-merged-recovery-v1';
  const QUARANTINE='lineage_repair_quarantine_v1';
+ const DEVICE_CLOCK='afk_clock_v1';
  const brokenItem=it=>it!=null&&(!bridge.record(it)||!['string','number'].includes(typeof it.id)||String(it.id).trim()==='');
  function quarantineData(keys){
   if(!bridge.own(keys,QUARANTINE))return {format:'lineage-item-quarantine',schema:1,entries:[]};
@@ -24,7 +25,15 @@
   return {changes,count};
  }
  function error(code,message){const e=new Error(message);e.code=code;return e;}
- function capture(store){const out=Object.create(null);for(let i=0;i<store.length;i++){const k=store.key(i),v=store.getItem(k);if(k!==null&&v!==null)out[k]=v;}return out;}
+ function capture(store){
+  const journal=typeof window!=='undefined'&&window.GiranJournal&&store===window.localStorage?window.GiranJournal:null;
+  const pending=journal?.flush();
+  const out=Object.create(null);
+  // The browser keeps its own clock watermark. Each character carries its time in _clkSeen.
+  for(let i=0;i<store.length;i++){const k=store.key(i),v=store.getItem(k);if(k!==null&&k!==DEVICE_CLOCK&&k!=='giran.sync.pending'&&v!==null)out[k]=v;}
+  if(pending)out[journal.key]=pending;
+  return out;
+ }
  function scan(keys,now=Date.now()){
   const issues=[],changes=[],identities=new Map();let roles=0,bytes=0;
   const issue=(code,severity,message,extra={})=>issues.push({code,severity,message,...extra});
@@ -79,6 +88,7 @@
  const OPTIONAL=/^(afk_hist_|afk_diag_|afk_return_probe|lineage_repair_quarantine|lineage_growth_transaction_backup)|_bak$/;
  async function transact(store,changes,backup,options={}){
   if(!Array.isArray(changes)||changes.some(c=>typeof c.key!=='string'||!(c.after===null||typeof c.after==='string')))throw error('PLAN','修復計畫不完整。');
+  changes=changes.filter(c=>c.key!==DEVICE_CLOCK);
   if(new Set(changes.map(c=>c.key)).size!==changes.length)throw error('PLAN','修復計畫包含重複項目。');
   if(!changes.length)return {ok:true,changed:0,backupId:null};
   if(options.canWrite&&!(await options.canWrite()))throw error('BUSY','目前無法安全寫入，請關閉其他遊戲分頁。');
@@ -131,7 +141,7 @@
  }
  function undoPlan(snapshot,current){
   if(!snapshot||snapshot.format!==ID||snapshot.schema!==1||!Array.isArray(snapshot.changes))throw error('BACKUP','這份備份不能用來撤銷修復。');
-  return snapshot.changes.map(c=>{
+  return snapshot.changes.filter(c=>c.key!==DEVICE_CLOCK).map(c=>{
    const v=bridge.own(current,c.key)?current[c.key]:null;
    if(v!==c.after)throw error('CONFLICT','修復後已有新的變更，不能直接撤銷；請保留現況並使用備份檢查。');
    return {key:c.key,before:v,after:c.before,reason:'UNDO'};
@@ -141,6 +151,7 @@
   if(!bridge.record(incoming)||Object.values(incoming).some(v=>typeof v!=='string'))throw error('PACK','備份資料不完整。');
   const changes=[];
   for(const key of new Set([...Object.keys(current),...Object.keys(incoming)])){
+   if(key===DEVICE_CLOCK)continue;
    if(key==='fb5_active_role_sessions_v1'||/^afk_diag_/.test(key)||key==='lineage_admin_receipts_v1')continue;   // afk_diag_*：診斷紀錄（心跳、操作、開機耗時），隨時會寫，不跟著還原
    // 玩家 11-11：舊版的整份交易備份（約 5MB）不還原、而且清掉，否則手機容量不夠、轉移碼還原寫入失敗
    const before=bridge.own(current,key)?current[key]:null,after=key==='lineage_growth_transaction_backup_v1'?null:(bridge.own(incoming,key)?incoming[key]:null);

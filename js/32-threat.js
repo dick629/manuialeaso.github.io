@@ -117,7 +117,7 @@ function ironGuardTauntTarget(m) {
     let taunt = _ironGuardTauntState(m);
     if (!taunt || typeof player === 'undefined' || !player) return null;
     if (taunt.key === 'P') return !player.dead && (player.hp || 0) > 0 ? player : null;
-    return (player.allies || []).find(a => a && !a._downed && (a.curHp || 0) > 0 && threatKey(a) === taunt.key) || null;
+    return GiranPartyView.combatAllies().find(a => a && !a._downed && (a.curHp || 0) > 0 && threatKey(a) === taunt.key) || null;
 }
 function ironGuardTauntWeakensAttack(m) { return !!_ironGuardTauntState(m); }
 
@@ -126,15 +126,16 @@ function ironGuardTauntWeakensAttack(m) { return !!_ironGuardTauntState(m); }
 function threatCommitDiff(snap, ent) {
     if (!THREAT_ENABLED || !snap || !ent) return;
     if (typeof mapState === 'undefined' || !mapState || !mapState.mobs) return;
-    let mult = computeThreatMult(ent);
-    if (!(mult > 0)) return;   // 隱身斗篷等：不累積
-    let key = threatKey(ent), mobs = mapState.mobs, now = _threatNow();
+    let mult;
+    // 隱身斗篷等：不累積
+    let key, now, mobs = mapState.mobs;
     for (let i = 0; i < snap.length; i++) {
         if (snap[i] == null) continue;
         let m = mobs[i];
         if (!m || m._dead) continue;
         let lost = snap[i] - Math.max(0, m.curHp || 0);
         if (lost <= 0) continue;
+        if(mult===undefined){mult=computeThreatMult(ent);if(!(mult>0))return;key=threatKey(ent);now=_threatNow();}
         let amt = lost * mult;
         if (m.boss) amt *= 0.5;   // 🐲 BOSS：threatMult 全體減半（更偏隨機·免一坦鎖死全場）
         _threatAdd(m, key, amt, now);

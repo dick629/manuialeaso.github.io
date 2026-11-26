@@ -228,10 +228,8 @@
   }, 1000);
 
   // ── 半身的席琳（席琳神殿；看過第三階層的真相才會出現）──
-  // 11-19：GPT 交件的人物圖（assets/npc/afk_half_sherine，待機 6 格）
-  try { if (typeof NPC_SPR !== 'undefined' && !NPC_SPR.half_sherine) NPC_SPR.half_sherine = { g: 'afk_half_sherine', f: 6, shadow: false }; } catch (e) {}
   L.addNpc('town_sherine', { id: HALF_ID, n: HALF_N, title: '劇情', type: 'quest', classicHide: true,
-    d: '水影凝成的女人，只有半邊身子。她說自己是還醒著的那一半。' }, 'half_sherine', [44, 40]);
+    d: '水影凝成的女人，只有半邊身子。她說自己是還醒著的那一半。' }, null, [44, 40]);
   if (typeof W.interactNPC === 'function') {
     var oNpc = W.interactNPC;
     W.interactNPC = function (npcId) {

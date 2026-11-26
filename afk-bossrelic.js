@@ -590,7 +590,7 @@
 
   // ════════ 效果 ════════
   var on = function () { var p = P(); return !!(p && !p.classicMode); };
-  var party = function () { var p = P(); if (!p) return []; return [p].concat((p.allies || []).filter(function (a) { return a && !a._downed && !a.dead; })); };
+  var party = function () { var p = P(); if (!p) return []; return [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed && !a.dead; })); };
   var isPlayer = function (x) { return x && x === P(); };
   var isAlly = function (x) { var p = P(); return !!(x && p && x !== p && (p.allies || []).indexOf(x) >= 0); };
   var hpOf = function (x) { return isPlayer(x) ? N(x.hp) : N(x.curHp); };
@@ -785,7 +785,7 @@
     if (f.berserk && hpOf(actor) < mhpOf(actor) * 0.5) add += f.berserk.p;
     if (f.hunt && N(tgt.curHp) < N(tgt.hp) * 0.5) add += f.hunt.p;
     if (f.vsMarked && marked(tgt)) add += f.vsMarked.p;
-    if (f.perAlly && p) add += f.perAlly.p * Math.min(15, (p.allies || []).filter(function (a) { return a && !a._downed; }).length);
+    if (f.perAlly && p) add += f.perAlly.p * Math.min(15, GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed; }).length);
     if (s.lsUntil > t && s.lsP) add += s.lsP;
     if (f.vsWeak && hasWeak(tgt)) add += f.vsWeak.p;
     if (f.killRush && s.krUntil > t) add += f.killRush.p * N(s.krN);

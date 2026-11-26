@@ -89,7 +89,7 @@
     } catch (e) { return false; }
   };
   var bossOf = function () { return (mapState.mobs || []).filter(function (m) { return m && m._afkFinal && !m._dead && m.curHp > 0; })[0] || null; };
-  var members = function () { var out = [], p = P(); if (!p) return out; if (!p.dead) out.push(p); (p.allies || []).forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) out.push(x); }); return out; };
+  var members = function () { var out = [], p = P(); if (!p) return out; if (!p.dead) out.push(p); GiranPartyView.combatAllies(p).forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) out.push(x); }); return out; };
   var pctOf = function (x) { return x === player ? (player.hp || 0) / (player.mhp || 1) : (x.curHp || 0) / (x.mhp || 1); };
 
   // ── 量測用統計（不存檔）──
@@ -276,7 +276,7 @@
   }
   var clearDeb = function () {
     var p = P(); if (!p) return;
-    [p].concat(p.allies || []).forEach(function (x) { if (!x || !x._g3Stk) return; x._g3Stk = 0; applyDeb(x); });
+    [p].concat(GiranPartyView.combatAllies(p)).forEach(function (x) { if (!x || !x._g3Stk) return; x._g3Stk = 0; applyDeb(x); });
   };
   var drain = function (forced) {
     var dead = false;
@@ -363,7 +363,7 @@
   var apostleStun = function () {
     var B = W.AFK_RELIC_DEFENSE_BRIDGE, hit = 0, list = [];
     if (!player.dead) list.push(player);
-    (player.allies || []).forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) list.push(x); });
+    GiranPartyView.combatAllies().forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) list.push(x); });
     list.forEach(function (x) {
       var st = x.statuses || (x.statuses = {}), before = Number(st.stun) || 0, v;
       if (B && typeof B.setStatus === 'function') v = B.setStatus(x, 'stun', APO_STUN, null);

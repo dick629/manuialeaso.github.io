@@ -172,7 +172,7 @@
     function fitEquipmentWindowToViewport() {   // 嵌入模式唯一版型：貼齊 #tab-content-panel、寬度以 183×408 底圖比例夾擠
         const frame = el('equipment-window-frame');
         const win = el('equipment-window');
-        if (!frame || !win || win.classList.contains('hidden')) return;
+        if (!frame || !win || win.classList.contains('hidden') || win.closest('#giran-console')) return;
         const host = el('tab-content-panel');
         if (!host) return;
         if (document.body.classList.contains('m-unified')) {

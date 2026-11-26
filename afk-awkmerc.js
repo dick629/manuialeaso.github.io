@@ -31,7 +31,7 @@
     var o = W.alliesTick; if (typeof o !== 'function' || o.__afkAwkM) return;
     var f = function () {
       var p = leader(), list = [];
-      try { if (p) (p.allies || []).forEach(function (a) { if (a && swap(a)) list.push(a); }); } catch (e) {}
+      try { if (p) GiranPartyView.combatAllies(p).forEach(function (a) { if (a && swap(a)) list.push(a); }); } catch (e) {}
       try { return o.apply(this, arguments); } finally { list.forEach(back); }
     };
     f.__afkAwkM = true; W.alliesTick = f; try { (0, eval)('alliesTick = window.alliesTick'); } catch (e) {}
@@ -51,7 +51,7 @@
     var o = W.tick; if (typeof o !== 'function' || o.__afkAwkM) return;
     var f = function () {
       var p = leader(), list = [];
-      try { if (p) (p.allies || []).forEach(function (a) { if (a && swap(a)) list.push(a); }); } catch (e) {}
+      try { if (p) GiranPartyView.combatAllies(p).forEach(function (a) { if (a && swap(a)) list.push(a); }); } catch (e) {}
       try { return o.apply(this, arguments); } finally { list.forEach(back); }
     };
     f.__afkAwkM = true; W.tick = f; try { (0, eval)('tick = window.tick'); } catch (e) {}

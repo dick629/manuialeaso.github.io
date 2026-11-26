@@ -209,12 +209,12 @@
   }
 
   // ── 反擊屏障、致死圓形結界 ──
-  var partyAlive = function () { var p = P(); return [p].concat(((p && p.allies) || []).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0; })); };
+  var partyAlive = function () { var p = P(); return [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0; })); };
   var deathCircle = function (m) {
     if (hasOrb()) { clog('<span class="font-bold" style="color:#fde68a">【信仰的寶珠】</span>寶珠綻放出溫暖的光，致死圓形結界在光裡碎成灰燼。', 'player'); return; }
     clog('<span class="font-bold" style="color:#ef4444;text-shadow:0 0 8px #7f1d1d">【致死圓形結界】</span>' + m.n + ' 的結界收攏——沒有信仰庇護的人全數倒下。');
     var p = P();
-    (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) { a.curHp = 0; a._downed = true; a._reviveCd = 150; } });
+    GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) { a.curHp = 0; a._downed = true; a._reviveCd = 150; } });
     if (!p.dead) { p.hp = 0; try { if (typeof killPlayer === 'function') killPlayer(); } catch (e) {} }
   };
   var gtTick = function () {

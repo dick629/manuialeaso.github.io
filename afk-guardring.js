@@ -505,18 +505,18 @@
       var E = cur(), t = tk();
       durTick(p, E);
       if (!E.on || p.dead) return;
-      if (E.guard) { guardTick(p, E, t); if (E.guard.mercs) (p.allies || []).forEach(function (a) { if (a && !a._downed) guardTick(a, E, t); }); }
+      if (E.guard) { guardTick(p, E, t); if (E.guard.mercs) GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed) guardTick(a, E, t); }); }
       if (E.song && X.inCombat()) {
         if (t >= swan.next || swan.next - t > E.song.cd * 10) {
           swan.next = t + E.song.cd * 10;
-          [p].concat((p.allies || []).filter(function (a) { return a && !a._downed; })).forEach(function (e) { clearOne(e); healE(e, E.song.pct); });
+          [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed; })).forEach(function (e) { clearOne(e); healE(e, E.song.pct); });
           fire('song', '天鵝之歌', '#7dd3fc');
         }
       }
       if (owenOn(p)) {
         if (t >= owen.next || owen.next - t > OWEN.every * 10) {
           owen.next = t + OWEN.every * 10;
-          [p].concat((p.allies || []).filter(function (a) { return a && !a._downed; })).forEach(function (e) { healE(e, E.owen.pct); });
+          [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed; })).forEach(function (e) { healE(e, E.owen.pct); });
           petsOut().forEach(function (pt) { try { if (pt.hp > 0) pt.hp = Math.min(typeof petMhpEff === 'function' ? petMhpEff(pt) : (pt.mhp || pt.hp), pt.hp + Math.floor((typeof petMhpEff === 'function' ? petMhpEff(pt) : (pt.mhp || 0)) * E.owen.pct / 100)); } catch (e) {} });
           sumsOut().forEach(function (s) { if (s && s.hp > 0 && s.mhp) s.hp = Math.min(s.mhp, s.hp + Math.floor(s.mhp * E.owen.pct / 100)); });
           if (X.inCombat()) fire('owen', '歐文', '#e0e7ff');

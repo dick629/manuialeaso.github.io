@@ -396,7 +396,7 @@
   var hasUlt = function (k) { return fx().ults.some(function (u) { return u.k === k; }); };
   var ready = function (k) { return now() >= (B.cd['u' + k] || 0); };
   var use = function (k, cd) { var u = ULTK[k]; B.cd['u' + k] = now() + (cd || (u && u.cd) || 60) * 10; };
-  var party = function () { var p = P(); if (!p) return []; return [p].concat((p.allies || []).filter(function (a) { return a && !a._downed && a.curHp > 0; })); };
+  var party = function () { var p = P(); if (!p) return []; return [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed && a.curHp > 0; })); };
   var heal = function (x, pct) { if (x === P()) x.hp = Math.min(x.mhp, x.hp + Math.floor(x.mhp * pct)); else x.curHp = Math.min(x.mhp, (x.curHp || 0) + Math.floor(x.mhp * pct)); };
   var tgt = function () { try { var t = typeof getTarget === 'function' ? getTarget() : null; if (t && !t._dead && t.curHp > 0) return t; } catch (e) {} return liveMobs()[0]; };
   var drec = function () { try { return DRm && DRm.rec(P()); } catch (e) { return null; } };

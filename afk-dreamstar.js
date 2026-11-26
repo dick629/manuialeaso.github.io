@@ -149,7 +149,7 @@
   var members = function () {
     var a = [];
     if (!player.dead) a.push(player);
-    (player.allies || []).forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) a.push(x); });
+    GiranPartyView.combatAllies().forEach(function (x) { if (x && !x._downed && (x.curHp || 0) > 0) a.push(x); });
     return a;
   };
   var nameOf = function (t) { return t === player ? '你' : '協力·' + (t._allyName || '傭兵'); };
@@ -266,7 +266,7 @@
       if ((player.skills || []).indexOf('sk_cancel') >= 0 && !player.dead && (player.mp || 0) >= mp && !blocked(player.statuses)) {
         var cb = document.getElementById('auto-sk-' + 'sk_cancel'); if (cb && cb.checked) return true;
       }
-      return (player.allies || []).some(function (a) { return a && !a._downed && (a.skills || []).indexOf('sk_cancel') >= 0 && (a.mp || 0) >= mp && !blocked(a.statuses); });
+      return GiranPartyView.combatAllies().some(function (a) { return a && !a._downed && (a.skills || []).indexOf('sk_cancel') >= 0 && (a.mp || 0) >= mp && !blocked(a.statuses); });
     } catch (e) { return false; }
   };
   // ── 時間軸：每 tick 檢查一次 ──
@@ -286,7 +286,7 @@
       m.rageDmgMult = m._dsRage * rageOf(m) * (m._dsIllu ? 1.5 : 1) * (full(m) ? 1 : 0.5);
       if (!full(m)) {   // 瘋狂席琳版：只有每 20 秒的星蝕
         if (age >= 10 * SEC && every(age - 10 * SEC, 20)) { pctAll(DS.eclipse, '星蝕'); log(tag('星蝕', '#a78bfa') + '星光一暗，全隊失去最大 HP ' + Math.round(DS.eclipse * 100) + '% 的生命。'); }
-        if (age >= 900 * SEC) { m.curHp = 0; m._dsBlast = true; sys('<span class="text-red-500 font-bold">' + NAME + ' 的身軀化為光焰炸裂，夢境隨之崩塌——無人生還。</span>'); (player.allies || []).forEach(function (x) { if (x && !x._downed) { x.curHp = 0; x._downed = true; x._reviveCd = 150; } }); player.hp = 0; forceDie(); return; }
+        if (age >= 900 * SEC) { m.curHp = 0; m._dsBlast = true; sys('<span class="text-red-500 font-bold">' + NAME + ' 的身軀化為光焰炸裂，夢境隨之崩塌——無人生還。</span>'); GiranPartyView.combatAllies().forEach(function (x) { if (x && !x._downed) { x.curHp = 0; x._downed = true; x._reviveCd = 150; } }); player.hp = 0; forceDie(); return; }
         continue;
       }
       if (age > 0 && age % (60 * SEC) === 0) {
@@ -339,7 +339,7 @@
       }
       if (age >= 900 * SEC) {
         sys('<span class="text-red-500 font-bold">' + NAME + ' 的身軀化為光焰炸裂，夢境隨之崩塌——無人生還。</span>');
-        (player.allies || []).forEach(function (x) { if (x && !x._downed) { x.curHp = 0; x._downed = true; x._reviveCd = 150; } });
+        GiranPartyView.combatAllies().forEach(function (x) { if (x && !x._downed) { x.curHp = 0; x._downed = true; x._reviveCd = 150; } });
         m.curHp = 0; m._dsBlast = true;
         player.hp = 0; forceDie();
         return;
@@ -502,7 +502,7 @@
     if (have < SOLO_CORES) { sys('<span class="text-red-400">入夢需要 ' + SOLO_CORES + ' 顆龜裂之核（你只有 ' + have + ' 顆）。</span>'); return; }
     // 進場提醒（玩家 2026-10-27）：聖結界只有魔法相消術能破；身上沒有相消術卷軸、隊伍裡也沒人會相消術 → 頭目幾乎一直無敵
     if (player.sherineDream && mode !== 'force' && invCnt('afk_cancel_scroll') < 1) {
-      var canCancel = [player].concat(player.allies || []).some(function (a) { return a && !a._downed && (a.skills || []).indexOf('sk_cancel') >= 0; });
+      var canCancel = [player].concat(GiranPartyView.combatAllies()).some(function (a) { return a && !a._downed && (a.skills || []).indexOf('sk_cancel') >= 0; });
       if (!canCancel) {
         var msg = '你身上沒有「相消術卷軸」，隊伍裡也沒有人會「魔法相消術」。\n\n星迴試煉的頭目每 30 秒張開聖結界，只有魔法相消術能破——沒有的話它幾乎一直無敵，十五分鐘內打不倒。\n\n相消術卷軸：燃柳村「哈瑪大師」販售，每張 10 顆龍之鑽石，帶在身上會自動使用（一場約 30 張）。';
         if (window.AFK_UI && AFK_UI.confirm) AFK_UI.confirm({ title: '星迴試煉：缺少魔法相消術', message: msg, okText: '仍要進入', cancelText: '先去準備', onOk: function () { window.enterDreamStar('force'); } });

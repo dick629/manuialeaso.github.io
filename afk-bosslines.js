@@ -78,7 +78,7 @@
     flush();
     var ms = mapState.mobs;
     for (var i = 0; i < ms.length; i++) {
-      var m = ms[i]; if (!isBoss(m) || m._dead) continue;
+      var m = ms[i]; if (!isBoss(m) || m._dead || W.GiranBossRooms?.unseen(mapState.current,m)) continue;
       var st = m._afkBl || (m._afkBl = {});
       var k = keyOf(m.n), staged = !!STAGEKEY[k], e = null;
       if (staged) { if (FIRST[m.n] || !enc[k] || Date.now() - enc[k].at > 1800000) { if (!st.o) enc[k] = { s: 0, h: 0, q: 0, at: Date.now() }; } e = enc[k] || (enc[k] = { s: 0, h: 0, q: 0, at: Date.now() }); }

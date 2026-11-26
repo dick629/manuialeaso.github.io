@@ -40,7 +40,7 @@
   var members = function () {
     var p = P(), out = []; if (!p) return out;
     if (!p.dead && p.hp > 0) out.push(p);
-    (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); });
+    GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); });
     return out;
   };
   var clog = function (h) { try { if (!S().ff && typeof logCombat === 'function') logCombat(h, 'enemy'); } catch (e) {} };

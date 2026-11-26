@@ -220,7 +220,7 @@ function _necroOwnerByKey(key) {
     if (key === 'player') return player;
     if (!key || !key.startsWith('ally:')) return null;
     let slot = key.slice(5);
-    return (player.allies || []).find(a => a && String(a._slot) === slot) || null;
+    return GiranPartyView.combatAllies().find(a => a && String(a._slot) === slot) || null;
 }
 function _necroOwnerAlive(owner) {
     if (!owner) return false;
@@ -293,7 +293,7 @@ function necroBookOnKill(mob) {
     _necroSyncPlayerRef();
     let holders = [];
     if (_necroOwnerAlive(player) && necroBookEquipped(player)) holders.push(player);
-    (player.allies || []).forEach(a => { if (_necroOwnerAlive(a) && necroBookEquipped(a)) holders.push(a); });
+    GiranPartyView.combatAllies().forEach(a => { if (_necroOwnerAlive(a) && necroBookEquipped(a)) holders.push(a); });
     if (!holders.length) return;
     _necroTeamHeal(holders);   // 遺物效果不是治癒法術，故骷髏亦可取得這 1% 回復
 
@@ -350,12 +350,12 @@ function necroSkeletonTick() {
     let alive = _necroSkeletonsV2.filter(s => !s._downed && (s.hp || 0) > 0);
     for (const s of alive) {
         let owner = _necroOwnerByKey(s._necroOwnerKey);
-        s._atkCd = (s._atkCd != null ? s._atkCd : 5) - 1;
+        s._atkCd = Math.max(0, (s._atkCd ?? 5) - 1);
         if (s._atkCd > 0) continue;
-        let d = _necroSkeletonDerive(s, owner);
-        s._atkCd = d.aspd;
         let t = (typeof _petPickTarget === 'function') ? _petPickTarget(s) : getTarget();
         if (!t) continue;
+        let d = _sumDeriveAny(s, owner);
+        s._atkCd = d.aspd;
         if (typeof threatWrap === 'function') threatWrap(s, () => summonV2AttackOnce(s, d, t, owner));
         else summonV2AttackOnce(s, d, t, owner);
     }
@@ -427,14 +427,14 @@ function summonV2List() { return (player && player.summonsV2) || []; }
 function mercSummonList() {
     if (typeof player === 'undefined' || !player || !player.allies || !player.allies.length) return [];
     let out = [];
-    for (let a of player.allies) { let s = a && !a._downed && a.summon; if (s && (s.mhp || 0) > 0 && !s._downed && (s.hp || 0) > 0) out.push(s); }
+    for (let a of GiranPartyView.combatAllies()) { let s = a && !a._downed && a.summon; if (s && !(s.endTick <= state.ticks) && (s.mhp || 0) > 0 && !s._downed && (s.hp || 0) > 0) out.push(s); }
     return out;
 }
 function summonV2Knows(skId) { skId = skId || 'sk_summon'; return ((player.skills || []).includes(skId) || (player.grantedSkills || []).includes(skId)); }   // 已習得（比照 castSkillInner 的 grantedSkills 旁路）
 function summonRenderList() {   // 供 js/22 寵物圖層渲染（含死亡殘影 2 秒）
     if (typeof player === 'undefined' || !player || !player.cls) return [];
     const now = Date.now();
-    return summonV2List().concat(necroSkeletonList()).filter(s => !s._downed || (now - (s._diedAt || 0)) < 2000);
+    return summonV2List().concat(necroSkeletonList(), mercSummonList()).filter(s => !s._downed || (now - (s._diedAt || 0)) < 2000);
 }
 function summonV2ActiveForm(owner) {   // 本次施放要召的怪（owner 預設玩家·傭兵召喚術傳 ally）
     owner = owner || player;
@@ -541,12 +541,12 @@ function summonV2Tick() {
     if (!alive.length) return;
     if (typeof _petInWild === 'function' && !_petInWild()) return;   // 安全區：不行動（不會有怪）
     for (const s of alive) {
-        s._atkCd = (s._atkCd != null ? s._atkCd : 5) - 1;
+        s._atkCd = Math.max(0, (s._atkCd ?? 5) - 1);
         if (s._atkCd > 0) continue;
-        const d = _sumDeriveAny(s);
-        s._atkCd = d.aspd;
         const t = (typeof _petPickTarget === 'function') ? _petPickTarget(s) : getTarget();
         if (!t) continue;
+        const d = _sumDeriveAny(s);
+        s._atkCd = d.aspd;
         // 🎯 v3.7.97 仇恨：召喚物攻擊傷害（含 proc/AOE 波及）→記給該召喚物實體
         if (typeof threatWrap === 'function') threatWrap(s, () => { if (s.skId === 'sk_elf_summon' || s.skId === 'sk_elf_summon2') spiritAttackOnce(s, t); else summonV2AttackOnce(s, d, t); });
         else if (s.skId === 'sk_elf_summon' || s.skId === 'sk_elf_summon2') spiritAttackOnce(s, t);   // 🧝 屬性精靈：玩家／傭兵共用公式（傭兵呼叫點見 js/07）
@@ -558,17 +558,23 @@ function summonV2Tick() {
     player.summonsV2 = (player.summonsV2 || []).filter(s => !s._downed || (now - (s._diedAt || 0)) < 2200);
     if ((player.summonsV2 || []).length !== before) renderSummonPanel(true);
 }
+// 已由主人面板計入的巫妖不重算。由另一名隊員維持時，夥伴在實際攻擊時計入。
+function summonMissingLich(owner) {
+    if (owner.buffs?.sk_illu_lich > 0) return 0;
+    return teamIlluAura(owner, true)?.md || 0;
+}
 function summonV2AttackOnce(s, d, t, owner) {
+    if(window.GiranCombat && !GiranCombat.permits(s,t,'basic'))return;
     owner = owner || player;   // 🩸 v3.3.23 owner 參數化：傭兵召喚術抽象輸出共用（讀 owner 裝備/精通；killMob 仍歸真隊長·不換身）
     const _ownerDmgMult = (owner !== player && typeof royalAllyMult === 'function') ? royalAllyMult() : 1;   // 👑 傭兵召喚物比照傭兵本體吃隊長魅力；玩家召喚固定1
     const _sgb = (typeof summonGearBonus === 'function') ? summonGearBonus(owner) : { dmg: 0, hit: 0 };   // 🏺 喚獸師的訓練鞭等
     const _ia = (typeof teamIlluAura === 'function') ? teamIlluAura(s, true) : null;   // 🩹 v3.2.67 幻覺攻擊光環（化身+10傷／歐吉+4傷+4命）全隊生效→注入召喚物普攻（s 非提供者·排除無效果=取全隊）
-    const _ownerIa = (owner !== player && !((owner.buffs || {}).sk_illu_lich > 0) && typeof teamIlluAura === 'function') ? teamIlluAura(owner, true) : null;   // 傭兵 d 已含自身光環；補入其他隊員提供的巫妖魔傷。🩹 v3.4.47：owner 自身已持有巫妖(共享會鋪給全隊)→own(+2 在 d)＋others(+2)＝雙算→自身持有時不再補差額
-    const _baseMd = Math.min(12, Math.max(0, (owner.d && owner.d.magicDmg) || 0));
-    const _teamMd = Math.min(12, Math.max(0, _baseMd + ((_ownerIa && _ownerIa.md) || 0)));
+    const panelMd = (owner.d?.magicDmg || 0) + _sumOwnerMdBonus(owner);
+    const _baseMd = Math.min(12, Math.max(0, panelMd));
+    const _teamMd = Math.min(12, Math.max(0, panelMd + summonMissingLich(owner)));
     const _magicAuraRatio = (1 + _teamMd / 80) / (1 + _baseMd / 80);   // _sumDerive/_zmbDerive 已含自身 magicDmg，只補差額避免雙算
     const _attackMult = d.dmgMult * _magicAuraRatio;
-    const hv = Math.min(window.__afkHitHv || 20, stretchHitValue(d.hit + _sgb.hit + (_ia ? _ia.eh : 0) - t.lv + mobEffAC(t))); /* 🔌 加掛版補丁:命中上限 */
+    const hv = Math.min(window.__afkHitHv || 20, stretchHitValue(d.hit + _sgb.hit + (_ia ? _ia.eh : 0) + (window.LineageClassCombat?.value(s,'hit',t,{kind:'melee'})||0) - t.lv + mobEffAC(t))); /* 🔌 加掛版補丁:命中上限 */
     const r = roll(1, 20);
     _petAnimAct(s, 'attack', t.uid);   // 🎬 v3.2.73 補跑中不設→回前景不同步爆播
     if (!((r === 20) || (r !== 1 && hv >= r))) { if (typeof vfxMiss === 'function') vfxMiss(t); logCombat(`<span class="text-purple-300">${s.form}</span> 的攻擊未命中。`, 'miss'); return; }
@@ -577,7 +583,7 @@ function summonV2AttackOnce(s, d, t, owner) {
     dmg += traumaPhysicalBonus(t);
     dmg = Math.max(1, Math.floor(dmg * _ownerDmgMult));
     markBossPhysicalHit(t);
-    if (window.AFK_RELIC_RUNTIME) dmg=window.AFK_RELIC_RUNTIME.companionDamage(owner||player,s,t,dmg,{kind:'summon'}); t.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(owner||player,t,dmg,{nativeRefund:'terror',kind:'melee'}):dmg)); /* card-combat:refund-summonV2AttackOnce */ /* card-combat:settle-summonV2AttackOnce */ /* relic-runtime:companion-summonV2AttackOnce */ if (typeof terrorVisageOnDamage === 'function') terrorVisageOnDamage(t, dmg, 'melee'); t.justHit = 'normal'; mobWake(t);   // 🌅 巨大骷髏：召喚物一般攻擊視為近距離
+    if (window.AFK_RELIC_RUNTIME) dmg=window.AFK_RELIC_RUNTIME.companionDamage(owner||player,s,t,dmg,{kind:'summon',heavy:r===20}); t.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(owner||player,t,dmg,{nativeRefund:'terror',kind:'melee'}):dmg)); /* card-combat:refund-summonV2AttackOnce */ /* card-combat:settle-summonV2AttackOnce */ /* relic-runtime:companion-summonV2AttackOnce */ if (typeof terrorVisageOnDamage === 'function') terrorVisageOnDamage(t, dmg, 'melee'); t.justHit = 'normal'; mobWake(t);   // 🌅 巨大骷髏：召喚物一般攻擊視為近距離
     logCombat(`<span class="text-purple-300">${s.form}</span> 攻擊 <span class="${getMobColor(t.lv)}">${t.n}</span>，造成 ${dmg}${r === 20 ? '（重擊）' : ''} 點傷害。`, 'player');
     // 技能觸發（10/15/20%·僅召喚術怪有 proc；造屍術殭屍不在 SUMMON_TIERS → e=null 直接跳過）
     const e = _sumTierOf(s.form);
@@ -616,23 +622,23 @@ function summonV2AttackOnce(s, d, t, owner) {
 // 🧝 屬性精靈攻擊（v3.4.11 玩家實體／傭兵無敵抽象召喚共用）：
 //   固定值＝owner魅力×owner等級/elemScale、魔抗穿透＝mrPenBase＋魅力/10；吃 owner 裝備/精通、魔抗/剋制/DR、幻覺光環，傭兵另吃王族隊長倍率。
 function spiritAttackOnce(s, t, owner) {
+    if (window.GiranCombat && !GiranCombat.permits(s,t,'basic')) return;
     owner = owner || player;   // 🧝 玩家實體／傭兵無敵抽象精靈共用同一傷害公式
     const spec = _spiritSpec(s.skId, s.ele, !!s._king);   // 🧝 v3.2.26 四屬性獨立參數（dice/scale/攻速依屬性·王含 AOE）
     const cha = (owner.d && owner.d.cha) || 0;
     const _sgb = (typeof summonGearBonus === 'function') ? summonGearBonus(owner) : { dmg: 0, hit: 0 };
     const _ia = (typeof teamIlluAura === 'function') ? teamIlluAura(s, true) : null;   // 🩹 幻覺光環：精靈命中吃 eh；md 由 owner.d＋下方其他隊員差額進 summonDamageMult，避免重複計算
-    const _ownerIa = (owner !== player && !((owner.buffs || {}).sk_illu_lich > 0) && typeof teamIlluAura === 'function') ? teamIlluAura(owner, true) : null;   // 傭兵補其他隊員的巫妖魔傷；自身光環已在 owner.d。🩹 v3.4.47：owner 自身已持有巫妖→不再補差額（共享使全隊持有＝原寫法必雙算）
     const smLike = { skId: s.skId, hitLvOff: spec.hitLvOff || 0, dmgMult: spec.dmgMult || 1 };
     _petAnimAct(s, 'attack', t.uid);   // 🎬 v3.2.73 補跑中不設→回前景不同步爆播
-    const hv = summonHitValue(smLike, owner, t, _sgb.hit + (_ia ? _ia.eh : 0));
+    const hv = summonHitValue(smLike, owner, t, _sgb.hit + (_ia ? _ia.eh : 0) + (window.LineageClassCombat?.value(s,'hit',t,{kind:'magic'})||0));
     const r = roll(1, 20);
     if (!((r === 20) || (r !== 1 && hv >= r))) { if (typeof vfxMiss === 'function') vfxMiss(t); logCombat(`<span class="text-purple-300">${s.form}</span> 的攻擊未命中。`, 'miss'); return; }
     const flat = Math.floor(cha * (owner.lv || 1) / (spec.scale || 20));
     const mrPen = (spec.mrPenBase || 0) + Math.floor(cha / 10);
-    const mult = summonDamageMult(smLike, owner, true, (_ownerIa && _ownerIa.md) || 0);
+    const mult = summonDamageMult(smLike, owner, true, summonMissingLich(owner));
     let dmg = summonElementDamage( /* relic-companion:spirit-mutable */spec.dice || [1, 40], s.ele, t, flat + _sgb.dmg + ((_ia && _ia.royalEd) || 0) + ((_ia && _ia.mel) || 0), mult, mrPen);   // 👑 灼熱武器：魔法型屬性精靈的一般攻擊亦取得全隊額外傷害；🔥 v3.8.3 舞躍之火近距離傷害+3（屬性精靈一般攻擊視為近距離）
     t.justHit = (s.ele && s.ele !== 'none') ? s.ele : 'magic';
-    if (window.AFK_RELIC_RUNTIME) dmg=window.AFK_RELIC_RUNTIME.companionDamage(owner||player,s,t,dmg,{kind:'summon'}); t.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(owner||player,t,dmg,{nativeRefund:'terror',kind:'melee'}):dmg)); /* card-combat:refund-spiritAttackOnce */ /* card-combat:settle-spiritAttackOnce */ /* relic-runtime:companion-spiritAttackOnce */ if (typeof terrorVisageOnDamage === 'function') terrorVisageOnDamage(t, dmg, 'melee'); mobWake(t);   // 🌅 巨大骷髏：屬性精靈一般攻擊視為近距離
+    if (window.AFK_RELIC_RUNTIME) dmg=window.AFK_RELIC_RUNTIME.companionDamage(owner||player,s,t,dmg,{kind:'summon',damageType:'magic',heavy:r===20,element:s.ele||'none'}); t.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(owner||player,t,dmg,{nativeRefund:'terror',kind:'melee'}):dmg)); /* card-combat:refund-spiritAttackOnce */ /* card-combat:settle-spiritAttackOnce */ /* relic-runtime:companion-spiritAttackOnce */ if (typeof terrorVisageOnDamage === 'function') terrorVisageOnDamage(t, dmg, 'melee'); mobWake(t);   // 🌅 巨大骷髏：屬性精靈一般攻擊視為近距離
     logCombat(`<span class="text-purple-300">${s.form}</span> 攻擊 <span class="${getMobColor(t.lv)}">${t.n}</span>，造成 ${dmg} 點傷害。`, 'player');
     // 👑 v3.2.26 精靈王：攻擊命中後 15% 機率釋放「同屬性全體法術」（冰雪暴/火風暴/龍捲風/震裂術·每目標約半發威力·吃魔抗/剋制/DR）
     if (spec.aoe && Math.random() < spec.aoe.p) {
@@ -653,6 +659,7 @@ function spiritAttackOnce(s, t, owner) {
 }
 // 怪物一般攻擊打召喚物（js/04 受害者池·權重 召喚術/造屍術＝4·屬性精靈＝3·見 js/04 summonAggroWeight·v3.2.21 含殭屍/屬性精靈）
 function enemyAttackSummon(mob, s) {
+    if(window.GiranCombat && !GiranCombat.permits(mob,s,'basic'))return;
     if (!mob || mob.curHp <= 0 || !s || s._downed || (s.hp || 0) <= 0) return;
     if (typeof _mobAnimTrigger === 'function') _mobAnimTrigger(mob, 'attack');
     const d = _sumDeriveAny(s);
@@ -754,7 +761,7 @@ function renderMercSummonTeamHTML() {
     try {
         if (typeof player === 'undefined' || !player || !player.allies || !player.allies.length) return '';
         const rows = [];
-        for (const a of player.allies) {
+        for (const a of GiranPartyView.combatAllies()) {
             const s = a && !a._downed && a.summon;
             if (!s || !(s.mhp > 0) || s._downed || !(s.hp > 0)) continue;
             const hpPct = Math.max(0, Math.min(100, Math.floor((s.hp || 0) / Math.max(1, s.mhp || 1) * 100)));

@@ -30,30 +30,8 @@
  *   ⑤ 入口在首頁設定選單(afk-storage,掛在 #main-menu)→ 天然只有主選單開得到,
  *      不會發生「遊戲中還原完,記憶體裡的舊 player 又被 saveGame 寫回去」。
  *
- * 🔑 轉移碼(2026-08-01 加·子開關 fullsavecode):同一包資料改用「六碼」搬,免存檔案。
- *   ⚠ 2026-11-16 起優先走自己的旅人伺服器（/xfer/*，8 碼、24 小時、最多下載 3 次，見下方 srvUpload）；伺服器連不上才用 Litterbox。
- *   A 按「產生轉移碼」→ 整包上傳到 Litterbox → 拿它回傳的六碼;B 輸入六碼 → 抓回來 → 走上面同一條還原流程。
- *   打包/驗證/寫入完全共用,轉移碼只是換一個「把那包交出去」的管道。
- *
- *   為什麼是 Litterbox(catbox.moe 的暫存版):比較過 Pixeldrain / Catbox / Uguu / Filebin /
- *   file.io / JSONBin,**只有它兩半都在瀏覽器裡通、而且 `file://` 也通**(實機驗過)。
- *     - Pixeldrain / JSONBin:要 API 金鑰 → 金鑰得放進公開 repo,等於把帳號送人
- *     - Catbox(永久版) / Uguu:上傳或下載沒有 CORS 標頭 → 瀏覽器讀不到回應,拿不到網址
- *     - Filebin:上傳可以、**下載不行**——它看 User-Agent,瀏覽器一律拿到導頁 HTML 而不是檔案
- *   詳細比較與實測數字見 docs/save-transfer.md。
- *
- *   🚨 這條路會把玩家整包資料送到第三方主機,所以:
- *     ① 面板文字要講明「暫存在網路上、24 小時後自動刪除」——這是玩家決定按不按的依據。
- *     ② 獨立子開關,關掉只剩檔案那半(它是本機、零依賴的保底,永遠不能被雲端取代)。
- *     ③ 對方掛掉/沒網路時訊息要把玩家導回檔案那半,不要只說「失敗」。
- *
- *   ⚠️ 碼是伺服器給的小寫英數六碼(如 `4wz0fn`)、**大小寫敏感**(`4WZ0FN` → 404)。
- *     跨裝置是「看著 A 的螢幕在 B 上打字」,`0`/`o`、`1`/`l` 一定有人看錯 → 輸入端自動轉小寫、
- *     去空白,找不到時明講可能是看錯了。**絕不可自動把 o 換成 0 再試一次**:那可能抓到
- *     別人的存檔並覆蓋玩家進度。沒機密性歸沒機密性,還原到別人的存檔是災難。
- *
- * 優雅降級:缺 _lzSetStoredRaw / AFK_SETTINGS 就 console.warn 後安靜停用。
- * ========================================================================== */
+ * 轉移碼使用旅人服務的八碼協定，有效 24 小時。檔案匯出仍可直接下載。
+ */
 (function () {
   'use strict';
   var VER = ((document.currentScript && /[?&]v=([\w]+)/.exec(document.currentScript.src)) || [])[1] || '';   // 錯誤訊息附版本，分辨手機是否還在跑舊版
@@ -99,11 +77,11 @@
   }
   // 11-16 資安（Ping 選 A）：轉移碼不帶旅人身分與交易所帳本——轉移碼外流時，拿到的人冒用不了你的交易所身分。
   //   新裝置會自己領一個新身分（72 小時後才能上架）；舊裝置沒領的交易所東西要回舊裝置領。檔案備份照舊整包。
-  var CODE_SKIP = { afk_hb_id: 1, afk_mkt_jr: 1, afk_mkt_done: 1 };
   function buildPack(forCode) {
-    var keys = {}, n = 0;
-    lsKeys().forEach(function (k) { if (k === 'lineage_growth_transaction_backup_v1') return; if (forCode && CODE_SKIP[k]) return; var v = localStorage.getItem(k); if (v != null) { keys[k] = packVal(k, v); n++; } });   // 11-11：舊版交易備份（約 5MB）不打包
-    return { format: FORMAT, schema: SCHEMA, exportedAt: new Date().toISOString(), keyCount: n, keys: keys };
+    var keys = {};
+    lsKeys().forEach(function (k) { if (k === 'lineage_growth_transaction_backup_v1' || k === 'afk_clock_v1') return; var v = localStorage.getItem(k); if (v != null) keys[k] = packVal(k, v); });   // 11-11：舊版交易備份（約 5MB）不打包
+    if (forCode) keys=LineageTransfer.forCode(keys);
+    return { format: FORMAT, schema: SCHEMA, exportedAt: new Date().toISOString(), keyCount: Object.keys(keys).length, keys: keys };
   }
 
   // 🔁 與核心 exportSave(js/13:558)同一套,不要自己另立一種:showSaveFilePicker 可用就用
@@ -152,106 +130,9 @@
   }
 
   // ── 轉移碼(同一包資料,換一個交出去的管道) ────────────────────
-  var LB_UPLOAD = 'https://litterbox.catbox.moe/resources/internals/api.php';
-  var LB_FILE   = 'https://litter.catbox.moe/';
-  var LB_EXPIRY = '24h';        // 1h/12h/24h/72h。選 24h:玩家常常上傳完跑去做別的事,1 小時真的會過期
-  var CODE_RE   = /^[a-z0-9]{6}$/;
-
-  // 回傳的是 https://litter.catbox.moe/4wz0fn.json → 取出中間那六碼
-  function codeFromUrl(url) {
-    var m = String(url || '').trim().match(/([a-z0-9]{6})\.json\s*$/i);
-    return m ? m[1].toLowerCase() : '';
-  }
-  // 玩家可能打成大寫、前後帶空白;整串網址貼進來也一併吃掉(不寫在提示裡,但別讓他走進死路)
-  function normalizeCode(s) {
-    var t = String(s || '').trim().toLowerCase();
-    if (t.indexOf('/') >= 0) t = t.slice(t.lastIndexOf('/') + 1);
-    return t.replace(/\.json$/, '').trim();
-  }
-
-  // ── 11-16：轉移碼改走自己的旅人伺服器（backend/heartbeat 的 /xfer/*，檔案放 R2）──
-  //   碼＝8 個字（不含 0/O、1/I/L），大小寫都可以；24 小時有效、最多下載 3 次。上傳前用 gzip 壓縮（瀏覽器支援的話）。
-  //   伺服器連不上（或還沒開存檔空間）才退回 Litterbox 的六碼。
-  var SRV_RE = /^[A-HJ-NP-Z2-9]{8}$/;
-  function srvApi() { try { var h = window.AFK_HEARTBEAT; return h && h.api && h.ensureId ? h.api() : ''; } catch (e) { return ''; } }
-  function srvNorm(s) { return String(s || '').toUpperCase().replace(/[\s-]/g, ''); }
-  function gz(text) {
-    if (typeof CompressionStream === 'undefined') return Promise.resolve(new Blob([text], { type: 'application/json' }));
-    return new Response(new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))).blob();
-  }
-  function ungz(buf) {
-    var u = new Uint8Array(buf);
-    if (u[0] === 0x1f && u[1] === 0x8b) {
-      if (typeof DecompressionStream === 'undefined') return Promise.reject(new Error('這個瀏覽器太舊，解不開壓縮過的存檔，請更新瀏覽器'));
-      return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
-    }
-    return Promise.resolve(new TextDecoder().decode(u));
-  }
-  function srvUpload(text) {
-    var base = srvApi();
-    return window.AFK_HEARTBEAT.ensureId().then(function (id) {
-      return gz(text).then(function (blob) {
-        return fetch(base + '/xfer/put', { method: 'POST', headers: { 'content-type': 'application/octet-stream', 'x-hb-uid': id.uid, 'x-hb-token': id.token }, body: blob });
-      });
-    }).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (d) {
-        if (!r.ok) { var e = new Error(d.error || ('上傳失敗（' + r.status + '）')); e.status = r.status; throw e; }
-        return d.code.slice(0, 4) + '-' + d.code.slice(4);
-      });
-    });
-  }
-  function srvDownload(code) {
-    return fetch(srvApi() + '/xfer/get?code=' + encodeURIComponent(code), { cache: 'no-store' }).then(function (r) {
-      if (r.status === 404) throw new Error('NOTFOUND8');
-      if (!r.ok) return r.json().catch(function () { return {}; }).then(function (d) { throw new Error(d.error || ('讀取失敗（' + r.status + '）')); });
-      return r.arrayBuffer().then(ungz);
-    });
-  }
-
   function uploadPack() {
-    var text;
-    try { text = JSON.stringify(buildPack(true)); }
-    catch (e) { return Promise.reject(new Error('打包失敗：' + (e && e.message || e))); }
-    if (srvApi()) return srvUpload(text).catch(function (e) {
-      if (e && e.status && e.status !== 503 && e.status < 500) throw e;   // 伺服器明確拒絕（例如今天次數用完）→ 直接告訴玩家
-      return lbUpload(text);                                                // 連不上／還沒開存檔空間 → 退回 Litterbox
-    });
-    return lbUpload(text);
+    return LineageTransfer.put(JSON.stringify(buildPack(true))).then(code=>code.slice(0,4)+'-'+code.slice(4));
   }
-  function lbUpload(text) {
-    var fd = new FormData();
-    fd.append('reqtype', 'fileupload');
-    fd.append('time', LB_EXPIRY);
-    fd.append('fileToUpload', new Blob([text], { type: 'application/json' }), 'save.json');
-    // 11-11：轉移服務偶爾回 5xx（暫時忙不過來）→ 隔 2 秒、5 秒各自動重試一次
-    var tryUp = function (left) {
-      return fetch(LB_UPLOAD, { method: 'POST', body: fd }).then(function (r) {
-        if (!r.ok) {
-          if (r.status >= 500 && left > 0) return new Promise(function (ok) { setTimeout(ok, left === 2 ? 2000 : 5000); }).then(function () { return tryUp(left - 1); });
-          throw new Error('上傳失敗（' + r.status + (r.status >= 500 ? '，轉移服務那邊暫時出問題，等幾分鐘再試' : '') + '）');
-        }
-        return r.text();
-      });
-    };
-    return tryUp(2).then(function (url) {
-      var code = codeFromUrl(url);
-      if (!code) throw new Error('上傳結果看不懂');
-      return code;
-    });
-  }
-
-  function downloadByCode(code) {
-    return fetch(LB_FILE + code + '.json', { cache: 'no-store' }).then(function (r) {
-      if (r.status === 404) throw new Error('NOTFOUND');
-      if (!r.ok) throw new Error('讀取失敗（' + r.status + '）');
-      return r.text();
-    });
-  }
-
-  // ── 還原 ───────────────────────────────────────────────────
-  // 只驗「是不是我們自己產生的檔、完不完整」——format / schema / keyCount 全是本檔自己寫進去的欄位。
-  // 🚨 絕不檢查 keys 裡面裝什麼(有沒有角色存檔、key 叫什麼名字):那是對上游存檔格式的假設,
-  //    作者哪天改名,所有合法備份檔都會被拒收,而且是在玩家換裝置時才炸。
   function validate(text) {
     var d;
     try { d = JSON.parse(String(text || "").replace(/^\ufeff/, "")); } catch (e) { d = null; }   // 容許 UTF-8 BOM
@@ -434,7 +315,7 @@
       + '<div id="m-fsv-note" class="fsv-note"></div>';
   }
 
-  // 產生轉移碼:上傳整包 → 顯示六碼 + 複製鈕
+  // 產生轉移碼:上傳整包 → 顯示八碼 + 複製鈕
   // fetch 直接拋 TypeError＝連線根本沒建立(不是伺服器回錯)。最常見的是 DNS 過濾/廣告封鎖把
   //   catbox 整個域名擋掉 —— 那時瀏覽器只給一句 "Failed to fetch",玩家不會聯想到是自己開的 DNS
   //   (2026-08-05 玩家實測 AdGuard DNS 會擋,關掉就通)。
@@ -465,21 +346,20 @@
   // 輸入轉移碼:抓回來 → 走與檔案還原完全相同的驗證與確認流程
   function doUseCode() {
     var input = document.getElementById('m-fsv-in');
-    var raw = input && input.value, s8 = srvNorm(raw), code = normalizeCode(raw), useSrv = SRV_RE.test(s8) && !!srvApi();
-    if (!useSrv && !CODE_RE.test(code)) { note('❌ 請輸入轉移碼（8 個字，例如 ABCD-EFGH；舊的六碼也可以）。', true); return; }
+    var code = LineageTransfer.normalize(input && input.value);
+    if (!LineageTransfer.valid(code)) { note('❌ 請輸入 8 碼轉移碼。', true); return; }
     var btn = document.getElementById('m-fsv-use');
     if (btn) btn.disabled = true;
     note('讀取中…');
-    (useSrv ? srvDownload(s8) : downloadByCode(code)).then(function (text) {
+    LineageTransfer.get(code).then(function (text) {
       var v = validate(text);
       if (!v.ok) { note('❌ ' + v.err, true); return; }
+      v.pack=LineageTransfer.receive(v.pack,localStorage);
       note('');
       confirmAndApply(v);
     }).catch(function (e) {
       // 🚨 只講「可能看錯」,不要自己拿相近字元重試——那可能抓到別人的存檔並覆蓋玩家進度
-      if (e && e.message === 'NOTFOUND8') note('❌ 找不到這組轉移碼。可能是打錯了、已經超過 24 小時，或已經用過 3 次。', true);
-      else if (e && e.message === 'NOTFOUND') note('❌ 找不到這組轉移碼。可能是打錯了（注意 0 和 o、1 和 l），或是已經超過 24 小時。', true);
-      else note('❌ ' + (netErrMsg(e) || ((e && e.message || '讀取失敗') + '。'))
+      note('❌ ' + (netErrMsg(e) || ((e && e.message || '讀取失敗') + '。'))
         + '\n可以改請對方用「匯出備份」存成檔案傳給你。', true);
     }).then(function () { if (btn) btn.disabled = false; });
   }
@@ -514,7 +394,7 @@
     m.classList.add('open');
     _layer = window.AFK_UI ? AFK_UI.openLayer(hideModal) : null;
   }
-  // 複製 API 不能用時的保底:把六碼選起來,玩家長按/Ctrl+C 就能自己複製
+  // 複製 API 不能用時的保底:把八碼選起來,玩家長按/Ctrl+C 就能自己複製
   function selectCode() {
     var el = document.getElementById('m-fsv-code');
     if (!el) return;

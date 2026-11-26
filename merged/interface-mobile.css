@@ -1,5 +1,5 @@
 /* Mobile only: jade panels, compact touch navigation. Preserve silver skill tiles. */
-body.m-unified{--li-panel:linear-gradient(120deg,#283b31ed,#101d18f5),url('../assets/ui/black-marble-v4.webp') center/420px;--li-card:linear-gradient(115deg,#293f35,#14251f);--li-header:linear-gradient(#405043,#24352c 54%,#15241d);--li-well:#102019}
+body.m-unified{--li-panel:linear-gradient(120deg,#283b31ed,#101d18f5),var(--lm-95c7b10d9272,url('../assets/ui/black-marble-v4.webp')) center/420px;--li-card:linear-gradient(115deg,#293f35,#14251f);--li-header:linear-gradient(#405043,#24352c 54%,#15241d);--li-well:#102019}
 body.m-unified #lm-detail{background:var(--li-panel)!important}
 body.m-unified #lm-detail-header{border-image:var(--li-frame) 16 / 5px / 0 stretch!important;background:var(--li-header)!important}
 body.m-unified #lm-detail-body :is(.panel,.modal-content){background:var(--li-panel)!important;border-image:var(--li-frame) 16 / 5px / 0 stretch!important}

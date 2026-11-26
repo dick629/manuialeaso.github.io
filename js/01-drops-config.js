@@ -1124,7 +1124,7 @@ function fragileMult(t) {
     let _pp = null;
     if (typeof player !== 'undefined' && player) {
         if (player.buffs && player.buffs.sk_royal_precise > 0) _pp = player;
-        else if (player.allies) { for (let _a of player.allies) { if (_a && !_a._downed && _a.buffs && _a.buffs.sk_royal_precise > 0) { _pp = _a; break; } } }
+        else if (player.allies) { for (let _a of GiranPartyView.combatAllies()) { if (_a && !_a._downed && _a.buffs && _a.buffs.sk_royal_precise > 0) { _pp = _a; break; } } }
     }
     if (_pp) { let _div = ((typeof _afkM === 'function' ? _afkM(_pp, 'k_royal_pledge') : _pp.mastery === 'k_royal_pledge')) ? 10 : 15; m *= (1 + (1 + (_pp.lv || 1) / _div) / 100); }
     return m;
@@ -1259,7 +1259,7 @@ const TEAM_SHARE_BUFFS = new Set(['sk_holy_wpn', 'sk_dex_up', 'sk_haste_spell', 
 // 團隊光環是否有「任一隊員(排除 exclude)」維持中：exclude 傳「受益者本身」→其自身光環已由 recomputeStats 套進自身 d，避免與此 helper 雙算（僅對 recompute 有套進 d 的光環需排除·如 AC/攻擊）。
 function _teamAuraHas(sid, exclude) {
     if (typeof player !== 'undefined' && player && player !== exclude && player.buffs && (player.buffs[sid] || 0) > 0) return true;
-    let al = (typeof player !== 'undefined' && player && player.allies) || [];
+    let al = GiranPartyView.combatAllies();
     for (let i = 0; i < al.length; i++) { let a = al[i]; if (a && a !== exclude && !a._downed && a.buffs && (a.buffs[sid] || 0) > 0) return true; }
     return false;
 }
@@ -1331,6 +1331,7 @@ function queueCatchupMs(ms) {
     ms = Number(ms);
     if (!Number.isFinite(ms) || ms <= 0 || !state || !state.running || !player || !player.cls || player.dead) return false;
     _loopLast = _perfNow();
+    if(typeof _ffAcc!=='undefined' && _ffAcc)_ffAcc.spatial=false;
     _tickDebt += ms;
     if (typeof _ffScheduleNext === 'function') _ffScheduleNext();
     return true;
@@ -1386,7 +1387,8 @@ function _resumeIncrementalBackground(reason) {
     _ffHiddenAt = 0;
     _loopLast = _now;
     if (_anchor > 0 && typeof state !== 'undefined' && state.running && typeof player !== 'undefined' && player && player.cls && !player.dead) {
-        settleBackgroundMs(Math.max(0, _now - _anchor), reason);
+        const elapsed = Math.max(0, _now - _anchor);
+        settleBackgroundMs(elapsed, reason);
     }
     // 若背景已完全追平而只剩摘要待結束，這次零差額 gameLoop 會負責統一重繪與顯示。
     if (typeof gameLoop === 'function') gameLoop();
@@ -1405,7 +1407,8 @@ if (typeof window !== 'undefined' && window.addEventListener) {
             return;
         }
         _ffHiddenAt = 0;
-        _resetGameLoopClock();
+        // 初次 pageshow 可能晚於讀檔開戰。此時沿用正在累計的時間與待處理刻數。
+        if (_gameLoopId === null || _loopLast === null) _resetGameLoopClock();
     });
 }
 
@@ -1487,7 +1490,7 @@ function petGearBonus(p) {
     // 🩹 v3.2.42 稽核修：範圍與 _relicPetSkillMult（訓狗棒）一致——傭兵持有也生效（原本只掃玩家·同類遺物範圍不一）
     let _allDmg = 0, _allHit = 0;
     let _scanPA = function (c) { if (!c || !c.eq) return; for (let _k in c.eq) { let _e = c.eq[_k]; if (!_e) continue; let _dd = DB.items[_e.id]; if (_dd && _dd.petDmgAll) _allDmg += _dd.petDmgAll; if (_dd && _dd.petHitAll) _allHit += _dd.petHitAll; } };
-    _scanPA(player); (player.allies || []).forEach(function (a) { if (a && !a._downed) _scanPA(a); });
+    _scanPA(player); GiranPartyView.combatAllies().forEach(function (a) { if (a && !a._downed) _scanPA(a); });
     let inst = p && p.eq && p.eq.wpn;
     let d = inst ? DB.items[inst.id] : null;
     if(!inst || !d) return { dmg:_allDmg, hit:_collHit + _allHit };
@@ -1813,17 +1816,41 @@ function applyCombatFilter(){
     if (el) for (let k in _combatFilter) el.classList.toggle('cf-hide-' + k, !_combatFilter[k]);   // 以 CSS class 隱藏 → 既有與未來訊息一併套用，重新點亮即還原
     for (let k in _combatFilter) { let b = document.getElementById('cf-btn-' + k); if (b) b.classList.toggle('cf-off', !_combatFilter[k]); }   // 按鈕點亮/點暗
     { let sb = document.getElementById('cf-btn-status'); if (sb) sb.classList.toggle('cf-off', !_showMobStatus); }   // 🩹 狀態顯示鈕點亮/點暗（與過濾列同步初始化）
-    { let hb = document.getElementById('cf-btn-hp'); if (hb) hb.classList.toggle('cf-off', !_showMobHp); }   // 🩸 血量顯示鈕點亮/點暗
+    syncMobHpControls();
 }
 function toggleCombatFilter(k){ if (!(k in _combatFilter)) return; _combatFilter[k] = !_combatFilter[k]; saveCombatFilter(); applyCombatFilter(); }
 // 🩹 怪物異常狀態/出血鈍擊等標示顯示開關（按鈕在戰鬥日誌過濾列最左·點暗即隱藏怪卡上的狀態徽章與狀態列；頭目/席琳恩賜標籤不受影響）
 let _showMobStatus = true;
 (function(){ try { let s = localStorage.getItem('lineage_idle_mob_status'); if (s !== null) _showMobStatus = (s === '1'); } catch(e){} })();
 function toggleMobStatus(){ _showMobStatus = !_showMobStatus; try { localStorage.setItem('lineage_idle_mob_status', _showMobStatus ? '1' : '0'); } catch(e){} let b = document.getElementById('cf-btn-status'); if (b) b.classList.toggle('cf-off', !_showMobStatus); renderMobs(); let tm = document.getElementById('town-npc-map'); if (tm) { tm.classList.toggle('show-labels', _showMobStatus); if (_showMobStatus && typeof _resolveTownLabelOverlap === 'function') _resolveTownLabelOverlap(); } }   /* 🏷️ v3.2.92 同步切換城鎮 NPC 名牌常駐顯示 */
-// 🩸 怪物血量條顯示開關（按鈕在「狀態」左側·點亮才在怪卡顯示短血條；預設關閉＝沿用無血條的乾淨版面）
-let _showMobHp = false;
+// 新玩家預設顯示怪物血條，已有偏好仍沿用上次設定。
+let _showMobHp = true;
 (function(){ try { let s = localStorage.getItem('lineage_idle_mob_hp'); if (s !== null) _showMobHp = (s === '1'); } catch(e){} })();
-function toggleMobHp(){ _showMobHp = !_showMobHp; try { localStorage.setItem('lineage_idle_mob_hp', _showMobHp ? '1' : '0'); } catch(e){} let b = document.getElementById('cf-btn-hp'); if (b) b.classList.toggle('cf-off', !_showMobHp); renderMobs(); }
+function syncMobHpControls(){
+    document.getElementById('cf-btn-hp')?.classList.toggle('cf-off', !_showMobHp);
+    const setting=document.getElementById('giran-show-mob-hp');
+    if(setting)setting.checked=_showMobHp;
+}
+function toggleMobHp(visible = !_showMobHp){
+    _showMobHp=visible;
+    try { localStorage.setItem('lineage_idle_mob_hp', visible ? '1' : '0'); } catch(e){}
+    syncMobHpControls();
+    renderMobs();
+}
+
+let _showCaptainVitals = false;
+try { _showCaptainVitals = localStorage.getItem('lineage_idle_captain_vitals') === '1'; } catch(e){}
+function syncCaptainVitalsControl() {
+    document.documentElement.classList.toggle('show-captain-vitals', _showCaptainVitals);
+    const input = document.getElementById('set-captain-vitals');
+    if (input) input.checked = _showCaptainVitals;
+}
+function setCaptainVitals(visible) {
+    _showCaptainVitals = visible;
+    try { localStorage.setItem('lineage_idle_captain_vitals', visible ? '1' : '0'); } catch(e){}
+    syncCaptainVitalsControl();
+}
+syncCaptainVitalsControl();
 
 function logCombat(msg, type="player", src=null) {
     if(state.ff) return; // 補跑期間不洗版
@@ -1846,7 +1873,8 @@ function logCombat(msg, type="player", src=null) {
     else if (type === "evade") { colorClass = "text-teal-300"; } // ER獨立迴避 (淡青綠色)
 
     let _src = src || _combatSrc || (type === 'enemy' ? 'enemy' : 'player');   // 來源：明確指定 > 派發點情境(_combatSrc) > 依顏色type推定
-    el.insertAdjacentHTML('beforeend', `<div class="log-entry ${colorClass} ${catClass}" data-src="${_src}">${msg}</div>`);   // 🚀 只解析新訊息、不重建整個日誌(原 innerHTML+= 會 O(n) 重建全部子節點，戰鬥洗版時造成卡頓)
+    const entry = `<div class="log-entry ${colorClass} ${catClass}" data-src="${_src}">${msg}</div>`;
+    el.insertAdjacentHTML('beforeend', window.GiranJournal ? window.GiranJournal.markup('combat-log',entry) : entry);
     // 🔒 鎖定捲動時保留更多歷史；未鎖定時維持一般上限
     let _max = _combatLogLocked ? COMBAT_LOG_MAX_LOCKED : COMBAT_LOG_MAX;
     while(el.children.length > _max && el.children.length > 1) el.removeChild(el.firstChild);
@@ -1887,7 +1915,8 @@ function logSys(msg, rare) {
     if(state.ff) return; // 補跑期間不洗版
     const el = document.getElementById('sys-log');
     if (!el) return;
-    el.insertAdjacentHTML('beforeend', `<div class="log-entry text-slate-100">${msg}</div>`);   // 🚀 同戰鬥日誌：只解析新訊息，避免 innerHTML+= 重建全部
+    const entry = `<div class="log-entry text-slate-100">${msg}</div>`;
+    el.insertAdjacentHTML('beforeend', window.GiranJournal ? window.GiranJournal.markup('sys-log',entry) : entry);
     // 🔒 鎖定捲動時保留更多歷史（150 行）；未鎖定時維持一般上限（50 行）
     let _max = _sysLogLocked ? SYS_LOG_MAX_LOCKED : SYS_LOG_MAX;
     while(el.children.length > _max && el.children.length > 1) el.removeChild(el.firstChild);
@@ -2082,7 +2111,7 @@ function _relicPetSkillMult() {
     let m = 1;
     try {
         let _scan = function (c) { if (!c || !c.eq) return; for (let k in c.eq) { let e = c.eq[k]; if (!e) continue; let dd = DB.items[e.id]; if (dd && dd.petSkillDmgMult) m = Math.max(m, dd.petSkillDmgMult); } };
-        if (typeof player !== 'undefined' && player) { _scan(player); (player.allies || []).forEach(function (a) { if (a && !a._downed) _scan(a); }); }
+        if (typeof player !== 'undefined' && player) { _scan(player); GiranPartyView.combatAllies().forEach(function (a) { if (a && !a._downed) _scan(a); }); }
     } catch (e) {}
     return m;
 }

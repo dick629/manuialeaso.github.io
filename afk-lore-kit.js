@@ -286,7 +286,7 @@
   };
 
   // ── Boss 小工具 ──
-  var party = function () { var p = P(); if (!p) return []; var out = []; if (!p.dead) out.push(p); (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); }); return out; };
+  var party = function () { var p = P(); if (!p) return []; var out = []; if (!p.dead) out.push(p); GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); }); return out; };
   var hurt = function (t, dmg, trueDmg, source) {
     var p = P(); if (!t || !(dmg > 0)) return 0;
     if (source?._twisted) dmg = W.TwistedSpace.monsterDamage(source,dmg);
@@ -298,7 +298,7 @@
     return dmg;
   };
   var place = function (idx, base, extra) {
-    if (W.TwistedSpace?.here() && (!TwistedSpace.canPlace(idx) || (!(extra?.boss || base.boss) && (base.lv || 0) < 85))) return null;
+    if (W.TwistedSpace?.here() && !TwistedSpace.canPlace(idx)) return null;
     var o = Object.assign(JSON.parse(JSON.stringify(base)), extra || {});
     mapState.mobs[idx] = Object.assign(o, { curHp: o.hp, uid: uid(), _born: ++_mobBornSeq, _bornMs: Date.now(), _magCd: {}, justHit: false, st: newMobStatus() });
     try { if (typeof applySherineBuff === 'function') applySherineBuff(idx); } catch (e) {}

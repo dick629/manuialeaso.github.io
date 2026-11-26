@@ -693,7 +693,7 @@
     function _offlineApplyAllyExp(amount) {
         amount = Math.max(0, Math.floor(_offlineFinite(amount, 0)));
         if (!amount || !Array.isArray(player.allies)) return;
-        player.allies.forEach(a => {
+        GiranPartyView.combatAllies().forEach(a => {
             if (!a || a._downed || (a.lv || 1) >= 100) return;
             a.exp = Math.max(0, Number(a.exp) || 0) + amount;
             a._expGained = Math.max(0, Number(a._expGained) || 0) + amount;
@@ -1234,6 +1234,8 @@
             TwistedSpace.settle(mob,kills,_offlineBinomial,
                 (id,n) => _offlineGainItem(id,n,mob,loot),
                 (name,tier,n) => { acquireCard(name,tier,n); _offlineTrackCard(loot,name,tier,n); });
+            window.AFK_POLY_CODEX?.rollTwistedBatch(mob,kills,_offlineBinomial,
+                (id,n) => _offlineGainItem(id,n,mob,loot));
             const king = TwistedSpace.cardBoss(mob);
             if (king) window.__afkBossCardKill(king,{_twisted:true,_dimRift:true},kills,_offlineBinomial,
                 (id,n) => _offlineTrackItem(loot,id,n));

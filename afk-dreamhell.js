@@ -153,7 +153,7 @@
     m.er = (m.er || 0) + DREAM_EVA; m._dreamEva = DREAM_EVA;   // 玩家 2026-11-03：迴避 +15 → +20%（打的角色面板命中 800 以上時只算 +18%，見上方 dreamEvaFor）
     // 傷害：複製後再改，避免動到 DB.mobs 共用的陣列與物件
     var k = boss ? 5 : 2;
-    var dotMult = window.TwistedSpace?.here() ? 5 * ((TwistedSpace.X && TwistedSpace.X.dmg) || 15) : 5;
+    var dotMult = window.TwistedSpace?.here() ? 5 * TwistedSpace.X.dmg : 5;
     if (Array.isArray(m.dmg)) m.dmg = m.dmg.slice();
     scaleAtk(m, k);
     Object.keys(m).forEach(function (f) {
@@ -194,7 +194,7 @@
   var reborn = function () { try { return !!(player && player.rebirth > 0); } catch (e) { return false; } };
   // 王登場先給全隊一波真實傷害：最大 HP 10%；傳送控制戒指找來的王 15%
   //   玩家 2026-10-24：不分是否轉生，席琳夢域鏡的王每次登場都算（原本只有轉生者）
-  // 11-26 Ping：扭亂時空每一隻王出場都打 10%；出場衝擊最多打掉最大 HP 80%（打不到剩 20% 以下）＝floor 0.2
+  // 扭亂時空的登場傷害使用同一個最大 HP 下限。
   var bossEntryBlast = function (nm, pct, floor) {
     pct = pct || 0.1;
     var cut = function (cur, mx) { var d = Math.max(1, Math.floor(mx * pct)); if (floor) d = Math.min(d, Math.max(0, Math.floor(cur - mx * floor))); return d; };
@@ -204,7 +204,7 @@
         var d0 = cut(player.hp, player.mhp || 1); player.hp -= d0; hit.push('你 ' + d0);
         if (player.hp <= 0 && typeof killPlayer === 'function') killPlayer();
       }
-      (player.allies || []).forEach(function (x) {
+      GiranPartyView.combatAllies().forEach(function (x) {
         if (!x || x._downed || !(x.curHp > 0)) return;
         var d = cut(x.curHp, x.mhp || x.curHp || 1); x.curHp -= d; hit.push((x._allyName || '傭兵') + ' ' + d);
         if (x.curHp <= 0) { x.curHp = 0; x._downed = true; x._reviveCd = 150; }
@@ -242,7 +242,11 @@
         if (!m || !m.boss || m._dead || !(m.curHp > 0) || m._afkEntryBlast || m.race === '血盟' || m.race === '建築') continue;
         m._afkEntryBlast = true; any = true;
         // 時空裂痕裡頭目一半機率出場、很快就一隻接一隻：登場衝擊最多每 10 秒一次（2026-10-29 晚，裂痕有自己的暴走與崩塌）
-        if (window.TwistedSpace && TwistedSpace.here()) { var R3 = TwistedSpace.R3 || {}; bossEntryBlast(m, R3.entryPct || 0.10, R3.entryFloor || 0.5); try { if (TwistedSpace.bossEntryStun) TwistedSpace.bossEntryStun(m); } catch (e) {} continue; }   // 11-26 Ping：扭亂時空每隻王都打；23:03 下限改 50%、出場暈全隊
+        if (window.TwistedSpace && TwistedSpace.here()) {
+          bossEntryBlast(m, TwistedSpace.R3.entryPct, TwistedSpace.R3.entryFloor);
+          TwistedSpace.bossEntryStun(m);
+          continue;
+        }
         if (state.riftRun) { if ((state.ticks || 0) < (state._dhBlastCd || 0)) continue; state._dhBlastCd = (state.ticks || 0) + 100; }
         if (typeof window.__afkBossRankOk === 'function' && !window.__afkBossRankOk(m)) continue;   // 多王：第二、三隻不放（afk-bossrules）
         // 2026-10-31 12:53：夢域鏡頭目強化（afk-dreamboss）開著、這隻王歸它管時，只吃那邊的出場傷害（30 秒冷卻），不再兩種疊加
@@ -404,7 +408,7 @@
           for (var i = 0; i < mapState.mobs.length; i++) {
             var m = mapState.mobs[i];
             if (!m || !m._dream || m._dead || m.curHp <= 0 || m.curHp >= m.hp || m._noBossRegen) continue;   // 暗夢星迴試煉頭目不回血
-            var add = m.boss ? (m._twisted ? 5 * Math.max(1, Math.floor(m.hp / ((window.TwistedSpace && TwistedSpace.X && TwistedSpace.X.hp) || 10) * 0.001)) : Math.max(1, Math.floor(m.hp * 0.001))) : (m._dreamRegen || 0);
+            var add = m.boss ? (m._twisted ? 5 * Math.max(1, Math.floor(m.hp / TwistedSpace.X.hp * 0.001)) : Math.max(1, Math.floor(m.hp * 0.001))) : (m._dreamRegen || 0);
             m.curHp = Math.min(m.hp, m.curHp + add);
           }
         }
@@ -414,7 +418,7 @@
 
   // ── 席琳夢域鏡：所有王 5% 機率發動看破——這一下對玩家的傷害 ×2（任何傷害都算，只有一下；玩家 2026-10-24）──
   var insightDepth = 0;
-  var snapTeam = function () { var a = [[player, player.hp]]; (player.allies || []).forEach(function (x) { if (x && !x._downed) a.push([x, x.curHp]); }); return a; };
+  var snapTeam = function () { var a = [[player, player.hp]]; GiranPartyView.combatAllies().forEach(function (x) { if (x && !x._downed) a.push([x, x.curHp]); }); return a; };
   ['enemyPhysicalAttack', 'enemyAttackAlly', 'applyMobMagic', 'applyMobMagicToAlly'].forEach(function (fn) {
     var o = window[fn]; if (typeof o !== 'function') return;
     window[fn] = function (mob) {
@@ -561,7 +565,7 @@
           var add = ILLU_MP * hits;
           try {
             if (player && !player.dead) player.mp = Math.min(player.mmp || 0, (player.mp || 0) + add);
-            (player.allies || []).forEach(function (a) { if (a && !a._downed) a.mp = Math.min(a.mmp || 0, (a.mp || 0) + add); });
+            GiranPartyView.combatAllies().forEach(function (a) { if (a && !a._downed) a.mp = Math.min(a.mmp || 0, (a.mp || 0) + add); });
           } catch (e) {}
         }
       }

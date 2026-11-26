@@ -62,7 +62,7 @@
 
   // ── E 隊伍人數：怪物 HP 與傷害 ──
   var PTY = { base: 8, per: 0.07, cap: 16 };   // 16 人 ×1.56（設計稿的數字；原寫「每人 +8%」算出來是 ×1.64，照 ×1.56 改成每人 +7%）
-  var partySize = function () { var p = P(); return p ? Math.min(PTY.cap, 1 + (p.allies || []).filter(Boolean).length) : 1; };
+  var partySize = function () { var p = P(); return p ? Math.min(PTY.cap, 1 + GiranPartyView.combatAllies(p).filter(Boolean).length) : 1; };
   var ptyMult = function () { return act() ? 1 + PTY.per * Math.max(0, partySize() - PTY.base) : 1; };
   W.__afkPartyMobMult = ptyMult;
   var exempt = function (m) { return !m || m._train || m.isTrainingDummy || m._pvp || m.isPlayerClone; };

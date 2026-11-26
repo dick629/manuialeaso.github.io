@@ -37,33 +37,32 @@ function summonHitValue(sm, owner, target, gearHit) {
     return Math.min(window.__afkHitHv || 20, stretchHitValue(raw)); /* 🔌 加掛版補丁:命中上限 */
 }
 
-function summonAttack(sm, owner) {
+function summonAttack(sm, owner, selected) {
     owner = owner || player;   // 🩸 v2.6.25 owner 參數化：owner=player（預設·玩家召喚）或 ally（傭兵召喚）；讀 owner.d.cha/lv/mastery/eq，killMob 仍歸真隊長（不換身）
     if(!sm) return;
     // 🧙 v3.3.23 傭兵召喚術／🧟 v3.3.24 造屍術 v2 抽象輸出：本體不上場（無血條/不被攻擊）·每攻擊週期對目標打 count 隻份的玩家 v2 傷害（召喚術含 water bubble 等 proc·造屍術 '人形殭屍' 不在 SUMMON_TIERS→proc 自動略過）；擊殺歸真隊長（summonV2AttackOnce 內 killMob·不換身）。
     if(sm._v2form && typeof summonV2AttackOnce === 'function') {
-        let _s0, _d;
-        if(sm._v2zmb) {   // 🧟 造屍術：依殭屍階級 lv 走 _zmbDerive
-            _s0 = { skId: 'sk_zombie', form: sm._v2form, lv: sm._v2lv || 10 };
-            _d = _zmbDerive(_s0, owner);
-        } else {          // 🧙 召喚術：SUMMON_TIERS 選怪 → _sumDerive
-            let _lvm = _sumTierOf(sm._v2form);
-            _s0 = { skId: 'sk_summon', form: sm._v2form, lv: (_lvm && _lvm.mob && _lvm.mob.lv) || sm._v2lv || 1 };
-            _d = _sumDerive({ form: sm._v2form, n: sm._v2form }, owner);
+        const d = _sumDeriveAny(sm, owner);
+        const count = Math.max(1, sm._v2count || 1);
+        for (let i = 0; i < count; i++) {
+            const target = i === 0 && selected ? selected : _petPickTarget(sm);
+            if (!target) break;
+            summonV2AttackOnce(sm, d, target, owner);
         }
-        let _cnt = Math.max(1, sm._v2count || 1);
-        for(let i = 0; i < _cnt; i++) { let _t = getTarget(); if(!_t) break; summonV2AttackOnce(_s0, _d, _t, owner); }
         return;
     }
     // 🧝 傭兵屬性精靈保持無敵抽象實體，但攻擊完整改走玩家 v2 精靈公式：四屬性骰值/攻速、命中、裝備、MR穿透、剋制、幻覺光環及精靈王15%全體技。
     if((sm.skId === 'sk_elf_summon' || sm.skId === 'sk_elf_summon2') && typeof spiritAttackOnce === 'function') {
-        let _st = getTarget(); if(!_st) return;
+        let _st = selected || _petPickTarget(sm); if(!_st) return;
         sm.form = sm.form || sm.n || '屬性精靈';
         sm._king = sm.skId === 'sk_elf_summon2' && (typeof _afkM === 'function' ? _afkM(owner, 'e_spirit') : owner.mastery === 'e_spirit');
         spiritAttackOnce(sm, _st, owner);
         return;
     }
-    let t = getTarget(); if(!t) return;
+    const attacker = sm.uid ? sm : owner;
+    const t = selected || (window.GiranCombat ? GiranCombat.target(attacker, getTarget(), 'basic') : getTarget());
+    if (!t || (window.GiranCombat && !GiranCombat.permits(attacker,t,'basic'))) return;
+    if (sm.uid) _petAnimAct(sm, 'attack', t.uid);
     let cha = (typeof window.__afkStatOf === 'function') ? window.__afkStatOf(owner, 'cha') : ((owner.d && owner.d.cha) || 0);   /* 2026-11-13：超過 200 也算 */
     let _sgb = (typeof summonGearBonus === 'function') ? summonGearBonus(owner) : { dmg: 0, hit: 0 };   // 🏺 喚獸師的訓練鞭：召喚物額外傷害/命中（掃 owner 裝備欄）
     let _teamAtk = (typeof teamIlluAura === 'function') ? teamIlluAura(sm, true) : null;   // 👑 灼熱武器／幻覺攻擊光環：舊式迷魅與抽象召喚也取得全隊一般攻擊加成
@@ -74,7 +73,7 @@ function summonAttack(sm, owner) {
         let hv = Math.max(1, Math.min(20, owner.lv + sm.hitBonus + cha - t.lv + mobEffAC(t) + _sgb.hit + (_teamAtk ? _teamAtk.eh : 0)));   // 🏺 喚獸師鞭＋👑灼熱武器／幻覺光環命中（🚫 召喚控制戒指命中+5 已移除）
         let r = roll(1, 20);
         if(!((r === 20) || (r !== 1 && hv >= r))) { if (typeof vfxMiss === 'function') vfxMiss(t); logCombat(`${sm.n} 的攻擊未命中。`, 'miss'); return; }
-        let dmg = Math.max(1, roll(sm.dmgDice[0], sm.dmgDice[1]) + cha + _sgb.dmg + (_teamAtk ? _teamAtk.ed : 0) - (t.dr || 0));
+        let dmg = Math.max(1, roll(sm.dmgDice[0], sm.dmgDice[1]) + cha + _sgb.dmg + (_teamAtk ? _teamAtk.ed + _teamAtk.mel : 0) - (t.dr || 0));
         dmg += traumaPhysicalBonus(t);
         markBossPhysicalHit(t);
         t.justHit = 'normal'; t.curHp -= (dmg=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(owner,t,dmg,{kind:'melee'}):dmg)); /* card-combat:settle-summonAttack */ mobWake(t);
@@ -95,13 +94,13 @@ function summonAttack(sm, owner) {
         if(sm.kind === 'ranged') {
             let flat = Math.floor(cha * owner.lv / (sm.elemScale || 20));   // 屬性精靈：魅力 x (等級/scale)
             let mrPen = (sm.mrPenBase || 0) + Math.floor(cha / 10);
-            dmg = summonElementDamage(sm.dmgDice, sm.ele, t, flat + _sgb.dmg + (_teamAtk ? _teamAtk.royalEd || 0 : 0), summonDamageMult(sm, owner, true), mrPen);
+            dmg = summonElementDamage(sm.dmgDice, sm.ele, t, flat + _sgb.dmg + (_teamAtk ? _teamAtk.royalEd || 0 : 0), summonDamageMult(sm, owner, true, summonMissingLich(owner)), mrPen);
             t.justHit = sm.ele !== 'none' ? sm.ele : 'magic';
         } else {
             let flatBase = cha / (sm.dmgDiv || 5);
             let flat = sm.dmgLvDiv ? Math.floor(flatBase * (1 + owner.lv / sm.dmgLvDiv)) : Math.floor(flatBase);   // 造屍術等具 dmgLvDiv：再乘上 (1+召喚者等級/dmgLvDiv)
             let hardSkin = Math.floor(mobHardSkin(t) * (1 - (sm.hardSkinPen || 0)));
-            let raw = (roll(sm.dmgDice[0], sm.dmgDice[1]) + flat + _sgb.dmg + (_teamAtk ? _teamAtk.ed : 0)) * summonDamageMult(sm, owner, false);
+            let raw = (roll(sm.dmgDice[0], sm.dmgDice[1]) + flat + _sgb.dmg + (_teamAtk ? _teamAtk.ed + _teamAtk.mel : 0)) * summonDamageMult(sm, owner, false, summonMissingLich(owner));
             dmg = Math.max(1, Math.floor(raw) - (t.dr || 0) - hardSkin);
             dmg += traumaPhysicalBonus(t);
             t.justHit = 'normal';
@@ -120,7 +119,16 @@ function summonTick(sm, clearFn, owner) {
         logCombat(`<span class="text-purple-300">${sm.n}</span> 消失了。`, 'magic');
         clearFn(); return;
     }
-    if(--sm.cd <= 0) { sm.cd = sm.interval; summonAttack(sm, owner); }
+    sm.cd = Math.max(0, (sm.cd ?? sm.interval ?? 1) - 1);
+    if (sm.cd === 0) {
+        const needsContact = sm.uid && (window.GiranCombat?.inWorld() || window.GiranRoam?.manual());
+        const target = needsContact ? _petPickTarget(sm) : null;
+        if (!needsContact || target) {
+            const speed = sm.uid && window.AFK_RELIC_COMPANIONS?.companionStats(owner,sm,{}).attackSpeedPct || 0;
+            sm.cd = sm.interval / (1 + speed / 100);
+            summonAttack(sm, owner, target);
+        }
+    }
     // 高階召喚物技能固定間隔施放；召喚精通使間隔縮短15%。
     if(sm.proc) {
         let procCd = Math.max(1, Math.floor(sm.proc.cd * (isMageSummonMastered(sm, owner) ? 0.85 : 1)));
@@ -128,16 +136,16 @@ function summonTick(sm, clearFn, owner) {
         if(--sm.proc.cdCur <= 0) {
             sm.proc.cdCur = procCd;
             let t = getTarget();
-            if(t && Math.random() < sm.proc.p) {
+            if(t && (!window.GiranCombat || GiranCombat.permits(sm.uid ? sm : owner,t,'magic')) && Math.random() < sm.proc.p) {
                 let cha = (typeof window.__afkStatOf === 'function') ? window.__afkStatOf(owner, 'cha') : ((owner.d && owner.d.cha) || 0);   /* 2026-11-13：超過 200 也算 */
                 let procFlat = cha + Math.floor((owner.lv || 1) / 2);
                 let pd;
                 if(sm.proc.ele && sm.proc.ele !== 'none') {
                     let mrPen = (sm.mrPenBase || 0) + Math.floor(cha / 10);
-                    pd = summonElementDamage(sm.proc.dmgDice, sm.proc.ele, t, procFlat, summonDamageMult(sm, owner, true), mrPen);
+                    pd = summonElementDamage(sm.proc.dmgDice, sm.proc.ele, t, procFlat, summonDamageMult(sm, owner, true, summonMissingLich(owner)), mrPen);
                 } else {
                     let hardSkin = Math.floor(mobHardSkin(t) * (1 - (sm.hardSkinPen || 0)));
-                    let raw = (roll(sm.proc.dmgDice[0], sm.proc.dmgDice[1]) + procFlat) * summonDamageMult(sm, owner, false);
+                    let raw = (roll(sm.proc.dmgDice[0], sm.proc.dmgDice[1]) + procFlat) * summonDamageMult(sm, owner, false, summonMissingLich(owner));
                     pd = Math.max(1, Math.floor(raw) - (t.dr || 0) - hardSkin);
                 }
                 t.curHp -= (pd=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(owner,t,pd,{kind:'magic'}):pd)); /* card-combat:settle-summonTick */ t.justHit = sm.proc.ele !== 'none' ? sm.proc.ele : 'magic';
@@ -167,7 +175,7 @@ function cubeTick() {
         if (c.kind === 'dmgmp') {   // 🔮 立方：和諧 → 對「當前目標」單體屬性傷害 ＋ 回全隊MP（每觸發一次；回MP不需目標）
             teamRecoverMp(c.val || 5);   // 🔮 v2.6.4：回全隊 MP（玩家＋全體非倒地傭兵）
             let t = getTarget();
-            if (t && t.curHp > 0 && !t._dead) {
+            if (t && t.curHp > 0 && !t._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,t,'magic'))) {
                 let d = Math.max(1, Math.floor(summonElementDamage(c.dice, c.ele || 'none', t, player.d.magicDmg || 0, magicDamageCoef(player.d, magicAttrDefense(t, c.ele || 'none'), sk.tier)) * illuLvMult(player) * wpnEnFinalMult(player.eq && player.eq.wpn)));   // 🔮 立方：SP／屬性防禦公式 ×(1+專屬法術階級/10)
                 d = illusionMagicDmg(d, true);   // 🔮 幻覺2/5回MP＋5/5二次傷害（比照立方dmg）
                 t.curHp -= (d=(window.AFK_CARD_COMBAT?window.AFK_CARD_COMBAT.damage(player,t,d,{kind:'dot'}):d)); /* card-combat:settle-cubeTick */ if (typeof moonShatterOnDamage === 'function') moonShatterOnDamage(player, t, d); t.justHit = (c.ele && c.ele !== 'none') ? c.ele : 'magic'; mobWake(t);
@@ -177,7 +185,7 @@ function cubeTick() {
             }
             return;
         }
-        let live = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead);
+        let live = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,'magic')));
         if (!live.length) return;
         if (c.kind === 'dmg') {
             let txt = [];
@@ -270,7 +278,9 @@ function manualCast(skId) {
         if(state.oblivion) { logSys('<span class="text-red-400">遺忘之島的迷霧壓制了傳送術，無法生效。</span>'); return; }
         if(state.antharas) { logSys('<span class="text-red-400">侵蝕的龍氣壓制了傳送術，無法生效。</span>'); return; }   // 🐉 v3.7.57 侵蝕的安塔瑞斯巢穴：禁傳送術
         // 🌀 v3.0.102 傳送術特效＋玩家 sprite 暫隱已移入 doTeleport / enterHiddenArea（涵蓋技能與瞬移卷軸所有路徑）
-        if (HIDDEN_AREA_PARENT[mapState.current]) {   // 🏛️ 對應地圖手動施放傳送術→進入隱藏狩獵區域（MP 已扣、冷卻照走）
+        if(window.GiranBookmarks?.pending){
+            if(!GiranBookmarks.activate())return;
+        } else if (HIDDEN_AREA_PARENT[mapState.current]) {   // 🏛️ 對應地圖手動施放傳送術→進入隱藏狩獵區域（MP 已扣、冷卻照走）
             enterHiddenArea(HIDDEN_AREA_PARENT[mapState.current]);
         } else {
             let forceBoss = hasTeleportRing();
@@ -283,7 +293,7 @@ function manualCast(skId) {
         let eName = { fire:'火', water:'水', wind:'風', earth:'地' }[weak];
         logCombat(eName ? `<span class="${getMobColor(t.lv)}">${t.n}</span> 弱點是 ${eName}屬性。`
                         : `<span class="${getMobColor(t.lv)}">${t.n}</span> 沒有明顯的屬性弱點。`, 'magic');
-        if(typeof playSpellFx === 'function') { try { playSpellFx(sk.n, t); } catch(e){} }   // 🔮 v2.7.44 能量感測：依目標屬性(t.e)播對應變體動畫(byEle·無屬性怪引擎靜默略過)
+        if(typeof playSpellFx === 'function') { try { if(!window.__dimMapSpellFx?.(player,sk.n,t))playSpellFx(sk.n, t); } catch(e){} }   // 🔮 v2.7.44 能量感測：依目標屬性(t.e)播對應變體動畫(byEle·無屬性怪引擎靜默略過)
     // 🔧 魔力奪取已改為轉換技能（type:'convert', drain:true），改由 castSkill 的 convert 分支處理：
     //    命中判定改用 abnormalMagicHit（與迷魅術一致，吃魔法命中/怪MR/等級差），吸取量＝怪物等級/2
     } else if(sk.mEff === 'charm') {
@@ -301,7 +311,7 @@ function manualCast(skId) {
                 hitBonus:(t.hit||0), proc:null, cd:10, endTick: state.ticks + 36000
             };
             logCombat(`<span class="${getMobColor(t.lv)}">${t.n}</span> 成為你的僕人。`, 'magic');
-            if(typeof playSpellFx === 'function') { try { playSpellFx(sk.n, t); } catch(e){} }   // 🔮 迷魅術特效疊在目標身上（於移除前·否則卡片消失無法錨定）
+            if(typeof playSpellFx === 'function') { try { if(!window.__dimMapSpellFx?.(player,sk.n,t))playSpellFx(sk.n, t); } catch(e){} }   // 🔮 迷魅術特效疊在目標身上（於移除前·否則卡片消失無法錨定）
             if(idx !== -1) { mapState.mobs[idx] = null; renderMobs(); }
         } else logCombat('迷魅術失敗了。', 'miss');
     } else if(sk.mEff === 'barrier') {
@@ -313,6 +323,7 @@ function manualCast(skId) {
     player.mp -= cost;
     if ((typeof _afkM === 'function' ? _afkM(player, 'i_mana') : player.mastery === 'i_mana') && player.mp < _mpBeforeManual) manaMasteryRefund(_mpBeforeManual - player.mp);   // 🔮 魔力精通：手動施法消耗MP→傭兵回饋10%
     player.manualCd[skId] = (sk.mEff === 'barrier') ? (sk.dur * 10 + 120) : getAutoCastInterval(player, isSupportSkill(sk), player.manualCd[skId]);   // 🛡️ 絕對屏障保留專屬長冷卻；其餘手動施法套用攻擊／輔助施法速度
+    window.__afkHotcast?.observed(skId);
     calcStats(); updateUI();
 }
 
@@ -367,12 +378,13 @@ function castSkill(skId) {
         r = castSkillInner(skId);
         if (player.mp < _before) manaMasteryRefund(_before - player.mp);
     }
+    if (r) window.__afkHotcast?.observed(skId);
     if (r) { try { playSpellCast(DB.skills[skId] ? DB.skills[skId].n : null); } catch(e){} }   // 🔊 音效：施法成功才出聲（依技能名對應專屬施展音，查無→通用魔法音）
     if (r && typeof playSelfFx === 'function' && DB.skills[skId] && isSupportSkill(DB.skills[skId])) {   // 🙏 v2.7.48 自我增益特效：buff→玩家頭上(overHead)·heal→被治療目標身上（未註冊靜默略過）
         try {
             let _sk = DB.skills[skId];
             let _anchor = (_sk.type === 'heal' && typeof _partyMemberRect === 'function') ? _partyMemberRect(_lastHealFxTarget || player) : null;   // 🩹 治癒特效疊在實際受益者身上；其餘 buff 走 playSelfFx 內 overHead（玩家頭上）
-            playSelfFx(_sk.n, _anchor);
+            window.__dimMapNative?.(player,_sk.n,_sk.type==='heal'?(_lastHealFxTarget||player):player,_sk.type==='heal'?'heal':'support'); playSelfFx(_sk.n, _anchor);
         } catch(e){}
     }
     return r;
@@ -410,6 +422,8 @@ function applyMoveDashBuffMutex(owner, sid) {
 }
 
 function castSkillInner(skId) {
+    const spatialSkill=DB.skills[skId];
+    if(spatialSkill && !isSupportSkill(spatialSkill) && window.GiranCombat && !GiranCombat.permits(player,getTarget(),spatialSkill.dmgType==='physical'?'basic':'magic'))return false;
     let sk = DB.skills[skId];
     if(!sk) return false;
     if(inAbsBarrier()) return false;   // 🛡️ 絕對屏障：無法施法（自動/手動皆擋）
@@ -603,7 +617,7 @@ function castSkillInner(skId) {
             let _slHitSet = [];   // random 模式：吃到弱點加成的目標（收尾統一消耗）
             for (let h = 0; h < times; h++) {
                 let ht = t;
-                if (_slRand) { let _alive = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead); if (!_alive.length) break; ht = _alive[Math.floor(Math.random() * _alive.length)]; }
+                if (_slRand) { let _alive = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,sk.dmgType==='physical'?'basic':'magic'))); if (!_alive.length) break; ht = _alive[Math.floor(Math.random() * _alive.length)]; }
                 if (ht.curHp <= 0) { if (_slRand) continue; break; }
                 let _hl = _slRand ? (ht.weakExpose || 0) : layers, _hb = _hl > 0 ? 10 * _hl : 0;
                 let dice = ht.s === 'L' ? wpn.dmgL : wpn.dmgS;
@@ -628,7 +642,7 @@ function castSkillInner(skId) {
         }
         // ⚔️ 咆哮：對所有敵人造成 50+(等級-30) 的固定無屬性傷害（不計 MR / DR / 元素）
         if (sk.roarFixed) {
-            let targets = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead);
+            let targets = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,sk.dmgType==='physical'?'basic':'magic')));
             if (!targets.length) return false;
             if (player.mp < cost) return false;
             if (window.AFK_RELIC_RUNTIME) window.AFK_RELIC_RUNTIME.castPaid(player,cost); player.mp -= cost; /* relic-runtime:cast-paid */ player.cds.atkSk = getAutoCastInterval(player, false, player.cds.atkSk);
@@ -644,7 +658,7 @@ function castSkillInner(skId) {
         // 👑 呼喚盟友：所有上場傭兵立即各發動一次額外攻擊（需有目標與傭兵；消耗 MP30＋攻擊冷卻）
         if (sk.callAllies) {
             let t = getTarget(); if (!t || t.curHp <= 0) return false;
-            let allies = (player.allies || []).filter(a => a && a.curHp > 0);
+            let allies = GiranPartyView.combatAllies().filter(a => a && a.curHp > 0);
             if (!allies.length) return false;
             if (player.mp < cost) return false;
             if (window.AFK_RELIC_RUNTIME) window.AFK_RELIC_RUNTIME.castPaid(player,cost); player.mp -= cost; /* relic-runtime:cast-paid */ player.cds.atkSk = getAutoCastInterval(player, false, player.cds.atkSk);
@@ -784,7 +798,7 @@ function castSkillInner(skId) {
             }
             return true;
         } else {
-            let targets = sk.target === 'all' ? mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead) : [getTarget()].filter(m => m && m.curHp > 0);   // 🛡️ v2.6.69 審計#7：排除同 tick 已死屍體（killMob 只標記·settleDeadMobs 才移除）——原本對屍體結算的傷害會灌進 _burstDmg 使魔爆總量膨脹；與傭兵 allyCastMagic 過濾一致
+            let targets = sk.target === 'all' ? mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,sk.dmgType==='physical'?'basic':'magic'))) : [getTarget()].filter(m => m && m.curHp > 0);   // 🛡️ v2.6.69 審計#7：排除同 tick 已死屍體（killMob 只標記·settleDeadMobs 才移除）——原本對屍體結算的傷害會灌進 _burstDmg 使魔爆總量膨脹；與傭兵 allyCastMagic 過濾一致
             if(sk.bossOnly) targets = targets.filter(m => m && m.boss);   // 🌊 頭目限定技能（污濁之水）：非頭目不施放、不扣 MP／冷卻
             if(targets.length === 0) return false;
 
@@ -867,7 +881,7 @@ function castSkillInner(skId) {
                     totalDmgText.push(`對 <span class="${getMobColor(t.lv)}">${t.n}</span> 施放`);
                 }
                 mobWake(t);
-                if(typeof playSpellFx === 'function') { try { playSpellFx(sk.n, t); } catch(e){} }   // ⚡ v2.7.15 法術特效：技能有註冊 SPELL_FX 者於目標身上疊播天堂原版特效(純視覺·只有註冊者會播)
+                if(typeof playSpellFx === 'function') { try { if(!window.__dimMapSpellFx?.(player,sk.n,t))playSpellFx(sk.n, t); } catch(e){} }   // ⚡ v2.7.15 法術特效：技能有註冊 SPELL_FX 者於目標身上疊播天堂原版特效(純視覺·只有註冊者會播)
                 if(t.st && t.st.mrhalf > 0) t.st.mrhalf = 0; // 受一次魔法傷害後解除魔抗減半
                 if(sk.lifesteal) { let h = Math.min(totalDmg, player.mhp - player.hp); if(h > 0){ player.hp += h; logCombat(`你吸取了 ${h} 點生命。`, 'heal'); } }
                 if(sk.freeze) applyMobStatus(t, { kind:'freeze', pbase:sk.freeze, dur:6 }, sk.n);
@@ -895,7 +909,7 @@ function castSkillInner(skId) {
             {
                 let _ww = player.eq.wpn ? DB.items[player.eq.wpn.id] : null;
                 if (_ww && _ww.windSpellProcRate && sk.ele === 'wind' && _burstDmg > 0 && Math.random() * 100 < _ww.windSpellProcRate) {
-                    let _wt = mapState.mobs.find(m => m && m.curHp > 0 && !m._dead);
+                    let _wt = mapState.mobs.find(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,sk.dmgType==='physical'?'basic':'magic')));
                     if (_wt) { logCombat(`<span class="font-bold" style="color:#86efac;text-shadow:0 0 6px #16a34a;">【${_ww.n}】</span>狂風共振，額外觸發龍捲風！`, 'player-special'); procFreeMagicSkill(_wt, 'sk_tornado', capWpnEn((player.eq.wpn && player.eq.wpn.en) || 0), false, _ww); }
                 }
             }
@@ -907,10 +921,10 @@ function castSkillInner(skId) {
                     let _msB = hasMastery('m_strike');   // 🏅 v2.6.71：改發魔擊時觸發率比照原生魔擊＝力量/60（不再吃智力/100或/60）
                     if (Math.random() < (_msB ? ((player.d.str || 0) / 60) : ((player.d.int || 0) / (_aoe ? 60 : 100)))) {
                         if (_msB) {   // 🏅 v2.6.70 魔擊精通：持魔爆武器時，魔爆觸發改為發動魔擊（對施放目標·含擴散·不再引爆30%均分）
-                            let _mt = (targets && targets.find(x => x && x.curHp > 0)) || mapState.mobs.find(m => m && m.curHp > 0 && !m._dead);
+                            let _mt = (targets && targets.find(x => x && x.curHp > 0)) || mapState.mobs.find(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,sk.dmgType==='physical'?'basic':'magic')));
                             if (_mt) procMagicStrike(_mt);
                         } else {
-                        let _live = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead);
+                        let _live = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,sk.dmgType==='physical'?'basic':'magic')));
                         if (_live.length) {
                             let _ex = Math.max(1, Math.floor(_burstDmg * 0.3 / _live.length));   // 🔧 v2.6.63：總量30%均分給場上敵人（原每隻各吃30%）
                             logCombat(`<span class="font-bold" style="color:#f0abfc;text-shadow:0 0 6px #c026d3;">【魔爆】</span>魔力過載爆炸，波及全場！`, 'player-special');
@@ -1047,7 +1061,7 @@ function autoActions() {
     {
         let tChk = document.getElementById('set-teleport');
         let _huntBoss = !!(window.AFK_BOSSRING && window.AFK_BOSSRING.huntActive && window.AFK_BOSSRING.huntActive());   // 🔌 加掛版補丁:外掛「自動找BOSS」進行中→抑制逃離(否則剛召來的王立刻被瞬移走);外掛未載入=false 照常
-        if (tChk && tChk.checked && !_huntBoss && mapState.mobs.some(m => m && m.boss && !m.noAutoTeleport) && !isSiegeArea(mapState.current) && !PURE_BOSS_MAPS.includes(mapState.current) && !state.prideClimb && !state.oblivion && !state.riftRun && (state._manualTpUntil == null || (state.ticks || 0) >= state._manualTpUntil)) {   // 🕒 手動瞬移後 5 秒內不自動瞬移/自動購買；攻城區與純BOSS房(安塔瑞斯/法利昂/巴拉卡斯)：BOSS為目標，不自動瞬移；🔧 卡瑞(noAutoTeleport)不觸發自動瞬移；🗼 傲慢之塔攀登中不自動瞬移；🌀 時空裂痕不自動瞬移逃離頭目
+        if (tChk && tChk.checked && !window.GiranCombat?.exploring() && !_huntBoss && !(player.giranHunt?.bossFirst && window.GiranRoam && !GiranRoam.manual()) && mapState.mobs.some(m => m && m.boss && !m.noAutoTeleport) && !isSiegeArea(mapState.current) && !PURE_BOSS_MAPS.includes(mapState.current) && !state.prideClimb && !state.oblivion && !state.riftRun && (state._manualTpUntil == null || (state.ticks || 0) >= state._manualTpUntil)) {   // 🕒 手動瞬移後 5 秒內不自動瞬移/自動購買；攻城區與純BOSS房(安塔瑞斯/法利昂/巴拉卡斯)：BOSS為目標，不自動瞬移；🔧 卡瑞(noAutoTeleport)不觸發自動瞬移；🗼 傲慢之塔攀登中不自動瞬移；🌀 時空裂痕不自動瞬移逃離頭目
             let item = player.inv.find(i => i.id === 'scroll_teleport');
             if (!item) {
                 let _tpCost = shopPrice(DB.items.scroll_teleport.p);   // 攻城獲勝 8 折亦適用
@@ -1144,7 +1158,7 @@ function autoCastSpells() {
     if (typeof healBeneficiaries === 'function') {
         healBeneficiaries().forEach(m => { if (m === player) return; let _mx = _supMhp(m); if (_mx > 0) { let _p2 = (_supHp(m) / _mx) * 100; if (_p2 < _teamLowPct) _teamLowPct = _p2; } });
     } else {
-        (player.allies || []).forEach(a => { if (a && !a._downed && (a.curHp || 0) > 0 && (a.mhp || 0) > 0) { let _p2 = (a.curHp / a.mhp) * 100; if (_p2 < _teamLowPct) _teamLowPct = _p2; } });
+        GiranPartyView.combatAllies().forEach(a => { if (a && !a._downed && (a.curHp || 0) > 0 && (a.mhp || 0) > 0) { let _p2 = (a.curHp / a.mhp) * 100; if (_p2 < _teamLowPct) _teamLowPct = _p2; } });
     }
     if(healSk && _teamLowPct <= healThr) castSkill(healSk);
 

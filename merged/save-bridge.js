@@ -76,7 +76,7 @@
   if(asc!==null&&n!==base.relicMax&&!(base.type==='acc'&&n===5))return null;
   if(p[5]!=null&&asc!==5||p[6]&&p[5]==null)return null;
   if([p[3],p[6]].some(key=>key&&!own(profile.items,key)))return null;
-  return base;
+  return {...base,relicAsc:asc,relicEvo:p[5]==null?null:Number(p[5])};
  }
  function analyzeCompatibility(value,profile){
   validateRole(value);const blockers=[],warnings=[];
@@ -88,10 +88,12 @@
   if(Number(value.p.lv)>maxLevel)blockers.push({code:'LEVEL_CAP',message:'角色等級超過此版本可保留的上限。'});
   if(Array.isArray(profile.maps)&&typeof value.ms.current==='string'&&!profile.maps.includes(value.ms.current))blockers.push({code:'UNKNOWN_MAP',message:'此版本沒有角色目前所在的地圖，請先在來源版本回到共通城鎮再匯出。'});
   if(Array.isArray(profile.skills)&&Array.isArray(value.p.skills)&&value.p.skills.some(id=>!profile.skills.includes(id)))blockers.push({code:'UNKNOWN_SKILL',message:'此版本沒有角色已學會的技能，暫時不能安全轉換。'});
+  const retired=new Set(profile.retiredItems||[]);
   const checkItem=(item,location)=>{
    if(item===null||item===undefined)return;
    if(!record(item)||typeof item.id==='undefined'){blockers.push({code:'ITEM_SHAPE',location,message:'物品資料不完整。'});return;}
    if(profile.sherineSystem!==1&&/^(潮誓|葬星|裂鎧|冥契|破曉|鏡潮|星祭|封夢|噬影|界織|祖誓|燼心)夢?$/.test(item.seteff||'')){blockers.push({code:'SHERINE_SYSTEM',location,message:'目標版本沒有這件席琳新系的套裝效果，不能安全轉出。'});return;}
+   if(retired.has(item.id)){warnings.push({code:'RETIRED_ITEM',location,message:'此物品已停用，讀檔時將保留原始物品資料。'});return;}
    const def=itemDefinition(profile,String(item.id));
    if(!def){blockers.push({code:'UNKNOWN_ITEM',location,message:'無法辨識物品 '+String(item.id)+'，已停止以免遺失物品或效果；請更新程式與物品資料後再試。'});return;}
    if(def.cap!==null&&Number.isFinite(def.cap)&&Number(item.en)>def.cap)blockers.push({code:'ENCHANT_CAP',location,message:'此版本會降低這件裝備的強化值。'});
@@ -106,5 +108,5 @@
  function exportRole(input,profile){const d=inspect(input);if(d.kind!=='role')fail('SELECT_ROLE','完整備份請先還原至合併版，再匯出選定角色。');const a=analyzeCompatibility(d.value,profile);if(!a.ok)fail('INCOMPATIBLE',a.blockers[0].message);return codec.wrap(d.payload);}
  function roleKeys(keys){return Object.keys(keys).filter(k=>/^lineage_idle_save(?:_\d+)?$/.test(k));}
  function encodeRole(value){safeTree(value);validateRole(value);return codec.wrap(JSON.stringify(value));}
- return Object.freeze({decode,inspect,parse,pack,validateRole,analyzeCompatibility,exportRole,roleKeys,SaveError,MAX_TEXT,own,record,encodeRole});
+ return Object.freeze({decode,inspect,parse,pack,validateRole,itemDefinition,analyzeCompatibility,exportRole,roleKeys,SaveError,MAX_TEXT,own,record,encodeRole});
 });

@@ -1,0 +1,157 @@
+/* The phone view shares the native hotbar, channels and map with the desktop. */
+html body.giran-chrome:not(.m-unified) #giran-dock .ga-phone-action {display:none}
+html body.giran-chrome.giran-running.m-unified {
+  --ga-phone-nav:54px;
+  --ga-dock:calc(148px + var(--ga-floor));
+}
+html body.giran-chrome.giran-running.m-unified #game-screen #col-center #map-view-panel {
+  bottom:var(--ga-field-bottom,var(--ga-dock))!important;
+}
+html body.giran-chrome.giran-running.m-unified > .ga-chat,
+html body.giran-chrome.giran-running.m-unified #ga-radar-dock {display:none}
+/* The journal still reads the native log nodes while the player views the field. */
+html body.giran-chrome.giran-running #game-screen :is(#lm-logs,#log-row) {display:none!important}
+html body.giran-chrome.giran-running.m-unified #giran-dock {
+  inset:auto var(--ga-end) var(--ga-floor) var(--ga-margin);margin-inline:auto;transform:none;
+  width:auto;max-width:940px;height:auto;min-height:0;box-sizing:border-box;
+  grid-template-areas:"identity identity identity identity identity identity" "keys keys keys keys journey hunt" "map chat character bag settings more";
+  grid-template-rows:19px 46px 44px;grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:2px;padding:12px 3px 2px;
+}
+html body.giran-chrome.giran-running.m-unified #giran-dock :is(.ga-nav-keys,.ga-quick-actions,.ga-commands) {display:contents}
+html body.giran-chrome.giran-running.m-unified #giran-dock .ga-pilot {grid-area:identity;display:flex;height:auto;border:0;padding:0 3px}
+html body.giran-chrome.giran-running.m-unified #giran-dock .ga-portrait {display:none}
+html body.giran-chrome.giran-running.m-unified .ga-pilot-info {display:flex;align-items:center;justify-content:space-between;gap:6px}
+html body.giran-chrome.giran-running.m-unified #giran-dock .ga-pilot-info .status-exp-bar {flex:0 0 90px}
+html body.giran-chrome.giran-running.m-unified #giran-dock > #giran-vitals {--ga-vital-height:34px}
+html body.giran-chrome.giran-running.m-unified #giran-dock :is(.ga-phone-action,.ga-more,.ga-journey,.ga-hunt-toggle) {display:flex;align-items:center;justify-content:center;flex-direction:column;width:100%}
+html body.giran-chrome.giran-running.m-unified #giran-dock :is(.ga-nav-keys button,.ga-more,.ga-phone-action,.ga-journey,.ga-hunt-toggle) {
+  touch-action:manipulation;min-width:0;min-height:44px;padding:2px;gap:1px;font:600 13px/1.15 var(--ga-serif);color:var(--ga-copy);
+  border:1px solid #5b4f50;border-radius:3px;background:linear-gradient(#38343e,#26232c);
+}
+html body.giran-chrome.giran-running.m-unified #giran-dock :is([aria-expanded=true],.ga-hunt-toggle[aria-pressed=true]) {
+  background:linear-gradient(#544737,#372f2c);border-color:#ad905c;color:#ffe6a5;
+}
+html body.giran-chrome.giran-running.m-unified #giran-dock .ga-ico {height:19px;width:21px;line-height:19px;font-size:18px}
+html body.giran-chrome.giran-running.m-unified #giran-dock #giran-vitals :is(.ga-sleep,.hb-lock) {
+  position:absolute;bottom:100%;z-index:4;display:grid;place-items:center;width:44px;height:44px;
+  border:0;padding:0;background:transparent;pointer-events:auto;touch-action:manipulation;
+}
+html body.giran-chrome.giran-running.m-unified #giran-vitals .ga-sleep {left:0}
+html body.giran-chrome.giran-running.m-unified #giran-vitals .hb-lock {right:0}
+html body.giran-chrome.giran-running.m-unified #giran-vitals :is(.ga-sleep,.hb-lock) i {
+  display:grid;place-items:center;width:32px;height:32px;border:1px solid #a28a5b;border-radius:50%;
+  background:linear-gradient(#3c363d,#242129);color:#ffe4a4;font:24px/1 Georgia,serif;
+}
+html body.giran-chrome.giran-running.m-unified #giran-vitals .hb-lock i {font:18px/1 sans-serif}
+html body.giran-chrome.giran-running.m-unified #giran-vitals .hb-lock[aria-pressed=true] i {background:#514536;border-color:#e7bd78}
+html body.giran-chrome.giran-running.m-unified:not([data-giran-pane]) #pandora-banner {
+  right:max(calc(var(--ga-end) + 48px),calc((100% - 940px) / 2 + 48px));max-width:min(310px,calc(100% - var(--ga-margin) - var(--ga-end) - 96px));
+}
+html body.giran-chrome.giran-running.m-unified #giran-dock #ga-hot-dock {display:block;grid-area:keys;align-self:center;margin:0}
+html body.giran-chrome.giran-running.m-unified #ga-hot-dock #afk-hotbar {display:block;height:auto;padding:0;background:transparent;border:0;box-shadow:none}
+html body.giran-chrome.giran-running.m-unified #ga-hot-dock #afk-hotbar .hb-top {display:none!important}
+html body.giran-chrome.giran-running.m-unified #ga-hot-dock .hb-pages {min-width:0}
+html body.giran-chrome.giran-running.m-unified #ga-hot-dock .hb-slot {height:44px;min-height:44px;min-width:0}
+html body.giran-chrome.giran-running.m-unified #giran-dock .g-field-orders {grid-area:hunt;display:flex;padding:0;border:0}
+html body.giran-chrome.giran-running.m-unified #giran-dock .g-field-orders :is([data-hunt-mode],.g-field-focus) {display:none}
+html body.giran-chrome.giran-running.m-unified #giran-dock [data-pane=map] {grid-area:map}
+html body.giran-chrome.giran-running.m-unified #giran-dock [data-pane=chat] {grid-area:chat}
+html body.giran-chrome.giran-running.m-unified #giran-dock #giran-menu {grid-area:character}
+html body.giran-chrome.giran-running.m-unified #giran-dock .ga-bag {grid-area:bag}
+html body.giran-chrome.giran-running.m-unified #giran-dock [data-pane=settings] {grid-area:settings}
+.ga-potion-icon {object-fit:contain;image-rendering:pixelated}
+html body.giran-chrome.giran-running.m-unified #giran-dock #giran-journey {grid-area:journey;align-self:stretch;height:auto}
+html body.giran-chrome.giran-running.m-unified #giran-dock #giran-journey::before {content:"⇄" / "";color:#d9c89a;font:19px/19px Georgia,serif}
+html body.giran-chrome.giran-running.m-unified #giran-dock .ga-more {grid-area:more;position:static}
+html body.giran-chrome.giran-running.m-unified #giran-dock .ga-secondary {
+  display:none;position:absolute;bottom:calc(100% + 22px);right:0;z-index:5;
+  grid-area:auto;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;width:min(320px,100%);padding:6px;
+  background:var(--ga-surface);border:1px solid var(--ga-brass);border-radius:4px;box-shadow:0 2px 10px #131017bb;
+}
+html body.giran-chrome.giran-running.m-unified #giran-dock.ga-more-open .ga-secondary {display:grid}
+html body.giran-chrome.giran-running.m-unified #giran-dock #ga-more-actions button {display:flex;grid-area:auto;flex-direction:column;align-items:center;justify-content:center;height:auto}
+html body.giran-chrome.giran-running.m-unified #giran-console[data-panel=settings] #tab-automation {display:flex!important;flex-direction:column}
+html body.giran-chrome.m-unified #giran-location {max-width:calc(100% - 65px);align-items:center}
+html body.giran-chrome.m-unified #giran-location>strong {min-width:0;overflow-wrap:anywhere}
+html body.giran-chrome.m-unified #giran-location>small {flex:none;white-space:nowrap}
+body.m-unified .ga-world-events {flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding-left:5px;font-size:11px}
+body.m-unified .ga-world-events #afk-ev-badges {font-size:inherit}
+.ga-phone-status {display:none;position:fixed;inset:6px 5px auto;height:0;z-index:681;pointer-events:none}
+body.giran-running.m-unified:not([data-giran-pane]) .ga-phone-status {display:block}
+body.m-unified .ga-phone-status #lm-status-toggle {top:0;right:2px;pointer-events:auto}
+body.m-unified .ga-phone-status #status-icon-bar {max-width:none;max-height:min(184px,43dvh);box-sizing:border-box}
+html body.giran-chrome.giran-running.m-unified #giran-console[data-panel=settings] #tab-automation > :has(#set-pot) {order:-1}
+html body.giran-chrome.giran-running.m-unified[data-giran-pane] #giran-dock {
+  grid-template-areas:"map chat character bag settings more";grid-template-rows:44px;grid-template-columns:repeat(6,minmax(0,1fr));padding:1px 3px;
+}
+html body.giran-chrome.giran-running.m-unified[data-giran-pane] #giran-dock :is(#giran-vitals,.ga-pilot,#ga-hot-dock,.g-field-orders,#giran-journey) {display:none}
+html body.giran-chrome.giran-running.m-unified[data-giran-pane] #giran-location {display:none}
+html body.giran-chrome.giran-running.m-unified #giran-console {
+  inset:max(3px,env(safe-area-inset-top)) var(--ga-end) calc(var(--ga-phone-nav) + var(--ga-floor) + 5px) var(--ga-margin);
+  width:auto;max-width:720px;margin-inline:auto;max-height:none;
+}
+html body.giran-chrome.giran-running.m-unified #giran-console[data-panel=chat] .ga-content {display:flex;flex-direction:column;overflow:hidden;padding:2px}
+html body.giran-chrome.giran-running.m-unified #giran-console .ga-chat {
+  position:static;display:flex;visibility:visible;flex:1;min-height:0;width:100%;height:auto;background:var(--ga-panel-inset);border:0;box-shadow:none;
+}
+#giran-console .ga-chat>header {flex:none;padding:4px}
+#giran-console .ga-chat>header select {min-height:44px;flex:1;font-size:16px}
+#giran-console .ga-chat>header button {display:none}
+#giran-console .ga-chat:not(.ga-folded) :is(#world-log,#gr-chat,#ga-chat-feed,#afk-hb-log) {
+  flex:1 1 0!important;height:auto!important;max-height:none!important;min-height:0;overflow-y:auto;
+}
+/* Sender, timestamp, amounts and item names share the same reading size. */
+.m-unified #giran-console .ga-chat {--ga-log-size:1.05rem;--chat-line:1.8rem;--ga-ink:#c8c9dd}
+.m-unified #giran-console .ga-chat :is(#world-log,#gr-chat,#ga-chat-feed,#afk-hb-log),
+.m-unified #giran-console .ga-chat :is(#world-log,#gr-chat,#ga-chat-feed,#afk-hb-log) :where(*) {
+  font-size:var(--ga-log-size)!important;line-height:var(--chat-line)!important;
+}
+.m-unified #giran-console #ga-chat-feed > [data-tone] {
+  color:var(--ga-ink)!important;border-inline-start:3px solid var(--ga-ink);padding-inline-start:7px;
+}
+.m-unified #ga-chat-feed > :where([data-tone=combat],.log-cat-attack) {--ga-ink:#83c9ff}
+.m-unified #ga-chat-feed > :where(.log-cat-skill) {--ga-ink:#cba5ff}
+.m-unified #ga-chat-feed > :where(.log-cat-enemy) {--ga-ink:#ff918c}
+.m-unified #ga-chat-feed > :where(.text-yellow-300,.text-orange-300) {--ga-ink:#ffc184}
+.m-unified #ga-chat-feed > :where([class~="text-blue-200/80"],.text-slate-200) {--ga-ink:#bfcfe1}
+.m-unified #ga-chat-feed > :where(.text-cyan-300,.text-teal-300) {--ga-ink:#8de8ed}
+.m-unified #ga-chat-feed > :where([data-tone=healing],.text-green-300) {--ga-ink:#76e6ac}
+.m-unified #ga-chat-feed > :where(.log-cat-dot) {--ga-ink:#c4e781}
+.m-unified #ga-chat-feed > :where([data-tone=critical],.crit-hit) {--ga-ink:#ffa35b}
+.m-unified #ga-chat-feed > :where([data-tone=loot]) {--ga-ink:#ffda78}
+.m-unified #ga-chat-feed > :where([data-tone=experience]) {--ga-ink:#69e4df}
+.m-unified #ga-chat-feed > :where([data-tone=dialogue]) {--ga-ink:#9fcfff}
+.m-unified #giran-console #ga-chat-feed :where([data-tone=experience],.sys-item-gain) span,
+.m-unified #giran-console #ga-chat-feed .sys-item-gain {color:inherit!important}
+.m-unified #giran-console #ga-chat-feed .sys-item-gain :is(.sys-drop-legend,.c-legend) {color:#f0a020!important}
+.m-unified #giran-console #ga-chat-feed .sys-item-gain :is(.sys-drop-relic,.c-relic) {color:#4cc9f0!important}
+.m-unified #giran-console #ga-chat-feed [style*="color"] {filter:none}
+.m-unified #giran-console #ga-chat-feed > :where([data-tone=combat],[data-tone=critical],[data-tone=healing],[data-tone=system]) :is(.text-amber-300,.text-yellow-300) {color:#ffe5a2!important}
+.m-unified #giran-console #ga-chat-feed > [data-tone=system] :is(.text-red-400,.text-rose-400) {color:#ff918c!important}
+.m-unified #giran-console #ga-chat-feed > [data-tone=system] :is(.text-green-300,.text-emerald-300,.text-emerald-400) {color:#76e6ac!important}
+.m-unified #giran-console #ga-chat-feed > [data-tone=system] :is(.text-sky-300,.text-blue-300,.text-cyan-300) {color:#83c9ff!important}
+.m-unified #giran-console #ga-chat-feed > [data-tone=system] :is(.text-violet-300,.text-purple-300) {color:#cba5ff!important}
+#giran-console .ga-chat #world-log>.log-entry {height:auto;white-space:normal;overflow-wrap:anywhere}
+#giran-console .ga-chat .ga-feed-latest:not([hidden]),
+#giran-console .ga-chat #world-log-unlock:not(.hidden) {
+  position:static;display:block;flex:none;align-self:center;transform:none;min-height:36px;margin:2px 0;
+  padding:2px 12px;font-size:15px;color:#f2d69f;background:var(--ga-panel-inset);border:1px solid var(--ga-brass);border-radius:4px;
+}
+#giran-console #afk-hb-main,#giran-console .afk-hb-body {display:flex;flex:1;min-height:0;flex-direction:column}
+#giran-console .ga-chat :is(#world-input,#gr-text,#afk-hb-input) {font-size:16px;min-height:44px}
+#giran-console .ga-chat :is(#world-send,#gr-say,#afk-wc-mute-btn) {min-height:44px}
+#giran-console #ga-area-drop-toggle {position:static;min-height:44px;margin-left:auto}
+html body.giran-chrome.giran-running.m-unified #ga-area-drops:not([hidden]) {
+  z-index:2501;inset:max(5px,env(safe-area-inset-top)) var(--ga-end) calc(var(--ga-phone-nav) + var(--ga-floor) + 5px) var(--ga-margin);
+  width:auto;max-width:520px;max-height:none;margin-inline:auto;
+}
+@media (min-width:680px) and (max-height:540px) {
+  html body.giran-chrome.giran-running.m-unified #giran-console .ga-atlas canvas {width:min(100%,100dvh);height:auto;margin-inline:auto}
+  html body.giran-chrome.giran-running.m-unified:not([data-giran-pane]) #giran-dock {
+    grid-template-areas:"identity identity identity identity identity identity identity identity identity identity identity identity"
+                        "keys keys keys keys journey hunt map chat character bag settings more";
+    grid-template-rows:18px 44px;grid-template-columns:repeat(12,minmax(0,1fr));
+  }
+  html body.giran-chrome.giran-running.m-unified {--ga-dock:calc(97px + var(--ga-floor))}
+}

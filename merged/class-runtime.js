@@ -9,9 +9,9 @@
  function packed(doc){return 'LZ1:'+LZString.compressToUTF16(_saveWrap(JSON.stringify(doc)));}
  function change(changes,key,after){changes.push({key,before:localStorage.getItem(key),after,reason:'CLASS_PROGRESSION'});}
  function safe(){return !_roleOtherActiveSessions().length;}
- async function commit(label,prepare){
+ async function commit(label,prepare,{progression=true}={}){
   const p=P(),slot=currentSlot;if(busy||!p?.cls||p.dead)throw Error('目前不能變更職業');if(!safe())throw Error('請先讓其他遊戲分頁回到首頁');
-  if(!/^town_/.test(mapState.current||''))throw Error('請回村或席琳神殿再進行永久變更');
+  if(progression&&!/^town_/.test(mapState.current||''))throw Error('請回村或席琳神殿再進行永久變更');
   const running=state.running;state.running=false;busy=true;
   try{const doc=JSON.parse(saveStateJson()),v=vault(),changes=[],prepared=prepare(C.copy(doc.p),C.copy(v),changes);
    if(prepared.player){if(!C.valid(prepared.player))throw Error('職業資料檢查失敗');doc.p=prepared.player;change(changes,'lineage_idle_save_'+slot,packed(doc));}
@@ -21,7 +21,8 @@
    if(typeof _lzWorkerRev!=='undefined')for(const c of changes)_lzWorkerRev[c.key]=(_lzWorkerRev[c.key]||0)+1;
    const rec=await W.LineageRecovery.transact(localStorage,changes,s=>W.LineageBackups.save({...s,label},'class-progression'),{integrity:'class',canWrite:()=>P()===p&&currentSlot===slot&&safe()});
    if(prepared.player)p.classPath=prepared.player.classPath;
-   if(typeof _petRosterKey!=='undefined')_petRosterKey=null;W.LineageClassCombat?.reset(p);calcStats();updateUI();return rec;
+   if(progression){if(typeof _petRosterKey!=='undefined')_petRosterKey=null;W.LineageClassCombat?.reset(p);}
+   calcStats();updateUI();return rec;
   }catch(e){failedBackup=e.backupId||null;throw e;}finally{busy=false;state.running=running;}
  }
  async function seal(slot){const entry=candidates().find(x=>x.slot===slot);if(!entry)throw Error('來源存檔已變更');if(entry.employed)throw Error('請先解除此角色的傭兵僱用');
@@ -30,7 +31,7 @@
    if(typeof _mercLedgerOutbox!=='undefined'&&_mercLedgerOutbox.some(r=>r&&String(r.slot)===String(slot)))throw Error('來源角色尚有待結算傭兵經驗，請先登入該角色領取');
    /* 11-21 Ping：只擋「這個角色登入真的領得到」的紀錄（跟 mercExpClaimPending 同條件：存檔位＋職業＋enSeed／名字）；存檔位以前的角色、領不到的舊帳不再永遠擋住封魂 */if(typeof _mercLedgerRead==='function'&&_mercLedgerRead().some(r=>{if(!r||r.claimed||String(r.slot)!==String(slot)||r.cls!==source.cls)return false;const same=!!(r.enSeed&&source.enSeed&&r.enSeed===source.enSeed);if(r.enSeed&&source.enSeed&&!same)return false;if(!same&&(r.name||'')!==(source.name||''))return false;return Math.floor(r.exp||0)>0||!!Math.trunc(Number(r.alignmentDelta)||0)||(r.questLoot||[]).length>0;}))throw Error('來源角色尚有待領傭兵經驗，請先登入該角色領取');
    const used=legacyUsed();if(source.enSeed&&used.includes(source.enSeed))throw Error('這個角色已被舊制進化消耗，不能再次封魂');if(source.enSeed)change(changes,'afk_evo_used_v1',JSON.stringify(used.concat(source.enSeed)));
-   const souls=C.seal(v,source,{id:crypto.randomUUID(),identity:entry.identity,slot,at:Date.now()});
+   const souls=C.seal(v,source,{id:LineageClientCrypto.uuid(),identity:entry.identity,slot,at:Date.now()});
    if(typeof PET_ROSTER_KEY!=='undefined')for(const key of [PET_ROSTER_KEY,PET_ROSTER_KEY+'_classic']){
     const raw=_lzGet(key);if(!raw)continue;const u=_saveUnwrap(raw);if(!u?.ok)throw Error('寵物名冊驗證失敗，未封魂');const list=JSON.parse(u.payload);if(!Array.isArray(list))throw Error('寵物名冊格式不符');let changed=false;
     const owner=typeof _petOwnerKeyFor==='function'?_petOwnerKeyFor(source):null;
@@ -46,7 +47,7 @@
  async function advance(route,soul,ult,breach){return commit('職業進化／融合轉職',(p,v)=>C.advance(p,v,route,soul,ult,breach));}
  async function convert(route){return commit('舊制進化一次轉換',p=>({player:C.convert(p,route,W.__afkEvolve?.S[p.afkEvo?.school])}));}
  async function choose(id){return commit('永久選定大絕',p=>({player:C.chooseUltimate(p,id)}));}
- async function configure(id,kind){return commit('職業技能設定',p=>{if(!C.canUse(p,id))throw Error('尚未開放此技能');const s=C.skills.get(id);if(s.type==='被動')throw Error('被動常駐生效');const key=kind==='aura'?'auras':'auto';if(key==='auras'&&s.type!=='光環'||key==='auto'&&s.type==='光環')throw Error('技能類型不符');const list=p.classPath[key]||[];if(list.includes(id))p.classPath[key]=list.filter(x=>x!==id);else{if(list.length>=(key==='auras'?2:8))throw Error('自動技能最多八招，光環最多兩個');p.classPath[key]=list.concat(id);}return {player:p};});}
+ async function configure(id,kind){return commit('職業技能設定',p=>{if(!C.canUse(p,id))throw Error('尚未開放此技能');const s=C.skills.get(id);if(s.type==='被動')throw Error('被動常駐生效');const key=kind==='aura'?'auras':'auto';if(key==='auras'&&s.type!=='光環'||key==='auto'&&s.type==='光環')throw Error('技能類型不符');const list=p.classPath[key]||[];if(list.includes(id))p.classPath[key]=list.filter(x=>x!==id);else{if(list.length>=(key==='auras'?2:8))throw Error('自動技能最多八招，光環最多兩個');p.classPath[key]=list.concat(id);}return {player:p};},{progression:false});}
  const save=W.saveGame;W.saveGame=function(){if(busy)return false;return save.apply(this,arguments);};
  // Ordinary old evolution keeps working until its owner accepts the one-time migration.
  if(W.__afkEvolve)W.__afkEvolve.evolve=function(){W.LineageClassUI?.open('route');};

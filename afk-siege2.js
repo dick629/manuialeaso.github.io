@@ -560,7 +560,7 @@
   var members = function () {
     var out = []; var p = P(); if (!p) return out;
     if (!p.dead) out.push(p);
-    (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); });
+    GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push(a); });
     return out;
   };
   var hurt = function (t, dmg) {

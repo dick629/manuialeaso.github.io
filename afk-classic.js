@@ -241,7 +241,7 @@
       return r;
     };
   }
-  if (typeof W.loadGame === 'function') { var oLoad = W.loadGame; W.loadGame = function () { var r = oLoad.apply(this, arguments); try { if (pendingConvert) { var _tri = pendingConvert === 2; pendingConvert = false; convertToClassic(_tri); } syncProxy(); syncOrin(); syncAncient(); migrateAll(); trimParty(); sealAll(P()); } catch (e) {} return r; }; }
+  if (typeof W.loadGame === 'function') { var oLoad = W.loadGame; W.loadGame = function () { var r = oLoad.apply(this, arguments); try { if (pendingConvert) { var _tri = pendingConvert === 2; pendingConvert = false; convertToClassic(_tri); } syncProxy(); syncOrin(); syncAncient(); migrateAll(); sealAll(P()); } catch (e) {} return r; }; }
 
   // ── 四、只有黑暗妖精之前的版本：職業封印 ──
   var OPEN = { royal: 1, knight: 1, elf: 1, mage: 1 };
@@ -501,7 +501,7 @@
   // 組隊經驗：依等級²分配（每位隊員拿 自己Lv² ÷ 全隊Lv²總和），每多一位隊員 +4%，隊伍有王族再 +5.9%
   W.__afkExpShare = function (x) {
     var p = P(); if (!(p && p.classicMode) || !x) return 1;
-    var mem = [p].concat((p.allies || []).filter(function (a) { return a && !a._downed; }));
+    var mem = [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed; }));
     if (mem.length <= 1) return 1;
     var sum = mem.reduce(function (s2, m) { var l = m.lv || 1; return s2 + l * l; }, 0), l2 = (x.lv || 1) * (x.lv || 1);
     return sum > 0 ? l2 / sum : 1;
@@ -520,7 +520,7 @@
     var oPEB = W.partyExpBonusPct;
     W.partyExpBonusPct = function () {
       var p = P(); if (!(p && p.classicMode)) return oPEB.apply(this, arguments);
-      var al = (p.allies || []).filter(function (a) { return a && !a._downed; });
+      var al = GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed; });
       if (!al.length) return 0;
       return al.length * 4 + ((p.cls === 'royal' || al.some(function (a) { return a.cls === 'royal'; })) ? 5.9 : 0);
     };
@@ -675,18 +675,6 @@
       return oEnter.apply(this, arguments);
     };
   }
-
-  // ── 十、經典模式隊伍最多四人（自己＋3 名傭兵）──
-  var PARTY_MAX = 3;
-  if (typeof W.allyActiveCap === 'function') { var oCap2 = W.allyActiveCap; W.allyActiveCap = function () { var c = oCap2.apply(this, arguments); return on() ? Math.min(PARTY_MAX, c) : c; }; }
-  var trimParty = function () {
-    var p = P(); if (!(p && p.classicMode) || !p.allies || p.allies.length <= PARTY_MAX) return;
-    var extra = p.allies.slice(PARTY_MAX);
-    extra.forEach(function (a) { try { snapshotMercPrefs(a); var m = _settleAllyExp(a, 'dismiss'); if (m) sys(m); } catch (e) {} });
-    p.allies = p.allies.slice(0, PARTY_MAX);
-    try { syncMercenaryEmploymentRegistry(true); } catch (e) {}
-    sys('<span class="text-amber-300">經典模式隊伍最多四人（含自己），多出的 ' + extra.length + ' 名傭兵已解散。</span>');
-  };
 
   // ── 十一、聖使阿卡塔贖回裝備：經典模式一次一件，冷卻現實時間 12 小時 ──
   var REDEEM_CD = 12 * 3600 * 1000;
@@ -947,6 +935,6 @@
     return 0;
   };
   var ERA_TXT = { '0': '序章起', '1': '黑妖三部曲起', '-1': '經典沒有' };
-  W.AFK_CLASSIC = { mapEra: mapEra, itemEra: itemEra, eraText: function (n) { return ERA_TXT[String(n)] || ''; }, shopBlocked: shopBlocked, trilogyUnlocked: trilogyUnlocked, CHAPTERS: CHAPTERS, skillLocked: skillLocked, itemOutOfEra: itemOutOfEra, ownStats: ownStats, convertToClassic: convertToClassic, redeemLeft: redeemLeft, trimParty: trimParty, classicReq: classicReq, deathPct: deathPct, dropRate: dropRate, migrateAll: migrateAll, rollDog: rollDog, era: era, setEra: setEra, ERAS: ERAS, part1: PART1, sealedMap: sealedMap, openCls: openCls, ancStock: ancStock, syncAncient: syncAncient, net: net, NET: NET, lagging: lagging, bugged: bugged, floors: FLOORS, stairs: STAIRS, orin: ORIN, syncOrin: syncOrin, open: OPEN, rollNet: rollNet, goFloor: goFloor };
+  W.AFK_CLASSIC = { mapEra: mapEra, itemEra: itemEra, eraText: function (n) { return ERA_TXT[String(n)] || ''; }, shopBlocked: shopBlocked, trilogyUnlocked: trilogyUnlocked, CHAPTERS: CHAPTERS, skillLocked: skillLocked, itemOutOfEra: itemOutOfEra, ownStats: ownStats, convertToClassic: convertToClassic, redeemLeft: redeemLeft, classicReq: classicReq, deathPct: deathPct, dropRate: dropRate, migrateAll: migrateAll, rollDog: rollDog, era: era, setEra: setEra, ERAS: ERAS, part1: PART1, sealedMap: sealedMap, openCls: openCls, ancStock: ancStock, syncAncient: syncAncient, net: net, NET: NET, lagging: lagging, bugged: bugged, floors: FLOORS, stairs: STAIRS, orin: ORIN, syncOrin: syncOrin, open: OPEN, rollNet: rollNet, goFloor: goFloor };
   console.log('[AFK-classic] 已啟用：經典模式補正（256K 撥接、不死系頭目、古魯丁地監攀爬、歐林、職業封印）');
 })();

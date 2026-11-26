@@ -1,20 +1,21 @@
-/* Original raster relief: decoration only; no palette or portrait overrides.
-   11-11 效能：框圖縮成 502px WebP（原 1254px PNG 1MB），框層獨立合成，戰鬥畫面重畫時不跟著重新柵格化。 */
-body:not(.m-unified) #game-screen .panel{position:relative}
-/* Keep the experience bar clear of the lower relief. */
-body:not(.m-unified) #status-panel{padding-bottom:10px}
-body:not(.m-unified) #game-screen .panel::after,
+/* Give the desktop relief its own border box so it can't paint over controls or scrolling text. */
+body:not(.m-unified) #game-screen .panel{
+ --panel-frame-width:clamp(12px,1vw,18px);
+ position:relative;
+ border:var(--panel-frame-width) solid transparent;
+ border-image:url('../assets/ui/interface-v7/dragon-carved-frame-s.webp') 96 / 1 / 0 stretch;
+}
+body:not(.m-unified) #game-screen #map-view-panel{
+ --panel-frame-width:clamp(16px,1.3vw,24px);
+ container-type:inline-size;
+}
 #growth-overlay>section::after,#class-overlay>section::after,#attribute-help>section::after{
  content:'';position:absolute;inset:-2px;z-index:5;pointer-events:none;
  border:0 solid transparent;border-image:url('../assets/ui/interface-v7/dragon-carved-frame-s.webp') 96 / 36px / 0 stretch;will-change:transform;
  width:auto;height:auto;top:-2px;right:-2px;left:-2px;bottom:-2px;
 }
-body:not(.m-unified) #game-screen .panel>.panel-header{padding-left:30px;padding-right:30px}
-/* Reserve real layout space for the right-column relief instead of painting
-   across edge-aligned tabs, stat labels and the scrolling content. */
-body:not(.m-unified) #col-right>:is(.tab-bar,#tab-content-panel){padding:18px;min-width:0;min-height:0}
+body:not(.m-unified) #col-right>:is(.tab-bar,#tab-content-panel){padding:4px;min-width:0;min-height:0}
 body:not(.m-unified) #col-right>.tab-bar{flex-shrink:0}
-body:not(.m-unified) #col-right>:is(.tab-bar,#tab-content-panel)::after{border-image-width:20px}
 body:not(.m-unified) #tab-content-panel>.h-full{min-height:0;min-width:0}
 #attribute-help>section,#class-overlay>section{position:relative}
 #growth-overlay>section::before{display:none}

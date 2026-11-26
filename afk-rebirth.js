@@ -200,8 +200,6 @@
     var oGain = window.getExpGainMult;
     window.getExpGainMult = function (lv) { if (lv >= 100 && lv < 150) return 1; return oGain.apply(this, arguments); };   // 只有轉生角色到得了 100 以上
   }
-  // 傭兵：任何職業都能帶 7 名；轉生後 15 名（連自己 16 人上場）
-  if (typeof window.allyActiveCap === 'function') window.allyActiveCap = function () { return reborn() ? 15 : 7; };
 
   // 雙持：玩家 2026-10-28 移除「轉生後任何武器都能雙持」——照原本的職業規則（戰士雙斧等）。
   //   已經用轉生雙持拿在副手、照原規則不能拿的武器：讀檔／重算時自動卸回背包。

@@ -1,33 +1,25 @@
 /* ============================================================================
  * afk-heartbeat.js — 旅人頻道（心跳聊天，玩家 2026-10-27 指定）
  *
- * 真人玩家之間的聊天，跟世界頻道（NPC 閒聊）分開：世界頻道標題旁多一顆「💬 旅人」專屬按鈕，
- * 打開是獨立的聊天視窗（字體 14px、遊戲原生的炭灰面板＋銅邊）。
- *   ‧由網頁直接統整（玩家 2026-10-27）：網站設好伺服器（DEFAULT_API）後，所有玩家進遊戲就自動連上，不用註冊或設定；
- *     每 5 分鐘送一次心跳：角色名、職業、等級（不送裝備、地圖、存檔）。不想出現在名冊可以按「隱身」
- *   ‧20 分鐘內有心跳的算在線（11-19 伺服器省額度：10 → 20）；視窗打開時每 30 秒抓新訊息（11-19：15 → 30 秒），關著時只靠心跳順便看有沒有新訊息（按鈕亮點）
- *   ‧每則最多 80 字；同一人 5 秒一句、一小時 60 句（伺服器把關）
- * 後端：backend/heartbeat（Cloudflare Worker＋D1，免費額度夠用）。部署後把網址寫進下方 DEFAULT_API（「伺服器設定」只給管理者測試用，網址帶 ?hbadmin 才看得到）。
- * 沒設定伺服器時只顯示說明，不會連任何地方。
- * ========================================================================== */
+ * 走路模式從世界對話框的頻道選單切換旅人，沿用同一個對話框。
+ *   本機服務提供旅人身分、頻道、寄賣與討伐。更換共用資料夾時會連到該資料庫。
+ */
 (function () {
   'use strict';
   var W = window, T = W.AFK_TOGGLES;
-  if (T && T.register) T.register({ id: 'heartbeat', name: '旅人頻道（真人聊天）', desc: '世界頻道旁的「💬 旅人」按鈕：跟其他真人玩家聊天；要自己加入才會連線', group: '遊戲介面' });
+  if (T && T.register) T.register({ id: 'heartbeat', name: '旅人頻道（真人聊天）', desc: '在對話框切換到旅人頻道，可與其他玩家交談或切換隱身。', group: '遊戲介面' });
   var on = function () { return !T || T.enabled('heartbeat'); };
 
-  var DEFAULT_API = 'https://lineage-heartbeat.manuialeaso.workers.dev';   // 部署好 Worker 後可以把網址寫在這裡（所有人預設連這台）；也可以在視窗裡另外設定
-  var K = { api: 'afk_hb_api', id: 'afk_hb_id', join: 'afk_hb_join', seen: 'afk_hb_seen' };
+  var K = { id: 'afk_hb_id', join: 'afk_hb_join', seen: 'afk_hb_seen' };
   var BEAT_MS = 5 * 60 * 1000, FEED_MS = 30000;   // 11-19：15 → 30 秒（D1 每日讀取額度）
   var CLS = { royal: ['王族', '#e8c48a'], knight: ['騎士', '#e57f6c'], elf: ['妖精', '#9bc48a'], mage: ['法師', '#8fb4e8'], dark: ['黑暗妖精', '#b59be0'], dragon: ['龍騎士', '#e09a5b'], illusion: ['幻術士', '#d38fc4'], warrior: ['戰士', '#c9b28a'] };
   var get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
   var set = function (k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
-  var api = function () { var u = get(K.api) || DEFAULT_API || ''; return u.replace(/\/+$/, ''); };
+  var api = function () { return W.LineageSite.traveler; };
   var ident = function () { try { var o = JSON.parse(get(K.id) || 'null'); return o && o.uid && o.token ? o : null; } catch (e) { return null; } };
   // 玩家 2026-10-27：由網頁直接統整，不用自己加入——有伺服器就自動連上；玩家可以選「隱身」（K.join='0'）不出現在名冊
   var joined = function () { return get(K.join) !== '0' && !!api(); };
-  var admin = function () { try { return /[?&]hbadmin\b/.test(location.search) || !!get(K.api); } catch (e) { return false; } };
   var P = function () { return (typeof player !== 'undefined' && player && player.cls) ? player : null; };
   var me = function () { var p = P(); return p ? { name: String(p.name || '旅人').slice(0, 12), cls: CLS[p.cls] ? p.cls : 'knight', lv: Math.max(1, Math.min(999, Math.floor(Number(p.lv) || 1))) } : null; };
 
@@ -41,53 +33,111 @@
       return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) { var e = new Error(d.error || ('連線失敗（' + r.status + '）')); e.status = r.status; throw e; } return d; });
     });
   }
+  var issuing = null;
+  // Web Storage changes can reach another renderer after the Web Lock is released.
+  // Publish the first join transactionally for overlapping tabs. Saved identities still take precedence.
+  var firstJoinStore;
+  async function firstJoin(update) {
+    try {
+      if (!firstJoinStore) firstJoinStore = new Promise(function (resolve, reject) {
+        var open = indexedDB.open('giran-traveler-first-join', 1);
+        open.onupgradeneeded = function () { open.result.createObjectStore('join'); };
+        open.onerror = function () { reject(open.error); };
+        open.onsuccess = function () {
+          var db = open.result;
+          db.onversionchange = function () { db.close(); firstJoinStore = null; };
+          resolve(db);
+        };
+      });
+      var db = await firstJoinStore;
+      return await new Promise(function (resolve, reject) {
+        var tx = db.transaction('join', 'readwrite'), store = tx.objectStore('join');
+        var request = store.get('initial'), result;
+        request.onsuccess = function () { result = update(request.result, store); };
+        tx.oncomplete = function () { resolve(result); };
+        tx.onabort = function () { reject(tx.error); };
+      });
+    } catch (_) { firstJoinStore = null; return null; }
+  }
   function ensureId() {
     var id = ident(); if (id) return Promise.resolve(id);
-    return req('POST', '/hello', {}).then(function (d) { set(K.id, JSON.stringify({ uid: d.uid, token: d.token })); return ident(); });
+    var started = Date.now();
+    function recent(row) { return row && row.at >= started - 1000 ? row.id : null; }
+    async function create() {
+      var current = ident();
+      if (current) return current;
+      current = await firstJoin(recent);
+      if (!current) {
+        var reply = await req('POST', '/hello', {});
+        var candidate = {uid:reply.uid, token:reply.token};
+        current = await firstJoin(function (row, store) {
+          var existing = recent(row);
+          if (existing) return existing;
+          store.put({at:Date.now(), id:candidate}, 'initial');
+          return candidate;
+        }) || candidate;
+      }
+      localStorage.setItem(K.id, JSON.stringify(current));
+      return current;
+    }
+    if (!issuing) issuing = (navigator.locks ? navigator.locks.request('giran-traveler-identity', create) : create()).finally(function () { issuing = null; });
+    return issuing;
   }
   function beat() {
     if (!on() || !joined()) return Promise.resolve();
-    var m = me(); if (!m) return Promise.resolve();
+    var m = me(), sent; if (!m) return Promise.resolve();
     return ensureId().then(function (id) {
+      sent = id;
       return req('POST', '/beat', { uid: id.uid, token: id.token, name: m.name, cls: m.cls, lv: m.lv });
     }).then(function (d) {
       st.online = d.online; st.roster = d.roster || []; st.err = '';
       var seen = Number(get(K.seen) || 0); if (d.lastId > seen && !st.open) dot(true);
       paint();
-    }).catch(function (e) {
-      if (e.status === 401) set(K.id, null);   // 身分失效 → 下次重新領
+    }).catch(async function (e) {
+      if (e.status === 401 && sent && ident()?.uid === sent.uid) {
+        await firstJoin(function (row, store) {
+          if (row?.id.uid === sent.uid) store.delete('initial');
+        });
+        if (ident()?.uid === sent.uid) set(K.id, null);
+      }
       st.err = e.message; paint();
     });
   }
   function feed() {
-    if (!api()) return Promise.resolve();
+    if (!api() || !joined()) return Promise.resolve();
     return req('GET', '/feed?after=' + st.lastId).then(function (d) {
       (d.messages || []).forEach(function (m) { if (m.id > st.lastId) { st.msgs.push(m); st.lastId = m.id; } });
       if (st.msgs.length > 200) st.msgs = st.msgs.slice(-200);
       if (d.online != null) st.online = d.online;
-      set(K.seen, String(st.lastId)); dot(false); st.err = ''; paint(true);
+      set(K.seen, String(st.lastId)); dot(false); st.err = ''; paint();
     }).catch(function (e) { st.err = e.message; paint(); });
   }
   function say(text) {
     var id = ident(); if (!id || st.sending) return;
     st.sending = true; paint();
     req('POST', '/say', { uid: id.uid, token: id.token, text: text }).then(function () {
-      var inp = document.getElementById('afk-hb-input'); if (inp) inp.value = '';
-      return feed();
+      var inp = document.getElementById('afk-hb-input'); if(inp && inp.value.trim()===text)inp.value='';
+      return feed().then(function(){var log=document.getElementById('afk-hb-log');if(log)log.scrollTop=log.scrollHeight;});
     }).catch(function (e) {
       if (e.status === 409) return beat().then(function () { st.err = '已重新連線，請再送一次。'; paint(); });
       st.err = e.message; paint();
     }).then(function () { st.sending = false; paint(); });
   }
   function startBeat() { clearInterval(st.beatT); st.beatT = 0; if (joined()) { beat(); st.beatT = setInterval(beat, BEAT_MS); } }
+  function updateFeed() {
+    clearInterval(st.feedT); st.feedT=0;
+    if(!st.open || !joined())return;
+    feed();
+    st.feedT=setInterval(function(){if(!document.hidden)feed();},FEED_MS);
+  }
   function join() {
     set(K.join, '1'); st.err = '';
-    startBeat(); setTimeout(feed, 800); paint();
+    startBeat(); updateFeed(); paint();
   }
   function leave() {
     var id = ident(); set(K.join, '0'); clearInterval(st.beatT); st.beatT = 0;
     if (id && api()) req('POST', '/leave', { uid: id.uid, token: id.token }).catch(function () {});
-    st.roster = []; paint();
+    st.roster = []; updateFeed(); paint();
   }
 
   // ── 介面 ──
@@ -137,25 +187,33 @@
     b.addEventListener('click', open);
     var first = head.querySelector('span'); if (first && first.nextSibling) head.insertBefore(b, first.nextSibling); else head.appendChild(b);
   }
-  function modal() {
-    var m = document.getElementById('afk-hb-modal'); if (m) return m;
-    css();
-    m = document.createElement('div'); m.id = 'afk-hb-modal';
-    m.innerHTML = '<div class="afk-hb-box" role="dialog" aria-modal="true" aria-label="旅人頻道"><div class="afk-hb-head"><b>💬 旅人頻道</b><span id="afk-hb-count"></span><button type="button" id="afk-hb-x" aria-label="關閉旅人頻道">✕</button></div><div id="afk-hb-main" style="flex:1;min-height:0;display:flex;flex-direction:column"></div></div>';
-    document.body.appendChild(m);
+  function bindChannel(m) {
     m.addEventListener('click', function (e) {
-      if (e.target === m || e.target.id === 'afk-hb-x') { close(); return; }
+      if ((m.id==='afk-hb-modal' && e.target===m) || e.target.id==='afk-hb-x') { close(); return; }
       var t = e.target.closest('[data-hb]'); if (!t || t.disabled) return;
       var act = t.getAttribute('data-hb');
       if (act === 'join') join();
       else if (act === 'leave') leave();
-      else if (act === 'diag') { if (typeof W.__afkDiagReport !== 'function') return; if (!confirm('把這個角色目前的狀態摘要（等級、裝備強化、面板數值、所在地圖、最近打怪的命中與傷害）送給管理員，用來查問題。不會送整份存檔。確定送出？')) return; t.disabled = true; W.__afkDiagReport().then(function (r) { st.err = ''; alert(r || '已送出，謝謝！'); }).catch(function (er) { st.err = '回報失敗：' + (er && er.message || er); paint(); }).then(function () { t.disabled = false; }); }
+      else if (act === 'diag') { if (typeof W.__afkDiagReport !== 'function') return; if (!confirm('把這個角色目前的狀態摘要（等級、裝備強化、面板數值、所在地圖、最近打怪的命中與傷害）存到本機旅人資料庫，供你查問題。確定送出？')) return; t.disabled = true; W.__afkDiagReport().then(function (r) { st.err = ''; alert(r || '已送出，謝謝！'); }).catch(function (er) { st.err = '回報失敗：' + (er && er.message || er); paint(); }).then(function () { t.disabled = false; }); }
       else if (act === 'send') { var inp = document.getElementById('afk-hb-input'); var v = inp && inp.value.trim(); if (v) say(v); }
-      else if (act === 'cfg') { st.cfg = !st.cfg; paint(); }
-      else if (act === 'save') { var u = (document.getElementById('afk-hb-url') || {}).value || ''; u = u.trim(); if (u && !/^https:\/\/|^http:\/\/(localhost|127\.0\.0\.1)/.test(u)) { st.err = '網址要以 https:// 開頭。'; paint(); return; } set(K.api, u || null); set(K.id, null); st.cfg = false; st.msgs = []; st.lastId = 0; st.err = ''; startBeat(); if (u) feed(); paint(); }
     });
     m.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.id === 'afk-hb-input' && !e.isComposing) { e.preventDefault(); var v = e.target.value.trim(); if (v) say(v); } });
-    return m;
+  }
+  function surface() {
+    var inline=document.getElementById('ga-traveler');
+    if(inline){
+      if(!inline.querySelector('#afk-hb-main')){
+        css();
+        inline.innerHTML='<div class="ga-traveler-presence"><span id="afk-hb-count"></span><button type="button" data-roster aria-expanded="false">名冊</button></div><div id="afk-hb-main"></div>';
+        inline.querySelector('[data-roster]').onclick=function(e){var shown=inline.classList.toggle('show-roster');e.currentTarget.setAttribute('aria-expanded',String(shown));};
+        bindChannel(inline);
+      }
+      return inline;
+    }
+    var m=document.getElementById('afk-hb-modal'); if(m)return m;
+    css();m=document.createElement('div');m.id='afk-hb-modal';
+    m.innerHTML='<div class="afk-hb-box" role="dialog" aria-label="旅人頻道"><div class="afk-hb-head"><b>旅人頻道</b><span id="afk-hb-count"></span><button type="button" id="afk-hb-x" aria-label="關閉旅人頻道">×</button></div><div id="afk-hb-main"></div></div>';
+    document.body.appendChild(m);bindChannel(m);return m;
   }
   function msgHTML(x) {
     var c = CLS[x.cls] || ['', '#ddd8d2'], d = new Date(x.at), tm = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
@@ -163,56 +221,56 @@
   }
   function paint(scroll) {
     var cnt = document.getElementById('afk-hb-count');
-    if (cnt) cnt.textContent = st.online != null ? '（近 20 分鐘在線 ' + st.online + ' 人）' : '';
+    if (cnt) cnt.textContent = st.online != null ? '（近 10 分鐘在線 ' + st.online + ' 人）' : '';
     var main = document.getElementById('afk-hb-main'); if (!main || !st.open) return;
     var err = st.err ? '<div class="afk-hb-err">' + esc(st.err) + '</div>' : '';
-    if (!api() && !st.cfg) {
-      main.innerHTML = '<div class="afk-hb-note">'
-        + '<p>旅人頻道是<b>真人玩家</b>之間的聊天（世界頻道那邊是 NPC 閒聊）。</p>'
-        + '<p><b>還沒開通</b>：網站的旅人伺服器架好之後，所有玩家打開遊戲就會<b>自動連上</b>，不需要註冊或任何設定。</p>'
-        + (admin() ? '<p style="display:flex;gap:6px"><button type="button" class="sub" data-hb="cfg">伺服器設定（管理用）</button></p>' : '') + '</div>' + err;
-      return;
-    }
-    if (st.cfg) {
-      main.innerHTML = '<div class="afk-hb-note">'
-        + '<p>管理用：旅人伺服器是免費的 Cloudflare Worker＋D1，步驟寫在 <code>backend/heartbeat/README.md</code>。正式上線請把網址寫進 afk-heartbeat.js 的 DEFAULT_API，所有玩家就會自動連上；這裡填的只對這台瀏覽器有效（測試用）。</p>'
-        + '<p>部署好之後，把 Worker 的網址貼在這裡：</p>'
-        + '<input id="afk-hb-url" type="url" placeholder="https://lineage-heartbeat.你的帳號.workers.dev" value="' + esc(get(K.api) || DEFAULT_API) + '">'
-        + '<p style="display:flex;gap:6px"><button type="button" class="go" data-hb="save">儲存</button>' + (api() ? '<button type="button" class="sub" data-hb="cfg">取消</button>' : '') + '</p>'
-        + '<p style="font-size:12.5px">網址只存在這台瀏覽器。換網址會重新領一個旅人身分。</p></div>' + err;
-      return;
-    }
     if (!joined()) {
       main.innerHTML = '<div class="afk-hb-note">'
         + '<p>你目前是<b>隱身</b>：不會出現在旅人名冊，也不能說話。</p>'
         + '<p>回到頻道後，每 <b>5 分鐘</b>會送一次心跳：<b>角色名、職業、等級</b>（不送裝備、地圖或存檔）。</p>'
-        + '<p style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="go" data-hb="join"' + (P() ? '' : ' disabled') + '>回到頻道</button>' + (admin() ? '<button type="button" class="sub" data-hb="cfg">伺服器設定（管理用）</button>' : '') + '</p>'
+        + '<p style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="go" data-hb="join"' + (P() ? '' : ' disabled') + '>回到頻道</button>' + '</p>'
         + (P() ? '' : '<p>請先進入遊戲（選好角色）。</p>') + '</div>' + err;
       return;
     }
-    var keep = document.getElementById('afk-hb-input'), draft = keep ? keep.value : '', focus = keep && document.activeElement === keep;
-    var log = document.getElementById('afk-hb-log'), atBottom = !log || log.scrollHeight - log.scrollTop - log.clientHeight < 40;
-    main.innerHTML = '<div class="afk-hb-body"><div class="afk-hb-log" id="afk-hb-log">'
-      + (st.msgs.length ? st.msgs.map(msgHTML).join('') : '<div class="afk-hb-empty">還沒有人說話，打個招呼吧。</div>') + '</div>'
-      + '<div class="afk-hb-side"><h5>在線旅人</h5>' + (st.roster.length ? st.roster.map(function (r) { var c = CLS[r.cls] || ['', '#ddd8d2']; return '<div class="afk-hb-who"><span style="color:' + c[1] + '">' + esc(r.name) + '</span><em>Lv' + esc(r.lv) + '</em></div>'; }).join('') : '<div class="afk-hb-who" style="color:#7d756b">（等待心跳）</div>') + '</div></div>'
-      + err
-      + '<div class="afk-hb-foot"><input id="afk-hb-input" maxlength="80" autocomplete="off" placeholder="對旅人們說…（Enter 送出，最多 80 字）"><button type="button" class="go" data-hb="send"' + (st.sending ? ' disabled' : '') + '>送出</button>'
-      + '<button type="button" class="sub" data-hb="leave" title="不出現在名冊、不送心跳">隱身</button>' + (typeof W.__afkDiagReport === 'function' ? '<button type="button" class="sub" data-hb="diag" title="把角色狀態摘要送給管理員查問題">📮 回報狀態</button>' : '') + (admin() ? '<button type="button" class="sub" data-hb="cfg">伺服器設定</button>' : '') + '</div>';
-    var inp = document.getElementById('afk-hb-input'); if (inp) { inp.value = draft; if (focus) inp.focus(); }
-    var lg = document.getElementById('afk-hb-log'); if (lg && (scroll || atBottom)) lg.scrollTop = lg.scrollHeight;
+    if (!main.querySelector('#afk-hb-input')) {
+      main.innerHTML='<div class="afk-hb-body"><div class="afk-hb-log" id="afk-hb-log" role="log" aria-label="旅人訊息"></div><div class="afk-hb-side"><h5>在線旅人</h5><div data-hb-people></div></div></div>'
+        + '<div class="afk-hb-err" hidden></div><div class="afk-hb-foot"><input id="afk-hb-input" maxlength="80" aria-label="旅人訊息" autocomplete="off" placeholder="對旅人們說…"><button type="button" class="go" data-hb="send">送出</button>'
+        + '<button type="button" class="sub" data-hb="leave" title="不出現在名冊、不送心跳">隱身</button>'
+        + (typeof W.__afkDiagReport==='function'?'<button type="button" class="sub" data-hb="diag" title="儲存角色狀態到本機資料庫">回報狀態</button>':'')+'</div>';
+    }
+    var log=main.querySelector('#afk-hb-log'),last=String(st.lastId);
+    var bottom=log.scrollHeight-log.scrollTop-log.clientHeight<20;
+    if(log.dataset.last!==last){
+      var top=log.scrollTop;
+      log.innerHTML=st.msgs.length?st.msgs.map(msgHTML).join(''):'<div class="afk-hb-empty">還沒有人說話，打個招呼吧。</div>';
+      log.dataset.last=last;log.scrollTop=bottom?log.scrollHeight:top;
+    }
+    if(scroll)log.scrollTop=log.scrollHeight;
+    var people=main.querySelector('[data-hb-people]'),roster=JSON.stringify(st.roster);
+    if(people.dataset.roster!==roster){
+      people.dataset.roster=roster;
+      people.innerHTML=st.roster.map(function(r){var c=CLS[r.cls]||['','#ddd8d2'];return '<div class="afk-hb-who"><span style="color:'+c[1]+'">'+esc(r.name)+'</span><em>Lv'+esc(r.lv)+'</em></div>';}).join('')||'<div class="afk-hb-who">等待心跳</div>';
+    }
+    var error=main.querySelector('.afk-hb-err');error.hidden=!st.err;error.textContent=st.err||'';
+    main.querySelector('[data-hb="send"]').disabled=st.sending || !ident();
   }
   function open() {
     if (!on()) return;
-    var m = modal(); m.classList.add('open'); st.open = true; dot(false); paint(true);
-    if (joined()) { feed(); clearInterval(st.feedT); st.feedT = setInterval(function () { if (!document.hidden) feed(); }, FEED_MS); }
-    st.layer = (W.AFK_UI && AFK_UI.openLayer) ? AFK_UI.openLayer(hide) : null;
-    var inp = document.getElementById('afk-hb-input'); if (inp) inp.focus();
+    if(W.GiranPanels?.traveler && !W.GiranPanels.traveler.active()){W.GiranPanels.traveler.show();return;}
+    if(st.open)return;
+    var m=surface(), inline=m.id==='ga-traveler';
+    if(!inline)m.classList.add('open');
+    st.open=true;dot(false);paint(true);
+    if(joined())beat();
+    updateFeed();
+    st.layer = (!inline && W.AFK_UI && AFK_UI.openLayer) ? AFK_UI.openLayer(hide) : null;
+    var inp = document.getElementById('afk-hb-input'); if(inp&&!inline)inp.focus();
   }
   function hide() { st.open = false; st.layer = null; clearInterval(st.feedT); st.feedT = 0; var m = document.getElementById('afk-hb-modal'); if (m) m.classList.remove('open'); }
-  function close() { if (st.layer && W.AFK_UI) AFK_UI.closeLayer(st.layer); else hide(); }
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && st.open) { e.preventDefault(); close(); } });
+  function close() { if(W.GiranPanels?.traveler?.active()){W.GiranPanels.traveler.back();return;} if (st.layer && W.AFK_UI) AFK_UI.closeLayer(st.layer); else hide(); }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && st.open && !document.getElementById('ga-traveler')) { e.preventDefault(); close(); } });
 
   var boot = function () { btn(); if (joined()) setTimeout(startBeat, 10000); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
-  W.AFK_HEARTBEAT = { open: open, close: close, beat: beat, feed: feed, state: st, api: api, ident: ident, ensureId: ensureId };   // 寄賣攤、存檔轉移碼共用同一個旅人身分（afk-trade、afk-fullsave）
+  W.AFK_HEARTBEAT = { open: open, close: close, hide: hide, beat: beat, feed: feed, state: st, api: api, ident: ident, ensureId: ensureId };   // 寄賣攤、存檔轉移碼共用同一個旅人身分（afk-trade、afk-fullsave）
 })();

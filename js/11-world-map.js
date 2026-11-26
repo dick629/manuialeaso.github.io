@@ -220,6 +220,9 @@ function castleOwnerCity(force) {
     _castleOwnerCache = { playerRef:ctx.playerRef, mode:ctx.mode, ready:true, city:_castleOwnerApply(city) };
     return _castleOwnerCache.city;
 }
+function ownsCastle(city) {
+    return !!city && (window.__afkCastleWar ? window.__afkCastleWar.held().includes(city) : castleOwnerCity()===city);
+}
 function rememberCastleOwnerCity(city, broadcast) {
     let ctx = _castleOwnerContext();
     _castleOwnerCache = {
@@ -290,6 +293,7 @@ function prideHasTalisman(tier, kinds) {
 }
 function mapOptDisabled(m) {
     if (m.requiresDimRift && !window.TwistedSpace?.open()) return true;
+    if(m.giranFloor && !window.GiranGates?.accessible(m.v))return true;
     if (m.disabled) return true;
     // 🧑‍🤝‍🧑 v3.7.84 受僱為其他角色的傭兵期間＝只能停留在安全區 → 下拉中所有非 town_ 地圖一律灰階不可選
     //    （與 changeMap 的 mercenaryRoleBattleBlocked 同一條規則·此處只是把它前推到 UI 上；快取版避免每個選項都掃 localStorage）
@@ -340,7 +344,8 @@ function setMapSelectors(mapKey) {
     let cat = mapRegionOf(mapKey);   // 🗺️ 下拉改用「地區」分類（mapCategoryOf 仍為型別分類，供掉落/追蹤/背景等邏輯）
     let catSel = document.getElementById('map-category'); if (catSel) catSel.value = cat;
     populateMapSelect(cat);
-    let sel = document.getElementById('map-select'); if (sel) sel.value = mapKey;
+    let sel = document.getElementById('map-select');
+    if (sel) sel.value = mapKey;
     updatePrideFloorIndicator();
     updateMercRoleHint();
 }
@@ -503,15 +508,18 @@ function getHomeTown() {
     return 'town_silver_knight';
 }
 // 🏘️ v3.0.94 回村改「回上一個待過的安全區」：changeMap 進村分支記錄 player.lastTownVisited；無紀錄/地圖無效→回家鄉。
-//    城堡安全區只允許目前持有該城堡的血盟返回；未持有時退回家鄉。
+//    如果上次停留的城堡已失守，回到該城的公共村莊。
 function getLastTown() {
     let t = player && player.lastTownVisited;
     if (!t || typeof t !== 'string' || !t.startsWith('town_') || !(DB.towns[t] || DB.maps[t])) return getHomeTown();
-    let _isCastle = Object.values(SIEGE_CITY).some(c => c && c.castle === t);
-    if (_isCastle && (!siegeVictoryActive() || victoryCityCfg().castle !== t)) return getHomeTown();
-    return t;
+    if (window.GiranGates && DB.towns[t]) return GiranGates.unownedCastleVillage(t)||t;
+    const city=Object.values(SIEGE_CITY).find(c=>c.castle===t);
+    return city&&!ownsCastle(city.key)?getHomeTown():t;
 }
-function returnToTown() {
+function returnToTown(toCastle=false) {
+    if(player.dead||document.body.classList.contains('giran-guest'))return;
+    const castle=toCastle===true&&(window.__afkCastleWar?.homeCity()||castleOwnerCity());
+    if(toCastle===true&&(!SIEGE_CITY[castle]||!ownsCastle(castle))){logSys('目前沒有可返回的血盟城堡。');return;}
     if (state.riftRun && mapState.current === 'rift_battle') { logSys('<span class="text-violet-300">扭曲的時空緊緊纏繞著你，無法回村——唯有戰死方能離開時空裂痕。</span>'); return; }   // 🌀 裂痕內不可回村
     // 與切換地圖相同的受控限制（石化／麻痺／冰凍／暈眩時無法回村）
     if (player.statuses && (player.statuses.stone > 0 || player.statuses.paralyze > 0 || player.statuses.freeze > 0 || player.statuses.stun > 0 || player.statuses.sleep > 0)) {
@@ -522,12 +530,15 @@ function returnToTown() {
     let _kingRegion = _wasKingRoom && typeof mapRegionOf === 'function' ? mapRegionOf(mapState.current) : null;   // 🗝️ 離場前先取得該軍王之室所屬地區（changeMap 後 mapState.current 已變）
     if (state.oblivion) { state.oblivion = null; state._oblivionAdvance = false; }   // 🏝️ 回村即結束遺忘之島旅程
     if (state.antharas) { state.antharas = 0; state._antAdvance = false; logSys('你離開了侵蝕的安塔瑞斯巢穴（挑戰失敗不消耗每日次數，隨時可再次挑戰）。'); }   // 🐉 v3.7.57 回村＝中離副本（不耗次數）
-    setMapSelectors(siegeVictoryActive() ? victoryCityCfg().castle : getLastTown());   // 持有城堡：回城＝血盟城堡；否則回上一個待過的安全區（無紀錄→家鄉）
+    const target=castle?SIEGE_CITY[castle].castle:(window.GiranGates?.homeDestination()||getHomeTown());
+    setMapSelectors(target);
     changeMap();   // 走既有切換流程（進入村莊：補滿 HP/MP、清狀態、渲染 NPC）
+    if(mapState.current!==target)return false;
     // 🔧 自軍王之室手動回城／回村：同樣將「特殊」記憶位置改為新兵修練場（避免下次自動回到需鑰匙的軍王之室）
     // 🗝️ 離開軍王之室：清掉該「地區」的最後位置記憶，否則下次在下拉選同一地區會自動再進 BOSS 房、白扣一把軍王的鑰匙。
     //    （舊寫法寫的是 lastMapByCat.special，但分類改用 MAP_REGIONS 後 'special' 不再是任何鍵＝死碼。）
     if (_wasKingRoom) { if (!player.lastMapByCat) player.lastMapByCat = {}; if (_kingRegion) delete player.lastMapByCat[_kingRegion]; saveGame(); }
+    return true;
 }
 
 // ===== ⌨️ 鍵盤快捷鍵（v3.1.13）=====
@@ -555,26 +566,8 @@ function hotkeyCycleInventory() {
     let cur = order.findIndex(id => { let e = document.getElementById('tab-' + id); return e && !e.classList.contains('hidden'); });
     _hkSwitchTab(order[(cur < 0) ? 0 : (cur + 1) % order.length]);
 }
-// Ctrl+C：返回血盟據點（getHomeTown 已含「血盟優先回盟主村莊」）；持有城堡時回城堡。未入盟→提示。
-function returnToPledgeBase() {
-    if (!player || !player.bloodPledge) { logSys('<span class="text-amber-300">你尚未加入任何血盟，沒有可返回的據點。</span>'); return; }
-    // 受控限制（比照回村）：石化／麻痺／冰凍／暈眩／睡眠時不可傳送
-    if (player.statuses && (player.statuses.stone > 0 || player.statuses.paralyze > 0 || player.statuses.freeze > 0 || player.statuses.stun > 0 || player.statuses.sleep > 0)) {
-        logSys('你目前無法行動（石化／麻痺／冰凍／暈眩），無法返回據點。');
-        return;
-    }
-    if (state.riftRun && mapState.current === 'rift_battle') { logSys('<span class="text-violet-300">時空裂痕緊緊纏繞著你，唯有戰死方能離開，無法返回據點。</span>'); return; }
-    let _wasKingRoom = !!KING_ROOMS[mapState.current];
-    let _kingRegion = _wasKingRoom && typeof mapRegionOf === 'function' ? mapRegionOf(mapState.current) : null;   // 🗝️ 同上：離場前記錄地區
-    if (state.oblivion) { state.oblivion = null; state._oblivionAdvance = false; }   // 🏝️ 返回即結束遺忘之島旅程
-    let _victory = siegeVictoryActive();
-    setMapSelectors(_victory ? victoryCityCfg().castle : getHomeTown());
-    changeMap();
-    // 🗝️ 離開軍王之室：清掉該「地區」的最後位置記憶，否則下次在下拉選同一地區會自動再進 BOSS 房、白扣一把軍王的鑰匙。
-    //    （舊寫法寫的是 lastMapByCat.special，但分類改用 MAP_REGIONS 後 'special' 不再是任何鍵＝死碼。）
-    if (_wasKingRoom) { if (!player.lastMapByCat) player.lastMapByCat = {}; if (_kingRegion) delete player.lastMapByCat[_kingRegion]; saveGame(); }
-    logSys('<span class="text-emerald-300">⌨️ 已返回' + (_victory ? '城堡' : '血盟據點') + '。</span>');
-}
+// 保留原本的按鍵位置，與畫面上的回家共用最近村落規則。
+function returnToPledgeBase() { return returnToTown(); }
 if (typeof document !== 'undefined' && document.addEventListener) {
     document.addEventListener('keydown', function (e) {
         if (!_hkInGame() || _hkTyping(e.target)) return;
@@ -596,6 +589,7 @@ if (typeof document !== 'undefined' && document.addEventListener) {
 
 // 🔧 村莊「出發」按鈕：一鍵回到上一張戰鬥地圖。軍王之室需鑰匙，無鑰匙顯示鑰匙不足。
 function departToLastBattle() {
+    if(player.dead)return;
     if (player.statuses && (player.statuses.stone > 0 || player.statuses.paralyze > 0 || player.statuses.freeze > 0 || player.statuses.stun > 0 || player.statuses.sleep > 0)) {
         logSys('你目前無法行動（石化／麻痺／冰凍／暈眩），無法出發。');
         return;
@@ -1119,6 +1113,7 @@ function ismaelBuyAcc() {
 }
 
 function changeMap(force) {
+    if(!force&&player.dead){syncMapSelectors();return false;}
     // 行動限制狀態（石化／麻痺／冰凍／暈眩）時無法主動切換地圖；force=true 供復活、載入等內部流程略過
     if (!force && player.statuses &&
         (player.statuses.stone > 0 || player.statuses.paralyze > 0 || player.statuses.freeze > 0 || player.statuses.stun > 0 || player.statuses.sleep > 0)) {
@@ -1185,13 +1180,16 @@ function changeMap(force) {
     }
     if (_changeTarget !== mapState.current && typeof npcClanOnLeaveBattleArea === 'function') npcClanOnLeaveBattleArea(!force);
     if (typeof giltasKeepOnLeave === 'function' && document.getElementById('map-select').value !== mapState.current) giltasKeepOnLeave();   // 🌑 v3.4.16 離開受詛咒聖地（回村/戰敗復活/切圖統一經此·helper 自帶地圖 gate）→ 吉爾塔斯 HP 保留判定＋提示
-    const _twPrevMap = mapState.current;
+    const giranPreviousMap=mapState.current;
     mapState.current = document.getElementById('map-select').value;
-    if (window.TwistedSpace && _twPrevMap !== mapState.current &&
-        [_twPrevMap,mapState.current].includes(TwistedSpace.map)) {
+    if (window.TwistedSpace && giranPreviousMap !== mapState.current &&
+        [giranPreviousMap,mapState.current].includes(TwistedSpace.map)) {
+        if (TwistedSpace.here()) TwistedSpace.startVisit();
         if (player.afkDimRift && !TwistedSpace.here()) player.afkDimRift.ero = Math.min(player.afkDimRift.ero || 0, window.__afkDimRift.R.resMax);
         calcStats(); window.__afkDimRift.allyPanel();
     }
+    if(giranPreviousMap!==mapState.current)window.GiranCombat?.beginTravel?.(mapState.current);
+    window.GiranCollections?.changedMap(giranPreviousMap,mapState.current);
     if (!mapState.current.startsWith('town_')) player.lastBattleMap = mapState.current;   // 🔧 記住最後所在的戰鬥地圖，供村莊「出發」按鈕一鍵返回
     { let _c = mapRegionOf(mapState.current); if(_c) { if(!player.lastMapByCat) player.lastMapByCat = {}; player.lastMapByCat[_c] = mapState.current; } }   // 記住各「地區」分類最後到過的地圖（與下拉同鍵）
     mapState.mobs = [null, null, null, null, null];
@@ -1528,7 +1526,9 @@ function sanctuaryEnter(mapKey, costId) {
     closeNpcInteraction();
     try { if (typeof closeWarehouseWindow === 'function') closeWarehouseWindow(); } catch (e) {}   // 🏦 v3.5.94 本函式複製 changeMap 的戰鬥進場流程但不經過 changeMap；closeNpcInteraction 刻意不負責關倉庫(見其開頭註解)，故此處自行補上，否則浮動倉庫視窗會殘留到聖地並遮住 battle-view
     saveSiegeBossHp();
+    const giranPreviousMap=mapState.current;
     mapState.current = mapKey;
+    window.GiranCollections?.changedMap(giranPreviousMap,mapKey);
     player.lastBattleMap = mapKey;
     mapState.mobs = [null, null, null, null, null];
     mapState.spawnAt = [null, null, null, null, null];
@@ -2156,15 +2156,9 @@ function _townCastleCrownAlign(crown, bodyImg) {
     crown.style.left = box.x + 'px';
     crown.style.bottom = box.bottom + 'px';
 }
-function renderTownNPCMap(townId) {
-    let map = document.getElementById('town-npc-map');
-    if (!map) return;
-    map.classList.remove('hidden');
-    map.innerHTML = '';
-    _townNpcSprites = [];
-    try { map.style.backgroundImage = _townMapBg(townId); } catch (e) {}
-    let td = DB.towns[townId];
-    if (!td) return;
+function townResidentsForMap(townId) {
+    const td = DB.towns[townId];
+    if (!td) return [];
     // 與舊卡片清單相同的可見性過濾
     let vis = (td.npcs || []).filter(npc => {
         if (npc.id === 'npc_esti' || npc.id === 'npc_tros') {
@@ -2183,6 +2177,18 @@ function renderTownNPCMap(townId) {
     // 🗼🌀 v3.2.89 傲慢之塔／時空裂痕：入口告示改成地圖上的可點 NPC（_spr 專屬圖·_float 專屬點擊→浮動視窗）
     if (townId === 'town_pride') vis.push({ id: '_pride_entrance', n: '傲慢之塔', title: '入口', _spr: '1148', _float: 'pride' });
     if (townId === 'town_rift') vis.push({ id: '_rift_entrance', n: '時空裂痕', title: '入口', _spr: '1149', _float: 'rift' });
+    return vis;
+}
+function renderTownNPCMap(townId) {
+    let map = document.getElementById('town-npc-map');
+    if (!map) return;
+    map.classList.remove('hidden');
+    map.innerHTML = '';
+    _townNpcSprites = [];
+    try { map.style.backgroundImage = _townMapBg(townId); } catch (e) {}
+    let td = DB.towns[townId];
+    if (!td) return;
+    const vis = townResidentsForMap(townId);
     // 🏴 潘朵拉玩家 NPC：每個安全區可各有一位龍鑽／金幣收購者，並沿用玩家職業站立動畫。
     try {
         if (typeof getWanderingBuyersForTown === 'function') {
@@ -2221,6 +2227,7 @@ function renderTownNPCMap(townId) {
             let shadow0 = spr.shadows && spr.shadows[0] ? spr.shadows[0].src : '';
             let el = document.createElement('div');
             el.className = 'town-npc wandering-player';
+            el.dataset.worldNpc=npc.id;
             el.style.left = p.x + '%'; el.style.top = p.y + '%'; el.style.zIndex = Math.round(p.y * 10);
             let align = (typeof pvpClampAlignment === 'function') ? pvpClampAlignment(npc.alignmentValue) : Math.max(-32767, Math.min(32767, Math.round(Number(npc.alignmentValue) || 0)));
             let nameHtml = (typeof pvpNameHtml === 'function') ? pvpNameHtml(npc.n, align, 'tn-name') : '<span class="tn-name">' + npc.n + '</span>';
@@ -2254,6 +2261,7 @@ function renderTownNPCMap(townId) {
         let cat = NPC_SPR[key] || NPC_SPR['1256'];
         let el = document.createElement('div');
         el.className = 'town-npc';
+            el.dataset.worldNpc=npc.id;
         el.style.left = p.x + '%'; el.style.top = p.y + '%'; el.style.zIndex = Math.round(p.y * 10);
         let crownHtml = _townCastleCrownHtml(npc);
         if (crownHtml) el.classList.add('has-castle-crown');
@@ -2299,7 +2307,7 @@ function openTownFloatWindow(name, title, renderFn) {
 function _resolveTownLabelOverlap() {
     try {
         let map = document.getElementById('town-npc-map');
-        if (!map || map.classList.contains('hidden') || !map.classList.contains('show-labels')) return;
+        if (!map || map.dataset.worldTown || map.classList.contains('hidden') || !map.classList.contains('show-labels')) return;
         let scale = (map.getBoundingClientRect().width / (map.offsetWidth || 800)) || 1;
         let mapTop = map.getBoundingClientRect().top;
         let labels = [].slice.call(map.querySelectorAll('.town-npc .tn-label'));

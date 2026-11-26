@@ -333,7 +333,7 @@
     if (m === p || m === P0 || (P0 && (P0.allies || []).indexOf(m) >= 0)) return heal(m, amt);
     var b = hpOf(m); if (typeof W._supHeal === 'function') W._supHeal(m, Math.floor(amt)); else m.hp = Math.min(mhpOf(m), N(m.hp) + Math.floor(amt)); return hpOf(m) - b;
   };
-  var areaHeal = function (p, frac) { [p].concat((p === P() ? (p.allies || []) : [])).forEach(function (a) { if (a && !a._downed && !a.dead) heal(a, N(a.mhp) * frac); }); };
+  var areaHeal = function (p, frac) { [p].concat((p === P() ? (GiranPartyView.combatAllies(p)) : [])).forEach(function (a) { if (a && !a._downed && !a.dead) heal(a, N(a.mhp) * frac); }); };
   // 雷神
   add('thunder', 'plasma2', { n: '等離子電場', tier: '傳說', lv: 80, k: 'act', heal: 1, mp: 30, cd: 60, ctrl: true, desc: '解除自己的昏迷、凍結等控制，回復 20% HP，5 秒內受到的傷害 -50%；昏迷中也能放。',
     can: function (p) { return controlled(p) || N(p.hp) < N(p.mhp) * 0.5; },
@@ -373,7 +373,7 @@
     hit: function (p, t) { if (!buffOn(p, 'avatar')) return; if (N(t.mp) > 0) t.mp = Math.max(0, N(t.mp) - 20); if (chance(0.05)) stun(p, t, 2); } });
   // 魔劍士
   add('runeblade', 'flow', { n: '生命流', tier: '傳說', lv: 80, k: 'act', heal: 1, mp: 40, cd: 45, desc: '回復全隊 LFE×20 的 HP。', can: function (p) { return N(p.hp) < N(p.mhp) * 0.8; },
-    run: function (p) { [p].concat(p === P() ? (p.allies || []) : []).forEach(function (a) { if (a && !a._downed) heal(a, LFE(p) * 20); }); return true; } });
+    run: function (p) { [p].concat(p === P() ? (GiranPartyView.combatAllies(p)) : []).forEach(function (a) { if (a && !a._downed) heal(a, LFE(p) * 20); }); return true; } });
   add('runeblade', 'illusion2', { n: '幻覺反擊（傳說）', tier: '傳說', lv: 80, k: 'pas', desc: '幻覺反擊的傷害 200% → 350%。' });
   add('runeblade', 'burst2', { n: '符石爆裂（王牌）', tier: '傳說', lv: 80, k: 'pas', desc: '符石爆裂的傷害 ×1.6。' });
   add('runeblade', 'master2', { n: '符石精通（傳說）', tier: '傳說', lv: 80, k: 'pas', desc: '符石精通的近距離傷害改成 LFE÷6；攻擊無視傷害減免 5。',
@@ -827,7 +827,7 @@
     var npc = { id: NPC_ID, n: '覺醒導師 伊瑟拉', title: '職業覺醒', type: 'quest', classicHide: true,
       d: '守著席琳神殿深處的古老祭壇。她說，三段輪迴的魂魄疊在一起，就能讓一個職業醒來，成為另一種存在。' };
     var L = W.__afkLore; if (L && L.addNpc) L.addNpc(TOWN, npc, NPC_SPR, null); else if (DB.towns && DB.towns[TOWN]) DB.towns[TOWN].npcs.push(npc);
-    try { (0, eval)("if (typeof NPC_SPR !== 'undefined' && !NPC_SPR.awaken) NPC_SPR.awaken = { g: 'awaken', f: 1 };"); } catch (e) {}
+    if (typeof NPC_SPR !== 'undefined') NPC_SPR.awaken = Object.assign({ g: 'awaken', f: 1 }, NPC_SPR.awaken, { shadow: false });
     if (typeof NPC_SPR_FIXED !== 'undefined') NPC_SPR_FIXED[NPC_ID] = NPC_SPR;
   } catch (e) {}
 
@@ -904,7 +904,7 @@
   // 導師面板
   var ui = { tab: 'awaken', msg: '', err: '' };
   var XT = function () { return (W.__afkAwaken && W.__afkAwaken.tabs) || []; };
-  var TEST = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);   // 測試工具：只有本機測試版看得到
+  var TEST = W.__FB5_TEST_BUILD === true;   // 本機正式遊戲使用與其他玩法相同的測試版本旗標。
   var gm = function (act, arg) {
     var p = P(); if (!p) return '請先進入遊戲。';
     if (act === 'souls') {

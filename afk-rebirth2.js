@@ -140,11 +140,44 @@
     else if (confirm(msg)) go();
   };
   window.unlockHades = window.enterHades;
+  function collectWarehouseFates(p) {
+    var missing = DS.FATE_IDS.filter(function (id) {
+      return !p.inv.some(function (item) { return hasFateCount(item, id); });
+    });
+    if (!missing.length) return true;
+
+    var mw = window.__afkMatWh;
+    if (!mw || !mw.on() || typeof loadWarehouse !== 'function' || typeof whTxnCommit !== 'function') return false;
+    var warehouse = loadWarehouse();
+    var sources = missing.map(function (id) {
+      return warehouse.items.find(function (item) { return item && !item.lock && hasFateCount(item, id); });
+    });
+    if (sources.some(function (item) { return !item; })) return false;
+
+    // 同一次倉庫交易補齊八職材料。中途背包放不下時，先前取出的材料也一起還原。
+    var snapshot = whTxnSnapshot();
+    try {
+      for (var i = 0; i < sources.length; i++) {
+        var item = sources[i];
+        if (item.cnt > 1) item.cnt--;
+        else warehouse.items.splice(warehouse.items.indexOf(item), 1);
+        gainItem(item.id, 1, true, true);
+        if (!p.inv.some(function (entry) { return hasFateCount(entry, item.id); })) {
+          whTxnRestore(snapshot);
+          return false;
+        }
+      }
+      return whTxnCommit(warehouse, snapshot);
+    } catch (e) {
+      whTxnRestore(snapshot);
+      return false;
+    } finally {
+      mw.flush();
+    }
+  }
   var doRebirth2 = function () {
-    var p = P();
-    try { var MW = window.__afkMatWh; if (p && MW && MW.on && MW.on()) { DS.FATE_IDS.forEach(function (id) { if (!p.inv.some(function (x) { return hasFateCount(x, id); })) MW.pull(id, 1, 0); }); MW.flush(); } } catch (e) {}
-    var why = rebirthReason(p);
-    if (!why && !DS.FATE_IDS.every(function (id) { return p.inv.some(function (x) { return hasFateCount(x, id); }); })) why = '從倉庫取出不屈的命運失敗，請稍後再試。';
+    var p = P(), why = rebirthReason(p);
+    if (!why && !collectWarehouseFates(p)) why = '從倉庫取出不屈的命運失敗，請稍後再試。';
     if (why) { sys('<span class="text-red-400">' + why + '</span>'); return { ok: false, reason: why }; }
     var ids = DS.FATE_IDS;
     var consumed = new Set();

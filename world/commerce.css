@@ -1,0 +1,13 @@
+.g-commerce {padding:.65rem;color:#eee2cd;min-width:0;text-align:left}
+.g-commerce nav,.g-commerce article {display:flex;flex-wrap:wrap;align-items:center;gap:.45em .8em}
+.g-commerce nav {margin-bottom:.7em}
+.g-commerce article {border-bottom:1px solid #514331;padding:.65em 0}
+.g-commerce article p,.g-commerce article small {flex-basis:100%;overflow-wrap:anywhere}
+.g-commerce article small {color:#cbb995}
+.g-starter-gifts {display:flex;flex:1 1 100%;flex-wrap:wrap;gap:.45em .85em;list-style:none;margin:0;padding:0}
+.g-starter-gifts li {display:flex;align-items:center;gap:.3em;color:#eee2cd;font-variant-numeric:tabular-nums}
+.g-starter-gifts img {width:2.25em;height:2.25em;object-fit:contain}
+.g-commerce button,.g-commerce select {background:#28251f;color:#efdfc0;border:1px solid #786647;border-radius:4px;padding:.36em .64em}
+.g-commerce button[aria-pressed=true] {background:#4c3a22;color:#ffe3a9}
+.g-commerce button:disabled {opacity:.55}
+.g-commerce output {color:#e4c184}

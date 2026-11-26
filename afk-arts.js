@@ -94,7 +94,7 @@
   var artAllowed = function (p) {
     if (recompAlly() && capOk) return capOk.has(p) || !capSeen.has(p);   // 重算傭兵能力時 player 會暫時換成那名傭兵，沿用隊長視角的結果
     var me = P(); if (!me) return true;
-    var party = [me].concat(me.allies || []);
+    var party = [me].concat(GiranPartyView.combatAllies(me));
     var t = tk();
     if (t !== capT || !capOk || capMe !== me || capSeen.size !== party.length || (!capSeen.has(p) && party.indexOf(p) >= 0)) {
       capT = t; capMe = me; capOk = new Set(); capSeen = new Set(party); var n = {};
@@ -118,7 +118,7 @@
   var artPen = function (p) {
     var a = art(p); if (!a) return 0;
     var me = P(); if (!me) return 0;
-    var n = [me].concat(me.allies || []).filter(function (x) { return x && art(x) === a; }).length;
+    var n = [me].concat(GiranPartyView.combatAllies(me)).filter(function (x) { return x && art(x) === a; }).length;
     var pen = (n >= 3 ? PEN3 : 0) + (n >= 4 ? PEN4 : 0);
     if (partyN >= 16) pen *= 2;
     return Math.min(0.9, pen);
@@ -136,7 +136,7 @@
   var ragey = function (p) { return bfaf(p) && inBattle(); };
   var leaderReborn = function () { var p = P(); return !!(p && p.rebirth > 0); };
   var kings = function () { if (!leaderReborn()) return 0; return Math.min(5, Math.floor(partyN / 4) + (partyN >= 16 ? 1 : 0)); };
-  var aliveAllies = function () { var p = P(); return ((p && p.allies) || []).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0; }); };
+  var aliveAllies = function () { var p = P(); return GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0; }); };
   var anyArt = function (id) { var p = P(); if (!p) return null; if (!p.dead && art(p) === id) return p; return aliveAllies().find(function (a) { return art(a) === id; }) || null; };
 
   // ── 戰鬥：連續有活怪＝同一場；換地圖或 5 秒沒有怪＝離開戰鬥 ──
@@ -366,10 +366,10 @@
   var partySnap = function () {
     var out = [], p = P();
     out.push([p, p.hp, 'player']);
-    (p.allies || []).forEach(function (a) { if (a && !a._downed) out.push([a, a.curHp, 'ally']); });
+    GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed) out.push([a, a.curHp, 'ally']); });
     try { (typeof petsOutList === 'function' ? petsOutList() : []).forEach(function (x) { if (x && !x._downed) out.push([x, x.hp, 'pet']); }); } catch (e) {}
     try { (p.summonsV2 || []).forEach(function (x) { if (x && !x._downed) out.push([x, x.hp, 'summon']); }); } catch (e) {}
-    try { (p.allies || []).forEach(function (a) { var x = a && !a._downed && a.summon; if (x && (x.mhp || 0) > 0 && !x._downed && (x.hp || 0) > 0 && minionArtOf(a)) out.push([x, x.hp, 'summon', a]); }); } catch (e) {}
+    try { GiranPartyView.combatAllies(p).forEach(function (a) { var x = a && !a._downed && a.summon; if (x && (x.mhp || 0) > 0 && !x._downed && (x.hp || 0) > 0 && minionArtOf(a)) out.push([x, x.hp, 'summon', a]); }); } catch (e) {}
     try { (typeof guardAliveList === 'function' ? guardAliveList() : []).forEach(function (x) { out.push([x, x.hp, 'guard']); }); } catch (e) {}
     return out;
   };
@@ -406,7 +406,7 @@
     if (art(ent) === 'w_fate') v += Math.round(500 * F(ent));
     return v;
   };
-  var finalOn = function () { var p = P(); if (!p) return false; if (finalDR(p, 'player') > 0) return true; return (p.allies || []).some(function (a) { return a && finalDR(a, 'ally') > 0; }); };
+  var finalOn = function () { var p = P(); if (!p) return false; if (finalDR(p, 'player') > 0) return true; return GiranPartyView.combatAllies(p).some(function (a) { return a && finalDR(a, 'ally') > 0; }); };
   // 2026-10-26 核心補丁 46：玩家、傭兵受到的一般攻擊與魔法，在扣血「之前」就套技藝減傷、白羊座抵銷、最終減傷（不再事後補血）
   // pre＝受傷掛點其他來源的減傷倍率（夢域遺骸、龍的傷痕、席琳模式…）；2026-10-29：所有百分比減傷相乘後最多減 75%（倍率不低於 0.25），之後才扣最終減傷（可扣到 0）
   var DR_FLOOR = 0.25;
@@ -936,13 +936,13 @@
         try {
           var p = P();
           if (p) {
-            partyN = 1 + ((p.allies || []).length);
-            active = !!(bfaf(p) || kings() > 0 || (p.allies || []).some(function (a) { return a && bfaf(a); }));
-            (p.allies || []).forEach(allyRegenTwice);
+            partyN = 1 + (GiranPartyView.combatAllies(p).length);
+            active = !!(bfaf(p) || kings() > 0 || GiranPartyView.combatAllies(p).some(function (a) { return a && bfaf(a); }));
+            GiranPartyView.combatAllies(p).forEach(allyRegenTwice);
             if (active) {
               battleTick();
               actorTick(p, true);
-              (p.allies || []).forEach(function (a) { if (a) actorTick(a, false); });
+              GiranPartyView.combatAllies(p).forEach(function (a) { if (a) actorTick(a, false); });
               // 席琳眷屬融合魔獸：每 3 秒隨機施放一種魔法（法師公式）
               if (art(p) === 'm_shilen' && tk() % 30 === 0 && (p.summonsV2 || []).some(function (s) { return s && s._afkFuse && !s._downed; })) {
                 var tg = (typeof getTarget === 'function') ? getTarget() : null;

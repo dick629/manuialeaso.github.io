@@ -202,6 +202,7 @@
   var startWave = function (w) {
     run.stage = 'wave'; run.wave = w; run.killed = 0;
     var n = 3 + Math.floor(w / 4), q = [];
+    n = W.GiranRoam?.waveSize(n) ?? n;
     for (var i = 0; i < n; i++) q.push(POOL[Math.floor(Math.random() * POOL.length)]);
     if (w % 4 === 0) q.push(ELITE);
     run.queue = q; run.need = q.length;
@@ -298,13 +299,13 @@
   var placeFree = function (id, extra) {
     var ms = mobs(), j = -1, q;
     for (q = 0; q < ms.length; q++) if (!ms[q] || ms[q]._dead) { j = q; break; }
-    if (j < 0) for (q = 0; q < ms.length; q++) if (ms[q] && !ms[q].boss && !ms[q].afkHd && !ms[q].afkHdShadow && ms[q].n !== '哈汀之影') { j = q; break; }
+    if (j < 0) for (q = 0; q < ms.length; q++) if (ms[q] && !ms[q].boss && !ms[q].afkHd && !ms[q].afkHdClone && !ms[q].afkHdShadow && ms[q].n !== '哈汀之影') { j = q; break; }
     if (j < 0) return null;
     var m = B.place(j, DB.mobs[id], Object.assign({ mobId: id }, extra || {}));
     try { if (!S().ff) renderMobs(); } catch (e) {}
     return m;
   };
-  var cloneOf = function (m) { return mobs().some(function (x) { return alive(x) && x.afkHdClone && x._hdOwner === m.uid; }); };
+  var cloneOf = function (m) { return m && m.n === '哈汀之影' && !m.afkHdClone && mobs().find(function (x) { return alive(x) && x.afkHdClone && x._hdOwner === m.uid; }); };
   var shadowsUp = function () { return mobs().some(function (x) { return alive(x) && x.afkHdShadow; }); };
   var fourAlive = function (except) { return mobs().filter(function (x) { return alive(x) && isFour(x) && x !== except; }); };
 
@@ -317,9 +318,8 @@
       if (!alive(m)) return;
       var hf = m.curHp / (m.hp || 1);
       if (m.n === '哈汀之影' && !m.afkHdClone && !m._hdSplit && hf <= 0.5) {
-        m._hdSplit = true;
         var c = placeFree('afk_hd_clone');
-        if (c) { c.hp = c.curHp = Math.max(1, Math.round(m.hp * 0.3)); c._hdOwner = m.uid; clog('<span class="font-bold" style="color:#a78bfa">【影分身】</span>哈汀之影一分為二——影分身倒下之前，本體不會受到傷害。'); }
+        if (c) { m._hdSplit = true; c.hp = c.curHp = Math.max(1, Math.round(m.hp * 0.3)); c._hdOwner = m.uid; clog('<span class="font-bold" style="color:#a78bfa">【影分身】</span>哈汀之影一分為二——影分身倒下之前，本體不會受到傷害。'); }
         return;
       }
       if (!m.afkHd) return;
@@ -336,7 +336,7 @@
       } else if (m.afkHd === 'senis') {
         if (t >= m._hdA) {
           m._hdA = t + 300;
-          var al = ((p.allies) || []).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0 && !(a._hdCharm > t); });
+          var al = GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0 && !(a._hdCharm > t); });
           if (al.length) { var a = al[Math.floor(Math.random() * al.length)]; a._hdCharm = t + 50; a._hdCharmHit = t; clog('<span class="font-bold" style="color:#f0abfc">【魅惑】</span>黑翼賽尼斯看了 ' + esc(a._allyName || '傭兵') + ' 一眼——5 秒內，他會攻擊自己人。'); }
         }
         var lost = Math.min(3, Math.floor((1 - hf) / 0.25));
@@ -362,7 +362,7 @@
       }
     });
     // 魅惑：被魅惑的傭兵每秒打一名自己人
-    ((p.allies) || []).forEach(function (a) {
+    GiranPartyView.combatAllies(p).forEach(function (a) {
       if (!a || !(a._hdCharm > t) || a._downed || t - (a._hdCharmHit || 0) < 10) return;
       a._hdCharmHit = t;
       var vs = member().filter(function (x) { return x !== a; }); if (!vs.length) return;
@@ -498,5 +498,5 @@
   K.hookNpc(NPC_ID, NPC_N, '占卜師', renderJoe);
 
   W.__afkHardin = { growthRestore:function(q){run=JSON.parse(JSON.stringify(q));lastMap=MAP;}, line: line, MAP: MAP, NPC_ID: NPC_ID, MARK: MARK, SET: SET, EXCH: EXCH, enter: enter, canEnter: canEnter, choose: choose, exchange: exchange,
-    run: function () { return run; }, tick: hdTick, mod: mod, startWave: startWave, startBoss: startBoss, partyN: partyN, renderJoe: renderJoe, WAVES: WAVES };
+    run: function () { return run; }, tick: hdTick, mod: mod, protectingClone: cloneOf, startWave: startWave, startBoss: startBoss, partyN: partyN, renderJoe: renderJoe, WAVES: WAVES };
 })();

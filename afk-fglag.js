@@ -30,6 +30,7 @@
   W.__afkFgCarryPut = function (ms) { ms = Number(ms); if (isFinite(ms) && ms > 0) { carry += ms; if (carry > stats.carryMax) stats.carryMax = carry; } };
   W.__afkFgCarryTake = function () { var c = carry; carry = 0; return c; };
   W.__afkFgShow = function () { var t = now(); if (t - lastShow < SHOW_MS) return false; lastShow = t; stats.shows++; return true; };
+  W.__giranForegroundDebt = function (owed) { return !bg && owed >= 2 && owed <= WINDOW; };
   W.__afkFgLag = function (owed) {
     if (bg) { bg = false; return false; }
     if (!on()) return false;

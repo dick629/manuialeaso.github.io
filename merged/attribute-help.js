@@ -19,7 +19,6 @@
   if(stat==='cha'){
    const owner=v=>({...p,d:{...p.d,cha:v}});
    if(W.petCharmCombatBonus)entries.push({key:'petCharmCombatBonus',label:'每隻寵物基礎傷害／命中',unit:'',fn:v=>W.petCharmCombatBonus(owner(v)).dmg});
-   if(p.cls==='royal'&&W.allyActiveCap)entries.push({key:'allyActiveCap',label:'可出戰傭兵上限',unit:'人',fn:v=>W.allyActiveCap(owner(v))});
    if(W._sumDefaultForm&&W._sumCountFor){const form=p.summon?.n||W._sumDefaultForm(p);if(form)entries.push({key:'summonCount',label:form+'召喚數量上限',unit:'隻',fn:v=>W._sumCountFor(form,owner(v))});}
   }
   const rows=entries.map(e=>{

@@ -236,7 +236,7 @@
     var H = W.__afkProc; if (!H || hookProc.done) return; hookProc.done = true;
     H.on('evade', function (mob) { var p = P(); if (!trOf(p)) return; var c = sumKey(p, 'evade'); if (c && X.alive(mob)) counter(p, mob, c * (stageN(p) >= 3 ? 1.5 : 1)); var nx = sumKey(p, 'evadeNext'); if (nx) st(p).t_next = nx; });
     // 全隊效果：看隊伍裡每個有覺醒轉職的人（你或傭兵）
-    var owners = function () { var me = P(); if (!me) return []; return [me].concat(me.allies || []).filter(function (a) { return a && !a._downed && trOf(a); }); };
+    var owners = function () { var me = P(); if (!me) return []; return [me].concat(GiranPartyView.combatAllies(me)).filter(function (a) { return a && !a._downed && trOf(a); }); };
     var pv = function (k) { return owners().reduce(function (v, a) { return v + stagesOf(a).reduce(function (w, s) { return w + N(s.party && s.party[k]); }, 0); }, 0); };
     var bv = function (k) { return owners().reduce(function (v, a) { return Math.max(v, N(Bv(a, k))); }, 0); };
     var bannerV = function () { return owners().reduce(function (v, a) { return Math.max(v, stagesOf(a).some(function (s) { return s.party && s.party.banner; }) ? N(st(a).t_banner) * 0.03 : 0); }, 0); };

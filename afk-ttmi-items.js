@@ -251,7 +251,8 @@
       if(d.ttmiPvpDrPerEn)out.ttmiPvpDr=(out.ttmiPvpDr||0)+Math.max(0,finite(e.en))*d.ttmiPvpDrPerEn;
       if(slot==='wpn' || slot==='offwpn') ['meleeDmg','rangedDmg','meleeHit','rangedHit','extraHit','magicHit','resFire','resWater','resWind','resEarth','ac','er'].forEach(function(k){if(d[k])out[k]=(out[k]||0)+d[k];});
     });
-    if(p&&p.ttmiFoods&&p.buffs)Object.keys(p.ttmiFoods).forEach(function(fid){if(p.buffs['ttmi_food:'+fid]>0){var fd=DB.items[fid];if(fd&&fd.ttmiBuff)merge(out,fd.ttmiBuff);}else delete p.ttmiFoods[fid];});
+    if(p&&window.GiranPartyEffects){for(const id of GiranPartyEffects.foods(p).keys())merge(out,DB.items[id].ttmiBuff);}
+    else if(p&&p.ttmiFoods&&p.buffs)Object.keys(p.ttmiFoods).forEach(function(fid){if(p.buffs['ttmi_food:'+fid]>0){var fd=DB.items[fid];if(fd&&fd.ttmiBuff)merge(out,fd.ttmiBuff);}else delete p.ttmiFoods[fid];});
     var active=p && p.ttmiBuffs;
     if(active && p.buffs) Object.keys(active).forEach(function(family){
       if(!(p.buffs['ttmi_'+family]>0))return;var d=DB.items[active[family]];if(d&&d.ttmiBuff)merge(out,d.ttmiBuff);
@@ -273,7 +274,7 @@
       else d[k]=(d[k]||0)+b[k];
     });
     if(p.buffs&&p.buffs.ttmi_blue>0){var extra=(d.wis>=12?d.wis-(p.ttmiBlueBase||10):1);var prior=p.buffs.blue>0&&typeof getWisBlueBonus==='function'?getWisBlueBonus(d.wis):0;d.mpR+=Math.max(0,extra-prior);}
-    var soul=p.buffs&&p.buffs.sk_soul_up>0?20:0;
+    var soul=(p.buffs&&p.buffs.sk_soul_up>0)||window.GiranMagicMerchant?.seconds(p,'sk_soul_up')>0?20:0;
     if(b.ttmiMaxHpPct)p.mhp=Math.floor(p.mhp*(1+Math.max(soul,b.ttmiMaxHpPct)/100)/(1+soul/100));
     if(b.ttmiMaxMpPct)p.mmp=Math.floor(p.mmp*(1+Math.max(soul,b.ttmiMaxMpPct)/100)/(1+soul/100));
     var h=p.buffs&&p.buffs.ttmi_haste3>0?Math.max(1,finite(p.ttmiHaste3Factor)||1.15):1;
@@ -416,7 +417,8 @@
       if(d.ttmiMpMin==null)player.mp=Math.min(player.mmp,player.mp+randomInt(d.valMin||0,d.valMax||d.valMin||0));
       setPotionCooldown(d);
     }
-    consume(it);refresh();save();say('使用了 '+esc(d.n)+'。',silent);return true;
+    consume(it);if(d.ttmiBuffFamily==='food')window.GiranPartyEffects?.sync(player);
+    refresh();save();say('使用了 '+esc(d.n)+'。',silent);return true;
   }
   wrap('useItem',function(old,self,args){
     if(!playerReady())return old.apply(self,args);
@@ -853,7 +855,7 @@
     if(!p||p!==player)return r;var dt=Math.max(0,finite(state.ticks)-at)/10;
     if(remain>0){p.ttmiPotionRemaining=Math.max(0,remain-dt);p.cds.pot=p.ttmiPotionRemaining;}
     if(!inRift()&&p.ttmiRiftRunKey){if(clearRift())refresh();}
-    if(!p.dead&&dt>0)[p].concat((p.allies||[]).filter(function(a){return a&&!a._downed;})).forEach(function(actor){
+    if(!p.dead&&dt>0)[p].concat(GiranPartyView.combatAllies(p).filter(function(a){return a&&!a._downed;})).forEach(function(actor){
       var timers=actor.ttmiPeriodic=actor.ttmiPeriodic||{};
       equipped(actor,function(e,d){(d.ttmiPeriodic||[]).forEach(function(x,i){var k=e.uid+':'+i;timers[k]=(timers[k]||0)+dt;if(timers[k]>=x.sec){timers[k]%=x.sec;var field=x.stat==='hp'&&actor.curHp!=null?'curHp':x.stat;actor[field]=Math.min(actor[x.stat==='hp'?'mhp':'mmp'],actor[field]+x.amount);}});});
     });

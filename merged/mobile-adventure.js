@@ -19,7 +19,8 @@
  }
  function mountStatus(root,options={}){
   const bar=root.querySelector('#status-icon-bar');if(!bar)return null;
-  const stage=bar.parentElement,doc=bar.ownerDocument;
+  let stage=bar.parentElement;
+  const doc=bar.ownerDocument;
   if(stage.querySelector('#lm-status-toggle'))return null;
   const toggle=doc.createElement('button');toggle.type='button';toggle.id='lm-status-toggle';
   toggle.setAttribute('aria-label','角色狀態');toggle.setAttribute('aria-controls','status-icon-bar');toggle.setAttribute('aria-expanded','false');
@@ -30,10 +31,16 @@
   toggle.addEventListener('click',()=>setExpanded(toggle.getAttribute('aria-expanded')!=='true'));
   // Keep the native nodes and their titles: the combat renderer owns buff durations.
   bar.addEventListener('click',event=>{const icon=event.target.closest('.status-icon');if(!icon)return;bar.dataset.selectedStatus=icon.getAttribute('title')||icon.querySelector('img')?.alt||'';bar.querySelectorAll('.status-icon').forEach(el=>el.classList.toggle('lm-status-selected',el===icon));});
-  stage.addEventListener('keydown',event=>{if(event.key==='Escape'){setExpanded(false);toggle.focus();}});
+  function escape(event){if(event.key==='Escape'&&toggle.getAttribute('aria-expanded')==='true'){setExpanded(false);toggle.focus();}}
+  stage.addEventListener('keydown',escape);
+  function moveTo(host){
+   if(stage===host)return;
+   setExpanded(false);stage.removeEventListener('keydown',escape);
+   stage=host;stage.append(bar,toggle);stage.addEventListener('keydown',escape);
+  }
   if(options.observe!==false&&typeof MutationObserver!=='undefined')new MutationObserver(refresh).observe(bar,{childList:true});
-  refresh();return {refresh,setExpanded};
+  refresh();return {refresh,setExpanded,moveTo};
  }
  window.LineageAdventure={mount,mountStatus};
- if(!window.__LINEAGE_PREVIEW__){mount(document);mountStatus(document);}
+ if(!window.__LINEAGE_PREVIEW__){mount(document);window.LineageAdventure.status=mountStatus(document);}
 })();

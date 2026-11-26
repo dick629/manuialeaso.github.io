@@ -47,7 +47,7 @@
     v.envyC = Math.min(1, v.envyC); v.faithC = Math.min(1, v.faithC); v.doubt = Math.min(1, v.doubt);
     cache.set(ent, { k: key, v: v }); return v;
   };
-  var party = function () { var p = P(); return p ? [p].concat((p.allies || []).filter(Boolean)) : []; };
+  var party = function () { var p = P(); return p ? [p].concat(GiranPartyView.combatAllies(p).filter(Boolean)) : []; };
   var inParty = function (e) { var p = P(); return !!(e && p && (e === p || (p.allies || []).indexOf(e) >= 0)); };
   var alive = function (m) { return !!(m && !m._dead && m.curHp > 0); };
   var ranged = function (m) { return !!(m && /弓|射手|弩|投擲|狙擊|槍手/.test(m.n || '')); };

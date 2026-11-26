@@ -1,4 +1,4 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>天賦與巔峰・雙版面預覽</title><style>html,body{margin:0;background:#141118;color:#ded6bc;font:15px system-ui}#demo-note{padding:14px}#growth-overlay{top:42px!important}*{box-sizing:border-box}/* Original medieval stone illustrations; same desktop design on narrow screens. */
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>天賦與巔峰・雙版面預覽</title><script src="site-config.js"></script><script src="merged/media-paths.js?v=087942200dae"></script><script src="merged/media-router.js?v=c072390f3de8"></script><script src="merged/media-dom.js?v=e591ed95353d"></script><style>html,body{margin:0;background:#141118;color:#ded6bc;font:15px system-ui}#demo-note{padding:14px}#growth-overlay{top:42px!important}*{box-sizing:border-box}/* Original medieval stone illustrations; same desktop design on narrow screens. */
 #growth-overlay{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;background:#030307da;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));color:#ddd8d2;font:14px/1.6 "Microsoft JhengHei","Segoe UI",sans-serif;isolation:isolate}
 #growth-overlay *{box-sizing:border-box}
 #growth-overlay>section{position:relative;width:min(1180px,100%);height:min(1040px,100%);max-height:calc(100dvh - 32px);min-height:0;display:flex;flex-direction:column;padding:4px;background:linear-gradient(135deg,#5e4333,#c2a575 2%,#352a28 6%,#806047 48%,#c5ae84 50%,#362725 54%,#a48861 98%,#42322b);border:1px solid #a78e67;box-shadow:0 0 0 1px #09080b,0 0 0 4px #362b24,inset 0 0 0 2px #1c1718,0 24px 80px #000c;border-radius:3px}
@@ -101,25 +101,25 @@
 
 /* 2026-11-10: original illustrated marble and engraved brass growth boards. */
 #growth-overlay .growth-emblem{display:block;width:100%;height:100%;background:center/contain no-repeat;pointer-events:none;filter:drop-shadow(0 1px 1px #0009)}
-#growth-overlay .growth-emblem--melee{background-image:url('assets/ui/growth-v4/icons/melee.svg')}
-#growth-overlay .growth-emblem--ranged{background-image:url('assets/ui/growth-v4/icons/ranged.svg')}
-#growth-overlay .growth-emblem--magic{background-image:url('assets/ui/growth-v4/icons/magic.svg')}
-#growth-overlay .growth-emblem--defense{background-image:url('assets/ui/growth-v4/icons/defense.svg')}
-#growth-overlay .growth-emblem--support{background-image:url('assets/ui/growth-v4/icons/support.svg')}
-#growth-overlay .growth-emblem--minions{background-image:url('assets/ui/growth-v4/icons/minions.svg')}
-#growth-overlay .growth-emblem--movement{background-image:url('assets/ui/growth-v4/icons/movement.svg')}
-#growth-overlay .growth-emblem--fortitude{background-image:url('assets/ui/growth-v4/icons/fortitude.svg')}
-#growth-overlay .growth-emblem--mind{background-image:url('assets/ui/growth-v4/icons/mind.svg')}
-#growth-overlay .growth-emblem--valor{background-image:url('assets/ui/growth-v4/icons/valor.svg')}
-#growth-overlay .growth-emblem--ward{background-image:url('assets/ui/growth-v4/icons/ward.svg')}
+#growth-overlay .growth-emblem--melee{background-image:var(--lm-a1eb9417bb42,url('assets/ui/growth-v4/icons/melee.svg'))}
+#growth-overlay .growth-emblem--ranged{background-image:var(--lm-7d3302987b24,url('assets/ui/growth-v4/icons/ranged.svg'))}
+#growth-overlay .growth-emblem--magic{background-image:var(--lm-59b1c81d7161,url('assets/ui/growth-v4/icons/magic.svg'))}
+#growth-overlay .growth-emblem--defense{background-image:var(--lm-00f9098847c8,url('assets/ui/growth-v4/icons/defense.svg'))}
+#growth-overlay .growth-emblem--support{background-image:var(--lm-c1994131d8d2,url('assets/ui/growth-v4/icons/support.svg'))}
+#growth-overlay .growth-emblem--minions{background-image:var(--lm-1bbf7b9838c7,url('assets/ui/growth-v4/icons/minions.svg'))}
+#growth-overlay .growth-emblem--movement{background-image:var(--lm-5a49d0d9225d,url('assets/ui/growth-v4/icons/movement.svg'))}
+#growth-overlay .growth-emblem--fortitude{background-image:var(--lm-81c307b29201,url('assets/ui/growth-v4/icons/fortitude.svg'))}
+#growth-overlay .growth-emblem--mind{background-image:var(--lm-f155e0515fe4,url('assets/ui/growth-v4/icons/mind.svg'))}
+#growth-overlay .growth-emblem--valor{background-image:var(--lm-18e0d2153b2c,url('assets/ui/growth-v4/icons/valor.svg'))}
+#growth-overlay .growth-emblem--ward{background-image:var(--lm-05414cd05452,url('assets/ui/growth-v4/icons/ward.svg'))}
 #growth-overlay .growth-body{background:radial-gradient(ellipse at 50% 0,#1e302b80,transparent 70%),#101513}
 #growth-overlay header,#growth-overlay nav,#growth-overlay footer{background:linear-gradient(#27302b,#121a17);border-color:#665a40;color:#d6c7a4}
-#growth-overlay .growth-tree{background:linear-gradient(#0002,#0002),url('assets/ui/growth-v3/talent-stone.png') center/100% 100% no-repeat}
+#growth-overlay .growth-tree{background:linear-gradient(#0002,#0002),var(--lm-37652c492e66,url('assets/ui/growth-v3/talent-stone.png')) center/100% 100% no-repeat}
 #growth-overlay .growth-star-panel{border-color:#a08b59;background:#0b1210;box-shadow:0 0 0 2px #080c0a,inset 0 0 0 1px #c2a46e55}
 #growth-overlay .growth-etch{stroke:#b5a06d22}
 #growth-overlay .growth-wire{stroke:#b2a07a;opacity:.5}
 #growth-overlay .growth-wire.lit{stroke:#edcc7f;filter:drop-shadow(0 0 3px #c3974b)}
-#growth-overlay .growth-path,#growth-overlay .growth-inspector,#growth-overlay .growth-stat{background:linear-gradient(135deg,#24322bd9,#101916ed),url('assets/ui/growth-v3/talent-stone.png') center/cover;border-color:#80704c;color:#dbd4bd}
+#growth-overlay .growth-path,#growth-overlay .growth-inspector,#growth-overlay .growth-stat{background:linear-gradient(135deg,#24322bd9,#101916ed),var(--lm-37652c492e66,url('assets/ui/growth-v3/talent-stone.png')) center/cover;border-color:#80704c;color:#dbd4bd}
 #growth-overlay .growth-path.selected{background:linear-gradient(120deg,#655536db,#252a20);border-color:#d3bb7d}
 #growth-overlay .growth-star-caption{background:linear-gradient(90deg,#343627,#111a16)}
 #growth-overlay .growth-origin{background:radial-gradient(#3d4b36,#131e18);box-shadow:0 0 0 3px #121912,0 0 0 5px #8c7950,inset 0 0 8px #d1b67640}
@@ -127,11 +127,11 @@
 #growth-overlay button.growth-node.locked{background:radial-gradient(#253127,#101612);border-color:#605e46;color:#9b9b88}
 #growth-overlay button.growth-node.available{border-color:#d6c38b;box-shadow:0 0 0 2px #111a12,0 0 0 3px #9d8653,inset 0 0 7px #daca6c35}
 #growth-overlay button.growth-node.lit{background:radial-gradient(circle at 40% 30%,#fff0bd,#b88d36 48%,#34422a 90%);border-color:#f6dc9a;color:#241d10;box-shadow:0 0 0 2px #1a2215,0 0 0 3px #8f7950,0 0 11px #d8b66480}
-#growth-overlay .growth-paragon-rank{display:grid;grid-template-columns:33.333% minmax(0,1fr);gap:0;aspect-ratio:3/1;padding:0;border:0;background:url('assets/ui/growth-v3/paragon-stone.png') center/100% 100% no-repeat}
+#growth-overlay .growth-paragon-rank{display:grid;grid-template-columns:33.333% minmax(0,1fr);gap:0;aspect-ratio:3/1;padding:0;border:0;background:var(--lm-597671340920,url('assets/ui/growth-v3/paragon-stone.png')) center/100% 100% no-repeat}
 #growth-overlay .growth-rank-seal{justify-self:center;width:70%;height:auto;aspect-ratio:1;border:0;box-shadow:none;background:transparent;padding:0;color:#f1dca4;text-shadow:0 2px 3px #000;transform:none}
 #growth-overlay .growth-rank-seal b{font-size:clamp(25px,4vw,54px)}
 #growth-overlay .growth-paragon-rank>div:last-child{padding:10px 9% 10px 3%;min-width:0}
-#growth-overlay .growth-ultimate{background:linear-gradient(110deg,#213126e8,#101914ed),url('assets/ui/growth-v3/talent-stone.png') center/cover}
+#growth-overlay .growth-ultimate{background:linear-gradient(110deg,#213126e8,#101914ed),var(--lm-37652c492e66,url('assets/ui/growth-v3/talent-stone.png')) center/cover}
 #growth-overlay .growth-stat-meter{background:#080f0a;border-color:#6e6848}
 #growth-overlay .growth-node-emblem{display:block;width:23px;height:23px;pointer-events:none}
 #growth-overlay .notable .growth-node-emblem{width:27px;height:27px}
@@ -154,7 +154,7 @@
 @media(max-width:600px){#growth-overlay .growth-paragon-rank h3{font-size:15px;margin:3px 0 6px}#growth-overlay .growth-paragon-rank .growth-eyebrow{font-size:8px;letter-spacing:.03em}#growth-overlay .growth-paragon-rank small{font-size:9px}#growth-overlay .growth-rank-seal{width:70%;height:auto}#growth-overlay .growth-rank-seal span{font-size:11px}#growth-overlay .growth-paragon-rank>div:last-child{padding-top:20px;padding-bottom:20px}}
 /* Interface v6: original vector engraving, shared materials only.
    Layout rules live in separate desktop/mobile files. Never recolor rarity text or battle art. */
-:root{--li-frame:url('assets/ui/interface-v6/carved-frame.svg')}
+:root{--li-frame:var(--lm-0d601be250cd,url('assets/ui/interface-v6/carved-frame.svg'))}
 body.m-unified #game-screen .log-bg{background:var(--li-panel)!important;border-color:#6d6754}
 body.m-unified :is(#game-screen,#lm-detail,#collection-panel,#card-book,#equip-book,#misc-book,#relic-book,#warehouse-window,#item-modal,#npc-interaction-modal,#shop-window,#growth-overlay,#class-overlay,#attribute-help,#afk-novel,#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#m-fsv-modal,#m-hist-modal,#m-rid-modal,#m-diag-modal,#m-mobname-modal,#m-stg-modal,#afk-confirm-modal,#afk-alert-modal,#afk-gh-win) :is(.panel,.modal-content){border-color:var(--li-edge);border-radius:1px}
 body.m-unified :is(#game-screen,#lm-detail,#collection-panel,#card-book,#equip-book,#misc-book,#relic-book,#warehouse-window,#item-modal,#npc-interaction-modal,#shop-window,#growth-overlay,#class-overlay,#attribute-help,#afk-novel,#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#m-fsv-modal,#m-hist-modal,#m-rid-modal,#m-diag-modal,#m-mobname-modal,#m-stg-modal,#afk-confirm-modal,#afk-alert-modal,#afk-gh-win) :is(.panel-header,.nv-head){color:var(--li-heading);border-color:var(--li-edge);background:var(--li-header)!important;font-family:"Noto Serif TC","PMingLiU",serif;letter-spacing:.04em}
@@ -212,7 +212,7 @@ body:not(.m-unified) #status-panel{padding-bottom:10px}
 body:not(.m-unified) #game-screen .panel::after,
 #growth-overlay>section::after,#class-overlay>section::after,#attribute-help>section::after{
  content:'';position:absolute;inset:-2px;z-index:5;pointer-events:none;
- border:0 solid transparent;border-image:url('assets/ui/interface-v7/dragon-carved-frame.png') 240 / 36px / 0 stretch;
+ border:0 solid transparent;border-image:var(--lm-a204be76b3c0,url('assets/ui/interface-v7/dragon-carved-frame.png')) 240 / 36px / 0 stretch;
  width:auto;height:auto;top:-2px;right:-2px;left:-2px;bottom:-2px;
 }
 body:not(.m-unified) #game-screen .panel>.panel-header{padding-left:30px;padding-right:30px}
@@ -236,7 +236,7 @@ body:not(.m-unified) #tab-content-panel>.h-full{min-height:0;min-width:0}
 #growth-overlay h2,#class-overlay h2,#growth-overlay h3,#class-overlay h3,#class-overlay .class-routes strong{font-family:"Noto Serif TC","PMingLiU",serif;font-weight:600;letter-spacing:.08em;color:#e0c996;text-shadow:0 2px 2px #000}
 #growth-overlay header h2,#class-overlay h2{font-size:24px}
 #growth-overlay header small,#class-overlay header small{color:#a8997d;letter-spacing:.25em}
-#growth-overlay .growth-body,#class-overlay main{padding:20px;min-width:0;scrollbar-color:#95836a #17181c;background:linear-gradient(135deg,#20232de8,#15181ff0),url('assets/ui/black-marble-v4.webp') center/600px}
+#growth-overlay .growth-body,#class-overlay main{padding:20px;min-width:0;scrollbar-color:#95836a #17181c;background:linear-gradient(135deg,#20232de8,#15181ff0),var(--lm-95c7b10d9272,url('assets/ui/black-marble-v4.webp')) center/600px}
 #growth-overlay button:not(.growth-node):not(.growth-j),#class-overlay button{background:linear-gradient(#3b332c,#221e1d);border:1px solid #80715b;border-radius:2px;color:#dcd3bf;box-shadow:inset 0 1px #d5bf9222,0 2px 3px #0006}
 #growth-overlay nav,#class-overlay nav{padding:0 16px;gap:0;min-height:43px}
 #growth-overlay nav button,#class-overlay nav button{flex:1;min-height:42px;border:0!important;border-right:1px solid #514837!important;background:transparent!important;box-shadow:none!important;color:#b1aba0;font-size:15px;letter-spacing:.14em}
@@ -249,7 +249,7 @@ body:not(.m-unified) #tab-content-panel>.h-full{min-height:0;min-width:0}
 #growth-overlay .growth-path{min-height:58px;margin:0 0 7px;gap:9px;padding:8px!important;text-align:left;background:linear-gradient(110deg,#2b3038,#1a1d24)!important}
 #growth-overlay .growth-path.selected{border-color:#c2a96b;background:linear-gradient(110deg,#635236,#302a21)!important;box-shadow:inset 3px 0 #d9bf81!important}
 #growth-overlay .growth-path i{width:31px;height:31px}#growth-overlay .growth-path span{font-size:16px}#growth-overlay .growth-path small{font-size:10px}
-#growth-overlay .growth-tree{min-width:0;width:min(100%,590px);background:linear-gradient(#11172277,#10151e88),url('assets/ui/growth-v3/talent-stone.png') center/100% 100%}
+#growth-overlay .growth-tree{min-width:0;width:min(100%,590px);background:linear-gradient(#11172277,#10151e88),var(--lm-37652c492e66,url('assets/ui/growth-v3/talent-stone.png')) center/100% 100%}
 #growth-overlay .growth-star-panel{border-color:#918269;box-shadow:0 0 0 2px #090b10,inset 0 0 0 1px #a99b7a44}
 #growth-overlay .growth-star-caption,#growth-overlay .growth-tree-hint{background:#20232b;border-color:#665c4c}
 #growth-overlay .growth-inspector{display:block;grid-column:auto;position:sticky;top:0;min-height:410px;padding:18px;background:linear-gradient(#2c3039,#191c24);border-color:#87765b;box-shadow:inset 0 0 0 3px #101218}
@@ -311,7 +311,7 @@ body:not(.m-unified) #item-modal .item-window-actions button{padding:6px 11px;bo
 #growth-overlay nav,#class-overlay nav{display:flex;gap:0;padding:0;background:#101b16;min-height:43px;border-color:#665f46}
 #growth-overlay nav button,#class-overlay nav button{flex:1;min-height:43px;font-size:14px;border:0;border-right:1px solid #505843;border-radius:0;background:none;padding:7px 4px;box-shadow:none;letter-spacing:.04em}
 #growth-overlay nav [aria-current=page],#class-overlay nav [aria-current=page]{color:#f1daa0;background:linear-gradient(#66563855,#3c3a2555);box-shadow:inset 0 -2px #d0b878}
-#growth-overlay .growth-body,#class-overlay main{padding:12px 10px;min-width:0;min-height:0;background:linear-gradient(#15251ee8,#0b1411ed),url('assets/ui/black-marble-v4.webp') center/450px;scrollbar-width:thin;overflow-x:hidden}
+#growth-overlay .growth-body,#class-overlay main{padding:12px 10px;min-width:0;min-height:0;background:linear-gradient(#15251ee8,#0b1411ed),var(--lm-95c7b10d9272,url('assets/ui/black-marble-v4.webp')) center/450px;scrollbar-width:thin;overflow-x:hidden}
 #growth-overlay footer,#class-overlay footer{padding:7px 10px;min-height:40px;background:#131f18;border-color:#6b6044;gap:8px;font-size:11px}
 #growth-overlay footer button,#class-overlay footer button{font-size:11px;padding:3px 7px;min-height:28px;flex:none}
 #growth-overlay .growth-heading{gap:10px;flex-wrap:nowrap;margin-bottom:10px;padding-bottom:10px;border-color:#6b6448}#growth-overlay .growth-heading h3{font:600 20px/1.5 "PMingLiU",serif;color:#ddcb9b}#growth-overlay .growth-eyebrow{font-size:8px;letter-spacing:.08em}
@@ -321,7 +321,7 @@ body:not(.m-unified) #item-modal .item-window-actions button{padding:6px 11px;bo
 #growth-overlay .growth-paths>.growth-eyebrow,#growth-overlay .growth-path-note{display:none}#growth-overlay .growth-path{flex:0 0 70px;min-height:65px;margin:0;padding:5px 3px;display:flex;flex-direction:column;gap:3px;align-items:center;text-align:center;background:linear-gradient(#26392e,#15221b)}
 #growth-overlay .growth-path i{width:26px;height:26px}#growth-overlay .growth-path span{font:14px/1.3 "PMingLiU",serif;letter-spacing:.04em}#growth-overlay .growth-path small,#growth-overlay .growth-path b{display:none}
 #growth-overlay .growth-star-panel{width:100%;border-color:#88774d}#growth-overlay .growth-star-caption{font-size:12px;padding:7px 9px;gap:5px;background:#213125}#growth-overlay .growth-star-caption small{font-size:9px}
-#growth-overlay .growth-tree{width:100%;min-width:280px;max-width:500px;aspect-ratio:700/700;background:linear-gradient(#10201922,#0d1b1433),url('assets/ui/growth-v3/talent-stone.png') center/100% 100%}
+#growth-overlay .growth-tree{width:100%;min-width:280px;max-width:500px;aspect-ratio:700/700;background:linear-gradient(#10201922,#0d1b1433),var(--lm-37652c492e66,url('assets/ui/growth-v3/talent-stone.png')) center/100% 100%}
 #growth-overlay button.growth-node{width:25px;height:25px;min-height:25px;border-width:1px}#growth-overlay button.growth-node.notable{width:29px;height:29px}#growth-overlay button.growth-node.keystone{width:43px;height:43px}
 #growth-overlay .growth-node-emblem{width:19px;height:19px}#growth-overlay .notable .growth-node-emblem{width:22px;height:22px}#growth-overlay .keystone .growth-node-emblem{width:31px;height:31px}#growth-overlay .growth-origin{width:36px;height:36px;padding:4px}
 #growth-overlay .growth-cluster-label b{font-size:17px}#growth-overlay .growth-cluster-label span{font-size:8px}#growth-overlay .growth-merge-label{font-size:14px}#growth-overlay .growth-merge-label span{font-size:8px}#growth-overlay .growth-core-label{font-size:8px;top:97%}
@@ -348,7 +348,7 @@ body:not(.m-unified) #item-modal .item-window-actions button{padding:6px 11px;bo
 #class-overlay.class-embedded>section{height:auto;max-height:none;padding:0;box-shadow:none;border:0}#class-overlay.class-embedded nav{position:sticky;top:0}#class-overlay.class-embedded main{overflow:visible}
 @media(min-width:600px){#growth-overlay .growth-paragon-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#growth-overlay .growth-stat{grid-template-columns:1fr}#growth-overlay .growth-stat-controls{grid-column:1;grid-row:2;justify-content:flex-end}#growth-overlay .growth-stat p{grid-row:3}#growth-overlay .growth-stat-meter{grid-row:4}#class-overlay .class-skill-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* Mobile only: jade panels, compact touch navigation. Preserve silver skill tiles. */
-body.m-unified{--li-panel:linear-gradient(120deg,#283b31ed,#101d18f5),url('assets/ui/black-marble-v4.webp') center/420px;--li-card:linear-gradient(115deg,#293f35,#14251f);--li-header:linear-gradient(#405043,#24352c 54%,#15241d);--li-well:#102019}
+body.m-unified{--li-panel:linear-gradient(120deg,#283b31ed,#101d18f5),var(--lm-95c7b10d9272,url('assets/ui/black-marble-v4.webp')) center/420px;--li-card:linear-gradient(115deg,#293f35,#14251f);--li-header:linear-gradient(#405043,#24352c 54%,#15241d);--li-well:#102019}
 body.m-unified #lm-detail{background:var(--li-panel)!important}
 body.m-unified #lm-detail-header{border-image:var(--li-frame) 16 / 5px / 0 stretch!important;background:var(--li-header)!important}
 body.m-unified #lm-detail-body :is(.panel,.modal-content){background:var(--li-panel)!important;border-image:var(--li-frame) 16 / 5px / 0 stretch!important}

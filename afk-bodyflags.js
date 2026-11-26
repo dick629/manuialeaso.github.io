@@ -12,8 +12,22 @@
   'use strict';
   var d = document, MODAL = '#afk-toggles-overlay,#afk-ms-overlay,#afk-ps-overlay,#afk-pwa-notice,#afk-radio-menu,#afk-stg-menu.open,#m-fsv-modal.open,#m-stg-modal.open,#m-hist-modal.open,#m-diag-modal.open,#m-rid-modal.open,#m-mobname-modal.open,#afk-alert-modal.open,#afk-confirm-modal.open';
   var set = function (c, on) { var b = d.body; if (b && b.classList.contains(c) !== on) b.classList.toggle(c, on); };
+  var raisedDialogs = ['item-modal','poly-modal','town-interaction-container','card-book','equip-book','misc-book','relic-book','collection-panel'];
+  var layoutIds = new Set(raisedDialogs.concat(['town-view','battle-view','app-stage','col-center']));
+  function syncLayout() {
+    var stage=d.getElementById('app-stage'),column=d.getElementById('col-center');
+    if(stage)stage.classList.toggle('afk-dialog-raised',raisedDialogs.some(function(id){
+      var el=d.getElementById(id);
+      return el && !el.classList.contains('hidden') && stage.contains(el);
+    }));
+    if(!column)return;
+    var town=d.getElementById('town-view'),field=d.getElementById('battle-view');
+    column.classList.toggle('afk-town-column',!!(town && column.contains(town) && !town.classList.contains('hidden')));
+    column.classList.toggle('afk-fitted-field',!!(field && column.contains(field) && field.classList.contains('area-fit') && !field.classList.contains('hidden')));
+  }
   var sync = function () {
     queued = false; if (!d.body) return;
+    syncLayout();
     var gs = d.getElementById('game-screen'), co = d.getElementById('class-overlay');
     set('afk-f-ingame', !!(gs && !gs.classList.contains('hidden')));
     set('afk-f-modal', !!d.querySelector(MODAL));
@@ -28,7 +42,10 @@
       new MutationObserver(function (list) {
         for (var i = 0; i < list.length; i++) {
           var m = list[i];
-          if (m.type === 'childList' ? m.target === d.body || (m.target.id === 'lm-detail') : (m.target.id && (m.target.id === 'game-screen' || m.target.id === 'class-overlay' || /modal|menu/.test(m.target.id)))) { q(); return; }
+          if (m.type === 'childList' ? m.target === d.body || m.target.id === 'lm-detail' ||
+              Array.prototype.some.call(m.addedNodes,function(n){return layoutIds.has(n.id);}) ||
+              Array.prototype.some.call(m.removedNodes,function(n){return layoutIds.has(n.id);})
+              : (m.target.id && (layoutIds.has(m.target.id) || m.target.id === 'game-screen' || m.target.id === 'class-overlay' || /modal|menu/.test(m.target.id)))) { q(); return; }
         }
       }).observe(d.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
     } catch (e) {}

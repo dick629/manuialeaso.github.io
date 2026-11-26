@@ -140,7 +140,7 @@
         if (mag && attacker && attacker !== p && mobs().indexOf(attacker) >= 0) sum('dReflMag').forEach(function (e) { if (Math.random() < e[1]) hurt(attacker, out * e[2], 'magic'); });
         sum('dHpHeal').forEach(function (e) { if (Math.random() < e[1] && icd('hpheal', e[3])) p.hp = Math.min(p.mhp, p.hp + Math.floor(p.mhp * e[2])); });
         sum('dMpShield').forEach(function (e) { if (!on('mpshield') && Math.random() < e[1]) { B.shield = Math.floor((p.mmp || 0) * e[2]); buff('mpshield', 8, '魔力護盾'); } });
-        sum('dPartyHeal').forEach(function (e) { if (Math.random() < e[1] && icd('pheal', e[3])) { p.hp = Math.min(p.mhp, p.hp + Math.floor(p.mhp * e[2])); (p.allies || []).forEach(function (a) { if (a && !a._downed && a.curHp > 0) a.curHp = Math.min(a.mhp || a.curHp, a.curHp + Math.floor((a.mhp || 0) * e[2])); }); clog(tag('全部治癒術') + '全隊回復 ' + Math.round(e[2] * 100) + '% HP。'); } });
+        sum('dPartyHeal').forEach(function (e) { if (Math.random() < e[1] && icd('pheal', e[3])) { p.hp = Math.min(p.mhp, p.hp + Math.floor(p.mhp * e[2])); GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed && a.curHp > 0) a.curHp = Math.min(a.mhp || a.curHp, a.curHp + Math.floor((a.mhp || 0) * e[2])); }); clog(tag('全部治癒術') + '全隊回復 ' + Math.round(e[2] * 100) + '% HP。'); } });
         sum('dClone').forEach(function (e) { if (!on('clone') && Math.random() < e[1]) { B.cloneK = e[3]; buff('clone', e[2], '鏡像分身'); } });
       } catch (e) {}
       return out;

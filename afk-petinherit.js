@@ -48,6 +48,7 @@
   if (typeof W.petAttackOnce === 'function') {
     var oAtk = W.petAttackOnce;
     W.petAttackOnce = function (pet, d, target) {
+      if (W.GiranCombat && !W.GiranCombat.permits(pet,target,'basic')) return;
       var alive = target && target.curHp > 0, r = oAtk.apply(this, arguments);
       try { if (alive && typeof W.teamRecoverMp === 'function') W.teamRecoverMp(PET_MP); } catch (e) {}
       return r;

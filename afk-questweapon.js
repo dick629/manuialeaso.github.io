@@ -48,7 +48,14 @@
   Object.keys(BASE).forEach(function (c) { mk(40, c); mk(60, c); });
 
   var store = function (p) { p = p || P(); if (!p) return null; if (!p.afkNovQ || typeof p.afkNovQ !== 'object') p.afkNovQ = { st: 0, kills: 0, w40: false, w60: false }; return p.afkNovQ; };
-  var trial30 = function (p) { var k = QC(p) + '30'; return !!(p.trialQ && p.trialQ[k] === 2); };
+  var trial30 = function (p) {
+    var role = QC(p);
+    // The original Dark Elf trials keep their historical keys after the two NPCs exchanged levels.
+    return [role + '15', role + '30', role + '45'].some(function (key) {
+      var quest = TRIAL_Q[key];
+      return quest && quest.lv === 30 && p.trialQ && p.trialQ[key] === 2;
+    });
+  };
   var give = function (p, cap) {
     var id = idOf(cap, QC(p)); if (!DB.items[id]) return false;
     var it = gainItem(id, 1, true, true); var got = (p.inv || []).filter(function (x) { return x && x.id === id; }).pop();

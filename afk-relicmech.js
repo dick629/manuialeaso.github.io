@@ -29,7 +29,7 @@
   var tier = function (n, a) { return a != null ? (a >= 5 ? 4 : 3) : n >= 10 ? 2 : n >= 5 ? 1 : 0; };
 
   // ── 共用：隊伍、怪物、傷害、治療 ──
-  var party = function () { var p = P(); if (!p) return []; return [p].concat((p.allies || []).filter(function (a) { return a && !a._downed && !a.dead && N(a.curHp) > 0; })); };
+  var party = function () { var p = P(); if (!p) return []; return [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed && !a.dead && N(a.curHp) > 0; })); };
   var isPlayer = function (x) { return !!x && x === P(); };
   var isAlly = function (x) { var p = P(); return !!(x && p && x !== p && (p.allies || []).indexOf(x) >= 0); };
   var hpOf = function (x) { return isPlayer(x) ? N(x.hp) : N(x.curHp); };
@@ -142,7 +142,7 @@
   def('relic_collie_fur', [{ c: 10, h: 50 }, { c: 15, h: 70 }, { c: 20, h: 100 }, { c: 25, h: 100, rez: 1 }], {
     t: function (o) { return '寵物攻擊時 ' + o.c + '% 治療 HP 最低的隊友（' + o.h + '% 寵物攻擊）' + (o.rez ? '；有人倒下時寵物 3 秒後把他拉起來（HP 20%，冷卻 90 秒）' : ''); },
     compHit: function (a, o, c) { if (c.src !== 'pet' || !roll(o.c)) return; var low = party().sort(function (x, y) { return hpOf(x) / mhpOf(x) - hpOf(y) / mhpOf(y); })[0]; if (low) heal(low, c.v * o.h / 100); },
-    tick: function (a, o, c) { if (!o.rez || !isPlayer(a) || !petsUp().length) return; var s = S(a, 'collie'); var dn = (a.allies || []).find(function (x) { return x && x._downed; }); if (!dn) { s.downAt = 0; return; } if (!s.downAt) s.downAt = tk(); if (tk() - s.downAt >= 30 && cd(s, 'rz', 90)) { try { dn._downed = false; dn.curHp = Math.floor(mhpOf(dn) * 0.2); } catch (e) {} s.downAt = 0; pop('collie', '寵物救援'); } }
+    tick: function (a, o, c) { if (!o.rez || !isPlayer(a) || !petsUp().length) return; var s = S(a, 'collie'); var dn = GiranPartyView.combatAllies(a).find(function (x) { return x && x._downed; }); if (!dn) { s.downAt = 0; return; } if (!s.downAt) s.downAt = tk(); if (tk() - s.downAt >= 30 && cd(s, 'rz', 90)) { try { dn._downed = false; dn.curHp = Math.floor(mhpOf(dn) * 0.2); } catch (e) {} s.downAt = 0; pop('collie', '寵物救援'); } }
   });
   def('relic_doberman_fang', [{ p: 15 }, { p: 20 }, { p: 30 }, { p: 30, crit: 1 }], {
     t: function (o) { return '你和寵物打同一個目標時，寵物傷害 +' + o.p + '%' + (o.crit ? '；你爆擊後寵物下一擊傷害 ×1.5' : ''); },
@@ -392,7 +392,7 @@
   });
   def('relic_wisp_thought', [{ p: 10 }, { p: 15 }, { p: 20 }, { p: 30, swap: 1 }], {
     t: function (o) { return '隊友倒下時，你 30 秒內造成的傷害 +' + o.p + '%' + (o.swap ? '；這段時間你倒下時改由那名隊友站起來（HP 30%）' : ''); },
-    tick: function (a, o) { var s = S(a, 'wisp'), p = P(), dn = (p.allies || []).filter(function (x) { return x && x._downed; }).length; if (dn > N(s.dn)) { s.until = tk() + 300; s.who = (p.allies || []).find(function (x) { return x && x._downed; }); } s.dn = dn; },
+    tick: function (a, o) { var s = S(a, 'wisp'), p = P(), dn = GiranPartyView.combatAllies(p).filter(function (x) { return x && x._downed; }).length; if (dn > N(s.dn)) { s.until = tk() + 300; s.who = GiranPartyView.combatAllies(p).find(function (x) { return x && x._downed; }); } s.dn = dn; },
     dmg: function (a, o) { return (S(a, 'wisp').until || 0) > tk() ? o.p : 0; },
     death: function (a, o) { var s = S(a, 'wisp'); if (!o.swap || (s.until || 0) <= tk() || !s.who || !s.who._downed) return false; s.who._downed = false; s.who.curHp = Math.floor(mhpOf(s.who) * 0.3); s.until = 0; return false; }
   });
@@ -572,7 +572,7 @@
   });
   def('relic_elmore_greatsword', [{ p: 1, k: 10 }, { p: 1, k: 20 }, { p: 2, k: 30 }, { p: 2, k: 30, fall: 1 }], {
     t: function (o) { return '戰鬥每 10 秒 +' + o.p + '% 傷害（最多 ' + o.k + '%，換地圖歸零）' + (o.fall ? '；隊友倒下時直接疊滿' : ''); },
-    tick: function (a, o, c) { var s = S(a, 'elm'), mp = String(mapState.current || ''); if (s.map !== mp) { s.map = mp; s.v = 0; } if (c.fight && tk() % 100 === 0) s.v = Math.min(o.k, N(s.v) + o.p); if (o.fall && (P().allies || []).some(function (x) { return x && x._downed; })) s.v = o.k; },
+    tick: function (a, o, c) { var s = S(a, 'elm'), mp = String(mapState.current || ''); if (s.map !== mp) { s.map = mp; s.v = 0; } if (c.fight && tk() % 100 === 0) s.v = Math.min(o.k, N(s.v) + o.p); if (o.fall && GiranPartyView.combatAllies(P()).some(function (x) { return x && x._downed; })) s.v = o.k; },
     dmg: function (a) { return N(S(a, 'elm').v); }
   });
   // ---- 防具、飾品 ----
@@ -724,7 +724,7 @@
       tick: function (a, o, c, d) { var s = S(a, 'emi_' + d._b); if ((s.clone || 0) > tk() && tk() % 10 === 0) { var tg = target(); if (tg) hit(tg, panel(a) * 0.4); } } },
     purify: { v: [{ im: 3 }, { im: 3, tr: 30 }, { im: 3, tr: 30, ally: 1 }, { im: 3, tr: 30, ally: 1, cap: 1 }],
       t: function (o, d) { var k = d.relicEffectKey; return '原本的異常回血觸發時，3 秒內不再中同一種異常' + (o.tr ? '；' + o.tr + '% 把異常轉給攻擊你的怪' : '') + (o.ally ? '；同時解除一名隊友的異常' : '') + (o.cap ? (k === 'rebirth' ? '；倒下時 5 秒後站起來（HP 30%，每張地圖一次）' : k === 'coldguard' ? '；解除時凍住目標 1 秒' : '；每解除一次全隊 10 秒傷害 +5%（最多 5 層）') : ''); },
-      tick: function (a, o, c, d) { if (tk() % 3) return; var st0 = a.statuses || a.st; if (!st0) return; var got = ['stun', 'freeze', 'stone', 'paralyze', 'sleep', 'poison', 'slow', 'silence', 'magicseal'].filter(function (k) { return st0[k] > 0; }); if (!got.length) return; var s = S(a, 'epu_' + d._b); if (!cd(s, 'u', 3)) return; got.forEach(function (k) { st0[k] = 0; s['im_' + k] = tk() + o.im * 10; }); var tg = target(); if (o.tr && tg && roll(o.tr)) stat(tg, got[0] === 'magicseal' ? 'silence' : got[0], 2); if (o.ally) { var al = (P().allies || []).find(function (x) { return x && !x._downed && x.st && ['stun', 'freeze', 'stone', 'paralyze'].some(function (k) { return x.st[k] > 0; }); }); if (al) cleanse(al, 3); } if (o.cap) { var key = d.relicEffectKey; if (key === 'coldguard' && tg) stat(tg, 'freeze', 1); if (key === 'purify') { s.pn = Math.min(5, ((s.pu || 0) > tk() ? N(s.pn) : 0) + 1); s.pu = tk() + 100; } } },
+      tick: function (a, o, c, d) { if (tk() % 3) return; var st0 = a.statuses || a.st; if (!st0) return; var got = ['stun', 'freeze', 'stone', 'paralyze', 'sleep', 'poison', 'slow', 'silence', 'magicseal'].filter(function (k) { return st0[k] > 0; }); if (!got.length) return; var s = S(a, 'epu_' + d._b); if (!cd(s, 'u', 3)) return; got.forEach(function (k) { st0[k] = 0; s['im_' + k] = tk() + o.im * 10; }); var tg = target(); if (o.tr && tg && roll(o.tr)) stat(tg, got[0] === 'magicseal' ? 'silence' : got[0], 2); if (o.ally) { var al = GiranPartyView.combatAllies(P()).find(function (x) { return x && !x._downed && x.st && ['stun', 'freeze', 'stone', 'paralyze'].some(function (k) { return x.st[k] > 0; }); }); if (al) cleanse(al, 3); } if (o.cap) { var key = d.relicEffectKey; if (key === 'coldguard' && tg) stat(tg, 'freeze', 1); if (key === 'purify') { s.pn = Math.min(5, ((s.pu || 0) > tk() ? N(s.pn) : 0) + 1); s.pu = tk() + 100; } } },
       resist: function (a, o, k, d) { var s = S(a, 'epu_' + d._b); return (s['im_' + k] || 0) > tk(); },
       team: function (a, o, c, d) { var s = S(a, 'epu_' + d._b); return o.cap && d.relicEffectKey === 'purify' && (s.pu || 0) > tk() ? 5 * N(s.pn) : 0; },
       death: function (a, o, d) { if (!o.cap || d.relicEffectKey !== 'rebirth') return false; var s = S(a, 'epu_' + d._b), mp = String(mapState.current || ''); if (s.map === mp) return false; s.map = mp; a.hp = 1; s.rise = tk() + 50; pop('reb', '重生之息'); return true; },
@@ -1080,6 +1080,8 @@
   };
   var init = function () { if (init.done) return; init.done = true; dropEvo(); calcTier(); catInit(); hookGen(); hookHeal(); hookEco(); hookRT(); bind(); hookTier(); baseText(); rebuild(); };
   hookGen(); bind(); hookTier();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
+  else queueMicrotask(init);
   W.addEventListener('load', function () { setTimeout(init, 0); setTimeout(function () { hookHeal(); hookEco(); rebuild(); }, 800); });
   W.__afkRelicMechHas = function (k) { return !!M[k]; };
   W.__afkRelicMechTxtS = function (k, st) { var h = M[k]; if (!h || !(st >= 1)) return ''; try { return h.t(scale(h.v[Math.min(st, h.v.length) - 1], (TMUL[k] || 1.15) / 1.15)); } catch (e) { return ''; } };

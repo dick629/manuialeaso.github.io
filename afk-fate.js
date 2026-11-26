@@ -29,13 +29,13 @@
   var compute = function () {
     var p = P(); if (!p || !on() || p.classicMode) return null;
     // 快速路徑：同一 tick、每位成員的 (_slot||'p') 與 cls 跟上次完全相同（===）→ 組出來的 key 必然相同，不必再組字串
-    var t = tk(), raw = cache.raw, al = p.allies || [];
+    var t = tk(), raw = cache.raw, al = GiranPartyView.combatAllies(p);
     if (raw && cache.tick === t && raw[0] === (p._slot || 'p') && raw[1] === p.cls) {
       var j = 2, same = true;
       for (var i = 0; i < al.length; i++) { var am = al[i]; if (!am) continue; if (raw[j] !== (am._slot || 'p') || raw[j + 1] !== am.cls) { same = false; break; } j += 2; }
       if (same && j === raw.length) return cache.v;
     }
-    var allies = (p.allies || []).filter(Boolean), members = [p].concat(allies);
+    var allies = GiranPartyView.combatAllies(p).filter(Boolean), members = [p].concat(allies);
     var key = t + '|' + members.map(function (m) { return (m._slot || 'p') + ':' + m.cls; }).join(',');
     var raws = []; members.forEach(function (m) { raws.push(m._slot || 'p', m.cls); });
     if (cache.key === key) { cache.tick = t; cache.raw = raws; return cache.v; }
@@ -105,7 +105,7 @@
   var syncAllies = function () {
     var p = P(); if (!p) return;
     var v = compute(), want = { ac: v ? v.ac : 0, mr: v ? v.mr : 0 };
-    (p.allies || []).forEach(function (a) {
+    GiranPartyView.combatAllies(p).forEach(function (a) {
       if (!a || !a.d) return;
       var ap = a._afkFate;
       if (!ap || ap.d !== a.d || ap.rn !== a._recompN) ap = { ac: 0, mr: 0 };   // 能力重建過＝之前加的已經不在了

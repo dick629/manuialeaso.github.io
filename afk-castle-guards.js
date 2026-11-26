@@ -511,7 +511,7 @@
     var p = P(), out = [];
     if (!p || p.dead) return out;
     out.push({ o: p, get: function () { return p.hp; }, set: function (v) { p.hp = v; }, max: p.mhp, n: '你' });
-    (p.allies || []).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push({ o: a, get: function () { return a.curHp; }, set: function (v) { a.curHp = v; }, max: a.mhp, n: a._allyName || a.name || '傭兵' }); });
+    GiranPartyView.combatAllies(p).forEach(function (a) { if (a && !a._downed && (a.curHp || 0) > 0) out.push({ o: a, get: function () { return a.curHp; }, set: function (v) { a.curHp = v; }, max: a.mhp, n: a._allyName || a.name || '傭兵' }); });
     (p.guardsV2 || []).forEach(function (g) { if (g && !g._downed && (g.hp || 0) > 0) out.push({ o: g, get: function () { return g.hp; }, set: function (v) { g.hp = v; }, max: g.mhp, n: g.form }); });
     return out.filter(function (t) { return t.max > 0; });
   };

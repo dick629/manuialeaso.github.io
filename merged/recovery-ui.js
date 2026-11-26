@@ -2,6 +2,12 @@
  const B=LineageSaveBridge,R=LineageRecovery,V=LineageBackups,$=id=>document.getElementById(id);
  let lastScan=null,selected=null,selectedText='',busy=false;
  const store=localStorage;
+ if(new URL(location.href).searchParams.get('mode')==='dimension'){
+  for(const back of document.querySelectorAll('a[href^="index.html"]')){
+   const entry=new URL('dimension.html',location.href);entry.search=new URL(back.href).search;
+   back.href=entry.href;
+  }
+ }
  const transient=new Set(['fb5_active_role_sessions_v1']);
  function status(text,bad=false){$('status').textContent=text;$('status').classList.toggle('error',bad);}
  function button(text,fn){const b=document.createElement('button');b.textContent=text;b.addEventListener('click',()=>run(fn));return b;}
@@ -72,15 +78,16 @@
   $('portable').disabled=!check.ok;
  }
  $('target').onchange=updateCompatibility;
- $('save-file').onchange=()=>run(async()=>{
+ async function inspectFile(file){
   selected=null;selectedText='';$('role-options').hidden=true;$('full-options').hidden=true;$('file-info').textContent='';$('replace-consent').checked=false;$('quarantine-consent').checked=false;$('quarantine-option').hidden=true;$('restore-full').disabled=true;
-  const file=$('save-file').files[0];if(!file)return;
+  if(!file)return;
   if(file.size>B.MAX_TEXT)throw Error('檔案太大，請保留原檔並交由開發者檢查。');
   selectedText=await file.text();selected=B.inspect(selectedText);
   $('file-info').textContent=selected.kind==='role'?'已讀取角色存檔。原始檔不會被修改。':'已讀取完整資料備份。還原前會備份目前資料。';
   if(selected.kind==='role'){$('role-options').hidden=false;updateCompatibility();}else{$('full-options').hidden=false;const n=R.scan(selected.keys).issues.filter(x=>x.code==='MISSING_ITEM_ID').reduce((n,x)=>n+x.count,0);$('quarantine-option').hidden=!n;$('quarantine-count').textContent=n;}
   status('檔案檢查完成。');
- });
+ }
+ $('save-file').onchange=()=>run(()=>inspectFile($('save-file').files[0]));
  $('portable').onclick=()=>run(async()=>{if(!selected)return;const text=B.exportRole(selectedText,LineageProfiles[$('target').value]);notifyDownload(await download(text,'lineage-compatible-'+$('target').value+'-'+stamp()+'.json'));});
  $('replace-consent').onchange=()=>{$('restore-full').disabled=!$('replace-consent').checked;};
  $('restore-full').onclick=()=>run(async()=>{
@@ -91,7 +98,7 @@
   for(const key of B.roleKeys(keys)){const d=B.decode(keys[key]);const check=B.analyzeCompatibility(d.value,window.LineageCurrentProfile);if(!check.ok)throw Error('備份含目前無法安全讀取的角色：'+check.blockers[0].message);}
   if(qp.count)await V.save({format:R.ID,schema:1,keys:selected.keys,changes:[]},'import-original');
   const changes=R.fullRestorePlan(keys,current());
-  status('正在備份目前資料並還原…');await mutate(changes,'full-restore');display(R.scan(current()));status('完整備份已還原。請返回遊戲選擇角色。');await showBackups();
+  status('正在備份目前資料並還原…');await mutate(changes,'full-restore');window.dispatchEvent(new Event('lineage-full-restored'));display(R.scan(current()));status('完整備份已還原。請返回遊戲選擇角色。');await showBackups();
  });
  $('export-full').onclick=()=>run(async()=>{const keys=current();if(!Object.keys(keys).length)throw Error('目前沒有可匯出的資料。');notifyDownload(await download(JSON.stringify(B.pack(keys)), 'lineage-full-backup-'+stamp()+'.json'));});
  async function restoreSnapshot(id){
@@ -134,5 +141,10 @@
  $('import-debug-copy')&&($('import-debug-copy').onclick=async()=>{let t='';try{t=JSON.stringify(JSON.parse(localStorage.getItem('lineage_import_debug_v1')||'[]'),null,1);}catch(e){}try{await navigator.clipboard.writeText(t);status('匯入紀錄已複製。');}catch(e){prompt('複製下面的文字：',t);}});
  $('import-debug-clear')&&($('import-debug-clear').onclick=()=>{try{localStorage.removeItem('lineage_import_debug_v1');}catch(e){}importDebug();status('匯入紀錄已清除。');});
  importDebug();
- window.LineageRecoveryUI={scan:()=>{const r=R.scan(current());display(r);return r;},showBackups};
+ window.LineageRecoveryUI={scan:()=>{const r=R.scan(current());display(r);return r;},showBackups,
+  async inspectTransfer(file){
+    if(busy)throw Error('存檔工具正在執行上一個操作，請稍後再讀取');
+    busy=true;document.body.setAttribute('aria-busy','true');
+    try{await inspectFile(file);}finally{busy=false;document.body.removeAttribute('aria-busy');}
+  }};
 })();

@@ -1,0 +1,104 @@
+[
+  {
+    "name": "夢域 地龍之魔眼",
+    "url": "assets/icons/accessories/夢域 地龍之魔眼.png",
+    "source": "重繪",
+    "sha256": "a88e1d86fdc7c7ac8e2ef06b36bccf9fa5b5530be827383b92342ebb0a279e36"
+  },
+  {
+    "name": "次元 地龍之魔眼",
+    "url": "assets/icons/accessories/次元 地龍之魔眼.png",
+    "source": "重繪",
+    "sha256": "601bd64550981acad84a2b2c76e0ceb8aa4d8262716cc55b5ea269ee783e9631"
+  },
+  {
+    "name": "四龍之瞳",
+    "url": "assets/icons/accessories/四龍之瞳.png",
+    "source": "重繪",
+    "sha256": "640934ed04965167afe1ec61696a4ebe20b51d45604f389a26109618d41cacec"
+  },
+  {
+    "name": "爆裂的火球",
+    "url": "assets/icons/skills/爆裂的火球.png",
+    "source": "重繪",
+    "sha256": "4ed3afcd5871919075988bbd873081253dd84343fa6bf74fb1a89154ade64334"
+  },
+  {
+    "name": "闇黑波動",
+    "url": "assets/icons/skills/闇黑波動.png",
+    "source": "重繪",
+    "sha256": "231bcf9c3cc30a1cd0ec7700372f6cc8369505303b45abb51868c813b0f4670c"
+  },
+  {
+    "name": "暈眩",
+    "url": "assets/icons/skills/暈眩.png",
+    "source": "重繪",
+    "sha256": "8ee8e9bcff409f51a354e621b7a50106c1b7143c8b3ec39954e46f725fd3a1e9"
+  },
+  {
+    "name": "冰凍",
+    "url": "assets/icons/skills/冰凍.png",
+    "source": "重繪",
+    "sha256": "f77b0772f25eee373b497c2ac6cfb360b699c30fcde9e0060a6ad6910423ae91"
+  },
+  {
+    "name": "麻痺",
+    "url": "assets/icons/skills/麻痺.png",
+    "source": "重繪",
+    "sha256": "f2718e35405dd1d49a17922e3f5d6b1cf030e238bf3df4e6e830628a4d14cb88"
+  },
+  {
+    "name": "沉默",
+    "url": "assets/icons/skills/沉默.png",
+    "source": "重繪",
+    "sha256": "f14a0d410f2975602318e63e5cb322c5270458bfd361a31365540914eddfba1a"
+  },
+  {
+    "name": "緩速",
+    "url": "assets/icons/skills/緩速.png",
+    "source": "重繪",
+    "sha256": "ce8057f8dbf905f168d474a38488d5e91767f5d734ab48abd21d756ec401c9da"
+  },
+  {
+    "name": "石化",
+    "url": "assets/icons/skills/石化.png",
+    "source": "重繪",
+    "sha256": "02099b90ce05308757ca091a7f3dbf314cf27f490f852fdb4fed7129d0b3fd2d"
+  },
+  {
+    "name": "損壞",
+    "url": "assets/icons/skills/損壞.png",
+    "source": "重繪",
+    "sha256": "101a37907dcbfbc37c4a880c7029570818156fc6aa3a239eeb1e0e26b62d9923"
+  },
+  {
+    "name": "致命落雷",
+    "url": "assets/icons/skills/致命落雷.png",
+    "source": "重繪",
+    "sha256": "c5eabed767d5858d85a7ecc80bfd7893d09eee6e6ecd900cdcebcb0cf0240f30"
+  },
+  {
+    "name": "惡魔之吻",
+    "url": "assets/icons/skills/惡魔之吻.png",
+    "source": "重繪",
+    "sha256": "1ceeb0c8a5ca885476aa806eb10c6b2e55d0812d79b21b96d09f4fdc82c965a3"
+  },
+  {
+    "name": "復仇尖石",
+    "url": "assets/icons/skills/復仇尖石.png",
+    "source": "重繪",
+    "sha256": "fb75473fbcba12379c370fc8871378d6aec6cddab992eb9e22f3329c530c6385"
+  },
+  {
+    "name": "大地崩裂",
+    "url": "assets/icons/skills/大地崩裂.png",
+    "source": "重繪",
+    "sha256": "eadda5b991a1b0ed4766a8ecc7351141b952df3cca73ebeb0300695afe04ad3b"
+  },
+  {
+    "name": "精緻魔法娃娃的袋子",
+    "url": "assets/icons/items/精緻魔法娃娃的袋子.png",
+    "source": "奇岩城娃娃袋原圖與精緻配色",
+    "sha256": "3f493fd7cd9e8270b3c2331ec394763ad3cd16355ac5c5fc1b82098707b7ed47"
+  }
+]

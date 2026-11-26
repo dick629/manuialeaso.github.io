@@ -27,7 +27,7 @@
   var pts = function (k) { try { var p = P(), g = p && G() && G().read(p); return g && g.paragon ? N(g.paragon.points[k]) : 0; } catch (e) { return 0; } };
   var opened = function () { return pts('bloodline') >= 65; };
   var starLv = function () { return opened() ? pts('starInherit') - 1 : -1; };   // −1＝沒點；0～3 階
-  var party = function () { var p = P(); return p ? [p].concat((p.allies || []).filter(Boolean)) : []; };
+  var party = function () { var p = P(); return p ? [p].concat(GiranPartyView.combatAllies(p).filter(Boolean)) : []; };
   var inParty = function (e) { var p = P(); return !!(e && p && (e === p || (p.allies || []).indexOf(e) >= 0)); };
   var has = function (e, cls) { return !!(e && e.cls === cls && opened() && inParty(e)); };
 

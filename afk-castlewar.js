@@ -243,8 +243,8 @@
   //   核心 changeMap 讀到的目的地是空字串，角色就卡在「沒有名字、沒有怪」的空白地圖。這裡在換圖前把目的地換成家鄉村莊，
   //   每秒也檢查一次：人在失去的城堡或空白地圖上（不在攻城中）就送回村莊。
   var castleTownOf = function (v) { for (var i = 0; i < ALL_CITIES.length; i++) { var c = SIEGE_CITY[ALL_CITIES[i]]; if (c && c.castle === v) return ALL_CITIES[i]; } return null; };
-  var homeSafe = function () {
-    var t = null; try { t = getHomeTown(); } catch (e) {}
+  var homeSafe = function (from) {
+    var t = null; try { t = window.GiranGates?.unownedCastleVillage(from) || getHomeTown(); } catch (e) {}
     var c = castleTownOf(t); if (!t || (c && held().indexOf(c) < 0)) t = (typeof player !== 'undefined' && player && player.cls && typeof CLASS_HOME !== 'undefined' && CLASS_HOME[player.cls]) || 'town_talking';
     return t;
   };
@@ -255,7 +255,7 @@
       try {
         var sel = document.getElementById('map-select'), v = sel ? sel.value : '';
         if (P() && badTarget(v) && typeof setMapSelectors === 'function') {
-          var home = homeSafe();
+          var home = homeSafe(v);
           if (home && home !== v) { setMapSelectors(home); if (castleTownOf(v)) sys('<span class="text-amber-300">血盟已經不再持有' + (SIEGE_CITY[castleTownOf(v)] ? SIEGE_CITY[castleTownOf(v)].castleName : '這座城堡') + '，改回村莊。</span>'); }
         }
       } catch (e) {}
@@ -266,8 +266,8 @@
     try {
       var p = P(); if (!p || typeof mapState === 'undefined' || (p.siege && p.siege.active)) return;
       var cur = mapState.current, c = castleTownOf(cur);
-      if (cur === '' || (c && held().indexOf(c) < 0)) {
-        var home = homeSafe(); if (!home || home === cur) return;
+      if (badTarget(cur)) {
+        var home = homeSafe(cur); if (!home || home === cur) return;
         if (c) sys('<span class="text-amber-300 font-bold">血盟已經不再持有' + SIEGE_CITY[c].castleName + '，你被送回村莊。</span>');
         setMapSelectors(home); changeMap(true); try { updateUI(); saveGame(); } catch (e) {}
       }
@@ -851,17 +851,6 @@
           var txt = short ? '<span class="' + (title ? 'text-yellow-300 font-bold' : 'text-amber-200 font-bold') + '" style="white-space:nowrap" title="' + tip + '">' + short + '</span>' : '';
           if (txt) el.innerHTML = el.innerHTML.replace(/城堡：[\s\S]*$/, '城堡：' + txt);
         });
-        // 回城城堡選擇
-        if (h.length) {
-          var old = div.querySelector('#afk-castle-home'); if (old) old.remove();
-          var hc = homeCity(), row = document.createElement('div');
-          row.id = 'afk-castle-home'; row.className = 'mt-2 p-2 rounded border border-amber-700/60 bg-slate-900/70 text-sm text-slate-200 flex flex-wrap items-center gap-2';
-          row.innerHTML = '<span class="text-amber-200 font-bold">🏰 回城地點</span><select class="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-slate-100">' +
-            h.map(function (c) { var nm = SIEGE_CITY[c] ? SIEGE_CITY[c].castleName : c; return '<option value="' + c + '"' + (c === hc ? ' selected' : '') + '>' + nm + '</option>'; }).join('') +
-            '</select><span class="text-xs text-slate-400">按「回城」或 Ctrl+C 會回到這座城堡</span>';
-          row.querySelector('select').onchange = function () { setHome(this.value); };
-          var anchor = div.firstElementChild; if (anchor) anchor.appendChild(row); else div.appendChild(row);
-        }
       } catch (e) {}
       return r;
     };
@@ -877,20 +866,9 @@
   var setHome = function (city) {
     var d = data(); if (held().indexOf(city) < 0) return false;
     d.home = city; save(d); titleCache.at = -1e9;
-    sys('<span class="text-amber-200">此後歸鄉之路將通往' + (SIEGE_CITY[city] ? SIEGE_CITY[city].castleName : city) + '。</span>');
+    sys('<span class="text-amber-200">地圖選單的自選城堡已設為' + (SIEGE_CITY[city] ? SIEGE_CITY[city].castleName : city) + '。</span>');
     return true;
   };
-  var withHome = function (fn, self, args) {
-    var c = null; try { c = homeCity(); } catch (e) {}
-    var cfg = c && SIEGE_CITY[c], old = window.victoryCityCfg;
-    if (!cfg || typeof old !== 'function') return fn.apply(self, args);
-    window.victoryCityCfg = function () { return cfg; };
-    try { return fn.apply(self, args); } finally { window.victoryCityCfg = old; }
-  };
-  ['returnToTown', 'returnToPledgeBase'].forEach(function (nm) {
-    var o = window[nm]; if (typeof o !== 'function') return;
-    window[nm] = function () { return withHome(o, this, arguments); };
-  });
   // 徽章只放得下 2～3 字：王族「N城主」、其他「N城」，七座「統一」；完整城名放在滑鼠提示
   var badgeCache = { at: -1e9, n: 0 };   // 每個 tick 都會問：一秒內只讀一次
   window.__afkCastleBadge = function () {
@@ -908,7 +886,7 @@
   var badgeTitle = function () {
     var h = held(); if (!h.length) return '';
     var names = h.map(function (c) { return SIEGE_CITY[c] ? SIEGE_CITY[c].name : c; }).join('、'), hc = homeCity();
-    return '血盟持有 ' + h.length + ' 座城堡' + (h.length >= 7 ? '（' + unifyTitle() + '）' : '') + '：' + names + '。回城：' + (SIEGE_CITY[hc] ? SIEGE_CITY[hc].castleName : '') + '。全商店 8 折、開放城堡';
+    return '血盟持有 ' + h.length + ' 座城堡' + (h.length >= 7 ? '（' + unifyTitle() + '）' : '') + '：' + names + '。自選城堡：' + (SIEGE_CITY[hc] ? SIEGE_CITY[hc].castleName : '') + '。全商店 8 折、開放城堡';
   };
 
 

@@ -306,10 +306,9 @@
   }; }); });
   ['allyReactCounter','allyReactIai'].forEach(function(name){wrap(name,function(native){return function(t,blocked){
     if(!enabled()||!owner()||!owner().allies)return native.apply(this,arguments);
-    var a=owner(),allies=a.allies,selected=allies.filter(function(x){return equipped(mainWeapon(x));}),isIai=name==='allyReactIai';
+    var allies=GiranPartyView.combatAllies(owner()),selected=allies.filter(function(x){return equipped(mainWeapon(x));}),isIai=name==='allyReactIai';
     if(!selected.length)return native.apply(this,arguments);
-    a.allies=allies.filter(function(x){return !equipped(mainWeapon(x));});
-    try{native.apply(this,arguments);}finally{a.allies=allies;}
+    native.call(this,t,blocked,allies.filter(function(x){return !equipped(mainWeapon(x));}));
     selected.forEach(function(x){
       if(!alive(x)||x._downed||x.classicMode||!alive(t))return;
       var d=mainWeapon(x),tags=getWeaponTags(x.eq.wpn.id),shield=x.eq.shield&&!(typeof _isArmguard==='function'&&_isArmguard(x.eq.shield));

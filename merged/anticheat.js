@@ -14,6 +14,16 @@
  * ========================================================================== */
 (function (W) {
   'use strict';
+  var fnv = function (s) { var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36); };
+  var ACCT_SALT = 'lgacct:7d1:';
+  var stSig = function (x) { return fnv(ACCT_SALT + 'st|' + x.t + '|' + x.n + '|' + x.f + '|' + (x.c || 0)); };
+  var stampOk = function (x) { return !!(x && x.k === stSig(x) && !x.f); };
+  var ONCE = { afk_fate_unlock: 20, afk_runebox_3: 20 };
+  var sealKind = function (id, d) { if (!d) return ''; if (String(id) === '99998' || String(id) === '99999' || d.gmOnly) return 'gm'; if (d.dimRelic || d.dimDragon != null) return 'dim'; if (d.relicEvo != null) return 'supreme'; if (d.relicAsc != null && d.type === 'acc') return 'ascacc'; return ''; };
+  W.LineageItemAudit = Object.freeze({validStamp: stampOk, item: function (it, d) {
+    var kind = sealKind(it.id, d);
+    return { high: !!kind || !!(d && !it.acx && (ONCE[it.id] || d.relicAsc >= 1)), sealed: !!kind && (!!it.afkDup || !stampOk(it.acs)) };
+  }});
   if (typeof DB === 'undefined' || !DB.items) return;
   var SALT = 'lgac:5b1e9c:', PWH = '49462dbd53447d0f175d972fef88c1ff48831462d2245c343bbc2eb84b5aa5d0';
   var OB_KEY = 'lineage_ob_v1', OB_SALT = 'lgob:91c2:';
@@ -54,7 +64,6 @@
   };
 
   // ── 遊玩時間 ──
-  var fnv = function (s) { var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36); };
   var signOf = function (p, x) { return fnv(SALT + x.ms + '|' + x.since + '|' + ident(p)); };
   var play = function (p) {
     var x = p.afkPlay;
@@ -66,7 +75,6 @@
 
   // ── A 級道具與合理時數（估計值；依 PLM 存檔實測的擊殺速度推算，見 docs/anticheat-design.md 十） ──
   var DIM_H = [0.1, 10, 25, 45, 70, 120], DRG_H = [5, 15, 30, 50];
-  var ONCE = { afk_fate_unlock: 20, afk_runebox_3: 20 };
   var costOf = function (it) {
     var d = it && DB.items[it.id]; if (!d || it.acx) return 0;
     if (ONCE[it.id]) return ONCE[it.id];
@@ -134,8 +142,8 @@
   //         封印的武器改成造成傷害 −35%；該件遺物特效的回復量 ×0.5。管理者的角色不封。
   // 合理時數（Ping 11-11 17:20：低於這個時數就拿到＝異常）。次元遺物照強化等級累計；四龍次元時空武器照進化階段。
   var SEAL_H = { supreme: 500, genesis: 500, ascacc: 300 }   /* Ping 11-20：至高支配 300→500；昇華飾品納入 S 級 */, DIM_SEAL = [1, 20, 50, 90, 140, 240], DRG_SEAL = [1, 15, 30, 50];
-  var sKind = function (id) { var d = DB.items[id]; if (!d) return ''; if (String(id) === '99998' || String(id) === '99999' || d.gmOnly) return 'gm'; if (d.dimRelic || d.dimDragon != null) return 'dim'; if (d.relicEvo != null) return 'supreme'; if (d.relicAsc != null && d.type === 'acc') return 'ascacc'; return ''; };
-  var ACCT_KEY = 'lineage_ac_acct_v1', ACCT_SALT = 'lgacct:7d1:';
+  var sKind = function (id) { return sealKind(id, DB.items[id]); };
+  var ACCT_KEY = 'lineage_ac_acct_v1';
   var acctSig = function (a) { return fnv(ACCT_SALT + a.ms + '|' + a.sh); };
   var acct = function () { var a = null; try { a = JSON.parse(localStorage.getItem(ACCT_KEY) || 'null'); } catch (e) {} if (!a || a.k !== acctSig(a)) a = { ms: 0, sh: 0 }; return a; };
   var acctSave = function (a) { a.k = acctSig(a); try { localStorage.setItem(ACCT_KEY, JSON.stringify(a)); } catch (e) {} };
@@ -145,7 +153,6 @@
     if (k === 'dim') return d && d.dimDragon != null ? (DRG_SEAL[d.dimDragon] || 50) : DIM_SEAL[Math.min(5, Number(it.dimEn) || 0)];
     return SEAL_H[k] || 0;
   };
-  var stSig = function (x) { return fnv(ACCT_SALT + 'st|' + x.t + '|' + x.n + '|' + x.f + '|' + (x.c || 0)); };
   // 帳號時數 a.ms 已經是「掛機打對折」後的時數（Ping 11-11 16:46：掛機時間 ÷ 2）
   var charge = function (x, cost) {
     var need = cost - (Number(x.c) || 0); if (need <= 0 || x.f) return x;
@@ -156,7 +163,6 @@
     var x = { t: Date.now(), n: Math.floor(Math.random() * 1e9).toString(36), f: 0, c: free ? cost : 0 };
     x.k = stSig(x); return free ? x : charge(x, cost);
   };
-  var stampOk = function (x) { return !!(x && x.k === stSig(x) && !x.f); };
   var stamp = function (it, free) {
     try {
       var k = it && sKind(it.id); if (!k || k === 'gm' && !free) return;

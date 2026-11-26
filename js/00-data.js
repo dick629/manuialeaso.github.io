@@ -1168,7 +1168,7 @@ const DB = {
         "new_item_141": { n: "安特的水果", type: "pot", req: "all", p: 360, c: "text-green-300", d: "由安特孕育的奇異果實，飽含森林的生命力。", gachaWeight: 0 },
         "scroll_poly": { n: "變形卷軸", type: "scroll", req: "all", p: 1300, c: "text-gray-300", d: "記載古老變形術的卷軸，能讓使用者暫時化為與自身歷練相稱的姿態。", eff: "poly", dur: 1800, gachaWeight: 0 },
         "scroll_magicbarrier": { n: "魔法卷軸(魔法屏障)", type: "scroll", req: "all", p: 1500, c: "text-cyan-300", d: "封存魔法屏障的卷軸，展開後能抵擋一次來襲的技能。", eff: "magicbarrier", gachaWeight: 0 },
-        "scroll_teleport": { n: "瞬間移動卷軸", type: "scroll", req: "all", p: 82, c: "text-sky-300", d: "使用後發動傳送術", eff: "teleport_scroll", gachaWeight: 0 },
+        "scroll_teleport": { n: "瞬間移動卷軸", type: "scroll", req: "all", p: 82, c: "text-sky-300", d: "全職業可用。隨機移動到目前地圖可行走的位置。", eff: "teleport_scroll", gachaWeight: 0 },
         "scroll_revive": { n: "復活卷軸", type: "scroll", req: "all", p: 1000, c: "text-yellow-300", d: "蘊藏復甦之力的神聖卷軸，能使倒下的冒險者或傭兵在原地重新站起。", gachaWeight: 0 },
         "item_blueflute": { n: "藍色長笛", p: 1, c: "text-blue-300", d: "試煉所需的材料。", gachaWeight: 0 },   // 🔧 試煉材料統一藍色
         "item_ancientkey": { n: "古代鑰匙", p: 1, c: "text-blue-300", d: "試煉所需的材料。", gachaWeight: 0 },   // 🔧 試煉材料統一藍色

@@ -68,7 +68,7 @@
   };
   var stun = function (m, sec) { var api = R(); if (!api || !m || m.boss) return; try { api.status(m, 'stun', sec, 1); } catch (e) {} };
   var heal = function (e, n) { if (!e || !(n > 0)) return; var p = P(); if (e === p) p.hp = Math.min(p.mhp, (p.hp || 0) + Math.floor(n)); else if (!e._downed && e.curHp > 0) e.curHp = Math.min(e.mhp, e.curHp + Math.floor(n)); };
-  var party = function (p) { return [p].concat((p.allies || []).filter(function (a) { return a && !a._downed && a.curHp > 0; })); };
+  var party = function (p) { return [p].concat(GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed && a.curHp > 0; })); };
   var allyOf = function (a) { var p = P(); return !!(p && a && (p.allies || []).indexOf(a) >= 0); };
   var burning = function (m) { var t = now(); return !!(m && ((m._artBurn && m._artBurn.until > t) || (m._dimBurn && m._dimBurn.until > t) || (m._art2Fire || 0) > t)); };
   var inked = function (m) { return !!(m && ((m._artInk || 0) > now() || (m._dimInk || 0) > now())); };
@@ -287,7 +287,7 @@
     if ((x = M('ember', 'royal')) && (S.scorch || 0) > t) ms.forEach(function (m) { hurt(m, p.mhp * 0.03 * x, 'magic'); });
     if ((x = M('ink', 'royal')) && cdOk('envoy', 300)) { var al = party(p).slice(1); if (al.length) { S.envoy = { a: al[Math.floor(rnd() * al.length)], until: t + 100 }; clog(tag('密詔', '密使出發了。')); } }
     if ((x = M('sea', 'royal')) && cdOk('tide', 600)) { party(p).forEach(function (e) { if (e !== p) { e.curHp = e.mhp; e.statuses = {}; } }); p.statuses = {}; S.immune = t + 50; clog(tag('潮汐徵召', '漲潮了。')); }
-    if ((x = M('hardin', 'royal')) && T && cdOk('library', 100)) { var sks = []; (p.allies || []).forEach(function (a) { (a.skills || []).forEach(function (id) { var k = DB.skills[id]; if (k && k.type === 'atk' && k.dmgDice) sks.push(k); }); }); if (sks.length) { var k0 = sks[Math.floor(rnd() * sks.length)]; hurt(T, atk(p) * 2 * x, 'magic'); clog(tag('王室藏書', '你施放了「' + esc0(k0.n) + '」。')); } }
+    if ((x = M('hardin', 'royal')) && T && cdOk('library', 100)) { var sks = []; GiranPartyView.combatAllies(p).forEach(function (a) { (a.skills || []).forEach(function (id) { var k = DB.skills[id]; if (k && k.type === 'atk' && k.dmgDice) sks.push(k); }); }); if (sks.length) { var k0 = sks[Math.floor(rnd() * sks.length)]; hurt(T, atk(p) * 2 * x, 'magic'); clog(tag('王室藏書', '你施放了「' + esc0(k0.n) + '」。')); } }
     if ((S.crown || 0) && S.crown <= t && S.crown > t - 10 && S.crownKills < 5) { S.crown = 0; p.hp = 0; try { if (typeof killPlayer === 'function') killPlayer(); } catch (e) {} }
     // 騎士：不滅誓言結束
     if (S.oath && S.oath <= t && S.oathAcc != null) { var acc = Math.min(S.oathAcc, p.mhp * 3) * (M('light', 'knight') || 1); S.oathAcc = null; S.oath = 0; if (T && acc > 0) { hurt(T, acc); clog(tag('不滅誓言', '光之騎士的一擊。')); } }

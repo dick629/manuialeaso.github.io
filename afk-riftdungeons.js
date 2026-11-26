@@ -94,9 +94,31 @@
   // 四龍・裂縫的房間傷害（每秒，侵蝕、光蝕另外算）：物理 1,000（扣傷害減免）＋真實 1,000＋魔法 1,000（照魔防）＋該龍屬性 1,000（照屬性抗性）＋最大 HP 1%
   var DRAGON_ELE = { '安塔瑞斯': 'earth', '法利昂': 'water', '林德拜爾': 'wind', '巴拉卡斯': 'fire' };
   var ROOM = { phys: 1000, tru: 1000, mag: 1000, ele: 1000, pct: 0.01 };
+  function earthField(run) {
+    if (!run || run.id !== 'dragons' || run.pick !== '安塔瑞斯') return '';
+    return run.bd ? 'antharas_lair' : run.si === 0 ? 'antharas_nest_1' : 'antharas_nest_3';
+  }
+  function earthRoomTargets(run, key, members) {
+    var combat = W.GiranCombat, field = combat && (combat.field || combat.suspendedField);
+    if (!field || !field.ready() || field.map !== MAP ||
+        field.scene !== key + '@' + run.until || field.terrain.key !== key) return [];
+    var terrain = field.terrain, geometry = W.GiranGeometry;
+    var entry = { x: terrain.origin[0], y: terrain.origin[1] };
+    var boss = run.bd && bossOf(), home = boss && W.GiranBossRooms.home(terrain, boss);
+    if (run.bd && (!home || !field.point(boss) || Number(terrain.world.map.id) !== 37)) return [];
+    return members.filter(function (actor) {
+      var position = field.point(actor);
+      if (!position || actor.dead || actor._downed || hpOf(actor) <= 0) return false;
+      if (!boss) return geometry.distance(position, entry) > 8;
+      if (geometry.distance(position, home) > 12) return false;
+      return combat.permits(boss, actor, 'magic');
+    });
+  }
   var roomDmg = function (run) {
     var ele = DRAGON_ELE[run.pick] || 'none';
-    party().forEach(function (x) {
+    var key = earthField(run), members = party();
+    if (key && document.documentElement.dataset.playMode !== 'dimension') members = earthRoomTargets(run, key, members);
+    members.forEach(function (x) {
       if (W.__afkBloodRoomImmune && W.__afkBloodRoomImmune(x)) return;   // 命脈：戰士「神聖光榮」不受四龍房間傷害
       var d = x.d || x, ph = Math.max(0, ROOM.phys - (Number(d.dr) || 0));
       var mg = ROOM.mag * (typeof mrMult === 'function' ? mrMult(Math.max(0, Number(d.mr) || 0)) : 1);
@@ -178,7 +200,7 @@
       dmgIn: function (run, b, amt) { return alive(function (x) { return x._rdMirror; }).length ? amt * 0.5 : amt; } } : null }; }),
     reward: function () { return [give('afk_rd_mirror', 1), give('afk_dim_crystal', 30)]; } });
 
-  def({ id: 'dragons', n: '四龍副本・裂縫', tier: 2, fee: { blood: 500 }, min: 40, pick: [['安塔瑞斯', '安塔瑞斯'], ['法利昂', '法利昂'], ['林德拜爾', '林德拜爾'], ['巴拉卡斯', '巴拉卡斯']], onTick: null, lore: '每座龍每天 1 次。整場房間每秒造成物理 1,000、真實 1,000、魔法 1,000、該龍屬性 1,000（各自照減傷、魔防、屬性抗性算）與最大 HP 1%；龍之護甲每 40 秒 10 秒，每一下先扣 5,000；每 4 分鐘沒打倒「龍怒」傷害 +20%。',
+  def({ id: 'dragons', n: '四龍副本・裂縫', tier: 2, fee: { blood: 500 }, min: 40, pick: [['安塔瑞斯', '安塔瑞斯'], ['法利昂', '法利昂'], ['林德拜爾', '林德拜爾'], ['巴拉卡斯', '巴拉卡斯']], onTick: null, lore: '每座龍每天 1 次。房間每秒造成物理 1,000、真實 1,000、魔法 1,000、該龍屬性 1,000（各自照減傷、魔防、屬性抗性算）與最大 HP 1%。地龍巢穴前段及深處的入口八格內安全，王房內須在安塔瑞斯施法範圍及射線內才受傷。龍之護甲每 40 秒 10 秒，每一下先扣 5,000；每 4 分鐘沒打倒「龍怒」傷害 +20%。',
     stages: [
       { n: '巢穴前段', waves: 3, onTick: function (run, t) { if (t % 10 === 0) roomDmg(run); } },
       { n: '巢穴深處', waves: 2, onTick: function (run, t) { if (t % 10 === 0 && !bossOf()) roomDmg(run); }, boss: { n: '', re: '', hpX: 30, final: true, dragon: true,
@@ -294,7 +316,7 @@
     clog('<span class="font-bold" style="color:#c4b5fd;">【' + esc(b.n) + '】</span>施放「' + esc(k.n) + '」，你受到 ' + Math.floor(dmg).toLocaleString() + ' 點傷害。', 'enemy');
   };
   var tbWave = function (lv) {   // 第一段：傭兵的倒影（個人模式沒有傭兵＝直接進下一段）
-    var p = P(), list = (p.allies || []).filter(function (a) { return a && !a._downed; }).slice(0, 4), slots = [0, 1, 3, 4];
+    var p = P(), list = GiranPartyView.combatAllies(p).filter(function (a) { return a && !a._downed; }).slice(0, 4), slots = [0, 1, 3, 4];
     run.wave++;
     if (!list.length) { nextStage(); run.pending = true; return; }
     list.forEach(function (x, i) {
@@ -381,21 +403,27 @@
     var c = admission(d,pick);
     if (!c.n || remaining(d,pick) || c.n >= 6) return null;
     // A save from the two-admission rules may already have spent its second free entry today.
-    var extra = c.bought || 0;
-    return {price:(extra + 1)*100, blood:(extra + 1)*500, next:c.n + 1};   // 11-26 Ping：另外要血龍鑽 500／1000／1500…
+    var purchase = (c.bought || 0) + 1;
+    return {price:purchase * 100, blood:purchase * 500, next:c.n + 1};
+  }
+  function reentryShortage(offer) {
+    if (cnt(W.TwistedSpace.proof) < offer.price) return '次元獵殺證明不足。';
+    if (cnt(BLOOD) < offer.blood) return '血龍鑽不足。';
+    return '';
   }
   function redeem(id,pick) {
     var d = BYID[id], p = P();
     if (!d || !p || !dailyGate(d) || entryGate(d,pick)) return false;
-    var offer = reentry(d,pick), proof = W.TwistedSpace.proof;
-    if (!offer || cnt(proof) < offer.price || cnt(BLOOD) < offer.blood) return false;
+    var offer = reentry(d,pick);
+    if (!offer || reentryShortage(offer)) return false;
     var c = admission(d,pick);
-    questConsumeId(proof,offer.price); take(BLOOD, offer.blood);
+    questConsumeId(W.TwistedSpace.proof,offer.price);
+    questConsumeId(BLOOD,offer.blood);
     c.bought = (c.bought || 0) + 1;
     c.extra = c.n; // one unused admission, also honoring old saves which already entered twice
     store(p).c[useKey(d,pick)] = c;
     saveGame();
-    sys('已消耗 ' + offer.price + ' 張次元獵殺證明、' + offer.blood.toLocaleString() + ' 血龍鑽，可再進入「' + esc(d.n) + '」一次。');
+    sys('已消耗 ' + offer.price + ' 張次元獵殺證明及 ' + offer.blood.toLocaleString() + ' 顆血龍鑽，可再進入「' + esc(d.n) + '」一次。');
     return true;
   }
   var mark = function (d,pick) { var c=admission(d,pick); c.n++; store().c[useKey(d,pick)] = c; };
@@ -486,7 +514,7 @@
     if (absHp) m.hp = Math.round(absHp);
     var tk2 = run && !(extra && extra._rdMirror) && hpTOf(run); if (tk2) m.hp = Math.round(m.hp * tk2);
     var mob = L.boss.place(idx, m, Object.assign({ mobId: baseId, _rd: true, _dimRift: !(run && run.D.noRift), noAutoTeleport: true, noCharm: true }, extra || {}));
-    if (extra && extra.n) { mob.n = extra.n; try { if (b.n && b.n !== extra.n) { L.aliasAnim(extra.n, b.n); if (b.img && !mob.img) mob.img = b.img; } } catch (e) {} }   // 11-11：改名的頭目沿用原型的動畫（原本找不到圖，顯示成深色方塊）
+    if (extra && extra.n) { mob.n = extra.n; try { if (b.n && b.n !== extra.n) { if (!(GPT_ART && GPT_ART.includes(extra.n) && typeof _manifestCount === 'function' && _manifestCount('assets/anim/' + extra.n + '/idle_0.png') > 0)) L.aliasAnim(extra.n, b.n); if (b.img && !mob.img) mob.img = b.img; } } catch (e) {} }   // 11-11：改名的頭目沿用原型的動畫（原本找不到圖，顯示成深色方塊）
     if (mob) { mob.hp = mob.curHp = m.hp; }   // HP 用這裡算好的（不再乘夢域鏡的怪物倍率；攻擊、命中等其他倍率照舊）
     return mob;
   };
@@ -501,7 +529,12 @@
     if (bossTime && st.boss) {
       var bd = st.boss, re = bd.dragon ? run.pick : bd.re, baseId = re ? findBase(re) : 'afk_rd_base';
       var abs = typeof bd.hpAbs === 'function' ? bd.hpAbs(run) : bd.hp, n = bd.dragon ? (DB.mobs[baseId] ? DB.mobs[baseId].n : run.pick) : bd.n;
-      var m = place(2, baseId, lv + 5, (bd.hpX || 10) * hpk, { _rdBoss: true, _rdFinal: !!bd.final, boss: true, n: n }, abs ? abs * (1 + R.allyHp * allyN()) * endlessK() : 0);
+      var bossSlot = 2;
+      if(st.timed && W.GiranRoam?.waveSize(0) && mobs()[bossSlot]?.curHp>0 && !mobs()[bossSlot]._dead){
+        bossSlot = mobs().findIndex(x=>!x||x._dead||x.curHp<=0);
+        if(bossSlot<0)bossSlot=mobs().length;
+      }
+      var m = place(bossSlot, baseId, lv + 5, (bd.hpX || 10) * hpk, { _rdBoss: true, _rdFinal: !!bd.final, boss: true, n: n }, abs ? abs * (1 + R.allyHp * allyN()) * endlessK() : 0);
       run.M = {}; run.bd = bd;
       if (bd.adds) { var aBase = bd.addRe ? findBase(bd.addRe) : baseId; for (var i = 0; i < bd.adds; i++) { var a = place([1, 3, 0, 4][i], aBase, lv, (bd.tentacles ? 1.5 : (bd.hpX || 10) * 0.4) * hpk, { _rdAdd: true, _rdTent: !!bd.tentacles, n: bd.addN || n }); a.boss = false; } }
       if (bd.mirrorAdds) mirrorWave(lv, hpk, true);
@@ -510,7 +543,10 @@
       try { if (typeof vfxBossEntrance === 'function' && !S().ff) vfxBossEntrance(m); } catch (e) {}
       if (st.timed) run.wave++;
     } else {
-      var pool = POOL(st.pool), per = st.per || 4, free = [0, 1, 2, 3, 4].filter(function (i) { var x = mobs()[i]; return !x || x._dead || x.curHp <= 0; });
+      var pool = POOL(st.pool), nativePer = st.per || 4, per = W.GiranRoam?.waveSize(nativePer) ?? nativePer;
+      var slots = W.GiranRoam?.waveSize(5) ?? 5;
+      var free = Array.from({length:slots},(_,i)=>i).filter(function (i) { var x = mobs()[i]; return !x || x._dead || x.curHp <= 0; });
+      per = Math.min(per, slots - mobs().filter(x=>x&&!x._dead&&x.curHp>0).length);
       for (var j = 0; j < per && j < free.length; j++) { var id = pool[Math.floor(Math.random() * pool.length)]; place(free[j], id, lv, R.mobHpK * hpk, d.id === 'past' ? { _rdWorm: true } : {}); }
       run.wave++;
     }
@@ -639,7 +675,7 @@
     var box = div.querySelector('#afk-rd-gate'); if (!box) return; var p = P(); if (!p) return;
     var rp = DR.recoverPct(p), pf = DR.panelF ? Math.round(DR.panelF(p) * 100) : 50 + rp;   // 11-16（Ping）：寫出目前的力量（壓縮後 50%＋已取回）
     var h = '<div class="ax-note">目前的力量：<b>' + pf + '%</b>（裂縫裡面板壓到 50%，已取回 ' + rp + '%／最多 40%）　血龍鑽：' + cnt(BLOOD).toLocaleString() + (DR.on() ? '' : '　<span class="no">次元裂縫沒有打開</span>') + '</div>';
-    if (DR.on()) h += '<div class="ax-note">次元獵殺證明：<b>' + cnt(W.TwistedSpace.proof).toLocaleString() + '</b> 張。每日副本各有一次入場，用完後可依序用證明與血龍鑽兌換五次，每次仍需原入場材料。證明在席琳神殿地區的扭亂時空掉落。</div>';
+    if (DR.on()) h += '<div class="ax-note">持有次元獵殺證明 <b>' + cnt(W.TwistedSpace.proof).toLocaleString() + '</b> 張。每個每日副本可用證明與血龍鑽加場五次，進場時另付原入場材料。證明可在席琳神殿地區的扭亂時空取得。</div>';
     if (DR.RANKS) { var rk = DR.rec(p).rank || 0, nx = DR.RANKS[rk + 1], rw = DR.rankWhy(p); h += K.rowHtml({ key: 'drank', name: '遠征位階（裂縫）：' + DR.RANKS[rk].n, color: '#67e8f9', desc: nx ? '下一階「' + nx.n + '」：' + (nx.cur === 'exped' ? '遠征點數 ' : '裂縫點數 ') + nx.cost + '。' + nx.d : '已經是最高位階。', note: '裂縫點數 ' + (DR.rec(p).pts || 0) + '（每個副本最後頭目每天第一次 10 點，一天最多 60）', why: nx ? rw : '', btns: nx ? [['rank:', '升階', !rw]] : [] }, 'data-rd'); }
     TIERS.forEach(function (tr) {
       h += '<div class="ax-h" style="margin-top:8px">' + tr[1] + '</div>';
@@ -649,9 +685,8 @@
           var choice = pk[0] || undefined, why = canEnter(d,choice), cap = remaining(d,choice);
           var buttons = [['go:' + d.id + ':' + pk[0], '進入', !why]], fee = reentry(d,choice);
           if (fee && !entryGate(d,choice)) {
-            var okProof = cnt(W.TwistedSpace.proof) >= fee.price, okBlood = cnt(BLOOD) >= fee.blood, canBuy = okProof && okBlood;
-            buttons.push(['extra:' + d.id + ':' + pk[0], '兌換第 ' + fee.next + ' 次入場 · ' + fee.price + ' 張證明＋' + fee.blood.toLocaleString() + ' 血龍鑽',canBuy]);
-            why = canBuy ? '' : !okProof ? '次元獵殺證明不足。' : '血龍鑽不足。';
+            why = reentryShortage(fee);
+            buttons.push(['extra:' + d.id + ':' + pk[0], '兌換第 ' + fee.next + ' 次入場 · ' + fee.price + ' 張證明＋' + fee.blood.toLocaleString() + ' 血龍鑽',!why]);
           }
           h += K.rowHtml({ key: d.id + pk[0], name: esc(d.n) + (pk[1] ? '・' + esc(pk[1]) : '') + (s.clear[d.id + (d.pickChain ? pk[0] : '')] ? '　<span style="color:#86efac">✓</span>' : ''), color: '#67e8f9', desc: pk === picks[0] ? esc(d.lore) : '', note: '入場：' + esc(feeTxt(d)) + '　' + (d.per === 'week' ? '本週' : '今天') + '剩 ' + Math.max(0, cap) + ' 次' + (d.min ? '　時限 ' + d.min + ' 分鐘' : '') + (d.endless && s.best ? '　最高第 ' + s.best + ' 層' : ''), why: why, btns: buttons }, 'data-rd');
         });
@@ -707,7 +742,7 @@
       return r;
     };
   }
-  W.__afkRiftDg = { growthCanShortcut:growthCanShortcut,growthShortcut:growthShortcut,growthCheckpoint:growthCheckpoint,growthRestore:growthRestore, D: D, BYID: BYID, R: R, reentry:reentry, redeem:redeem, remaining:remaining, canEnter: canEnter, enter: enter, run: function () { return run; }, store: store, MAP: MAP, findBase: findBase, nextStage: nextStage };
+  W.__afkRiftDg = { growthCanShortcut:growthCanShortcut,growthShortcut:growthShortcut,growthCheckpoint:growthCheckpoint,growthRestore:growthRestore, D: D, BYID: BYID, R: R, reentry:reentry, redeem:redeem, remaining:remaining, canEnter: canEnter, enter: enter, run: function () { return run; }, store: store, MAP: MAP, findBase: findBase, nextStage: nextStage, earthField: earthField };
   try { console.log('[AFK-riftdg] 已載入：次元裂縫的副本 ' + D.length + ' 個'); } catch (e) {}
 
   // ── 11-12（Ping）：GPT 重繪的次元裂縫頭目與小怪、黃道十二宮、守護者之戒的王上線（assets/anim/<名字>/idle、attack、skill、hurt、death）──

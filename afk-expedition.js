@@ -97,7 +97,7 @@
   var lastSt = new WeakMap();
   var debuffTick = function () {
     var p = P(); if (!p || p.classicMode || !on()) return;
-    [p].concat(p.allies || []).forEach(function (a) {
+    [p].concat(GiranPartyView.combatAllies(p)).forEach(function (a) {
       var r = stoneOf(a), st = a && a.statuses; if (!st || !r || !r.debuff || !slotOn(a)) { if (a) lastSt.delete(a); return; }
       var prev = lastSt.get(a) || {}, now = {};
       DEBUFFS.forEach(function (k) { var v = Number(st[k]) || 0; if (v > 0 && v > (Number(prev[k]) || 0)) { v = Math.max(Number(prev[k]) || 0, Math.max(1, Math.round(v * r.debuff))); st[k] = v; } now[k] = v; });

@@ -137,7 +137,7 @@
   // ---- 右上副標 -----------------------------------------------------------
   function ensureBadge() {
     var cs = document.getElementById('creation-screen'); if (!cs) return;
-    if (document.getElementById('afk-brand-badge')) return;
+    if (document.querySelector('#login-version[data-giran-release]') || document.getElementById('afk-brand-badge')) return;
     // 錨定在「標題區(h1+副標 的容器)」的右下角=使用者示意圖框的位置(副標右側、標題下方、分隔線上方)。
     var h1 = cs.querySelector('h1');
     var header = h1 ? h1.parentElement : cs;

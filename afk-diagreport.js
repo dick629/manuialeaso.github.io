@@ -34,6 +34,7 @@
     panel.mhp = N(p.mhp); panel.mmp = N(p.mmp); panel.hp = N(p.hp);
     var sum = 0, mx = 0; hits.forEach(function (h) { sum += h[0]; if (h[0] > mx) mx = h[0]; });
     var tail = [];
+    if (window.__afkPerfFlushLogs) window.__afkPerfFlushLogs();
     try { var L = document.querySelectorAll('#combat-log > *, #log-combat > *'); for (var i = Math.max(0, L.length - 20); i < L.length; i++) tail.push(String(L[i].textContent || '').slice(0, 90)); } catch (e) {}
     var misses = tail.filter(function (s) { return /未命中|迴避/.test(s); }).length;
     var ver = ''; try { ver = String((document.querySelector('meta[name="afk-version"]') || {}).content || W.__AFK_VERSION || ''); } catch (e) {}

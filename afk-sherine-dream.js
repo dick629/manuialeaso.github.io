@@ -176,7 +176,7 @@
     W.renderStatusEffects = function () {
       var r = oRSE.apply(this, arguments);
       try {
-        var p = P(), el = document.getElementById('dt-buffs'); if (!p || !el) return r;
+        var p = P(), el = (window.__afkBuffTextTarget || document.getElementById('dt-buffs')); if (!p || !el) return r;
         var tiers = dreamTiers(p);
         el.querySelectorAll('span.c-sherine').forEach(function (sp) {
           var m = /^(\S{2}) (\d)\/5$/.exec(sp.textContent || ''); if (!m || !DN[m[1]] || !(tiers[m[1]] && tiers[m[1]].length)) return;
@@ -391,7 +391,7 @@
   var lastSt = new WeakMap();
   var soulTick = function () {
     var p = P(); if (!p || p.classicMode) return;
-    [p].concat(p.allies || []).forEach(function (a) {
+    [p].concat(GiranPartyView.combatAllies(p)).forEach(function (a) {
       if (!a) return;
       var st = a.statuses; if (!st || typeof st !== 'object') return;
       if (!soulRefined(a)) { lastSt.delete(a); return; }

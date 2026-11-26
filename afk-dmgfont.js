@@ -34,8 +34,8 @@
       return s + '{font-family:"afkdmg-pixel",monospace!important;' + GRAD('linear-gradient(#ffffff 0 28%,#7df9ff 28% 52%,#ff7ad9 52% 76%,#ffe66b 76%)') + '-webkit-text-stroke:2px #000!important;text-shadow:none!important;filter:drop-shadow(2px 2px 0 #000);-webkit-font-smoothing:none;animation-name:dmgfRise!important;animation-timing-function:linear!important}'
         + c + '{' + GRAD('linear-gradient(#fff8b0 0 28%,#ffd000 28% 52%,#ff8a00 52% 76%,#ff3d6e 76%)') + '}' + TAG('pixel', '#ffe600'); } },
     { id: 'crystal', n: '水晶之章', d: '冰晶白、淡藍、薰衣草紫、粉紅的漸層字，帶淡藍光，往下掉再小彈兩下；爆擊是金黃到粉紅。', price: 5000000, fam: 'crystal', css: function (s, c) {
-      return s + '{font-family:"afkdmg-crystal",monospace!important;font-size:15px!important;' + GRAD('linear-gradient(170deg,#ffffff,#bae6fd 35%,#a5b4fc 65%,#f0abfc)') + '-webkit-text-stroke:1px #1e3a8a!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #7dd3fc) drop-shadow(2px 2px 0 #10204a);animation:dmgfDrop 1.05s ease-out forwards!important}'
-        + 'body.dmgf-crystal #vfx-layer .vfx-dmg.vfx-crit,.dmgf-pv.dmgf-crystal .vfx-dmg.vfx-crit{font-size:22px!important}'
+      return s + '{font-family:"afkdmg-crystal",monospace!important;font-size:calc(15px + var(--vfx-font-bonus,0px))!important;' + GRAD('linear-gradient(170deg,#ffffff,#bae6fd 35%,#a5b4fc 65%,#f0abfc)') + '-webkit-text-stroke:1px #1e3a8a!important;text-shadow:none!important;filter:drop-shadow(0 0 4px #7dd3fc) drop-shadow(2px 2px 0 #10204a);animation:dmgfDrop 1.05s ease-out forwards!important}'
+        + 'body.dmgf-crystal #vfx-layer .vfx-dmg.vfx-crit,.dmgf-pv.dmgf-crystal .vfx-dmg.vfx-crit{font-size:calc(22px + var(--vfx-font-bonus,0px))!important}'
         + c + '{' + GRAD('linear-gradient(170deg,#fffbe0,#fde68a 35%,#fbbf24 65%,#f472b6)') + 'filter:drop-shadow(0 0 6px #facc15)}' + TAG('crystal', '#fde68a'); } },
     { id: 'horde', n: '部落榮光', d: '金黃、橘、珊瑚紅漸層的奇幻襯線字，往上飄、微微偏一邊；爆擊變橘紅紫漸層，先爆大再縮回。', price: 5000000, fam: 'horde', css: function (s, c) {
       return s + '{font-family:"afkdmg-horde",serif!important;' + GRAD('linear-gradient(#fff3b0,#ffd100 40%,#ff9f1c 70%,#ff5d73)') + '-webkit-text-stroke:0!important;text-shadow:none!important;filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 2px 2px #000);animation-name:dmgfDrift!important}'   // 這款字很細，描邊會蓋掉漸層 → 用陰影描黑邊
@@ -84,7 +84,7 @@
       return t + c + '{filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 8px #fff8)}' + TAG('element', '#fff'); } },
     { id: 'royal', two: true, n: '王者金字', d: '超粗的金屬字，香檳金、琥珀、玫瑰粉到淡紫的漸層，重重落下、震一下；爆擊變得巨大，後面炸開一圈金光。', price: 5000000, fam: 'royal', css: function (s, c) {
       return s + '{font-family:"afkdmg-royal",sans-serif!important;' + GRAD('linear-gradient(#fffbea,#fde68a 25%,#f59e0b 50%,#f472b6 78%,#a78bfa)') + '-webkit-text-stroke:1.5px #3b2300!important;text-shadow:none!important;filter:drop-shadow(0 2px 1px #000);animation-name:dmgfSlam!important}'
-        + 'body.dmgf-royal #vfx-layer .vfx-dmg.vfx-critical,.dmgf-pv.dmgf-royal .vfx-dmg.vfx-critical{font-size:40px!important;filter:drop-shadow(0 0 10px #fbbf24) drop-shadow(0 0 3px #fff7)}'
+        + 'body.dmgf-royal #vfx-layer .vfx-dmg.vfx-critical,.dmgf-pv.dmgf-royal .vfx-dmg.vfx-critical{font-size:calc(40px + var(--vfx-font-bonus,0px))!important;filter:drop-shadow(0 0 10px #fbbf24) drop-shadow(0 0 3px #fff7)}'
         + c + '{' + GRAD('linear-gradient(#ffffff,#fef08a 20%,#fb923c 45%,#f43f5e 70%,#8b5cf6)') + '}' + TAG('royal', '#fde68a'); } },
     { id: 'arcade', two: true, n: '街機連段', d: '方正的街機字，白、黃、橘紅到桃紅的漸層，紅黑雙層框；連續打中會在下面數「12 HITS」；爆擊變黃到青的漸層。', price: 5000000, fam: 'arcade', css: function (s, c) {
       return s + '{font-family:"afkdmg-arcade",sans-serif!important;' + GRAD('linear-gradient(#ffffff,#ffe14d 40%,#ff6b6b 70%,#ff3cac)') + '-webkit-text-stroke:1.5px #b91c1c!important;text-shadow:none!important;filter:drop-shadow(2px 2px 0 #000) drop-shadow(-1px -1px 0 #000);animation-name:dmgfRise!important}'
@@ -132,17 +132,17 @@
     if (el('afk-dmgfont-css')) return;
     var s = document.createElement('style'); s.id = 'afk-dmgfont-css';
     var t = FONTS.map(function (f) { return '@font-face{font-family:"afkdmg-' + f.fam + '";src:url("' + DIR + f.fam + '.woff2?v=1") format("woff2");font-display:swap}'; }).join('');
-    t += '@keyframes dmgfPop{0%{transform:translate(-50%,-50%) scale(.35);opacity:0}14%{transform:translate(-50%,-55%) scale(1.25);opacity:1}28%{transform:translate(-50%,-55%) scale(1)}100%{transform:translate(-50%,-180%) scale(1);opacity:0}}'
-      + '@keyframes dmgfRise{0%{transform:translate(-50%,-50%);opacity:1}75%{opacity:1}100%{transform:translate(-50%,-200%);opacity:0}}'
-      + '@keyframes dmgfDrop{0%{transform:translate(-50%,-150%);opacity:0}18%{transform:translate(-50%,-50%);opacity:1}30%{transform:translate(-50%,-80%)}42%{transform:translate(-50%,-50%)}52%{transform:translate(-50%,-62%)}62%{transform:translate(-50%,-50%)}85%{opacity:1}100%{transform:translate(-50%,-50%);opacity:0}}'
-      + '@keyframes dmgfDrift{0%{transform:translate(-50%,-50%);opacity:1}70%{opacity:1}100%{transform:translate(-20%,-190%);opacity:0}}'
-      + '@keyframes dmgfBurst{0%{transform:translate(-50%,-50%) scale(2.2);opacity:.2}12%{transform:translate(-50%,-50%) scale(1);opacity:1}70%{opacity:1}100%{transform:translate(-30%,-170%) scale(1);opacity:0}}'
+    t += '@keyframes dmgfPop{0%{transform:translate(-50%,-50%) scale(.35);opacity:0}14%{transform:translate(-50%,-55%) scale(1.25);opacity:1}28%{transform:translate(-50%,-55%) scale(1)}100%{transform:translate(-50%,calc(-180% - 34px)) scale(1);opacity:0}}'
+      + '@keyframes dmgfRise{0%{transform:translate(-50%,-50%);opacity:1}75%{opacity:1}100%{transform:translate(-50%,calc(-200% - 34px));opacity:0}}'
+      + '@keyframes dmgfDrop{0%{transform:translate(-50%,-150%);opacity:0}18%{transform:translate(-50%,-50%);opacity:1}30%{transform:translate(-50%,-80%)}42%{transform:translate(-50%,-50%)}52%{transform:translate(-50%,-62%)}62%{transform:translate(-50%,-50%)}85%{opacity:1}100%{transform:translate(-50%,calc(-50% - 34px));opacity:0}}'
+      + '@keyframes dmgfDrift{0%{transform:translate(-50%,-50%);opacity:1}70%{opacity:1}100%{transform:translate(-20%,calc(-190% - 34px));opacity:0}}'
+      + '@keyframes dmgfBurst{0%{transform:translate(-50%,-50%) scale(2.2);opacity:.2}12%{transform:translate(-50%,-50%) scale(1);opacity:1}70%{opacity:1}100%{transform:translate(-30%,calc(-170% - 34px)) scale(1);opacity:0}}'
       + '@keyframes dmgfShake{0%,100%{transform:none}25%{transform:translateX(-3px) rotate(-4deg)}75%{transform:translateX(3px) rotate(4deg)}}'
-      + '@keyframes dmgfComic{0%{transform:translate(-50%,-50%) scale(.2) rotate(-12deg);opacity:0}12%{transform:translate(-50%,-55%) scale(1.3) rotate(-6deg);opacity:1}24%{transform:translate(-50%,-55%) scale(1) rotate(-6deg)}100%{transform:translate(10%,-170%) scale(1) rotate(-6deg);opacity:0}}'
-      + '@keyframes dmgfSlide{0%{transform:translate(-130%,-50%);opacity:0}14%{transform:translate(-50%,-50%);opacity:1}75%{opacity:1}100%{transform:translate(-50%,-160%);opacity:0}}'
-      + '@keyframes dmgfInk{0%{transform:translate(-50%,-50%) scale(1.25);opacity:0;filter:blur(3px)}18%{transform:translate(-50%,-50%) scale(1);opacity:1;filter:blur(0)}70%{opacity:1;filter:blur(0)}100%{transform:translate(-50%,-110%) scale(1.15);opacity:0;filter:blur(4px)}}'
-      + '@keyframes dmgfSlam{0%{transform:translate(-50%,-190%) scale(1.6);opacity:0}16%{transform:translate(-50%,-50%) scale(1);opacity:1}22%{transform:translate(-46%,-50%)}28%{transform:translate(-54%,-50%)}34%{transform:translate(-50%,-50%)}75%{opacity:1}100%{transform:translate(-50%,-130%);opacity:0}}'
-      + '@keyframes dmgfGlitch{0%{transform:translate(-50%,-50%);opacity:0}8%{transform:translate(-46%,-50%) skewX(-12deg);opacity:1}14%{transform:translate(-54%,-52%) skewX(10deg)}20%{transform:translate(-50%,-55%) skewX(0)}80%{opacity:1}100%{transform:translate(-50%,-170%);opacity:0}}'
+      + '@keyframes dmgfComic{0%{transform:translate(-50%,-50%) scale(.2) rotate(-12deg);opacity:0}12%{transform:translate(-50%,-55%) scale(1.3) rotate(-6deg);opacity:1}24%{transform:translate(-50%,-55%) scale(1) rotate(-6deg)}100%{transform:translate(10%,calc(-170% - 34px)) scale(1) rotate(-6deg);opacity:0}}'
+      + '@keyframes dmgfSlide{0%{transform:translate(-130%,-50%);opacity:0}14%{transform:translate(-50%,-50%);opacity:1}75%{opacity:1}100%{transform:translate(-50%,calc(-160% - 34px));opacity:0}}'
+      + '@keyframes dmgfInk{0%{transform:translate(-50%,-50%) scale(1.25);opacity:0;filter:blur(3px)}18%{transform:translate(-50%,-50%) scale(1);opacity:1;filter:blur(0)}70%{opacity:1;filter:blur(0)}100%{transform:translate(-50%,calc(-110% - 34px)) scale(1.15);opacity:0;filter:blur(4px)}}'
+      + '@keyframes dmgfSlam{0%{transform:translate(-50%,-190%) scale(1.6);opacity:0}16%{transform:translate(-50%,-50%) scale(1);opacity:1}22%{transform:translate(-46%,-50%)}28%{transform:translate(-54%,-50%)}34%{transform:translate(-50%,-50%)}75%{opacity:1}100%{transform:translate(-50%,calc(-130% - 34px));opacity:0}}'
+      + '@keyframes dmgfGlitch{0%{transform:translate(-50%,-50%);opacity:0}8%{transform:translate(-46%,-50%) skewX(-12deg);opacity:1}14%{transform:translate(-54%,-52%) skewX(10deg)}20%{transform:translate(-50%,-55%) skewX(0)}80%{opacity:1}100%{transform:translate(-50%,calc(-170% - 34px));opacity:0}}'
       + '@keyframes dmgfFlicker{50%{opacity:.55}}@keyframes dmgfShimmer{from{background-position:0 0}to{background-position:200% 0}}'
       + '@keyframes dmgfTwinkle{from{opacity:.25;transform:scale(.6)}to{opacity:1;transform:scale(1.15)}}'
       + '@media (prefers-reduced-motion:reduce){[class*="dmgf-"] .vfx-dmg::before,[class*="dmgf-"] .vfx-dmg::after{animation:none!important}}'
@@ -176,21 +176,27 @@
     var o = W._vfxNumber;
     var nw = function (x, y, dmg, ele, big) {
       var r = o.apply(this, arguments);
+      if (!r || ele === 'shield') return r;
       try {
         var cu = using(), u = !!(cu && FBY[cu].zh && document.body.classList.contains('dmgf-' + cu));
         if (cu && FBY[cu].two && ele !== 'miss' && typeof dmg === 'number') {   // 第二批：屬性顏色、爆擊分級、連擊數
-          var L0 = el('vfx-layer'), n0 = L0 && L0.lastElementChild;
-          if (n0 && n0.classList.contains('vfx-dmg')) {
-            n0.classList.add('dmgf-e-' + (ele && /^(fire|water|wind|earth|magic)$/.test(ele) ? ele : 'normal'));
-            if (big === 'crit' && avg > 0 && dmg >= avg * 2.5) n0.classList.add('dmgf-t3');
-            avg = avg ? avg * 0.95 + dmg * 0.05 : dmg;
-            if (cu === 'arcade') { var nowT = Date.now(); hits = nowT - lastHit < 1500 ? hits + 1 : 1; lastHit = nowT;
-              if (hits >= 2) { var hs = document.createElement('span'); hs.className = 'dmgf-hits'; hs.textContent = hits + ' HITS'; n0.appendChild(hs); } }
+          r.classList.add('dmgf-e-' + (ele && /^(fire|water|wind|earth|magic)$/.test(ele) ? ele : 'normal'));
+          if (big === 'crit' && avg > 0 && dmg >= avg * 2.5) r.classList.add('dmgf-t3');
+          avg = avg ? avg * 0.95 + dmg * 0.05 : dmg;
+          if (cu === 'arcade') {
+            var nowT = Date.now();
+            hits = nowT - lastHit < 1500 ? hits + 1 : 1;
+            lastHit = nowT;
+            if (hits >= 2) {
+              var hs = r.dmCombo || (r.dmCombo = document.createElement('span'));
+              hs.className = 'dmgf-hits';
+              hs.textContent = hits + ' HITS';
+              r.appendChild(hs);
+            }
           }
         }   // 用中文單位的字體（繁星、泡泡彩虹）
         if (u && ele !== 'miss' && typeof dmg === 'number' && dmg >= 1e4) {
-          var L = el('vfx-layer'), n = L && L.lastElementChild;
-          if (n && n.classList.contains('vfx-dmg')) { var v = n.querySelector('.vfx-dmg-value'); (v || n).textContent = zhNum(dmg); }
+          r.dmValue.data = zhNum(dmg);
         }
       } catch (e) {}
       return r;

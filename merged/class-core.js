@@ -8,6 +8,21 @@
   s.name=base+'・'+tag(op.mode);s.breachPair=s.id+'_x';s.breachMode=op.mode
   alt.id=s.id+'_x';alt.name=base+'・'+tag(other);alt.breakImmunity=other==='magic'?'魔法免疫':'物理免疫';alt.breachPair=s.id;alt.breachMode=other;alt.breachAlt=true;alt.plan.ops.forEach(o=>{if(o.kind==='breach')o.mode=other})
   t.skills.splice(i+1,0,alt)}
+ // Target and attack restrictions from the named route's second-stage aura.
+ const routes={
+  v3_knight_0:{damage:'element'}, v3_elf_8:{hit:'ranged'}, v3_elf_11:{damage:'rangedElement'},
+  v3_mage_12:{hit:'magic',damage:'magic'}, v3_mage_15:{damage:'magic'},
+  v3_warrior_20:{hit:'melee',damage:'heavy'}, v3_warrior_23:{damage:'melee'},
+  v3_dragon_25:{reduction:'element'}, v3_illusion_28:{damage:'magic'}, v3_illusion_31:{damage:'magic'}
+ };
+ for(const route of D.trees){
+  for(const s of route.skills.filter(s=>s.type==='光環'&&s.stage===2)){
+   for(const op of s.plan.ops){
+    if(routes[route.id]?.[op.key])op.filter=routes[route.id][op.key];
+    if(route.id==='v3_mage_14')op.summonsOnly=true;
+   }
+  }
+ }
  const trees=new Map(D.trees.map(t=>[t.id,t])),skills=new Map(D.trees.flatMap(t=>t.skills.map(s=>[s.id,{...s,tree:t.id}])));
  const CLS={knight:'騎士',royal:'王族',elf:'妖精',mage:'法師',dark:'黑暗妖精',warrior:'戰士',dragon:'龍騎士',illusion:'幻術士'};
  function fail(message){throw Error(message);}

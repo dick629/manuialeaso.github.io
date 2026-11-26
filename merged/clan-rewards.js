@@ -9,8 +9,7 @@
   const owner=P(),slot=currentSlot;if(blocked||!owner||owner.dead)return{ok:false,busy:true};
   pending++;
   try{
-   if(!navigator.locks)throw Error('瀏覽器不支援安全領獎鎖，請使用 HTTPS 或本機網址');
-   return await navigator.locks.request('lineage-clan-rewards',{mode:'exclusive'},()=>{
+   return await W.LineageLocalActionLock('lineage-clan-rewards',()=>{
     if(blocked||P()!==owner||currentSlot!==slot||owner.dead) return{ok:false,cancelled:true};
     const job=prepare();if(!job)return{ok:true,skipped:true};
     const log=W.logSys,lines=[];let value;

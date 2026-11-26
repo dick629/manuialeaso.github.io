@@ -1930,17 +1930,22 @@
         return _readState().diamonds;
     }
 
-    function pandoraAdjustSharedDiamonds(delta) {
+    function pandoraAdjustSharedDiamonds(delta, mailReceipt) {
         if (delta > 0 && window.TwistedSpace?.blockingSideRewards()) return {ok:false};
         delta = Math.trunc(Number(delta) || 0);
         if (!delta) return { ok: true, diamonds: _readState().diamonds };
         let result = _withStateLock(st => {
+            if (mailReceipt && st.lastMailReceipt === mailReceipt) return { diamonds: st.diamonds };
             let next = Math.floor(Number(st.diamonds) || 0) + delta;
             if (next < 0) return { commit: false, error: '龍之鑽石不足。' };
+            if (!Number.isSafeInteger(next)) return { commit: false, error: '龍之鑽石已達上限。' };
             st.diamonds = next;
+            if (mailReceipt) st.lastMailReceipt = mailReceipt;
             return { diamonds: next };
         });
-        if (result.ok) _rerenderPandora();
+        // The mail tab renders its own receipt. Rebuilding its parent market
+        // here would replace the open sign-in tab before it reports success.
+        if (result.ok && !mailReceipt) _rerenderPandora();
         return result;
     }
 

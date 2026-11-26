@@ -1151,6 +1151,7 @@ function showCreation() {
     if(main) main.classList.add('hidden');
     if(load) load.classList.add('hidden');
     if(creation) creation.classList.remove('hidden');
+    document.getElementById('creation-name').value = '';
     const classicToggle = document.getElementById('create-classic-toggle');
     if(classicToggle) classicToggle.checked = false;   // 刪角後同頁重創時不得沿用上一輪的經典模式勾選
 
@@ -1236,7 +1237,21 @@ function adjStat(s, v) {
     updateCreateUI();
 }
 
+function cleanRoleName(value) {
+    return value.replace(/[<>&"']/g, '').trim();
+}
+
+function readCreationName() {
+    const input = document.getElementById('creation-name');
+    const name = cleanRoleName(input.value);
+    const message = !name ? '請輸入角色名稱' : name.length > 12 ? '角色名稱最多 12 個字' : '';
+    input.setCustomValidity(message);
+    document.getElementById('creation-name-hint').textContent = message;
+    return message ? '' : name;
+}
+
 function updateCreateUI() {
+    const name = readCreationName();
     if(!curCreate.cls || !createBase[curCreate.cls]){
         ['str','dex','con','int','wis','cha'].forEach(s => {
             let el = document.getElementById(`c-${s}`);
@@ -1250,7 +1265,7 @@ function updateCreateUI() {
     ['str','dex','con','int','wis','cha'].forEach(s => document.getElementById(`c-${s}`).innerText = b[s] + curCreate[s]);
     let left = b.pts - (curCreate.str + curCreate.dex + curCreate.con + curCreate.int + curCreate.wis + curCreate.cha);
     document.getElementById('creation-pts').innerText = left;
-    document.getElementById('btn-start').disabled = left <= 0 ? false : true;
+    document.getElementById('btn-start').disabled = left > 0 || !name;
 }
 
 function onToggleClassic(el) {
@@ -1260,6 +1275,11 @@ function onToggleClassic(el) {
 }
 function startGame() {
     if(!curCreate.cls || !curCreate.rawCls) return;
+    const name = readCreationName();
+    if (!name) {
+        document.getElementById('creation-name').focus();
+        return;
+    }
     if(slotSummary(currentSlot)){
         alert(`存檔 ${currentSlot} 已有角色，無法直接覆蓋。請返回角色選擇畫面並先刪除原角色。`);
         backToMenu();
@@ -1273,6 +1293,7 @@ function startGame() {
     try { if (typeof _petRosterDirty !== 'undefined' && _petRosterDirty && player && player.cls && typeof petRosterSave === 'function') petRosterSave(); } catch (e) {}   // 上一角色未寫入的寵物名冊先 flush（比照 loadGame）
     try { if (typeof _petRosterKey !== 'undefined') _petRosterKey = null; } catch (e) {}   // 失效記憶體快取→新角色重新從共用桶載入（防跨角色髒鏡像）
     if (typeof freshPlayerState === 'function') player = freshPlayerState();
+    player.giranCombatMode = 'manual';
     if (typeof freshMapState === 'function') mapState = freshMapState();
     if(typeof stopCreationFrameSfx === 'function') stopCreationFrameSfx();
     // 🔊 v3.4.17 進遊戲：隱藏 creation-panel（原本只隱藏 creation-screen 父層·子面板 classList 無 .hidden 殘留）＋停創角動畫。
@@ -1299,7 +1320,7 @@ function startGame() {
     player.cls = curCreate.cls;
     player.bloodPledge = null;   // 血盟改由同模式王族花費金幣創立，不再於創角時自動加入。
     player.classicMode = !!(document.getElementById('create-classic-toggle') && document.getElementById('create-classic-toggle').checked);   // 🎮 經典模式：依創角開關決定（此角色永久生效）；🏛️v3.0.83 傳統模式已取消（traditionalMode 由 SAVE_DEFAULTS 恆 false）
-    player.name = null;   // 預設未取名，狀態欄顯示「點擊取名」，玩家可點擊命名
+    player.name = name;
     player.enSeed = 'es' + uid() + uid();   // 🎲 強化決定論種子（創角產生一次、存進存檔永久固定）：讓強化成敗由種子決定、不可用 save/load 刷
     player._roleEpoch = _roleEpoch();        // 🛡️ 角色世代：刪除後舊分頁不得把同欄位的舊角色寫回
     if (typeof clanSyncCurrentPlayer === 'function') clanSyncCurrentPlayer();   // 同模式已有血盟時，新角色自動成為成員。
@@ -1513,9 +1534,9 @@ function _mercMonotonicExpGuard() {
     } catch (e) {}
 }
 function saveGame() {
-    // 死亡狀態不寫檔：避免把 player.dead=true 存進去，導致下次讀檔卡在死亡狀態而不出怪。
-    // 死亡期間沒有可保存的進度，保留上一份「存活」存檔即可。
-    if (player && player.dead) return false;
+    if(window.GiranPartyGuestPending||document.body.classList.contains('giran-guest'))return false;
+    // Temporary arena knockouts and native events settle through their own exit.
+    if (player?.dead && !player.giranDeath) return false;
     // 🛡️ v3.3.14 防「空殼玩家覆蓋既有存檔」資料遺失：標題／載入畫面的 player 是 cls:null 的空殼（尚未載入/創建角色）。
     //    5 分鐘自動存檔計時器（startGameTimers）在「返回主選單」後不會被清除、beforeunload／寵物名冊 dirty 也可能觸發 saveGame，
     //    這些背景觸發會把空殼 player 寫進 currentSlot（預設 1）→ 毀掉該格真正的角色（顯示為 null／Lv.1／預設王族／資料不完整）。
@@ -1669,16 +1690,29 @@ function loadGame() {
         //    舊文案多寫的「仍可用『刪除角色』清空」正好點名此情境唯一看不見的那顆按鈕，故移除。
         let d; try { d = JSON.parse(s); } catch(e){ alert('此存檔位的資料已毀損，無法載入。\n此欄位在載入畫面會顯示為空，請直接按「匯入進度」還原先前匯出的 .json 備份檔。'); return; }
         player = d.p; mapState = d.ms;
+        if(window.GiranAtlas){
+            GiranAtlas.archiveActor(player);
+            for(const ally of player.allies||[])GiranAtlas.archiveActor(ally);
+            if(Array.isArray(mapState.mobs))mapState.mobs=mapState.mobs.map(m=>{
+                if(!m)return m;
+                delete m._giranLoot;
+                const old=/^giran_mob_(\d+)$/.exec(m.mobId||'');
+                if(!old)return m;
+                const key=GiranAtlas.mobKey(old[1]);
+                if(key!==m.mobId)return null;
+                if(DB.mobs[key]?._giranGeneralLoot){m._giranGeneralLoot=true;m._giranArt=DB.mobs[key]._giranArt;}
+                return m;
+            });
+        }
         delete player.offlineHunt;   // 🗑️ v3.7.94 離線掛機已移除：舊存檔的逐地圖速率快照沒有讀取者，載入即丟掉（否則每次存檔都白帶一份）
         normalizeFacingRefsForSave();   // 舊存檔若含 v3.2.12 面向物件副本，載入時立即轉為 UID／隊員鍵並移除物件參照
         if (typeof applyGlobalAutoSellSettings === 'function') applyGlobalAutoSellSettings();   // 🔧 v2.6.91 功能5：載入角色時套用全域自動販賣設定（8 角色共用時覆蓋本檔規則）
         if (!player.enSeed) player.enSeed = 'es' + _seedHash((player.name || '') + '|' + (player.cls || '') + '|lz').toString(36);   // 🎲 舊存檔無強化種子：由角色名+職業決定論衍生（重匯入同一份舊檔也得相同種子→不能靠重匯入重洗強化）
         if (typeof sanitizeState === 'function') sanitizeState();   // 🛡️ 讀檔後合理性夾擠（抓改過/竄改的存檔：等級>100、強化值超上限、負金幣等）
         state.ticks = d.ticks || 0;   // 🔧 還原 tick 計數：讓召喚物/迷魅以絕對 tick 記錄的 endTick 在重載後仍然有效
-        // 修復：自動存檔可能在「死亡放置」期間把 player.dead=true 寫入存檔。
-        // 讀檔一律以「在村莊甦醒、存活」載入，否則 tick() 會因 player.dead 提早 return，
-        // 導致載入後不出怪、且無復活按鈕可按而卡死。後續進村流程會補滿 HP/MP 並清除異常狀態。
-        player.dead = false;
+        const savedDeath=!!player.dead || (player.hp===0 && !!mapState.current && !DB.towns[mapState.current]);
+        player.dead=savedDeath;
+        if(!savedDeath)delete player.giranDeath;
         { let b1 = document.getElementById('btn-revive'); if(b1) b1.classList.add('hidden');
           let b2 = document.getElementById('btn-revive-inplace'); if(b2) b2.classList.add('hidden'); }
         document.getElementById('creation-screen').classList.add('hidden');
@@ -1869,7 +1903,20 @@ function loadGame() {
 
         // 👇 正確的新版起點邏輯
         // 🔧 讀檔回「家」改走 getHomeTown()：血盟成員回盟主村莊（海音/歐瑞），否則回職業起始村，與回村按鈕邏輯一致
-        setMapSelectors(getHomeTown());
+        // A saved Giran village is safe to resume at its recorded arrival tile.
+        // Timed encounters and ordinary hunting still use the native offline settlement route.
+        delete player.giranVisitingCastle;
+        const storedTown=player.giranWorld?.key;
+        const displacedVillage=window.GiranGates?.unownedCastleVillage(mapState.current);
+        const resumeTown=storedTown&&storedTown===mapState.current&&DB.towns[storedTown]&&window.GiranGates?.allowed(storedTown);
+        if(savedDeath){
+            const death=player.giranDeath?.map===mapState.current?player.giranDeath:null;
+            if(death?.prideClimb)Object.assign(state,{prideClimb:true,prideRanked:!!death.prideRanked,prideFloor:death.prideFloor});
+            if(death?.oblivion)state.oblivion=death.oblivion;
+            if(death?.antharas)state.antharas=death.antharas;
+            player.giranDeath=death||{map:mapState.current};
+            setMapSelectors(mapState.current);
+        }else setMapSelectors(displacedVillage||(resumeTown?storedTown:getHomeTown()));
 
         if (player.eq && player.eq.ring3 === undefined) player.eq.ring3 = null;   // 🔧 舊存檔補上第三戒指欄
         if (player.eq && player.eq.ring4 === undefined) player.eq.ring4 = null;   // 🔧 舊存檔補上第四戒指欄
@@ -1887,7 +1934,16 @@ function loadGame() {
         calcStats();
         try { if (typeof _petEnforceCarry === 'function') { _petEnforceCarry(); if (_petRosterDirty) petRosterSave(); } } catch (e) { console.warn('pet carry enforcement', e); }
         applySherineTheme();   // 🔮 還原席琳的世界視覺主題
-        changeMap(true);
+        if(savedDeath&&(DB.towns[mapState.current]||document.getElementById('map-select').value!==mapState.current)){
+            revive();
+        }else{
+            changeMap(true);
+            if(savedDeath){
+                player.hp=0;
+                document.getElementById('btn-revive').classList.remove('hidden');
+                updateReviveInPlaceBtn();
+            }
+        }
         renderTabs();
         renderSkillSelects();
         renderMobs();

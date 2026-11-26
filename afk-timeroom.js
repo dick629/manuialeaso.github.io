@@ -97,7 +97,7 @@
   // 外層再包一次（load 時）：之後才載入的外掛（次元裂縫、夢域鏡…）在擊殺後補發的掉落也算在擊殺結算裡
   W.addEventListener('load', function () {
     if (typeof W.killMob !== 'function' || W.killMob.__afkTrOuter) return;
-    var o2 = W.killMob, w2 = function () { if (!here()) return o2.apply(this, arguments); killing++; try { return o2.apply(this, arguments); } finally { killing--; } };
+    var o2 = W.killMob, w2 = function () { if (!here()) return o2.apply(this, arguments); killing++; try { return o2.apply(this, arguments); } finally { killing--; if (killing <= 0 && typeof blockedNames !== 'undefined') blockedNames = []; } };
     w2.__afkTrOuter = true; W.killMob = w2;
     try { (0, eval)('killMob = window.killMob'); } catch (e) {}
   });

@@ -72,15 +72,16 @@
     flushT = 0;
     if (!Q.length || !mount()) { if (Q.length) flushT = setTimeout(flush, 1000); return; }
     var box = document.getElementById('exp-log');
-    var atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    var atBottom = on && box.scrollHeight - box.scrollTop - box.clientHeight < 40;
     var list = Q.splice(0, Q.length);
     if (list.length > MAX) list = list.slice(-MAX);
-    box.insertAdjacentHTML('beforeend', list.map(function (h) { return '<div class="log-entry text-slate-100">' + h + '</div>'; }).join(''));
+    box.insertAdjacentHTML('beforeend', list.join(''));
     while (box.children.length > MAX) box.removeChild(box.firstChild);
     if (atBottom) box.scrollTop = box.scrollHeight;
   };
   var add = function (html) {
-    Q.push(html);
+    var row = '<div class="log-entry text-slate-100">' + html + '</div>';
+    Q.push(W.GiranJournal ? W.GiranJournal.markup('exp-log',row) : row);
     if (Q.length > MAX * 2) Q.splice(0, Q.length - MAX);
     if (!flushT) flushT = setTimeout(flush, 120);
   };
@@ -89,11 +90,11 @@
   if (typeof W.killMob === 'function') {
     var oKill = W.killMob;
     W.killMob = function (idx) {
-      var p = P(), m = null, lv0 = 0, ex0 = 0, pg0 = par(p);
-      try { m = mapState.mobs[idx]; if (p) { lv0 = Number(p.lv) || 1; ex0 = Number(p.exp) || 0; } } catch (e) {}
+      var p = P(), m = null, wasDead = false, lv0 = 0, ex0 = 0, pg0 = par(p);
+      try { m = mapState.mobs[idx]; wasDead = m && m._dead; if (p) { lv0 = Number(p.lv) || 1; ex0 = Number(p.exp) || 0; } } catch (e) {}
       var r = oKill.apply(this, arguments);
       try {
-        if (!p || p !== P() || !m) return r;
+        if (!p || p !== P() || !m || wasDead || !m._dead) return r;
         var lv1 = Number(p.lv) || 1, ex1 = Number(p.exp) || 0, gain;
         if (lv1 === lv0) gain = ex1 - ex0;
         else { gain = Math.max(0, req(lv0) - ex0); for (var l = lv0 + 1; l < lv1; l++) gain += req(l); gain += ex1; }
@@ -106,7 +107,7 @@
           var ref = 0;
           try { ref = Math.floor(N(m.exp) * (1 + (typeof partyExpBonusPct === 'function' ? N(partyExpBonusPct()) : 0) / 100) * (1 + (typeof dollFieldVal === 'function' ? N(dollFieldVal('expBonus')) : 0) / 100)); } catch (e) {}
           if (!(ref > 0)) return r;
-          add('擊殺 <span class="text-amber-100">' + name + '</span>　獲得經驗 <b class="text-amber-200">' + fmt(ref) + '</b>' + '<br><span class="text-slate-400">已滿等（Lv.' + lv1 + '）' + (pg1 && pg1.max ? '，巔峰也已滿' : '') + '</span>');
+          add('擊殺 <span class="text-amber-100">' + name + '</span>　經驗參考值 <b class="text-amber-200">' + fmt(ref) + '</b>' + '<br><span class="text-slate-400">已滿等（Lv.' + lv1 + '）' + (pg1 && pg1.max ? '，巔峰也已滿' : '') + '</span>');
           return r;
         }
         // 格式（Ping 11-17 22:44）：擊殺 怪物名稱　獲得經驗 xxxx ／ 下次升級所需 yyyy！
