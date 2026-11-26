@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "merge-0.4-92d6a67572a6",
+  "build": "merge-0.4-a10bb211bf00",
   "files": [
     {
       "url": "afk-abnforce.js?v=08c1533cec6e",
@@ -13,8 +13,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-affix-plus.js?v=b538e7274df7",
-      "sha256": "b538e7274df7b527990587b9177ccdf4fbf2ca3ca422035b298bb2a9d9100ef7",
+      "url": "afk-affix-plus.js?v=b4feabd1d2cc",
+      "sha256": "b4feabd1d2cc23c9487a98a7ee7ddf0caec7bc7481b45602824458e3d4c49644",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -483,8 +483,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dimrift.js?v=31d042caf494",
-      "sha256": "31d042caf4944afd3243eef94f481907dee65fe3d3b71bf2d893811e877745a6",
+      "url": "afk-dimrift.js?v=b965c6c6feed",
+      "sha256": "b965c6c6feedf8a69e15d29608798186868b450144e62b92c96930ff184ef8e8",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -533,8 +533,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamboss.js?v=b31d6681070b",
-      "sha256": "b31d6681070b6bb536ffed31079276c450e1143a3b02d0d524bedba7284a993c",
+      "url": "afk-dreamboss.js?v=73918f121091",
+      "sha256": "73918f121091922b69f8a73a87fd58a2d8d0108373dbd06dcf26fa1f36a921f9",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -543,8 +543,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dreamhell.js?v=a10414550b97",
-      "sha256": "a10414550b97e7743a937f32bcf48079d9b17f89474504a3945df7095f37a836",
+      "url": "afk-dreamhell.js?v=6baa6d61fcbf",
+      "sha256": "6baa6d61fcbfbf147331589fa2170fb1fcee5ac1a0bef3624b17db8dee753a1b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1844,7 +1844,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "85862f85139c454f5f4291531f725ea1482a3b6f50e1ef41f3806cf777139633",
+      "sha256": "cc69c175e8d56a37d31f3b259628bb9c0cbc5d63eda043de1bbb0562dfe4f5bc",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2353,8 +2353,8 @@
       "type": "text/html; charset=utf-8"
     },
     {
-      "url": "world/twisted-space.js?v=9d854b1089ab",
-      "sha256": "9d854b1089ab53ffd81fe5e46ccf638722a62911ca5633de4b9d0fd939b5726b",
+      "url": "world/twisted-space.js?v=e6fb6f9bf48d",
+      "sha256": "e6fb6f9bf48d3f6ff709fa10099c674a14f40c02538cf954fa2d32f39f71f626",
       "type": "text/javascript; charset=utf-8"
     }
   ]

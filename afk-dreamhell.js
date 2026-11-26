@@ -242,7 +242,7 @@
         if (!m || !m.boss || m._dead || !(m.curHp > 0) || m._afkEntryBlast || m.race === '血盟' || m.race === '建築') continue;
         m._afkEntryBlast = true; any = true;
         // 時空裂痕裡頭目一半機率出場、很快就一隻接一隻：登場衝擊最多每 10 秒一次（2026-10-29 晚，裂痕有自己的暴走與崩塌）
-        if (window.TwistedSpace && TwistedSpace.here()) { bossEntryBlast(m, 0.10, 0.2); continue; }   // 11-26 Ping：扭亂時空每隻王都打
+        if (window.TwistedSpace && TwistedSpace.here()) { var R3 = TwistedSpace.R3 || {}; bossEntryBlast(m, R3.entryPct || 0.10, R3.entryFloor || 0.5); try { if (TwistedSpace.bossEntryStun) TwistedSpace.bossEntryStun(m); } catch (e) {} continue; }   // 11-26 Ping：扭亂時空每隻王都打；23:03 下限改 50%、出場暈全隊
         if (state.riftRun) { if ((state.ticks || 0) < (state._dhBlastCd || 0)) continue; state._dhBlastCd = (state.ticks || 0) + 100; }
         if (typeof window.__afkBossRankOk === 'function' && !window.__afkBossRankOk(m)) continue;   // 多王：第二、三隻不放（afk-bossrules）
         // 2026-10-31 12:53：夢域鏡頭目強化（afk-dreamboss）開著、這隻王歸它管時，只吃那邊的出場傷害（30 秒冷卻），不再兩種疊加

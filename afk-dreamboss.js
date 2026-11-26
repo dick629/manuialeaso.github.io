@@ -62,7 +62,9 @@
   var chars = function () { var p = P(); if (!p || p.dead) return []; return [p].concat((p.allies || []).filter(function (a) { return a && !a._downed && (a.curHp || 0) > 0; })); };
   var pctCur = function (pct) {   // 目前 HP 的百分比，不會因此倒下
     var n = 0;
-    everyone().forEach(function (e) { var cur = Number(e.get()) || 0, d = Math.floor(cur * pct); if (d >= cur) d = cur - 1; if (d > 0) { e.set(cur - d); n++; } });
+    // 11-26 23:03 Ping：扭亂時空的王出場傷害（含之後的流血）最多打到剩最大 HP 的 entryFloor（50%），跟扭亂時空自己的出場傷害共用同一條下限
+    var tw = window.TwistedSpace && TwistedSpace.here && TwistedSpace.here(), fl = tw ? ((TwistedSpace.R3 && TwistedSpace.R3.entryFloor) || 0.5) : 0;
+    everyone().forEach(function (e) { var cur = Number(e.get()) || 0, d = Math.floor(cur * pct); if (d >= cur) d = cur - 1; if (fl) { var mx = Number(e.o.mhp || e.o.maxHp || e.o.hpMax) || 0; if (mx > 0) d = Math.min(d, Math.floor(cur - mx * fl)); } if (d > 0) { e.set(cur - d); n++; } });
     try { if (!S().ff && typeof updateUI === 'function') updateUI(); } catch (e) {}
     return n;
   };

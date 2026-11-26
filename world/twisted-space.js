@@ -74,6 +74,12 @@ window.TwistedSpace = (() => {
   // probabilities intact. Attack damage uses the same outgoing multiplier as the rift.
   // 11-26 16:15 Ping（次元）：難度約時光屋 3.5 倍、收益比時光屋低——HP ×2、防禦類 ×1.5、命中 ×4/3、怪物傷害 ×2.5、經驗 ×1.5、金幣 ×3（原本 ×10／×5／×5／×15／×5／×5）
   const X = {hp:1, bossHp:0.35, def:1.2, hit:4/3, dmg:2.5, drain:2, exp:1.5, gold:3};
+  // 11-26 23:03 Ping：扭亂時空三條新規則的常數（全部集中在這裡）
+  //   fee／feeSec：待在扭亂時空每滿 feeSec 秒（遊戲時間）扣 fee 金幣；不夠就不扣、送回席琳神殿
+  //   stunHit／stunHitSec：一般怪每次命中有 stunHit 機率暈眩被打的人 stunHitSec 秒
+  //   stunBossSec：王出場暈眩全隊；stunGuardSec：同一人被暈後這段時間內不會再被暈（王出場與一般怪共用）
+  //   entryPct／entryFloor：每隻王出場扣最大 HP entryPct，出場傷害最多打到剩 entryFloor
+  const R3 = {fee:500000, feeSec:60, stunHit:0.05, stunHitSec:2, stunBossSec:3, stunGuardSec:5, entryPct:0.10, entryFloor:0.5};
   function scale(m) {
     if (!m || m._twisted || !m._dream) return;
     m._twisted = true;
@@ -164,11 +170,54 @@ window.TwistedSpace = (() => {
   }
   wrapKill();
   window.addEventListener('load',wrapKill);
+  // ── 規則 1：每分鐘扣金幣（afk-dimrift 每秒呼叫一次；以待在這張圖的遊戲時間累計，離開再回來就重算；離線模擬也走同一條，所以照扣） ──
+  let feeSec = 0, feeSeen = -1;
+  function feeSecond() {
+    if (!here() || !player || player.dead) return;
+    const t = state.ticks || 0;
+    if (feeSeen < 0 || t - feeSeen > 15 || t < feeSeen) feeSec = 0;   // 中間離開過（或剛進場）就歸零
+    feeSeen = t;
+    if (++feeSec < R3.feeSec) return;
+    feeSec = 0;
+    if ((Number(player.gold) || 0) < R3.fee) {
+      try { logSys('<span class="text-amber-300 font-bold">金幣不足 ' + R3.fee.toLocaleString() + '，已離開扭亂時空。</span>'); } catch (e) {}
+      setMapSelectors('town_sherine'); changeMap(true);
+      return;
+    }
+    player.gold -= R3.fee;
+    try { if (!state.ff) logSys('<span class="text-slate-300">扭亂時空的停留費用：' + R3.fee.toLocaleString() + ' 金幣。</span>'); } catch (e) {}
+  }
+  // ── 規則 2：暈眩（照玩家、傭兵現有的暈眩抗性與免暈；同一人 stunGuardSec 秒內不再被暈） ──
+  const stunGuard = new WeakMap();
+  function stunOne(ent, sec, mob) {
+    if (!ent || (ent === player ? player.dead : (ent._downed || !(ent.curHp > 0)))) return false;
+    const now = state.ticks || 0;
+    if ((stunGuard.get(ent) || -1) > now) return false;
+    const resisted = ent === player ? (typeof playerStatusResisted === 'function' && playerStatusResisted('stun',mob))
+      : (typeof allyStatusResisted === 'function' && allyStatusResisted(ent,'stun',mob));
+    if (resisted) return false;
+    const t = Math.round(sec * 10);
+    stunGuard.set(ent, now + R3.stunGuardSec * 10);   // 真的被暈才開始保護
+    if (window.AFK_RELIC_DEFENSE_BRIDGE) AFK_RELIC_DEFENSE_BRIDGE.setStatus(ent,'stun',t,mob);
+    else { ent.statuses = ent.statuses || {}; ent.statuses.stun = Math.max(ent.statuses.stun || 0, t); }
+    return true;
+  }
+  function onHit(ent, mob, kind) {
+    if (!here() || !mob || mob.boss || kind === 'dot' || Math.random() >= R3.stunHit) return;
+    if (stunOne(ent, R3.stunHitSec, mob)) try { if (!state.ff) logCombat('<span class="text-yellow-300">' + (ent === player ? '你' : (ent._allyName || '傭兵')) + '被' + mob.n + '打暈了（' + R3.stunHitSec + ' 秒）。</span>', 'enemy'); } catch (e) {}
+  }
+  function bossEntryStun(mob) {
+    if (!here()) return 0;
+    let n = 0;
+    [player].concat((player.allies || []).filter(Boolean)).forEach(e => { if (stunOne(e, R3.stunBossSec, mob)) n++; });
+    if (n) try { if (!state.ff) logCombat('<span class="text-yellow-300 font-bold">' + (mob && mob.n || '王') + '出場的威壓讓 ' + n + ' 人暈眩（' + R3.stunBossSec + ' 秒）。</span>', 'enemy'); } catch (e) {}
+    return n;
+  }
   const regional = window.__afkRbRegionOf;
   window.__afkRbRegionOf = (id,keys) => id === map && keys.length ?
     keys[Math.floor(Math.random()*keys.length)] : regional?.(id,keys);
   return {map,proof,limit,here,open,canPlace,pickBossOrMob,scale,settle,killRewards,preview,cardBoss,
-    X, monsterDamage:(m,dmg) => m?._twisted ? dmg*X.dmg : dmg,
+    X, R3, onHit, bossEntryStun, feeSecond, monsterDamage:(m,dmg) => m?._twisted ? dmg*X.dmg : dmg,
     blockItem(id) {
       if (!killDepth) return false;
       const d = DB.items[id];
