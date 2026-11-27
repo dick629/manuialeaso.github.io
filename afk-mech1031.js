@@ -146,6 +146,7 @@
     if (!(Math.random() < ch)) return;
     var amt = Math.floor(v * (boss ? PH.bossPct : PH.pct) * (typeof W.__afkRapidPhantom === 'function' ? W.__afkRapidPhantom() : 1) * (typeof W.__afkPhantomDecay === 'function' ? W.__afkPhantomDecay(actor) : 1)); if (!(amt > 0)) return;   // 平衡 C：1 秒內連發遞減（afk-balance1102）   // 隱藏規則：連射觸發的 −50%
     var ms = mobs(), hit = 0;
+    if (W.giranArea) { var near = W.giranArea(actor, ms, 'magic'); ms = ms.map(function (m) { return near.indexOf(m) >= 0 || m === target ? m : null; }); }   // 11-27：自由走動只波及主目標周圍 3×3（保留索引給 killMob）
     inner = true;
     try {
       for (var i = 0; i < ms.length; i++) {

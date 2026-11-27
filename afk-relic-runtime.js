@@ -330,7 +330,8 @@
     // inside a reflected hit. Their owner is not an enemy to retaliate against.
     var redirected=!!opt.redirected, self=target===actor||opt.origin==='self';
     var origin=redirected||opt.origin==='redirect'?'redirect':self?'self':reflection?'reflection':opt.origin||(typ==='dot'?'dot':'relic');
-    if(!self&&!redirected&&!reflection&&origin!=='dot'&&typ!=='dot'&&window.GiranCombat?.inWorld() &&
+    // 11-27 Ping：自由走動連持續傷害也要在施放者的魔法射程內才扣血（原本全場的怪都在跳 DoT 數字）
+    if(!self&&!redirected&&!reflection&&window.GiranCombat?.inWorld() &&
        mapState.mobs.includes(target)&&!GiranCombat.onTerrain(actor,target,typ==='physical'&&opt.range!=='ranged'?'basic':'magic'))return 0;
     amount = Math.max(0, finite(amount)); var ele = opt.element || 'none';
     if (typ !== 'true' && !opt.snapshot && opt.raw) {

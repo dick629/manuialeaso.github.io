@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-c397d36829ec",
+  "build": "giran-0.8.25-1fa25e6f5e09",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -993,8 +993,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-mech1031.js?v=ee9accc2f836",
-      "sha256": "ee9accc2f836106ca708b2c99ad8177f697ee8566495d82ac710fd3cc552fd66",
+      "url": "afk-mech1031.js?v=03c3b1a813a5",
+      "sha256": "03c3b1a813a56022e358121a62fc3646a111524189fd0ae7357fd0dd1903345a",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1308,8 +1308,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-relic-runtime.js?v=3b5f2ee104cd",
-      "sha256": "3b5f2ee104cd79d384d8f8fe8955d75c42278ba846464be41c119775cb9593d7",
+      "url": "afk-relic-runtime.js?v=65211ef1621d",
+      "sha256": "65211ef1621d34392a423d487f6137ba02b5b979b7403e48e1761adeb8fd3745",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1908,8 +1908,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "dimension-map/stride-view.js?v=9644b5028e88",
-      "sha256": "9644b5028e888e10d63b1fae0dab84ed67eae192f4bfaa62560bc1bcfe3d50eb",
+      "url": "dimension-map/stride-view.js?v=df8784c7d9d3",
+      "sha256": "df8784c7d9d3071ea21ca86c208d342d706ff5ad1740be939df13f1ff2ce9570",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1949,7 +1949,7 @@
     },
     {
       "url": "dimension.html",
-      "sha256": "72445562b23cd668c7e0d48201942e8a8d305dad1446f14dbe70a9fe1f1b7fa6",
+      "sha256": "b9a395b3bb22861bb0f953d665e57587a85cff9efdf2b349a402d0c0382387b4",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "e55d57c16dbf491905403455050b7a1a344cbf145060c10063af34292ab2cb53",
+      "sha256": "7a2283d3ad4734a8040dd6e02f3d82681059ebf5189f41c3d4a60cdded365b48",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1983,8 +1983,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/04-combat-attack.js?v=0ca5b272df83",
-      "sha256": "0ca5b272df835534c09c4884fed546e8e981d37e192117e6720d84e33d8b172f",
+      "url": "js/04-combat-attack.js?v=ebb971717f7c",
+      "sha256": "ebb971717f7c7bab7c89b788e10acf209c1f79aac202828275dbc868315e9c73",
       "type": "text/javascript; charset=utf-8"
     },
     {

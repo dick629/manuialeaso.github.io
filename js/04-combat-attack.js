@@ -723,7 +723,7 @@ function procFreeMagicSkill(t, skId, en, areaHit, sourceItem, illusionRecoverMp)
     if (!sk || !t || t.curHp <= 0) return;
     if (sk.reqJustice && typeof pvpIsJustice === 'function' && !pvpIsJustice()) return;   // 💙 v3.5.75 究極光裂術：限正義性向（免費 proc 施放亦擋·靜默）
     if (sk.target === 'all' && !areaHit) {
-        let uids = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead).map(m => m.uid);
+        let uids = (window.giranArea||((w,l)=>l))(player, mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead), 'magic').map(m => m.uid);   // 11-27：自由走動只波及主目標周圍 3×3
         uids.forEach((uid, i) => {
             let mob = mapState.mobs.find(m => m && m.uid === uid && m.curHp > 0 && !m._dead);
             if (mob) procFreeMagicSkill(mob, skId, en, true, sourceItem, i === 0);
@@ -1053,7 +1053,9 @@ function bombFlowerExplode(who) {
     if (!_w.d || !_w.d.hurtExplode) return;
     let base = _w.d.hurtExplode;
     let coef = 1 + 3 * (_w.d.magicDmg || 0) / 16;   // 受魔法傷害影響（同一般魔攻係數）
-    let uids = mapState.mobs.filter(m => m && m.curHp > 0).map(m => m.uid);   // uid 快照·避免 killMob 改索引
+    let _near = m => true;   // 11-27：自由走動只炸到自己周圍 3×3 的怪
+    if (window.GiranCombat?.inWorld?.() && GiranCombat.field?.ready?.()) { const _me = GiranCombat.field.point(_w); _near = m => { const q = _me && GiranCombat.field.point(m); return !!q && GiranGeometry.distance(_me, q) <= 1 + (q.footprint || 0); }; }
+    let uids = mapState.mobs.filter(m => m && m.curHp > 0 && _near(m)).map(m => m.uid);   // uid 快照·避免 killMob 改索引
     let hitAny = false;
     uids.forEach(function (uid) {
         let t = mapState.mobs.find(m => m && m.uid === uid && m.curHp > 0);
