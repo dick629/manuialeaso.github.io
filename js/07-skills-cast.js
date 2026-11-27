@@ -185,7 +185,7 @@ function cubeTick() {
             }
             return;
         }
-        let live = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,'magic')));
+        let live = (window.giranArea||((w,l)=>l))(player, mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,'magic'))), 'magic');
         if (!live.length) return;
         if (c.kind === 'dmg') {
             let txt = [];
@@ -642,7 +642,7 @@ function castSkillInner(skId) {
         }
         // ⚔️ 咆哮：對所有敵人造成 50+(等級-30) 的固定無屬性傷害（不計 MR / DR / 元素）
         if (sk.roarFixed) {
-            let targets = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,sk.dmgType==='physical'?'basic':'magic')));
+            let targets = (window.giranArea||((w,l)=>l))(player, mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,sk.dmgType==='physical'?'basic':'magic'))), sk.dmgType==='physical'?'basic':'magic');
             if (!targets.length) return false;
             if (player.mp < cost) return false;
             if (window.AFK_RELIC_RUNTIME) window.AFK_RELIC_RUNTIME.castPaid(player,cost); player.mp -= cost; /* relic-runtime:cast-paid */ player.cds.atkSk = getAutoCastInterval(player, false, player.cds.atkSk);
@@ -798,7 +798,7 @@ function castSkillInner(skId) {
             }
             return true;
         } else {
-            let targets = sk.target === 'all' ? mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,sk.dmgType==='physical'?'basic':'magic'))) : [getTarget()].filter(m => m && m.curHp > 0);   // 🛡️ v2.6.69 審計#7：排除同 tick 已死屍體（killMob 只標記·settleDeadMobs 才移除）——原本對屍體結算的傷害會灌進 _burstDmg 使魔爆總量膨脹；與傭兵 allyCastMagic 過濾一致
+            let targets = sk.target === 'all' ? (window.giranArea||((w,l)=>l))(player, mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead && (!window.GiranCombat || GiranCombat.onTerrain(player,m,sk.dmgType==='physical'?'basic':'magic'))), sk.dmgType==='physical'?'basic':'magic') : [getTarget()].filter(m => m && m.curHp > 0);   // 🛡️ v2.6.69 審計#7：排除同 tick 已死屍體（killMob 只標記·settleDeadMobs 才移除）——原本對屍體結算的傷害會灌進 _burstDmg 使魔爆總量膨脹；與傭兵 allyCastMagic 過濾一致
             if(sk.bossOnly) targets = targets.filter(m => m && m.boss);   // 🌊 頭目限定技能（污濁之水）：非頭目不施放、不扣 MP／冷卻
             if(targets.length === 0) return false;
 

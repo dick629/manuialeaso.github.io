@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-1b1631252fa7",
+  "build": "giran-0.8.25-72fe90c90cbd",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1933,8 +1933,8 @@
       "type": "application/json; charset=utf-8"
     },
     {
-      "url": "dimension-map/terrain-view.js?v=2058866e3974",
-      "sha256": "2058866e397468d524dcdb68952695237653100605db334e6c245a64ae66e62a",
+      "url": "dimension-map/terrain-view.js?v=df891b4da955",
+      "sha256": "df891b4da955be199341516779fd2c6e81bb09a59a940a0bc7fdf8032123642b",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1949,7 +1949,7 @@
     },
     {
       "url": "dimension.html",
-      "sha256": "a6e6ba4dcacfd3a1e4d145e658df64df3d3e34342481b93d1925f2542b6b4232",
+      "sha256": "e18056ab42dcbcaea50b836786800312b0d84e534208b7fa8524f9e07095d832",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "d8e2fe2b456af62f04393cd304bb989fcf24e5a62083b645a12e23586b8bdb76",
+      "sha256": "c6055b2dc4c0ac450b0a03aba643ac34ad17b996a00fbcd6af6d0c29006e34e5",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1993,13 +1993,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/06-status-allies.js?v=6ba5b6583d63",
-      "sha256": "6ba5b6583d636d74a9a13a4606dc440a115cdc1c7169f54edf4aae6659845b25",
+      "url": "js/06-status-allies.js?v=caba48cd9dd8",
+      "sha256": "caba48cd9dd8ffe5138e73f59fcc703fec2962cec603563db1a232cf304450f4",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/07-skills-cast.js?v=00c282327ddf",
-      "sha256": "00c282327ddf19295a2d4cb5046ce2f175db772078959853b6e27aff0afa6ce4",
+      "url": "js/07-skills-cast.js?v=9fe9cce1602f",
+      "sha256": "9fe9cce1602f889b7bbcca1a1961118f3c29f8d062ea49ada262c9c6bebd53d7",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2193,8 +2193,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/class-combat.js?v=f51c927b795c",
-      "sha256": "f51c927b795cd8fa5b1f3aa66c07b9360770e69e5980d31433e3dd024f04bce5",
+      "url": "merged/class-combat.js?v=feab6ad60977",
+      "sha256": "feab6ad60977622746bb067b6742fa0e10aeced141b126fb6382bce86519a7fc",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2578,8 +2578,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/combat-world.js?v=9e8ef1434e93",
-      "sha256": "9e8ef1434e937999b35aec247c8634fbb42ecf40b533a49cfb55b73cddb9e771",
+      "url": "world/combat-world.js?v=13647640f510",
+      "sha256": "13647640f510f9397a1b81ac6ccf5eb0b87f7026aac9ad852532ec57b3034b26",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2703,8 +2703,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/party-lineup.js?v=3f291e0157a9",
-      "sha256": "3f291e0157a90347b654703dd3409a96f931d983ced8e6a5337119e36b84fbfc",
+      "url": "world/party-lineup.js?v=b467a14154dc",
+      "sha256": "b467a14154dce6d012655ce616fce1f0a0af8bdc70cab225359764c52752909b",
       "type": "text/javascript; charset=utf-8"
     },
     {

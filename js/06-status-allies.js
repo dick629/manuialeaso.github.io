@@ -1253,7 +1253,7 @@ function allyCastMagic(ally, sk) {
         }
     }
     let d = ally.d || {};
-    let targets = (sk.target === 'all') ? mapState.mobs.filter(m => m && m.curHp > 0) : [getTarget()].filter(m => m && m.curHp > 0);
+    let targets = (sk.target === 'all') ? (window.giranArea||((w,l)=>l))(ally, mapState.mobs.filter(m => m && m.curHp > 0), 'magic') : [getTarget()].filter(m => m && m.curHp > 0);
     if (!targets.length) return;
     let mageMult = 1.0;
     let texts = [], _burstDmg = 0;   // 🔧 神官魔杖·魔爆：累計本次魔法總傷害
@@ -1367,7 +1367,7 @@ function allyCastNonDamage(ally, sk) {
     if (!sk || sk.type !== 'atk' || sk.dmgDice || sk.multiDmg || sk.dmgType === 'physical') return false;   // 僅處理「無傷害骰的魔法狀態/即死技」
     if (!sk.status && !sk.instakill) return false;
     let d = ally.d || {};
-    let targets = (sk.target === 'all') ? mapState.mobs.filter(m => m && m.curHp > 0) : [getTarget()].filter(m => m && m.curHp > 0);
+    let targets = (sk.target === 'all') ? (window.giranArea||((w,l)=>l))(ally, mapState.mobs.filter(m => m && m.curHp > 0), 'magic') : [getTarget()].filter(m => m && m.curHp > 0);
     if (sk.bossOnly) targets = targets.filter(m => m && m.boss);   // 🌊 頭目限定技能（污濁之水）：非頭目時退回一般攻擊，不扣 MP／不播放施法動作
     if (!targets.length) return false;
     if (typeof _allySpriteTrigger === 'function') _allySpriteTrigger(ally, 'skill', sk.n);   // 🤝 v3.0.70 隊員戰場 sprite：確認有合法目標後才播放施法動作
@@ -2266,7 +2266,7 @@ function allyWarriorAct(ally) {
     let sk = DB.skills[ally._atkSkill];
     let d = ally.d || {};
     if (sk && sk.type === 'atk' && sk.roarFixed) {                                          // ⚔️ 咆哮：全體固定傷害（戰士唯一主動攻擊技）
-        let targets = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead);
+        let targets = (window.giranArea||((w,l)=>l))(ally, mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead), 'basic');
         if (targets.length) {
             let cost = Math.max(1, Math.ceil((sk.mp || 0) * (1 - (d.mpReduce || 0) / 100)));
             if (allyHasMastery(ally, 'i_mana')) cost *= 2;   // 🔮 v3.1.78 魔力精通（傭兵）：攻擊技 MP 消耗加倍（與 MP 上限加倍配套·原 inline 公式漏掉·buff 維持走 getMpCost 已含）
@@ -2448,7 +2448,7 @@ function allyCubeTick(ally) {
             }
             return;
         }
-        let live = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead);
+        let live = (window.giranArea||((w,l)=>l))(ally, mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead), 'magic');
         if (!live.length) return;
         if (c.kind === 'dmg') {
             let txt = [];
@@ -2469,7 +2469,7 @@ function allyCubeTick(ally) {
 //   公式鏡像玩家 stormBuffTick（js/04），改用傭兵自身 magicDmg/cls/magicCrit/武器最終倍率；冰凍命中換身用傭兵 lv/magicHit；擊殺仍歸玩家（killMob 不換身）。
 function allyStormTick(ally, sk, noMageBonus) {
     if (!ally || ally.dead || !sk || !state.running) return;
-    let targets = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead);
+    let targets = (window.giranArea||((w,l)=>l))(ally, mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead), 'magic');
     if (!targets.length) return;
     let d = ally.d || {};
     let mageDmgMult = 1.0;

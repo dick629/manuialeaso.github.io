@@ -14,7 +14,7 @@
   const aim=getTarget();
   return p===player?aim:W.GiranCombat.target(p,aim,'magic');
  }
- function nearbyEnemies(p,s){return enemies().filter(m=>!W.GiranCombat||W.GiranCombat.onTerrain(p,m,castMode(s)));}
+ function nearbyEnemies(p,s){const l=enemies().filter(m=>!W.GiranCombat||W.GiranCombat.onTerrain(p,m,castMode(s)));return W.giranArea?W.giranArea(p,l,castMode(s)):l;}   // 11-27：自由走動只波及主目標周圍
  const needsEnemy=new Set(['hit','dot','breach','status','mark','debuff','retaliate','detonate','assist']);
  function companions(p){return [...new Set(R.api.pets(p).concat(R.api.summons(p),p===player?(typeof guardAliveList==='function'?guardAliveList():player.guards||[]):[]))].filter(live);}
  function members(){const head=W.GiranPartyEffects?.leaderOf(player)||player;return [head].concat(GiranPartyView.combatAllies(head)).filter(live);}

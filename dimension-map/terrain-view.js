@@ -42,6 +42,7 @@ function walker(x, y) {
   return {x, y, fx: x, fy: y, path: [], step: null, progress: 0, walking: false, heading: 4};
 }
 
+const MOVE_SPEED = document.documentElement.dataset.playMode === 'fusion' ? .8 : 1;
 function advance(actor, seconds, pace, terrain, occupied) {
   if (!actor.step && actor.path.length) {
     const h = actor.path.shift();
@@ -56,7 +57,8 @@ function advance(actor, seconds, pace, terrain, occupied) {
   }
   actor.walking = !!actor.step;
   if (!actor.step) return;
-  actor.progress = Math.min(1, actor.progress + seconds / pace);
+  // 11-27 Ping：自由走動所有人（隊伍、怪物、城鎮）移動速度 ×0.8，追擊關係不變。
+  actor.progress = Math.min(1, actor.progress + seconds * MOVE_SPEED / pace);
   const travel = actor.progress - 0.035*Math.sin(4*Math.PI*actor.progress);
   actor.fx = actor.x + (actor.step[0] - actor.x) * travel;
   actor.fy = actor.y + (actor.step[1] - actor.y) * travel;

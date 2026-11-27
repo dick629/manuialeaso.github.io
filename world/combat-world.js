@@ -123,5 +123,20 @@ window.GiranCombat = (() => {
     }
   }
   const exploring=()=>field?.map===mapState.current && !offline() && (!!field.commanded || !!window.GiranRoam?.manual());
-  return {exploring,attach,point,reach,usesBow,permits,onTerrain,target,strike,update,bind,get pinned(){return pinned;},get field(){return field;},get suspendedField(){return suspendedField;},inWorld,offline};
+  // 11-27 Ping：自由走動的範圍技只打「主目標周圍 ±2 格」的怪（約 4×4，以目標為中心）。
+  // 主目標打不到時改用施放者打得到的最近一隻；一隻都打不到＝整招落空，不再全場開花。
+  const AREA=2;
+  function area(who,list,mode='magic'){
+    if(!inWorld()||!field?.ready?.()||!Array.isArray(list))return list;
+    const live=list.filter(m=>m&&m.curHp>0&&!m._dead);
+    let center=typeof getTarget==='function'?getTarget():null;
+    if(!center||!live.includes(center)||!onTerrain(who,center,mode)){
+      const me=point(who);center=null;
+      if(me){let best=1e9;for(const m of live){const q=point(m);if(!q||!onTerrain(who,m,mode))continue;const d=GiranGeometry.distance(me,q);if(d<best){best=d;center=m;}}}
+    }
+    const c=center&&point(center);if(!c)return [];
+    return live.filter(m=>{const q=point(m);return q&&GiranGeometry.distance(c,q)<=AREA+(q.footprint||0);});
+  }
+  window.giranArea=area;
+  return {area,exploring,attach,point,reach,usesBow,permits,onTerrain,target,strike,update,bind,get pinned(){return pinned;},get field(){return field;},get suspendedField(){return suspendedField;},inWorld,offline};
 })();
