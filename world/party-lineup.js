@@ -117,6 +117,56 @@ window.GiranPartyView = (() => {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hook, { once: true }); else hook();
     window.addEventListener('load', hook);
   }
+  if (!fusion) {
+    // 11-27 Ping：舊版次元的手機畫面，怪名和狀態標籤固定在卡片頂端，小隻的怪圖在卡片底部 → 名字飄在怪頭上很高的地方。
+    // 量出怪圖最上緣的不透明像素，把名字和標籤往下移到怪頭上方。量不到（跨網域圖）就不動。
+    const inkTop = new Map();
+    const topOf = im => {
+      const key = im.currentSrc || im.src;
+      if (inkTop.has(key)) return inkTop.get(key);
+      let top = 0;
+      try {
+        const w = im.naturalWidth, h = im.naturalHeight, c = document.createElement('canvas');
+        c.width = w; c.height = h; const ctx = c.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(im, 0, 0); const a = ctx.getImageData(0, 0, w, h).data;
+        for (top = 0; top < h; top++) { let n = 0; for (let x = 0; x < w; x++) if (a[(top * w + x) * 4 + 3] > 120 && ++n >= 3) break; if (n >= 3) break; }
+        if (top >= h) top = 0;
+      } catch (e) { top = 0; }
+      if (inkTop.size > 512) inkTop.delete(inkTop.keys().next().value);
+      inkTop.set(key, top); return top;
+    };
+    let queued = 0;
+    const lift = () => {
+      queued = 0;
+      const field = document.getElementById('battle-view');
+      if (!mobile() || !field || field.classList.contains('dm-map')) return;
+      for (const card of field.querySelectorAll('#mob-list > .mob-target[data-uid]')) {
+        const im = card.querySelector('.mob-img-inner img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)');
+        const parts = [card.querySelector('.mob-name'), card.querySelector('.mob-badge-row')].filter(Boolean);
+        if (!im || !im.naturalHeight || !parts.length) continue;
+        // 每隻怪只量一次（換動作幀不重量，名字才不會跟著抖）；卡片被重畫時把量過的位移補回去
+        const tag = card.dataset.uid + '|' + parts.length;
+        if (card.__giranLiftTag === tag) { if (parts[0].style.transform !== card.__giranLift) for (const el of parts) el.style.transform = card.__giranLift; continue; }
+        const r = im.getBoundingClientRect(); if (!r.height) continue;
+        const head = r.top + topOf(im) * r.height / im.naturalHeight;
+        for (const el of parts) el.style.transform = '';
+        const bottom = parts[parts.length - 1].getBoundingClientRect().bottom;
+        const dy = Math.max(0, Math.round(head - 4 - bottom));
+        card.__giranLiftTag = tag; card.__giranLift = dy ? 'translateY(' + dy + 'px)' : '';
+        for (const el of parts) el.style.transform = card.__giranLift;
+      }
+    };
+    const hookMobs = () => {
+      const original = window.renderMobs;
+      if (typeof original !== 'function' || original.__giranLift) return;
+      const wrapped = function () { const r = original.apply(this, arguments); if (!queued) queued = requestAnimationFrame(lift); return r; };
+      wrapped.__giranLift = true; window.renderMobs = wrapped;
+      try { (0, eval)('renderMobs = window.renderMobs'); } catch (e) {}
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hookMobs, { once: true }); else hookMobs();
+    window.addEventListener('load', hookMobs);
+    setInterval(() => { if (!queued && mobile()) queued = requestAnimationFrame(lift); }, 700);
+  }
   return {
     phonePreview, mobile, allyCap, fusionCap: fusion ? FUSION_CAP : 0, deployed: () => deployed(player), setDeployed,
     get limit() { return fusion ? FUSION_CAP + 1 : mobile() ? 4 : 8; },

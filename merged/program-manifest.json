@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-61f60ec5a7f6",
+  "build": "giran-0.8.25-c397d36829ec",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1949,7 +1949,7 @@
     },
     {
       "url": "dimension.html",
-      "sha256": "74dfd3290094ef16e490b31a891b98f821f908445d8b726ac6f4e60aae5cbc2f",
+      "sha256": "72445562b23cd668c7e0d48201942e8a8d305dad1446f14dbe70a9fe1f1b7fa6",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "55e28fba4bee46ce1d589b5dc39c74dbd256d66479403820f3ba9731dd8ef040",
+      "sha256": "e55d57c16dbf491905403455050b7a1a344cbf145060c10063af34292ab2cb53",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2703,8 +2703,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/party-lineup.js?v=b467a14154dc",
-      "sha256": "b467a14154dce6d012655ce616fce1f0a0af8bdc70cab225359764c52752909b",
+      "url": "world/party-lineup.js?v=8cc25a583657",
+      "sha256": "8cc25a58365776ad6b14bab8a5da7ecce936c00f997713d75abd98ad9a0cb265",
       "type": "text/javascript; charset=utf-8"
     },
     {
