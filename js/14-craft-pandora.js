@@ -2005,6 +2005,10 @@ window.onload = () => {
             return (player.inv || []).find(x => x.uid === uidv) || null;
         } catch(e){ return null; }
     }
+    // 11-27 Ping：說明框只靠 mousemove 收起，捲動視窗、點按鈕、滑鼠離開畫面時會一直留著蓋住內容 → 這些情況一律收起
+    ['scroll','wheel','mousedown','touchstart'].forEach(function(t){ document.addEventListener(t, function(){ hideTip(); }, { capture:true, passive:true }); });
+    window.addEventListener('blur', function(){ hideTip(); });
+    document.documentElement.addEventListener('mouseleave', function(){ hideTip(); });
     document.addEventListener('mousemove', function(e){
         let host = e.target && e.target.closest ? e.target.closest('.tip-host') : null;
         let ic = document.getElementById('interaction-content');

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-e3bc86fdb54c",
+  "build": "giran-0.8.25-ddab4b67cf81",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1949,7 +1949,7 @@
     },
     {
       "url": "dimension.html",
-      "sha256": "2a38b4d07e7c8b4f6cc3493989698ea9230a1d32da3a556b73dcf6ecf8298e25",
+      "sha256": "b73e45ea167722b2c50fc14c7cd48f5e9a73067fead5e526545e4c501ed5326d",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "6f2f86a38ded3d4f00e3cb12e500e92c4620dc5e9b5a53e3bc8b48fd3a3c23d4",
+      "sha256": "b17c029c8a189e543c27ec49148d844fc84b1a5db1c9f6f1e8f4b1bb67a68bd6",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2033,8 +2033,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/14-craft-pandora.js?v=c70e9635e692",
-      "sha256": "c70e9635e69242e7d366b211118de98a6e8b32f186c85c332fbb0e977a134320",
+      "url": "js/14-craft-pandora.js?v=06e91663763c",
+      "sha256": "06e91663763c6bb1909c108ad87d3eb1da42f54d437c63f174f5057224845aef",
       "type": "text/javascript; charset=utf-8"
     },
     {
