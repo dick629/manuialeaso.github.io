@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-72fe90c90cbd",
+  "build": "giran-0.8.25-05f9680bc7d1",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1949,7 +1949,7 @@
     },
     {
       "url": "dimension.html",
-      "sha256": "e18056ab42dcbcaea50b836786800312b0d84e534208b7fa8524f9e07095d832",
+      "sha256": "efda94faf884ba0074dc064e0aa6943b64a444a5d24fd791b83948935fdc20ee",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "c6055b2dc4c0ac450b0a03aba643ac34ad17b996a00fbcd6af6d0c29006e34e5",
+      "sha256": "69e856805688f386c5f37ba148ead55e18c5a882552d063d7b03671da4adcff3",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2578,8 +2578,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/combat-world.js?v=13647640f510",
-      "sha256": "13647640f510f9397a1b81ac6ccf5eb0b87f7026aac9ad852532ec57b3034b26",
+      "url": "world/combat-world.js?v=d2ced392b39a",
+      "sha256": "d2ced392b39a3fea42a905e12bc9538c1d488740e39ba66733456c7175127e68",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2623,8 +2623,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/gates.js?v=0bd02d3d9dea",
-      "sha256": "0bd02d3d9deae4311b512a7b23488fd73711ae684514827a9b1961e7f1c432ee",
+      "url": "world/gates.js?v=9e0de9fdb693",
+      "sha256": "9e0de9fdb6931de0817ad2fc7c7aacdbb6c1511915addd3187e8a2e9e33b57f1",
       "type": "text/javascript; charset=utf-8"
     },
     {

@@ -100,6 +100,7 @@ window.GiranGates=(()=>{
   }
   const distance=(a,b)=>Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y));
   const villageMargin=3;
+  const WILD_RADIUS=150;
   function inDistrict(t,x,y,margin=0){
     const dist=Math.max(Math.abs(x-t.x),Math.abs(y-t.y));
     return dist<=26+margin||dist<=t.extent+margin&&t.npcs.some(([px,py])=>Math.max(Math.abs(x-px),Math.abs(y-py))<=7+margin);
@@ -249,8 +250,12 @@ window.GiranGates=(()=>{
     const places=geography(terrain),from=terrain.areas?.[terrain.key];
     if(!places?.wilds.length||!from||mapState.current!==terrain.key)return false;
     let dest;
+    // 11-27 Ping：地圖名稱要跟腳下的地方一致。狩獵區只算到中心 WILD_RADIUS 格內；走到兩個狩獵區之間的路上
+    // （例：奇岩城外的花園）不再沿用遠處狩獵區的名字和怪，改成最近的村莊（沒有怪），走進下一個狩獵區才開打。
+    const nearestWild=(p,skip)=>places.wilds.filter(w=>w.key!==skip&&distance(w,p)<=WILD_RADIUS&&allowed(w.key))
+      .sort((a,b)=>distance(a,p)-distance(b,p))[0]||null;
     if(terrain.key.startsWith('town_')){
-      if(outsideVillage(terrain,leader.x,leader.y)&&!sceneHasTalk())dest=outside(terrain,leader);
+      if(outsideVillage(terrain,leader.x,leader.y)&&!sceneHasTalk())dest=nearestWild(leader);
     }else if(places.wilds.some(w=>w.key===terrain.key)){
       if(!outsideVillage(terrain,leader.x,leader.y)&&groundReady(terrain,leader.x,leader.y,villageMargin)){
         dest=places.towns.filter(t=>inDistrict(t,leader.x,leader.y,villageMargin)||
@@ -258,8 +263,10 @@ window.GiranGates=(()=>{
           .sort((a,b)=>distance(a,leader)-distance(b,leader)).find(t=>allowed(t.key));
       }
       if(!dest){
-        const closest=places.wilds.filter(w=>w.key!==terrain.key&&distance(w,leader)<36&&distance(leader,w)+30<distance(leader,from)).sort((a,b)=>distance(leader,a)-distance(leader,b))[0];
-        if(closest&&allowed(closest.key))dest=closest;
+        const here=distance(leader,from),closest=nearestWild(leader,terrain.key);
+        if(closest&&distance(leader,closest)+30<here)dest=closest;
+        else if(here>WILD_RADIUS&&groundReady(terrain,leader.x,leader.y,villageMargin))
+          dest=places.towns.filter(t=>allowed(t.key)).sort((a,b)=>distance(a,leader)-distance(b,leader))[0];
       }
     }
     if(!dest)return false;

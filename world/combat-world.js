@@ -123,9 +123,9 @@ window.GiranCombat = (() => {
     }
   }
   const exploring=()=>field?.map===mapState.current && !offline() && (!!field.commanded || !!window.GiranRoam?.manual());
-  // 11-27 Ping：自由走動的範圍技只打「主目標周圍 ±2 格」的怪（約 4×4，以目標為中心）。
+  // 11-27 Ping：自由走動的範圍技只打「主目標周圍 ±1 格」的怪（3×3，以目標為中心）。
   // 主目標打不到時改用施放者打得到的最近一隻；一隻都打不到＝整招落空，不再全場開花。
-  const AREA=2;
+  const AREA=1;
   function area(who,list,mode='magic'){
     if(!inWorld()||!field?.ready?.()||!Array.isArray(list))return list;
     const live=list.filter(m=>m&&m.curHp>0&&!m._dead);
