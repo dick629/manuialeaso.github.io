@@ -56,6 +56,13 @@ window.LineagePlayMode = (() => {
     } catch { return false; }
   })().then(ok => {
     tester = ok;
+    // 11-27 Ping：沒有測試口令的人一打開自由走動頁（index.html）就直接換到舊版次元，不論從哪個按鈕進遊戲（建角、讀檔、快速繼續）都進不了自由走動
+    if (!ok && current === 'fusion') {
+      const target = new URL(entries.dimension, location.href);
+      target.search = location.search;
+      location.replace(target.href);
+      return ok;
+    }
     if (ok) {
       fusionOption.disabled = false;
       fusionOption.textContent = '融合版（自由走動）';
