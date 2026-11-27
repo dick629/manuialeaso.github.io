@@ -1217,96 +1217,96 @@ window.GiranTownPlaces={
  },
  "town_sherine": {
   "npc_afk_goddess": [
+   32743,
+   32810
+  ],
+  "npc_sherine": [
+   32742,
+   32821
+  ],
+  "npc_afk_riftgate": [
+   32732,
+   32809
+  ],
+  "npc_afk_halfsherine": [
+   32737,
+   32809
+  ],
+  "npc_kyo_sigh": [
+   32737,
+   32819
+  ],
+  "npc_afk_awaken": [
+   32742,
+   32815
+  ],
+  "npc_ally_sherine": [
+   32731,
+   32812
+  ],
+  "npc_io": [
    32731,
    32830
   ],
-  "npc_sherine": [
-   32738,
-   32829
-  ],
-  "npc_ally_sherine": [
-   32736,
-   32832
-  ],
-  "npc_io": [
-   32728,
-   32830
-  ],
-  "npc_kyo_sigh": [
-   32735,
-   32835
-  ],
   "npc_afk_brace": [
-   32728,
-   32833
-  ],
-  "npc_afk_riftgate": [
-   32735,
-   32819
+   32737,
+   32831
   ],
   "npc_afk_artgate": [
-   32723,
-   32829
+   32725,
+   32830
   ],
   "npc_afk_josda": [
-   32738,
-   32819
+   32735,
+   32837
   ],
   "npc_afk_skillup": [
-   32723,
-   32832
-  ],
-  "npc_afk_halfsherine": [
    32742,
    32837
   ],
   "npc_afk_storyteller": [
-   32720,
+   32719,
    32832
   ],
   "npc_afk_elena": [
    32720,
-   32823
+   32824
   ],
   "npc_afk_zal": [
-   32739,
-   32816
-  ],
-  "npc_afk_awaken": [
-   32745,
-   32837
+   32714,
+   32826
   ],
   "npc_afk_trilogy": [
-   32720,
-   32835
+   32713,
+   32832
   ],
   "npc_afk_dimsmith": [
-   32717,
-   32825
+   32714,
+   32820
   ],
   "visitor0": [
-   32739,
-   32813
+   32708,
+   32826
   ],
   "visitor1": [
-   32717,
-   32835
+   32742,
+   32831
   ],
   "visitor2": [
-   32715,
-   32828
+   32709,
+   32821
   ],
   "visitor3": [
-   32718,
-   32818
+   32728,
+   32830
   ],
   "visitor4": [
-   32719,
-   32815
+   32736,
+   32834
   ],
   "visitor5": [
-   32714,
-   32835
+   32722,
+   32830
   ]
  },
  "town_silent": {

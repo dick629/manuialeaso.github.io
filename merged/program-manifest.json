@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-a573cf87625e",
+  "build": "giran-0.8.25-6f15c772d86f",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "ccd50bd56bdf17eefcd2b77dc2d941e7819859d10c13bb898eda8a5a957551fc",
+      "sha256": "7c28c676278ac96b7ac8314eaacf704c5b9cb57eb3887cc313c65712c2042f79",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2768,8 +2768,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/town-places.js?v=0a55fe56ca99",
-      "sha256": "0a55fe56ca998dfff583c04fe778ffda3d14e53a0f7b7cb18e7358974655a240",
+      "url": "world/town-places.js?v=77a42e23dbc0",
+      "sha256": "77a42e23dbc0b9104820793ee6877566b9027e1dd288dc2cf4382c9014806fad",
       "type": "text/javascript; charset=utf-8"
     },
     {
