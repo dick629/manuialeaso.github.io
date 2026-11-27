@@ -176,7 +176,14 @@ window.GiranRoam=(()=>{
     const rec=residents.get(point.key)||{};
     rec.mob=m;rec.zone=zone;rec.seen=Date.now();residents.set(point.key,rec);return rec;
   }
-  function make(f,p){
+  // 11-27 Ping：新生的怪從畫面邊緣出生再走進來（剛進地圖的第一波照舊直接在場上）。
+  // 已載入的地形只到畫面範圍，畫面外沒有可站的格子，所以改成避開畫面中間 76% 的區域。
+  function onScreen(f,p){
+    const t=f.terrain;if(!t?.camera)return false;
+    const [x,y]=t.project(p.x,p.y);
+    return x>t.width*.12&&y>t.height*.12&&x<t.width*.88&&y<t.height*.88;
+  }
+  function make(f,p,hidden=false){
     const saved=residents.get(p.key),index=freeSlot();
     const twisted=window.TwistedSpace?.here()?TwistedSpace:null;
     if(twisted&&!twisted.canPlace(index))return false;
@@ -186,6 +193,7 @@ window.GiranRoam=(()=>{
       mapState.mobs[index]=m;return true;
     }
     if(f.board.occupied(null,p.x,p.y)||gap(f.leader,p)<2)return false;
+    if(hidden&&onScreen(f,p))return false;
     request={index,p};
     try{spawnMob(index);}finally{request=null;}
     const m=mapState.mobs[index];if(!alive(m))return false;
@@ -271,15 +279,16 @@ window.GiranRoam=(()=>{
     if(!twisted&&mapState.mobs.filter(alive).length<cap+2&&GiranWorldBosses.spawn(freeSlot()))changed=true;
     // Fill close, connected cells first even if earlier battles put some of them on cooldown.
     const waveLimit=enteringField?Math.min(12,cap):Math.max(2,Math.ceil(cap/4));
+    const firstWave=enteringField;
     enteringField=false;
     let arrivals=0;
     const available=twisted?Math.max(0,twisted.limit-mapState.mobs.filter(alive).length):Infinity;
     const nearTarget=cap>=12?Math.ceil(cap*.6):0;
-    function fill(closeOnly){
+    function fill(closeOnly,hidden){
       for(const p of sites()){
         if(ordinary>=residentCap||arrivals>=available||arrivals>=waveLimit||closeOnly&&nearby>=nearTarget)break;
         if(used.has(p.key)||closeOnly&&gap(leader,p)>8||(player.giranHuntRecovery?.[p.key]||0)>Date.now())continue;
-        if(!make(f,p))continue;
+        if(!make(f,p,hidden))continue;
         arrivals++;used.add(p.key);changed=true;
         const resident=residents.get(p.key);
         if(resident?.mob?._giranSpawn?.kind==='ordinary'){
@@ -288,8 +297,14 @@ window.GiranRoam=(()=>{
         }
       }
     }
-    if(ordinary<residentCap&&nearby<nearTarget)fill(true);
-    if(ordinary<residentCap&&arrivals<waveLimit)fill(false);
+    if(firstWave){
+      if(ordinary<residentCap&&nearby<nearTarget)fill(true,false);
+      if(ordinary<residentCap&&arrivals<waveLimit)fill(false,false);
+    }else{
+      if(ordinary<residentCap&&arrivals<waveLimit)fill(false,true);
+      // 畫面外沒有可用的出生點（地圖太小、牆擋住）而場上怪太少時，才在畫面內補
+      if(ordinary<Math.ceil(residentCap/2)&&arrivals<waveLimit)fill(false,false);
+    }
     if(arrivals&&ordinary<residentCap)nextScan=now;
     if(residents.size>384){
       const stale=[...residents].filter(([,r])=>!mapState.mobs.includes(r.mob)).sort((a,b)=>a[1].seen-b[1].seen);
