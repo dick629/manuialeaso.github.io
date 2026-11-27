@@ -10,7 +10,8 @@ window.GiranTravel=(()=>{
       const entry={v:key,t:station.label},region=key.endsWith('kent')?'kent':'windwood';
       MAP_CATEGORIES.village.push(entry);MAP_REGIONS.find(r=>r.key===region).maps.push(entry);
     }
-    __afkLore.addNpc(key,{id:'npc_giran_travel_'+key,n:station.name,title:'傳送師',type:'guide'},'6377',[62,42]);
+    // 11-27 Ping：傳送師（付金幣的長串傳送清單）關閉；要移動用地圖選單的瞬移／飛行
+    // __afkLore.addNpc(key,{id:'npc_giran_travel_'+key,n:station.name,title:'傳送師',type:'guide'},'6377',[62,42]);
   }
   function reason(town,route){
     if(!route||!route.to)return '原圖未提供落點';

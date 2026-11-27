@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-f49e1efbcb6c",
+  "build": "giran-0.8.25-a573cf87625e",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -513,8 +513,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-dollaffix.js?v=158e288abc77",
-      "sha256": "158e288abc777035ef83e16c7739b4d052a1478f98bdb93174a3bb71d055bb74",
+      "url": "afk-dollaffix.js?v=2e8a09410a19",
+      "sha256": "2e8a09410a19f5978f7ded1a1c8d3ff9d7c3de24319f7afcecb6a24d1fc55cb1",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1949,7 +1949,7 @@
     },
     {
       "url": "dimension.html",
-      "sha256": "b9a395b3bb22861bb0f953d665e57587a85cff9efdf2b349a402d0c0382387b4",
+      "sha256": "2a38b4d07e7c8b4f6cc3493989698ea9230a1d32da3a556b73dcf6ecf8298e25",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "4510fc8a10a000f33b82c3cdd0e5d6ac7c66f5262564bd10d2f1333e36a1b500",
+      "sha256": "ccd50bd56bdf17eefcd2b77dc2d941e7819859d10c13bb898eda8a5a957551fc",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2793,8 +2793,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/travel.js?v=ff17504c41b5",
-      "sha256": "ff17504c41b5a8f579b27614525ae359f87d4799eb57fee0ece0ede7f3e9d04c",
+      "url": "world/travel.js?v=0bdf4795fb49",
+      "sha256": "0bdf4795fb49a8f1ca6a5778e4dd6a351a4233f1563236370258636365a71781",
       "type": "text/javascript; charset=utf-8"
     },
     {

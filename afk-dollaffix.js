@@ -135,6 +135,7 @@
   // ── 魔法娃娃商人：專區 ──
   var ui = { tier: 1 };
   var section = function () {
+    return '';   // 11-27 Ping：詞條娃娃合成專區關閉（不顯示）；有詞條的娃娃照舊不會被一般合成吃掉
     var p = P(); if (!p) return '';
     var counts = [1, 2, 3, 4, 5].map(count), cur = counts[ui.tier - 1], can = cur >= PAIR;
     var btn = function (on, cls) { return 'btn ' + (on ? cls : 'bg-slate-700 border-slate-600 opacity-60 cursor-not-allowed'); };
