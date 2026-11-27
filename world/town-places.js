@@ -1216,97 +1216,97 @@ window.GiranTownPlaces={
   ]
  },
  "town_sherine": {
-  "npc_afk_artgate": [
-   32748,
-   32835
-  ],
-  "npc_afk_awaken": [
-   32733,
-   32839
-  ],
-  "npc_afk_brace": [
-   32740,
-   32830
-  ],
-  "npc_afk_dimsmith": [
-   32745,
-   32841
-  ],
-  "npc_afk_elena": [
-   32729,
-   32833
-  ],
   "npc_afk_goddess": [
-   32747,
+   32731,
    32830
-  ],
-  "npc_afk_halfsherine": [
-   32741,
-   32839
-  ],
-  "npc_afk_josda": [
-   32735,
-   32831
-  ],
-  "npc_afk_riftgate": [
-   32742,
-   32834
-  ],
-  "npc_afk_skillup": [
-   32737,
-   32835
-  ],
-  "npc_afk_storyteller": [
-   32731,
-   32828
-  ],
-  "npc_afk_trilogy": [
-   32738,
-   32838
-  ],
-  "npc_afk_zal": [
-   32731,
-   32836
-  ],
-  "npc_ally_sherine": [
-   32744,
-   32836
-  ],
-  "npc_io": [
-   32723,
-   32836
-  ],
-  "npc_kyo_sigh": [
-   32738,
-   32828
   ],
   "npc_sherine": [
-   32747,
-   32838
+   32738,
+   32829
+  ],
+  "npc_ally_sherine": [
+   32736,
+   32832
+  ],
+  "npc_io": [
+   32728,
+   32830
+  ],
+  "npc_kyo_sigh": [
+   32735,
+   32835
+  ],
+  "npc_afk_brace": [
+   32728,
+   32833
+  ],
+  "npc_afk_riftgate": [
+   32735,
+   32819
+  ],
+  "npc_afk_artgate": [
+   32723,
+   32829
+  ],
+  "npc_afk_josda": [
+   32738,
+   32819
+  ],
+  "npc_afk_skillup": [
+   32723,
+   32832
+  ],
+  "npc_afk_halfsherine": [
+   32742,
+   32837
+  ],
+  "npc_afk_storyteller": [
+   32720,
+   32832
+  ],
+  "npc_afk_elena": [
+   32720,
+   32823
+  ],
+  "npc_afk_zal": [
+   32739,
+   32816
+  ],
+  "npc_afk_awaken": [
+   32745,
+   32837
+  ],
+  "npc_afk_trilogy": [
+   32720,
+   32835
+  ],
+  "npc_afk_dimsmith": [
+   32717,
+   32825
   ],
   "visitor0": [
-   32725,
-   32830
+   32739,
+   32813
   ],
   "visitor1": [
-   32743,
-   32830
+   32717,
+   32835
   ],
   "visitor2": [
-   32742,
-   32841
+   32715,
+   32828
   ],
   "visitor3": [
-   32719,
-   32833
+   32718,
+   32818
   ],
   "visitor4": [
-   32746,
-   32833
+   32719,
+   32815
   ],
   "visitor5": [
-   32734,
-   32836
+   32714,
+   32835
   ]
  },
  "town_silent": {
