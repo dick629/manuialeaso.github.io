@@ -138,7 +138,8 @@
     (W.__afkGoddessCards = W.__afkGoddessCards || []).push(function (box) {
       var r;
       try {
-        var p = P(); if (!p || !FB.won(p) || !API.OPEN) return r;
+        // 11-27 Ping：沒打贏第一階層時卡片整張消失，玩家看不出為什麼沒有第二、三階層 → 改成照樣顯示，按鈕寫原因
+        var p = P(); if (!p || !API.OPEN) return r;
         var rr = rec(p);
         var row = function (t) {
           var md = t === 2 ? 'tier2' : 'tier3', why = can(t), ok = !why, res = t === 2 ? rr.t2 : rr.t3;

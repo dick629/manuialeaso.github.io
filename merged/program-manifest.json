@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-e4c529ac81b2",
+  "build": "giran-0.8.25-61f60ec5a7f6",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -663,8 +663,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "afk-finaltiers.js?v=8e2bcbdd59de",
-      "sha256": "8e2bcbdd59dee42725c76743539dda080fd2ce0d369c90ce97a9eec828a0b3f6",
+      "url": "afk-finaltiers.js?v=06e615c322a8",
+      "sha256": "06e615c322a858685dbdff0c5d09bf7260dad163c927e7fdd8a8cf2ff2a4b0c5",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1949,7 +1949,7 @@
     },
     {
       "url": "dimension.html",
-      "sha256": "2a4d8ac2a8ca6c960638da30f020653da93a9598fcfa7bada9faf7d9d552e4ea",
+      "sha256": "74dfd3290094ef16e490b31a891b98f821f908445d8b726ac6f4e60aae5cbc2f",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "d8d1efb56a27f5ae8e3d32782d120676c669c048c0938f1e4ef372895f97faa0",
+      "sha256": "55e28fba4bee46ce1d589b5dc39c74dbd256d66479403820f3ba9731dd8ef040",
       "type": "text/html; charset=utf-8"
     },
     {
