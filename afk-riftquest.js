@@ -230,6 +230,7 @@
   // ── 半身的席琳（席琳神殿；看過第三階層的真相才會出現）──
   L.addNpc('town_sherine', { id: HALF_ID, n: HALF_N, title: '劇情', type: 'quest', classicHide: true,
     d: '水影凝成的女人，只有半邊身子。她說自己是還醒著的那一半。' }, null, [44, 40]);
+  try { if (typeof NPC_FEMALE_IDS !== 'undefined') NPC_FEMALE_IDS.add(HALF_ID); } catch (e) {}   // 11-27：沒指定外型時會被配到男性外型
   if (typeof W.interactNPC === 'function') {
     var oNpc = W.interactNPC;
     W.interactNPC = function (npcId) {

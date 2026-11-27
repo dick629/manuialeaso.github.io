@@ -822,13 +822,13 @@
   } catch (e) {}
 
   // ── 覺醒 ──
-  var NPC_ID = 'npc_afk_awaken', TOWN = 'town_sherine', NPC_SPR = 'awaken';   // GPT 立繪縮成的站姿（assets/npc/awaken）
+  var NPC_ID = 'npc_afk_awaken', TOWN = 'town_sherine', SPR_KEY = 'awaken';   // 11-27：原本叫 NPC_SPR，蓋掉了全域外型表，伊瑟拉一直借用別人的外型   // GPT 立繪縮成的站姿（assets/npc/awaken）
   try {
     var npc = { id: NPC_ID, n: '覺醒導師 伊瑟拉', title: '職業覺醒', type: 'quest', classicHide: true,
       d: '守著席琳神殿深處的古老祭壇。她說，三段輪迴的魂魄疊在一起，就能讓一個職業醒來，成為另一種存在。' };
-    var L = W.__afkLore; if (L && L.addNpc) L.addNpc(TOWN, npc, NPC_SPR, null); else if (DB.towns && DB.towns[TOWN]) DB.towns[TOWN].npcs.push(npc);
+    var L = W.__afkLore; if (L && L.addNpc) L.addNpc(TOWN, npc, SPR_KEY, null); else if (DB.towns && DB.towns[TOWN]) DB.towns[TOWN].npcs.push(npc);
     if (typeof NPC_SPR !== 'undefined') NPC_SPR.awaken = Object.assign({ g: 'awaken', f: 1 }, NPC_SPR.awaken, { shadow: false });
-    if (typeof NPC_SPR_FIXED !== 'undefined') NPC_SPR_FIXED[NPC_ID] = NPC_SPR;
+    if (typeof NPC_SPR_FIXED !== 'undefined') NPC_SPR_FIXED[NPC_ID] = SPR_KEY;
   } catch (e) {}
 
   var need = function (p) { var b = p.cls; return [0, 0, 0, 0, 0].map(function (r) { return { cls: b, rebirth: r, level: 100 }; }); };   // Ping 11-15 05:48：本職 0 轉 Lv100 魂魄 5 顆
