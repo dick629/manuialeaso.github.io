@@ -36,6 +36,8 @@ function origin(folder, action, index = 0) {
 // Some later outfits use their own canvas and have no anchor entry.
 const measured = new Map();
 const ink = new Map();
+// 11-27 Ping：角色身高只量「身體」——腳點左右 14% 寬的直條，翅膀、光環、披風往兩側張開的部分不算。
+const bodyInk = new Map();
 function foot(im) {
   if (measured.has(im.src)) return measured.get(im.src);
   const w = im.naturalWidth, h = im.naturalHeight;
@@ -53,7 +55,7 @@ function foot(im) {
     c.width=c.height=0;
     if(measured.size>=768)measured.delete(measured.keys().next().value);
     if(ink.size>=768)ink.delete(ink.keys().next().value);
-    const p=[w/2,h-1];measured.set(im.src,p);ink.set(im.src,h);
+    const p=[w/2,h-1];measured.set(im.src,p);ink.set(im.src,h);bodyInk.set(im.src,h);
     return p;
   }
   let bottom=h-1, sum=0, total=0;
@@ -73,8 +75,19 @@ function foot(im) {
   }
   if (ink.size>=768) ink.delete(ink.keys().next().value);
   ink.set(im.src,Math.max(8,bottom-top+1));
-  c.width=0; c.height=0;
   const p=[total?sum/total:w/2,bottom];
+  {
+    const band=Math.max(4,Math.round(w*.14)),x0=Math.max(0,Math.round(p[0])-band),x1=Math.min(w-1,Math.round(p[0])+band);
+    let bodyTop=top;
+    for (;bodyTop<bottom;bodyTop++) {
+      let opaque=0;
+      for (let x=x0;x<=x1;x++) if (a[(bodyTop*w+x)*4+3]>120) opaque++;
+      if (opaque>=2) break;
+    }
+    if (bodyInk.size>=768) bodyInk.delete(bodyInk.keys().next().value);
+    bodyInk.set(im.src,Math.max(8,bottom-bodyTop+1));
+  }
+  c.width=0; c.height=0;
   if (measured.size>=768) measured.delete(measured.keys().next().value);
   measured.set(im.src,p);
   return p;
@@ -92,15 +105,20 @@ function figureHeight(terrain,kind,standingInk){
   const cell=terrainCellWidth(terrain);
   if(kind==='character')return cell*1.48;
   if(kind==='npc')return cell*1.16;
-  const range=kind==='boss'?[1.55,2.40]:kind==='pet'?[.50,.84]:[.68,1.44];
+  // 11-27 Ping：一般怪 1.0～1.5 格、寵物 0.7～1.0 格、王上限 2.40→2.0 格（角色固定 1.48 格）
+  const range=kind==='boss'?[1.55,2.0]:kind==='pet'?[.70,1.0]:[1.0,1.5];
   return cell*Math.max(range[0],Math.min(range[1],standingInk/48));
 }
 function silhouette(im) {
   foot(im);
   return ink.get(im.src)||im.naturalHeight;
 }
+function bodyHeight(im) {
+  foot(im);
+  return bodyInk.get(im.src)||ink.get(im.src)||im.naturalHeight;
+}
 function townFigureRatio(reference,terrain) {
-  return figureHeight(terrain,'character',silhouette(reference))/silhouette(reference);
+  return figureHeight(terrain,'character',bodyHeight(reference))/bodyHeight(reference);
 }
 function monsterSpec(name,dir) {
   const anchor=window.GiranBossArt?.anchors[name];
@@ -252,7 +270,7 @@ function nativeGeometry(el,isMob) {
   const x=(ir.left-er.left)/scale+padX+(w-ref.naturalWidth*ratio)/2+p[0]*ratio;
   const y=(ir.top-er.top)/scale+padY+(h-ref.naturalHeight*ratio)/2+p[1]*ratio;
   const local=r=>[(r.left-er.left)/scale-x,(r.top-er.top)/scale-y,r.width/scale,r.height/scale];
-  const sourceHeight=silhouette(ref);
+  const sourceHeight=isMob||el.hasAttribute('data-pet')?silhouette(ref):bodyHeight(ref);
   // Some sprites (particularly flying dragons) have a world origin above their visible feet.
   const headRatio=(p[1]-foot(ref)[1]+sourceHeight)/sourceHeight;
   return {fallback:isMob&&!match,x,y,ratio,height:sourceHeight*ratio,sourceHeight,headRatio,
@@ -345,7 +363,7 @@ function paint(el,set,progress,isMob,mode='dm-walking') {
     const geometry=anchorGeometry||nativeGeometry(el,isMob);
     if (!geometry) return false;
     layer.geometry=geometry; layer.set=set; layer.index=-1;
-    const first=set.body[0],ratio=geometry.sourceHeight/(set.sourceHeight||silhouette(first));
+    const first=set.body[0],ratio=geometry.sourceHeight/(set.sourceHeight||(isMob?silhouette(first):bodyHeight(first)));
     // Some action sheets were exported at another resolution. Preserve normal
     // crouches and leaps while matching those sheets to the standing actor.
     layer.ratio=geometry.ratio*(ratio<.65||ratio>1.52?ratio:1);
@@ -404,7 +422,7 @@ function poseStride(actor,el,dir,isMob=false){
     const [fx,fy]=foot(im),w=im.naturalWidth,h=im.naturalHeight,inkHeight=ink.get(im.src)||h;
     if(!w||!h||w*h>1000000)return null;
     const hip=Math.max(1,Math.min(h-1,Math.round(fy-inkHeight*.32))),split=Math.max(1,Math.min(w-1,Math.round(fx))),pad=8;
-    set={body:[],shadow:[],weapon:[],ready:false,missing:false,sourceHeight:inkHeight,anchor:()=>[fx+pad,fy+pad]};
+    set={body:[],shadow:[],weapon:[],ready:false,missing:false,sourceHeight:isMob||el.hasAttribute('data-pet')?inkHeight:(bodyInk.get(im.src)||inkHeight),anchor:()=>[fx+pad,fy+pad]};
     try{
       for(let k=0;k<8;k++){
         const wave=Math.sin(k*Math.PI/4),lift=Math.abs(wave)*Math.min(2,inkHeight*.04),xstep=dx[dir]-dy[dir];
