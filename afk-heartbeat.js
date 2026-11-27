@@ -157,6 +157,7 @@
       '.afk-hb-head span{color:#b3aa9e;font-size:12.5px}',
       '.afk-hb-head button{margin-left:auto;min-width:36px;min-height:32px;border:1px solid #765036;border-radius:.25rem;background:linear-gradient(180deg,#332c2c,#17161a);color:#f1ede8;cursor:pointer}',
       '.afk-hb-body{flex:1;min-height:0;display:flex}',
+      '#afk-hb-modal #afk-hb-main{flex:1;min-height:0;display:flex;flex-direction:column}',   // 11-27：少了這層，訊息列表會撐出視窗底部
       '.afk-hb-log{flex:1;min-width:0;overflow-y:auto;padding:8px 12px;overscroll-behavior:contain}',
       '.afk-hb-msg{padding:2px 0;word-break:break-word}.afk-hb-msg time{color:#7d756b;font-size:11.5px;margin-right:6px;font-variant-numeric:tabular-nums}',
       '.afk-hb-msg .n{font-weight:700;margin-right:4px}.afk-hb-msg .lv{color:#8f867b;font-size:11.5px;margin-right:6px}',

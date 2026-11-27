@@ -28,10 +28,54 @@ window.LineagePlayMode = (() => {
     const saved = localStorage.getItem(preference);
     if (Object.hasOwn(entries, saved)) preferred = saved;
   } catch {}
-  picker.value = preferred;
+  // 11-27 Ping：自由走動暫停開放，只有帶測試口令的裝置能選。口令只存雜湊，開一次「網址#tester=口令」後記在這台裝置。
+  const testerKey = 'giran.tester.v1', testerHash = 'c7ff2d65a1b82d566dd4fef8aebca877d3288f9cfcf8967a30b43feb6ff7bce9';
+  const fusionOption = picker.querySelector('option[value="fusion"]');
+  let tester = false, loaded = false;
+  document.addEventListener('DOMContentLoaded', () => { loaded = true; }, {once:true});
+  fusionOption.disabled = true;
+  fusionOption.textContent = '融合版（自由走動）暫停開放';
+  picker.value = 'dimension';
+  function toDimension() {
+    const target = new URL(entries.dimension, location.href);
+    target.searchParams.set('selectCharacter', '1');
+    location.replace(target.href);
+  }
+  const verified = (async () => {
+    try {
+      const given = /^#tester=(.+)$/.exec(location.hash);
+      if (given) {
+        localStorage.setItem(testerKey, decodeURIComponent(given[1]));
+        url.hash = '';
+        history.replaceState(history.state, '', location.pathname + location.search);
+      }
+      const phrase = localStorage.getItem(testerKey);
+      if (!phrase) return false;
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(phrase));
+      return Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, '0')).join('') === testerHash;
+    } catch { return false; }
+  })().then(ok => {
+    tester = ok;
+    if (ok) {
+      fusionOption.disabled = false;
+      fusionOption.textContent = '融合版（自由走動）';
+      picker.value = url.searchParams.get('selectCharacter') === '1' ? current : preferred;
+    }
+    return ok;
+  });
+  window.addEventListener('hashchange', () => { if (/^#tester=/.test(location.hash)) location.reload(); });
+  if (current === 'fusion') {
+    for (const name of ['openLoadSelect', 'loadEnterSelected']) {
+      const original = window[name];
+      if (typeof original === 'function') window[name] = function () {
+        if (!tester) { verified.then(ok => ok ? original.apply(this, arguments) : toDimension()); return; }
+        return original.apply(this, arguments);
+      };
+    }
+  }
 
   function start() {
-    const mode = picker.value;
+    const mode = picker.value === 'fusion' && !tester ? 'dimension' : picker.value;
     if (!Object.hasOwn(entries, mode)) return;
     if (mode === 'dimension' && hasRoom()) {
       picker.value = current;
@@ -51,7 +95,8 @@ window.LineagePlayMode = (() => {
     picker.value = current;
     url.searchParams.delete('selectCharacter');
     history.replaceState(history.state, '', url.href);
-    document.addEventListener('DOMContentLoaded', openLoadSelect, {once:true});
+    const open = () => window.openLoadSelect();
+    if (loaded) open(); else document.addEventListener('DOMContentLoaded', open, {once:true});
   }
   return {start};
 })();
