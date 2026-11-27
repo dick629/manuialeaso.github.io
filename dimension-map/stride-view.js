@@ -118,9 +118,11 @@ function monsterSpec(name,dir) {
 }
 
 // Some legacy transformations have combat poses but no walking animation.
-// Use a single equipped class appearance for their entire time on the walking map.
+// 11-27 Ping：變身一律保留原本的樣子與攻擊動作；沒有走路圖的，走路時由 stride() 用待機圖補步態（poseStride）。
+// 舊做法是整段時間換回職業外觀，玩家看起來像「變身被解除」、也看不到變身的攻擊動作。
 const canWalk=new Map();
 function mapForm(form,who,isAlly) {
+  return form;
   if(/冥皇丹特斯/.test(form?.domKey||decodeURIComponent(form?.base||'')))return form;
   if(!frameIndex || !form?.base || form.domKey?.startsWith('class:') || typeof _classForm!=='function')return form;
   let supported=canWalk.get(form.key);
