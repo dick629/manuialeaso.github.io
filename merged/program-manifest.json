@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-af6665533d7d",
+  "build": "giran-0.8.25-bd946e5d6059",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1949,7 +1949,7 @@
     },
     {
       "url": "dimension.html",
-      "sha256": "62a969c463f4dee02b6406acc356f3f47c7726f6b12a19efb6cc24dad8004eed",
+      "sha256": "6ac07fa95b1054c72d655e5a5574eca76bf737464b6ade16c777e10d6bc68732",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "9c2eeeb8cb5b2da74b301f6e41d911b9988f223569c09f1fb51ab9bef044bf0c",
+      "sha256": "8a8f6b3ed5663acb8918c2a8e7582b1830b4c5f6b7a5039aa70a5c81d18e0f16",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2458,8 +2458,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "merged/save-bridge.js?v=c3b4d3abddbf",
-      "sha256": "c3b4d3abddbf6f3e3323513736aa198bcb09105138dc260f26290817522d9f32",
+      "url": "merged/save-bridge.js?v=370da1da8089",
+      "sha256": "370da1da80899d41cadbf6daf350e1cf30d6c33a60b3a6153b2c95ee7c967eca",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2514,7 +2514,7 @@
     },
     {
       "url": "recovery.html",
-      "sha256": "47ccfc04b785e7c80f1b749ff410ab98091b25d8e4882b7d47e56b394da485ed",
+      "sha256": "d39a372dd787cc78a95c898cd065c3a56c7bad10c14341b0956b6dff16a38a5e",
       "type": "text/html; charset=utf-8"
     },
     {
