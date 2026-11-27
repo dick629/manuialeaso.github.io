@@ -85,7 +85,8 @@ function foot(im) {
       if (opaque>=2) break;
     }
     if (bodyInk.size>=768) bodyInk.delete(bodyInk.keys().next().value);
-    bodyInk.set(im.src,Math.max(8,bottom-bodyTop+1));
+    // 腳點算偏（拿杖、披風拖地）或躺姿時直條會量到很矮，放大後整個人變巨大馬賽克 → 至少算全身高的 72%
+    bodyInk.set(im.src,Math.max(8,bottom-bodyTop+1,Math.round((bottom-top+1)*.72)));
   }
   c.width=0; c.height=0;
   if (measured.size>=768) measured.delete(measured.keys().next().value);
@@ -270,7 +271,15 @@ function nativeGeometry(el,isMob) {
   const x=(ir.left-er.left)/scale+padX+(w-ref.naturalWidth*ratio)/2+p[0]*ratio;
   const y=(ir.top-er.top)/scale+padY+(h-ref.naturalHeight*ratio)/2+p[1]*ratio;
   const local=r=>[(r.left-er.left)/scale-x,(r.top-er.top)/scale-y,r.width/scale,r.height/scale];
-  const sourceHeight=isMob||el.hasAttribute('data-pet')?silhouette(ref):bodyHeight(ref);
+  let sourceHeight=isMob||el.hasAttribute('data-pet')?silhouette(ref):bodyHeight(ref);
+  // 11-27：有些八方向怪某個方向的待機圖是壞的（例：提卡爾 杰弗雷庫 d6 只剩一小塊），拿它當身高會把整隻放大好幾倍 → 同時參考正面（d2）待機圖，取較高的
+  if(isMob&&match&&match[1]==='anim'&&/^d\d\//.test(match[3])){
+    const url='assets/anim/'+match[2]+'/d2/idle_0.png';
+    let front=standingReferences.get(url);
+    if(!front){front=image(url);standingReferences.set(url,front);}
+    if(loaded(front))sourceHeight=Math.max(sourceHeight,silhouette(front));
+    else if(!front.complete)return null;   // 正面圖還在下載：下一幀再量，不拿壞圖記尺寸
+  }
   // Some sprites (particularly flying dragons) have a world origin above their visible feet.
   const headRatio=(p[1]-foot(ref)[1]+sourceHeight)/sourceHeight;
   return {fallback:isMob&&!match,x,y,ratio,height:sourceHeight*ratio,sourceHeight,headRatio,

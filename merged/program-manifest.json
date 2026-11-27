@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-1fa25e6f5e09",
+  "build": "giran-0.8.25-fa352318fe24",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1908,8 +1908,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "dimension-map/stride-view.js?v=df8784c7d9d3",
-      "sha256": "df8784c7d9d3071ea21ca86c208d342d706ff5ad1740be939df13f1ff2ce9570",
+      "url": "dimension-map/stride-view.js?v=7a23a4294082",
+      "sha256": "7a23a4294082bc0040eacb547b1774bbad71ea4d5d04a8f47a24153499542bbb",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "7a2283d3ad4734a8040dd6e02f3d82681059ebf5189f41c3d4a60cdded365b48",
+      "sha256": "acba7607667fa86707d0823ecc4dd55effd94d60f9f47311869f0586a861d4f2",
       "type": "text/html; charset=utf-8"
     },
     {
