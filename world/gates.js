@@ -44,7 +44,9 @@ window.GiranGates=(()=>{
     if(from&&(g.sourceMap??g.map)===4){
       const at={x:g.tx,y:g.ty};
       const map4=terrain.areas;
-      const name=allowed(from.outer)?from.outer:Object.keys(map4).filter(k=>map4[k].map===4&&DB.maps[k]?.length&&mapCategoryOf(k)==='wild'&&allowed(k)).sort((a,b)=>distance(map4[a],at)-distance(map4[b],at))[0];
+      // 11-27：城外附近沒有狩獵區時（例：奇岩城），出口通往該城所屬地區的村莊，不再指向 200 多格外的狩獵區。
+      const name=allowed(from.outer)?from.outer:Object.keys(map4).filter(k=>map4[k].map===4&&DB.maps[k]?.length&&mapCategoryOf(k)==='wild'&&allowed(k)&&distance(map4[k],at)<=WILD_RADIUS).sort((a,b)=>distance(map4[a],at)-distance(map4[b],at))[0]
+        ||townNear(map4,4,at,mapRegionOf(from.castle)||from.key);
       if(name)return {...g,key:name,title:'→ '+(name===from.outer?from.outerName:mapDisplayName(name))};
     }
     return g;
@@ -101,6 +103,11 @@ window.GiranGates=(()=>{
   const distance=(a,b)=>Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y));
   const villageMargin=3;
   const WILD_RADIUS=150;
+  // 最近的村莊；同地區的優先（差 180 格以內都選同地區的）。
+  function townNear(areas,map,at,region){
+    return Object.keys(areas).filter(k=>k.startsWith('town_')&&(areas[k].sourceMap??areas[k].map)===map&&!areas[k].castleInterior&&!areas[k].instance&&allowed(k))
+      .sort((a,b)=>distance(areas[a],at)+(mapRegionOf(a)===region?0:180)-distance(areas[b],at)-(mapRegionOf(b)===region?0:180))[0]||null;
+  }
   function inDistrict(t,x,y,margin=0){
     const dist=Math.max(Math.abs(x-t.x),Math.abs(y-t.y));
     return dist<=26+margin||dist<=t.extent+margin&&t.npcs.some(([px,py])=>Math.max(Math.abs(x-px),Math.abs(y-py))<=7+margin);
@@ -265,8 +272,10 @@ window.GiranGates=(()=>{
       if(!dest){
         const here=distance(leader,from),closest=nearestWild(leader,terrain.key);
         if(closest&&distance(leader,closest)+30<here)dest=closest;
-        else if(here>WILD_RADIUS&&groundReady(terrain,leader.x,leader.y,villageMargin))
-          dest=places.towns.filter(t=>allowed(t.key)).sort((a,b)=>distance(a,leader)-distance(b,leader))[0];
+        else if(here>WILD_RADIUS&&groundReady(terrain,leader.x,leader.y,villageMargin)){
+          const town=townNear(terrain.areas,terrain.sourceMap??terrain.world.map.id,leader,mapRegionOf(terrain.key));
+          dest=town&&places.towns.find(t=>t.key===town);
+        }
       }
     }
     if(!dest)return false;

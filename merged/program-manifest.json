@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-05f9680bc7d1",
+  "build": "giran-0.8.25-83dcba336b14",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1949,7 +1949,7 @@
     },
     {
       "url": "dimension.html",
-      "sha256": "efda94faf884ba0074dc064e0aa6943b64a444a5d24fd791b83948935fdc20ee",
+      "sha256": "2a4d8ac2a8ca6c960638da30f020653da93a9598fcfa7bada9faf7d9d552e4ea",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "69e856805688f386c5f37ba148ead55e18c5a882552d063d7b03671da4adcff3",
+      "sha256": "cde3218d477672b92aa769357675de508a417d29609e2f9827d61ff54fc486f0",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2623,8 +2623,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/gates.js?v=9e0de9fdb693",
-      "sha256": "9e0de9fdb6931de0817ad2fc7c7aacdbb6c1511915addd3187e8a2e9e33b57f1",
+      "url": "world/gates.js?v=e5acb9cb12ca",
+      "sha256": "e5acb9cb12cae9e9d257b60bd42c7e8346dac667f4ad0d9c1fcdae29717b8ff2",
       "type": "text/javascript; charset=utf-8"
     },
     {
