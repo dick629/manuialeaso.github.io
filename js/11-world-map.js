@@ -282,7 +282,7 @@ function rebuildMapCategoryOptions() {
     let catSel = document.getElementById('map-category'); if (!catSel) return;
     let opts = [];
     if (player.siege && player.siege.active) opts.push(['siege','攻城']);   // ⚔️ 攻城進行中（攻城獲勝城堡不再獨立成「城堡」分類，已注入肯特/風木/海音地區）
-    MAP_REGIONS.forEach(r => { if (regionHasVisible(r.key)) opts.push([r.key, r.label]); });   // 🗺️ 17 地區（依 map_categories.md 順序；經典模式空地區自動隱藏）
+    MAP_REGIONS.forEach(r => { if (r.key === 'giran_floors' && document.documentElement.dataset.playMode === 'dimension' && !r.maps.some(m => m.v === mapState.current)) return;   /* 11-27 Ping：地界要走到過才能選，固定站位走不到→整區不列 */ if (regionHasVisible(r.key)) opts.push([r.key, r.label]); });   // 🗺️ 17 地區（依 map_categories.md 順序；經典模式空地區自動隱藏）
     catSel.innerHTML = opts.map(o => `<option value="${o[0]}">${o[1]}</option>`).join('');
 }
 // 🗼 是否持有指定樓層區間(N)的 傳送符 / 支配符 / 移動卷軸（任一即可進入；支配符可在塔內手動傳送）

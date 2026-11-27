@@ -1125,6 +1125,15 @@ function corrosiveJellySkinOnBasicHit(mob, defender) {
     mob._corrosiveJellyAtkDown = after;
     return true;
 }
+// 11-27 Ping：圍毆（只在自由走動）。6 秒內有 3 隻以上的怪打同一個人 → 那個人的閃避率 ×0.9，每多一隻再減 0.1，最低 ×0.4（8 隻以上）。
+const _gangSeen = new WeakMap();
+function gangEvadeMul(mob, key) {
+    if (document.documentElement.dataset.playMode !== 'fusion' || !mob) return 1;
+    _gangSeen.set(mob, { k: key, t: state.ticks });
+    let n = 0;
+    for (const m of mapState.mobs) { if (!m || m.curHp <= 0) continue; const g = _gangSeen.get(m); if (g && g.k === key && state.ticks - g.t <= 60 && state.ticks >= g.t) n++; }
+    return n < 3 ? 1 : 1 - 0.1 * Math.min(6, n - 2);
+}
 function _enemyPhysicalAttackInner(mob, idx, stunChance = 0, atkDmg = null, atkDb = null, isBasicAttack = false) {   // atkDmg/atkDb：連擊技覆寫骰子/加值（如鐮刀劍氣斬 9×3D70+99，與一般攻擊不同）
     if(player.dead) return;
     if(inAbsBarrier()) return;   // 🛡️ 絕對屏障：不受任何傷害（敵方一般/連擊攻擊完全無效，亦不觸發反擊）
@@ -1137,7 +1146,7 @@ function _enemyPhysicalAttackInner(mob, idx, stunChance = 0, atkDmg = null, atkD
     // 🔧 暗隱術：100% 迴避一次物理攻擊（迴避後失效並進入 5 秒冷卻）；否則依 ER 有效迴避率判定
     let _stealthDodge = !!(player.buffs && player.buffs.sk_dark_stealth > 0);
     let _titanEr = (player.skills.includes('sk_warrior_titan_bullet') && player.hp < player.mhp * titanThreshold()) ? 50 : 0;   // ⚔️ 泰坦：子彈：HP<40%(反彈精通 80%) 時 ER+50（即時判定，不入 recomputeStats）
-    if (!mob.magicMelee && !_asleep && !(player.d && player.d.noEvade && !_stealthDodge) && (_stealthDodge || roll(1, 100) <= Math.min(window.__afkEvadeCap || 100, effResistPct(player.d.er + _titanEr) + (window.GiranMagicMerchant?.arrowEvade(player,mob)||0)) /* 🔌 加掛版補丁:迴避上限 */)) {   // 😤 magicMelee(白目幻術士)：一般攻擊視為魔法·必定命中不可迴避   // 🏺 笨重的鋼鐵石盾 noEvade：無法迴避（暗隱術 100% 迴避不受限）
+    if (!mob.magicMelee && !_asleep && !(player.d && player.d.noEvade && !_stealthDodge) && (_stealthDodge || roll(1, 100) <= Math.min(window.__afkEvadeCap || 100, (effResistPct(player.d.er + _titanEr) + (window.GiranMagicMerchant?.arrowEvade(player,mob)||0)) * gangEvadeMul(mob, 'P')) /* 🔌 加掛版補丁:迴避上限 */)) {   // 😤 magicMelee(白目幻術士)：一般攻擊視為魔法·必定命中不可迴避   // 🏺 笨重的鋼鐵石盾 noEvade：無法迴避（暗隱術 100% 迴避不受限）
         logCombat(`${player.name || '你'} 成功迴避攻擊。`, 'evade');   if (typeof window.__afkOnEvade === 'function') { try { window.__afkOnEvade(player, mob); } catch (e) {} }   /* 🔌 加掛版補丁:迴避掛點 */
         if (hasMastery('d_evade')) { let _s = player._darkEvadeStack || 0; player._darkEvadeStack = 0; if (player.d) player.d.er -= _s; player._darkEvadeSure = true; player._darkEvadeCrit = true; }   // 🔧 迴避精通：清空累積ER，下次一般攻擊必中且必爆
         // 🔧 暗隱術：消耗該次 100% 迴避後失效，並進入 5 秒冷卻
@@ -1541,7 +1550,7 @@ function _enemyAttackAllyInner(mob, ally, isBasicAttack = false) {
         let _titanEr = (ally.skills && ally.skills.includes('sk_warrior_titan_bullet') && (ally.curHp || 0) < (ally.mhp || 1) * ((ally.cls === 'warrior' && allyHasMastery(ally, 'k_rebound')) ? 0.8 : 0.4)) ? 50 : 0;   // ⚔️ 泰坦：子彈
         let _evStack = allyHasMastery(ally, 'd_evade') ? (ally._darkEvadeStack || 0) : 0;   // 🖤 迴避精通：累積 ER（直接加進判定·不動 ally.d 避免重算失同步）
         let _stealthDodge = !!(ally.buffs && ally.buffs.sk_dark_stealth > 0);   // 🖤 v2.7.92 暗隱術（傭兵）：100% 迴避一次物理攻擊（迴避後失效並進入 5 秒冷卻·鏡像玩家 enemyPhysicalAttack）
-        if (!(d.noEvade && !_stealthDodge) && (_stealthDodge || roll(1, 100) <= Math.min(window.__afkEvadeCap || 100, effResistPct((d.er || 0) + _titanEr + _evStack) + (window.GiranMagicMerchant?.arrowEvade(ally,mob)||0)) /* 🔌 加掛版補丁:迴避上限 */)) {   // 🏺 笨重的鋼鐵石盾 noEvade：無法一般迴避（鏡像玩家 enemyPhysicalAttack；暗隱術 100% 迴避不受限）
+        if (!(d.noEvade && !_stealthDodge) && (_stealthDodge || roll(1, 100) <= Math.min(window.__afkEvadeCap || 100, (effResistPct((d.er || 0) + _titanEr + _evStack) + (window.GiranMagicMerchant?.arrowEvade(ally,mob)||0)) * gangEvadeMul(mob, 'A:' + String(ally._slot || ''))) /* 🔌 加掛版補丁:迴避上限 */)) {   // 🏺 笨重的鋼鐵石盾 noEvade：無法一般迴避（鏡像玩家 enemyPhysicalAttack；暗隱術 100% 迴避不受限）
             logCombat(`<span class="text-sky-300 font-bold">協力·${ally._allyName}</span> 迴避了 <span class="${getMobColor(mob.lv)}">${mob.n}</span> 的攻擊。`, 'evade', 'enemy');
             if (allyHasMastery(ally, 'd_evade')) { ally._darkEvadeStack = 0; ally._darkEvadeSure = true; ally._darkEvadeCrit = true; }   // 迴避精通：清空累積·下次一般攻擊必中必爆
             if (_stealthDodge) { ally.buffs.sk_dark_stealth = 0; ally._darkStealthCd = state.ticks + 50; logCombat(`<span class="text-fuchsia-300">協力·${ally._allyName} 的暗影隱蔽消散了。</span>`, 'magic', 'mercenary'); }   // 🖤 v2.7.92 消耗該次 100% 迴避後失效＋5 秒冷卻（allyMaintainBuffs 冷卻閘讀 _darkStealthCd）

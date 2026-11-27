@@ -933,6 +933,19 @@ function tick() {
         if(m.curHp <= 0) continue;   // 反擊使該怪在自己回合內死亡 → 跳過後續魔法施放
         if(m.st && (m.st.vacuum > 0 || m.st.magicseal > 0)) continue; // 真空 / 魔法封印：無法施放技能
         if(!m._magCd) m._magCd = {};
+        // 11-27 Ping：所有王每 15 秒對全隊放一次本身屬性的範圍攻擊，傷害約為普通攻擊的 1.2 倍。
+        if (m.boss && Array.isArray(m.dmg)) {
+            m._magCd._wave = (m._magCd._wave === undefined ? 150 : m._magCd._wave) - 1;
+            if (m._magCd._wave <= 0) {
+                m._magCd._wave = 150;
+                let _we = ['fire','water','wind','earth'].includes(m.e) ? m.e : null;
+                let _wsk = { skn: '王者震盪', dmg: [m.dmg[0], Math.max(1, Math.round(m.dmg[1] * 1.2))], db: Math.round((m.db || 0) * 1.2), alwaysHit: true };
+                if (_we) _wsk.ele = _we;
+                if (!player.dead) _dpsReactWrap(() => castMobMagic(m, _wsk));
+                if (player.dead) break;
+                if (m.curHp <= 0) continue;
+            }
+        }
         // 🔮 v3.7.16 決鬥法師對手：先問 js/28「本 tick 已就緒的法術中傷害最高的是哪一招」→ 那一招必放且先放。
         //   ⚠️ 只有 `_pvpDuelFoe` 且職業為法師會拿到非 null，其餘怪物 _magBest 恆 null＝完全照舊。
         let _magBest = (m._pvpDuelFoe && typeof pvpDuelBestSpellKey === 'function') ? pvpDuelBestSpellKey(m) : null;

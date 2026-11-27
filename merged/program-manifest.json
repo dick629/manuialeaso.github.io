@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-bd946e5d6059",
+  "build": "giran-0.8.25-70e102814301",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1949,7 +1949,7 @@
     },
     {
       "url": "dimension.html",
-      "sha256": "6ac07fa95b1054c72d655e5a5574eca76bf737464b6ade16c777e10d6bc68732",
+      "sha256": "a1c53e958773044cf9352419b4c763b814167b4a91fd512a30eb8be5cc385a68",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "8a8f6b3ed5663acb8918c2a8e7582b1830b4c5f6b7a5039aa70a5c81d18e0f16",
+      "sha256": "5a6476286d46be75215d74bb6c4936d4df739d91db62c16343d0d2664e10991c",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -1968,8 +1968,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/01-drops-config.js?v=214b07caa152",
-      "sha256": "214b07caa152415ea3e70d8bd0bd204f2e2971ce4d84d433f655bc8ff2bc12fc",
+      "url": "js/01-drops-config.js?v=87c73bd705f1",
+      "sha256": "87c73bd705f1a8c17b07aa9e85192f3703c07fb1c6e9084465e492b556d0fceb",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -1978,13 +1978,13 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/03-combat-core.js?v=4c464380121e",
-      "sha256": "4c464380121e1102eed587ffe490d58fa45c7279ca0769ee4084280fd5c0c4ed",
+      "url": "js/03-combat-core.js?v=87cdf24cacc5",
+      "sha256": "87cdf24cacc57c0a33d0c7ac53c9a024393280b5edc9ea97734c61990b3770c1",
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/04-combat-attack.js?v=a4c4e0dd1228",
-      "sha256": "a4c4e0dd12281f61e5ef683822c212880e9e44e3280ca06cdd92f99976ae91f6",
+      "url": "js/04-combat-attack.js?v=0ca5b272df83",
+      "sha256": "0ca5b272df835534c09c4884fed546e8e981d37e192117e6720d84e33d8b172f",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2018,8 +2018,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "js/11-world-map.js?v=2b9de3210a49",
-      "sha256": "2b9de3210a49d41cdb9a3b679e0aacd9499c7bfcccf428ee8b2e8c966e649c83",
+      "url": "js/11-world-map.js?v=81e0dfd3bc54",
+      "sha256": "81e0dfd3bc5413fa84136cb40af1006d54b8aa65e6636150a1548107c40e848a",
       "type": "text/javascript; charset=utf-8"
     },
     {
