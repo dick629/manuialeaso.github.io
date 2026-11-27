@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "build": "giran-0.8.25-77016b237494",
+  "build": "giran-0.8.25-1b1631252fa7",
   "files": [
     {
       "url": "afk-abnforce.js?v=89425fe81415",
@@ -1959,7 +1959,7 @@
     },
     {
       "url": "index.html",
-      "sha256": "415adaa4b1498f95e3d4b355822e16b038b182f969807df01d137da08c2195fb",
+      "sha256": "d8e2fe2b456af62f04393cd304bb989fcf24e5a62083b645a12e23586b8bdb76",
       "type": "text/html; charset=utf-8"
     },
     {
@@ -2523,8 +2523,8 @@
       "type": "text/css; charset=utf-8"
     },
     {
-      "url": "world/adventure-ui.js?v=040e528a6985",
-      "sha256": "040e528a6985156e5fee43d052497fc811c5c272457e0963178a0804fc8a7df8",
+      "url": "world/adventure-ui.js?v=01c2bb22a78b",
+      "sha256": "01c2bb22a78b96a3410db35a8865dd386588821775412867f4a2db008e62ee14",
       "type": "text/javascript; charset=utf-8"
     },
     {
@@ -2773,8 +2773,8 @@
       "type": "text/javascript; charset=utf-8"
     },
     {
-      "url": "world/town.js?v=706a98c0a188",
-      "sha256": "706a98c0a1887e40d2e77ea387e144f25914c615b2c385eb8d84d67055309d2d",
+      "url": "world/town.js?v=5163849e52c0",
+      "sha256": "5163849e52c0a4ac06e340867b56a8f6c65a48af38475928d8bb0bd9180d63c4",
       "type": "text/javascript; charset=utf-8"
     },
     {

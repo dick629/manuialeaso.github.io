@@ -506,6 +506,7 @@
   channel.onchange=()=>chooseChannel(channel.value);
   document.addEventListener('visibilitychange',syncFeed);
   const history=$('world-log');history.addEventListener('click',e=>{if(e.target.closest('a,button,input'))return;const row=e.target.closest('.log-entry');if(row&&history.contains(row))row.classList.toggle('ga-chat-expanded');});
+  if(typeof window.GIRAN_DESKTOP_ZOOM!=='number')window.GIRAN_DESKTOP_ZOOM=.75;
   function measureFieldFocus(){
     if(!panel.clientHeight)return;
     const rect=panel.getBoundingClientRect();
@@ -526,7 +527,8 @@
       if(target===statusIcons){document.body.style.setProperty('--ga-buffs-end',Math.ceil(statusIcons.getBoundingClientRect().bottom)+'px');continue;}
       if(target===chat){document.body.style.setProperty('--ga-channel-h',Math.ceil(chat.getBoundingClientRect().height)+'px');continue;}
       const scale=Math.min(2.65,Math.max(1.06,contentRect.height*.102/56),Math.max(1.06,contentRect.width/282));
-      const zoom=Number(scale.toFixed(3));
+      // 11-27 Ping：電腦版鏡頭拉遠（原本 1440 高的螢幕放大約 1.6 倍、2K 螢幕 2.6 倍，走路一步跨很多像素，看起來又快又卡）。手機不動。
+      const zoom=Number((GiranPartyView.mobile()?scale:Math.max(1,scale*window.GIRAN_DESKTOP_ZOOM)).toFixed(3));
       panel.style.setProperty('--ga-world-scale',zoom);
       panel.style.setProperty('--ga-field-height',Math.max(1,(contentRect.height-6)/zoom)+'px');
     }

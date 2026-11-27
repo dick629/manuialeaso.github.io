@@ -85,7 +85,8 @@ window.GiranTown=(()=>{
       body={ratio,height:height*ratio};inkSizes.set(npc,body);
     }
     if(body.src===image.currentSrc)return body;
-    body.src=image.currentSrc;const feet=api.foot(image),r=body.ratio;
+    // 11-27：腳點只量第一張。每張待機圖的輪廓不同，逐張重量會讓 NPC 在原地抖動（倉庫朵琳最明顯）。
+    body.src=image.currentSrc;const feet=body.feet||(body.feet=api.foot(image)),r=body.ratio;
     npc.style.setProperty('--npc-x',(-feet[0]*r).toFixed(2)+'px');
     npc.style.setProperty('--npc-y',(-feet[1]*r).toFixed(2)+'px');
     npc.style.setProperty('--npc-head',Math.round(body.height)+'px');
